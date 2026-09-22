@@ -1,5 +1,6 @@
 import { cn } from "@/components/lib/utils.js";
-import zaiLogoUrl from "@/assets/provider-icons/logo-zai.svg";
+// XCode fork：设置页左上角品牌 logo 换 X 位图资产（替代旧 Z.ai logo）。
+import appLogoUrl from "@/assets/app-logo.png";
 
 export function WindowsTopLeftLogo({
   className,
@@ -20,7 +21,7 @@ export function WindowsTopLeftLogo({
       )}
     >
       <img
-        src={zaiLogoUrl}
+        src={appLogoUrl}
         alt="XCode"
         className={cn("pointer-events-none size-5 select-none", imageClassName)}
         draggable={false}
