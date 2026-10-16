@@ -18,6 +18,7 @@ import { useServices } from "@/hooks/useServices.js";
 import { TECHNICAL_INPUT_ATTRIBUTES } from "@/lib/technicalInputAttributes.js";
 import type { CodeBuddyCheckinStats } from "@zcode/services";
 import { AccountQuotaInline, AccountQuotaSummaryLine, useAccountQuota } from "./ProviderQuotaSection.js";
+import { ProviderAccountBinding } from "./ProviderAccountBinding.js";
 
 /**
  * XCode fork：CodeBuddy（其他登录型供应商）登录区，渲染在供应商详情模型列表上方。
@@ -454,6 +455,11 @@ export function CodeBuddyLoginSection({
                     <AccountQuotaInline snapshot={accountQuota.byAccountId.get(account.id)} />
                   </div>
                 ) : null}
+                {/* 账号级代理绑定：只在该供应商启用代理且池有条目时渲染（组件内部判空）。 */}
+                <ProviderAccountBinding
+                  providerId={providerId}
+                  accountId={account.id}
+                />
               </div>
               {!account.active ? (
                 <Button

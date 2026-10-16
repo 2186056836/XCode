@@ -21,7 +21,8 @@ export type SettingsSectionId =
   | "computerUse"
   | "automations"
   | "shortcuts"
-  | "accounts";
+  | "accounts"
+  | "proxyPool";
 
 export type SettingsUsageTabTarget = "app" | "codingPlan";
 export type SettingsPluginTabTarget = "plugins" | "mcps" | "skills" | "commands";
@@ -44,6 +45,9 @@ const HIDDEN_SETTINGS_SECTIONS = new Set<SettingsSectionId>([
   // 工作区搜索（.zcodeignore）设置入口先隐藏：规则文件仍生效并可手动编辑，
   // 编辑页代码保留，放开时从这里移除即可。
   "workspaceFileSearch",
+  // 代理池配置入口先隐藏：功能代码（services/agent 请求层/UI 组件）全部保留，
+  // 开发完成后从这里移除即可恢复入口。
+  "proxyPool",
 ]);
 
 export interface SettingsSectionIntentEventDetail {
@@ -80,7 +84,8 @@ function isSettingsSectionId(value: string): value is SettingsSectionId {
     value === "computerUse" ||
     value === "automations" ||
     value === "shortcuts" ||
-    value === "accounts"
+    value === "accounts" ||
+    value === "proxyPool"
   );
 }
 

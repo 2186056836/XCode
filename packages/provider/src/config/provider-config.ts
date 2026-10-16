@@ -132,12 +132,15 @@ export class ProviderApiConfig extends ConfigOverlay<ProviderApiConfig> {
   readonly type?: ProviderApiConfigInput["type"];
   readonly baseUrl?: ProviderApiConfigInput["baseUrl"];
   readonly headers?: ProviderApiConfigInput["headers"];
+  /** XCode fork：供应商级代理绑定；随 Registry 下发到 agent 请求层。 */
+  readonly proxy?: ProviderApiConfigInput["proxy"];
 
   constructor(input: ProviderApiConfigInput = {}) {
     super();
     this.type = input.type;
     this.baseUrl = input.baseUrl;
     this.headers = input.headers ? Object.freeze({ ...input.headers }) : input.headers;
+    this.proxy = input.proxy ? Object.freeze({ ...input.proxy }) : input.proxy;
     Object.freeze(this);
   }
 
@@ -146,6 +149,8 @@ export class ProviderApiConfig extends ConfigOverlay<ProviderApiConfig> {
       type: this.overlayValue(this.type, next.type),
       baseUrl: this.overlayValue(this.baseUrl, next.baseUrl),
       headers: this.overlayValue(this.headers, next.headers),
+      // 代理绑定是整块替换语义：null 表示显式关闭，undefined 表示本层不表态。
+      proxy: next.proxy === undefined ? this.proxy : next.proxy,
     });
   }
 
@@ -159,6 +164,7 @@ export class ProviderApiConfig extends ConfigOverlay<ProviderApiConfig> {
       type: this.type,
       baseUrl: this.baseUrl,
       headers: this.headers,
+      proxy: this.proxy,
     });
   }
 }

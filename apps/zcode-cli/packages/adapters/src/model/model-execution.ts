@@ -10,7 +10,7 @@ import { tmpdir } from "node:os";
 import {
   applyBuildAgentSignature,
   mintSessionId,
-  OPENCODE_USER_AGENT,
+  OPENCODE_FREE_USER_AGENT,
 } from "./opencode-build-agent.js";
 import type { createModelRequestSecurityState } from "./request-security-edition/index.js";
 import type { ModelRequestSecurityPort } from "./request-security.js";
@@ -33,7 +33,11 @@ import { isOffReasoningLevel, mapReasoningEffortForOpenCode, withOpenRouterAttri
 import { createAnthropicCompatFetch } from "./anthropic-stream-compat.js";
 import { createOpenAIResponsesJsonCompatFetch } from "./openai-responses-json-compat.js";
 import { createModelOptionMapFetch, type RawRequestBodyCapture } from "./model-option-map-fetch.js";
-import { createNetworkProxyFetch } from "../network/proxy-fetch.js";
+import { createNetworkProxyFetch, type NetworkProxyFetchOptions } from "../network/proxy-fetch.js";
+import {
+  createProviderProxyFetch,
+  resolveProviderProxyAccountId,
+} from "../network/provider-proxy-fetch.js";
 import {
   buildSignedQoderRequest,
   unwrapQoderSseStream,
@@ -56,6 +60,11 @@ interface AiSdkProviderConfig {
   providerOptions?: Record<string, unknown>;
   name?: string;
   requestProfile?: RegistryProviderConfig["requestProfile"];
+  /**
+   * XCode fork：供应商级代理绑定（provider config 的 api.proxy）。
+   * 只影响本供应商的模型请求，与全局 httpProxy 完全独立，未配置即直连。
+   */
+  proxy?: RegistryProviderConfig["api"]["proxy"];
 }
 
 export interface AiSdkModelExecutionConfig {
@@ -292,7 +301,24 @@ export class AiSdkModelExecution {
   ): LanguageModelFactory {
     const apiKey = this.resolveApiKey(providerConfig);
     const headers = providerConfig.headers;
-    const providerTransport = this.resolveProviderTransport(providerId);
+    // 供应商级代理：包在 transport 之外、requestProfile 之内侧——
+    // 代理只负责「这一跳走哪个出口」，不应看到 qoder 签名/opencode 指纹改写后的请求。
+    const providerTransport = createProviderProxyFetch({
+      binding: providerConfig.proxy ?? undefined,
+      providerId,
+      // 账号身份在 factory 创建时解析：per-account 的 requestAuth 已在此前合入
+      // providerConfig（applyModelRequestAuth），此处拿到的就是该账号的准确值。
+      accountId: resolveProviderProxyAccountId({
+        headers: providerConfig.headers,
+        apiKey:
+          providerConfig.access.type !== "zhipu-account"
+            ? providerConfig.access.apiKey ?? undefined
+            : undefined,
+      }),
+      fetch: this.resolveProviderTransport(providerId),
+      caCertFile: this.network.caCertFile,
+      env: this.env,
+    });
     const profiledTransport = createUpstreamRequestProfileFetch({
       profile: providerConfig.requestProfile ?? undefined,
       kind: providerConfig.kind,
@@ -405,6 +431,9 @@ function toAiSdkProviderConfig(
     providerOptions: { apiFormat: config.api.type },
     access: config.access,
     requestProfile: config.requestProfile,
+    // 供应商级代理绑定随 provider config 一起冻结进快照；请求期由
+    // createProviderProxyFetch 按账号/策略解析，无需重启即可生效。
+    ...(config.api.proxy == null ? {} : { proxy: config.api.proxy }),
   };
   switch (config.api.type) {
     case "anthropic-messages":
@@ -463,18 +492,27 @@ function applyModelRequestAuth(
 //   2. `Authorization: Bearer public` 的有无 —— 带与不带全部 403。
 //   3. x-opencode-client：desktop / cli / web —— 全部 403。
 //   4. session/request/project 的真实性：占位 ID 与**官方桌面端真实产生过的**
-//      40 位 project id + 真实 session id —— 全部 403。
+//      40 位 project id + 真实 session id —— 全部 403（2026-10-16 查明原因：
+//      session 必须**每次新生**——占位值解码后 counter=4095、复用过的真实值
+//      counter 也已 >63，全过不了闸门。别据此条判定「session 无关」）。
 //   5. 模型选择：官方 410 提示的替代模型 mimo-v2.6-flash-free、官方日志里成功的
 //      step-5-preview-free、space-bunny-free、ling-3.1-flash-free —— 全部 403。
 //   6. **抓到的官方完整 header 集**（四段式 UA + x-opencode-client/project/session/
 //      session-id + x-session-id + x-session-affinity + b3 + traceparent）整体照搬、
 //      以及只带其中任一项的组合 —— 全部 403。说明闸门不在这批 header 上。
 //
-// 【仍未排除的方向】请求体本身。官方 CLI 的 body 约 22KB，含完整 agent system
-// prompt（"You are an AI agent running in OpenCode, a coding agent harness..."）与
-// 一套工具定义；本产品发的极简请求与之差异巨大。服务端很可能校验 body 里的
-// 这套标志性 prompt/工具形状。**未继续验证**——若确有此校验，模拟它等于复制
-// OpenCode 的整套 agent harness，超出本 provider 适配的合理范围。
+// 【2026-10-16 破解结论——上面「仍未排除」的方向已全部定位，勿再按旧结论改】
+//   body 校验的真实形状：`tools` 必须**包含**那 11 个官方工具名（多带任意额外
+//   工具没问题），system prompt **不作校验**——无 system、换成任意短文，实测均
+//   200。header 校验的落点是 `x-opencode-session-id`：值必须合法（counter≤63 的
+//   descending ID）——**缺失放行、占位/过期值必 403**（变体矩阵实测；其余三个
+//   session 头任意值均不校验）。所以完整门禁 = UA(opencode/ 前缀) +
+//   x-opencode-session-id(合法值) + tools 官方 11 名并集；匿名（Bearer public）
+//   可直接访问，当日以本产品完整请求形态（四段式 UA + 全套 x-opencode-* 头 +
+//   工具并集 + XCode 自有 system）直连实测 200，模型正常回复。
+//   同日 dev 实测踩坑：包装层若只 mint x-opencode-session、其余照发配置占位值，
+//   正好触发「x-opencode-session-id 存在且非法」→ 403（用户实测踩中，已修，
+//   见 mergeOpenCodeSessionHeader 注释）。
 //
 // 【上游源码证据】官方桌面端 asar（node-DaUPSCrz.js）opencode provider 装载逻辑：
 //     const hasKey = Boolean(process.env.OPENCODE_API_KEY || connected
@@ -482,29 +520,31 @@ function applyModelRequestAuth(
 //     if (!hasKey) provider9.request.body.apiKey = "public";
 //     if (hasKey) return;
 //     // 无 key 时继续把收费模型逐个 disable
-// 【CLI 二进制交叉验证】官方 @opencode-ai/cli-windows-x64 1.18.18 的 lildax.exe
-// （127MB）里是同一段逻辑，且证明两件事：
-//   1. `"public"` 确为官方无 key 时的兜底值 → 本产品配置的 `Bearer public`
-//      与官方路径一致，是正确的匿名凭证（上一轮曾误判为假凭证删掉，已恢复）
-//   2. 127MB 二进制里 `x-opencode-session` / `x-opencode-project` /
-//      `x-opencode-client` / `FreeTierError` 全部 **0 命中** —— 官方 CLI 根本不发
-//      这些头。zcode-builtin.json 里配的那 4 个 x-opencode-* 是历史臆造的，
-//      对闸门无意义（保留仅为兼容，不依赖它们）
-// 即 `"public"` 正是**无任何 key 时官方自己写入的兜底值**，所以它是正确的匿名
-// 凭证（本产品配置保留 `Bearer public` 与官方无 key 路径一致，并非假凭证）。
-// 放行的真正条件是 hasKey 三者之一：环境变量 OPENCODE_API_KEY / 客户端连接态 /
-// 已有 apiKey。该连接态无法由静态 header 伪造——这正是本产品匿名用不了 free 档
-// 的原因。
+// 【CLI 二进制交叉验证（1.18.18，历史，结论部分作废）】曾从官方
+// @opencode-ai/cli-windows-x64 1.18.18 的 lildax.exe（127MB，**旧分发线**，见上
+// 「别拿错包」）得出「官方不发 x-opencode-* 头」——该结论已被 2.0.28 真实抓包
+// （四个 session 头同值，见上）推翻，session 头确为闸门要素之一。
+// 从该分析保留下来仍有效的只有一条：`"public"` 是官方无 key 时的兜底值，本产品
+// 的 `Bearer public` 与官方匿名路径一致，是正确的匿名凭证（上一轮曾误判为假凭证
+// 删掉，已恢复）。
 //
-// 【同机对照】官方桌面端在同机同网下用 mimo-v2.6-flash-free 成功
+// 【hasKey 逻辑定位】官方 asar 里 hasKey = 环境变量 OPENCODE_API_KEY || connected
+// || 请求体已有 apiKey；它只决定**客户端自己**往 body 写不写 `"public"`，属于
+// 客户端行为，**不是服务端闸门**。服务端放行条件最终定位为：UA + 新 mint 的
+// session + tools 官方 11 名并集（见上方 2026-10-16 结论）。
+// 此前「匿名用不了」的误判根源是 session 头用了占位/事后复用的旧 ID——session 必须
+// 按算法新生（counter≤63，见 opencode-build-agent.ts 的 mintSessionId），旧值
+// （counter 已超限或过期）必 403。
+//
+// 【同机对照（历史）】官方桌面端在同机同网下用 mimo-v2.6-flash-free 成功
 // （其 opencode.log 可见该模型 stream 成功且无 error），证明不是网络/地区问题，
-// 而是服务端认客户端身份。
+// 而是服务端认客户端身份——身份要素最终定位为上述三项。
 //
-// 结论：**OpenCode free 档的匿名使用已被上游收紧，当前无法通过本产品直接访问。**
-// 可用路径是让本产品携带真实 OpenCode Zen key（填 provider API Key，或设环境变量
-// OPENCODE_API_KEY）。填了 key 后经 SDK 汇成 `Authorization: Bearer <真实key>`
-// ——但注意 api.headers 里的 Authorization 优先级更高，会覆盖 apiKey，所以需要 key
-// 时应从 api.headers 移除该行（见 zcode-builtin.json 该 provider 的注释）。
+// 结论：**匿名（Bearer public）可直接访问 free 档**（2026-10-16 以本产品完整请求
+// 形态直连实测 200）。真实 key 是可选的第二条路径：填 provider API Key 或设环境
+// 变量 OPENCODE_API_KEY 亦可。需用 key 时注意 api.headers 里的 Authorization 优先
+// 级更高、会覆盖 apiKey，应把 zcode-builtin.json 该 provider 的 Authorization 行
+// 移除。
 //
 // 请求侧职责（与闸门无关，保持不变）：
 //   1. 按模型钳制 reasoning_effort（normalizeOpenCodeReasoningFields）
@@ -515,10 +555,22 @@ function applyModelRequestAuth(
 type UpstreamRequestProfile = NonNullable<RegistryProviderConfig["requestProfile"]>;
 
 /**
- * 把闸门所需的两个 header 合进请求头：User-Agent（①）+ x-opencode-session（②）。
+ * 把闸门所需的全套官方 header 合进请求头：UA（①）+ 4 个 session 头（②）+
+ * 匿名凭证与其余 x-opencode-* 头。
  *
- * UA 走「已有则不动」：api.headers 里已配了官方形状（opencode/1.19.0）时不要二次覆盖，
- * 缺失才补默认值，避免配置被悄悄改掉。session 每次请求新建，始终以本函数为准。
+ * 【2026-10-16 mitm 实测（本地抓包 app 真实出站请求）三条硬事实】
+ *   1. init.headers 里的 UA 是 AI SDK 的产品 UA
+ *      （`XCode/3.15.2 ai-sdk/provider-utils/... runtime/node.js/...`），
+ *      不以 opencode/ 开头 → 闸门①失败。旧守卫「UA 存在即不动」想保护的
+ *      是配置里的官方 UA，但实际放过的恰是产品 UA——守卫必须按**前缀**判断。
+ *   2. zcode-builtin.json 里 api.headers 配的 `Authorization: Bearer public`、
+ *      x-opencode-client/project/request **全部没有到达请求层**（用户规则层的
+ *      api.headers 反而到了），所以匿名凭证与官方头必须在这里补齐。
+ *   3. session 头 4 个全 mint 成同一 fresh 值后仍 403，唯一剩余原因就是上述
+ *      UA / Authorization——修掉后（见当天 devlog）实测 200。
+ *
+ * UA 以 opencode/ 开头才视为已配置官方形状；其余头缺失才补，避免覆盖
+ * 显式配置过的值。
  */
 function mergeOpenCodeSessionHeader(
   init: RequestInit | undefined,
@@ -535,10 +587,29 @@ function mergeOpenCodeSessionHeader(
   } else if (existing && typeof existing === "object") {
     Object.assign(base, existing);
   }
-  const hasUa = Object.keys(base).some((k) => k.toLowerCase() === "user-agent");
-  if (!hasUa) base["User-Agent"] = OPENCODE_USER_AGENT;
+  const uaKey = Object.keys(base).find((k) => k.toLowerCase() === "user-agent");
+  if (!uaKey || !base[uaKey].startsWith("opencode/")) {
+    if (uaKey) delete base[uaKey];
+    base["User-Agent"] = OPENCODE_FREE_USER_AGENT;
+  }
   base["x-opencode-session"] = session;
+  base["x-opencode-session-id"] = session;
+  base["x-session-id"] = session;
+  base["x-session-affinity"] = session;
+  setHeaderIfAbsent(base, "Authorization", "Bearer public");
+  setHeaderIfAbsent(base, "x-opencode-client", "cli");
+  setHeaderIfAbsent(base, "x-opencode-project", "global");
+  setHeaderIfAbsent(
+    base,
+    "x-opencode-request",
+    "msg_000000000000AAAAAAAAAAAAAA",
+  );
   return base;
+}
+
+function setHeaderIfAbsent(headers: Record<string, string>, name: string, value: string): void {
+  const existing = Object.keys(headers).find((k) => k.toLowerCase() === name.toLowerCase());
+  if (!existing) headers[name] = value;
 }
 
 const OPENCODE_FINGERPRINT_TOOLS = ["bash", "glob", "grep", "read"] as const;
@@ -1071,7 +1142,14 @@ function normalizeAnthropicBaseURL(baseURL: string | undefined): string | undefi
 export function createProviderBusinessErrorFetch(
   options: ProviderBusinessErrorFetchOptions,
 ): ProviderFetch {
-  const baseFetch = createProviderProxyFetch(options);
+  // 全局代理路径：错误归一化这一层不关心供应商级绑定，只认全局 httpProxy / noProxy。
+  const baseFetch = createNetworkProxyFetch({
+    caCertFile: options.caCertFile,
+    env: options.env,
+    fetch: options.fetch,
+    httpProxy: options.httpProxy,
+    noProxy: options.noProxy,
+  });
 
   return async (input, init) => {
     let response: Response;
@@ -1136,21 +1214,19 @@ interface ProviderProxyFetchOptions {
   noProxy?: string;
 }
 
-function createProviderProxyFetch(options: ProviderProxyFetchOptions): ProviderFetch {
-  // Node 的 global fetch 不会自动读取 HTTP_PROXY/http_proxy。
-  // 模型 provider 和 MCP HTTP transport 都复用同一层 proxy-aware fetch，避免多套出口规则漂移。
-  return createNetworkProxyFetch(options);
-}
-
 /**
  * 模型请求出口：官方 Coding Plan 端点经 XCode 平台网关发送（做套餐权益校验等平台侧处理），
- * 其余 provider 直连；之后统一进入用户 HTTP 代理 fetch，httpProxy / noProxy 按实际发送地址判定。
+ * 其余 provider 直连；之后统一进入**全局** HTTP 代理 fetch，httpProxy / noProxy 按实际发送地址判定。
  * 官方端点与网关端点的对应关系见 official-coding-plan-gateway.ts。
+ *
+ * 注意：这里是**全局代理**路径（读 this.network.httpProxy），与供应商级代理池
+ * createProviderProxyFetch（306 行那条，走 provider config 的 api.proxy）是两条独立链路，
+ * 互不 fallback。全局没配就直连。
  */
-function createProviderTransportFetch(options: ProviderProxyFetchOptions): ProviderFetch {
+function createProviderTransportFetch(options: NetworkProxyFetchOptions): ProviderFetch {
   return createOfficialCodingPlanGatewayFetch({
     env: options.env,
-    fetch: createProviderProxyFetch(options),
+    fetch: createNetworkProxyFetch(options),
   });
 }
 

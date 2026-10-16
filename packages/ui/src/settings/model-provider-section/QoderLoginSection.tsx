@@ -21,6 +21,7 @@ import { useOptionalPlatform } from "@/hooks/usePlatform.js";
 import { useServices } from "@/hooks/useServices.js";
 import type { QoderCheckinStats } from "@zcode/services";
 import { AccountQuotaInline, AccountQuotaSummaryLine, useAccountQuota } from "./ProviderQuotaSection.js";
+import { ProviderAccountBinding } from "./ProviderAccountBinding.js";
 import { TECHNICAL_INPUT_ATTRIBUTES } from "@/lib/technicalInputAttributes.js";
 import { generateId } from "./constants.js";
 
@@ -622,6 +623,11 @@ if (account) {
                       <AccountQuotaInline snapshot={accountQuota.byAccountId.get(account.id)} />
                     </div>
                   ) : null}
+                  {/* 账号级代理绑定：只在该供应商启用代理且池有条目时渲染（组件内部判空）。 */}
+                  <ProviderAccountBinding
+                    providerId={providerId}
+                    accountId={account.id}
+                  />
                 </div>
                 {!account.active ? (
                   <Button

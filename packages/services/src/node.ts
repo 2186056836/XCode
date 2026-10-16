@@ -413,6 +413,8 @@ import {
   IModelSelectionService,
   IProviderSettingsService,
 } from "./model-provider/providerFacadeServices.js";
+import { createProxyPoolService } from "./proxy-pool/proxyPoolService.js";
+import { IProxyPoolService, supportsAccountBinding } from "./proxy-pool/proxyPool.js";
 import { createProviderSettingsConnectivityTester } from "./model-provider/providerSettingsConnectivity.js";
 import { createUpstreamModelListFetcher } from "./model-provider/upstreamModelListFetcher.js";
 import { fetchQoderProStatusViaGateway } from "./model-provider/qoderUpstreamModels.js";
@@ -2894,7 +2896,69 @@ export function createLocalServices(options: {
   providerProvisioningTriggerDisposers.set(services, providerProvisioningDisposers);
   services
     .register(IProviderSettingsService, providerRuntime.providerSettings)
-    .register(IModelSelectionService, providerRuntime.modelSelection);
+    .register(IModelSelectionService, providerRuntime.modelSelection)
+    .register(
+      IProxyPoolService,
+      createProxyPoolService({
+        settingService,
+        getProviderSettingsView: () => providerRuntime.providerSettings.getView(),
+        // Provider overlay 是整份替换语义，直接传只带 proxy 的 config 会抹掉
+        // baseUrl / headers / type。这里显式做 read-modify-write，只替换 api.proxy。
+        saveProviderProxy: async (providerId, binding) => {
+          const view = await providerRuntime.providerSettings.getView();
+          const provider = view.providers.find((item) => item.providerId === providerId);
+          if (!provider) {
+            throw new Error(`Provider 不存在: ${providerId}`);
+          }
+          const current = provider.effectiveConfig;
+          await providerRuntime.providerSettings.savePersonalProviderOverlay(providerId, {
+            ...current,
+            api: {
+              ...current.api,
+              proxy: binding ?? null,
+            },
+          });
+        },
+        listProviderAccounts: async (_providerId, requestProfile) => {
+          // 只有 Qoder / CodeBuddy 有账号列表；其余供应商无账号概念，返回空数组走策略。
+          if (!supportsAccountBinding(requestProfile)) {
+            return [];
+          }
+          const facade = providerRuntime.providerSettings;
+          const regions = ["cn", "intl"] as const;
+          if (requestProfile === "qoder") {
+            const results = await Promise.all(
+              regions.map(async (region) => {
+                const { accounts } = await facade
+                  .qoderListAccounts(region)
+                  .catch(() => ({ accounts: [] as never[] }));
+                return accounts.map((account) => ({
+                  id: account.id,
+                  displayName: account.displayName,
+                  ...(account.email ? { email: account.email } : {}),
+                  active: account.active,
+                }));
+              }),
+            );
+            return results.flat();
+          }
+          const results = await Promise.all(
+            regions.map(async (region) => {
+              const { accounts } = await facade
+                .codebuddyListAccounts(region)
+                .catch(() => ({ accounts: [] as never[] }));
+              return accounts.map((account) => ({
+                id: account.id,
+                displayName: account.displayName,
+                ...(account.email ? { email: account.email } : {}),
+                active: account.active,
+              }));
+            }),
+          );
+          return results.flat();
+        },
+      }),
+    );
   if (isDesktopAttachedRemote || options.providerProvisioningTargetEnabled === true) {
     services.register(
       IProviderProvisioningTargetService,

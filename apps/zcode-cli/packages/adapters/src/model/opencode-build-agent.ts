@@ -47,25 +47,49 @@ const GATE_TOOL_NAMES: readonly string[] = [
   "write",
 ];
 
-/** 上游 opencode provider 的免费模型清单（不做可用性预筛）。 */
+/**
+ * 上游 opencode 免费模型清单快照（2026-10-16 真实端点实测，仅作记录）。
+ *
+ * 【非功能清单】导入链路的权威来源是**动态目录**：拉
+ * https://opencode.ai/zen/v1/models（实测 88 个，其中免费系 13 个），
+ * 再由 zcode-builtin.json 的 upstreamModelIdFilter 过滤（当前=本清单 12 个）。
+ * 本常量无代码引用，保留仅为记录当次实测可用集与排除理由（正则里写不了注释）。
+ *
+ * 唯一排除：jev-1.13-free → 400 ModelProtocolUnsupported（systemone 端点族，
+ * 非 chat/completions；XCode 未实现该族，换 IP 也没用，列出即「选了就报错」）。
+ *
+ * 区域受限但**保留**（用户决策：地区封锁无所谓，换 IP 即可用）：
+ *   - muse-spark-1.2/1.3-contributor-free → 403 RegionError
+ *   - cat-jam-free → 同样 RegionError（注意会漂移：同日上午直连还 200，
+ *     下午起 403 RegionError——上游按出口 IP 分地区，别按单次结果定生死）
+ * 另：big-pickle 名字不含 free 但确是免费档（实测 200），过滤器已单列放行。
+ */
 export const OPENCODE_FREE_MODELS: readonly string[] = [
   "big-pickle",
   "cat-jam-free",
-  "exo-free",
-  "ling-3.0-flash-fin-free",
-  "ling-3.1-flash-free",
+  "ll-alpha-free",
+  "deepseek-v4.1-flash-free",
+  "glm-5.3-flash-free",
   "longcat-2.5-preview-free",
   "mimo-v2.6-flash-free",
   "muse-spark-1.2-contributor-free",
   "muse-spark-1.3-contributor-free",
-  "nemotron-3-ultra-free",
   "nemotron-3.5-lightning-free",
+  "nemotron-3.5-super-vl-free",
   "space-bunny-free",
-  "step-5-preview-free",
 ];
 
 /** 闸门①：官方 CLI 的 User-Agent 形状。 */
 export const OPENCODE_USER_AGENT = "opencode/1.19.0";
+
+/**
+ * 官方 CLI 2.0.28 抓包实测的四段式 UA（与 zcode-builtin.json api.headers 的配置
+ * 一致）。mitm 实测：AI SDK 会往 init.headers 注入产品 UA（XCode/<版本>
+ * ai-sdk/provider-utils/... runtime/node.js/...），不以 opencode/ 开头必 403，
+ * 且 builtin api.headers 的 UA 不会到达请求层，所以 free-tier wrapper 里按前缀
+ * 判断强制覆盖时用这个值。
+ */
+export const OPENCODE_FREE_USER_AGENT = "opencode/latest/2.0.28/cli";
 
 /** 闸门②：counter 合法上界（含）。实测 1..63 放行、64 起拒绝。 */
 const COUNTER_MAX = 63;
@@ -107,6 +131,17 @@ function toolNameOf(tool: unknown): string | undefined {
 }
 
 /**
+ * 追加的官方占位工具的 description。
+ *
+ * 不能用空串：GLM-5.3-flash-free 实测 400
+ * `[missing_required_parameter] tools[N]: function.description is required`——
+ * 上游按模型校验 description 必须非空（deepseek/space-bunny 等不校验，纯协议
+ * 参考实现的空串碰巧只在部分模型上成立）。文案沿用指纹占位的同款禁用语义，
+ * 引导模型优先用产品自己的同名工具，降低误调概率。
+ */
+const GATE_TOOL_PLACEHOLDER_DESCRIPTION = "This tool is currently unavailable and must not be used.";
+
+/**
  * 闸门③适配：**并集**注入那 11 个官方工具名。
  *
  * XCode 自己的工具定义原样保留（名字、description、schema 都不动），只把缺失的
@@ -125,12 +160,22 @@ export function applyBuildAgentSignature(body: Record<string, unknown>): void {
       ...existing,
       ...missing.map((name) => ({
         type: "function",
-        function: { name, description: "", parameters: { type: "object", properties: {} } },
+        function: {
+          name,
+          description: GATE_TOOL_PLACEHOLDER_DESCRIPTION,
+          parameters: { type: "object", properties: {} },
+        },
       })),
     ];
   }
   // 上游对该档位要求 tool_choice 为 auto；XCode 侧若已显式指定（如具体工具名）则不动。
   if (body.tool_choice === undefined) body.tool_choice = "auto";
+  // token 限制只能留一个：AI SDK 会给请求注入 max_completion_tokens，而官方 CLI
+  // 只发 max_tokens；两者并存时 GLM 系直接 400
+  // `[conflicting_token_limits] Use max_tokens or max_completion_tokens, not both`
+  // （deepseek 等宽容模型不校验，别拿部分模型 200 当两者并存合法的证据）。
+  // 统一删 completion 形态、保留与官方及全部实测放行形态一致的 max_tokens。
+  delete body.max_completion_tokens;
   if (typeof body.max_tokens !== "number" || body.max_tokens <= 0) {
     body.max_tokens = 32000;
   }

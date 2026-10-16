@@ -61,6 +61,17 @@ export async function startCanonicalIntent(
     text,
   );
   const requireQueue = options?.requireQueue === true;
+  // 编辑重发的模型跟随输入区当前选择：editUserQuery 携带的 modelSelection（UI 从
+  // Composer 草稿冻结）是用户此刻选中的模型，有则覆盖 canonical intent 记录的旧
+  // 模型，否则重发永远停留在原消息模型（UI 3082 行的注释承诺了这一语义，但此前
+  // 只有 highspeed 分支消费该字段，普通模型一直走 editTarget.intent 的旧值）。
+  // retryTurn 的 payload 没有 modelSelection（schema 决定），维持「原模型重跑」语义。
+  if (envelope.type === "editUserQuery") {
+    const editSelection = (envelope.payload as CommandPayloadMap["editUserQuery"]).modelSelection;
+    if (editSelection !== undefined) {
+      intent.modelSelection = editSelection;
+    }
+  }
   const retainQueuedTurnExecution = host.retainQueuedTurnExecution;
   // 入队路径的凭据只能驻留内存；宿主不提供暂存能力时必须整体退回会话模型，不留半程加速。
   const canRetainQueuedHighspeed =

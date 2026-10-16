@@ -20,6 +20,7 @@ import { recordModelUsageFact } from "./usage-observability.js";
 import { createRuntimeModel } from "./runtime-model.js";
 import { normalizeStreamError } from "../helpers/index.js";
 import { auxiliaryModelOptions } from "../../model/auxiliary-model-options.js";
+import { isOffReasoningLevel } from "@zcode/shared";
 
 const WORKSPACE_GENERATE_TEXT_TIMEOUT_MS = 60_000;
 const CONNECTIVITY_PROBE_MAX_OUTPUT_TOKENS = 1;
@@ -59,8 +60,17 @@ export async function testModelConnectivity(
   const baseModel = createRuntimeModel(this, { selection: input.selection, scope: "workspace" });
   // 连接探测不需要生成正文；复用辅助生成的 5,000 预算会等待多余推理和输出。
   // 独立限制为 1 Token，仍使用最低公开档位，不改变其他辅助调用的预算。
+  //
+  // 档位不能无脑取 values[0]：强制推理的模型（如 stepfun/step-5-preview-free）
+  // 的档位列表里含关闭档，而上游对该类端点回 400
+  // "Reasoning is mandatory for this endpoint and cannot be disabled."，
+  // 于是「测试失败但聊天正常」。这里优先挑第一个非关闭档；若列表全是关闭档
+  // （纯非推理模型），退回 values[0] 保持原行为。
+  const reasoningValues = baseModel.optionSpecs.reasoningLevel.values;
+  const probeReasoningLevel =
+    reasoningValues.find((value) => !isOffReasoningLevel(value)) ?? reasoningValues[0]!;
   const model = baseModel.bind({
-    reasoningLevel: baseModel.optionSpecs.reasoningLevel.values[0]!,
+    reasoningLevel: probeReasoningLevel,
     maxOutputTokens: CONNECTIVITY_PROBE_MAX_OUTPUT_TOKENS,
   });
   const traceContext = createChildTraceContext(options?.traceContext ?? this.rootTraceContext, {

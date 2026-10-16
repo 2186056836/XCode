@@ -278,6 +278,8 @@ export * from "./subagents-types.js";
 export * from "./settings-source.js";
 export * from "./settings-errors.js";
 export * from "./app-runtime-preferences.js";
+// 代理池契约：类型 + 纯校验/策略函数，renderer 与服务层共用（browser-safe）。
+export * from "./proxy-pool.js";
 export * from "./command-types.js";
 export * from "./plugin-marketplaces.js";
 export * from "./lineChangeStat.js";

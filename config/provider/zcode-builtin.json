@@ -1100,7 +1100,7 @@
               }
             },
             "builtinModelIds": [],
-            "upstreamModelIdFilter": "^(?!.*muse-spark).*free",
+            "upstreamModelIdFilter": "^(?!.*jev-1\\.13-free)(?:.*free|big-pickle)",
             "requestProfile": "opencode-free-tier",
             "logo": {
               "type": "builtin",

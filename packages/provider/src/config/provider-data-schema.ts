@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { sparseShape } from "@zcode/shared/config-schema";
+// 用子路径而不是根入口：根入口会拉进 shared 的 node 依赖模块（env.ts / mcp.ts 等），
+// provider 的 tsconfig 没有 node types，编译会因 process 未定义整片失败。
+import { providerProxyBindingSchema } from "@zcode/shared/proxy-pool";
 
 export const providerApiTypeDataSchema = z.enum([
   "anthropic-messages",
@@ -73,12 +76,16 @@ export const completeProviderApiDataSchema = z
     type: providerApiTypeDataSchema,
     baseUrl: nonBlankRequiredString.pipe(z.string().url()),
     headers: z.record(z.string(), z.string()).readonly().nullable().optional(),
+    // XCode fork：供应商级代理绑定。随 provider config 下发到 agent，让请求层自包含地
+    // 选代理（含账号级绑定）；与全局 httpProxy 完全独立，不配置即直连。
+    proxy: providerProxyBindingSchema.nullable().optional(),
   })
   .strict();
 export const providerApiDataSchema = z
   .object({
     ...sparseShape(completeProviderApiDataSchema.shape),
     baseUrl: z.string().url().nullable().optional(),
+    proxy: providerProxyBindingSchema.nullable().optional(),
   })
   .strict();
 // Personal 允许暂存编辑中的 endpoint；完整 schema 仍拒绝，且只影响该 Provider 的准入。

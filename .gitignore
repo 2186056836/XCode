@@ -68,6 +68,9 @@ __pycache__/
 packages/desktop/.e2e-artifacts/
 packages/desktop/.e2e-cache/
 packages/desktop/.e2e-network-capture/
+# 仓库根的临时验证脚本/截图（曾随 58bc3788 误入库，已 untrack——别再 add 进来）。
+/.e2e-verify.cjs
+/.shot-*.png
 .zcode-runtime/
 
 # fork 开发日志，不随仓库分发

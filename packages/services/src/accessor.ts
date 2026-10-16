@@ -12,6 +12,7 @@ import type { IGitCheckpointService } from "./git/gitCheckpoint.js";
 import type { ISystemService } from "./system/system.js";
 import type { ITerminalService } from "./terminal/terminal.js";
 import type { ISettingService } from "./setting/setting.js";
+import type { IProxyPoolService } from "./proxy-pool/proxyPool.js";
 import type { ICredentialService } from "./credential/credential.js";
 import type { IBroadcastService } from "./broadcast/broadcast.js";
 import type { IXCodeTaskService } from "./session/zcodeTaskService.js";
@@ -58,6 +59,11 @@ export interface IServiceAccessor {
   readonly systemService: ISystemService;
   readonly terminalService: ITerminalService;
   readonly settingService: ISettingService;
+  /**
+   * 代理池：池条目 CRUD / 连通性测试 / 供应商级代理绑定。
+   * 可选——旧 host wire 与测试 double 不提供；UI 需自行判断缺失后隐藏入口。
+   */
+  readonly proxyPoolService?: IProxyPoolService;
   /** Onboarding 完成记录（本地持久化）；旧测试 double / 不支持的 host 可不提供。 */
   readonly onboardingRecordService?: IOnboardingRecordService;
   readonly credentialService: ICredentialService;

@@ -12,6 +12,7 @@ import {
   embeddedBrowserViewportPreferenceSchema,
 } from "./browser-use/command-metadata.js";
 import { providerFamilyConnectionSelectionSettingsSchema } from "./provider-family-connection-selection.js";
+import { proxyPoolSettingsSchema } from "./proxy-pool.js";
 
 /** 引导职业枚举；单独导出供 onboarding 记录回填 settings 时做窄化校验。 */
 const appSettingsOccupationSchema = z.enum([
@@ -794,6 +795,9 @@ const appSettingsObjectSchema = z.object({
   customSystemMessages: customSystemMessagesSchema.optional(),
   // null = 显式移除皮肤、回退官方主题（RPC/JSON 会吞 undefined，清空必须走 null）。
   customSkin: customSkinSchema.nullable().optional(),
+  // 代理池：条目数组 + 策略 + 选中项。用 optional 而非 default，避免老 setting.json
+  // 被一次性写入空代理池（写入会触发整份文件重写，扩大 diff 面）。
+  proxyPools: proxyPoolSettingsSchema.optional(),
 });
 
 export const appSettingsSchema = z.preprocess(
@@ -892,4 +896,7 @@ export const appSettingsPatchSchema = z.object({
   customSystemMessages: customSystemMessagesSchema.optional(),
   // null = 显式移除皮肤、回退官方主题（RPC/JSON 会吞 undefined，清空必须走 null）。
   customSkin: customSkinSchema.nullable().optional(),
+  // 代理池整块替换语义：UI 与服务层都按「读-改-写」提交完整 ProxyPoolSettings，
+  // 因此 patch 直接复用同一 schema，不做部分字段合并（避免两个池并发编辑互相丢条目）。
+  proxyPools: proxyPoolSettingsSchema.optional(),
 });

@@ -56,6 +56,7 @@ import {
 import { buildUsageEntitlementCacheKey } from "@/lib/usageEntitlementCache.js";
 import { ModelProviderSection } from "@/settings/ModelProviderSection.js";
 import { AccountSettingsSection } from "@/settings/AccountSettingsSection.js";
+import { ProxyPoolSettingsSection } from "@/settings/ProxyPoolSettingsSection.js";
 import { useCodingPlanUpgradeDialog } from "@/settings/CodingPlanUpgradeDialogProvider.js";
 import { useEnterpriseCodingPlanProducts } from "@/settings/model-provider-section/useEnterpriseCodingPlanProducts.js";
 import { UsageStatsSection, type UsageStatsSectionTab } from "@/settings/UsageStatsSection.js";
@@ -1836,6 +1837,10 @@ export function SettingsPage({
                               onOpenLogin={onOpenLogin}
                               onLogout={onLogout}
                             />
+                          </ServiceProvider>
+                        ) : activeSection === "proxyPool" ? (
+                          <ServiceProvider services={localHostServices}>
+                            <ProxyPoolSettingsSection />
                           </ServiceProvider>
                         ) : activeSection === "memory" ? (
                           <ServiceProvider services={localHostServices}>

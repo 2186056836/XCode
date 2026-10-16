@@ -294,6 +294,20 @@ export { IPluginManagementService } from "./plugins/pluginManagement.js";
 // Subagents service — ISubagentsService is both a type (interface) and value (descriptor)
 export { ISubagentsService } from "./subagents/subagents.js";
 
+// ProxyPool service — IProxyPoolService 同时是类型与描述符。
+// 只导出契约：实现依赖 settingService、provider facade 与 undici，属于 host 侧装配，
+// 从 index 导出会把 node 依赖链拖进 renderer bundle（同 createSettingService 的惯例）。
+export {
+  IProxyPoolService,
+  supportsAccountBinding,
+  type ProxyPoolSaveInput,
+  type ProxyPoolState,
+  type ProxyPoolTestResult,
+  type ProxyProviderAccountView,
+  type ProxyProviderBindingSaveInput,
+  type ProxyProviderBindingView,
+} from "./proxy-pool/proxyPool.js";
+
 // Commands service — ICommandsService is both a type (interface) and value (descriptor)
 export { ICommandsService } from "./commands/commands.js";
 
