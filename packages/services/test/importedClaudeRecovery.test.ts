@@ -4,8 +4,8 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import {
-  ZCODE_PROTOCOL_NAME,
-  ZCODE_PROTOCOL_VERSION,
+  XCODE_PROTOCOL_NAME,
+  XCODE_PROTOCOL_VERSION,
   zcodeSessionStateSnapshotSchema,
   type XCodeSessionStateSnapshot,
 } from "@zcode/shared";
@@ -63,7 +63,7 @@ for (const clientMode of ["desktop-continuous", "web-remote-replayable"] as cons
         async createSession(input: CreateInput) {
           created.push(input);
           session = zcodeSessionStateSnapshotSchema.parse({
-            protocol: { name: ZCODE_PROTOCOL_NAME, version: ZCODE_PROTOCOL_VERSION },
+            protocol: { name: XCODE_PROTOCOL_NAME, version: XCODE_PROTOCOL_VERSION },
             session: {
               sessionId: input.sessionId,
               workspace: {

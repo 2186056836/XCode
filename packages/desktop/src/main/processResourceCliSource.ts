@@ -22,7 +22,7 @@
 import {
   agentLaneResourceSampleSchema,
   resolveCliProcessResourceRole,
-  ZCODE_CLI_RESOURCE_SAMPLE_INTERVAL_MS,
+  XCODE_CLI_RESOURCE_SAMPLE_INTERVAL_MS,
   type AgentLaneResourceSample,
   type ProcessResourceRole,
   type ProcessResourceRuntimeSurface,
@@ -114,7 +114,7 @@ export function ingestCliResourceSample(
 
 /** 采样周期至少按 CLI 自采周期计：读数间隔异常小时不能把过期窗口跟着缩短。 */
 function resolveSampleIntervalMs(sample: AgentLaneResourceSample): number {
-  return Math.max(ZCODE_CLI_RESOURCE_SAMPLE_INTERVAL_MS, sample.intervalMs);
+  return Math.max(XCODE_CLI_RESOURCE_SAMPLE_INTERVAL_MS, sample.intervalMs);
 }
 
 function resolveHardware(sample: AgentLaneResourceSample): ProcessResourceHardwareOverride {
@@ -247,7 +247,7 @@ export const cliProcessResourceSampleSource: ProcessResourceSampleSource = {
     // 这里只决定「多久算一个 CLI 样本」，同一份读数不会被计入两次统计量。
     if (
       lastDeliveredAt !== null &&
-      context.now - lastDeliveredAt < ZCODE_CLI_RESOURCE_SAMPLE_INTERVAL_MS
+      context.now - lastDeliveredAt < XCODE_CLI_RESOURCE_SAMPLE_INTERVAL_MS
     ) {
       return;
     }

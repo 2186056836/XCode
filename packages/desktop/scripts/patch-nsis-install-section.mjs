@@ -1,7 +1,10 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { writeFileSync } from "node:fs";
 
-const PATCH_MARKER = "; zcode-installer-details-v1";
+const PATCH_MARKER = "; xcode-installer-details-v1";
+// 旧品牌 marker：node_modules 里的 installSection.nsh 是跨构建复用的补丁缓存，
+// 已按旧 marker 打过补丁时必须继续幂等跳过，否则锚点缺失会直接构建失败。
+const LEGACY_PATCH_MARKER = "; zcode-installer-details-v1";
 
 function optionalMacro(name) {
   return [`!ifmacrodef ${name}`, `  !insertmacro ${name}`, "!endif"].join("\n");
@@ -24,7 +27,7 @@ function replaceRequired(source, needle, replacement, label) {
 export function patchNsisInstallSectionSource(source) {
   const sourceEol = source.includes("\r\n") ? "\r\n" : "\n";
   let patched = source.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
-  if (patched.includes(PATCH_MARKER)) {
+  if (patched.includes(PATCH_MARKER) || patched.includes(LEGACY_PATCH_MARKER)) {
     return source;
   }
 

@@ -104,3 +104,6 @@ export { createCuaPipSessionService } from "./cuaPipSessionService.js";
 export { ICuaPipSessionService } from "./cuaPipSession.js";
 export type { CuaPipPresentationCredentials } from "./cuaPipSessionService.js";
 export type { CuaPipSessionService } from "./cuaPipSession.js";
+
+// ── 1010 新增 barrel 导出 ──
+export { resolveStandaloneStatusLaunchCandidates } from "./cuaStandaloneStatusLaunch.js";

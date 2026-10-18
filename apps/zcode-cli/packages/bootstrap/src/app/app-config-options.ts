@@ -4,7 +4,7 @@ import type { RuntimeConfigPatch, SupportedLocale, UiLocale } from "@zcode/contr
 import type { XCodeAppOptions } from "./types.js";
 
 export function isMessageEnabled(env: NodeJS.ProcessEnv): boolean {
-  return env.ZCODE_MESSAGE_ENABLED === "1" || env.ZCODE_MESSAGE_ENABLED === "true";
+  return env.XCODE_MESSAGE_ENABLED === "1" || env.XCODE_MESSAGE_ENABLED === "true";
 }
 
 export function createConfigCliOverrides(options: XCodeAppOptions): RuntimeConfigPatch | undefined {

@@ -8,11 +8,11 @@ interface XCodeStdioTapStateFile {
   enabled?: boolean;
 }
 
-function isXCodeStdioTapDevVisible(): boolean {
+export function isXCodeStdioTapDevVisible(): boolean {
   return isEffectiveDevelopmentNodeEnv();
 }
 
-function getXCodeStdioTapDevDir(): string {
+export function getXCodeStdioTapDevDir(): string {
   return join(getAppConfigDir(), "dev");
 }
 
@@ -20,7 +20,7 @@ export function getXCodeStdioTapDevLogDir(): string {
   return join(getXCodeStdioTapDevDir(), "stdio-traffic");
 }
 
-function getXCodeStdioTapDevStatePath(): string {
+export function getXCodeStdioTapDevStatePath(): string {
   return join(getXCodeStdioTapDevDir(), "zcode-stdio-tap.json");
 }
 

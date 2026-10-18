@@ -10,8 +10,8 @@ import {
 } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
 import { writeBundledOfficialMarketplacePartitionSync } from "@zcode/adapters";
-import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE, type Logger } from "@zcode/contracts";
-import { isXCodeCuaInternalFeatureEnabled, ZCODE_CUA_OFFICIAL_PLUGIN_ID } from "@zcode/shared";
+import { XCODE_OFFICIAL_PLUGIN_MARKETPLACE, type Logger } from "@zcode/contracts";
+import { isXCodeCuaInternalFeatureEnabled, XCODE_CUA_OFFICIAL_PLUGIN_ID } from "@zcode/shared";
 import {
   createOfficialPluginCacheRetryBudget,
   getOfficialPluginCacheRetryAttempts,
@@ -30,7 +30,7 @@ import {
   withOfficialPluginSeedLock,
 } from "./official-plugin-seed-lock.js";
 
-const OFFICIAL_PLUGIN_MARKETPLACE = ZCODE_OFFICIAL_PLUGIN_MARKETPLACE;
+const OFFICIAL_PLUGIN_MARKETPLACE = XCODE_OFFICIAL_PLUGIN_MARKETPLACE;
 const SEA_PLUGIN_ASSET_PREFIX = "zcode-official-plugins/";
 const SEA_PLUGIN_MANIFEST_ASSET_KEY = `${SEA_PLUGIN_ASSET_PREFIX}manifest.json`;
 const SEED_MARKER_FILE = ".zcode-plugin-seed.json";
@@ -116,7 +116,7 @@ function seedBundledOfficialPlugins(input: {
           new Error(
             `Bundled official plugin ${plugin.definition.name} is missing required seed assets: ${plugin.missingSeedPaths.join(", ")}`,
           ),
-          { code: "ZCODE_PLUGIN_SEED_INCOMPLETE" },
+          { code: "XCODE_PLUGIN_SEED_INCOMPLETE" },
         ),
         missingSeedPaths: plugin.missingSeedPaths,
         operation: "seed_plugin",
@@ -235,7 +235,7 @@ export function resolveOfficialPluginRoots(input: {
   // zcode-cua 内置 plugin 默认不启用，由 feature flag 控制加载。在 seed/discovery 层门控
   // （而非只隐藏某个 UI 面），这样开关关闭时用户无法经 plugin 列表/marketplace/MCP 设置/CLI 命令看到它。
   if (!isXCodeCuaInternalFeatureEnabled(input.env ?? process.env)) {
-    suppressedBuiltins.add(ZCODE_CUA_OFFICIAL_PLUGIN_ID);
+    suppressedBuiltins.add(XCODE_CUA_OFFICIAL_PLUGIN_ID);
   }
   const failedSeeds = seedBundledOfficialPlugins({
     logger: input.logger,
@@ -245,7 +245,7 @@ export function resolveOfficialPluginRoots(input: {
   const fallbackRoots = failedSeeds.flatMap((definition) => {
     // CUA 的 frame contract 随 wrapper 与 producer 原子升级。加载旧版本
     // cache 会把旧 block 布局接到新 consumer 上；当前 cache 不可用时宁可不注册 CUA。
-    if (`${definition.name}@${OFFICIAL_PLUGIN_MARKETPLACE}` === ZCODE_CUA_OFFICIAL_PLUGIN_ID) {
+    if (`${definition.name}@${OFFICIAL_PLUGIN_MARKETPLACE}` === XCODE_CUA_OFFICIAL_PLUGIN_ID) {
       return [];
     }
     const fallbackRoot = findUsableOfficialPluginFallback(input.storageRoot, definition);
@@ -313,7 +313,7 @@ function resolveFilesystemSeedSource(): OfficialPluginSeedSource | undefined {
   };
 }
 
-function findMissingOfficialPluginSeedPaths(
+export function findMissingOfficialPluginSeedPaths(
   definition: Pick<OfficialPluginDefinition, "requiredSeedPaths">,
   files: ReadonlyArray<{ path: string }>,
 ): string[] {

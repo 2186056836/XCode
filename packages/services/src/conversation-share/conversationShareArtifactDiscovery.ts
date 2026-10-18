@@ -17,7 +17,7 @@ import type {
 } from "@zcode/shared/zcode-protocol-v4";
 import {
   PROTOCOL_V4_LIMITS,
-  ZCODE_ATTACHMENT_FAULT_CODES,
+  XCODE_ATTACHMENT_FAULT_CODES,
   readXCodeAttachmentFaultCode,
 } from "@zcode/shared/zcode-protocol-v4";
 
@@ -40,7 +40,7 @@ interface DiscoveredShareArtifact extends MaterializedShareArtifact {
   row: ArtifactRow;
 }
 
-interface ConversationShareArtifactSnapshot {
+export interface ConversationShareArtifactSnapshot {
   rows: ConversationRow[];
   bytesBySourceRef: Map<string, Uint8Array>;
   additionalArtifacts: ConversationSharePublicArtifact[];
@@ -115,15 +115,19 @@ async function materializeRegisteredArtifacts(options: {
   workspacePath: string;
   maxArtifactBytes: number;
   artifacts: ConversationSharePublicArtifact[];
+  inlineBytesBySourceRef?: ReadonlyMap<string, Uint8Array>;
   artifactSource: ConversationShareArtifactSource;
 }): Promise<MaterializedShareArtifact[]> {
   const materialized: MaterializedShareArtifact[] = [];
   for (const artifact of options.artifacts) {
-    const { bytes, canonicalPath } = await options.artifactSource.read({
-      workspacePath: options.workspacePath,
-      ref: artifact.sourceRef,
-      maxBytes: options.maxArtifactBytes,
-    });
+    const inlineBytes = options.inlineBytesBySourceRef?.get(artifact.sourceRef);
+    const { bytes, canonicalPath } = inlineBytes
+      ? { bytes: inlineBytes, canonicalPath: artifact.sourceRef }
+      : await options.artifactSource.read({
+          workspacePath: options.workspacePath,
+          ref: artifact.sourceRef,
+          maxBytes: options.maxArtifactBytes,
+        });
     const sha256 = createHash("sha256").update(bytes).digest("hex");
     // Row 在工具完成时记录，用户可能在发布前修改同一路径；必须复验当前字节，
     // 否则 projection/manifest 描述的是旧文件而 multipart 上传的是新文件。
@@ -564,8 +568,8 @@ async function discoverInputAttachments(options: {
       } catch (error) {
         const faultCode = readXCodeAttachmentFaultCode(error);
         if (
-          faultCode === ZCODE_ATTACHMENT_FAULT_CODES.shareReadNotAuthorized ||
-          faultCode === ZCODE_ATTACHMENT_FAULT_CODES.shareReadConnectionUntrusted
+          faultCode === XCODE_ATTACHMENT_FAULT_CODES.shareReadNotAuthorized ||
+          faultCode === XCODE_ATTACHMENT_FAULT_CODES.shareReadConnectionUntrusted
         ) {
           throw new ConversationShareServiceError(
             "artifact_protocol_not_ready",
@@ -574,8 +578,8 @@ async function discoverInputAttachments(options: {
           );
         }
         if (
-          faultCode === ZCODE_ATTACHMENT_FAULT_CODES.previewTooLarge ||
-          faultCode === ZCODE_ATTACHMENT_FAULT_CODES.shareStatTooLarge
+          faultCode === XCODE_ATTACHMENT_FAULT_CODES.previewTooLarge ||
+          faultCode === XCODE_ATTACHMENT_FAULT_CODES.shareStatTooLarge
         ) {
           // 容量超限是确定阻断，不能降级成「附件不可用」warning 后静默发布——
           // 那样接收者拿不到附件，分享者也看不出错误类别（见预检同名分类）。
@@ -612,8 +616,8 @@ async function discoverInputAttachments(options: {
           extension,
           mimeType,
           availability:
-            faultCode === ZCODE_ATTACHMENT_FAULT_CODES.shareStatNotFound ||
-            faultCode === ZCODE_ATTACHMENT_FAULT_CODES.statNotFile ||
+            faultCode === XCODE_ATTACHMENT_FAULT_CODES.shareStatNotFound ||
+            faultCode === XCODE_ATTACHMENT_FAULT_CODES.statNotFile ||
             (error instanceof ConversationShareServiceError &&
               error.diagnostics?.errno === "ENOENT")
               ? "not_found"
@@ -663,6 +667,7 @@ export async function buildConversationShareArtifactSnapshot(options: {
   input: PublishTextConversationInput;
   selectedRows: ConversationRow[];
   registeredArtifacts: ConversationSharePublicArtifact[];
+  inlineBytesBySourceRef?: ReadonlyMap<string, Uint8Array>;
   capabilities: ConversationShareCapabilities;
   revision: number;
   logEpoch: string;
@@ -685,6 +690,7 @@ export async function buildConversationShareArtifactSnapshot(options: {
     workspacePath: options.input.workspacePath,
     maxArtifactBytes: options.capabilities.max_artifact_bytes,
     artifacts: options.registeredArtifacts,
+    inlineBytesBySourceRef: options.inlineBytesBySourceRef,
     artifactSource: options.artifactSource,
   });
   const discovered = await discoverPreviewArtifacts({

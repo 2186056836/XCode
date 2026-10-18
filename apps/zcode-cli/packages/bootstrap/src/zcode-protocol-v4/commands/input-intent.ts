@@ -4,7 +4,10 @@ import type { AttachmentRef, CommandEnvelope, QueueItem } from "@zcode/shared/zc
 import type { SubmissionMode } from "@zcode/shared/zcode-protocol-v4";
 import { commandAdmissionOf } from "./executor.js";
 
-interface CanonicalCommandIntent {
+export interface CanonicalCommandIntent {
+  inputOrigin?: "desktop" | "mobile";
+  conversationQuotes?: TurnInputIntentMetadata["conversationQuotes"];
+  botGroupSource?: TurnInputIntentMetadata["botGroupSource"];
   kind: "sendText" | "sendGoalCommand";
   text: string;
   modelSelection?: ModelSelection;
@@ -20,6 +23,7 @@ interface CanonicalCommandIntent {
   attachmentRefs?: readonly AttachmentRef[];
   sharedContextRefs?: TurnInputIntentMetadata["sharedContextRefs"];
   provenance?: TurnInputIntentMetadata["provenance"];
+  source?: TurnInputIntentMetadata["source"];
 }
 
 export function inputIntentMetadata(
@@ -81,6 +85,11 @@ export function inputIntentMetadataFromCanonical(
   const originalSourceCommandId =
     canonical.provenance?.sourceCommandId ?? canonical.sourceCommandId;
   return {
+    ...(canonical.inputOrigin ? { inputOrigin: canonical.inputOrigin } : {}),
+    ...(canonical.conversationQuotes
+      ? { conversationQuotes: canonical.conversationQuotes }
+      : {}),
+    ...(canonical.botGroupSource ? { botGroupSource: canonical.botGroupSource } : {}),
     sourceCommandId: envelope.commandId,
     queueItemId: admission.queueItemId,
     clientId: envelope.clientId || canonical.clientId || "cli",
@@ -97,6 +106,7 @@ export function inputIntentMetadataFromCanonical(
     ...(canonical.fallbackReasonCode ? { fallbackReasonCode: canonical.fallbackReasonCode } : {}),
     ...(canonical.attachmentRefs ? { attachmentRefs: [...canonical.attachmentRefs] } : {}),
     ...(canonical.sharedContextRefs ? { sharedContextRefs: [...canonical.sharedContextRefs] } : {}),
+    ...(canonical.source ? { source: canonical.source } : {}),
     ...(originalSourceCommandId
       ? {
           provenance: canonical.provenance ?? {

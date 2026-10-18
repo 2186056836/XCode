@@ -59,7 +59,7 @@ export function memoryFileRelativePath(rootDir: string, filePath: string): strin
   return isContainedRelativePath(relativePath) ? relativePath : undefined;
 }
 
-function containsSensitiveMemoryPathSegment(relativePath: string): boolean {
+export function containsSensitiveMemoryPathSegment(relativePath: string): boolean {
   return relativePath
     .split(/[\\/]+/u)
     .some((segment) => SENSITIVE_MEMORY_PATH_SEGMENTS.has(normalizeSensitiveSegment(segment)));

@@ -31,7 +31,7 @@ import {
   resolveWorkspaceKey,
   resolveXCodeVisibleSessionTitle,
   textFromXCodeMessageParts,
-  ZCODE_AGENT_PROVIDER,
+  XCODE_AGENT_PROVIDER,
   zcodeBackgroundTaskNotificationToolUpdateStatus,
   appendXCodeStreamingToolInputDelta,
   buildXCodeStreamingToolInputPreview,
@@ -210,7 +210,7 @@ type XCodeTerminalStreamEvent =
   | Extract<XCodeStreamEvent, { type: "task_complete" }>
   | Extract<XCodeStreamEvent, { type: "task_error" }>;
 
-const GLM_PROVIDER: XCodeProvider = ZCODE_AGENT_PROVIDER;
+const GLM_PROVIDER: XCodeProvider = XCODE_AGENT_PROVIDER;
 const EMPTY_SLASH_COMMANDS: XCodeSlashCommand[] = [];
 const logger = createServiceLogger("zcode-task-service");
 const ASK_USER_QUESTION_TOOL_NAME = "AskUserQuestion";
@@ -247,7 +247,7 @@ function formatXCodeAgentLogDate(now: Date): string {
 }
 
 function resolveXCodeAgentCurrentLogFilePath(now = new Date()): string {
-  const configuredLogDir = process.env.ZCODE_LOG_DIR?.trim();
+  const configuredLogDir = process.env.XCODE_LOG_DIR?.trim();
   const logDir = configuredLogDir || join(homedir(), ".xcode", "cli", "log");
   return join(logDir, `zcode-${formatXCodeAgentLogDate(now)}.jsonl`);
 }
@@ -293,7 +293,7 @@ export function createXCodeTaskServiceAdapter(
     throw Object.assign(
       new Error(`XCode task service adapter does not support IXCodeTaskService.${name} yet.`),
       {
-        code: "ZCODE_AGENT_UNSUPPORTED_LEGACY_TASK_METHOD",
+        code: "XCODE_AGENT_UNSUPPORTED_LEGACY_TASK_METHOD",
       },
     );
   }
@@ -987,7 +987,7 @@ export function createXCodeTaskServiceAdapter(
     const target = taskTargets.get(taskId);
     if (!target) {
       throw Object.assign(new Error(`XCode session target is not loaded: ${taskId}`), {
-        code: "ZCODE_SESSION_TARGET_NOT_FOUND",
+        code: "XCODE_SESSION_TARGET_NOT_FOUND",
       });
     }
     return target;
@@ -1637,6 +1637,11 @@ export function createXCodeTaskServiceAdapter(
         params,
         userInputResponseToElicitationStreamEvent(params.taskId, event.requestId, event.response),
       );
+      return;
+    }
+
+    if (event.type === "providerRuntimeHeaders.request") {
+      // 1010 新增分支：provider 运行时请求头不参与 task 事件投影，提前返回
       return;
     }
 
@@ -2855,6 +2860,15 @@ export function createXCodeTaskServiceAdapter(
       const snapshot = await resumeSnapshot(target);
       await syncTaskIndexSnapshot(snapshot);
       return settingsToConfigOptions(snapshot.settings);
+    },
+
+    // 1010 新增：workspace + provider 的主配置文件路径（agent 侧无独立配置文件，返回不存在）
+    async getWorkspaceProviderConfigFile(params) {
+      return {
+        provider: GLM_PROVIDER,
+        path: params.workspacePath,
+        exists: false,
+      };
     },
 
     async getTaskNativeSessionLogFile() {

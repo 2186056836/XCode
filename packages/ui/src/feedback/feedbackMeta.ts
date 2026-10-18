@@ -48,7 +48,7 @@ export const STATUS_META: Record<FeedbackTicketStatus, StatusMeta> = {
   },
 };
 
-const FEEDBACK_STATUS_MESSAGE_IDS: Record<FeedbackTicketStatus, string> = {
+export const FEEDBACK_STATUS_MESSAGE_IDS: Record<FeedbackTicketStatus, string> = {
   已提交: "feedback.status.pendingReview",
   信息不足: "feedback.status.needInfo",
   已采纳: "feedback.status.accepted",

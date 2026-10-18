@@ -22,7 +22,7 @@ import {
   TID_CHAT_EMPTY,
   TID_V4_SESSION_PANE,
   testId,
-  ZCODE_AGENT_PROVIDER,
+  XCODE_AGENT_PROVIDER,
 } from "@zcode/shared";
 import type {
   ConversationShareAccessMode,
@@ -302,6 +302,8 @@ export interface SessionPaneProps {
   remoteSessionId?: string | null;
   /** Prompt 模板埋点当前仅覆盖 Desktop；Web / 手机远控保留 UI 行为但不触发该事件。 */
   isDesktop?: boolean;
+  /** 1010 新增：远控（手机/Web）下的紧凑布局。 */
+  compactForRemoteControl?: boolean;
   provider?: XCodeProvider;
   onSessionCreated?: (sessionId: string) => void;
   /** deleteSession：删除当前会话后回到 draft（shell 起新草稿）。 */
@@ -499,6 +501,7 @@ export function SessionPane({
   workspaceIdentity,
   remoteSessionId,
   isDesktop = false,
+  compactForRemoteControl = false,
   provider,
   onSessionCreated,
   onSelectionSideChatUnavailable,
@@ -2998,7 +3001,7 @@ export function SessionPane({
         // 这里把 admission 前失败收口为 pane-local 错误横幅，不改变 desktop continuous 或
         // Web remote replayable 的发送/恢复语义，草稿仍由 Composer 原路径保留。
         setSendSubmissionError({
-          code: runtimeModelUnavailable ? "ZCODE_RUNTIME_MODEL_UNAVAILABLE" : "SEND_FAILED",
+          code: runtimeModelUnavailable ? "XCODE_RUNTIME_MODEL_UNAVAILABLE" : "SEND_FAILED",
           message: runtimeModelUnavailable
             ? detail
             : intl.formatMessage({ id: "chat.error.sendFailed" }),
@@ -3475,7 +3478,7 @@ export function SessionPane({
       if (!decoded?.providerId) {
         return;
       }
-      const displayProvider = provider ?? ZCODE_AGENT_PROVIDER;
+      const displayProvider = provider ?? XCODE_AGENT_PROVIDER;
       let modelValue = value;
       if (!decoded.modelName) {
         const fallbackModel =

@@ -35,4 +35,4 @@ export interface RemoteApiKeySecret {
 
 export const DEFAULT_ORG_NAME = "默认机构";
 export const DEFAULT_PROJECT_NAME = "默认项目";
-export const ZCODE_API_KEY_NAME = "zcode-api-key";
+export const XCODE_API_KEY_NAME = "zcode-api-key";

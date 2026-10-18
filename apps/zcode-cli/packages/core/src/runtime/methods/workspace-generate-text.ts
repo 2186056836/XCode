@@ -24,9 +24,9 @@ import { auxiliaryModelOptions } from "../../model/auxiliary-model-options.js";
 const WORKSPACE_GENERATE_TEXT_TIMEOUT_MS = 60_000;
 const CONNECTIVITY_PROBE_MAX_OUTPUT_TOKENS = 1;
 // 探测请求使用固定最小 prompt，避免多余推理开销；不可改写角色、文本或混入会话历史。
-// 对齐官方 ZCode 探测词（官方原版即此串）：start-plan 网关只放行官方探测词与完整官方
+// 对齐官方 XCode 探测词（官方原版即此串）：start-plan 网关只放行官方探测词与完整官方
 // 上下文，fork 品牌串（XCode）会被判 "unusual activity" 405。探测词不面向用户，保持官方串。
-const CONNECTIVITY_PROBE_SYSTEM = "You are ZCode connectivity probe.";
+const CONNECTIVITY_PROBE_SYSTEM = "You are XCode connectivity probe.";
 const CONNECTIVITY_PROBE_USER = "hi";
 const GIT_COMMIT_MESSAGE_QUERY_SOURCE = "git_commit_message";
 
@@ -56,7 +56,7 @@ export async function testModelConnectivity(
   input: ModelConnectivityTestInput,
   options?: { abortSignal?: AbortSignal; traceContext?: TraceContext },
 ): Promise<void> {
-  const baseModel = createRuntimeModel(this, { selection: input.selection });
+  const baseModel = createRuntimeModel(this, { selection: input.selection, scope: "workspace" });
   // 连接探测不需要生成正文；复用辅助生成的 5,000 预算会等待多余推理和输出。
   // 独立限制为 1 Token，仍使用最低公开档位，不改变其他辅助调用的预算。
   const model = baseModel.bind({
@@ -83,7 +83,6 @@ export async function testModelConnectivity(
   await runWithModelInvocationContext(
     {
       metadata: traceContextToLogContext(traceContext),
-      modelRequestSessionType: "other",
       modelCall: { operation: "workspace_generate_text" },
       statusSink: this.createModelStatusSink(traceContext, []),
       traceContext,
@@ -146,7 +145,7 @@ async function generateWorkspaceTextImpl(
   assertWorkspaceModelInput(input);
   const requestedSelection = input.selection;
   const querySource = input.querySource.trim() || "workspace_generate_text";
-  const baseModel = createRuntimeModel(this, { selection: requestedSelection });
+  const baseModel = createRuntimeModel(this, { selection: requestedSelection, scope: "workspace" });
   // 辅助请求需要的是最低公开档位，不是扫描 off/nothink 等名称后强制关闭。
   const model =
     querySource === GIT_COMMIT_MESSAGE_QUERY_SOURCE
@@ -200,7 +199,6 @@ async function generateWorkspaceTextImpl(
   const result = await runWithModelInvocationContext(
     {
       metadata: traceContextToLogContext(modelTraceContext),
-      modelRequestSessionType: "other" as const,
       modelCall: {
         operation:
           querySource === GIT_COMMIT_MESSAGE_QUERY_SOURCE

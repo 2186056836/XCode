@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExternalLinkIcon, RefreshCwIcon } from "lucide-react";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import { RENDERER_ZCODE_ENDPOINT_URLS } from "@/lib/rendererXCodeEndpoint.js";
+import { RENDERER_XCODE_ENDPOINT_URLS } from "@/lib/rendererXCodeEndpoint.js";
 import { logger } from "@/logger.js";
 import { cn } from "@/components/lib/utils.js";
 import { Button } from "@/components/ui/button.js";
@@ -31,7 +31,8 @@ import {
 import {
   CodingPlanWebviewChannels,
   type CodingPlanPurchaseCompletePayload,
-  ZCODE_VERSION,
+  XCODE_ENV,
+  XCODE_VERSION,
 } from "@zcode/shared";
 
 interface CodingPlanEmbeddedWebviewDialogProps {
@@ -57,8 +58,9 @@ interface CodingPlanEmbeddedWebviewDialogProps {
 }
 
 interface CodingPlanWebviewImportMetaEnv {
+  DEV?: boolean;
   VITE_CODING_PLAN_WEBVIEW_ORIGIN?: string;
-  VITE_ZCODE_E2E_STORE_BRIDGE?: string;
+  VITE_XCODE_E2E_STORE_BRIDGE?: string;
 }
 
 interface CodingPlanWebviewNavigationState {
@@ -123,9 +125,11 @@ export function CodingPlanEmbeddedWebviewDialog({
   const computedWebviewUrl = useMemo(() => {
     const env = readCodingPlanWebviewImportMetaEnv();
     const origin = resolveCodingPlanEmbeddedOrigin({
-      endpointOrigin: RENDERER_ZCODE_ENDPOINT_URLS.origin,
-      e2eStoreBridgeEnabled: env.VITE_ZCODE_E2E_STORE_BRIDGE === "1",
+      dev: env.DEV === true,
+      endpointOrigin: RENDERER_XCODE_ENDPOINT_URLS.origin,
+      e2eStoreBridgeEnabled: env.VITE_XCODE_E2E_STORE_BRIDGE === "1",
       overrideOrigin: env.VITE_CODING_PLAN_WEBVIEW_ORIGIN,
+      zcodeEnv: XCODE_ENV,
     });
     // URL 带 ?lang= hint 让官网首屏就有正确语言，避免注入前的英文闪烁。
     // 同步带 ?theme= hint，避免官网 SSR 默认 dark 在 App 浅色主题下首帧闪烁。
@@ -158,7 +162,7 @@ export function CodingPlanEmbeddedWebviewDialog({
         const currentUrl = typeof webview.getURL === "function" ? webview.getURL() : "";
         if (
           !isTrustedCodingPlanEmbeddedWebviewUrl(currentUrl, {
-            e2eStoreBridgeEnabled: env.VITE_ZCODE_E2E_STORE_BRIDGE === "1",
+            e2eStoreBridgeEnabled: env.VITE_XCODE_E2E_STORE_BRIDGE === "1",
           })
         ) {
           // dom-ready 会在后续主 frame 导航时再次触发，初始 src 可信不代表
@@ -189,7 +193,7 @@ export function CodingPlanEmbeddedWebviewDialog({
           funnelContext,
           deviceMid,
           userId,
-          appVersion: ZCODE_VERSION,
+          appVersion: XCODE_VERSION,
         });
         const script = createCodingPlanAuthInjectionScript({
           provider,

@@ -3,7 +3,7 @@ import {
   buildHelpAppConfigUrl,
   buildXCodeSourceHeadersFromContext,
   createHelpAppConfigReader,
-  ZCODE_ENV,
+  XCODE_ENV,
 } from "@zcode/shared";
 
 export function createDesktopHelpConfigReader(options: {
@@ -26,7 +26,7 @@ export function createDesktopHelpConfigReader(options: {
         deviceMid: options.deviceMid,
         platform: process.platform,
         arch: process.arch,
-        releaseChannel: ZCODE_ENV,
+        releaseChannel: XCODE_ENV,
         sourceTitle: "electron",
       }),
     );

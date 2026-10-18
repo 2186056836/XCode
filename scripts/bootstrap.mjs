@@ -76,7 +76,7 @@ function resolveBootstrapWithRemoteEnv(baseEnv = process.env) {
     // remote assets 和 bootstrap build 同一轮里会触发大量 workspace 构建。
     // 这里把降峰值限制在 bootstrap:with-remote 子进程，不修改 build/build:bootstrap 的全局语义。
     PNPM_CONFIG_WORKSPACE_CONCURRENCY: "1",
-    ZCODE_BOOTSTRAP_WITH_REMOTE: "1",
+    XCODE_BOOTSTRAP_WITH_REMOTE: "1",
     ...(pathEntries.length > 0
       ? {
           PATH: prependPathEntries(baseEnv.PATH, pathEntries),
@@ -169,7 +169,7 @@ runPnpm(["prepare:desktop-runtime"], {
         // 本地 bootstrap 过去默认准备 remote mock-cdn，
         // 每次都会重新打包跨平台组件，导致普通初始化很慢。
         // 默认只准备桌面端本地 runtime；需要远程资源时使用 bootstrap:with-remote。
-        ZCODE_SKIP_REMOTE_ASSETS: "1",
+        XCODE_SKIP_REMOTE_ASSETS: "1",
       },
 });
 

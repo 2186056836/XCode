@@ -10,7 +10,7 @@ const { loadBuiltinProviderConfig } = await import(
 const { content: zcodeBuiltinProviderConfigJson } = await loadBuiltinProviderConfig();
 
 export const SERVER_CLI_DEFINES = {
-  __ZCODE_BUILTIN_PROVIDER_CONFIG_JSON__: JSON.stringify(zcodeBuiltinProviderConfigJson),
+  __XCODE_BUILTIN_PROVIDER_CONFIG_JSON__: JSON.stringify(zcodeBuiltinProviderConfigJson),
 };
 
 export default defineConfig({

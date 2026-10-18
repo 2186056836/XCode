@@ -1,4 +1,4 @@
-import { mapXCodeEnvToArmsRumEnv, ZCODE_ARMS_RUM_ENDPOINT, ZCODE_VERSION } from "@zcode/shared";
+import { mapXCodeEnvToArmsRumEnv, XCODE_ARMS_RUM_ENDPOINT, XCODE_VERSION } from "@zcode/shared";
 /** 主进程 init 的 browserCollectors，经 autoInject 注入到 renderer 的 RumSDK.init(collectors) */
 export const ARMS_BROWSER_COLLECTORS = {
   perf: true,
@@ -29,8 +29,8 @@ export function parseArmsViewName(url) {
 export function buildArmsBrowserInitConfig(runtimeEnv) {
   return {
     enable: true,
-    version: ZCODE_VERSION,
-    endpoint: ZCODE_ARMS_RUM_ENDPOINT,
+    version: XCODE_VERSION,
+    endpoint: XCODE_ARMS_RUM_ENDPOINT,
     env: mapXCodeEnvToArmsRumEnv(runtimeEnv),
     sessionConfig: {
       sampleRate: 1,

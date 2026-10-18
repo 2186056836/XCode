@@ -5,7 +5,7 @@
 import type { IXCodeAgentService } from "../zcode-agent/zcodeAgent.js";
 import type { IPluginManagementService } from "./pluginManagement.js";
 
-interface PluginManagementServiceDependencies {
+export interface PluginManagementServiceDependencies {
   zcodeAgentService: Pick<
     IXCodeAgentService,
     | "listPlugins"

@@ -32,7 +32,7 @@ import {
 } from "./workspaceHookSettingsModel.js";
 
 const SETTINGS_FILE = "settings.json";
-const ZCODE_CONFIG_FILE = "config.json";
+const XCODE_CONFIG_FILE = "config.json";
 const HOOK_EVENTS: readonly HookEvent[] = [
   "SessionStart",
   "UserPromptSubmit",
@@ -64,7 +64,7 @@ function getRootDir(source: SettingsDirectorySource, workspacePath?: string): st
 function getConfigPath(source: SettingsDirectorySource, workspacePath?: string): string {
   return join(
     getRootDir(source, workspacePath),
-    source === "zcode" ? ZCODE_CONFIG_FILE : SETTINGS_FILE,
+    source === "zcode" ? XCODE_CONFIG_FILE : SETTINGS_FILE,
   );
 }
 

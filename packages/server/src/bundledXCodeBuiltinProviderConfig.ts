@@ -1,6 +1,6 @@
 import { materializeXCodeBuiltinProviderConfig } from "@zcode/services/node";
 
-declare const __ZCODE_BUILTIN_PROVIDER_CONFIG_JSON__: string | undefined;
+declare const __XCODE_BUILTIN_PROVIDER_CONFIG_JSON__: string | undefined;
 
 interface MaterializeBundledXCodeBuiltinProviderConfigOptions {
   readonly environmentConfigRoot: string;
@@ -9,10 +9,10 @@ interface MaterializeBundledXCodeBuiltinProviderConfigOptions {
 
 /** 返回构建时嵌入远端 Server 的 XCode Built-in Provider Config。 */
 export function readBundledXCodeBuiltinProviderConfig(): string {
-  if (typeof __ZCODE_BUILTIN_PROVIDER_CONFIG_JSON__ !== "string") {
+  if (typeof __XCODE_BUILTIN_PROVIDER_CONFIG_JSON__ !== "string") {
     throw new Error("当前构建未嵌入 XCode Built-in Provider Config");
   }
-  return __ZCODE_BUILTIN_PROVIDER_CONFIG_JSON__;
+  return __XCODE_BUILTIN_PROVIDER_CONFIG_JSON__;
 }
 
 /**

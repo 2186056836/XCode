@@ -29,7 +29,7 @@ const nativeSearchBuildPlan = nativeSearchReleasePlan.enabled
 // Windows Chrome 导入入口未启用，默认 dev 启动不应把可选 helper 当成本地必需资源。
 // 显式 opt-in 时继续沿用原有按需构建，避免删除未来恢复所需代码。
 const shouldRequireWindowsBrowserImportHelper =
-  target.os === "win32" && process.env.ZCODE_ENABLE_WINDOWS_BROWSER_IMPORT === "1";
+  target.os === "win32" && process.env.XCODE_ENABLE_WINDOWS_BROWSER_IMPORT === "1";
 // CUA 权限浮窗靠 zcode-window-bounds 读系统设置窗口 bounds 才能吸附。该 Swift 产物被
 // .gitignore 排除（仓库卫生门禁禁产物入库），生产链 prepare:runtime-assets 会在 darwin 上编它，
 // dev 链也必须 ensure —— 新 checkout、换 worktree 或清过 resources 后二进制缺失，watcher spawn

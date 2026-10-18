@@ -1,7 +1,7 @@
 /* eslint-disable max-lines -- 远端部署入口集中编排 server/node/agent/tool 资源，拆分需单独整理边界。 */
 import { join } from "node:path";
 import {
-  ZCODE_VERSION,
+  XCODE_VERSION,
   formatLogPrefix,
   normalizeRemoteResourcePackageSelection,
   type RemoteAssetInstallMode,
@@ -127,7 +127,7 @@ export async function deployServer(
   const getRemoteManifestRef = (): Promise<RemoteManifestRef> => {
     remoteManifestPromise ??= fetchRemoteDownloadManifest(
       {
-        version: ZCODE_VERSION,
+        version: XCODE_VERSION,
         platformArch,
         remoteCdnBaseUrl: options?.remoteCdnBaseUrl,
         remoteCdnBaseUrls: options?.remoteCdnBaseUrls,
@@ -221,7 +221,7 @@ export async function deployServer(
     {
       ...assetDeployOptions,
       platformArch,
-      version: ZCODE_VERSION,
+      version: XCODE_VERSION,
       assetInstallMode: options?.assetInstallMode,
     },
     { log, logWarn },
@@ -267,7 +267,7 @@ export async function deployServer(
       await markRemoteAssetComponentRefreshPending(backend, {
         componentId: "glm",
         platformArch,
-        appVersion: ZCODE_VERSION,
+        appVersion: XCODE_VERSION,
       });
     }
 
@@ -513,11 +513,11 @@ async function checkServerDeployDecision(
       `${quotePosixPathArg(nodePath)} ${quotePosixPathArg(serverPath)} --version`,
     );
     const version = (await collectStdout(stream)).trim();
-    log("remote version:", JSON.stringify(version), "local:", ZCODE_VERSION);
-    if (version !== ZCODE_VERSION) {
+    log("remote version:", JSON.stringify(version), "local:", XCODE_VERSION);
+    if (version !== XCODE_VERSION) {
       return {
         shouldDeploy: true,
-        reason: `remote server version mismatch remote=${version} expected=${ZCODE_VERSION}`,
+        reason: `remote server version mismatch remote=${version} expected=${XCODE_VERSION}`,
         appVersionChanged: true,
       };
     }
@@ -620,7 +620,7 @@ function resolveMockCdnReleaseDir(mockCdnDir?: string): string | null {
     return null;
   }
 
-  return join(mockCdnDir, "releases", ZCODE_VERSION);
+  return join(mockCdnDir, "releases", XCODE_VERSION);
 }
 
 async function resolveReleaseDir(
@@ -669,7 +669,7 @@ async function resolveReleaseDir(
       remoteCdnBaseUrl: options?.remoteCdnBaseUrl,
       remoteCdnBaseUrls: options?.remoteCdnBaseUrls,
       remoteCacheDir: options?.remoteCacheDir,
-      version: ZCODE_VERSION,
+      version: XCODE_VERSION,
       platformArch,
       componentIds,
       manifestRef,

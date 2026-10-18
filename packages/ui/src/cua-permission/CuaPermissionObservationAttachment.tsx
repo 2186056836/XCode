@@ -53,7 +53,9 @@ async function runWithOneRetry<T>(
   throw new Error("CUA permission retry exhausted");
 }
 
-function cuaPermissionObservationKey(observation: XCodeAgentCuaPermissionObservation): string {
+export function cuaPermissionObservationKey(
+  observation: XCodeAgentCuaPermissionObservation,
+): string {
   const workspaceKey = observation.workspaceIdentity?.trim() || observation.workspacePath;
   const missing = requiredCuaPermissionsForRequestAccessStatus(observation.permissionStatus);
   return [
@@ -64,7 +66,7 @@ function cuaPermissionObservationKey(observation: XCodeAgentCuaPermissionObserva
   ].join("\0");
 }
 
-async function runCuaPermissionPrompt(
+export async function runCuaPermissionPrompt(
   dependencies: CuaPermissionPromptDependencies,
 ): Promise<void> {
   const readMissing = async () => {

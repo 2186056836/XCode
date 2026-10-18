@@ -29,7 +29,7 @@ function parseArgs(argv) {
   }
 
   let workspaceKey = "";
-  let logDir = process.env.ZCODE_STDIO_TAP_LOG_DIR?.trim() || "";
+  let logDir = process.env.XCODE_STDIO_TAP_LOG_DIR?.trim() || "";
 
   for (let index = 0; index < options.length; index += 1) {
     const option = options[index];

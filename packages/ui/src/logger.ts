@@ -24,9 +24,9 @@ function isRendererLoggingDisabled(): boolean {
   return (
     (
       globalThis as typeof globalThis & {
-        __ZCODE_RENDERER_DISABLE_LOGGING__?: boolean;
+        __XCODE_RENDERER_DISABLE_LOGGING__?: boolean;
       }
-    ).__ZCODE_RENDERER_DISABLE_LOGGING__ === true
+    ).__XCODE_RENDERER_DISABLE_LOGGING__ === true
   );
 }
 
@@ -37,7 +37,7 @@ const consoleFns: Record<LogLevel, (...args: unknown[]) => void> = {
   error: console.error,
 };
 
-function isLoggerLevelEnabled(_level: LogLevel): boolean {
+export function isLoggerLevelEnabled(_level: LogLevel): boolean {
   // 生产构建下 renderer 所有日志级别都禁用；暴露 guard 让调用方在构造重 payload 前退出。
   return !isRendererProductionBuild() && !isRendererLoggingDisabled();
 }

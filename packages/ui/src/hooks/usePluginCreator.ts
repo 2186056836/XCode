@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ZCODE_AGENT_PROVIDER } from "@zcode/shared";
+import { XCODE_AGENT_PROVIDER } from "@zcode/shared";
 import type { CreateTaskRequest } from "@/app-shell/types.js";
 import { useWorkspaceServicesResolution } from "@/hooks/useWorkspaceServices.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
@@ -8,12 +8,13 @@ import { logger } from "@/logger.js";
 import { loadPluginCreatorPrefill } from "@/settings/pluginCreatorPrefill.js";
 import { isWorkspaceReadOnly } from "@/store/tabStore.js";
 import { useTabStore, useTabStoreApi } from "@/store/TabStoreProvider.js";
-import { usePaneLayoutStore } from "@/v4/paneLayoutStore.js";
+import { INITIAL_PANE_LAYOUT, usePaneLayoutStore } from "@/v4/paneLayoutStore.js";
 import { resolveWorkbenchNewTaskTarget } from "@/v4/workbenchNewTaskTarget.js";
 import { useWorkbenchGroupStore } from "@/v4/workbenchGroupStore.js";
 
 export function usePluginCreator(
   onCreateTask: ((request?: CreateTaskRequest) => void) | undefined,
+  isWebRemoteControl = false,
 ) {
   const { intl } = useXCodeIntl();
   const tabStore = useTabStoreApi();
@@ -26,8 +27,8 @@ export function usePluginCreator(
   const target = resolveWorkbenchNewTaskTarget({
     activeWorkspacePath,
     activeWorkspaceIdentity,
-    activeGroup: group,
-    paneLayout: paneLayout,
+    activeGroup: isWebRemoteControl ? null : group,
+    paneLayout: isWebRemoteControl ? INITIAL_PANE_LAYOUT : paneLayout,
   });
   const targetKey = target?.workspaceIdentity?.trim() || target?.workspacePath || "";
   const resolution = useWorkspaceServicesResolution(
@@ -59,8 +60,11 @@ export function usePluginCreator(
       const current = resolveWorkbenchNewTaskTarget({
         activeWorkspacePath: state.activeWorkspacePath,
         activeWorkspaceIdentity: state.activeWorkspaceIdentity,
-        activeGroup: groups.activeGroupId ? (groups.groups[groups.activeGroupId] ?? null) : null,
-        paneLayout: usePaneLayoutStore.getState(),
+        activeGroup:
+          !isWebRemoteControl && groups.activeGroupId
+            ? (groups.groups[groups.activeGroupId] ?? null)
+            : null,
+        paneLayout: isWebRemoteControl ? INITIAL_PANE_LAYOUT : usePaneLayoutStore.getState(),
       });
       return (
         scope.active &&
@@ -76,7 +80,7 @@ export function usePluginCreator(
           resolution.services.skillsService.list({
             workspacePath: target.workspacePath,
             workspaceIdentity: target.workspaceIdentity,
-            provider: ZCODE_AGENT_PROVIDER,
+            provider: XCODE_AGENT_PROVIDER,
           }),
         isCurrent,
       );
@@ -96,6 +100,6 @@ export function usePluginCreator(
       if (pending.current === scope) pending.current = null;
       if (scope.active) setBusyScope(null);
     }
-  }, [intl, onCreateTask, resolution, scope, tabStore, target, targetKey]);
+  }, [intl, isWebRemoteControl, onCreateTask, resolution, scope, tabStore, target, targetKey]);
   return { create, busy: busyScope === scope, available: Boolean(target && onCreateTask) };
 }

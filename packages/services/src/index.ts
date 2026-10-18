@@ -137,11 +137,11 @@ export type {
 export {
   IXCodeAgentService,
   type XCodeAgentLocalRuntimeChildProcesses,
-  ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE,
+  XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE,
 } from "./zcode-agent/zcodeAgent.js";
 export {
   isXCodeAgentMcpStatusModeUnsupportedError,
-  ZCODE_AGENT_MCP_STATUS_MODE_UNSUPPORTED_ERROR_CODE,
+  XCODE_AGENT_MCP_STATUS_MODE_UNSUPPORTED_ERROR_CODE,
   XCodeAgentMcpStatusModeUnsupportedError,
 } from "./zcode-agent/zcodeAgentErrors.js";
 export {
@@ -310,3 +310,57 @@ export type {
   FeedbackTicketType,
 } from "@zcode/shared";
 export { IClientConfigService } from "./client-config/clientConfig.js";
+import "#src/cloud-content/cloudContent.js";
+import "#src/marketing-touch/marketingTouch.js";
+import "./output-style/outputStyle.js";
+import "./plugin-ui-bridge/index.js";
+import "./plugin-ui-bridge/contract.js";
+import "./highspeed/highspeedCard.js";
+import "./highspeed/highspeedCardService.js";
+import "./highspeed/highspeedMockTransport.js";
+import "./gen-ui/contract.js";
+
+// ── 1010 新增模块导出（导入时补齐）──
+// 注：IMarketingTouchService 本文件已在 L247 用相对路径导出，此处不再重复（避免 TS2300）
+export { ICloudContentService } from "#src/cloud-content/cloudContent.js";
+export { IOutputStyleService } from "./output-style/outputStyle.js";
+export {
+  createPluginUiBridgeService,
+  createPluginUiAppToolsService,
+  createPluginUiSamplingService,
+  IPluginUiSamplingService,
+  type PluginUiSamplingParams,
+  type PluginUiCancelSamplingParams,
+  PluginUiBridgeError,
+  IPluginUiAppToolsService,
+  type PluginUiAppToolInstanceParams,
+  type PluginUiAppToolCallParams,
+  type PluginUiAppToolAcceptedResult,
+  type PluginUiRegisterAppToolsParams,
+  type PluginUiRegisterAppToolsResult,
+  type PluginUiResolveAppToolCallParams,
+} from "./plugin-ui-bridge/index.js";
+export {
+  IPluginUiBridgeService,
+  type PluginUiCallToolParams,
+  type PluginUiCallToolResult,
+  type PluginUiPrepareSandboxParams,
+  type PluginUiReadResourceParams,
+  type PluginUiReadResourceResult,
+  type PluginUiPluginScope,
+  type PluginUiListResourcesParams,
+  type PluginUiListResourcesResult,
+  type PluginUiListResourceTemplatesResult,
+  type PluginUiResourceSubscriptionParams,
+  type PluginUiSurfaceEntry,
+  type PluginUiWorkspaceTarget,
+} from "./plugin-ui-bridge/contract.js";
+export { IHighspeedCardService } from "./highspeed/highspeedCard.js";
+export {
+  HighspeedCardService,
+  createHighspeedHttpTransport,
+  buildHighspeedTurnExecution,
+} from "./highspeed/highspeedCardService.js";
+export { createHighspeedMockTransport } from "./highspeed/highspeedMockTransport.js";
+export { IGenUiService } from "./gen-ui/contract.js";
+export type { GenUiPrepareParams } from "./gen-ui/contract.js";

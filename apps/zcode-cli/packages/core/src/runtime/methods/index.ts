@@ -79,8 +79,9 @@ import { createContextBuilderFromSnapshot } from "./context.js";
 import { loadProjectMemoryRoot } from "./context.js";
 import { logMemorySkipped } from "./context.js";
 import { injectPluginReferenceReminderFromTurn } from "./plugin-reference.js";
-import { initializeMcp } from "./mcp.js";
+import { initializeMcp, refreshMcpToolsIfChanged } from "./mcp.js";
 import { startMcpStartup } from "./mcp.js";
+import { activateDynamicWorkflowTools } from "./dynamic-workflow-activation.js";
 import { discoverSkillsForContext } from "./context.js";
 import { createConfigOnlyContextSnapshot } from "./context.js";
 import { initializeMessageHistoryFromContext } from "./context.js";
@@ -187,6 +188,7 @@ import { recordPendingModelChange } from "./timeline-persistence.js";
 import { persistPendingModelChangeTimeline } from "./timeline-persistence.js";
 import { persistAssistantTimelinePartForSession } from "./timeline-persistence.js";
 import { generateWorkspaceText, testModelConnectivity } from "./workspace-generate-text.js";
+import { sampleModel } from "./sample-model.js";
 import { maybeStartGoalSummaryTitleGeneration } from "./goal-summary-title.js";
 import { maybeStartSessionTitleGenerationFromExternalInput } from "./session-title.js";
 import { setCustomSessionTitle } from "./session-title.js";
@@ -283,7 +285,9 @@ export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void 
   proto.logMemorySkipped = logMemorySkipped;
   proto.injectPluginReferenceReminderFromTurn = injectPluginReferenceReminderFromTurn;
   proto.initializeMcp = initializeMcp;
+  proto.refreshMcpToolsIfChanged = refreshMcpToolsIfChanged;
   proto.startMcpStartup = startMcpStartup;
+  proto.activateDynamicWorkflowTools = activateDynamicWorkflowTools;
   proto.discoverSkillsForContext = discoverSkillsForContext;
   proto.createConfigOnlyContextSnapshot = createConfigOnlyContextSnapshot;
   proto.initializeMessageHistoryFromContext = initializeMessageHistoryFromContext;
@@ -387,6 +391,7 @@ export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void 
   proto.persistPart = persistPart;
   proto.rebuildProjection = rebuildProjection;
   proto.generateWorkspaceText = generateWorkspaceText;
+  proto.sampleModel = sampleModel;
   proto.drainMemoryExtractions = drainMemoryExtractions;
   proto.isProjectMemoryEnabled = isProjectMemoryEnabled;
 }

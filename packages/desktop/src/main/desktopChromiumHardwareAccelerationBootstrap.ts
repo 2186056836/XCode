@@ -10,7 +10,7 @@ function resolveChromiumHardwareAccelerationSettingsFile(homePath: string = home
   return join(homePath, ".xcode", "v2", "setting.json");
 }
 
-function extractBootstrapChromiumHardwareAccelerationEnabled(rawValue: unknown): boolean {
+export function extractBootstrapChromiumHardwareAccelerationEnabled(rawValue: unknown): boolean {
   if (!rawValue || typeof rawValue !== "object" || Array.isArray(rawValue)) {
     return true;
   }

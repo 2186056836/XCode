@@ -105,6 +105,7 @@ export interface ContextBuilderConfig {
   /** 当前步骤的执行对象，不进入 Context Source 或持久化环境快照。 */
   model?: Model;
   presentationSurface?: PresentationSurface;
+  genUiOutputDirectory?: string;
   currentDate?: string;
   userInstructions?: ResolvedUserInstructions;
   projectContext?: ProjectContext;
@@ -122,8 +123,8 @@ export interface ContextBuilderConfig {
    */
   systemPromptOverrides?: SystemPromptOverrides;
   /**
-   * 官方 ZCode 提示词模式：zai 的 start-plan 端点对 system 逐字校验，必须官方提示词。
-   * 开启后 cli_prefix / identity 用官方 ZCode 文案（含安全声明），并忽略系统提示词自定义。
+   * 官方 XCode 提示词模式：zai 的 start-plan 端点对 system 逐字校验，必须官方提示词。
+   * 开启后 cli_prefix / identity 用官方 XCode 文案（含安全声明），并忽略系统提示词自定义。
    */
   officialSystemPrompt?: boolean;
   /**

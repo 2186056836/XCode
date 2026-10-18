@@ -1,9 +1,10 @@
 import type {
+  ModelSelection,
   XCodeAgentMcpServer,
   XCodeAutomationScheduleRule,
   XCodeMcpListMode,
-  ModelSelection,
 } from "@zcode/shared";
+import type { McpAppsAppToolCallResult, McpAppsAppToolDescriptor } from "@zcode/shared/mcp-apps";
 
 export interface XCodeAgentWorkspaceTarget {
   workspacePath: string;
@@ -106,6 +107,73 @@ export interface XCodeAgentPluginReferenceCatalogParams extends XCodeAgentWorksp
 // resident Session runtime 快照；不参与 Settings 管理目录。
 export interface XCodeAgentSkillReferenceCatalogParams extends XCodeAgentWorkspaceTarget {
   sessionId?: string;
+}
+
+/** 插件 UI：UI 发起的 `ui://` 资源读取。 */
+export interface XCodeAgentReadMcpResourceParams extends XCodeAgentWorkspaceTarget {
+  instance: import("@zcode/shared/mcp-apps").McpAppInstance;
+  sessionId: string;
+  pluginId: string;
+  serverName: string;
+  uri: string;
+}
+
+/** 插件 UI 页面发起的 `resources/read`；参数与 readMcpResource 同形，结果受 8 MiB 与 mimeType 白名单约束。 */
+export type XCodeAgentReadMcpResourceForUiParams = XCodeAgentReadMcpResourceParams;
+
+/** 插件 UI：UI 回调本插件工具；不进审批流，归属由 agent 侧 catalog fail closed。 */
+export interface XCodeAgentCallMcpToolForUiParams extends XCodeAgentWorkspaceTarget {
+  instance: import("@zcode/shared/mcp-apps").McpAppInstance;
+  sessionId: string;
+  pluginId: string;
+  serverName: string;
+  toolName: string;
+  arguments?: Record<string, unknown>;
+  /** 宿主生成的调用 id，配合 cancelMcpToolCallForUi。 */
+  callId: string;
+}
+/** 插件 UI 页面发起的 resources/list、resources/templates/list、subscribe、unsubscribe。 */
+export interface XCodeAgentListMcpResourcesForUiParams extends XCodeAgentWorkspaceTarget {
+  instance: import("@zcode/shared/mcp-apps").McpAppInstance;
+  sessionId: string;
+  pluginId: string;
+  serverName: string;
+  cursor?: string;
+}
+/** App-Provided Tools：实例身份 = 会话 + 沙箱作用域 + 代际。 */
+export interface XCodeAgentAppToolInstanceForUiParams extends XCodeAgentWorkspaceTarget {
+  instance: import("@zcode/shared/mcp-apps").McpAppInstance;
+  sessionId: string;
+  pluginId: string;
+  serverName: string;
+  scopeId: string;
+  generation: number;
+}
+export interface XCodeAgentRegisterAppToolsForUiParams extends XCodeAgentAppToolInstanceForUiParams {
+  tools: McpAppsAppToolDescriptor[];
+}
+export interface XCodeAgentAppToolCallForUiParams extends XCodeAgentAppToolInstanceForUiParams {
+  callId: string;
+}
+export interface XCodeAgentResolveAppToolCallForUiParams extends XCodeAgentAppToolCallForUiParams {
+  result?: McpAppsAppToolCallResult;
+  error?: { message: string };
+}
+export interface XCodeAgentMcpResourceSubscriptionForUiParams extends XCodeAgentWorkspaceTarget {
+  instance: import("@zcode/shared/mcp-apps").McpAppInstance;
+  sessionId: string;
+  pluginId: string;
+  serverName: string;
+  scopeId: string;
+  generation: number;
+  uri: string;
+}
+export interface XCodeAgentCancelMcpToolCallForUiParams extends XCodeAgentWorkspaceTarget {
+  instance: import("@zcode/shared/mcp-apps").McpAppInstance;
+  sessionId: string;
+  pluginId: string;
+  serverName: string;
+  callId: string;
 }
 export interface XCodeAgentResolveSuggestedPluginReferenceParams extends XCodeAgentWorkspaceTarget {
   stableId: string;

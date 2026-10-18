@@ -1,6 +1,6 @@
 import type { ConfigResult } from "@zcode/adapters/config";
 import type { PluginLoadOutcome } from "@zcode/contracts";
-import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE } from "@zcode/contracts";
+import { XCODE_OFFICIAL_PLUGIN_MARKETPLACE } from "@zcode/contracts";
 import {
   listXCodePlugins,
   setXCodePluginEnabled,
@@ -68,7 +68,7 @@ function createPluginFacade(options: CreatePluginFacadeOptions): PluginFacade {
         enabledPlugins = next;
         // 内置（官方）插件卸载是写 suppressedBuiltins 标记；同步本地抑制集合，
         // 否则同一会话内后续 list 会用启动时的旧集合，把它重新解析出来。
-        if (removed.marketplace === ZCODE_OFFICIAL_PLUGIN_MARKETPLACE) {
+        if (removed.marketplace === XCODE_OFFICIAL_PLUGIN_MARKETPLACE) {
           if (!suppressedBuiltins.includes(removed.id)) {
             suppressedBuiltins = [...suppressedBuiltins, removed.id];
           }

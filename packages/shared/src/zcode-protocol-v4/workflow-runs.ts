@@ -95,6 +95,22 @@ export const WORKFLOW_RUNS_LIMITS = {
    * 放不下参数全文或文件内容——后两者永远不该出现在这条高频状态键上。
    */
   maxLastToolTargetLength: 120,
+  // ── 1010 新增 ──
+  /**
+   * actor `sessionId` 的线上上界。会话 id 是铸出来或读出来的标识，不是展示文本：超界的值
+   * 整条丢弃而不是截断——一个被砍短的会话 id 指向的是另一条（或不存在的）会话。
+   */
+  maxSessionIdLength: 256,
+  /**
+   * 一条 run 记得的留白条数（docs/dynamic-workflow/presentation.md「Holes on the timeline」）。与 display
+   * 载荷的 `holes` 同界：时间线上画不出的留白，投影里也不必记。一个留白就是一个阶段，所以它天然
+   * 不会多过 `maxPhases`。
+   */
+  maxHoles: 32,
+  /** 留白类型原文（`Plan`）的线上上界，与 display 的同名字段同值。 */
+  maxHoleTypeLength: 128,
+  /** 留白的提示语在 run 状态里的上限（侧板等待体要画它）；超长时截到 499 字加 `…`。 */
+  maxHolePromptLength: 500,
 } as const;
 
 /**
@@ -358,6 +374,28 @@ export const workflowRunPendingQuestionSchema = z.object({
 });
 export type WorkflowRunPendingQuestion = z.infer<typeof workflowRunPendingQuestionSchema>;
 
+/**
+ * 一条 run 记得的**留白**：作者在图里留出的、模型还没填的空位。
+ *
+ * `state`：`waiting` = 引擎里有停驻的 deferred（真相在 CLI 进程内，与 pendingQuestions 同族，所以新的
+ * 一世与终态都把它剥掉）；`filled` = 补全已接进 run（事实在 journal 的 `hole-filled` 事件里，跨世保留）。
+ * `type` 是作者写的类型原文；载荷不带它时缺席，读面退回 display 载荷的 `holes[].type` 按站点 id 取。
+ * `since` 是到达时刻（epoch 毫秒，由事件携带——本模块无时钟），`filledAt` / `filledBy` 随 `hole-filled` 到达。
+ */
+export const workflowRunHoleSchema = z.object({
+  siteId: z.string().min(1).max(64),
+  ordinal: z.number().int().nonnegative(),
+  name: z.string().min(1).max(WORKFLOW_RUNS_LIMITS.maxPhaseNameLength),
+  type: z.string().min(1).max(WORKFLOW_RUNS_LIMITS.maxHoleTypeLength).optional(),
+  /** 主代理收到的提示语（`hole-reached` 载荷的 `prompt`），已按 {@link WORKFLOW_RUNS_LIMITS.maxHolePromptLength} 截断。 */
+  prompt: z.string().min(1).max(WORKFLOW_RUNS_LIMITS.maxHolePromptLength).optional(),
+  state: z.enum(["waiting", "filled"]),
+  since: z.number().int().nonnegative().optional(),
+  filledAt: z.number().int().nonnegative().optional(),
+  filledBy: z.string().min(1).max(128).optional(),
+});
+export type WorkflowRunHole = z.infer<typeof workflowRunHoleSchema>;
+
 export const workflowRunSchema = z.object({
   runId: z.string().min(1).max(128),
   /** 发起该 run 的 CreateWorkflow 工具调用（工具卡 → 详情页的关联键）。 */
@@ -483,6 +521,23 @@ export const workflowRunSchema = z.object({
     .array(z.array(z.number().int().nonnegative()).max(WORKFLOW_RUNS_LIMITS.maxPhases))
     .max(WORKFLOW_RUNS_LIMITS.maxPhases)
     .optional(),
+  /**
+   * `phaseNames` 里哪几站是**还开着的留白**（下标表，`run-launched.holes` / `hole-filled.holes`；
+   * docs/dynamic-workflow/presentation.md「Holes on the timeline」的「The model」）。侧栏只从 `phaseNames`
+   * 画迷你轨道，没有 display 载荷可查，所以这张表是它把留白画成虚线灯的唯一依据。补全之后那一站
+   * 不再是留白，表随 `hole-filled` 整张换新。依附 `phaseNames`：后者不在场时它一定不在场；一个都没有
+   * 时同样缺席。
+   */
+  phaseHoles: z
+    .array(z.number().int().nonnegative())
+    .max(WORKFLOW_RUNS_LIMITS.maxPhases)
+    .optional(),
+  /**
+   * 这条 run 的留白（见 {@link workflowRunHoleSchema}），按首次到达顺序。**零条时整个键缺席**，与
+   * `pendingQuestions` 同规。optional 的理由与 `reports` 逐字相同：往已有状态键追加字段，旧 CLI 不发它
+   * 时少一个键是退化，不是整帧被丢。
+   */
+  holes: z.array(workflowRunHoleSchema).max(WORKFLOW_RUNS_LIMITS.maxHoles).optional(),
   /**
    * 界在各个出生阶段上花掉了多少（见 {@link workflowRunUnlistedPhaseSchema}）。**一格都没有时
    * 整个键缺席**。表长比 `maxPhases` 多一格：那一格是「无阶段」，它与具名阶段共用同一张表。

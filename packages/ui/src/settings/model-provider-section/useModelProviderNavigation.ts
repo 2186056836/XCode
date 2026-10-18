@@ -96,6 +96,12 @@ export function useModelProviderNavigation({
     [modelProviders],
   );
 
+  // 其他登录型供应商组（CodeBuddy 等，OAuth/API Key 双模式）。
+  const otherProviders = useMemo(
+    () => modelProviders.filter((provider) => provider.config.group === "other"),
+    [modelProviders],
+  );
+
   const codingPlanItems = useMemo(
     () =>
       CODING_PLAN_PROVIDER_SPECS.filter((spec) =>
@@ -229,6 +235,17 @@ export function useModelProviderNavigation({
         })),
       },
       {
+        id: "other",
+        title: intl.formatMessage({ id: "settings.modelProvider.otherTitle" }),
+        items: otherProviders.map((provider) => ({
+          key: createFreeProviderNodeKey(provider.providerId),
+          type: "other" as const,
+          label: getProviderFormLabel(provider),
+          provider,
+          statusActive: provider.executable === true,
+        })),
+      },
+      {
         id: "custom",
         title: intl.formatMessage({ id: "settings.modelProvider.customTitle" }),
         items: customProviders.map((provider) => ({
@@ -245,6 +262,7 @@ export function useModelProviderNavigation({
   }, [
     customProviders,
     freeProviders,
+    otherProviders,
     codingPlanItems,
     connectionModeCodingPlanItems,
     // 左侧导航分组标题在这个 memo 内格式化。
@@ -389,7 +407,7 @@ function resolvePresetFamilyStatusProvider({
   );
 }
 
-function resolveFallbackModelProviderNodeKey({
+export function resolveFallbackModelProviderNodeKey({
   selectedNodeKey,
   selectableNavigationItems,
 }: {
@@ -538,12 +556,46 @@ function pickFamilyModeNavigationItem(
   );
 }
 
+export function resolveSelectedFamilyModeNodeKey({
+  selectedNavItem,
+  selectableNavigationItems,
+  connectionSelections = {},
+  pendingConnectionSelections = {},
+}: {
+  selectedNavItem: Exclude<
+    ModelProviderNavGroup["items"][number],
+    { type: "codingPlanLoading" }
+  > | null;
+  selectableNavigationItems: Array<
+    Exclude<ModelProviderNavGroup["items"][number], { type: "codingPlanLoading" }>
+  >;
+  connectionSelections?: ProviderFamilyConnectionSelectionSettings;
+  pendingConnectionSelections?: ProviderFamilyConnectionSelectionSettings;
+}): string | null {
+  if (
+    selectedNavItem?.type !== "preset" &&
+    selectedNavItem?.type !== "codingPlan" &&
+    selectedNavItem?.type !== "teamPlan"
+  ) {
+    return null;
+  }
+  const familySpec = resolveModelProviderFamilySpecByProviderId(selectedNavItem.presetId);
+  if (!familySpec) {
+    return null;
+  }
+  const savedItem = pickFamilyModeNavigationItem(selectableNavigationItems, familySpec.id, {
+    ...connectionSelections,
+    ...pendingConnectionSelections,
+  });
+  return savedItem && savedItem.key !== selectedNavItem.key ? savedItem.key : null;
+}
+
 export function connectionSelectionMatchesNavigationItem(
   family: ProviderFamilyDomain,
   selection: ProviderFamilyConnectionSelection,
   item: Exclude<ModelProviderNavGroup["items"][number], { type: "codingPlanLoading" }>,
 ): boolean {
-  if (item.type === "custom" || item.type === "free") return false;
+  if (item.type === "custom" || item.type === "free" || item.type === "other") return false;
   const familySpec = resolveModelProviderFamilySpecByProviderId(item.presetId ?? "");
   if (familySpec?.id !== family) return false;
   if (selection.kind === "start-plan") {

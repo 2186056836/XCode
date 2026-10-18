@@ -219,6 +219,7 @@ export interface AgentRuntimeTurnMethods {
       sourceCommandId?: string;
       trigger?: CompactTrigger;
       model?: Model;
+      agentListingTools?: readonly { name: string }[];
       activeEntries?: readonly RuntimeMessageEntry[];
     },
   ): Promise<{
@@ -305,6 +306,7 @@ export interface AgentRuntimeTurnMethods {
     traceContext: TraceContext,
     events: SessionEvent[],
     options?: {
+      persist?: boolean;
       onStatus?: (event: ModelNetworkStatusEvent) => void;
       streamRecovery?: ModelStreamRecoveryStatus;
     },

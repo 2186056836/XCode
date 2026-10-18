@@ -180,13 +180,13 @@ async function serve(options) {
     env: {
       ...process.env,
       PORT: String(port),
-      ZCODE_AGENT_SERVER_ARGS_JSON: JSON.stringify([agentEntry, "app-server", "--stdio"]),
-      ZCODE_AGENT_SERVER_COMMAND: process.execPath,
-      ZCODE_SERVER_HOST: options.host,
-      ZCODE_SERVER_WORKSPACE: options.workspace,
-      ZCODE_WEB_STATIC_ROOT: webRoot,
+      XCODE_AGENT_SERVER_ARGS_JSON: JSON.stringify([agentEntry, "app-server", "--stdio"]),
+      XCODE_AGENT_SERVER_COMMAND: process.execPath,
+      XCODE_SERVER_HOST: options.host,
+      XCODE_SERVER_WORKSPACE: options.workspace,
+      XCODE_WEB_STATIC_ROOT: webRoot,
       // 显式关闭 token 时必须清空继承值，否则 --no-token 仍会开启后端鉴权。
-      ZCODE_SERVER_AUTH_TOKEN: token,
+      XCODE_SERVER_AUTH_TOKEN: token,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });

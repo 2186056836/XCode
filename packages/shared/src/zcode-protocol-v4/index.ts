@@ -50,6 +50,8 @@ export * from "./fork.js";
 export * from "./telemetry.js";
 export * from "./controller.js";
 export * from "./workspace-hook-review.js";
+// 1010 新增：run 留白（holes）契约
+export * from "./workflow-runs-holes.js";
 export * from "./cuaPermission.js";
 
 export {

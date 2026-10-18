@@ -7,7 +7,7 @@ function resolveBootstrapSettingsFile(homePath: string = homedir()): string {
   return join(homePath, ".xcode", "v2", "setting.json");
 }
 
-function extractBootstrapDataBaseDir(rawValue: unknown): string | null {
+export function extractBootstrapDataBaseDir(rawValue: unknown): string | null {
   if (!rawValue || typeof rawValue !== "object") {
     return null;
   }

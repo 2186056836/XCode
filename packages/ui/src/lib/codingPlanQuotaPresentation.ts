@@ -1,6 +1,6 @@
 import type { UsageEntitlementSnapshot, UsageQuotaLimit } from "@zcode/shared";
 
-type CodingPlanQuotaResetFormat = "date" | "dateTime" | "adaptive";
+export type CodingPlanQuotaResetFormat = "date" | "dateTime" | "adaptive";
 
 /**
  * Token / Credit 类配额的等价 type 集合。
@@ -64,6 +64,13 @@ export function resolveMcpQuotaLimit(
   return snapshot?.mcpQuota?.aggregate ?? null;
 }
 
+export function normalizeQuotaPercentage(value: number | undefined): number {
+  if (value == null || !Number.isFinite(value)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(100, value));
+}
+
 export function getQuotaRemainingPercentage(limit: UsageQuotaLimit | null): number | null {
   if (typeof limit?.percentage !== "number" || !Number.isFinite(limit.percentage)) {
     return null;
@@ -75,9 +82,8 @@ export function getQuotaRemainingPercentage(limit: UsageQuotaLimit | null): numb
 }
 
 /**
- * 额度剩余 100%（未产生任何消耗）时重置没有收益，UI 隐藏「重置」按钮与机会徽标。
- * 纯展示层门控：不影响服务端发放、status 轮询与机会状态本身；
- * processing / completed 展示不走此判断，手动重置的完成反馈仍完整播放。
+ * fork 保留：上游 1010 删除了该展示层门控，但 fork 的 StatusCards.tsx 仍引用它。
+ * 纯展示判断，不影响服务端发放、status 轮询与机会状态本身。
  */
 export function isCodingPlanQuotaLimitFull(limit: UsageQuotaLimit | null | undefined): boolean {
   return getQuotaRemainingPercentage(limit ?? null) === 100;

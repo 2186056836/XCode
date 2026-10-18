@@ -25,8 +25,8 @@ function run(command, args) {
       env: withPinnedNodePath(
         {
           ...process.env,
-          ZCODE_ENV: requestedEnv,
-          ZCODE_DESKTOP_AGENT_BYTECODE: agentBytecode ? "1" : "0",
+          XCODE_ENV: requestedEnv,
+          XCODE_DESKTOP_AGENT_BYTECODE: agentBytecode ? "1" : "0",
         },
         process.execPath,
       ),

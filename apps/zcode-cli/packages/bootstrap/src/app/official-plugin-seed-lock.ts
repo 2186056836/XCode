@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 const DEFAULT_RETRY_DELAY_MS = 50;
 const DEFAULT_STALE_LOCK_AGE_MS = 60_000;
 const DEFAULT_TIMEOUT_MS = 15_000;
-const SEED_LOCK_TIMEOUT_ERROR_CODE = "ZCODE_PLUGIN_SEED_LOCK_TIMEOUT";
+const SEED_LOCK_TIMEOUT_ERROR_CODE = "XCODE_PLUGIN_SEED_LOCK_TIMEOUT";
 
 interface OfficialPluginSeedLockOptions {
   retryDelayMs?: number;

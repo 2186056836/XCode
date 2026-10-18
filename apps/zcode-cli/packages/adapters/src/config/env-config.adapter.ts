@@ -1,4 +1,4 @@
-// Env Config Adapter - Parse the intentionally small ZCODE_* environment surface.
+// Env Config Adapter - Parse the intentionally small XCODE_* environment surface.
 
 import type { RuntimeConfigPatch } from "@zcode/contracts";
 
@@ -6,10 +6,10 @@ interface EnvConfigOptions {
   prefix?: string;
 }
 
-const DEFAULT_PREFIX = "ZCODE_";
+const DEFAULT_PREFIX = "XCODE_";
 
 /**
- * Parse ZCODE_* environment variables into config
+ * Parse XCODE_* environment variables into config
  */
 export function parseEnvConfig(
   env: Record<string, string | undefined> = process.env,
@@ -67,7 +67,7 @@ export function parseEnvConfig(
  */
 export function getToolConcurrencyConfig(): { maxConcurrency: number } {
   return {
-    maxConcurrency: normalizeNumber(process.env.ZCODE_MAX_TOOL_CONCURRENCY ?? "10"),
+    maxConcurrency: normalizeNumber(process.env.XCODE_MAX_TOOL_CONCURRENCY ?? "10"),
   };
 }
 

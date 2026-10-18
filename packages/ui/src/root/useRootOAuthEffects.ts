@@ -9,7 +9,7 @@ import type {
 import {
   DesktopCommandIds,
   resolveProviderFamilyDomainFromOAuthProvider,
-  ZCODE_JWT_INVALID_BROADCAST_CHANNEL,
+  XCODE_JWT_INVALID_BROADCAST_CHANNEL,
 } from "@zcode/shared";
 import type { IServiceAccessor } from "@zcode/services";
 import { useAlertDialog } from "@/hooks/useAlertDialog.js";
@@ -29,7 +29,7 @@ import { useAccountConnectionLossNotification } from "@/root/useAccountConnectio
 
 export { refreshRestoredOAuthProviderFamilyAfterStartup } from "@/root/oauthProviderFamilySelectionRefresh.js";
 
-async function handleOAuthCallbackSuccess(params: {
+export async function handleOAuthCallbackSuccess(params: {
   result: OAuthSessionCallbackResult;
   platform: Pick<IPlatformService, "reportTelemetryEvent">;
   refreshLatestModelProviderFamilySelection?: (
@@ -203,7 +203,7 @@ export function useRootOAuthEffects({
   useEffect(() => {
     let disposed = false;
     const disposable = services.broadcastService.onMessage((message) => {
-      if (message.channel !== ZCODE_JWT_INVALID_BROADCAST_CHANNEL || disposed) {
+      if (message.channel !== XCODE_JWT_INVALID_BROADCAST_CHANNEL || disposed) {
         return;
       }
       void (async () => {

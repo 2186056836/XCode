@@ -52,7 +52,7 @@ import { listRegisteredHostAgentProcessIds } from "./resourceManagerWindow.js";
  */
 
 /** 采样间隔 */
-const RESOURCE_SAMPLE_INTERVAL_MS = 10_000;
+export const RESOURCE_SAMPLE_INTERVAL_MS = 10_000;
 
 /** 开发构建与 E2E 用 1 分钟窗口便于验证；生产 5 分钟。 */
 function resolveDefaultReportIntervalMs(): number {
@@ -60,22 +60,22 @@ function resolveDefaultReportIntervalMs(): number {
     return 60_000;
   }
   // E2E 跑的是打包构建，没有这个短窗口就无法在一次用例里观察到趋势事件。
-  if (process.env.ZCODE_ENV === "test" && process.env.ZCODE_E2E_RUN_ID?.trim()) {
+  if (process.env.XCODE_ENV === "test" && process.env.XCODE_E2E_RUN_ID?.trim()) {
     return 60_000;
   }
   return 300_000;
 }
 
 /** 上报间隔 */
-const RESOURCE_REPORT_INTERVAL_MS = resolveDefaultReportIntervalMs();
+export const RESOURCE_REPORT_INTERVAL_MS = resolveDefaultReportIntervalMs();
 
 /**
  * 本地内存诊断日志：借用 10s 资源采样节拍，
  * 每 6 个 tick（≈60s）读一次 main 自身内存，同一次读数既写主日志又作为 main 角色的 heap 样本。
  */
-const MEMORY_LOG_SAMPLE_EVERY_N_TICKS = 6;
+export const MEMORY_LOG_SAMPLE_EVERY_N_TICKS = 6;
 
-type ResourceUsageScene = "foreground" | "background";
+export type ResourceUsageScene = "foreground" | "background";
 
 interface ResourceLogger {
   info: (...args: unknown[]) => void;
@@ -214,8 +214,8 @@ function auditDisabledAgentMetricProbe(logger: ResourceLogger | undefined): void
   if (
     agentMetricProbeDisabledAuditLogged ||
     process.platform !== "win32" ||
-    process.env.ZCODE_ENV !== "test" ||
-    !process.env.ZCODE_E2E_RUNTIME_LOG_DIR?.trim()
+    process.env.XCODE_ENV !== "test" ||
+    !process.env.XCODE_E2E_RUNTIME_LOG_DIR?.trim()
   ) {
     return;
   }

@@ -104,3 +104,7 @@ export * from "./tracing/local-turn-preparation.js";
 export type { LocalTtftDetail } from "@zcode/shared";
 
 export * from "./interfaces/permission-full-access.js";
+
+// ── 1010 新增契约导出 ──
+export * from "./interfaces/provider-endpoint-routing.port.js";
+export * from "./interfaces/topic-resource.port.js";

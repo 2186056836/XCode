@@ -1,4 +1,4 @@
-import { ZCODE_AGENT_PROVIDER } from "@zcode/shared";
+import { XCODE_AGENT_PROVIDER } from "@zcode/shared";
 import type { IRemoteBackend } from "@zcode/server/remote/backend.js";
 import { type DeployLoggers, waitForClose } from "@zcode/server/remote/deployShared.js";
 import { quotePosixPathArg } from "@zcode/server/remote/posixShell.js";
@@ -14,7 +14,7 @@ export async function repairLegacyRemoteOfficialPluginDirectoryPermissions(param
   // IRemoteBackend.exists 只承诺检查远端文件，SSH / Docker 实现使用 test -f，
   // 因此目录存在性和 chmod 必须收敛在同一条远端 shell 命令中判断。
   params.loggers.logWarn(
-    `[zcode-agent-deploy] ${ZCODE_AGENT_PROVIDER}: 检查并修复旧 builtin plugin 目录权限 ${params.remoteOfficialPluginDir}`,
+    `[zcode-agent-deploy] ${XCODE_AGENT_PROVIDER}: 检查并修复旧 builtin plugin 目录权限 ${params.remoteOfficialPluginDir}`,
   );
   const quotedRemoteOfficialPluginDir = quotePosixPathArg(params.remoteOfficialPluginDir);
   const stream = await params.backend.exec(
@@ -27,7 +27,7 @@ export async function repairLegacyRemoteOfficialPluginDirectoryPermissions(param
     // chmod 只是旧 WSL 坏权限目录的预修复，真实部署成败应由后续 packages 替换决定。
     // 某些 SSH / Docker 挂载卷或 ACL 环境可能拒绝 chmod，但 rm/tar 替换路径仍可成功。
     params.loggers.logWarn(
-      `[zcode-agent-deploy] ${ZCODE_AGENT_PROVIDER}: 修复旧 builtin plugin 目录权限失败，将继续尝试替换 packages: ${
+      `[zcode-agent-deploy] ${XCODE_AGENT_PROVIDER}: 修复旧 builtin plugin 目录权限失败，将继续尝试替换 packages: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );

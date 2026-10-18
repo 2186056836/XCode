@@ -35,7 +35,7 @@ const SETTINGS_PARSE_RETRY_COUNT = 3;
 const log = (...args: unknown[]) =>
   console.log(formatLogPrefix("settingService", process.pid), ...args);
 const debugLog = (...args: unknown[]) => {
-  // NODE_ENV 来自用户 shell 时会误导服务层 debug 开关；统一使用 ZCODE_RUNTIME_ENV。
+  // NODE_ENV 来自用户 shell 时会误导服务层 debug 开关；统一使用 XCODE_RUNTIME_ENV。
   if (!isEffectiveDevelopmentNodeEnv()) {
     return;
   }
@@ -46,7 +46,7 @@ function resolveUserHomeDir() {
   // 独立桌面 Dev 实例已设置自己的 home，设置服务却仍写真实 HOME，
   // 导致启动迁移和外观操作污染其他实例。与 Electron 的显式 home 覆盖保持一致。
   const envHome =
-    process.env.ZCODE_DESKTOP_HOME_DIR?.trim() ||
+    process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
     process.env.HOME?.trim() ||
     process.env.USERPROFILE?.trim();
   return envHome && envHome.length > 0 ? envHome : homedir();

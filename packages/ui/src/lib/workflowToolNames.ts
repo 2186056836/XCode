@@ -6,7 +6,7 @@
  * - 模型目录：`ListModels`。
  *
  * 为什么不走 `resolveToolCallIdentity`：这些工具名都不在 `packages/shared` 的
- * `ZCODE_KNOWN_TOOL_NAMES` 里，identity 对它们只会回 `unknown`，分流会掉进 raw JSON 兜底卡。
+ * `XCODE_KNOWN_TOOL_NAMES` 里，identity 对它们只会回 `unknown`，分流会掉进 raw JSON 兜底卡。
  *
  * 而且这些判定必须排在 family 分流**之前**：`workflow` family 的兜底分支是 CreateWorkflow
  * 卡（`resolveRenderer.ts`）与运行确认块（`PermissionDialog.tsx`），一旦有人把这些名字登记
@@ -96,4 +96,13 @@ export function isCreateWorkflowToolCall(source: WorkflowToolNameSource): boolea
  */
 export function isAmendWorkflowToolCall(source: WorkflowToolNameSource): boolean {
   return matchesToolName(source, "amendworkflow");
+}
+
+/**
+ * 留白补全（docs/dynamic-workflow/launch.md「The `FillWorkflowHole` tool」）。与修订同一条路：已登记进
+ * workflow family（确认窗按 family 选运行确认块），工具行由 create-workflow 渲染器换一套留白词汇
+ * ——「正在补全留白 / 留白补全草稿 / 留白已补全」（docs/dynamic-workflow/presentation.md「The fill row」）。
+ */
+export function isFillWorkflowHoleToolCall(source: WorkflowToolNameSource): boolean {
+  return matchesToolName(source, "fillworkflowhole");
 }

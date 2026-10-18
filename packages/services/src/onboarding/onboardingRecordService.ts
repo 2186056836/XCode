@@ -13,7 +13,13 @@ import type {
   OnboardingRecordFile,
 } from "@zcode/shared";
 import { atomicWriteText } from "../fs/atomicFileUtils.js";
-import { getAppConfigDir, getDataBaseDir, getXCodeDataRootDir } from "../paths.js";
+import {
+  findZcodeDataDir,
+  getAppConfigDir,
+  getDataBaseDir,
+  getXCodeDataRootDir,
+  getZcodeHomeRoots,
+} from "../paths.js";
 import { createServiceLogger } from "../logger/serviceLogger.js";
 import type {
   CreateOnboardingRecordServiceOptions,
@@ -27,7 +33,7 @@ const logger = createServiceLogger("onboardingRecordService");
 
 // 持久化最后一个完成结果的文件（供 host 重启后 UI 仍可见）
 const LAST_RESULT_FILE = join(getAppConfigDir(), "zcode-migration-last-result.json");
-function loadLastResult(): { copiedFiles: number; skipped: string[]; finishedAt?: number } | null {
+function loadLastResult(): (MigrationResultSnapshot & { finishedAt?: number }) | null {
   try {
     const raw = readFileSync(LAST_RESULT_FILE, "utf-8");
     return JSON.parse(raw);
@@ -35,7 +41,15 @@ function loadLastResult(): { copiedFiles: number; skipped: string[]; finishedAt?
     return null;
   }
 }
-function persistLastResult(result: { copiedFiles: number; skipped: string[] }): void {
+interface MigrationResultSnapshot {
+  copiedFiles: number;
+  skipped: string[];
+  /** SOURCE_MISSING：所有候选根下都没有 .zcode（区别于"迁移了 0 条"）。 */
+  errorCode?: "SOURCE_MISSING";
+  errorMessage?: string;
+}
+
+function persistLastResult(result: MigrationResultSnapshot): void {
   writeFileSync(LAST_RESULT_FILE, JSON.stringify({ ...result, finishedAt: Date.now() }, null, 2));
 }
 
@@ -263,14 +277,20 @@ export function createOnboardingRecordService(
 
     // 迁移任务：后台运行，报告进度，UI 通过 getMigrationStatus() 轮询或读取持久化结果
     async startMigrateZCodeData(): Promise<{ jobId: string }> {
-      const sourceDir = join(getDataBaseDir(), ".zcode");
-      let hasSource = false;
-      try {
-        await stat(sourceDir);
-        hasSource = true;
-      } catch {
-        // ~/.zcode 不存在 → 静默返回“已完成”状态（0 条），UI 显示无操作
-        void persistLastResult({ copiedFiles: 0, skipped: [] });
+      // 源按多候选根解析（复刻旧 ZCode 自身的启动解析）：旧 ZCode 同样支持
+      // 自定义数据目录（其 setting.json 的 dataBaseDir），活动数据在
+      // {声明目录}/.zcode；未声明时在真实家目录。此前直接用 getDataBaseDir()
+      // 拼 .zcode，把 XCode 的当前基目录误当旧产品的数据基目录，两个完全不同。
+      const sourceDir = findZcodeDataDir();
+      if (!sourceDir) {
+        // 找不到源是明确的终态，不是"迁移了 0 条"。持久化原因，让 UI 能显示。
+        logger.warn("未找到 ZCode 数据目录，跳过迁移", { searched: getZcodeHomeRoots() });
+        void persistLastResult({
+          copiedFiles: 0,
+          skipped: [],
+          errorCode: "SOURCE_MISSING",
+          errorMessage: `未在以下位置找到 ZCode 数据目录 .zcode：${getZcodeHomeRoots().join("、")}`,
+        });
         return { jobId: `migration_${Date.now()}` };
       }
       const destDir = getXCodeDataRootDir();
@@ -334,7 +354,28 @@ export function createOnboardingRecordService(
 
     // ProxyChannel 远程调用一律按 Promise 消费；这里显式 async 保证 UI 端 await 语义。
     async getMigrationStatus(): Promise<JobSnapshot | null> {
-      return getJobSnapshot("zcode-data-migration");
+      const running = getJobSnapshot("zcode-data-migration");
+      if (running) {
+        return running;
+      }
+      // 回落持久化的最后结果：「未找到源」是提前 return 的分支，没有 job 快照；
+      // 不回落的话 UI 永远看不到反馈（表现为点了没反应）。
+      const last = loadLastResult();
+      if (!last) {
+        return null;
+      }
+      const finishedAt = last.finishedAt ?? Date.now();
+      const restored: JobSnapshot = {
+        name: "zcode-data-migration",
+        running: false,
+        startedAt: finishedAt,
+        finishedAt,
+        result: last,
+      };
+      if (last.errorCode) {
+        restored.error = last.errorMessage ?? last.errorCode;
+      }
+      return restored;
     },
   };
 }

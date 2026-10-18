@@ -6,7 +6,7 @@ export type BuiltinXCodeSlashCommandHelpEntry = {
   usage: string;
 };
 
-export const BUILTIN_ZCODE_SLASH_COMMAND_HELP_ENTRIES: readonly BuiltinXCodeSlashCommandHelpEntry[] =
+export const BUILTIN_XCODE_SLASH_COMMAND_HELP_ENTRIES: readonly BuiltinXCodeSlashCommandHelpEntry[] =
   [
     {
       details: [

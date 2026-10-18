@@ -695,7 +695,7 @@ chart's points, so a card for it would say nothing new.
 The complete review workflow that used to sit here — a reviewer per changed file, triage
 through one shared subagent that is fed as reviews land, a confirmer per kept finding chained
 inside the same callback, one join for the cross-file deduplication — is
-`${ZCODE_SKILL_DIR}/examples.md` §5. Read it when you want to see a whole script's arc; §7
+`${XCODE_SKILL_DIR}/examples.md` §5. Read it when you want to see a whole script's arc; §7
 and §10 already carry its rules.
 
 ## 12. Anti-patterns
@@ -907,11 +907,11 @@ chatter, not an allowance to spend.
 
 ## 15. Going deeper
 
-- `${ZCODE_SKILL_DIR}/patterns.md` — the topology catalogue: fan-out/fan-in, review sweeps,
+- `${XCODE_SKILL_DIR}/patterns.md` — the topology catalogue: fan-out/fan-in, review sweeps,
   planner-reviewer loops, judge panels, staged pipelines, bounded discovery,
   `world.run`-gated verifier loops. Read it
   when you know the shape you want and want it written correctly.
-- `${ZCODE_SKILL_DIR}/examples.md` — complete worked scripts, including a two-subagent
+- `${XCODE_SKILL_DIR}/examples.md` — complete worked scripts, including a two-subagent
   adversarial prove/disprove loop. Read one when you want to see a whole script's arc.
 
 ## 16. Tool reference

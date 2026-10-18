@@ -11,9 +11,9 @@ async function main(): Promise<void> {
     content: readBundledXCodeBuiltinProviderConfig(),
   });
   const port = Number(process.env["PORT"]) || 3030;
-  const host = process.env["ZCODE_SERVER_HOST"]?.trim() || process.env["HOST"]?.trim() || undefined;
-  const staticRoot = process.env["ZCODE_WEB_STATIC_ROOT"]?.trim() || undefined;
-  const authToken = process.env["ZCODE_SERVER_AUTH_TOKEN"]?.trim() || undefined;
+  const host = process.env["XCODE_SERVER_HOST"]?.trim() || process.env["HOST"]?.trim() || undefined;
+  const staticRoot = process.env["XCODE_WEB_STATIC_ROOT"]?.trim() || undefined;
+  const authToken = process.env["XCODE_SERVER_AUTH_TOKEN"]?.trim() || undefined;
   const services = createLocalServices({
     zcodeBuiltinProviderConfigFilePath,
     providerProvisioningTargetEnabled: Boolean(authToken),

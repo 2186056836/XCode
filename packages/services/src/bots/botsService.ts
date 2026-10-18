@@ -9,7 +9,7 @@ import {
   ALL_BOT_WORKSPACES,
   generateTraceId,
   normalizeAgentProviderToXCodeAgent,
-  ZCODE_AGENT_PROVIDER,
+  XCODE_AGENT_PROVIDER,
   BOT_TASK_BROADCAST_CHANNEL,
   BOT_TASK_STREAM_BROADCAST_CHANNEL,
   appendAssistantMessagePart,
@@ -162,7 +162,7 @@ const botsLogger = createServiceLogger("bots");
 
 function formatBotModelSelectionValue(selection: ModelSelection | undefined): string | undefined {
   if (!selection) return undefined;
-  return selection.providerId === ZCODE_AGENT_PROVIDER
+  return selection.providerId === XCODE_AGENT_PROVIDER
     ? selection.modelId
     : encodeCustomModelValue(selection.providerId, selection.modelId);
 }
@@ -179,7 +179,7 @@ function parseBotModelOptionValue(value: string): ModelSelection | undefined {
       modelId: value.slice(separatorIndex + 1),
     };
   }
-  return value.trim() ? { providerId: ZCODE_AGENT_PROVIDER, modelId: value.trim() } : undefined;
+  return value.trim() ? { providerId: XCODE_AGENT_PROVIDER, modelId: value.trim() } : undefined;
 }
 
 const BOT_REPLY_GRANULARITY_OPTIONS = [
@@ -658,7 +658,7 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const DEFAULT_BOT_ZCODE_PROVIDER: XCodeProvider = ZCODE_AGENT_PROVIDER;
+const DEFAULT_BOT_XCODE_PROVIDER: XCodeProvider = XCODE_AGENT_PROVIDER;
 // Bot 模式硬锁 yolo：所有 bot task 一律免交互权限，且禁止通过 /mode 切换运行模式。
 const BOT_FORCED_MODE = "yolo";
 const BOT_TYPING_INTERVAL_MS = 4_000;
@@ -1694,7 +1694,7 @@ export function createBotsService(
     provider?: XCodeProvider,
   ): Promise<BotDraftOptions> {
     const requestedProvider = normalizeAgentProviderToXCodeAgent(
-      provider ?? DEFAULT_BOT_ZCODE_PROVIDER,
+      provider ?? DEFAULT_BOT_XCODE_PROVIDER,
     );
     if (context.workspaceIdentity && !(await isRemoteWorkspaceConnected(context))) {
       // Bugfix: 远端断连时初始化草稿也不能偷偷申请远端 XCode Agent runtime。
@@ -1916,6 +1916,9 @@ export function createBotsService(
     }
     pendingSelectionsByContext.delete(actorContextKey);
     switch (selection.action) {
+      // 1010 新增：队列管理的取消动作，选项 id 本身就是一条可解析的命令
+      case "queue.cancel":
+        return parseBotCommand(option.id);
       case "workspace.set":
         return { type: "workspace.set", value: option.id };
       case "model.provider.set":
@@ -6291,6 +6294,18 @@ export function createBotsService(
             ];
           case "message":
             return handleMessage(message);
+          default: {
+            // 1010 扩宽了 BotCommand（新增 queue.* 等分支），本 switch 尚未覆盖到的类型
+            // 落到未知命令提示，而不是隐式返回 undefined（TS2366）。
+            return [
+              createOutbound(
+                message.actor,
+                msg(await readMessageLocale(), "unknownCommand", {
+                  command: String((command as { type: string }).type),
+                }),
+              ),
+            ];
+          }
         }
       });
     },

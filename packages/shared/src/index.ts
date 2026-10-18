@@ -34,7 +34,7 @@ export type {
 } from "./protocol.js";
 export type { WorkspacePurpose } from "./workspacePurpose.js";
 export { DEFAULT_LOCALE } from "./protocol.js";
-export { ZCODE_VERSION, ZCODE_COMMIT, ZCODE_BUILD_TIME } from "./version.js";
+export { XCODE_VERSION, XCODE_COMMIT, XCODE_BUILD_TIME } from "./version.js";
 export type { HelloMessage, HelloAckMessage } from "./handshake.js";
 export type { ArmsRumEnv, XCodeEnv, XCodeProductFlavor } from "./env.js";
 export type { RemoteAssetInstallMode } from "./remoteAssetInstallMode.js";
@@ -66,14 +66,15 @@ export {
   serializeShortcutBinding,
 } from "./shortcutCommands.js";
 export {
-  ZCODE_ENV,
-  ZCODE_PRODUCT_FLAVOR,
-  ZCODE_APP_VERSION_ENV,
-  ZCODE_BUILD_COMMIT_ID_ENV,
-  RUNTIME_ZCODE_DEBUG,
-  ZCODE_TELEMETRY_REPORT_ENDPOINT,
-  ZCODE_ARMS_RUM_ENDPOINT,
-  ZCODE_TELEMETRY_ENABLED,
+  XCODE_ENV,
+  XCODE_PRODUCT_FLAVOR,
+  XCODE_APP_VERSION_ENV,
+  XCODE_BUILD_COMMIT_ID_ENV,
+  RUNTIME_XCODE_DEBUG,
+  XCODE_TELEMETRY_REPORT_ENDPOINT,
+  XCODE_ARMS_RUM_ENDPOINT,
+  XCODE_AUTO_UPDATE_ENABLED,
+  XCODE_TELEMETRY_ENABLED,
   mapXCodeEnvToArmsRumEnv,
   normalizeXCodeEnv,
   normalizeXCodeProductFlavor,
@@ -142,6 +143,16 @@ export {
   DesktopCommandIds,
   buildLocalMediaPreviewUrl,
   createOpenInEditorRemoteTarget,
+} from "./platform.js";
+export type {
+  EmbeddedBrowserPermissionDeviceOption,
+  EmbeddedBrowserPermissionPromptEvent,
+  EmbeddedBrowserPermissionResolution,
+  EmbeddedBrowserPermissionResolveRequest,
+  EmbeddedBrowserPermissionScreenOption,
+  EmbeddedBrowserSitePermissionResetRequest,
+  EmbeddedBrowserSitePermissionUpdateRequest,
+  EmbeddedBrowserSitePermissionsSnapshot,
 } from "./platform.js";
 export type {
   ArmsCustomEventPayload,
@@ -247,6 +258,7 @@ export * from "./task-realtime.js";
 export { formatTimestamp, formatLogPrefix } from "./log-format.js";
 export * from "./model-provider-types.js";
 export * from "./model-provider-family.js";
+export * from "./reasoning-levels.js";
 export * from "./provider-family-connection-selection.js";
 export * from "./provider-provisioning.js";
 export * from "./custom-model-value.js";
@@ -314,3 +326,66 @@ export * from "./clientConfig.js";
 export * from "./pluginStoreOrdering.js";
 export * from "./session-debug.js";
 export { redactFeedbackText } from "./feedbackPrivacy.js";
+import "./cloudContent.js";
+import "./networkCapture.js";
+import "./zcode-session-content-profile.js";
+import "./web-remote-control.js";
+import "./web-remote-control-heartbeat.js";
+import "./web-remote-control-rpc-transport.js";
+import "./memory.js";
+import "./output-style.js";
+import "./highspeed.js";
+import "./subagent-runtime-config.js";
+import "./subagent-profile.js";
+import "./subagent-profile-parser.js";
+import "./marketingTouch.js";
+import "./rewardsEmbedded.js";
+import "./rewardsBridge.js";
+import "./api-key-usage-scene.js";
+import "./project-access-token.js";
+import "./project-access-token-client.js";
+import "./conversationSelection.js";
+import "./attachment-source.js";
+import "./channel-mention.js";
+import "./request-security-edition/policy.js";
+import "./request-security-edition/verification-policy.js";
+
+// ── 1010 新增模块导出（导入时补齐）──
+export { cloudContentPayloadSchema, contentBundleSchema } from "./cloudContent.js";
+export * from "./networkCapture.js";
+export type {
+  CloudContentPayload,
+  CloudContentBundle,
+  CloudContentHeroType,
+} from "./cloudContent.js";
+export * from "./zcode-session-content-profile.js";
+export * from "./web-remote-control.js";
+export * from "./web-remote-control-heartbeat.js";
+export * from "./web-remote-control-rpc-transport.js";
+export * from "./memory.js";
+export * from "./output-style.js";
+export * from "./highspeed.js";
+export * from "./subagent-runtime-config.js";
+export * from "./subagent-profile.js";
+export { parseAgentProfileFromMarkdown } from "./subagent-profile-parser.js";
+export * from "./marketingTouch.js";
+export * from "./rewardsEmbedded.js";
+export * from "./rewardsBridge.js";
+export { API_KEY_USAGE_SCENE, type ApiKeyCreationUsageScene } from "./api-key-usage-scene.js";
+export {
+  projectAccessTokenFingerprint,
+  ProjectAccessTokenTransientError,
+} from "./project-access-token.js";
+export {
+  ProjectAccessTokenClient,
+  type ProjectAccessTokenInput,
+  type ProjectAccessTokenMaterial,
+} from "./project-access-token-client.js";
+export * from "./conversationSelection.js";
+export * from "./attachment-source.js";
+export * from "./channel-mention.js";
+export {
+  requestSecuritySensitiveHeaders,
+  isRequestSecurityFailure,
+} from "./request-security-edition/policy.js";
+export * from "./request-security-edition/verification-policy.js";

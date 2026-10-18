@@ -4,9 +4,9 @@ export function installScriptSource(baseUrl) {
   return `#!/usr/bin/env sh
 set -eu
 
-BASE_URL="\${ZCODE_DIST_BASE_URL:-${baseUrl}}"
-INSTALL_DIR="\${ZCODE_DIST_HOME:-$HOME/.xcode/runtime}"
-BIN_DIR="\${ZCODE_DIST_BIN_DIR:-$HOME/.local/bin}"
+BASE_URL="\${XCODE_DIST_BASE_URL:-${baseUrl}}"
+INSTALL_DIR="\${XCODE_DIST_HOME:-$HOME/.xcode/runtime}"
+BIN_DIR="\${XCODE_DIST_BIN_DIR:-$HOME/.local/bin}"
 
 need_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then

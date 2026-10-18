@@ -1,6 +1,6 @@
 import {
-  DEFAULT_ZCODE_ENDPOINT_ORIGIN,
-  ZCODE_VERSION,
+  DEFAULT_XCODE_ENDPOINT_ORIGIN,
+  XCODE_VERSION,
   buildXCodeEndpointUrls,
   getForceUpdateMinimalVersionFromConfig,
   resolveForceUpdateRequirement,
@@ -10,7 +10,7 @@ import {
 import { requestForceAutoUpdate, type ForceAutoUpdateState } from "./autoUpdater.js";
 import { showForceUpdatePrompt } from "./forceUpdatePrompt.js";
 
-const ZCODE_CLIENT_CONFIG_API_PATH = "/api/v1/client/configs";
+const XCODE_CLIENT_CONFIG_API_PATH = "/api/v1/client/configs";
 const FORCE_UPDATE_CONFIG_REQUEST_TIMEOUT_MS = 10_000;
 const FORCE_UPDATE_CONFIG_MAX_RESPONSE_BYTES = 1024 * 1024;
 
@@ -28,27 +28,27 @@ export interface ForceUpdateGuardLogger {
   warn: (...args: unknown[]) => void;
 }
 
-interface ForceUpdateGuardResult {
+export interface ForceUpdateGuardResult {
   blocked: boolean;
   requirement?: ForceUpdateRequirement;
 }
 
-interface ForceUpdateGuardOptions {
+export interface ForceUpdateGuardOptions {
   locale: Locale;
   logger: ForceUpdateGuardLogger;
   endpointOrigin?: string;
   fetchRemoteConfig?: () => Promise<unknown>;
-  requestAutoUpdate?: (
-    onStateChange?: (state: ForceAutoUpdateState) => void,
-  ) => (() => void) | void;
+  requestAutoUpdate?: (onStateChange?: (state: ForceAutoUpdateState) => void) => (() => void) | void;
   onBlocked?: (requirement: ForceUpdateRequirement) => void;
 }
 
-function resolveForceUpdateClientConfigUrl(endpointOrigin = DEFAULT_ZCODE_ENDPOINT_ORIGIN): string {
+export function resolveForceUpdateClientConfigUrl(
+  endpointOrigin = DEFAULT_XCODE_ENDPOINT_ORIGIN,
+): string {
   const url = new URL(
-    `${buildXCodeEndpointUrls(endpointOrigin).origin}${ZCODE_CLIENT_CONFIG_API_PATH}`,
+    `${buildXCodeEndpointUrls(endpointOrigin).origin}${XCODE_CLIENT_CONFIG_API_PATH}`,
   );
-  url.searchParams.set("app_version", ZCODE_VERSION);
+  url.searchParams.set("app_version", XCODE_VERSION);
   url.searchParams.set("platform", `${process.platform}-${process.arch}`);
   return url.toString();
 }
@@ -147,14 +147,14 @@ async function fetchRemoteForceUpdateConfig(
   });
 }
 
-async function resolveDesktopForceUpdateRequirement(options: {
+export async function resolveDesktopForceUpdateRequirement(options: {
   logger: ForceUpdateGuardLogger;
   endpointOrigin?: string;
   fetchRemoteConfig?: () => Promise<unknown>;
 }): Promise<ForceUpdateRequirement | null> {
   const resolveFromConfig = (config: unknown) =>
     resolveForceUpdateRequirement({
-      currentVersion: ZCODE_VERSION,
+      currentVersion: XCODE_VERSION,
       forceUpdate: {
         minimalVersion:
           getForceUpdateMinimalVersionFromClientConfig(config) ??
@@ -181,15 +181,15 @@ async function resolveDesktopForceUpdateRequirement(options: {
   return null;
 }
 
-function resolveForceUpdateDownloadUrl(
+export function resolveForceUpdateDownloadUrl(
   locale: Locale,
-  endpointOrigin = DEFAULT_ZCODE_ENDPOINT_ORIGIN,
+  endpointOrigin = DEFAULT_XCODE_ENDPOINT_ORIGIN,
 ): string {
   const origin = buildXCodeEndpointUrls(endpointOrigin).origin;
   return locale === "zh-CN" ? `${origin}/cn` : `${origin}/en`;
 }
 
-function formatForceUpdateDialogText(
+export function formatForceUpdateDialogText(
   requirement: ForceUpdateRequirement,
   locale: Locale,
 ): ForceUpdateDialogText {

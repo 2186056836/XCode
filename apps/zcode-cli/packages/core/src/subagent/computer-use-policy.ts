@@ -1,7 +1,7 @@
 import { relative, isAbsolute } from "node:path";
 import {
-  ZCODE_CUA_OFFICIAL_MCP_NAMESPACE_NAME as ZCODE_CUA_OFFICIAL_MCP_SERVER_NAME,
-  ZCODE_CUA_OFFICIAL_PLUGIN_ID,
+  XCODE_CUA_OFFICIAL_MCP_NAMESPACE_NAME as XCODE_CUA_OFFICIAL_MCP_SERVER_NAME,
+  XCODE_CUA_OFFICIAL_PLUGIN_ID,
 } from "@zcode/shared";
 import type { McpToolDescriptor, PluginReferenceCatalog, SkillMetadata } from "@zcode/contracts";
 import { toMcpToolName, toModelVisibleMcpNamePart } from "../mcp/name.js";
@@ -15,7 +15,7 @@ const OFFICIAL_CUA_ALIAS_PREFIX = "mcp__computer_use__";
 const OFFICIAL_CUA_SERVER_PARTS = new Set([
   "computer-use",
   "computer_use",
-  toModelVisibleMcpNamePart(ZCODE_CUA_OFFICIAL_MCP_SERVER_NAME),
+  toModelVisibleMcpNamePart(XCODE_CUA_OFFICIAL_MCP_SERVER_NAME),
 ]);
 
 export interface OfficialCuaPolicy {
@@ -37,7 +37,7 @@ export function createOfficialCuaPolicy(
     if (!officialServerNames.has(descriptor.serverName)) continue;
     officialDescriptorCount += 1;
     toolNames.add(toMcpToolName(descriptor));
-    if (descriptor.serverName === ZCODE_CUA_OFFICIAL_MCP_SERVER_NAME) {
+    if (descriptor.serverName === XCODE_CUA_OFFICIAL_MCP_SERVER_NAME) {
       const suffix = toModelVisibleMcpNamePart(descriptor.toolName);
       toolNames.add(`${OFFICIAL_CUA_CANONICAL_PREFIX}${suffix}`);
       toolNames.add(`${OFFICIAL_CUA_ALIAS_PREFIX}${suffix}`);
@@ -48,14 +48,14 @@ export function createOfficialCuaPolicy(
   for (const serverName of officialServerNames) {
     officialToolPrefixes.add(`mcp__${toModelVisibleMcpNamePart(serverName)}__`);
   }
-  if (officialServerNames.has(ZCODE_CUA_OFFICIAL_MCP_SERVER_NAME)) {
+  if (officialServerNames.has(XCODE_CUA_OFFICIAL_MCP_SERVER_NAME)) {
     officialToolPrefixes.add(OFFICIAL_CUA_CANONICAL_PREFIX);
     officialToolPrefixes.add(OFFICIAL_CUA_ALIAS_PREFIX);
   }
 
   const officialServerSelectorParts = new Set<string>();
   for (const serverName of officialServerNames) {
-    if (serverName === ZCODE_CUA_OFFICIAL_MCP_SERVER_NAME) {
+    if (serverName === XCODE_CUA_OFFICIAL_MCP_SERVER_NAME) {
       for (const part of OFFICIAL_CUA_SERVER_PARTS) officialServerSelectorParts.add(part);
       continue;
     }
@@ -63,7 +63,7 @@ export function createOfficialCuaPolicy(
   }
 
   const officialPlugin = catalog?.plugins.find(
-    (plugin) => plugin.pluginId === ZCODE_CUA_OFFICIAL_PLUGIN_ID,
+    (plugin) => plugin.pluginId === XCODE_CUA_OFFICIAL_PLUGIN_ID,
   );
   const skillQualifiedNames = new Set(officialPlugin?.skillQualifiedNames ?? []);
   const skillBareNames = new Set(

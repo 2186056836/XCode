@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import type { XCodeImportSessionsResult, XCodeTaskMeta } from "@zcode/shared";
-import { generateTraceId, ZCODE_AGENT_PROVIDER } from "@zcode/shared";
+import { generateTraceId, XCODE_AGENT_PROVIDER } from "@zcode/shared";
 import { createServiceLogger } from "#src/logger/serviceLogger.js";
 import { getConversationWorkspaceDir } from "#src/paths.js";
 import type { TaskIndexRepo } from "#src/session/taskIndexRepo.js";
@@ -9,13 +9,13 @@ import {
   deleteZcodeSessionRowsFromDest,
   destDbHasSessionTable,
   findZcodeSessionRow,
-  getZcodeHomeRoots,
   isSameOrInsidePath,
   openDestZcodeDbForWrite,
   openSourceZcodeDb,
   sessionExistsInDest,
   type ZcodeSessionRow,
 } from "#src/session/zcode-native/zcodeNativeSessionImportRepo.js";
+import { getZcodeHomeRoots } from "#src/paths.js";
 
 const logger = createServiceLogger("zcode-native-import");
 
@@ -47,7 +47,7 @@ function buildZcodeTaskMeta(row: ZcodeSessionRow): XCodeTaskMeta {
     mode: "build",
     // 侧栏 listTasks 按当前 runtime provider 过滤；导入的历史会话归属 XCode Agent
     // 才能进入默认任务列表（与 Claude 迁移走 agent 真实建会话的行为对齐）。
-    provider: ZCODE_AGENT_PROVIDER,
+    provider: XCODE_AGENT_PROVIDER,
     migrationSource: "zcodeSession",
   };
 }
@@ -125,7 +125,7 @@ export async function importZcodeNativeSessions(params: {
             taskId: sessionId,
             workspacePath: mapZcodeWorkspacePath(row.directory ?? row.path),
           });
-          if (indexMeta?.provider === ZCODE_AGENT_PROVIDER) {
+          if (indexMeta?.provider === XCODE_AGENT_PROVIDER) {
             result.skipped.push({ provider: "zcode", sessionId, reason: "already_imported" });
             continue;
           }

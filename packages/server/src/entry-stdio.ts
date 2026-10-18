@@ -1,6 +1,6 @@
 import { disposeServiceResourcesAndWait, getAppConfigDir } from "@zcode/services/node";
 import {
-  ZCODE_VERSION,
+  XCODE_VERSION,
   SERVICE_AUTHORITY_MODE_ENV,
   formatLogPrefix,
   formatZodError,
@@ -32,7 +32,7 @@ console.debug = stderrConsoleLog;
 
 // --version flag: print version and exit (used by deploy version check)
 if (process.argv.includes("--version")) {
-  process.stdout.write(ZCODE_VERSION + "\n");
+  process.stdout.write(XCODE_VERSION + "\n");
   process.exit(0);
 }
 
@@ -40,7 +40,7 @@ async function main() {
   // Phase 1: Send hello message
   const hello: HelloMessage = {
     type: "zcode-hello",
-    version: ZCODE_VERSION,
+    version: XCODE_VERSION,
     platform: process.platform,
     arch: process.arch,
     pid: process.pid,

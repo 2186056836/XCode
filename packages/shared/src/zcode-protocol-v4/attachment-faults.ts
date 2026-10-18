@@ -8,7 +8,7 @@
 // 传输路径：CLI 侧抛出的 Error 带 `code` 字段，`toProtocolError` 会把 string code
 // 透传到 JSON-RPC `error.data.code`；客户端读回时用 readXCodeAttachmentFaultCode。
 
-export const ZCODE_ATTACHMENT_FAULT_CODES = {
+export const XCODE_ATTACHMENT_FAULT_CODES = {
   /** host 未实现 stat 能力。 */
   statUnsupported: "fault.attachment.statUnsupported",
   /** host 未实现读取能力。 */
@@ -34,9 +34,9 @@ export const ZCODE_ATTACHMENT_FAULT_CODES = {
 } as const;
 
 export type XCodeAttachmentFaultCode =
-  (typeof ZCODE_ATTACHMENT_FAULT_CODES)[keyof typeof ZCODE_ATTACHMENT_FAULT_CODES];
+  (typeof XCODE_ATTACHMENT_FAULT_CODES)[keyof typeof XCODE_ATTACHMENT_FAULT_CODES];
 
-const KNOWN_FAULT_CODES = new Set<string>(Object.values(ZCODE_ATTACHMENT_FAULT_CODES));
+const KNOWN_FAULT_CODES = new Set<string>(Object.values(XCODE_ATTACHMENT_FAULT_CODES));
 
 export function isXCodeAttachmentFaultCode(value: unknown): value is XCodeAttachmentFaultCode {
   return typeof value === "string" && KNOWN_FAULT_CODES.has(value);

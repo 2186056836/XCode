@@ -34,7 +34,7 @@ const child = spawn(electronExecutable, ["--inspect-brk=9231", "."], {
     // 调试启动时 renderer 也必须走 localhost。
     // 否则即使 Vite 已经就绪，Electron 仍会因为访问 127.0.0.1 被拒绝而打开空白页。
     ELECTRON_RENDERER_URL: "http://localhost:5174",
-    ...(enableHostInspect ? { ZCODE_DEBUG: "9230" } : {}),
+    ...(enableHostInspect ? { XCODE_DEBUG: "9230" } : {}),
   },
 });
 

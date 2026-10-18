@@ -5,7 +5,7 @@
  * 判定规则本身全部在 lib/cuaComposerEntryState.ts，这里不复制任何一条分支。
  */
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { isRemoteWorkspaceIdentity, ZCODE_CUA_OFFICIAL_PLUGIN_ID } from "@zcode/shared";
+import { isRemoteWorkspaceIdentity, XCODE_CUA_OFFICIAL_PLUGIN_ID } from "@zcode/shared";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useServices } from "@/hooks/useServices.js";
 import { useSettings } from "@/hooks/useSettingService.js";
@@ -32,11 +32,12 @@ export interface UseCuaComposerEntryParams {
   workspaceIdentity?: string;
   remoteSessionId?: string | null;
   /** 手机 Web 远控壳；远控保护约束下不渲染本机 CUA 入口。 */
+  isWebRemoteControl?: boolean;
   /** 当前 composer 的 v4 snapshot.control.canStop，作为运行态的低延迟权威。 */
   currentSessionBusy?: boolean;
 }
 
-interface CuaComposerEntryController {
+export interface CuaComposerEntryController {
   view: CuaComposerEntryView;
   /** 点击按钮；仅在 view.clickAction === "open-settings" 时产生副作用。 */
   onActivate: () => void;
@@ -46,6 +47,7 @@ export function useCuaComposerEntry({
   workspacePath,
   workspaceIdentity,
   remoteSessionId,
+  isWebRemoteControl = false,
   currentSessionBusy = false,
 }: UseCuaComposerEntryParams): CuaComposerEntryController {
   const platform = usePlatform();
@@ -58,6 +60,7 @@ export function useCuaComposerEntry({
   // 与 ComputerUseSection 同口径的本地 workspace 判定：远程 workspace 的 CUA 会操作
   // 远端机器的屏幕，产品上不提供。
   const isLocalWorkspace =
+    !isWebRemoteControl &&
     !remoteSessionId &&
     !(workspaceIdentity?.trim() && isRemoteWorkspaceIdentity(workspaceIdentity.trim()));
 
@@ -74,7 +77,7 @@ export function useCuaComposerEntry({
   // 归属由 store 的 lastFailedPluginId 记录。
   const lastFailedPluginId = usePluginManagementStore((state) => state.lastFailedPluginId);
   const initializePlugins = usePluginManagementStore((state) => state.initialize);
-  const cuaPlugin = plugins.find((plugin) => plugin.id === ZCODE_CUA_OFFICIAL_PLUGIN_ID);
+  const cuaPlugin = plugins.find((plugin) => plugin.id === XCODE_CUA_OFFICIAL_PLUGIN_ID);
   const pluginEnabled = cuaPlugin?.enabled === true;
 
   const pluginManagementService = services.pluginManagementService;
@@ -137,9 +140,9 @@ export function useCuaComposerEntry({
         hiddenBySettings,
         permissionServiceAvailable: Boolean(services.cuaPermissionService),
         pluginEnabled,
-        pluginToggling: togglingPluginId === ZCODE_CUA_OFFICIAL_PLUGIN_ID,
+        pluginToggling: togglingPluginId === XCODE_CUA_OFFICIAL_PLUGIN_ID,
         pluginError:
-          Boolean(pluginStoreError) && lastFailedPluginId === ZCODE_CUA_OFFICIAL_PLUGIN_ID,
+          Boolean(pluginStoreError) && lastFailedPluginId === XCODE_CUA_OFFICIAL_PLUGIN_ID,
         permissionStatus: permissionStatus ?? null,
         sessionBusy,
       }),

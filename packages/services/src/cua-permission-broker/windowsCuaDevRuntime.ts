@@ -4,7 +4,7 @@ import type { Stats } from "node:fs";
 import * as fs from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep, win32 as windowsPath } from "node:path";
 
-const DEV_ROOT_ENV = "ZCODE_CUA_DEV_ROOT";
+const DEV_ROOT_ENV = "XCODE_CUA_DEV_ROOT";
 const EXPECTED_PACKAGE_NAME = "@zcode/zcode-cua";
 const PACKAGE_JSON = "package.json";
 const PRODUCT_RUNTIME_MANIFEST = "runtime-manifest.json";
@@ -18,14 +18,14 @@ export interface WindowsCuaRuntime {
   commandEnv: Record<string, string>;
 }
 
-interface WindowsCuaRuntimeFileSystem {
+export interface WindowsCuaRuntimeFileSystem {
   stat(path: string): Promise<Pick<Stats, "isDirectory" | "isFile">>;
   lstat?(path: string): Promise<Pick<Stats, "isDirectory" | "isFile" | "isSymbolicLink">>;
   realpath?(path: string): Promise<string>;
   readFile(path: string, encoding?: "utf8"): Promise<string | Uint8Array>;
 }
 
-interface WindowsCuaRuntimeResolveOptions {
+export interface WindowsCuaRuntimeResolveOptions {
   platform?: NodeJS.Platform;
   env?: NodeJS.ProcessEnv;
   resourcesPath?: string;
@@ -35,7 +35,7 @@ interface WindowsCuaRuntimeResolveOptions {
   hashBytes?: (bytes: string | Uint8Array) => Promise<string>;
 }
 
-type WindowsCuaDevRuntimeResolutionReason =
+export type WindowsCuaDevRuntimeResolutionReason =
   | "unsupported-platform"
   | "development-root-not-absolute"
   | "development-root-not-found"

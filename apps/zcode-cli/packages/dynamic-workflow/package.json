@@ -13,6 +13,10 @@
     "./projections": {
       "types": "./dist/projections.d.ts",
       "import": "./dist/projections.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.js"
     }
   },
   "scripts": {

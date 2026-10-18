@@ -1,8 +1,8 @@
 import {
   buildXCodeEndpointUrls,
   buildXCodeSourceHeadersFromContext,
-  ZCODE_ENV,
-  ZCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV,
+  XCODE_ENV,
+  XCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV,
 } from "@zcode/shared";
 import {
   createSingleFeatureRollout,
@@ -10,20 +10,23 @@ import {
   type SingleFeatureRolloutLogger,
 } from "./singleFeatureRollout.js";
 
-export { ZCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV };
+export { XCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV };
 
-type DesktopContextPromptRolloutLogger = SingleFeatureRolloutLogger;
+export type DesktopContextPromptRolloutLogger = SingleFeatureRolloutLogger;
+export const DESKTOP_CONTEXT_PROMPT_REQUEST_TIMEOUT_MS = 3_000;
 export const DESKTOP_CONTEXT_PROMPT_CACHE_TTL_MS = 60 * 60 * 1_000;
 const DESKTOP_CONTEXT_PROMPT_MAX_RESPONSE_BYTES = 1024 * 1024;
 
-interface DesktopContextPromptConfig {
+export interface DesktopContextPromptConfig {
   enabled: boolean;
   configVersion?: string;
 }
 
-type DesktopContextPromptRollout = SingleFeatureRollout<DesktopContextPromptConfig>;
+export type DesktopContextPromptRollout = SingleFeatureRollout<DesktopContextPromptConfig>;
 
-function resolveDesktopContextPromptConfig(payload: unknown): DesktopContextPromptConfig | null {
+export function resolveDesktopContextPromptConfig(
+  payload: unknown,
+): DesktopContextPromptConfig | null {
   if (typeof payload !== "object" || payload === null) {
     return null;
   }
@@ -116,7 +119,7 @@ export function createElectronDesktopContextPromptConfigFetcher(options: {
         deviceMid: options.deviceMid,
         endpointOrigin,
         platform: process.platform,
-        releaseChannel: ZCODE_ENV,
+        releaseChannel: XCODE_ENV,
         sourceTitle: "electron",
       });
       for (const [name, value] of Object.entries(sourceHeaders)) {

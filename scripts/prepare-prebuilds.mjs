@@ -42,7 +42,7 @@ const rootDir = resolve(scriptDir, "..");
 const desktopDir = join(rootDir, "packages/desktop");
 const mockCdnDir = join(desktopDir, "mock-cdn");
 const version = require(join(rootDir, "package.json")).version;
-const ZCODE_AGENT_RUNTIME = {
+const XCODE_AGENT_RUNTIME = {
   glm: {
     version: readXCodeAgentRuntimeVersion(),
   },
@@ -52,10 +52,10 @@ const nodeVersion = "v22.16.0";
 const componentSchemaVersion = 1;
 const remotePlatforms = ["linux-arm64", "linux-x64", "darwin-arm64", "darwin-x64"];
 const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
-const isBootstrapWithRemote = process.env.ZCODE_BOOTSTRAP_WITH_REMOTE === "1";
+const isBootstrapWithRemote = process.env.XCODE_BOOTSTRAP_WITH_REMOTE === "1";
 
 /**
- * Node dist 下载源。默认走国内镜像，`ZCODE_NODE_DIST_MIRROR` 可覆盖（与
+ * Node dist 下载源。默认走国内镜像，`XCODE_NODE_DIST_MIRROR` 可覆盖（与
  * `.gitlab/ci/00-workflow.yml` 的同名 CI 变量、`scripts/cua-helper-sea-base.mjs` 同一约定）。
  *
  * 这里原本硬编码 `https://nodejs.org/dist`，而 macOS
@@ -70,7 +70,7 @@ const isBootstrapWithRemote = process.env.ZCODE_BOOTSTRAP_WITH_REMOTE === "1";
 export const DEFAULT_NODE_DIST_BASE = "https://cdn.npmmirror.com/binaries/node";
 
 export function nodeDistBase(env = process.env) {
-  const mirror = env.ZCODE_NODE_DIST_MIRROR?.trim();
+  const mirror = env.XCODE_NODE_DIST_MIRROR?.trim();
   return (mirror || DEFAULT_NODE_DIST_BASE).replace(/\/+$/u, "");
 }
 const BROWSER_USE_PLUGIN_PACKAGE_NAME = "@zcode/browser-use-plugin";
@@ -156,6 +156,25 @@ const excludedOfficialPluginAssetNames = new Set([
 function shouldCopyOfficialPluginAsset(sourcePath) {
   const name = basename(sourcePath);
   return !excludedOfficialPluginAssetNames.has(name) && !name.endsWith(".pyc");
+}
+
+/**
+ * Bugfix: `cpSync(src, dest, { recursive: true })` 在含非 ASCII 字符的 Windows 路径下会直接
+ * 让进程以 `0xC0000409` (STATUS_STACK_BUFFER_OVERRUN) 崩溃 —— 不是抛错，是整个 node 进程
+ * 被 abort 掉。本仓库位于 `D:\我的项目\...`，mock-cdn 的复用路径必然踩中。
+ *
+ * 根因在 Node 自身的实现：`lib/internal/fs/cp/cp-sync.js` 的 `copyDir()` 里，
+ * **只有在调用方没有传 `filter` 时**才会走 C++ 快路径 `fsBinding.cpSyncCopyDir()`；
+ * 传了 `filter` 就退回纯 JS 的 `opendirSync` 逐项复制。崩的是那条 C++ 快路径
+ * （Windows 上对非 ASCII 路径的字符串处理有缺陷），JS 路径不受影响。
+ *
+ * 所以这里统一走 `copyDirectorySync()`：显式传一个恒真的 `filter`，把递归复制钉在
+ * JS 实现上。语义与原来的 `cpSync(..., { recursive: true })` 完全一致（都复制全部内容、
+ * 都递归子目录），只是换掉会崩的那条实现路径。
+ */
+function copyDirectorySync(sourcePath, targetPath, filter = () => true) {
+  // 默认的恒真 filter 不是为了筛任何东西，只为禁用 Node 的 C++ 快路径（见上方说明）。
+  cpSync(sourcePath, targetPath, { recursive: true, force: true, filter });
 }
 const remoteOfficialPluginRequiredPaths = [
   "packages/browser-use-plugin/.zcode-plugin/plugin.json",
@@ -304,7 +323,7 @@ async function prepareNodeBinaries() {
     } catch (error) {
       console.error(`  [error] 下载或解压失败: ${url}`);
       console.error(
-        `  [error] 请检查 CI runner 的外网访问、tar/xz 依赖，或用 ZCODE_NODE_DIST_MIRROR 覆盖下载源（当前 ${nodeDistBase()}）`,
+        `  [error] 请检查 CI runner 的外网访问、tar/xz 依赖，或用 XCODE_NODE_DIST_MIRROR 覆盖下载源（当前 ${nodeDistBase()}）`,
       );
       throw error;
     }
@@ -480,10 +499,7 @@ function stageRemoteOfficialPlugins(glmDir) {
     for (const entryName of remoteOfficialPluginTopLevelPaths) {
       const sourcePath = join(sourceRoot, entryName);
       if (!existsSync(sourcePath)) continue;
-      cpSync(sourcePath, join(targetRoot, entryName), {
-        recursive: true,
-        filter: shouldCopyOfficialPluginAsset,
-      });
+      copyDirectorySync(sourcePath, join(targetRoot, entryName), shouldCopyOfficialPluginAsset);
     }
     for (const relativePath of remoteOfficialPluginRequiredPaths) {
       if (!relativePath.startsWith(`${plugin.stagedPath}/`)) continue;
@@ -767,7 +783,8 @@ export function restoreReusableReleaseAssets({
           // 目标目录存在但关键文件不完整时不能跳过复用，先清掉再用历史 release 的完整资源修复。
           rmSync(targetPath, { force: true, recursive: true });
         }
-        cpSync(sourcePath, targetPath, { recursive: true });
+        // 非 ASCII 仓库路径下必须走 JS 复制实现，否则 node 会以 0xC0000409 崩掉。
+        copyDirectorySync(sourcePath, targetPath);
         console.log(
           `  [reuse] ${componentDefinition.id} ${platformKey} from ${basename(previousReleaseDir)}`,
         );
@@ -837,8 +854,8 @@ export function buildRemoteComponentDefinitions(platformKey) {
     {
       id: "glm",
       // GLM native binary 之前固定成 v1，二进制版本升级后不会触发组件 cache 失效。
-      // 这里复用 ZCODE_AGENT_RUNTIME.glm.version，保持 manifest 版本与运行时描述一致。
-      semanticPrefix: ZCODE_AGENT_RUNTIME.glm.version,
+      // 这里复用 XCODE_AGENT_RUNTIME.glm.version，保持 manifest 版本与运行时描述一致。
+      semanticPrefix: XCODE_AGENT_RUNTIME.glm.version,
       mount: joinPosix("glm", platformKey),
       sourcePath: join(releaseDir, "glm", platformKey),
     },

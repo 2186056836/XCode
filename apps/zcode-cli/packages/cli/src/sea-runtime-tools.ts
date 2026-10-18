@@ -6,7 +6,7 @@ import { getRuntimeToolRuntime, type RuntimeToolId } from "@zcode/shared/runtime
 
 type CliEnv = Record<string, string | undefined>;
 
-interface SeaRuntimeModule {
+export interface SeaRuntimeModule {
   getAsset(key: string, encoding: "utf8"): string;
   getRawAsset(key: string): ArrayBuffer;
   isSea(): boolean;
@@ -36,7 +36,7 @@ interface RuntimeToolMarker {
   version: 1;
 }
 
-interface EnsureSeaRuntimeToolsOptions {
+export interface EnsureSeaRuntimeToolsOptions {
   arch?: string;
   env?: CliEnv;
   platform?: NodeJS.Platform;
@@ -65,7 +65,7 @@ export async function ensureSeaRuntimeTools(
   }
 
   const env = options.env ?? process.env;
-  const configuredStorageRoot = options.storageRoot ?? env.ZCODE_STORAGE_DIR?.trim();
+  const configuredStorageRoot = options.storageRoot ?? env.XCODE_STORAGE_DIR?.trim();
   const storageRoot = configuredStorageRoot || join(homedir(), ".xcode");
   const runtimeEnv: CliEnv = {};
 

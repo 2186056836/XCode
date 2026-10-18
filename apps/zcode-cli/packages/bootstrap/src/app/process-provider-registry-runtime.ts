@@ -8,7 +8,7 @@ import {
 import {
   isBuiltinModelProviderId,
   resolveRuntimeXCodeEndpointOrigin,
-  ZCODE_VERSION,
+  XCODE_VERSION,
 } from "@zcode/shared";
 import { dirname, join } from "node:path";
 import {
@@ -17,7 +17,7 @@ import {
   resolveNodeProviderRuntimePaths,
   downloadXCodeBuiltinRelease,
   resolveXCodeBuiltinClientPlatform,
-  ZCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV,
+  XCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV,
   type XCodeBuiltinRefreshEvent,
 } from "@zcode/provider-node";
 import {
@@ -57,7 +57,7 @@ export async function startProcessProviderRegistryRuntime(
     : undefined;
   let standaloneAccount: AccountProviderService | undefined;
   const bundledFile = options.standalone
-    ? env[ZCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV]?.trim()
+    ? env[XCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV]?.trim()
     : undefined;
   const runtime = new NodeProviderRegistryRuntime({
     ...paths,
@@ -75,7 +75,7 @@ export async function startProcessProviderRegistryRuntime(
               downloadXCodeBuiltinRelease({
                 endpointOrigin,
                 signal,
-                appVersion: ZCODE_VERSION,
+                appVersion: XCODE_VERSION,
                 platform: resolveXCodeBuiltinClientPlatform(),
                 request: options.standalone?.request ?? globalThis.fetch,
               }),
@@ -95,9 +95,15 @@ export async function startProcessProviderRegistryRuntime(
                 const snapshot = await readStandaloneAccountProviderConfigSnapshot(
                   credentialStore,
                   env,
-                  { revision: configRevision, providers: configuredProviders },
+                  {
+                    revision: configRevision,
+                    providers: configuredProviders,
+                  },
                 );
-                return { providers: snapshot.providers, states: snapshot.states ?? {} };
+                return {
+                  providers: snapshot.providers,
+                  states: snapshot.states ?? {},
+                };
               },
             });
             standaloneAccount.onDidRefreshError(({ error }) => {
@@ -133,7 +139,11 @@ export async function startProcessProviderRegistryRuntime(
       })
     : undefined;
   // 复用 AccountService 的串行、过期结果丢弃机制，凭据变化与 Built-in 变化不能各自发布。
+  const standaloneHeaders = credentialStore
+    ? createStandaloneProviderRuntimeHeadersPort(credentialStore, env)
+    : undefined;
   const disposeCredentialSubscription = credentialStore?.onDidChange?.(async () => {
+    await standaloneHeaders?.invalidateChangedCredentials();
     await standaloneAccount!.refresh("standalone-credentials-changed");
     await runtime.registryService.refresh("standalone-credentials-barrier");
   });
@@ -158,6 +168,7 @@ export async function startProcessProviderRegistryRuntime(
         },
         dispose() {
           disposeCredentialSubscription?.();
+          standaloneHeaders?.clearProjectTokens();
           disposeRecovery?.();
           standaloneAccount?.dispose();
           modelSelectionConfigRepository.dispose();
@@ -165,10 +176,7 @@ export async function startProcessProviderRegistryRuntime(
         },
         ...(credentialStore
           ? {
-              providerRuntimeHeadersPort: createStandaloneProviderRuntimeHeadersPort(
-                credentialStore,
-                env,
-              ),
+              providerRuntimeHeadersPort: standaloneHeaders!,
             }
           : {}),
         runtime,

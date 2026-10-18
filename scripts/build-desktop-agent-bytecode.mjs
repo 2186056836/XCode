@@ -28,7 +28,7 @@ export async function buildDesktopAgentBytecode({
   electronPath = createRequire(import.meta.url)("electron"),
   env = process.env,
 } = {}) {
-  if (env.ZCODE_E2E_COVERAGE === "1") throw new Error("coverage 构建不能启用字节码试验");
+  if (env.XCODE_E2E_COVERAGE === "1") throw new Error("coverage 构建不能启用字节码试验");
   const directory = dirname(entryPath);
   const temporary = join(directory, `.bytecode-${randomUUID()}`);
   const loaderPath = join(directory, "zcode.bytecode.cjs");

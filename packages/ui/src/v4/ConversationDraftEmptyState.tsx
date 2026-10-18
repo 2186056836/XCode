@@ -15,7 +15,7 @@ const GREETING_BOUNDARY_HOURS = [5, 9, 12, 14, 18, 23] as const;
 const GREETING_MIN_FONT_SIZE_PX = 20;
 const GREETING_MAX_FONT_SIZE_PX = 30;
 
-type ChatEmptyGreetingMessageId =
+export type ChatEmptyGreetingMessageId =
   | "chat.empty.greeting.morningEarly"
   | "chat.empty.greeting.morning"
   | "chat.empty.greeting.noon"
@@ -23,7 +23,9 @@ type ChatEmptyGreetingMessageId =
   | "chat.empty.greeting.evening"
   | "chat.empty.greeting.lateNight";
 
-function getChatEmptyGreetingMessageId(date: Date = new Date()): ChatEmptyGreetingMessageId {
+export function getChatEmptyGreetingMessageId(
+  date: Date = new Date(),
+): ChatEmptyGreetingMessageId {
   const hour = date.getHours();
 
   if (hour >= 5 && hour < 9) return "chat.empty.greeting.morningEarly";
@@ -35,7 +37,7 @@ function getChatEmptyGreetingMessageId(date: Date = new Date()): ChatEmptyGreeti
   return "chat.empty.greeting.lateNight";
 }
 
-function getNextChatEmptyGreetingDelayMs(date: Date = new Date()) {
+export function getNextChatEmptyGreetingDelayMs(date: Date = new Date()) {
   const candidates = GREETING_BOUNDARY_HOURS.map((hour) => {
     const boundary = new Date(date);
     boundary.setHours(hour, 0, 0, 0);
@@ -46,18 +48,24 @@ function getNextChatEmptyGreetingDelayMs(date: Date = new Date()) {
   tomorrowFirstBoundary.setHours(GREETING_BOUNDARY_HOURS[0], 0, 0, 0);
 
   const nextBoundary =
-    candidates.find((candidate) => candidate.getTime() > date.getTime()) ?? tomorrowFirstBoundary;
+    candidates.find((candidate) => candidate.getTime() > date.getTime()) ??
+    tomorrowFirstBoundary;
 
   return Math.max(1, nextBoundary.getTime() - date.getTime());
 }
 
-function resolveGreetingFontSizePx({
+export function resolveGreetingFontSizePx({
   availableWidthPx,
   naturalTextWidthPx,
+  compactForRemoteControl = false,
 }: {
   availableWidthPx: number;
   naturalTextWidthPx: number;
+  compactForRemoteControl?: boolean;
 }) {
+  if (compactForRemoteControl) {
+    return GREETING_MIN_FONT_SIZE_PX;
+  }
   if (
     !Number.isFinite(availableWidthPx) ||
     !Number.isFinite(naturalTextWidthPx) ||
@@ -72,23 +80,35 @@ function resolveGreetingFontSizePx({
     GREETING_MIN_FONT_SIZE_PX,
     Math.min(
       GREETING_MAX_FONT_SIZE_PX,
-      Math.floor(GREETING_MAX_FONT_SIZE_PX * (availableWidthPx / naturalTextWidthPx)),
+      Math.floor(
+        GREETING_MAX_FONT_SIZE_PX * (availableWidthPx / naturalTextWidthPx),
+      ),
     ),
   );
 }
 
-export function ConversationDraftEmptyState({ className }: { className?: string }) {
+export function ConversationDraftEmptyState({
+  className,
+  compactForRemoteControl = false,
+}: {
+  className?: string;
+  compactForRemoteControl?: boolean;
+}) {
   const { intl } = useXCodeIntl();
   const isOfficeMode = useIsOfficeMode();
   // 自定义皮肤开启时隐藏品牌 X 水印背景（背景图/皮肤自己铺底，不再叠官方 logo）。
   const { settings: appSettings } = useSettings();
   const hasCustomSkin = Boolean(appSettings?.customSkin);
   const [greetingDate, setGreetingDate] = useState(() => new Date());
-  const [greetingFontSizePx, setGreetingFontSizePx] = useState(GREETING_MAX_FONT_SIZE_PX);
+  const [greetingFontSizePx, setGreetingFontSizePx] = useState(
+    GREETING_MAX_FONT_SIZE_PX,
+  );
   const greetingContainerRef = useRef<HTMLParagraphElement | null>(null);
   const greetingMeasurementRef = useRef<HTMLSpanElement | null>(null);
   const greeting = intl.formatMessage({
-    id: isOfficeMode ? "chat.empty.greeting.office" : getChatEmptyGreetingMessageId(greetingDate),
+    id: isOfficeMode
+      ? "chat.empty.greeting.office"
+      : getChatEmptyGreetingMessageId(greetingDate),
   });
 
   useEffect(() => {
@@ -102,6 +122,10 @@ export function ConversationDraftEmptyState({ className }: { className?: string 
   }, [greetingDate]);
 
   useLayoutEffect(() => {
+    if (compactForRemoteControl) {
+      setGreetingFontSizePx(GREETING_MIN_FONT_SIZE_PX);
+      return;
+    }
     const container = greetingContainerRef.current;
     const measurement = greetingMeasurementRef.current;
     if (!container || !measurement) {
@@ -168,7 +192,7 @@ export function ConversationDraftEmptyState({ className }: { className?: string 
       }
       observer.disconnect();
     };
-  }, [greeting]);
+  }, [compactForRemoteControl, greeting]);
 
   return (
     <div
@@ -196,7 +220,9 @@ export function ConversationDraftEmptyState({ className }: { className?: string 
         }
         className={cn(
           "relative z-10 w-full px-4 text-center font-medium text-foreground",
-          "text-[length:var(--v4-draft-greeting-font-size)]/[1.2]",
+          compactForRemoteControl
+            ? "text-xl/[1.2]"
+            : "text-[length:var(--v4-draft-greeting-font-size)]/[1.2]",
         )}
       >
         <span

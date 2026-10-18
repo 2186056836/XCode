@@ -109,7 +109,7 @@ function shouldInheritLoginShellEnvKey(key: string): boolean {
   return INHERITED_LOGIN_SHELL_ENV_KEY_PATTERNS.some((pattern) => pattern.test(key));
 }
 
-function buildLoginShellEnvPatch(
+export function buildLoginShellEnvPatch(
   snapshot: Record<string, string | undefined>,
 ): Record<string, string> {
   const patch: Record<string, string> = {};
@@ -261,7 +261,7 @@ export function initializeRuntimeProcessEnv(
   const runtimeProcessEnvPatch =
     preparedRuntimeProcessEnvPatch ?? buildRuntimeProcessEnvPatch(normalizedProcessEnv);
   // host/agent 运行时不能直接继承用户 shell 里的 NODE_ENV、http_proxy 或证书变量。
-  // 网络变量会先封存为 ZCODE_TOOL_ENV_PASSTHROUGH_JSON，只有 Bash/tool 子进程边界才恢复原名。
+  // 网络变量会先封存为 XCODE_TOOL_ENV_PASSTHROUGH_JSON，只有 Bash/tool 子进程边界才恢复原名。
   sanitizeXCodeRuntimeEnvInPlace(process.env);
   Object.assign(process.env, runtimeProcessEnvPatch);
 }

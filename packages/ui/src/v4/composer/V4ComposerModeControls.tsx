@@ -4,7 +4,7 @@ import {
   TID_CHAT_MODE_SELECT_TRIGGER,
   TID_CHAT_MODE_SELECT_ITEM,
   TID_V4_COMPOSER_INPUT,
-  ZCODE_AGENT_PROVIDER,
+  XCODE_AGENT_PROVIDER,
   getXCodeAgentAvailableModes,
   testId,
   type XCodeConfigOption,
@@ -57,11 +57,14 @@ function V4ComposerModeSwitchImpl({
   | "onSwitchMode"
 >) {
   const { intl } = useXCodeIntl();
-  const displayProvider = provider ?? ZCODE_AGENT_PROVIDER;
+  const displayProvider = provider ?? XCODE_AGENT_PROVIDER;
   const modeShortcutLabel = useShortcutCommandLabel("cycleSessionMode");
   const modes = getXCodeAgentAvailableModes();
   const permissions = modes.filter((mode) => mode.id !== "plan");
-  const selected = permissions.find((mode) => mode.id === draftConfig?.mode);
+  // 新菜单隐藏 Edit，但历史草稿仍可回显，不能因候选变化隐藏整个权限入口。
+  const selected =
+    permissions.find((mode) => mode.id === draftConfig?.mode) ??
+    (draftConfig?.mode === "edit" ? { id: "edit", name: "Edit" } : undefined);
   const label = (mode: (typeof modes)[number]) =>
     getModeOptionDisplayLabel(intl, displayProvider, { value: mode.id, name: mode.name });
   const plan = modes.find((mode) => mode.id === "plan")!;
@@ -118,6 +121,8 @@ function V4ComposerModeSwitchImpl({
               className={cn(
                 "group/mode h-7 gap-1 rounded-lg px-2 text-ui-base data-[composer-compact=true]:w-7 data-[composer-compact=true]:px-0",
                 selected.id === "yolo" && "text-warning hover:text-warning",
+                selected.id === "guarded" &&
+                  "text-icon-blue hover:text-icon-blue aria-expanded:text-icon-blue",
               )}
             >
               <Icon className="size-4" />

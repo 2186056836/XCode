@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { existsSync, readFileSync } from "node:fs";
 import type {
   XCodeAgentMcpServer,
   XCodeSessionImportHistory,
@@ -14,13 +14,15 @@ import { claudeNativeSessionImportRepo } from "#src/session/claude-native/claude
 import { parseClaudeNativeSessionFile } from "#src/session/claude-native/claudeNativeSessionImportParser.js";
 import { safeParseLegacyTaskSessionFile } from "#src/session/legacyTaskSessionFile.js";
 
-interface ImportedClaudeHistoryRepairTarget {
+export interface ImportedClaudeHistoryRepairTarget {
   workspacePath: string;
   workspaceIdentity?: string;
   taskId: string;
 }
 
-interface ImportedClaudeHistoryRepairResult {
+export interface ImportedClaudeHistoryRepairResult {
+  // fork 保留：上游 1010 删掉了 traceId，但 fork 的 zcodeTaskServiceAdapter 仍以
+  // `history.traceId ?? createSessionTraceId()` 恢复会话 trace。删除会导致 TS2339。
   traceId?: string;
   title?: string;
   createdAt?: number;
@@ -29,11 +31,11 @@ interface ImportedClaudeHistoryRepairResult {
   source: "legacySnapshot" | "nativeJsonl";
 }
 
-interface ImportedClaudeSessionRepairTarget extends ImportedClaudeHistoryRepairTarget {
+export interface ImportedClaudeSessionRepairTarget extends ImportedClaudeHistoryRepairTarget {
   mcpServers?: XCodeAgentMcpServer[];
 }
 
-interface ImportedClaudeSessionRepairCreateParams {
+export interface ImportedClaudeSessionRepairCreateParams {
   workspacePath: string;
   workspaceIdentity?: string;
   sessionId: string;
@@ -61,7 +63,7 @@ function countAssistantMessages(messages: readonly XCodeSessionImportMessage[]):
   return messages.filter((message) => message.role === "assistant").length;
 }
 
-function shouldRepairImportedClaudeSnapshot(
+export function shouldRepairImportedClaudeSnapshot(
   snapshot: Pick<XCodeSessionStateSnapshot, "messages" | "runtime" | "session">,
 ): boolean {
   if (snapshot.session.status === "running" || snapshot.runtime.activeTurnId) {
@@ -89,36 +91,36 @@ function shouldRepairImportedClaudeSnapshot(
   return hasLegacyFixedMessageIds;
 }
 
-export async function readLegacyImportedClaudeHistory(
+// fork 保留 export：上游 1010 已将其收为模块私有，但 fork 的 zcodeTaskServiceAdapter.ts 仍按
+// 具名导入使用（await 非 Promise 值在运行时安全）。删除 export 会导致 TS2459。
+export function readLegacyImportedClaudeHistory(
   target: ImportedClaudeHistoryRepairTarget,
-): Promise<ImportedClaudeHistoryRepairResult | null> {
-  const snapshotPaths = [
-    getLegacyTaskSessionSnapshotPath(target.workspacePath, target.taskId, target.workspaceIdentity),
+): ImportedClaudeHistoryRepairResult | null {
+  const snapshotPath = [
+    getLegacyTaskSessionSnapshotPath(
+      target.workspacePath,
+      target.taskId,
+      target.workspaceIdentity,
+    ),
     getLegacyDeletedTaskSessionSnapshotPath(
       target.workspacePath,
       target.taskId,
       target.workspaceIdentity,
     ),
-  ];
-  let raw: string | undefined;
-  for (const path of snapshotPaths) {
-    try {
-      raw = await readFile(path, "utf-8");
-      break;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-    }
+  ].find((path) => existsSync(path));
+  if (!snapshotPath) {
+    return null;
   }
-  if (raw === undefined) return null;
 
-  const parsed = safeParseLegacyTaskSessionFile(JSON.parse(raw) as unknown);
+  const parsed = safeParseLegacyTaskSessionFile(
+    JSON.parse(readFileSync(snapshotPath, "utf-8")) as unknown,
+  );
   if (!parsed.success || parsed.data.meta.migrationSource !== "claudeCode") {
     return null;
   }
   const messages = toImportMessages(parsed.data.messages);
   return messages.length > 0
     ? {
-        traceId: parsed.data.meta.traceId,
         title: parsed.data.meta.title,
         createdAt: parsed.data.meta.createdAt,
         updatedAt: parsed.data.meta.updatedAt,
@@ -161,10 +163,10 @@ async function readNativeImportedClaudeHistory(
     : null;
 }
 
-async function resolveImportedClaudeHistoryForRepair(
+export async function resolveImportedClaudeHistoryForRepair(
   target: ImportedClaudeHistoryRepairTarget,
 ): Promise<ImportedClaudeHistoryRepairResult | null> {
-  const legacyHistory = await readLegacyImportedClaudeHistory(target);
+  const legacyHistory = readLegacyImportedClaudeHistory(target);
   if (legacyHistory && countAssistantMessages(legacyHistory.messages) > 0) {
     return legacyHistory;
   }
@@ -172,8 +174,7 @@ async function resolveImportedClaudeHistoryForRepair(
   const nativeHistory = await readNativeImportedClaudeHistory(target);
   if (
     nativeHistory &&
-    countAssistantMessages(nativeHistory.messages) >=
-      countAssistantMessages(legacyHistory?.messages ?? [])
+    countAssistantMessages(nativeHistory.messages) >= countAssistantMessages(legacyHistory?.messages ?? [])
   ) {
     // 旧版本可能已经把 user-only 的 legacy 备份写坏了。
     // 这时 legacy 不能再作为权威来源，需要按 taskId 反查原 Claude jsonl 重建 assistant。

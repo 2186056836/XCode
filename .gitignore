@@ -72,3 +72,8 @@ packages/desktop/.e2e-network-capture/
 
 # fork 开发日志，不随仓库分发
 XCODE-DEVLOG.md
+apps/zcode-cli/packages/node-repl-host/dist-types/
+**/dist-types/
+
+# tsc 产物：cli 包 tsconfig 无 outDir，构建时落在 src 旁
+apps/zcode-cli/packages/cli/src/**/*.js

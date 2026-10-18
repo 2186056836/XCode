@@ -56,12 +56,13 @@ export class OffPeakModelUnavailableError extends OffPeakPermanentDispatchError 
   }
 }
 
-const ZCODE_JWT_TOKEN_KEY = "zcodejwttoken";
+const XCODE_JWT_TOKEN_KEY = "zcodejwttoken";
 const ACTIVE_OAUTH_PROVIDER_KEY = "oauth:active_provider";
 
 export interface OffPeakCredentialSnapshot {
   jwt: string;
   codingPlanApiKey: string;
+  accountScope?: string;
   kind: OffPeakCodingPlanKind;
   providerFamily: "zai" | "bigmodel";
   providerId: string;
@@ -136,8 +137,8 @@ export async function resolveOffPeakCredentials(
   options: { allowMockCredentials?: boolean } = {},
 ): Promise<OffPeakCredentialSnapshot> {
   const env = deps.env ?? process.env;
-  if (options.allowMockCredentials !== false && env["ZCODE_OFFPEAK_MOCK"] === "1") {
-    if (env["ZCODE_OFFPEAK_MOCK_NO_PLAN"] === "1") {
+  if (options.allowMockCredentials !== false && env["XCODE_OFFPEAK_MOCK"] === "1") {
+    if (env["XCODE_OFFPEAK_MOCK_NO_PLAN"] === "1") {
       throw new OffPeakCodingPlanUnavailableError("connection_unavailable");
     }
     // mock 网关不校验凭证；使用确定性 metadata 让 UI 和 ticket/runtime 仍共享同一 support 形状。
@@ -161,7 +162,7 @@ export async function resolveOffPeakCredentials(
       // ZAI JWT 与 BigModel key（或反向）拼到同一请求，服务端只能在取号时才拒绝。
       throw new OffPeakCodingPlanUnavailableError("provider_identity_mismatch");
     }
-    const jwt = (await deps.credentialService.load(ZCODE_JWT_TOKEN_KEY))?.trim() ?? "";
+    const jwt = (await deps.credentialService.load(XCODE_JWT_TOKEN_KEY))?.trim() ?? "";
     if (!jwt) {
       throw new OffPeakCredentialsUnavailableError("jwt");
     }
@@ -187,6 +188,7 @@ export async function resolveOffPeakCredentials(
       throw new OffPeakCodingPlanUnavailableError("connection_unavailable");
     }
     let codingPlanApiKey = "";
+    let accountScope: string | undefined;
     try {
       const auth = await deps.accountRequestAuthService.resolveCurrent({
         providerId: selection.providerId,
@@ -195,6 +197,7 @@ export async function resolveOffPeakCredentials(
         reason: "off-peak",
       });
       codingPlanApiKey = auth.apiKey?.trim() ?? "";
+      accountScope = auth.accountScope;
     } catch (error) {
       if (error instanceof AccountRequestCredentialUnavailableError) {
         throw new OffPeakCredentialsUnavailableError("codingPlanApiKey");
@@ -208,6 +211,7 @@ export async function resolveOffPeakCredentials(
       ...selection,
       jwt,
       codingPlanApiKey,
+      ...(accountScope ? { accountScope } : {}),
       ...(provider.baseURL ? { providerBaseURL: provider.baseURL } : {}),
     };
   }
@@ -246,10 +250,11 @@ export function buildOffPeakPlanIdentityHeaders(
 export function buildOffPeakRequestAuth(params: {
   credentials: OffPeakCredentialSnapshot;
   ticketId: string;
-}): { apiKey: string; headers: Record<string, string> } {
+}): { apiKey: string; headers: Record<string, string>; accountScope?: string } {
   return {
     // Anthropic 兼容客户端会发送 x-api-key；服务端仍以 Authorization 与计划 Key 裁决。
     apiKey: params.credentials.jwt,
+    ...(params.credentials.accountScope ? { accountScope: params.credentials.accountScope } : {}),
     headers: {
       Authorization: `Bearer ${params.credentials.jwt}`,
       "X-Coding-Plan-Api-Key": params.credentials.codingPlanApiKey,

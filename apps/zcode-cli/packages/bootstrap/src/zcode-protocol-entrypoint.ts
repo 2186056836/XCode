@@ -1,4 +1,5 @@
 import { createConfig } from "@zcode/adapters/config";
+import type { McpElicitationPort, McpNotificationPort } from "@zcode/contracts";
 import { createNodeModelSelectionFacade } from "@zcode/provider-node";
 import { createNodeLoggerFactory } from "@zcode/adapters/logging";
 import {
@@ -29,6 +30,7 @@ import {
 import { closeSessionStore, getSessionDbPath } from "./app/session-store.js";
 import { startProcessProviderRegistryRuntime } from "./app/process-provider-registry-runtime.js";
 import { scheduleStartupLogRetentionCleanup } from "./log-retention.js";
+import { resolveProcessProviderEndpointRoutingPort } from "./provider-endpoint-routing.js";
 import { StartupTimer, startupNow } from "./startup-logging.js";
 import { installXCodeProtocolAiSdkWarningLogger } from "./zcode-protocol/ai-sdk-warning-logger.js";
 import {
@@ -38,7 +40,7 @@ import {
 import {
   createOfficialMcpTrustedOriginRegistry,
   OFFICIAL_MCP_DEV_TRUSTED_ORIGINS_ENV,
-  ZCODE_WORKSPACE_IDENTITY_ENV,
+  XCODE_WORKSPACE_IDENTITY_ENV,
   resolveRuntimeXCodeEndpointOrigin,
 } from "@zcode/shared";
 import { XCodeProtocolAgentServer } from "./zcode-protocol/server.js";
@@ -46,10 +48,10 @@ import { XCodeProtocolNdjsonConnection } from "./zcode-protocol/transport.js";
 import { cleanupProtocolRuntime } from "./zcode-protocol/runtime-cleanup.js";
 import { startProtocolResourceSampler } from "./zcode-protocol/resource-sampler.js";
 import { acquireProtocolStartupResource } from "./zcode-protocol/startup-resource.js";
-import type { XCodeProcessResourceSampler } from "./process-resource-sampler.js";
 import { prepareXCodeTelemetryEnv, shutdownXCodeTelemetry } from "./telemetry-bootstrap.js";
+import type { XCodeProcessResourceSampler } from "./process-resource-sampler.js";
 
-function applyProtocolPresentationSurface(
+export function applyProtocolPresentationSurface(
   options: Omit<XCodeAppOptions, "providerRegistry">,
   presentationSurface: PresentationSurface,
 ): Omit<XCodeAppOptions, "providerRegistry"> {
@@ -67,7 +69,7 @@ function applyProtocolPresentationSurface(
  *
  * 旧 workspace snapshot 不再参与 Provider 和 Model 执行。
  */
-function applyProtocolProviderRegistry(
+export function applyProtocolProviderRegistry(
   options: Omit<XCodeAppOptions, "providerRegistry">,
   providerRegistry: XCodeAppOptions["providerRegistry"],
   configuredDefaultModelSelection?: ModelSelection,
@@ -175,20 +177,29 @@ export async function runXCodeProtocolAgent(
       create: () =>
         prepareXCodeTelemetryEnv(runtimeEnv, {
           cliVersion: options.version,
-          productVersion: options.env?.ZCODE_APP_VERSION,
+          productVersion: options.env?.XCODE_APP_VERSION,
           runtimeSurface,
         }),
     });
-    const telemetryDeviceMid = telemetryEnv.ZCODE_TELEMETRY_DEVICE_MID;
+    const telemetryDeviceMid = telemetryEnv.XCODE_TELEMETRY_DEVICE_MID;
     mcpTelemetryTracker =
       configResult.config.features.mcp === false
         ? undefined
         : createMcpTelemetryTracker({
-            idSalt: traceContext.traceId,
+            idSalt: telemetryDeviceMid ?? traceContext.traceId,
             onEvent: (event) => mcpTelemetrySink?.(event),
             onResourceSamples: (samples) => mcpResourceSink?.(samples),
           });
-    // 官方 MCP 身份头端口：连接池构造早于 server，故用惰性 holder 回填。
+    const providerEndpointRoutingPort =
+      options.providerEndpointRoutingPort ??
+      resolveProcessProviderEndpointRoutingPort({
+        appVersion: options.version,
+        env: options.env,
+        logger,
+        network: configResult.config.network,
+        sourceTitle: "electron",
+      });
+    // 官方 MCP 身份头端口（spec §7.1/§7.2）：连接池构造早于 server，故用惰性 holder 回填。
     // server 就绪前该端口返回 official_auth_unavailable；HTTP tools/call 会匿名交给服务端
     // 返回结构化权限错误，stdio 则把 reason 下发给插件。连接与工具发现都不受影响。
     let officialMcpAuthContext: OfficialMcpAuthRequestContext | undefined;
@@ -196,7 +207,7 @@ export async function runXCodeProtocolAgent(
     // 与下面 trustedOrigins 的 resolveXCodeApiOrigin 必须是同一个表达式，否则两侧判定分叉。
     const resolveXCodeApiOrigin = (): string =>
       resolveRuntimeXCodeEndpointOrigin(options.env ?? process.env);
-    const workspaceIdentity = (options.env ?? process.env)[ZCODE_WORKSPACE_IDENTITY_ENV]?.trim();
+    const workspaceIdentity = (options.env ?? process.env)[XCODE_WORKSPACE_IDENTITY_ENV]?.trim();
     const officialMcpAuth = {
       authHeadersPort: createOfficialMcpAuthHeadersPort({
         resolveContext: () => officialMcpAuthContext,
@@ -224,10 +235,26 @@ export async function runXCodeProtocolAgent(
         resolveXCodeApiOrigin,
       }),
     };
+    // MCP elicitation 归属到协议 server 的会话；pool 先于 server 创建，端口延迟绑定。
+    let elicitationServer: {
+      requestMcpElicitation: McpElicitationPort["requestElicitation"];
+      handleMcpNotification: McpNotificationPort["onNotification"];
+    } | null = null;
     mcpConnectionPool =
       configResult.config.features.mcp === false
         ? undefined
         : createMcpAdapterConnectionPool({
+            elicitation: {
+              requestElicitation: (request, elicitationOptions) =>
+                elicitationServer
+                  ? elicitationServer.requestMcpElicitation(request, elicitationOptions)
+                  : Promise.resolve({ action: "decline" as const }),
+            },
+            // server 通知同样延迟绑定到协议 server。
+            notifications: {
+              onNotification: (notification) =>
+                elicitationServer?.handleMcpNotification(notification),
+            },
             clientVersion: options.version ?? "0.0.0",
             env: options.env,
             logger,
@@ -265,7 +292,7 @@ export async function runXCodeProtocolAgent(
           env: {
             ...telemetryEnv,
             ...appOptions.env,
-            ...(telemetryDeviceMid ? { ZCODE_TELEMETRY_DEVICE_MID: telemetryDeviceMid } : {}),
+            ...(telemetryDeviceMid ? { XCODE_TELEMETRY_DEVICE_MID: telemetryDeviceMid } : {}),
           },
           ...(nodeReplBrowserBroker ? { nodeReplBrowserBroker } : {}),
           ...(mcpConnectionPool
@@ -277,6 +304,7 @@ export async function runXCodeProtocolAgent(
                   }),
               }
             : {}),
+          providerEndpointRoutingPort,
           sourceTitle: "electron",
           onToolExecResource: (params) =>
             connection.send({ method: zcodeProtocolNotifications.toolExecResource, params }),
@@ -294,6 +322,7 @@ export async function runXCodeProtocolAgent(
       version: options.version,
     }));
     officialMcpAuthContext = server.officialMcpAuthRequestContext;
+    elicitationServer = server;
     if (configResult.config.features.mcp !== false) {
       nodeReplBrowserBroker = createNodeReplBrowserBroker({
         browserControlPort: server.browserControlPort,
@@ -380,7 +409,7 @@ function resolveProtocolRuntimeSurface(
   env: NodeJS.ProcessEnv,
 ): "desktop_local_host" | "remote_workspace_host" {
   // Bug 根因：入口曾无条件覆盖 Host 注入值，远程 SSH/WSL/容器 Trace 被归入本地 Desktop。
-  return env.ZCODE_TELEMETRY_RUNTIME_SURFACE?.trim() === "remote_workspace_host"
+  return env.XCODE_TELEMETRY_RUNTIME_SURFACE?.trim() === "remote_workspace_host"
     ? "remote_workspace_host"
     : "desktop_local_host";
 }

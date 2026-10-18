@@ -5,7 +5,7 @@ import { homedir } from "node:os";
 import { join, normalize, resolve, sep } from "node:path";
 import type { XCodeImportableSessionCandidate } from "@zcode/shared";
 import { createServiceLogger } from "#src/logger/serviceLogger.js";
-import { getDataBaseDir, getXCodeDataRootDir } from "#src/paths.js";
+import { getDataBaseDir, getXCodeDataRootDir, getZcodeHomeRoots } from "#src/paths.js";
 
 const require = createRequire(import.meta.url);
 const { DatabaseSync } = require("node:sqlite") as typeof import("node:sqlite");
@@ -52,21 +52,6 @@ export function isSameOrInsidePath(candidate: string, parent: string): boolean {
   const target = normalizePathForComparison(candidate);
   const base = normalizePathForComparison(parent);
   return target === base || target.startsWith(base.endsWith(sep) ? base : `${base}${sep}`);
-}
-
-/** 与 Claude 导入同源的多候选根：真实 HOME、显式环境变量、自定义数据目录。 */
-export function getZcodeHomeRoots(): string[] {
-  const homes = new Set<string>();
-  homes.add(homedir());
-  const envHome = process.env.HOME?.trim() || process.env.USERPROFILE?.trim();
-  if (envHome) {
-    homes.add(envHome);
-  }
-  const dataBaseDir = getDataBaseDir();
-  if (dataBaseDir) {
-    homes.add(dataBaseDir);
-  }
-  return [...homes];
 }
 
 export function getSourceZcodeSessionDbPath(): string | null {

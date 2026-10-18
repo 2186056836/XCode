@@ -13,11 +13,13 @@ import {
 import type { McpTelemetryTracker } from "@zcode/adapters";
 import type { WorkspaceHookPolicyProvider } from "@zcode/core";
 import type { AccountProviderConfigSnapshot } from "@zcode/provider";
+
 import {
   zcodeProtocolErrorCodes,
   type XCodeAutomationBotDeliveryTarget,
   type XCodeDeliveryKind,
   type ModelSelection,
+  type DynamicWorkflowMode,
   type XCodeModelContextBudgetStrategy,
   type XCodeProtocolMessage,
   type XCodeProtocolMethod,
@@ -110,6 +112,8 @@ export interface SessionCustomSystemMessages {
 
 export interface XCodeProtocolSessionRecord {
   app: XCodeApp;
+  /** 1010 新增：子代理运行时配置是否启用（subagents/readRuntimeConfig 的回退依据）。 */
+  subagentRuntimeConfigEnabled?: boolean;
   memoryEnabled: boolean;
   nativeSearchEnhancementsEnabled: boolean;
   modelContextBudgetStrategy: XCodeModelContextBudgetStrategy;
@@ -170,6 +174,8 @@ export interface XCodeProtocolAgentServerContext {
      * 工作流工具面、`/workflow` 与 dynamic-workflows 技能一律不露出。
      */
     dynamicWorkflowEnabled: boolean;
+    /** 1010 新增：与布尔同行的灰度 mode（launch.md「On demand: activation」）；缺省按 alwaysOn。 */
+    dynamicWorkflowMode?: DynamicWorkflowMode;
   };
   // 竖切：v4 conversation 通道（订阅/帧/命令），与旧 session/* 方法并存。
   // 构造顺序问题（gateway 闭包持有 context）用可选字段收口，server 构造完立即赋值。
@@ -189,6 +195,16 @@ export interface XCodeProtocolAgentServerContext {
     options?: XCodeProtocolClientRequestOptions,
   ): Promise<T>;
 }
+
+/** 1010 新增：Protocol 客户端请求失败的错误码（JSON-RPC 自定义段）。 */
+export const PROTOCOL_CLIENT_REQUEST_ERROR_CODES = {
+  /** 没有 XCode Protocol client 挂载，无法投递请求。 */
+  noClientAttached: -32020,
+  /** 请求在收到应答前被取消。 */
+  cancelled: -32021,
+  /** 请求等待应答超时。 */
+  timedOut: -32022,
+} as const;
 
 export class ProtocolRequestError extends Error {
   constructor(

@@ -1,3 +1,4 @@
+import { localRuntimeNetworkCapture } from "#src/zcode-agent/localRuntimeNetworkCapture.js";
 import { resolveXCodeAgentSpawnCwd } from "#src/zcode-agent/zcodeAgentSpawnCwd.js";
 import type { XCodeAgentStorageStartupSnapshot } from "#src/zcode-agent/zcodeAgent.js";
 /* eslint-disable max-lines -- zcodeAgentProcessManager 集中维护 agent 子进程启动、复用、超时回收和 runtime identity，拆分会扩大进程生命周期状态同步面 */
@@ -7,17 +8,19 @@ import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { Emitter } from "@zcode/rpc";
+import { GEN_UI_OUTPUT_DIRECTORY, GEN_UI_OUTPUT_ROOT_ENV } from "@zcode/shared/node";
+import { getAppConfigDir } from "../paths.js";
 import {
   parseXCodeProcessDiagnostic,
-  ZCODE_AGENT_LIFECYCLE_LOG_MARKER,
-  ZCODE_PROCESS_DIAGNOSTIC_NAME_MAX_CHARS,
-  ZCODE_PROCESS_DIAGNOSTIC_MESSAGE_MAX_CHARS,
-  ZCODE_PROCESS_DIAGNOSTIC_STACK_MAX_CHARS,
+  XCODE_AGENT_LIFECYCLE_LOG_MARKER,
+  XCODE_PROCESS_DIAGNOSTIC_NAME_MAX_CHARS,
+  XCODE_PROCESS_DIAGNOSTIC_MESSAGE_MAX_CHARS,
+  XCODE_PROCESS_DIAGNOSTIC_STACK_MAX_CHARS,
 } from "@zcode/shared/process-diagnostic";
 import {
-  ZCODE_AGENT_RUNTIME,
-  ZCODE_AGENT_PROVIDER,
-  ZCODE_RUNTIME_ENV_KEY,
+  XCODE_AGENT_RUNTIME,
+  XCODE_AGENT_PROVIDER,
+  XCODE_RUNTIME_ENV_KEY,
   resolveWorkspaceKey,
   resolveXCodeRuntimeEnv,
   sanitizeXCodeRuntimeEnv,
@@ -84,9 +87,8 @@ export interface XCodeAgentProcessManagerOptions {
    * 每次 spawn agent 子进程前解析的额外环境变量（在 process.env 之后、workspace 变量之前合入）。
    * 用于把设置页的代理等配置注入子进程；按 spawn 时读取，天然「下次启动生效」。
    *
-   * context 携带本次 spawn 的 workspace 标识三元组（workspacePath/workspaceIdentity/workspaceKey），
-   * 让 CUA broker 凭据注入能按 workspace 记录 Helper admission（见 services/node.ts 的
-   * cuaProductHelperWorkspaceRegistry）。Helper lifecycle 不再回收或重启已有 Agent。
+   * context 携带本次 spawn 的 workspace 标识三元组（workspacePath/workspaceIdentity/workspaceKey）。
+   * Helper lifecycle 不再回收或重启已有 Agent。
    */
   resolveSpawnEnv?: (context: {
     workspacePath: string;
@@ -181,9 +183,11 @@ if (coverageDirectory) {
 }
 `;
 
-function buildE2EAgentCoverageEnv(env: NodeJS.ProcessEnv = process.env): Record<string, string> {
-  const artifactDir = env.ZCODE_E2E_ARTIFACT_DIR?.trim();
-  if (env.ZCODE_E2E_COVERAGE !== "1" || !artifactDir) {
+export function buildE2EAgentCoverageEnv(
+  env: NodeJS.ProcessEnv = process.env,
+): Record<string, string> {
+  const artifactDir = env.XCODE_E2E_ARTIFACT_DIR?.trim();
+  if (env.XCODE_E2E_COVERAGE !== "1" || !artifactDir) {
     return {};
   }
   const directory = resolve(artifactDir, "coverage", "raw", "cli");
@@ -204,7 +208,7 @@ function buildE2EAgentCoverageEnv(env: NodeJS.ProcessEnv = process.env): Record<
  * 首个 getClient 重新拉起）。v4 订阅（sessions-index/workspace-config/conversation）
  * 都活在 CLI 进程内存里，进程换代即失效——订阅方收到本事件后必须重发 subscribe。
  */
-interface XCodeAgentRuntimeRestartedEvent {
+export interface XCodeAgentRuntimeRestartedEvent {
   workspaceKey: string;
   runtimeIdentity: XCodeAgentRuntimeIdentity;
 }
@@ -217,7 +221,7 @@ export interface XCodeAgentRuntimeLifecycleEvent {
   state: "available" | "unavailable";
 }
 
-interface XCodeAgentRuntimeIdentity {
+export interface XCodeAgentRuntimeIdentity {
   generation: number;
   identity: string;
   processId?: number;
@@ -300,7 +304,7 @@ function parseArgsJson(raw: string | undefined): string[] | undefined {
   }
   const parsed = JSON.parse(trimmed) as unknown;
   if (!Array.isArray(parsed) || parsed.some((item) => typeof item !== "string")) {
-    throw new Error("ZCODE_AGENT_SERVER_ARGS_JSON must be a JSON string array");
+    throw new Error("XCODE_AGENT_SERVER_ARGS_JSON must be a JSON string array");
   }
   return parsed;
 }
@@ -356,7 +360,7 @@ function resolveBundledWorkspaceXCodeAgentCommand(
   const distEntrypoint = findUpward("apps/zcode-cli/packages/cli/dist/zcode.cjs");
   if (distEntrypoint) {
     const useBytecode =
-      process.versions.electron && process.env.ZCODE_DESKTOP_AGENT_BYTECODE === "1";
+      process.versions.electron && process.env.XCODE_DESKTOP_AGENT_BYTECODE === "1";
     const entrypoint = useBytecode
       ? join(dirname(distEntrypoint), "zcode.bytecode.cjs")
       : distEntrypoint;
@@ -391,7 +395,7 @@ function resolveBundledWorkspaceXCodeAgentCommand(
 function resolveDeployedXCodeAgentBinaryCommand(
   context: XCodeAgentCommandResolverContext,
 ): XCodeAgentCommand | null {
-  // 旧 resolver 只识别 ZCODE_AGENT_SERVER_COMMAND env 和 monorepo 源码树。
+  // 旧 resolver 只识别 XCODE_AGENT_SERVER_COMMAND env 和 monorepo 源码树。
   // SSH 远端把 zcode-server.cjs 单文件部署到 ~/.xcode/server/，宿主进程的 cwd 不在仓库内、
   // env 也不会被 ssh exec 继承，即使 zcode-agent 已经部署到 ~/.xcode/server/agents/glm/，
   // resolver 也找不到，第一次 getClient 就抛 "XCode agent server command is not configured"。
@@ -404,7 +408,7 @@ function resolveDeployedXCodeAgentBinaryCommand(
   }
   return {
     command: binaryPath,
-    args: ZCODE_AGENT_RUNTIME.spawnArgs,
+    args: XCODE_AGENT_RUNTIME.spawnArgs,
     cwd: context.workspacePath,
   };
 }
@@ -427,7 +431,7 @@ function resolveElectronRuntimeXCodeAgentCommand(
   }
   return {
     command: process.execPath,
-    args: [bundlePath, ...ZCODE_AGENT_RUNTIME.spawnArgs],
+    args: [bundlePath, ...XCODE_AGENT_RUNTIME.spawnArgs],
     storagePreparationEntry: bundlePath,
     cwd: context.workspacePath,
     // 关键：必须以纯 Node 模式启动，否则子进程会被当成 Electron/Chromium 子进程卡在 GPU 初始化。
@@ -438,13 +442,13 @@ function resolveElectronRuntimeXCodeAgentCommand(
 export function resolveDefaultXCodeAgentCommand(
   context: XCodeAgentCommandResolverContext,
 ): XCodeAgentCommand | null {
-  const command = process.env.ZCODE_AGENT_SERVER_COMMAND?.trim();
+  const command = process.env.XCODE_AGENT_SERVER_COMMAND?.trim();
   if (command) {
     return applyPresentationSurfaceToCommand(
       {
         command,
-        args: parseArgsJson(process.env.ZCODE_AGENT_SERVER_ARGS_JSON) ?? ["app-server", "--stdio"],
-        cwd: process.env.ZCODE_AGENT_SERVER_CWD?.trim() || context.workspacePath,
+        args: parseArgsJson(process.env.XCODE_AGENT_SERVER_ARGS_JSON) ?? ["app-server", "--stdio"],
+        cwd: process.env.XCODE_AGENT_SERVER_CWD?.trim() || context.workspacePath,
       },
       context.presentationSurface,
     );
@@ -497,7 +501,7 @@ function applyPresentationSurfaceToCommand(
   };
 }
 
-function wrapXCodeAgentCommandWithStdioTapDevProxy(
+export function wrapXCodeAgentCommandWithStdioTapDevProxy(
   command: XCodeAgentCommand,
   workspaceKey: string,
 ): XCodeAgentCommand {
@@ -720,7 +724,7 @@ export class XCodeAgentProcessManager {
     this.reportProcessLifecycle((reporter) =>
       reporter.onReady?.({
         pid: managed.child.pid!,
-        provider: ZCODE_AGENT_PROVIDER,
+        provider: XCODE_AGENT_PROVIDER,
         ...(this.lane ? { lane: this.lane } : {}),
         workspacePath: managed.workspace.workspacePath,
         readyAt: managed.readyAt!,
@@ -766,17 +770,22 @@ export class XCodeAgentProcessManager {
         }
       });
     managed.cleanupPromise = cleanupPromise;
-    if (options.reportError !== false) {
-      void cleanupPromise.catch((error) => {
-        errorLog("XCode agent process cleanup failed", {
-          workspaceKey: managed.runtimeIdentity.workspaceKey,
-          pid: managed.child.pid,
-          runtimeIdentity: managed.runtimeIdentity.identity,
-          reason,
-          error,
-        });
+    // Bug 原因：dispose 与重试编排竞态时，rejection 可能先于调用方 await 挂靠被判为
+    // unhandledRejection（vitest 计为运行级失败，生产等价于未处理拒绝）。catch 必须在
+    // 创建点无条件挂靠：reportError:false（重试路径）时静默吞掉，统一上报由
+    // cleanupManagedProcessWithRetry 的 await/catch 完成，告警语义不变。
+    void cleanupPromise.catch((error) => {
+      if (options.reportError === false) {
+        return;
+      }
+      errorLog("XCode agent process cleanup failed", {
+        workspaceKey: managed.runtimeIdentity.workspaceKey,
+        pid: managed.child.pid,
+        runtimeIdentity: managed.runtimeIdentity.identity,
+        reason,
+        error,
       });
-    }
+    });
     return cleanupPromise;
   }
 
@@ -961,7 +970,7 @@ export class XCodeAgentProcessManager {
     const resolveCommandDurationMs = Date.now() - resolveCommandStartedAt;
     if (!command) {
       throw new Error(
-        "XCode agent server command is not configured. Set ZCODE_AGENT_SERVER_COMMAND before integration.",
+        "XCode agent server command is not configured. Set XCODE_AGENT_SERVER_COMMAND before integration.",
       );
     }
     if (admissionSignal.aborted) {
@@ -1008,7 +1017,7 @@ export class XCodeAgentProcessManager {
     if ((this.restartGenerationByWorkspaceKey.get(workspaceKey) ?? 0) !== startGeneration) {
       throw new Error("XCode agent process start was cancelled.");
     }
-    // app 以本地开发方式启动时，让 agent 子进程也带上 ZCODE_RUNTIME_ENV=development；
+    // app 以本地开发方式启动时，让 agent 子进程也带上 XCODE_RUNTIME_ENV=development；
     // 不再传 NODE_ENV，避免用户 shell/runtime 变量影响 XCode 运行模式或泄漏到 Bash 工具。
     const runtimeEnv = resolveXCodeRuntimeEnv(process.env);
     log("XCode agent spawn preflight", {
@@ -1023,9 +1032,11 @@ export class XCodeAgentProcessManager {
       detached: shouldSpawnInDetachedProcessGroup(),
       env: {
         ...sanitizeXCodeRuntimeEnv(process.env),
-        [ZCODE_RUNTIME_ENV_KEY]: runtimeEnv,
+        [XCODE_RUNTIME_ENV_KEY]: runtimeEnv,
         ...spawnEnv,
         ...effectiveCommand.env,
+        // 生成文件根目录由执行端 Host 唯一决定，保证 Agent 写入与 Host 读取授权一致。
+        [GEN_UI_OUTPUT_ROOT_ENV]: join(getAppConfigDir(), GEN_UI_OUTPUT_DIRECTORY),
         // 身份/隔离语义使用 workspaceIdentity；cwd 继续使用 workspacePath。
         ...buildAgentWorkspaceIdentityEnv(params.workspaceIdentity),
         ...buildE2EAgentCoverageEnv(),
@@ -1043,7 +1054,7 @@ export class XCodeAgentProcessManager {
           this.reportProcessLifecycle((reporter) =>
             reporter.onException?.({
               pid: child.pid!,
-              provider: ZCODE_AGENT_PROVIDER,
+              provider: XCODE_AGENT_PROVIDER,
               ...(this.lane ? { lane: this.lane } : {}),
               workspacePath: params.workspacePath,
               runtimeGeneration,
@@ -1053,17 +1064,17 @@ export class XCodeAgentProcessManager {
                 // 脱敏占位符可能比原文长，必须再次限长，避免 IPC schema 拒绝合法异常。
                 name: redactAgentDiagnostic(diagnostic.name).slice(
                   0,
-                  ZCODE_PROCESS_DIAGNOSTIC_NAME_MAX_CHARS,
+                  XCODE_PROCESS_DIAGNOSTIC_NAME_MAX_CHARS,
                 ),
                 message: redactAgentDiagnostic(diagnostic.message).slice(
                   0,
-                  ZCODE_PROCESS_DIAGNOSTIC_MESSAGE_MAX_CHARS,
+                  XCODE_PROCESS_DIAGNOSTIC_MESSAGE_MAX_CHARS,
                 ),
                 ...(diagnostic.stack !== undefined
                   ? {
                       stack: redactAgentDiagnostic(diagnostic.stack).slice(
                         0,
-                        ZCODE_PROCESS_DIAGNOSTIC_STACK_MAX_CHARS,
+                        XCODE_PROCESS_DIAGNOSTIC_STACK_MAX_CHARS,
                       ),
                     }
                   : {}),
@@ -1084,6 +1095,10 @@ export class XCodeAgentProcessManager {
       requireStorageStartup: effectiveCommand.supportsStorageStartup,
       requestTimeoutMs: this.requestTimeoutMs,
     });
+    if (child.pid) {
+      const unregisterNetworkCapture = localRuntimeNetworkCapture.register(client, child.pid);
+      child.once("close", unregisterNetworkCapture);
+    }
     // Agent 进程重启后，Host 仍需要 runtime identity 区分新旧订阅和运行命令。
     // Provider Registry 由新 Worker 从所属 Environment 的 Config 重建，不再由 UI 重新下发。
     const runtimeGeneration = (this.runtimeGenerationByWorkspaceKey.get(workspaceKey) ?? 0) + 1;
@@ -1157,7 +1172,7 @@ export class XCodeAgentProcessManager {
         this.reportProcessLifecycle((reporter) =>
           reporter.onSpawn({
             pid: child.pid!,
-            provider: ZCODE_AGENT_PROVIDER,
+            provider: XCODE_AGENT_PROVIDER,
             ...(this.lane ? { lane: this.lane } : {}),
             workspacePath: params.workspacePath,
             command: effectiveCommand.command,
@@ -1179,7 +1194,7 @@ export class XCodeAgentProcessManager {
     });
     child.once("error", (error) => {
       errorLog(
-        `XCode agent process error${this.processLifecycleReporter?.onError ? ` ${ZCODE_AGENT_LIFECYCLE_LOG_MARKER}` : ""}`,
+        `XCode agent process error${this.processLifecycleReporter?.onError ? ` ${XCODE_AGENT_LIFECYCLE_LOG_MARKER}` : ""}`,
         {
           workspaceKey,
           pid: child.pid,
@@ -1194,7 +1209,7 @@ export class XCodeAgentProcessManager {
       this.reportProcessLifecycle((reporter) =>
         reporter.onError?.({
           pid: typeof child.pid === "number" ? child.pid : null,
-          provider: ZCODE_AGENT_PROVIDER,
+          provider: XCODE_AGENT_PROVIDER,
           ...(this.lane ? { lane: this.lane } : {}),
           workspacePath: params.workspacePath,
           command: effectiveCommand.command,
@@ -1242,7 +1257,7 @@ export class XCodeAgentProcessManager {
         // 和长期运行的 Agent 自行 exit 0 同样是非预期退出。
         // 已有独立生命周期事件，显式标记包装日志，避免 Electron 将其再计为 JS 异常。
         errorLog(
-          `XCode agent process exited unexpectedly${this.processLifecycleReporter ? ` ${ZCODE_AGENT_LIFECYCLE_LOG_MARKER}` : ""}`,
+          `XCode agent process exited unexpectedly${this.processLifecycleReporter ? ` ${XCODE_AGENT_LIFECYCLE_LOG_MARKER}` : ""}`,
           {
             ...exitContext,
             stderr,
@@ -1253,7 +1268,7 @@ export class XCodeAgentProcessManager {
         this.reportProcessLifecycle((reporter) =>
           reporter.onExit({
             pid: child.pid!,
-            provider: ZCODE_AGENT_PROVIDER,
+            provider: XCODE_AGENT_PROVIDER,
             ...(this.lane ? { lane: this.lane } : {}),
             workspacePath: params.workspacePath,
             exitCode: code,
@@ -1365,7 +1380,7 @@ export class XCodeAgentProcessManager {
         : {
             available: false,
             workspaceKey,
-            reason: "ZCODE_AGENT_SERVER_COMMAND is not configured",
+            reason: "XCODE_AGENT_SERVER_COMMAND is not configured",
           };
     } catch (error) {
       return {

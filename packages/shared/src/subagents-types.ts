@@ -26,7 +26,15 @@ export function parsePluginSubagentModelSelectionOverrides(
   );
 }
 
-export type AgentPermissionMode = "auto" | "plan";
+// 1010 扩宽枚举（subagent-profile-parser 等新模块需要 acceptEdits/bypassPermissions/default/dontAsk）
+// fork 原为 "auto" | "plan"；扩宽后旧代码仍兼容（子集关系）
+export type AgentPermissionMode =
+  | "acceptEdits"
+  | "auto"
+  | "bypassPermissions"
+  | "default"
+  | "dontAsk"
+  | "plan";
 
 export type AgentColor =
   | "red"

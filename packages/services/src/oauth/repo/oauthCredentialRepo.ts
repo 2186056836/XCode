@@ -14,7 +14,7 @@ const ACTIVE_PROVIDER_KEY = "oauth:active_provider";
 const ACTIVE_ACCOUNT_KEY = "oauth:active_account";
 const ACCOUNT_LIST_KEY = "oauth:account_list";
 const LOGIN_ATTRIBUTION_KEY = "oauth:login_attribution";
-const ZCODE_JWT_TOKEN_KEY = "zcodejwttoken";
+const XCODE_JWT_TOKEN_KEY = "zcodejwttoken";
 const KNOWN_OAUTH_PROVIDER_IDS = [BIGMODEL_PROVIDER_ID, ZAI_PROVIDER_ID] as const;
 const log = createServiceLogger("oauthCredentialRepo");
 
@@ -419,14 +419,14 @@ export class OAuthCredentialRepo {
         await this.credentialService.delete(refreshTokenKey(provider));
       }
       if (tokenSet.zcodeJwtToken) {
-        await this.credentialService.save(ZCODE_JWT_TOKEN_KEY, tokenSet.zcodeJwtToken);
+        await this.credentialService.save(XCODE_JWT_TOKEN_KEY, tokenSet.zcodeJwtToken);
       } else {
-        await this.credentialService.delete(ZCODE_JWT_TOKEN_KEY);
+        await this.credentialService.delete(XCODE_JWT_TOKEN_KEY);
       }
     } else {
       await this.credentialService.delete(accessTokenKey(provider));
       await this.credentialService.delete(refreshTokenKey(provider));
-      await this.credentialService.delete(ZCODE_JWT_TOKEN_KEY);
+      await this.credentialService.delete(XCODE_JWT_TOKEN_KEY);
     }
     // 关键：登录态/账号身份/套餐都读单值 oauth:{provider}:user_info，必须与激活账号镜像同步。
     const profile = await this.loadUserProfileForAccount(accountRef);
@@ -544,7 +544,7 @@ export class OAuthCredentialRepo {
 
       const zcodeJwtToken =
         provider === ZAI_PROVIDER_ID || provider === BIGMODEL_PROVIDER_ID
-          ? await this.credentialService.load(ZCODE_JWT_TOKEN_KEY)
+          ? await this.credentialService.load(XCODE_JWT_TOKEN_KEY)
           : null;
 
       return {
@@ -576,9 +576,9 @@ export class OAuthCredentialRepo {
         // BigModel Start Plan 与 Z.ai Start Plan 一样消费 zcode JWT。
         // JWT 必须在 OAuth callback 阶段随 tokenSet 落盘，后续 balance/runtime 只读取它，
         // 不能再拿 BigModel access token 拼另一个 /oauth/token body 临时兑换。
-        await this.credentialService.save(ZCODE_JWT_TOKEN_KEY, tokenSet.zcodeJwtToken);
+        await this.credentialService.save(XCODE_JWT_TOKEN_KEY, tokenSet.zcodeJwtToken);
       } else {
-        await this.credentialService.delete(ZCODE_JWT_TOKEN_KEY);
+        await this.credentialService.delete(XCODE_JWT_TOKEN_KEY);
       }
     }
   }
@@ -661,7 +661,7 @@ export class OAuthCredentialRepo {
     await this.credentialService.delete(refreshTokenKey(provider));
     await this.credentialService.delete(userInfoKey(provider));
     if (shouldClearXcodeJwtOnLogout(provider)) {
-      await this.credentialService.delete(ZCODE_JWT_TOKEN_KEY);
+      await this.credentialService.delete(XCODE_JWT_TOKEN_KEY);
     }
   }
 

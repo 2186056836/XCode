@@ -105,3 +105,12 @@ export { generateMobileDeviceFingerprint, setStreamClientId } from "./lib/stream
 export { GlobalDatabaseStartupLoading } from "./root/GlobalDatabaseStartupLoading.js";
 
 export { LocalTtftObserver, setLocalTtftObserver } from "@/v4/telemetry/localTtftObserver.js";
+
+// ── 1010 新增 barrel 导出 ──
+export { WebRemoteControlDialog } from "./WebRemoteControlDialog.js";
+export {
+  WebRemoteControlFeatureProvider,
+  useWebRemoteControlFeatureEnabled,
+} from "./WebRemoteControlFeatureProvider.js";
+export { setWebRemoteControlTerminalTransportState } from "./webRemoteControlTerminalTransportState.js";
+export { installDocumentHiddenMotionPause } from "./lib/documentHiddenMotionPause.js";

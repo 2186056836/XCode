@@ -33,7 +33,7 @@ const pnpmRunEnv = {
 const BROWSER_USE_PLUGIN_PACKAGE_NAME = "@zcode/browser-use-plugin";
 
 // 平台目录命名：darwin/win32/linux + x64/arm64，
-// 支持 ZCODE_TARGET_OS / ZCODE_TARGET_ARCH 覆盖（交叉打包时由 CI 注入）。
+// 支持 XCODE_TARGET_OS / XCODE_TARGET_ARCH 覆盖（交叉打包时由 CI 注入）。
 function normalizePlatform(raw) {
   switch (raw) {
     case "mac":
@@ -66,8 +66,8 @@ function normalizeArch(raw) {
   }
 }
 
-const platform = normalizePlatform(process.env.ZCODE_TARGET_OS || "") || process.platform;
-const arch = normalizeArch(process.env.ZCODE_TARGET_ARCH || "") || process.arch;
+const platform = normalizePlatform(process.env.XCODE_TARGET_OS || "") || process.platform;
+const arch = normalizeArch(process.env.XCODE_TARGET_ARCH || "") || process.arch;
 const platformKey = `${platform}-${arch}`;
 
 const glmDir = resolve(desktopRoot, "bundled-agents", platformKey, "glm");
@@ -153,7 +153,7 @@ function shouldCopyOfficialPluginAsset(sourcePath) {
   const name = basename(sourcePath);
   return !excludedOfficialPluginAssetNames.has(name) && !name.endsWith(".pyc");
 }
-const isBootstrapWithRemote = process.env.ZCODE_BOOTSTRAP_WITH_REMOTE === "1";
+const isBootstrapWithRemote = process.env.XCODE_BOOTSTRAP_WITH_REMOTE === "1";
 
 function buildCliBundle() {
   console.log("[prepare:agent-bundle] building zcode-cli app-server bundle ...");

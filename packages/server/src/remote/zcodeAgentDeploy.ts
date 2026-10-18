@@ -1,6 +1,6 @@
 import {
-  ZCODE_AGENT_RUNTIME,
-  ZCODE_AGENT_PROVIDER,
+  XCODE_AGENT_RUNTIME,
+  XCODE_AGENT_PROVIDER,
   type RemoteResourcePackageId,
 } from "@zcode/shared";
 import type { IRemoteBackend, RemoteEnvironment } from "@zcode/server/remote/backend.js";
@@ -126,7 +126,7 @@ async function shouldSkipXCodeAgentDeploy(params: {
   }
 
   params.loggers.log(
-    `[zcode-agent-deploy] ${ZCODE_AGENT_PROVIDER}: 制品 SHA ${params.expectedArtifactSha256} 已部署，跳过`,
+    `[zcode-agent-deploy] ${XCODE_AGENT_PROVIDER}: 制品 SHA ${params.expectedArtifactSha256} 已部署，跳过`,
   );
   return true;
 }
@@ -155,8 +155,8 @@ export async function deployXCodeAgentRuntime(
   options: DeployXCodeAgentRuntimeOptions,
   loggers: DeployLoggers,
 ): Promise<void> {
-  const provider = ZCODE_AGENT_PROVIDER;
-  const runtime = ZCODE_AGENT_RUNTIME;
+  const provider = XCODE_AGENT_PROVIDER;
+  const runtime = XCODE_AGENT_RUNTIME;
   const componentId = provider;
   if (!isSelectedXCodeAgentComponent(componentId, options.selectedResourcePackageIds)) {
     loggers.log(`[zcode-agent-deploy] ${provider}: 未选择资源包 ${componentId}，跳过检查和部署`);

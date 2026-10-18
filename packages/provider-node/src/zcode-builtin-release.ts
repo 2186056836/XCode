@@ -7,7 +7,7 @@ import {
   type ProviderTemplateMap,
 } from "@zcode/provider";
 
-export const ZCODE_BUILTIN_RELEASE_SCHEMA_VERSION = 1 as const;
+export const XCODE_BUILTIN_RELEASE_SCHEMA_VERSION = 1 as const;
 const RETIRED_ZAPI_PROVIDER_ID = "builtin:zapi";
 
 export interface XCodeBuiltinConfigContent {
@@ -17,14 +17,14 @@ export interface XCodeBuiltinConfigContent {
 }
 
 export interface XCodeBuiltinRelease {
-  readonly schemaVersion: typeof ZCODE_BUILTIN_RELEASE_SCHEMA_VERSION;
+  readonly schemaVersion: typeof XCODE_BUILTIN_RELEASE_SCHEMA_VERSION;
   readonly revision: number;
   readonly config: XCodeBuiltinConfigContent;
 }
 
 const releaseSchema = z
   .object({
-    schemaVersion: z.literal(ZCODE_BUILTIN_RELEASE_SCHEMA_VERSION),
+    schemaVersion: z.literal(XCODE_BUILTIN_RELEASE_SCHEMA_VERSION),
     revision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
     config: z
       .object({
@@ -46,7 +46,7 @@ export function decodeXCodeBuiltinRelease(input: unknown): XCodeBuiltinRelease {
     throw new Error(`XCode Built-in Release 包含已退出的 Provider: ${RETIRED_ZAPI_PROVIDER_ID}`);
   }
   return Object.freeze({
-    schemaVersion: ZCODE_BUILTIN_RELEASE_SCHEMA_VERSION,
+    schemaVersion: XCODE_BUILTIN_RELEASE_SCHEMA_VERSION,
     revision: parsed.revision,
     config: Object.freeze({
       providers,
@@ -58,7 +58,7 @@ export function decodeXCodeBuiltinRelease(input: unknown): XCodeBuiltinRelease {
 
 export function encodeXCodeBuiltinRelease(release: XCodeBuiltinRelease): object {
   return {
-    schemaVersion: ZCODE_BUILTIN_RELEASE_SCHEMA_VERSION,
+    schemaVersion: XCODE_BUILTIN_RELEASE_SCHEMA_VERSION,
     revision: release.revision,
     config: {
       providerConfigRules: {

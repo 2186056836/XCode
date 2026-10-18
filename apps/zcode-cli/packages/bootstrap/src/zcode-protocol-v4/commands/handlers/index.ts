@@ -26,3 +26,5 @@ export const NATIVE_HANDLERS = {
   ...assistantFeedbackHandlers,
   ...assistantMessageEditHandlers,
 } as const;
+
+export type NativeCommandType = keyof typeof NATIVE_HANDLERS;

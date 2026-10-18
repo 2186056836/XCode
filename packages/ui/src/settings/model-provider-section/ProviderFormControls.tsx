@@ -5,12 +5,18 @@ import { Loader2Icon, Trash2, Unplug } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { ModelInputCapabilityBadge } from "@/components/ModelInputCapabilityBadge.js";
 import { Switch } from "@/components/ui/switch.js";
+import { Checkbox } from "@/components/ui/checkbox.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import { useProviderModelDraft } from "@/settings/model-provider-section/useProviderModelDraft.js";
 import { ProviderModelMetadataDialog } from "@/settings/model-provider-section/ProviderModelMetadataDialog.js";
 import { formatModelContextWindowLabel } from "@/lib/tokenNumberFormat.js";
 import type { ModelConfigResolution, ProviderConfigObject } from "@zcode/provider";
 import { shouldShowModelVisionBadge } from "@/lib/modelVisionBadge.js";
+import {
+  formatQoderPriceFactor,
+  parseQoderModelMeta,
+  readQoderModelMetaHeaderValue,
+} from "@/lib/qoderModelDisplayNames.js";
 import { useProviderDetailFeedback } from "@/settings/model-provider-section/ProviderDetailFeedback.js";
 
 export function ModelRowInput({
@@ -27,6 +33,11 @@ export function ModelRowInput({
   onDelete,
   onEnabledChange,
   onTest,
+  selected,
+  onSelectedChange,
+  selectTestId,
+  /** XCode fork：provider 的 api.headers，读取模型元数据表（Qoder 可读名/倍率）。 */
+  providerMetaHeaders,
 }: {
   model: ProviderSettingsFormModel;
   providerId: string;
@@ -44,6 +55,13 @@ export function ModelRowInput({
   onDelete?: () => void;
   onEnabledChange?: (enabled: boolean) => void;
   onTest?: (model: string) => Promise<ModelConnectivityResult>;
+  /** XCode fork：批量删除勾选态。 */
+  selected?: boolean;
+  /** XCode fork：传入即渲染行首勾选框（内置模型不传，保持不可勾选）。 */
+  onSelectedChange?: (checked: boolean) => void;
+  selectTestId?: string;
+  /** XCode fork：provider 的 api.headers，读取模型元数据表（Qoder 可读名/倍率）。 */
+  providerMetaHeaders?: Record<string, string>;
 }) {
   const { intl, locale } = useXCodeIntl();
   const { showFeedback } = useProviderDetailFeedback();
@@ -241,10 +259,31 @@ export function ModelRowInput({
     { id: "settings.modelProvider.contextWindowBadgeLabel" },
     { value: contextWindowLabel },
   );
+  // XCode fork：可读名与倍率来自拉取上游时写入的 overlay 元数据表（真实值，
+  // 上游改价/改名后重新拉取即生效），不是静态映射。缺失时静默不显示。
+  const qoderMeta = parseQoderModelMeta(readQoderModelMetaHeaderValue(providerMetaHeaders));
+  const qoderDisplayName = qoderMeta[model.modelId]?.name;
+  const qoderPriceFactor = qoderMeta[model.modelId]?.priceFactor;
+  const qoderPriceLabel =
+    qoderPriceFactor === undefined ? undefined : formatQoderPriceFactor(qoderPriceFactor);
 
   return (
-    <div className="space-y-2 px-3 py-2">
+<div className="space-y-2 px-3 py-2">
       <div className="flex items-center gap-2">
+        {/* XCode fork：批量删除勾选框。Radix Checkbox 渲染为 button，已被
+            列表拖拽的交互逃生门排除，不会误触排序。 */}
+        {onSelectedChange ? (
+          <Checkbox
+            className="shrink-0"
+            data-testid={selectTestId}
+            checked={selected === true}
+            onCheckedChange={(checked) => onSelectedChange(checked === true)}
+            aria-label={intl.formatMessage(
+              { id: "settings.modelProvider.batchDelete.selectedCount" },
+              { count: 1 },
+            )}
+          />
+        ) : null}
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <span
             data-testid={inputTestId}
@@ -252,6 +291,25 @@ export function ModelRowInput({
           >
             {model.modelId}
           </span>
+          {/* XCode fork：Qoder 国际版在旁边补一个更小的可读名，主显示仍是模型 ID，
+              与其他提供商的展示逻辑完全一致。 */}
+          {qoderDisplayName ? (
+            <span
+              className="min-w-0 shrink truncate text-ui-sm text-foreground-subtle"
+              title={qoderDisplayName}
+            >
+              {qoderDisplayName}
+            </span>
+          ) : null}
+          {/* 相对倍率：0 显示「免费」，其余显示 0.2× 这样的相对值。 */}
+          {qoderPriceLabel ? (
+            <span
+              className="shrink-0 truncate font-mono text-ui-sm text-foreground-subtle"
+              title={intl.formatMessage({ id: "settings.modelProvider.qoderPriceFactorHint" })}
+            >
+              {qoderPriceLabel}
+            </span>
+          ) : null}
           <span
             className="inline-flex h-5 max-w-20 shrink-0 items-center truncate rounded-md border border-border bg-surface px-1.5 font-mono text-ui-sm text-foreground-subtle"
             aria-label={contextWindowAccessibleLabel}

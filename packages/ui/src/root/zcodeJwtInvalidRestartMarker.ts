@@ -1,4 +1,4 @@
-const ZCODE_JWT_INVALID_RESTART_MARKER_KEY = "zcode:auth:jwt-invalid-restart";
+const XCODE_JWT_INVALID_RESTART_MARKER_KEY = "zcode:auth:jwt-invalid-restart";
 
 interface RestartMarkerStorage {
   getItem(key: string): string | null;
@@ -18,15 +18,15 @@ function resolveStorage(storage?: RestartMarkerStorage): RestartMarkerStorage | 
 }
 
 export function markXcodeJwtInvalidRestart(storage?: RestartMarkerStorage): void {
-  resolveStorage(storage)?.setItem(ZCODE_JWT_INVALID_RESTART_MARKER_KEY, "1");
+  resolveStorage(storage)?.setItem(XCODE_JWT_INVALID_RESTART_MARKER_KEY, "1");
 }
 
 export function consumeXcodeJwtInvalidRestartMarker(storage?: RestartMarkerStorage): boolean {
   const resolved = resolveStorage(storage);
-  if (!resolved || resolved.getItem(ZCODE_JWT_INVALID_RESTART_MARKER_KEY) !== "1") {
+  if (!resolved || resolved.getItem(XCODE_JWT_INVALID_RESTART_MARKER_KEY) !== "1") {
     return false;
   }
   // 该标记只服务于本次重启；如果不在读取时删除，后续正常启动仍会被强制带回登录页。
-  resolved.removeItem(ZCODE_JWT_INVALID_RESTART_MARKER_KEY);
+  resolved.removeItem(XCODE_JWT_INVALID_RESTART_MARKER_KEY);
   return true;
 }

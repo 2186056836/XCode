@@ -296,7 +296,7 @@ function getDialogTitleParts({
   intl: IntlInstance;
   titleId: string;
 }) {
-  const marker = "__ZCODE_UPDATE_VERSION__";
+  const marker = "__XCODE_UPDATE_VERSION__";
   const text = intl.formatMessage({ id: titleId }, { version: marker });
   const index = text.indexOf(marker);
   const rawPrefix = index >= 0 ? text.slice(0, index) : "";

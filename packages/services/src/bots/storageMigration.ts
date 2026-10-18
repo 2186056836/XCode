@@ -3,7 +3,7 @@ import {
   migrateLegacyModelProviderId,
   migrateLegacyOfficialGlmModelId,
   modelSelectionSchema,
-  ZCODE_AGENT_PROVIDER,
+  XCODE_AGENT_PROVIDER,
   type ModelSelection,
 } from "@zcode/shared";
 import { normalizeBotCurrentOptions, normalizeBotDraftOptions } from "./config.js";
@@ -78,7 +78,7 @@ export function importLegacyBotState(value: unknown): unknown {
       {
         ...state,
         draftOptions: normalizeBotDraftOptions({
-          provider: ZCODE_AGENT_PROVIDER,
+          provider: XCODE_AGENT_PROVIDER,
           modelSelection: migrateSelection(options),
           ...(typeof options.mode === "string" ? { mode: options.mode } : {}),
         }),

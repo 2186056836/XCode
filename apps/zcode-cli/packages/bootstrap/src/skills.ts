@@ -4,11 +4,14 @@ import { createNodeSkillAdapter } from "@zcode/adapters/skills";
 import type { Logger, SkillContent, SkillDiagnostic, SkillLoadOutcome } from "@zcode/contracts";
 import { resolveBundledSkillRoots } from "./app/bundled-skills.js";
 import { getCliStorageRoot } from "./app/paths.js";
+import { filterVisualizeSkillRoots } from "./app/visualize-skill-gate.js";
 import { resolveXCodePlugins } from "./plugins.js";
 import { collectDisabledPaths } from "./skill-command-overrides.js";
 
 export interface ListXCodeSkillsOptions {
   env?: NodeJS.ProcessEnv;
+  /** 协议宿主草稿目录使用；CLI 命令缺省关闭。 */
+  includeVisualize?: boolean;
   logger?: Logger;
   projectConfigPath?: string;
   skipUserConfig?: boolean;
@@ -118,7 +121,10 @@ async function createSkillDiscovery(options: ListXCodeSkillsOptions): Promise<
     enabled: true,
     skillPort: createNodeSkillAdapter({
       extraRoots: configResult.config.skills.roots,
-      extraResolvedRoots: [...pluginOutcome.skillRoots, ...bundledSkillRoots],
+      extraResolvedRoots: [
+        ...filterVisualizeSkillRoots(pluginOutcome.skillRoots, options.includeVisualize),
+        ...bundledSkillRoots,
+      ],
       disabledPaths: collectDisabledPaths(configResult.config.skillOverrides),
     }),
     workingDirectory,

@@ -7,15 +7,15 @@ import {
   PERSONAL_PROVIDER_CONFIG_FILE_NAME,
   resolveXCodeBuiltinCachePaths,
   resolveXCodeBuiltinClientPlatform,
-  ZCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV,
-  ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV,
-  ZCODE_PERSONAL_PROVIDER_CONFIG_FILE_ENV,
+  XCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV,
+  XCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV,
+  XCODE_PERSONAL_PROVIDER_CONFIG_FILE_ENV,
   type XCodeBuiltinRefreshEvent,
 } from "@zcode/provider-node";
-import { resolveRuntimeXCodeEndpointOrigin, ZCODE_VERSION } from "@zcode/shared";
+import { resolveRuntimeXCodeEndpointOrigin, XCODE_VERSION } from "@zcode/shared";
 import type { CliEnv } from "./env.js";
 
-export const SEA_ZCODE_BUILTIN_PROVIDER_CONFIG_ASSET_KEY = "zcode-provider/zcode-builtin.json";
+export const SEA_XCODE_BUILTIN_PROVIDER_CONFIG_ASSET_KEY = "zcode-provider/zcode-builtin.json";
 
 export function createCliProviderRefreshReporter(
   stderr: Pick<NodeJS.WriteStream, "write"> = process.stderr,
@@ -55,13 +55,13 @@ export async function prepareCliProviderRuntimeEnv(
 ): Promise<Record<string, string>> {
   if (!requiresProviderRuntime(options.argv)) return {};
 
-  const explicitXCodeBuiltin = options.env[ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]?.trim();
-  const explicitPersonal = options.env[ZCODE_PERSONAL_PROVIDER_CONFIG_FILE_ENV]?.trim();
-  const dataBaseDir = options.dataBaseDir ?? options.env.ZCODE_DATA_BASE_DIR?.trim() ?? homedir();
+  const explicitXCodeBuiltin = options.env[XCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]?.trim();
+  const explicitPersonal = options.env[XCODE_PERSONAL_PROVIDER_CONFIG_FILE_ENV]?.trim();
+  const dataBaseDir = options.dataBaseDir ?? options.env.XCODE_DATA_BASE_DIR?.trim() ?? homedir();
   if (explicitXCodeBuiltin && explicitPersonal) {
     return {
-      [ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]: explicitXCodeBuiltin,
-      [ZCODE_PERSONAL_PROVIDER_CONFIG_FILE_ENV]: explicitPersonal,
+      [XCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]: explicitXCodeBuiltin,
+      [XCODE_PERSONAL_PROVIDER_CONFIG_FILE_ENV]: explicitPersonal,
     };
   }
 
@@ -74,7 +74,7 @@ export async function prepareCliProviderRuntimeEnv(
     }));
   const personalFilePath =
     explicitPersonal ?? join(dataBaseDir, ".xcode", "v2", PERSONAL_PROVIDER_CONFIG_FILE_NAME);
-  const appVersion = options.appVersion ?? ZCODE_VERSION;
+  const appVersion = options.appVersion ?? XCODE_VERSION;
   const platform = options.platform ?? resolveXCodeBuiltinClientPlatform();
   const zcodeEndpointOrigin = resolveRuntimeXCodeEndpointOrigin(options.env);
   const cachePaths = resolveXCodeBuiltinCachePaths({
@@ -96,9 +96,9 @@ export async function prepareCliProviderRuntimeEnv(
   }
 
   return {
-    [ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]: cachePaths.activeFilePath,
-    [ZCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV]: zcodeBuiltinFilePath,
-    [ZCODE_PERSONAL_PROVIDER_CONFIG_FILE_ENV]: personalFilePath,
+    [XCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]: cachePaths.activeFilePath,
+    [XCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV]: zcodeBuiltinFilePath,
+    [XCODE_PERSONAL_PROVIDER_CONFIG_FILE_ENV]: personalFilePath,
   };
 }
 
@@ -135,7 +135,7 @@ async function resolveBundledXCodeBuiltinProviderConfig(input: {
   readonly sea: SeaProviderConfigAssets | undefined;
 }): Promise<string> {
   if (input.sea?.isSea()) {
-    const content = input.sea.getAsset(SEA_ZCODE_BUILTIN_PROVIDER_CONFIG_ASSET_KEY, "utf8");
+    const content = input.sea.getAsset(SEA_XCODE_BUILTIN_PROVIDER_CONFIG_ASSET_KEY, "utf8");
     return materializeXCodeBuiltinProviderConfig({
       environmentConfigRoot: join(input.dataBaseDir, ".xcode", "v2"),
       content,

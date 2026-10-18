@@ -1,6 +1,7 @@
 /* eslint-disable max-lines -- Coding Plan 订阅协议类型需要集中导出给 UI、services 和 RPC 共享，拆散会增加跨包类型入口复杂度。 */
 import type { ProviderFamilyDomain } from "./model-provider-family.js";
 import type { BUILTIN_MODEL_PROVIDER_IDS } from "./model-provider-types.js";
+import type { RequestVerificationProof } from "./request-security-edition/verification-policy.js";
 
 export type CodingPlanPayType = "ALI" | "WECHAT";
 export type CodingPlanOverseasPaymentChannel = "STRIPE_PAY" | "PAYPAL_PAY";
@@ -129,6 +130,66 @@ export interface CodingPlanBillingDiscountText {
  * badageBody 存在且活跃（active）时才显示徽标；字段缺失按官方语义隐藏。
  */
 export type CodingPlanBillingDiscountConfig = Record<string, CodingPlanBillingDiscountText>;
+
+/**
+ * fork 回填：W 类合并后的 bigmodelCodingPlanSubscriptionProvider 已按 1010 引用下列
+ * 手动领取（Coding Plan 营销活动）类型，但上一轮合并把它们从本文件漏掉了，
+ * 导致 @zcode/services 报 TS2305。此处按 1010 原定义补回（类型名不含 ZCode 前缀，无需改名）。
+ */
+export interface ManualClaimPlanEntitlement {
+  entitlementId: string;
+  showName: string;
+  meter: string;
+  unitType: string;
+  capabilities: string[];
+  grantUnits: number;
+  period: string;
+  priority: number;
+  effectiveAt?: number;
+}
+
+export interface ManualClaimPlanPreview {
+  planId: string;
+  name: string;
+  description: string;
+  priority: number;
+  entitlements: ManualClaimPlanEntitlement[];
+}
+
+export interface ManualClaimPlanPreviewSnapshot {
+  /** 本次响应的服务端时间（毫秒）；生效时间 effectiveAt 仍为 Unix 秒。 */
+  serverTime?: number;
+  plans: ManualClaimPlanPreview[];
+}
+
+export interface ManualClaimPlanClaimRequest extends RequestVerificationProof {
+  planId: string;
+}
+
+export interface ManualClaimPlanClaimEntitlement {
+  entitlementId: string;
+  showName: string;
+  /** Claim 返回的权益生效时间，Unix 秒；0 表示立即生效。 */
+  effectiveAt?: number;
+}
+
+export interface ManualClaimPlanClaimResult {
+  success: boolean;
+  code: number;
+  message: string;
+  /** 失败响应中的活动结束时间，用于额度耗尽提示；不得当作已领取权益期限。 */
+  failureEndsAt?: number;
+  /** 领取接口返回的服务端时间（毫秒），不与其他响应的时间混用。 */
+  serverTime?: number;
+  plan?: {
+    userPlanId: string;
+    planId: string;
+    status: string;
+    startsAt?: number;
+    endsAt?: number;
+    entitlements?: ManualClaimPlanClaimEntitlement[];
+  };
+}
 
 export interface ForceUpdateConfig {
   minimalVersion: string;
@@ -532,4 +593,13 @@ export interface EnterpriseCodingPlanOrderStatusResponse {
   productPurchaseType?: "ENTERPRISE" | "PERSONAL" | string;
   organizationId?: string | null;
   projectId?: string | null;
+}
+
+// ── 1010 新增导出 ──
+export interface CodingPlanBillingDiscountLocaleCopy {
+  cardTitle?: string;
+  cardBody?: string;
+  badgeBody?: string;
+  infoTitle?: string;
+  infoBody?: string;
 }

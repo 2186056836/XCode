@@ -3,7 +3,7 @@ import type { XCodeTaskMeta } from "@zcode/shared";
 import { useXCodeSessionService } from "@/hooks/useXCodeSessionService.js";
 import { zcodeSessionSnapshotToTaskMeta } from "@/lib/zcodeSessionProjection.js";
 
-function resolveImmediateActiveTaskSnapshotMeta(
+export function resolveImmediateActiveTaskSnapshotMeta(
   previousSnapshotMeta: XCodeTaskMeta | null,
   taskId: string | null,
   taskMetaFromLists?: XCodeTaskMeta | null,
@@ -45,7 +45,11 @@ export function useActiveTaskSnapshotMeta(
     let cancelled = false;
 
     setSnapshotMeta((currentSnapshotMeta) =>
-      resolveImmediateActiveTaskSnapshotMeta(currentSnapshotMeta, taskId, taskMetaFromLists),
+      resolveImmediateActiveTaskSnapshotMeta(
+        currentSnapshotMeta,
+        taskId,
+        taskMetaFromLists,
+      ),
     );
 
     if (!taskId) {

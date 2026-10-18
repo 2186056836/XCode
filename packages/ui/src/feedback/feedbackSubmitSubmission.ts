@@ -19,7 +19,7 @@ import {
   type FeedbackSubmissionJob,
 } from "@/feedback/feedbackSubmissionJob.js";
 
-const FEEDBACK_ZCODE_AGENT_LABEL = "XCode Agent";
+const FEEDBACK_XCODE_AGENT_LABEL = "XCode Agent";
 
 export const DEFAULT_FEEDBACK_TYPE: FeedbackTicketType = "bug";
 export const DEFAULT_FEEDBACK_SEVERITY: FeedbackTicketSeverity = "P2-中";
@@ -94,7 +94,7 @@ export async function startSimplifiedFeedbackSubmission({
       framework,
       device: {
         ...device,
-        agentProvider: FEEDBACK_ZCODE_AGENT_LABEL,
+        agentProvider: FEEDBACK_XCODE_AGENT_LABEL,
         agentFramework: framework,
         ...(modelContext.model ? { agentModel: modelContext.model } : {}),
         ...(modelContext.display ? { agentModelDisplay: modelContext.display } : {}),

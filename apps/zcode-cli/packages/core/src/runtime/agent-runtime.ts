@@ -1,4 +1,9 @@
-import { DEFAULT_ZCODE_MODEL_CONTEXT_BUDGET_STRATEGY, resolveExecutionState } from "@zcode/shared";
+import {
+  createTurnAgentDefinitions,
+  createAgentDefinitionsReader,
+  type GetAgentDefinitions,
+} from "../subagent/definitions.js";
+import { DEFAULT_XCODE_MODEL_CONTEXT_BUDGET_STRATEGY, resolveExecutionState } from "@zcode/shared";
 import type { BackgroundBashOutputResult } from "@zcode/shared";
 import {
   createDenyPermissionBroker,
@@ -173,6 +178,14 @@ export class AgentRuntime {
   private mcpInitialized = false;
   private mcpToolsRegistered = false;
   private subagentPort?: SubagentPort;
+  /**
+   * 1010 拆出「读」与「准备」两条子 Agent 契约：read 给列表面板，prepare 在每轮开跑前
+   * 把 profile 物化（过滤/解析模型覆盖）。turn.ts 走 prepare，只读界面走 get。
+   */
+  private readonly getAgentDefinitions: GetAgentDefinitions;
+  private readonly prepareAgentDefinitions: ReturnType<
+    typeof createTurnAgentDefinitions
+  >["prepare"];
   private dynamicWorkflowRunPort?: DynamicWorkflowRunPort;
   private modelCatalogPort?: ModelCatalogPort;
   private runtimeTaskRegistry: RuntimeTaskRegistry;
@@ -232,9 +245,18 @@ export class AgentRuntime {
     // 3.12.2：兼容旧 Host/内部调用传入 legacy，但本版本 Runtime、日志和子 Agent 只使用 preflight。
     this.config = projectPersistentAgentMemoryTools({
       ...config,
-      modelContextBudgetStrategy: DEFAULT_ZCODE_MODEL_CONTEXT_BUDGET_STRATEGY,
+      modelContextBudgetStrategy: DEFAULT_XCODE_MODEL_CONTEXT_BUDGET_STRATEGY,
     });
     Object.assign(this.config, resolveExecutionState(config));
+    const definitions = createTurnAgentDefinitions(
+      deps.getAgentDefinitions ??
+        createAgentDefinitionsReader(this.config.subagents?.profiles ?? [], {
+          builtInModelSelectionOverrides: this.config.subagents?.builtInModelSelectionOverrides,
+        }),
+      deps.loadAgentDefinitions,
+    );
+    this.getAgentDefinitions = definitions.get;
+    this.prepareAgentDefinitions = definitions.prepare;
     this.agentTelemetry = new RuntimeTelemetryFacade({
       agentName: config.agentName,
       causation: deps.agentTelemetryCausation,
@@ -509,6 +531,11 @@ export interface AgentRuntime {
     childSessionId: SessionId;
     event: SessionEvent;
     traceContext?: TraceContext;
+    /**
+     * 子 runtime 的交互归属（与 `createChildClientPorts` 同一份）。在场时交互事件
+     * （PermissionRequested / Resolved / Denied）另镜像一份到本会话，确认窗才能在父界面出现。
+     */
+    interactionOrigin?: ChildClientPortsContext;
   }): Promise<void>;
   /**
    * 外部子 runtime 的接缝（三）：铸造子 runtime 的对外交互端口（permission broker +
@@ -653,6 +680,11 @@ export interface AgentRuntime {
     traceContext?: TraceContext;
     commitAfterApply?: () => Promise<void>;
   }): Promise<WorkspaceFileRewindApplyResult>;
+  /** 1010 新增：MCP Apps 的模型采样（Mcp Apps 协议要求宿主转发 sampling 请求）。 */
+  sampleModel(
+    input: import("./methods/sample-model.js").SampleModelInput,
+    options: { abortSignal: AbortSignal; traceContext?: TraceContext },
+  ): Promise<import("@zcode/shared/mcp-apps").McpAppsSamplingResult>;
   generateWorkspaceText(
     input: WorkspaceGenerateTextInput,
     options?: { abortSignal?: AbortSignal; traceContext?: TraceContext },

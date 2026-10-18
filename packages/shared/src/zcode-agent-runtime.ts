@@ -23,7 +23,7 @@ export function resolvePlatformBinaryName(binaryName: string, platform: string):
   return platform === "win32" ? `${binaryName}.exe` : binaryName;
 }
 
-export const ZCODE_AGENT_RUNTIME: XCodeAgentRuntimeDescriptor = {
+export const XCODE_AGENT_RUNTIME: XCodeAgentRuntimeDescriptor = {
   binaryKind: "native-binary",
   binaryEnvVar: "GLM_BINARY_PATH",
   bundledResourceDir: "glm",
@@ -32,7 +32,7 @@ export const ZCODE_AGENT_RUNTIME: XCodeAgentRuntimeDescriptor = {
   nativeConfigDir: ".xcode/cli",
   nativeConfigFileName: "config.json",
   missingBinaryMessage:
-    "[XCode Agent] glm binary 未找到，请设置 GLM_BINARY_PATH 或先准备 GLM 运行时资源",
+    "[XCode Agent] glm binary 未找到，请设置 XCODE_AGENT_WORKDIR、GLM_BINARY_PATH 或先准备 GLM 运行时资源",
   resolveEntrySegments: (platform) => [resolvePlatformBinaryName("zcode-agent", platform)],
   nodeBundleEntryFile: "zcode.cjs",
   resolveNodeBundleSegments() {
@@ -41,5 +41,5 @@ export const ZCODE_AGENT_RUNTIME: XCodeAgentRuntimeDescriptor = {
 };
 
 export function getXCodeAgentRuntime(): XCodeAgentRuntimeDescriptor {
-  return ZCODE_AGENT_RUNTIME;
+  return XCODE_AGENT_RUNTIME;
 }

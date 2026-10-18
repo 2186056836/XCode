@@ -138,6 +138,8 @@ export interface MarketingCampaign {
 export interface MarketingTouchDelivery {
   resource_position: MarketingTouchResourcePosition;
   campaign_id: string;
+  /** 投放优先级（0-100，越大越优先）。1010 的 marketingDeliverySchema 要求该字段在场。 */
+  priority?: number;
   campaign?: MarketingCampaign;
   banner?: {
     background?: MarketingHero;
@@ -169,10 +171,14 @@ export type MarketingTouchReportActionType =
   | "click"
   | "claim_success"
   | "claim_fail"
-  | "close";
+  | "close"
+  // 1010 的 marketingTouchController 用 confirm/cancel 表示用户对弹窗的确认或关闭
+  | "confirm"
+  | "cancel";
 
 export interface MarketingTouchReport {
-  scope: string;
+  /** 1010 的 snapshot 可能不下发 scope（旧服务端），故为可选。 */
+  scope?: string;
   campaignId: string;
   actionType: MarketingTouchReportActionType;
   locale: string;

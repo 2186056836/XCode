@@ -12,12 +12,16 @@ export const providerGroupDataSchema = z.enum([
   "bigmodel-family",
   // XCode fork：免费供应商组（内置凭据、连接信息不对用户显示）。
   "free",
+  // XCode fork：其他登录型供应商组（CodeBuddy 等，OAuth/API Key 双模式）。
+  "other",
 ]);
 export const zhipuAccountModeDataSchema = z.enum([
   "start-plan",
   "individual-coding-plan",
   "team-coding-plan",
   "off-peak",
+  // 加速卡访问类别；与 zcodeProviderAccountAccessSchema.mode 同值，改动需同步两处。
+  "highspeed",
 ]);
 export const providerVisibilityDataSchema = z.enum(["visible", "hidden"]);
 export const providerLogoDataSchema = z
@@ -36,9 +40,10 @@ export const apiKeyAccessDataSchema = z
     apiKeyManagementUrl: z.string().url().nullable().optional(),
   })
   .strict();
-export const completeApiKeyAccessDataSchema = apiKeyAccessDataSchema.extend({
-  apiKey: nonBlankRequiredString,
-});
+// XCode fork：部分提供商（本地网关 / 免鉴权端点）不需要 API Key，
+// 准入不再强制非空——否则空 Key 的自定义提供商会直接被报错弃用。
+// 真正需要鉴权的端点由请求层 401 反馈；请求层已对空 Key 免发 Authorization。
+export const completeApiKeyAccessDataSchema = apiKeyAccessDataSchema;
 
 export const completeZhipuAccountAccessDataSchema = z
   .object({
@@ -92,6 +97,14 @@ export const providerConfigDataSchema = z
     personalModelIds: modelIdsDataSchema,
     modelOrder: modelIdsDataSchema,
     visibility: providerVisibilityDataSchema.nullable().optional(),
+    // XCode fork：从上游拉取模型列表时仅保留 ID 匹配该正则片段的模型（不区分大小写）。
+    // 缺省不过滤；正则非法时按未配置处理（拉取失败 open 比静默空列表更可诊断）。
+    upstreamModelIdFilter: z.string().min(1).nullable().optional(),
+    // XCode fork：上游请求画像。opencode-free-tier = OpenCode 免费档：
+    // 请求体注入 bash/glob/grep/read 指纹工具并强制 stream（chat 通道）/
+    // store:false（responses 通道），配合 api.headers 里的 Bearer public 等
+    // 静态头，绕过「free tier can only be used from within OpenCode」客户端闸门。
+    requestProfile: z.enum(["opencode-free-tier", "codebuddy", "qoder"]).nullable().optional(),
   })
   .strict();
 export const completeProviderConfigDataSchema = providerConfigDataSchema.extend({

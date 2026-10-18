@@ -6,7 +6,7 @@ import { resolveServerLayout } from "../runtime/paths.js";
  * 保持 HTTP 工厂的嵌入/单测兼容，由调用方决定是否使用 hostname fallback。
  */
 export async function resolveCoreServerId(
-  serverRoot = process.env.ZCODE_SERVER_ROOT?.trim(),
+  serverRoot = process.env.XCODE_SERVER_ROOT?.trim(),
 ): Promise<string | undefined> {
   if (!serverRoot) return undefined;
   const ownership = await validateServerInstallOwnership(resolveServerLayout(serverRoot));

@@ -6,14 +6,17 @@ import {
   type SessionId,
   type TraceContext,
 } from "@zcode/contracts";
-import { loadXCodeCustomCommand, type ListXCodeCustomCommandsOptions } from "./custom-commands.js";
+import {
+  loadXCodeCustomCommand,
+  type ListXCodeCustomCommandsOptions,
+} from "./custom-commands.js";
 import { expandCustomCommandShellSyntax } from "./custom-command-shell-expansion.js";
 import { isReservedXCodeSlashCommandName } from "./slash-command-surface.js";
 
 const CUSTOM_COMMAND_NOT_FOUND_PATTERN = /not found/i;
 const PROMPT_CUSTOM_COMMAND_PATTERN = /^\/([^\s]+)(?:\s+([\s\S]*))?$/;
 
-interface ResolveXCodeCustomCommandPromptOptions extends ListXCodeCustomCommandsOptions {
+export interface ResolveXCodeCustomCommandPromptOptions extends ListXCodeCustomCommandsOptions {
   executionPort?: ExecutionPort;
   sessionId?: SessionId;
   signal?: AbortSignal;
@@ -26,7 +29,7 @@ export async function resolveXCodeCustomCommandPrompt(
 ): Promise<string | undefined> {
   const invocation = parsePromptCustomCommandInvocation(input);
   // 保留名（含内置 `workflow`）在这里直接返回 undefined，与「命令不存在」同形：内置命令由
-  // builtin-prompt-command.ts 先行展开，这里拒绝的是借同名自定义命令绕过内置语义（或功能开关）的路径。
+  // builtin-prompt-command.ts 先行展开，这里拒绝的是借同名自定义命令绕过内置语义（或灰度门）的路径。
   if (!invocation || isReservedXCodeSlashCommandName(invocation.name)) {
     return undefined;
   }

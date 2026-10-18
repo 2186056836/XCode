@@ -1,5 +1,5 @@
 /* eslint-disable max-lines -- 开发态 agent 部署包含本地打包、远端 owner staging 与 wrapper 安装，后续独立拆分上传事务。 */
-import { ZCODE_AGENT_PROVIDER, resolveXCodeRuntimeEnv } from "@zcode/shared";
+import { XCODE_AGENT_PROVIDER, resolveXCodeRuntimeEnv } from "@zcode/shared";
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { cp, lstat, mkdir, mkdtemp, readdir, readFile, readlink, rm } from "node:fs/promises";
@@ -15,6 +15,7 @@ import {
 import {
   buildWriteLiteralFileCommand,
   quotePosixPathArg,
+  quotePosixShellArg,
 } from "@zcode/server/remote/posixShell.js";
 import { createTarGzArchive } from "@zcode/server/remote/localTarGz.js";
 import {
@@ -37,7 +38,7 @@ import {
 import { repairLegacyRemoteOfficialPluginDirectoryPermissions } from "@zcode/server/remote/zcodeAgentOfficialPluginPermissionRepair.js";
 
 const DEV_AGENT_BUNDLE_RELATIVE_PATH = "apps/zcode-cli/packages/cli/dist/zcode.cjs";
-const DEV_AGENT_BUNDLE_ENV = "ZCODE_REMOTE_DEV_AGENT_BUNDLE";
+const DEV_AGENT_BUNDLE_ENV = "XCODE_REMOTE_DEV_AGENT_BUNDLE";
 const REMOTE_DEV_AGENT_BUNDLE_NAME = REMOTE_AGENT_BUNDLE_NAME;
 const REMOTE_DEV_AGENT_VERSION_FILE_NAME = ".dev-version";
 
@@ -196,6 +197,7 @@ async function shouldSkipDevelopmentXCodeAgentDeploy(params: {
   runtimeResourceDir: string;
   runtimeVersion: string;
   devVersion: string;
+  localBundleSha256: string;
   force: boolean;
   missingOfficialPluginAssetPaths: string[];
   loggers: DeployLoggers;
@@ -240,7 +242,28 @@ async function shouldSkipDevelopmentXCodeAgentDeploy(params: {
     return false;
   }
 
-  params.loggers.log(`[zcode-agent-deploy] ${ZCODE_AGENT_PROVIDER}: 开发态 zcode.cjs 未变化，跳过`);
+  // 旧发布包或另一客户端可能覆盖 bundle，却留下相同的 .dev-version。
+  // 标记只描述上次部署意图；跳过上传前必须在远端校验实际文件，避免 PAT 交给旧版 Agent 的过时鉴权逻辑。
+  const verifyBundleScript =
+    "require('node:fs/promises').readFile(process.argv[1]).then(content => {" +
+    "process.exitCode = require('node:crypto').createHash('sha256').update(content).digest('hex') === process.argv[2] ? 0 : 1;" +
+    "}).catch(() => { process.exitCode = 1; });";
+  try {
+    await waitForClose(
+      await params.backend.exec(
+        `"\${XCODE_SERVER_RUNTIME_ROOT:-$HOME/.zcode/server}/node" -e ${quotePosixShellArg(verifyBundleScript)} ${quotePosixPathArg(params.remoteBundlePath)} ${quotePosixShellArg(params.localBundleSha256)}`,
+      ),
+    );
+  } catch {
+    params.loggers.logWarn(
+      `[zcode-agent-deploy] ${XCODE_AGENT_PROVIDER}: 远端 bundle SHA 不匹配或无法校验，重新上传`,
+    );
+    return false;
+  }
+
+  params.loggers.log(
+    `[zcode-agent-deploy] ${XCODE_AGENT_PROVIDER}: 开发态 zcode.cjs 未变化，跳过`,
+  );
   return true;
 }
 
@@ -305,11 +328,11 @@ async function uploadDevelopmentOfficialPluginPackages(params: {
         await waitForClose(cleanupStream);
       } catch (error) {
         params.loggers.logWarn(
-          `[zcode-agent-deploy] ${ZCODE_AGENT_PROVIDER}: 清理 owner staging 失败 (${ownerSuffix}): ${String(error)}`,
+          `[zcode-agent-deploy] ${XCODE_AGENT_PROVIDER}: 清理 owner staging 失败 (${ownerSuffix}): ${String(error)}`,
         );
       }
     };
-    params.loggers.log(`[zcode-agent-deploy] ${ZCODE_AGENT_PROVIDER}: 开发态上传官方插件资源`);
+    params.loggers.log(`[zcode-agent-deploy] ${XCODE_AGENT_PROVIDER}: 开发态上传官方插件资源`);
     try {
       await params.backend.upload(archivePath, remoteArchivePath);
       await repairLegacyRemoteOfficialPluginDirectoryPermissions({
@@ -376,6 +399,9 @@ export async function deployDevelopmentXCodeAgentRuntime(
       runtimeResourceDir: params.runtimeResourceDir,
       runtimeVersion: params.runtimeVersion,
       devVersion,
+      localBundleSha256: createHash("sha256")
+        .update(await readFile(developmentBundle.localBundlePath))
+        .digest("hex"),
       force: params.force,
       missingOfficialPluginAssetPaths,
       loggers,
@@ -389,7 +415,7 @@ export async function deployDevelopmentXCodeAgentRuntime(
   // 本地修改 apps/zcode-cli 后，远端测试仍运行滞后的发布包。这里改为上传 dev 启动时刚构建的
   // dist/zcode.cjs，并用远端已部署的 node 包一层 wrapper 启动，保证 agent 仍运行在目标机器内。
   loggers.log(
-    `[zcode-agent-deploy] ${ZCODE_AGENT_PROVIDER}: 开发态上传本地 zcode.cjs ${devVersion.slice(0, 12)}`,
+    `[zcode-agent-deploy] ${XCODE_AGENT_PROVIDER}: 开发态上传本地 zcode.cjs ${devVersion.slice(0, 12)}`,
   );
   const mkdirStream = await backend.exec(`mkdir -p ${quotePosixPathArg(params.remoteProviderDir)}`);
   await waitForClose(mkdirStream);
@@ -432,7 +458,7 @@ export async function deployDevelopmentXCodeAgentRuntime(
   }
   await waitForClose(markerStream);
   loggers.log(
-    `[zcode-agent-deploy] ${ZCODE_AGENT_PROVIDER}: 开发态部署完成 ${devVersion.slice(0, 12)}`,
+    `[zcode-agent-deploy] ${XCODE_AGENT_PROVIDER}: 开发态部署完成 ${devVersion.slice(0, 12)}`,
   );
   return true;
 }

@@ -1,7 +1,7 @@
 import { posix } from "node:path";
 import type { CustomPublishOptions, PackageFileInfo } from "builder-util-runtime";
 import {
-  DEFAULT_ZCODE_ENDPOINT_ORIGIN,
+  DEFAULT_XCODE_ENDPOINT_ORIGIN,
   normalizeXCodeEndpointOrigin,
   type ElectronReleaseChannel,
 } from "@zcode/shared";
@@ -19,11 +19,11 @@ import {
 import type { ProviderRuntimeOptions } from "electron-updater/out/providers/Provider.js";
 import { parse as parseYaml } from "yaml";
 
-const ELECTRON_MANIFEST_API_PATH = "/api/v1/releases/electron/manifest";
+export const ELECTRON_MANIFEST_API_PATH = "/api/v1/releases/electron/manifest";
 
 const MANIFEST_ACCEPT_HEADER = "application/x-yaml,text/yaml,text/plain,*/*";
 
-interface ManifestUpdateProviderOptions extends CustomPublishOptions {
+export interface ManifestUpdateProviderOptions extends CustomPublishOptions {
   endpointOrigin?: string;
   manifestUrl?: string;
   deviceMid?: string;
@@ -74,7 +74,7 @@ export function getElectronReleasePlatform(
   return `${mapElectronReleasePlatform(platform)}-${mapElectronReleaseArch(arch)}`;
 }
 
-function buildElectronManifestUrl(options: {
+export function buildElectronManifestUrl(options: {
   endpointOrigin: string;
   manifestUrl?: string;
   platform: string;
@@ -182,7 +182,7 @@ export class ManifestUpdateProvider extends Provider<UpdateInfo> {
   private readonly options: ManifestUpdateProviderOptions;
   private readonly releasePlatform: string;
   private readonly linuxExtensions: readonly string[] | null;
-  private resolveBaseUrl = new URL(DEFAULT_ZCODE_ENDPOINT_ORIGIN);
+  private resolveBaseUrl = new URL(DEFAULT_XCODE_ENDPOINT_ORIGIN);
 
   constructor(
     options: ManifestUpdateProviderOptions,
@@ -194,7 +194,7 @@ export class ManifestUpdateProvider extends Provider<UpdateInfo> {
     this.linuxExtensions = getLinuxUpdateExtensions(updater);
     this.releasePlatform = options.releasePlatform?.trim() || getElectronReleasePlatform();
     this.resolveBaseUrl = new URL(
-      normalizeXCodeEndpointOrigin(options.endpointOrigin ?? DEFAULT_ZCODE_ENDPOINT_ORIGIN),
+      normalizeXCodeEndpointOrigin(options.endpointOrigin ?? DEFAULT_XCODE_ENDPOINT_ORIGIN),
     );
   }
 
@@ -247,7 +247,7 @@ export class ManifestUpdateProvider extends Provider<UpdateInfo> {
     const resolved =
       (await this.options.resolveEndpointOrigin?.()) ??
       this.options.endpointOrigin ??
-      DEFAULT_ZCODE_ENDPOINT_ORIGIN;
+      DEFAULT_XCODE_ENDPOINT_ORIGIN;
     return normalizeXCodeEndpointOrigin(resolved);
   }
 

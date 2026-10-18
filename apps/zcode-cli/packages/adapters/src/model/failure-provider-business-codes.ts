@@ -325,6 +325,26 @@ for (const code of ["engine_overloaded_error", "overloaded_error"]) {
   PROVIDER_BUSINESS_CODE_MAPPINGS.set(code, RETRYABLE_OVERLOAD_MAPPING);
 }
 
+// XCode fork: Qoder 业务码。
+// Qoder 把失败藏在 HTTP 200 的 SSE 信封里（外层 statusCodeValue 常为 200，
+// 真实错误在 body 的 {"error":{"code":...}}），由 qoderProtocol 提取后以标准
+// SSE error 帧外抛。这里只登记**行为语义**（是否重试、归因到哪类失败），
+// 不登记文案——错误文案一律保持上游原文。
+for (const code of ["110", "112"]) {
+  // 110 = 当日调用次数用尽（次日零点恢复）；112 = 账号可用额度见底。
+  // 两者都要等长期额度重置，重试无意义。
+  PROVIDER_BUSINESS_CODE_MAPPINGS.set(code, TERMINAL_RATE_LIMIT_MAPPING);
+}
+
+for (const code of ["406", "416"]) {
+  // 内容安全策略拒绝（intention_rejected）。换号、重试都会被同样拦下，
+  // 属请求侧问题。
+  PROVIDER_BUSINESS_CODE_MAPPINGS.set(code, TERMINAL_BUSINESS_MAPPING);
+}
+
+// 排队/算力紧张，属可恢复的瞬时拥塞。
+PROVIDER_BUSINESS_CODE_MAPPINGS.set("10605", RETRYABLE_RATE_LIMIT_MAPPING);
+
 export function getProviderBusinessCodeMapping(
   providerCode: string,
 ): ProviderBusinessCodeMapping | undefined {

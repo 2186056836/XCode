@@ -179,6 +179,8 @@ export class ProviderConfig extends ConfigOverlay<ProviderConfig> {
   readonly personalModelIds?: ProviderConfigObject["personalModelIds"];
   readonly modelOrder?: ProviderConfigObject["modelOrder"];
   readonly visibility?: ProviderConfigObject["visibility"];
+  readonly upstreamModelIdFilter?: ProviderConfigObject["upstreamModelIdFilter"];
+  readonly requestProfile?: ProviderConfigObject["requestProfile"];
 
   constructor(input: ProviderConfigInput = {}) {
     super();
@@ -190,6 +192,8 @@ export class ProviderConfig extends ConfigOverlay<ProviderConfig> {
     this.personalModelIds = freezeModelIds(input.personalModelIds);
     this.modelOrder = freezeModelIds(input.modelOrder);
     this.visibility = input.visibility;
+    this.upstreamModelIdFilter = input.upstreamModelIdFilter;
+    this.requestProfile = input.requestProfile;
     Object.freeze(this);
   }
 
@@ -203,6 +207,11 @@ export class ProviderConfig extends ConfigOverlay<ProviderConfig> {
       personalModelIds: this.overlayValue(this.personalModelIds, next.personalModelIds),
       modelOrder: this.overlayValue(this.modelOrder, next.modelOrder),
       visibility: this.overlayValue(this.visibility, next.visibility),
+      upstreamModelIdFilter: this.overlayValue(
+        this.upstreamModelIdFilter,
+        next.upstreamModelIdFilter,
+      ),
+      requestProfile: this.overlayValue(this.requestProfile, next.requestProfile),
     });
   }
 
@@ -227,6 +236,8 @@ export class ProviderConfig extends ConfigOverlay<ProviderConfig> {
       personalModelIds: this.personalModelIds,
       modelOrder: this.modelOrder,
       visibility: this.visibility,
+      upstreamModelIdFilter: this.upstreamModelIdFilter,
+      requestProfile: this.requestProfile,
     });
   }
 
@@ -241,6 +252,8 @@ export class ProviderConfig extends ConfigOverlay<ProviderConfig> {
       personalModelIds: source?.personalModelIds,
       modelOrder: source?.modelOrder,
       visibility: this.visibility,
+      upstreamModelIdFilter: this.upstreamModelIdFilter,
+      requestProfile: this.requestProfile,
     });
   }
 
@@ -259,6 +272,8 @@ export class ProviderConfig extends ConfigOverlay<ProviderConfig> {
       personalModelIds: this.personalModelIds,
       modelOrder: this.modelOrder,
       visibility: this.visibility,
+      upstreamModelIdFilter: this.upstreamModelIdFilter,
+      requestProfile: this.requestProfile,
     });
   }
 }

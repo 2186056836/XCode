@@ -1,5 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
-import type { XCodeInstalledPluginSummary, XCodePluginInfo } from "@zcode/shared";
+import type {
+  XCodeInstalledPluginSummary,
+  XCodePluginInfo,
+} from "@zcode/shared";
 import type { IPluginManagementService } from "@zcode/services";
 import { usePluginManagementStore } from "@/store/pluginManagementStore.js";
 
@@ -12,7 +15,7 @@ interface UsePluginUninstallInput {
   onAfterUninstall: () => Promise<void>;
 }
 
-interface PluginUninstallController {
+export interface PluginUninstallController {
   pendingPlugin: XCodePluginInfo | XCodeInstalledPluginSummary | null;
   uninstalling: boolean;
   requestUninstall: (pluginId: string) => void;

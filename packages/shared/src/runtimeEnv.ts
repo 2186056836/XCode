@@ -1,33 +1,33 @@
-export const ZCODE_RUNTIME_ENV_KEY = "ZCODE_RUNTIME_ENV";
-export const ZCODE_HTTP_PROXY_ENV_KEY = "ZCODE_HTTP_PROXY";
-export const ZCODE_NO_PROXY_ENV_KEY = "ZCODE_NO_PROXY";
+export const XCODE_RUNTIME_ENV_KEY = "XCODE_RUNTIME_ENV";
+export const XCODE_HTTP_PROXY_ENV_KEY = "XCODE_HTTP_PROXY";
+export const XCODE_NO_PROXY_ENV_KEY = "XCODE_NO_PROXY";
 /** Desktop Host 只向 desktop-attached remote server 传递一次的网络配置。 */
-export const ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY =
-  "ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY";
-export const ZCODE_REMOTE_HTTP_PROXY_ENV_KEY = "ZCODE_REMOTE_HTTP_PROXY";
-export const ZCODE_REMOTE_NO_PROXY_ENV_KEY = "ZCODE_REMOTE_NO_PROXY";
-export const ZCODE_AGENT_CA_CERT_ENV_KEY = "ZCODE_AGENT_CA_CERT";
-export const ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY = "ZCODE_TOOL_ENV_PASSTHROUGH_JSON";
+export const XCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY =
+  "XCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY";
+export const XCODE_REMOTE_HTTP_PROXY_ENV_KEY = "XCODE_REMOTE_HTTP_PROXY";
+export const XCODE_REMOTE_NO_PROXY_ENV_KEY = "XCODE_REMOTE_NO_PROXY";
+export const XCODE_AGENT_CA_CERT_ENV_KEY = "XCODE_AGENT_CA_CERT";
+export const XCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY = "XCODE_TOOL_ENV_PASSTHROUGH_JSON";
 /** Desktop Main 将服务端裁决的单功能灰度结果传给 Local/Remote Host。 */
-export const ZCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV = "ZCODE_DESKTOP_CONTEXT_PROMPT_ENABLED";
-export const ZCODE_CUA_PRODUCT_HELPER_ENV_KEY = "ZCODE_CUA_PRODUCT_HELPER";
-export const ZCODE_CUA_BROKER_SOCKET_ENV_KEY = "ZCODE_CUA_PERMISSION_BROKER_SOCKET";
+export const XCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV = "XCODE_DESKTOP_CONTEXT_PROMPT_ENABLED";
+export const XCODE_CUA_PRODUCT_HELPER_ENV_KEY = "XCODE_CUA_PRODUCT_HELPER";
+export const XCODE_CUA_BROKER_SOCKET_ENV_KEY = "XCODE_CUA_PERMISSION_BROKER_SOCKET";
 /** Shared node_repl host marker; unlike the broker bearer values it is not a secret. */
-export const ZCODE_CUA_NODE_REPL_HOST_ENV_KEY = "ZCODE_CUA_NODE_REPL_HOST";
-// One-knob local-development bundle. Setting ZCODE_CUA_DEV_MODE implies the internal feature
+export const XCODE_CUA_NODE_REPL_HOST_ENV_KEY = "XCODE_CUA_NODE_REPL_HOST";
+// One-knob local-development bundle. Setting XCODE_CUA_DEV_MODE implies the internal feature
 // flag (below) plus the local-helper relaxations wired in packages/services (unsigned/
 // unauthenticated local helper, dev install variant, "Dev.app" naming). It exists so a developer
 // can launch the full local CUA loop with a single env var instead of the historical four-var
 // incantation. 这些开关只在未打包本地构建生效；正式 desktop/Helper bundle 会在编译期关闭并在
 // main→host 边界删除，不能用于 signed release 的 runtime override。
-export const ZCODE_CUA_DEV_MODE_ENV_KEY = "ZCODE_CUA_DEV_MODE";
+export const XCODE_CUA_DEV_MODE_ENV_KEY = "XCODE_CUA_DEV_MODE";
 
 export type XCodeRuntimeEnv = "development" | "production" | "test";
 
 type EnvRecord = Record<string, string | undefined>;
 
 export function isCuaDevModeRequested(env: EnvRecord = process.env): boolean {
-  const explicit = env[ZCODE_CUA_DEV_MODE_ENV_KEY]?.trim().toLowerCase();
+  const explicit = env[XCODE_CUA_DEV_MODE_ENV_KEY]?.trim().toLowerCase();
   return explicit === "1" || explicit === "true" || explicit === "on";
 }
 
@@ -35,7 +35,7 @@ export function isXCodeCuaInternalFeatureEnabled(env: EnvRecord = process.env): 
   // CUA 现已默认打包进正式版（plugin staged + Helper enabled），不再需要显式 env flag。
   // DEV_MODE 仍然 implied（开发一键），PRODUCT_HELPER=0/off/false 可显式关闭。
   if (isCuaDevModeRequested(env)) return true;
-  const explicit = env[ZCODE_CUA_PRODUCT_HELPER_ENV_KEY]?.trim().toLowerCase();
+  const explicit = env[XCODE_CUA_PRODUCT_HELPER_ENV_KEY]?.trim().toLowerCase();
   if (explicit === "0" || explicit === "false" || explicit === "off") return false;
   return true;
 }
@@ -54,22 +54,22 @@ const SANITIZED_RUNTIME_ENV_KEYS = [
   "REQUESTS_CA_BUNDLE",
   "CURL_CA_BUNDLE",
   "GIT_SSL_CAINFO",
-  ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY,
-  ZCODE_REMOTE_HTTP_PROXY_ENV_KEY,
-  ZCODE_REMOTE_NO_PROXY_ENV_KEY,
+  XCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY,
+  XCODE_REMOTE_HTTP_PROXY_ENV_KEY,
+  XCODE_REMOTE_NO_PROXY_ENV_KEY,
   // CUA broker socket 是只该给目标 zcode-cua MCP server 的连接材料（由 desktop/CLI 在
   // 解析该 server 时定向注入其 env）。绝不能随 agent 全局 env 泄漏给其它 MCP server / Bash / tool
   // 子进程 —— 否则同 agent 内的恶意 MCP 或被 prompt-injection 触发的命令能直接驱动
   // 已授权 Helper（confused-deputy）。这里统一从所有子进程 env 剔除；zcode-cua server 的定向
   // env 注入在 buildMcpStdioEnv 之后 spread，因此仍能拿到（见 adapters/mcp StdioClientTransport）。
-  ZCODE_CUA_BROKER_SOCKET_ENV_KEY,
+  XCODE_CUA_BROKER_SOCKET_ENV_KEY,
   // 遗留 bearer token：当前 broker 是 identity 模式（socket + authority，无口令，见
   // captureXCodeCuaBrokerCredentials），本进程不再产生也不再消费它。仍然剔除，因为用户机上
   // 可能装着旧版 Helper —— 那些版本认 bearer token，一旦这个变量随 agent 全局 env 漏给别的
   // MCP server / Bash 子进程，同一个 confused-deputy 又成立。剔除一个已不用的键是零成本的。
-  "ZCODE_CUA_PERMISSION_BROKER_TOKEN",
-  "ZCODE_CUA_PERMISSION_BROKER_REFRESH_MARKER",
-  "ZCODE_CUA_PLUGIN_AUTHORITY",
+  "XCODE_CUA_PERMISSION_BROKER_TOKEN",
+  "XCODE_CUA_PERMISSION_BROKER_REFRESH_MARKER",
+  "XCODE_CUA_PLUGIN_AUTHORITY",
   // Agent OTLP Endpoint/Auth/Identity 只属于 CLI telemetry bootstrap，不能继续泄漏给
   // Bash、MCP 或模型工具子进程。sanitize 前会捕获到本进程私有 Map，供 Agent 启动边界读取。
   "OTEL_EXPORTER_OTLP_ENDPOINT",
@@ -81,16 +81,16 @@ const SANITIZED_RUNTIME_ENV_KEYS = [
   "OTEL_SERVICE_NAME",
   "OTEL_RESOURCE_ATTRIBUTES",
   "OTEL_EXPORTER_OTLP_COMPRESSION",
-  "ZCODE_MODEL_TELEMETRY_ENABLED",
-  "ZCODE_TELEMETRY_DEVICE_MID",
+  "XCODE_MODEL_TELEMETRY_ENABLED",
+  "XCODE_TELEMETRY_DEVICE_MID",
   // 历史身份变量不再受支持，但仍须从所有子进程环境剔除，避免旧配置把原始账号
   // 或可伪造 hash 泄漏给 Host、Bash 与 MCP。
-  "ZCODE_TELEMETRY_USER_ID",
-  "ZCODE_TELEMETRY_USER_ID_HASH",
-  "ZCODE_TELEMETRY_USER_SUBJECT_ID",
-  "ZCODE_TELEMETRY_IDENTITY_STATE",
-  "ZCODE_TELEMETRY_RUNTIME_SURFACE",
-  "ZCODE_TELEMETRY_RUNTIME_DISTRIBUTION",
+  "XCODE_TELEMETRY_USER_ID",
+  "XCODE_TELEMETRY_USER_ID_HASH",
+  "XCODE_TELEMETRY_USER_SUBJECT_ID",
+  "XCODE_TELEMETRY_IDENTITY_STATE",
+  "XCODE_TELEMETRY_RUNTIME_SURFACE",
+  "XCODE_TELEMETRY_RUNTIME_DISTRIBUTION",
 ] as const;
 
 const NON_TOOL_PASSTHROUGH_RUNTIME_ENV_KEYS = [
@@ -98,12 +98,12 @@ const NON_TOOL_PASSTHROUGH_RUNTIME_ENV_KEYS = [
   "ELECTRON_RUN_AS_NODE",
   "NODE_NO_WARNINGS",
   // CUA broker 凭据不得经 tool-env-passthrough 恢复到 Bash/tool 子进程（否则等于绕过上面的剔除）。
-  ZCODE_CUA_BROKER_SOCKET_ENV_KEY,
-  "ZCODE_CUA_PERMISSION_BROKER_REFRESH_MARKER",
-  "ZCODE_CUA_PLUGIN_AUTHORITY",
-  ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY,
-  ZCODE_REMOTE_HTTP_PROXY_ENV_KEY,
-  ZCODE_REMOTE_NO_PROXY_ENV_KEY,
+  XCODE_CUA_BROKER_SOCKET_ENV_KEY,
+  "XCODE_CUA_PERMISSION_BROKER_REFRESH_MARKER",
+  "XCODE_CUA_PLUGIN_AUTHORITY",
+  XCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY,
+  XCODE_REMOTE_HTTP_PROXY_ENV_KEY,
+  XCODE_REMOTE_NO_PROXY_ENV_KEY,
 ] as const;
 
 const SANITIZED_PACKAGE_MANAGER_ENV_PATTERN =
@@ -121,12 +121,12 @@ export function resolveXCodeRuntimeEnv(
   env: Record<string, string | undefined>,
   fallback: XCodeRuntimeEnv = "production",
 ): XCodeRuntimeEnv {
-  return normalizeXCodeRuntimeEnv(env[ZCODE_RUNTIME_ENV_KEY]) ?? fallback;
+  return normalizeXCodeRuntimeEnv(env[XCODE_RUNTIME_ENV_KEY]) ?? fallback;
 }
 
 // Exported so services/node.ts can inject the Helper's plugin authority into the agent spawn env
 // (mirrors feat; the agent-side plugin host verifies the broker authority via this env var).
-export const ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY = "ZCODE_CUA_PLUGIN_AUTHORITY";
+export const XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY = "XCODE_CUA_PLUGIN_AUTHORITY";
 
 interface CapturedCuaBrokerCredentials {
   socket: string;
@@ -145,9 +145,9 @@ const capturedXCodeAgentTelemetryEnv: Record<string, string> = {};
 // 凭据捕获进本进程私有存储，只经 getCapturedXCodeCuaBrokerCredentials() 暴露给 bootstrap 的定向
 // 注入路径，绝不写回任何子进程 env。
 function captureXCodeCuaBrokerCredentials(env: Record<string, string | undefined>): void {
-  const socket = env[ZCODE_CUA_BROKER_SOCKET_ENV_KEY]?.trim();
-  const pluginAuthority = env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY]?.trim();
-  const refreshMarker = env["ZCODE_CUA_PERMISSION_BROKER_REFRESH_MARKER"]?.trim();
+  const socket = env[XCODE_CUA_BROKER_SOCKET_ENV_KEY]?.trim();
+  const pluginAuthority = env[XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY]?.trim();
+  const refreshMarker = env["XCODE_CUA_PERMISSION_BROKER_REFRESH_MARKER"]?.trim();
   // 连接没有口令：socket + authority（config-provenance 随机数）同批出现才构成有效凭据组；
   // 半组说明上游注入不完整或正在轮换。
   if (socket && pluginAuthority) {
@@ -238,7 +238,7 @@ export function buildXCodeToolEnvPassthroughEnv(env: EnvRecord): Record<string, 
 }
 
 export function readXCodeToolEnvPassthroughEnv(env: EnvRecord): Record<string, string> {
-  const raw = env[ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY];
+  const raw = env[XCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY];
   if (!raw) {
     return {};
   }
@@ -278,8 +278,8 @@ export function sanitizeXCodeRuntimeEnvInPlace(env: Record<string, string | unde
 function isXCodeAgentTelemetryEnvKey(key: string): boolean {
   return (
     key.startsWith("OTEL_") ||
-    key.startsWith("ZCODE_TELEMETRY_") ||
-    key === "ZCODE_MODEL_TELEMETRY_ENABLED"
+    key.startsWith("XCODE_TELEMETRY_") ||
+    key === "XCODE_MODEL_TELEMETRY_ENABLED"
   );
 }
 
@@ -310,6 +310,6 @@ function stringifyXCodeToolEnvPassthroughEnv(
     return {};
   }
   return {
-    [ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY]: JSON.stringify(Object.fromEntries(entries)),
+    [XCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY]: JSON.stringify(Object.fromEntries(entries)),
   };
 }

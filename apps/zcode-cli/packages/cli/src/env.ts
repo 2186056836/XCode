@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { dirname, join, parse, resolve } from "node:path";
 import { config as loadDotenv } from "dotenv";
 import {
-  ZCODE_RUNTIME_ENV_KEY,
+  XCODE_RUNTIME_ENV_KEY,
   buildXCodeToolEnvPassthroughEnv,
   normalizeXCodeRuntimeEnv,
   sanitizeXCodeRuntimeEnv,
@@ -47,7 +47,7 @@ export function applyCliRuntimeEnvSanitization(
   applyCliRuntimeEnvDefaults(env, argv);
 }
 
-const findDotenv = (startDir: string): string | undefined => {
+export const findDotenv = (startDir: string): string | undefined => {
   let current = resolve(startDir);
   const root = parse(current).root;
 
@@ -112,12 +112,12 @@ export function shouldLoadCliDotenvForProtocolServer(env: CliEnv): boolean {
 }
 
 function applyCliRuntimeEnvDefaults(env: CliEnv, argv: readonly string[]): void {
-  env[ZCODE_RUNTIME_ENV_KEY] = resolveCliRuntimeEnv(env, argv);
+  env[XCODE_RUNTIME_ENV_KEY] = resolveCliRuntimeEnv(env, argv);
   applyBetaStorageDefault(env, argv);
 }
 
 function resolveCliRuntimeEnv(env: CliEnv, argv: readonly string[]): XCodeRuntimeEnv {
-  const explicit = normalizeXCodeRuntimeEnv(env[ZCODE_RUNTIME_ENV_KEY]);
+  const explicit = normalizeXCodeRuntimeEnv(env[XCODE_RUNTIME_ENV_KEY]);
   if (explicit) {
     return explicit;
   }
@@ -131,9 +131,9 @@ function resolveCliRuntimeEnv(env: CliEnv, argv: readonly string[]): XCodeRuntim
 }
 
 function applyBetaStorageDefault(env: CliEnv, argv: readonly string[]): void {
-  if (env.ZCODE_STORAGE_DIR?.trim()) return;
-  const explicitBeta = env.ZCODE_BETA === "1" || env.ZCODE_ENV === "beta";
+  if (env.XCODE_STORAGE_DIR?.trim()) return;
+  const explicitBeta = env.XCODE_BETA === "1" || env.XCODE_ENV === "beta";
   const invokedAsBeta = argv.some((arg) => /(^|[/\\])xcode-beta(?:$|\.)/u.test(arg));
   if (!explicitBeta && !invokedAsBeta) return;
-  env.ZCODE_STORAGE_DIR = join(homedir(), ".xcode-beta");
+  env.XCODE_STORAGE_DIR = join(homedir(), ".xcode-beta");
 }

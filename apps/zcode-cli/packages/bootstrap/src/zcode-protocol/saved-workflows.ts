@@ -19,7 +19,7 @@ import {
   type SavedWorkflowResolveFailure,
 } from "@zcode/core";
 import {
-  ZCODE_WORKFLOWS_RUNS_MAX_LIMIT,
+  XCODE_WORKFLOWS_RUNS_MAX_LIMIT,
   zcodeWorkflowsDeleteParamsSchema,
   zcodeWorkflowsGetParamsSchema,
   zcodeWorkflowsListParamsSchema,
@@ -150,9 +150,9 @@ export async function listSavedWorkflowRunsOp(
   const params = parseParams(zcodeWorkflowsRunsParamsSchema, rawParams);
   const journal = resolveDynamicWorkflowJournalStore(context.deps.sessionStore);
   if (journal === undefined || !supportsRunIntrospection(journal)) return { runs: [] };
-  const limit = Math.min(ZCODE_WORKFLOWS_RUNS_MAX_LIMIT, params.limit);
+  const limit = Math.min(XCODE_WORKFLOWS_RUNS_MAX_LIMIT, params.limit);
   const global = scopeOf(params) === "global";
-  // 多取一条**只为判定 truncated**（run service 与 v4 事件分页的同一惯例）。
+  // 多取一条**只为判定 truncated**（run service 的同一惯例）。
   // 全局变体省掉 cwd 谓词（journal 的 cwd 可选 = 跨所有项目）；项目变体传 cwd，逐字不变。
   const rows = journal.listRuns({
     ...(global ? {} : { cwd: params.workspace.workspacePath }),

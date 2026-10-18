@@ -4,13 +4,13 @@ import { join } from "node:path";
 import {
   buildXCodeSourceHeadersFromContext,
   normalizeXCodeSourceHeaderValue,
-  ZCODE_ENV,
-  ZCODE_SOURCE_HEADERS,
-  ZCODE_VERSION,
+  XCODE_ENV,
+  XCODE_SOURCE_HEADERS,
+  XCODE_VERSION,
 } from "@zcode/shared";
 import { getAppConfigDir } from "../paths.js";
 
-export { ZCODE_SOURCE_HEADERS };
+export { XCODE_SOURCE_HEADERS };
 
 interface XCodeSourceHeaderOptions {
   appVersion?: string;
@@ -79,8 +79,8 @@ export function buildXCodeSourceHeaders(
 ): Record<string, string> {
   const platform = options.platform ?? process.platform;
   const arch = options.arch ?? process.arch;
-  const appVersion = normalizePrintableHeaderValue(options.appVersion ?? ZCODE_VERSION);
-  const releaseChannel = normalizePrintableHeaderValue(options.releaseChannel ?? ZCODE_ENV);
+  const appVersion = normalizePrintableHeaderValue(options.appVersion ?? XCODE_VERSION);
+  const releaseChannel = normalizePrintableHeaderValue(options.releaseChannel ?? XCODE_ENV);
   const clientLanguage =
     normalizePrintableHeaderValue(options.clientLanguage) ?? resolveClientLanguage();
   const clientTimezone =

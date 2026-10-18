@@ -1,6 +1,6 @@
 import { isAbsolute, resolve } from "node:path";
 import {
-  ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY,
+  XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY,
   type McpContentBlock,
   type McpToolCallResult,
   type McpToolDescriptor,
@@ -191,7 +191,7 @@ interface BrowserScreenshotArtifact {
 }
 
 function readBrowserScreenshotContentIndices(result: McpToolCallResult): Set<number> {
-  const value = result._meta?.[ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY];
+  const value = result._meta?.[XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY];
   if (!Array.isArray(value)) return new Set<number>();
   return new Set(
     value.filter(

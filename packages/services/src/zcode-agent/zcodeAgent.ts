@@ -1,8 +1,13 @@
-import type { BackgroundBashOutputResult, SessionDebugSnapshot } from "@zcode/shared";
+import type {
+  BackgroundBashOutputResult,
+  SessionDebugSnapshot,
+  XCodeSessionContentProfile,
+} from "@zcode/shared";
 /* eslint-disable max-lines -- XCode agent service 接口集中声明 protocol/session/workspace 方法，拆分会增加 service descriptor 迁移成本。 */
 import type { Event, IDisposable } from "@zcode/rpc";
 import { ServiceChannels } from "@zcode/shared";
 import type { AppUsageRange, AppUsageSnapshot, XCodeTaskTokenUsageResult } from "@zcode/shared";
+import type { DynamicWorkflowMode } from "@zcode/shared";
 import type { XCodeAutomation, XCodeAutomationRun } from "@zcode/shared";
 import type {
   XCodeStorageStartupState,
@@ -29,11 +34,23 @@ import type {
   XCodePluginsInstallResult,
   XCodePluginsReferenceCatalogResult,
   XCodeSkillsReferenceCatalogResult,
+  XCodeMcpReadResourceResult,
+  XCodeMcpUiCallToolResult,
+  XCodeMcpUiCancelCallResult,
+  XCodeMcpUiReadResourceResult,
+  XCodeMcpUiListResourcesResult,
+  XCodeMcpUiAppToolAcceptedResult,
+  XCodeMcpUiRegisterAppToolsResult,
+  XCodeMcpUiUnregisterAppToolsResult,
+  XCodeMcpUiListResourceTemplatesResult,
+  XCodePluginsListUiSurfacesResult,
   XCodeWorkflowsDeleteResult,
+  XCodeWorkflowsForRunResult,
   XCodeWorkflowsGetResult,
   XCodeWorkflowsListResult,
   XCodeWorkflowsMoveResult,
   XCodeWorkflowsRunsResult,
+  XCodeWorkflowsSaveResult,
   XCodeWorkflowsUpdateMetaResult,
   XCodePluginsUninstallResult,
   XCodePluginsRestoreBuiltinResult,
@@ -43,6 +60,8 @@ import type {
   XCodePluginsSetEnabledResult,
   XCodePluginsCancelOperationResult,
   XCodePluginOperationProgressNotification,
+  XCodeProviderRuntimeHeadersRequestParams,
+  XCodeProviderRuntimeHeadersCancelled,
   XCodeProviderTestModelConnectivityParams,
   XCodeProviderTestModelConnectivityResult,
   XCodeUserInputRequestParams,
@@ -120,6 +139,16 @@ import type {
   XCodeAgentPluginViewParams,
   XCodeAgentPluginReferenceCatalogParams,
   XCodeAgentSkillReferenceCatalogParams,
+  XCodeAgentReadMcpResourceParams,
+  XCodeAgentReadMcpResourceForUiParams,
+  XCodeAgentListMcpResourcesForUiParams,
+  XCodeAgentAppToolCallForUiParams,
+  XCodeAgentAppToolInstanceForUiParams,
+  XCodeAgentRegisterAppToolsForUiParams,
+  XCodeAgentResolveAppToolCallForUiParams,
+  XCodeAgentMcpResourceSubscriptionForUiParams,
+  XCodeAgentCallMcpToolForUiParams,
+  XCodeAgentCancelMcpToolCallForUiParams,
   XCodeAgentResolveSuggestedPluginReferenceParams,
   XCodeAgentRemovePluginMarketplaceParams,
   XCodeAgentRestoreBuiltinPluginParams,
@@ -134,10 +163,12 @@ import type {
 } from "./zcodeAgentPluginParams.js";
 import type {
   XCodeAgentDeleteSavedWorkflowParams,
+  XCodeAgentFindSavedWorkflowForRunParams,
   XCodeAgentGetSavedWorkflowParams,
   XCodeAgentListSavedWorkflowRunsParams,
   XCodeAgentListSavedWorkflowsParams,
   XCodeAgentMoveSavedWorkflowParams,
+  XCodeAgentSaveSavedWorkflowFromRunParams,
   XCodeAgentUpdateSavedWorkflowMetaParams,
 } from "./zcodeAgentWorkflowParams.js";
 
@@ -176,7 +207,7 @@ export interface XCodeAgentWorkspaceRuntimeIdentity {
   workspaceKey: string;
 }
 
-export const ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE = "ZCODE_AGENT_RUNTIME_UNAVAILABLE";
+export const XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE = "XCODE_AGENT_RUNTIME_UNAVAILABLE";
 
 export type XCodeAgentRuntimePolicy = "start-if-needed" | "existing-only";
 
@@ -232,6 +263,8 @@ export interface XCodeAgentReadSessionParams extends XCodeAgentSessionTarget {
   afterSeq?: number;
   /** 被动索引/观察者只能读取现有 runtime，禁止为了读快照拉起 session。 */
   runtimePolicy?: XCodeAgentRuntimePolicy;
+  /** "index" 仅供 task index：返回剥离大载荷的同结构 snapshot，禁止回写 UI 状态。 */
+  contentProfile?: XCodeSessionContentProfile;
 }
 
 export interface XCodeAgentReadSessionMessagesParams extends XCodeAgentSessionTarget {
@@ -323,6 +356,16 @@ export interface XCodeAgentGenerateWorkspaceTextParams extends XCodeAgentWorkspa
 export interface XCodeAgentTestModelConnectivityParams extends XCodeAgentWorkspaceTarget {
   selection: XCodeProviderTestModelConnectivityParams["selection"];
   signal?: AbortSignal;
+}
+
+// 合并时曾混用 Agent 完整鉴权响应；UI 只能回传请求校验，账号鉴权必须由 Host 合成。
+export type ProviderRuntimeHeadersUiResponse =
+  | { headersApplied: true; runtimeProviderHeaders: Record<string, string>; errorMessage?: string }
+  | { headersApplied: false; errorMessage?: string };
+
+export interface ZCodeAgentRespondProviderRuntimeHeadersParams extends XCodeAgentSessionTarget {
+  requestId: string;
+  response: ProviderRuntimeHeadersUiResponse;
 }
 
 export interface XCodeAgentSessionRuntimePreferencesRequest extends XCodeSessionRequestRuntimePreferencesParams {
@@ -546,6 +589,7 @@ export type XCodeAgentServiceEvent =
       requestId: string;
       response: XCodeUserInputResponse;
     }
+  | { type: "providerRuntimeHeaders.request"; request: XCodeProviderRuntimeHeadersRequestParams }
   | { type: "snapshot"; snapshot: XCodeSessionStateSnapshot };
 
 export interface XCodeAgentAppRuntimePreferences {
@@ -580,6 +624,12 @@ export interface IXCodeAgentService {
    * 同步 App 全局运行时偏好到所有已活动 workspace；不得为此启动空闲 Agent。
    */
   syncAppRuntimePreferences(preferences: XCodeAgentAppRuntimePreferences): Promise<void>;
+  /**
+   * 动态工作流用户选择变化的信号（docs/dynamic-workflow/launch.md「The user's choice」）：Host 重新计算
+   * 生效模式并串行重发 workspace/updateDynamicWorkflowPolicy。有本机设置权威的 Host 以设置文件为准；
+   * desktop-attached remote Host 以传入值为准（缺席 = 跟随服务端）。不得为此启动空闲 Agent。
+   */
+  syncDynamicWorkflowUserMode(params: { mode?: DynamicWorkflowMode }): Promise<void>;
   getWorkspaceRuntimeIdentity(
     params: XCodeAgentWorkspaceTarget,
   ): Promise<XCodeAgentWorkspaceRuntimeIdentity>;
@@ -617,6 +667,64 @@ export interface IXCodeAgentService {
   getSkillReferenceCatalog(
     params: XCodeAgentSkillReferenceCatalogParams,
   ): Promise<XCodeSkillsReferenceCatalogResult>;
+  /** 插件 UI：读取插件 MCP 的 `ui://` 资源；走 session 所在 workspace agent 进程。 */
+  openMcpUiInstance(
+    params: import("../plugin-ui-bridge/contract.js").PluginUiPrepareSandboxParams & {
+      accountContext?: string;
+    },
+  ): Promise<import("@zcode/shared/mcp-apps").McpAppInstance>;
+  validateMcpUiInstance(
+    params: import("../plugin-ui-bridge/contract.js").PluginUiPluginScope,
+  ): Promise<void>;
+  recycleMcpUiInstance(
+    params: import("../plugin-ui-bridge/contract.js").PluginUiPluginScope,
+  ): Promise<boolean>;
+  closeMcpUiInstance(
+    params: import("../plugin-ui-bridge/contract.js").PluginUiPluginScope,
+  ): Promise<void>;
+  readMcpResource(params: XCodeAgentReadMcpResourceParams): Promise<XCodeMcpReadResourceResult>;
+  /** 插件 UI：UI 发起的工具调用；复用既有权限审批，不产生 transcript row。 */
+  sampleMcpApp(
+    params: import("../plugin-ui-bridge/samplingContract.js").PluginUiSamplingParams,
+  ): Promise<import("@zcode/shared/mcp-apps").McpAppsSamplingResult>;
+  cancelMcpAppSampling(
+    params: import("../plugin-ui-bridge/samplingContract.js").PluginUiCancelSamplingParams,
+  ): Promise<{ cancelled: boolean }>;
+  callMcpToolForUi(params: XCodeAgentCallMcpToolForUiParams): Promise<XCodeMcpUiCallToolResult>;
+  /** 插件 UI 取消带 callId 的进行中 UI 工具调用；agent 侧 abort 到 MCP client。 */
+  cancelMcpToolCallForUi(
+    params: XCodeAgentCancelMcpToolCallForUiParams,
+  ): Promise<XCodeMcpUiCancelCallResult>;
+  /** 插件 UI 页面发起的 `resources/read`，agent 侧限同插件服务器、8 MiB、mimeType 白名单。 */
+  readMcpResourceForUi(
+    params: XCodeAgentReadMcpResourceForUiParams,
+  ): Promise<XCodeMcpUiReadResourceResult>;
+  /** 插件 UI 页面发起的 resources/list、resources/templates/list、subscribe、unsubscribe 代理。 */
+  listMcpResourcesForUi(
+    params: XCodeAgentListMcpResourcesForUiParams,
+  ): Promise<XCodeMcpUiListResourcesResult>;
+  listMcpResourceTemplatesForUi(
+    params: XCodeAgentListMcpResourcesForUiParams,
+  ): Promise<XCodeMcpUiListResourceTemplatesResult>;
+  subscribeMcpResourceForUi(params: XCodeAgentMcpResourceSubscriptionForUiParams): Promise<void>;
+  unsubscribeMcpResourceForUi(params: XCodeAgentMcpResourceSubscriptionForUiParams): Promise<void>;
+  /** App-Provided Tools：页面工具登记 / 注销与模型调用的认领 / 回传（信箱投递走 v4 live 增量）。 */
+  registerAppToolsForUi(
+    params: XCodeAgentRegisterAppToolsForUiParams,
+  ): Promise<XCodeMcpUiRegisterAppToolsResult>;
+  unregisterAppToolsForUi(
+    params: XCodeAgentAppToolInstanceForUiParams,
+  ): Promise<XCodeMcpUiUnregisterAppToolsResult>;
+  claimAppToolCallForUi(
+    params: XCodeAgentAppToolCallForUiParams,
+  ): Promise<XCodeMcpUiAppToolAcceptedResult>;
+  resolveAppToolCallForUi(
+    params: XCodeAgentResolveAppToolCallForUiParams,
+  ): Promise<XCodeMcpUiAppToolAcceptedResult>;
+  /** 插件 UI 工作区级面板入口（已启用插件清单 `ui.surfaces[]`）。 */
+  listPluginUiSurfaces(
+    params: XCodeAgentWorkspaceTarget,
+  ): Promise<XCodePluginsListUiSurfacesResult>;
   // 已保存工作流的 GUI 中枢：workspace 级、无会话，每次调用现扫 `<cwd>/.xcode/workflows/`。
   // 全局档传 `scope: "global"`：带 workspace 就用它当载体，不带则由 services 层自选本机载体运行时。
   listSavedWorkflows(params: XCodeAgentListSavedWorkflowsParams): Promise<XCodeWorkflowsListResult>;
@@ -633,6 +741,15 @@ export interface IXCodeAgentService {
   // 在项目档 / 全局档之间移动同名文件：
   // `workspace` 是载体（移到项目传目标项目、移到全局传源项目），`to` 是落点档；不覆盖已存在的目标。
   moveSavedWorkflow(params: XCodeAgentMoveSavedWorkflowParams): Promise<XCodeWorkflowsMoveResult>;
+  // 完成卡的「直接保存」（docs/dynamic-workflow/transcript-and-notifications.md）：按 runId 从
+  // journal 取这次 run 实际跑过的脚本落盘，不经模型回合。两者都必带 workspace（journal 在那里）。
+  saveSavedWorkflowFromRun(
+    params: XCodeAgentSaveSavedWorkflowFromRunParams,
+  ): Promise<XCodeWorkflowsSaveResult>;
+  /** 这次 run 对应哪个已保存工作流（推导，不记忆）；顺带回 run 的实参供「再次运行」预填。 */
+  findSavedWorkflowForRun(
+    params: XCodeAgentFindSavedWorkflowForRunParams,
+  ): Promise<XCodeWorkflowsForRunResult>;
   resolveSuggestedPluginReference(
     params: XCodeAgentResolveSuggestedPluginReferenceParams,
   ): Promise<import("@zcode/shared").XCodePluginsResolveSuggestedReferenceResult>;
@@ -704,9 +821,34 @@ export interface IXCodeAgentService {
   setModel(params: XCodeAgentSetModelParams): Promise<XCodeSessionStateSnapshot>;
   setThoughtLevel(params: XCodeAgentSetThoughtLevelParams): Promise<XCodeSessionStateSnapshot>;
   setMode(params: XCodeAgentSetModeParams): Promise<XCodeSessionStateSnapshot>;
+  respondProviderRuntimeHeaders(
+    params: ZCodeAgentRespondProviderRuntimeHeadersParams,
+  ): Promise<void>;
   respondSessionRuntimePreferences(
     params: XCodeAgentRespondSessionRuntimePreferencesParams,
   ): Promise<void>;
+  /**
+   * v4 UI 的 Start Plan runtime-auth bridge 只需要本地 pending request 事件，
+   * 不能为此额外打开旧 `session/subscribe`，否则会把旧 replay/continuous 读路径
+   * 重新带回 v4 pane。
+   */
+  onDynamicProviderRuntimeHeadersRequest(
+    params: XCodeAgentSessionTarget,
+  ): Event<XCodeProviderRuntimeHeadersRequestParams>;
+  /**
+   * Start Plan runtime headers 的 workspace 级订阅入口（生产应答方使用）。
+   * Bug 原因（2026-08-16 web 远控卡死）：session 级入口只随桌面 pane 挂载订阅，
+   * web 远控新建会话在桌面没有 pane、web 端无应答方，请求校验请求滞留 pending，
+   * 任务永久「工作中」。桌面窗口用本入口为每个打开的 workspace tab 维持常驻应答方；
+   * 订阅时先注册 live listener 再按 workspaceKey 前缀补投 pending，与 session 级同语义。
+   */
+  onDynamicWorkspaceProviderRuntimeHeadersRequest(
+    params: XCodeAgentWorkspaceTarget,
+  ): Event<XCodeProviderRuntimeHeadersRequestParams>;
+  /** 只投递本 workspace 的校验取消，不属于 conversation stream。 */
+  onDynamicWorkspaceProviderRuntimeHeadersCancelled(
+    params: XCodeAgentWorkspaceTarget,
+  ): Event<XCodeProviderRuntimeHeadersCancelled>;
   onDynamicSessionRuntimePreferencesRequest(): Event<XCodeAgentSessionRuntimePreferencesRequest>;
   /**
    * CLI 进程级资源样本，带 services 打的 lane 标签（CLI 自己不知道 lane）。

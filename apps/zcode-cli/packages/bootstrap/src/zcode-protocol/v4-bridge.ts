@@ -130,7 +130,15 @@ function sessionUsageSeedFromRuntimeContextUsage(
   };
 }
 
-const STABLE_FORK_MODES = new Set<CollaborationMode>(["plan", "build", "edit", "yolo", "auto"]);
+// 1010 新增 guarded 到稳定 fork 模式集
+const STABLE_FORK_MODES = new Set<CollaborationMode>([
+  "plan",
+  "build",
+  "edit",
+  "yolo",
+  "guarded",
+  "auto",
+]);
 
 function stableForkMode(value: string, fallback: CollaborationMode): CollaborationMode {
   return STABLE_FORK_MODES.has(value as CollaborationMode)

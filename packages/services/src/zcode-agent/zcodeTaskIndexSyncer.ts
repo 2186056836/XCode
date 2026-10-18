@@ -8,8 +8,8 @@ import {
   isXCodeModelOnlySyntheticUserMessage,
   resolveWorkspaceKey,
   resolveXCodeVisibleSessionTitle,
-  ZCODE_AGENT_PROVIDER_NOT_READY_CODE,
-  ZCODE_AGENT_PROVIDER,
+  XCODE_AGENT_PROVIDER_NOT_READY_CODE,
+  XCODE_AGENT_PROVIDER,
   type XCodeTaskGoal,
   type XCodeTaskMode,
   type XCodeTaskMeta,
@@ -44,7 +44,7 @@ import type {
   XCodeAgentSessionTarget,
   XCodeAgentWorkspaceTarget,
 } from "./zcodeAgent.js";
-import { ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE } from "./zcodeAgent.js";
+import { XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE } from "./zcodeAgent.js";
 import { formatTaskMetaModelSelectionFromSnapshot } from "./zcodeConfigOptions.js";
 
 const logger = createServiceLogger("zcode-task-index-syncer");
@@ -225,8 +225,8 @@ function buildBaselineMetaFromSummary(
     workspaceIdentity: target.workspaceIdentity,
     createdAt: summary.createdAt,
     updatedAt: summary.lastActivityAt,
-    mode: "build",
-    provider: ZCODE_AGENT_PROVIDER,
+    mode: "default",
+    provider: XCODE_AGENT_PROVIDER,
     ...(summary.parentSessionId ? { forkedFromTaskId: summary.parentSessionId } : {}),
     ...(status ? { status } : {}),
   };
@@ -322,11 +322,11 @@ export function createXCodeTaskIndexSyncer(
   const isProviderNotReadyError = (error: unknown): boolean =>
     typeof error === "object" &&
     error !== null &&
-    (error as { code?: unknown }).code === ZCODE_AGENT_PROVIDER_NOT_READY_CODE;
+    (error as { code?: unknown }).code === XCODE_AGENT_PROVIDER_NOT_READY_CODE;
   const isRuntimeUnavailableError = (error: unknown): boolean =>
     typeof error === "object" &&
     error !== null &&
-    (error as { code?: unknown }).code === ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE;
+    (error as { code?: unknown }).code === XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE;
   const logTopicSubscribeFailure = (
     state: WorkspaceIngestState,
     topic: TaskIndexTopicKind,
@@ -511,9 +511,14 @@ export function createXCodeTaskIndexSyncer(
       // 会在用户下一轮 prompt 已被 Core 接受后重新 materialize/resume 同一 session，
       // 形成第二个生命周期 writer；readSession(existing-only) 保留完整 snapshot
       // 的索引能力，同时不会拉起或修改 runtime。
+      // 性能根因：每轮 turn 完成/改标题/变可见都会走这里，完整历史单行可达 ~15MB，
+      // host stdio 帧解析与 JSON.parse 被打满；index 只读标题/正文/可见性/状态，
+      // 故请求 contentProfile "index"（剥离 tool/reasoning/data URL 大载荷，结构不变）。
+      // 不能用 messageLimit：searchableText 与标题回退依赖历史开头。
       const snapshot = await agentService.readSession({
         ...target,
         runtimePolicy: "existing-only",
+        contentProfile: "index",
       });
       // 回源收敛是状态/正文同步，不涉及 pin/archive/unread 归属（task_status_changed）。
       await syncSnapshotAndBroadcast(snapshot, {
@@ -1840,7 +1845,7 @@ function buildMetaFromSnapshot(
     // 历史 task 恢复时 snapshot.settings.thoughtLevel 可能仍是同 workspace 草稿态的最新值。
     // 当恢复入口已经带上 task-local thoughtLevel 时，sqlite 必须写入入口值，避免下次打开继续被污染。
     thoughtLevel: thoughtLevelOverride || snapshot.settings.thoughtLevel.current,
-    provider: ZCODE_AGENT_PROVIDER,
+    provider: XCODE_AGENT_PROVIDER,
     status: deriveXCodeTaskStatusFromSessionSnapshot(snapshot),
     lastError: snapshot.projection.lastError
       ? {

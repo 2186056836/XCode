@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE } from "@zcode/contracts";
+import { XCODE_OFFICIAL_PLUGIN_MARKETPLACE } from "@zcode/contracts";
 
 const BUNDLED_PARTITION_FILE = "bundled-marketplace.json";
 const CDN_PARTITION_FILE = "cdn-marketplace.json";
@@ -41,7 +41,7 @@ export function loadBundledOfficialPluginRootsSync(
   const officialCacheRoot = resolve(
     storageRoot,
     "cache",
-    ZCODE_OFFICIAL_PLUGIN_MARKETPLACE,
+    XCODE_OFFICIAL_PLUGIN_MARKETPLACE,
   );
   return readPluginEntries(bundledPartition.manifest).flatMap((plugin) => {
     const name = readPluginName(plugin);
@@ -78,7 +78,7 @@ function rebuildOfficialMarketplaceSync(storageRoot: string): Record<string, unk
   const merged = {
     ...(bundledManifest ?? {}),
     ...(cdnManifest ?? {}),
-    name: ZCODE_OFFICIAL_PLUGIN_MARKETPLACE,
+    name: XCODE_OFFICIAL_PLUGIN_MARKETPLACE,
     plugins: [...cdnPlugins, ...bundledPlugins],
   };
   writeJsonFileSync(partitionPath(storageRoot, MERGED_MARKETPLACE_FILE), merged);
@@ -119,15 +119,15 @@ function isStrictDescendant(parentPath: string, childPath: string): boolean {
 }
 
 function assertOfficialManifest(manifest: Record<string, unknown>): void {
-  if (manifest.name !== ZCODE_OFFICIAL_PLUGIN_MARKETPLACE) {
+  if (manifest.name !== XCODE_OFFICIAL_PLUGIN_MARKETPLACE) {
     throw new Error(
-      `Official marketplace manifest must be named ${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE}`,
+      `Official marketplace manifest must be named ${XCODE_OFFICIAL_PLUGIN_MARKETPLACE}`,
     );
   }
 }
 
 function partitionPath(storageRoot: string, fileName: string): string {
-  return join(storageRoot, "marketplaces", ZCODE_OFFICIAL_PLUGIN_MARKETPLACE, fileName);
+  return join(storageRoot, "marketplaces", XCODE_OFFICIAL_PLUGIN_MARKETPLACE, fileName);
 }
 
 function readJsonRecord(path: string): Record<string, unknown> | undefined {

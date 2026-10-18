@@ -17,7 +17,6 @@ import {
 } from "#src/bigmodel/codingPlanEntitlement.js";
 import { createServiceLogger } from "#src/logger/serviceLogger.js";
 import { readApiJson } from "../providers/api/apiJson.js";
-import { normalizeApiKeyForHeader } from "../providers/api/index.js";
 import { resolveBigModelStartPlanXcodeJwt } from "./bigmodelStartPlanXcodeJwt.js";
 import {
   buildZaiStartPlanBalanceUrl,
@@ -34,7 +33,7 @@ const REQUEST_TIMEOUT_MS = 15_000;
 const log = createServiceLogger("coding-plan-availability");
 const BIGMODEL_SUBSCRIPTION_LIST_PATH = "/api/biz/subscription/list";
 
-const ZCODE_JWT_TOKEN_KEY = "zcodejwttoken";
+const XCODE_JWT_TOKEN_KEY = "zcodejwttoken";
 
 export type CodingPlanUnavailableReason =
   | "coding_plan_not_authenticated"
@@ -44,7 +43,7 @@ export type CodingPlanUnavailableReason =
 
 function buildZaiSubscriptionListUrl(): string {
   // ZAI 测试环境业务 token 只能请求配置的 ZAI Business origin。
-  // availability 校验必须和 OAuth business login 共用同一套 ZCODE_ENV 域名分流，只允许 origin 不同。
+  // availability 校验必须和 OAuth business login 共用同一套 XCODE_ENV 域名分流，只允许 origin 不同。
   return buildRuntimeZaiBusinessUrl(process.env, "/api/biz/subscription/list");
 }
 
@@ -99,7 +98,7 @@ export interface CodingPlanAvailabilityProvider {
   readonly apiKey?: string | null;
 }
 
-async function validateCodingPlanProviderAvailability(
+export async function validateCodingPlanProviderAvailability(
   provider: CodingPlanAvailabilityProvider,
   context: CodingPlanAvailabilityContext,
 ): Promise<CodingPlanAvailabilityResult> {
@@ -239,7 +238,7 @@ async function validateSelectedTeamPlanAvailability(
   if (!token) {
     return { kind: "unavailable", reason: "coding_plan_not_connected" };
   }
-  const zcodeJwtToken = (await context.credentialService?.load(ZCODE_JWT_TOKEN_KEY))?.trim();
+  const zcodeJwtToken = (await context.credentialService?.load(XCODE_JWT_TOKEN_KEY))?.trim();
   // BigModel 旧版本可能把 zcodejwttoken 误写进 oauth access token；
   // 但 Z.ai 的 business JWT 本身就是合法 Bearer token，不能套用这个 stale-token 防御。
   if (family === "bigmodel" && zcodeJwtToken && token === zcodeJwtToken) {
@@ -371,8 +370,9 @@ async function validateSubscriptionListAvailability(
   context: CodingPlanAvailabilityContext,
   url: string,
 ): Promise<CodingPlanAvailabilityResult> {
-  const authorization = normalizeApiKeyForHeader(provider.apiKey ?? "");
-  // Key 尚未准备好只能表示权益未知；不能用调用凭据的缺失证明未订阅。
+  // 账号凭据已是三段 PAT；旧手工 Key 归一化会按 id.secret 截掉签名。
+  const authorization = (provider.apiKey ?? "").trim().replace(/^Bearer\s+/i, "").trim();
+  // 请求期 Token 尚未准备好只能表示权益未知；不能用凭据缺失证明未订阅。
   if (!authorization) return { kind: "unknown" };
   try {
     const result = await fetchPersonalCodingPlanEntitlement({
@@ -453,7 +453,7 @@ async function resolveStartPlanAuthorization(
   }
 
   const credentialJwt = await loadZaiProviderConnectionXcodeJwtToken(context);
-  const providerJwt = normalizeApiKeyForHeader(provider.apiKey ?? "");
+  const providerJwt = (provider.apiKey ?? "").trim().replace(/^Bearer\s+/i, "").trim();
   return {
     value: credentialJwt || providerJwt ? `Bearer ${credentialJwt || providerJwt}` : "",
     missingReason: "coding_plan_not_authenticated",
@@ -507,7 +507,7 @@ function resolveStartPlanBalanceAvailability(
 async function loadZaiProviderConnectionXcodeJwtToken(
   context: CodingPlanAvailabilityContext,
 ): Promise<string> {
-  return (await context.credentialService?.load(ZCODE_JWT_TOKEN_KEY))?.trim() || "";
+  return (await context.credentialService?.load(XCODE_JWT_TOKEN_KEY))?.trim() || "";
 }
 
 function classifyAvailabilityError(error: unknown): CodingPlanAvailabilityResult {

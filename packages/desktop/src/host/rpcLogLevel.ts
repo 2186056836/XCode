@@ -1,4 +1,4 @@
-import { ZCODE_AGENT_PROVIDER_NOT_READY_CODE } from "@zcode/shared";
+import { XCODE_AGENT_PROVIDER_NOT_READY_CODE } from "@zcode/shared";
 
 type RpcLogLevel = "debug" | "info" | "warn";
 
@@ -19,7 +19,7 @@ export function resolveRpcLogLevel(message: string, ...args: unknown[]): RpcLogL
         typeof arg === "object" &&
         arg !== null &&
         "code" in arg &&
-        (arg as { code?: unknown }).code === ZCODE_AGENT_PROVIDER_NOT_READY_CODE,
+        (arg as { code?: unknown }).code === XCODE_AGENT_PROVIDER_NOT_READY_CODE,
     )
   ) {
     return "info";

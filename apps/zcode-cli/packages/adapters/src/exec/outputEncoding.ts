@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { StringDecoder } from "node:string_decoder";
 import iconv from "iconv-lite";
 
-const WINDOWS_OUTPUT_ENCODING_OVERRIDE_ENV = "ZCODE_WINDOWS_OUTPUT_ENCODING";
+const WINDOWS_OUTPUT_ENCODING_OVERRIDE_ENV = "XCODE_WINDOWS_OUTPUT_ENCODING";
 const PYTHON_UTF8_ENV_PATCH = {
   PYTHONIOENCODING: "utf-8",
   PYTHONUTF8: "1",

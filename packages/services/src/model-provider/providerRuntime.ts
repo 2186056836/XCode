@@ -25,11 +25,13 @@ import {
   type ProviderSettingsConnectivityTester,
 } from "./providerFacadeServices.js";
 import type { ProviderSettingsUpstreamModelsFetcher } from "./upstreamModelListFetcher.js";
+import type { QoderProStatusGatewayFetcher } from "./providerFacadeServices.js";
 
 export interface ProviderRuntimeOptions extends ProviderConfigRuntimeOptions {
   readonly accountSource?: RefreshableProviderSource<AccountProviderConfigSnapshot>;
   readonly testConnectivity?: ProviderSettingsConnectivityTester;
   readonly fetchUpstreamModels?: ProviderSettingsUpstreamModelsFetcher;
+  readonly qoderProStatusGatewayFetcher?: QoderProStatusGatewayFetcher;
 }
 
 export interface ProviderRuntimeDependencies {
@@ -38,6 +40,7 @@ export interface ProviderRuntimeDependencies {
   readonly disposeAccountSource?: () => void;
   readonly testConnectivity?: ProviderSettingsConnectivityTester;
   readonly fetchUpstreamModels?: ProviderSettingsUpstreamModelsFetcher;
+  readonly qoderProStatusGatewayFetcher?: QoderProStatusGatewayFetcher;
   readonly modelSelectionConfiguredDefaultSource?: ModelSelectionConfiguredDefaultSource;
   readonly disposeModelSelectionConfiguredDefaultSource?: () => void;
 }
@@ -109,6 +112,7 @@ export class ProviderRuntime {
       ensureReady,
       dependencies.testConnectivity,
       dependencies.fetchUpstreamModels,
+      dependencies.qoderProStatusGatewayFetcher,
     );
     this.#modelSelectionRuntime = createModelSelectionService(
       createNodeModelSelectionFacade(this.registryService),
@@ -198,7 +202,13 @@ function createSettingsMutationTarget(
 }
 
 export function createProviderRuntime(options: ProviderRuntimeOptions): ProviderRuntime {
-  const { accountSource, testConnectivity, fetchUpstreamModels, ...configRuntimeOptions } = options;
+  const {
+    accountSource,
+    testConnectivity,
+    fetchUpstreamModels,
+    qoderProStatusGatewayFetcher,
+    ...configRuntimeOptions
+  } = options;
   const configRuntime = createProviderConfigRuntime(configRuntimeOptions);
   const modelSelectionConfiguredDefaultSource = new NodeModelSelectionConfigRepository({
     personalRepository: configRuntime.personalRepository,
@@ -208,6 +218,7 @@ export function createProviderRuntime(options: ProviderRuntimeOptions): Provider
     accountSource,
     testConnectivity,
     fetchUpstreamModels,
+    qoderProStatusGatewayFetcher,
     modelSelectionConfiguredDefaultSource,
     disposeModelSelectionConfiguredDefaultSource: () =>
       modelSelectionConfiguredDefaultSource.dispose(),

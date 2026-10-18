@@ -14,8 +14,10 @@ import { Input } from "@/components/ui/input.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import type { ModelConfigObject } from "@zcode/provider";
-import type { UpstreamModelListResult } from "@zcode/shared";
+import type { UpstreamModelEntry, UpstreamModelListResult } from "@zcode/shared";
+import { sortReasoningLevelsByIntensity } from "@zcode/shared";
 import { TECHNICAL_INPUT_ATTRIBUTES } from "@/lib/technicalInputAttributes.js";
+import { formatQoderPriceFactor } from "@/lib/qoderModelDisplayNames.js";
 import {
   ModelConfigHelp,
   ModelConfigInputLabel,
@@ -36,10 +38,10 @@ import { cn } from "@/components/lib/utils.js";
  * 从自定义供应商上游拉取模型列表并批量添加。
  *
  * 打开即自动拉取（GET {baseUrl}/models，Host 直连）；列表勾选要导入的模型，
- * 已存在的置灰防重复。弹窗顶部提供"统一模型配置"——与单个添加模型对话框同款字段
- * （上下文窗口/最大输出 Token/输入类型/模型能力/推理等级），勾选的所有模型共用这一套
- * 配置（替代智能推荐配置）。行为对齐单个"添加模型"：导入中等待完成，全部成功才关闭；
- * 结果 toast 由 Card 层一次性汇总。
+ * 已存在的置灰防重复。「统一模型配置」开关默认关闭：关闭时上下文窗口/最大输出
+ * 等**取自上游模型信息**（缺失字段继承系统默认规则），不套用统一表单；开启后
+ * 勾选的所有模型共用弹窗内这套统一配置。行为对齐单个"添加模型"：导入中等待
+ * 完成，全部成功才关闭；结果 toast 由 Card 层一次性汇总。
  */
 
 type FetchPhase = "idle" | "fetching" | "ready" | "error";
@@ -147,6 +149,43 @@ function buildBatchPersonalConfig(
   };
 }
 
+/**
+ * 未启用统一配置时按上游模型信息构造个人配置：上下文窗口/最大输出取上游，
+ * 上游未提供的字段不写（继承系统默认规则），两者皆无则为空覆盖。
+ */
+/** 思考强度选项对齐上游：disabled + 上游档位；payload 只读 reasoning_effort。 */
+const QODER_REASONING_LEVEL_MAP = JSON.stringify({
+  reasoning_effort: 'reasoningLevel == "disabled" ? "none" : reasoningLevel',
+});
+
+function buildUpstreamEntryConfig(entry: UpstreamModelEntry | undefined): ModelConfigObject {
+  if (!entry) return {};
+  // maxOutputTokens 与思考档位同属 optionSpecs，必须合成一个对象——
+  // 两个条件展开会让后写的键覆盖前一个，导致 maxOutputTokens 静默丢失。
+  const optionSpecs: NonNullable<ModelConfigObject["optionSpecs"]> = {};
+  if (entry.maxOutputTokens !== undefined) {
+    optionSpecs.maxOutputTokens = { max: entry.maxOutputTokens };
+  }
+  // XCode fork：思考强度档位对齐上游（Qoder thinking_config.efforts /
+  // CodeBuddy reasoning.supportedEfforts），聊天的思考强度选择器即可选
+  // 上游档位；payload 只读 reasoning_effort。
+  if (entry.thinkingEfforts?.length) {
+    // XCode fork：上游档位按强度升序写入。上游把档位放在 JSON 对象键里
+    // （Qoder thinking_config.enabled.efforts），键序与强度无关；不排序就会把
+    // 「关闭/极高/低/中/高」这种序列持久化进 optionSpecs。
+    optionSpecs.reasoningLevel = {
+      values: sortReasoningLevelsByIntensity(["disabled", ...entry.thinkingEfforts]),
+      map: QODER_REASONING_LEVEL_MAP,
+    };
+  }
+  return {
+    ...(entry.contextWindow !== undefined
+      ? { properties: { contextWindow: entry.contextWindow } }
+      : {}),
+    ...(Object.keys(optionSpecs).length > 0 ? { optionSpecs } : {}),
+  };
+}
+
 export function UpstreamModelsImportDialog({
   open,
   onOpenChange,
@@ -160,19 +199,30 @@ export function UpstreamModelsImportDialog({
   providerId: string;
   existingModelIds: readonly string[];
   onFetchUpstreamModels: (providerId: string) => Promise<UpstreamModelListResult>;
-  /** 批量导入整批勾选的模型，统一套用弹窗内的模型配置；串行保存与一次性汇总通知由 Card 层负责。 */
+  /** 批量导入整批勾选的模型（每项可带各自配置）；串行保存与一次性汇总通知由 Card 层负责。 */
   onImportModels: (
-    modelIds: readonly string[],
-    config: ModelConfigObject,
+    items: ReadonlyArray<{
+      modelId: string;
+      config: ModelConfigObject;
+      /** XCode fork：上游可读名与倍率，仅用于展示与元数据表，不进模型配置。 */
+      displayName?: string;
+      priceFactor?: number;
+      contextTiers?: ReadonlyArray<{ name: string; tokenCount: number }>;
+      thinkingEfforts?: ReadonlyArray<string>;
+    }>,
   ) => Promise<{ added: number; failed: number; failedModelIds: readonly string[] }>;
 }) {
   const { intl } = useXCodeIntl();
   const [phase, setPhase] = useState<FetchPhase>("idle");
   const [models, setModels] = useState<readonly string[]>([]);
+  const [entriesById, setEntriesById] = useState<ReadonlyMap<string, UpstreamModelEntry>>(
+    () => new Map(),
+  );
   const [fetchError, setFetchError] = useState<UpstreamFetchError | null>(null);
   const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set());
   const [filter, setFilter] = useState("");
   const [importing, setImporting] = useState(false);
+  const [useSharedConfig, setUseSharedConfig] = useState(false);
   const [configDraft, setConfigDraft] = useState<BatchModelConfigDraft>(DEFAULT_BATCH_CONFIG);
   const [invalidField, setInvalidField] = useState<BatchConfigField | null>(null);
 
@@ -185,8 +235,12 @@ export function UpstreamModelsImportDialog({
       const result = await onFetchUpstreamModels(providerId);
       if (result.success) {
         setModels(result.models);
-        // 默认全选尚未添加的模型；已存在的保持未选且不可选。
-        setSelected(new Set(result.models.filter((id) => !existingSet.has(id))));
+        setEntriesById(
+          new Map((result.entries ?? []).map((entry) => [entry.id, entry] as const)),
+        );
+        // 默认不选任何模型：上游列表常有几十项，全选后误点「添加所选 N 个模型」
+        // 会一次写入大量用户并不需要的模型。改为由用户主动勾选（全选仍有入口）。
+        setSelected(new Set());
         setPhase("ready");
       } else {
         setFetchError(result.error);
@@ -206,9 +260,11 @@ export function UpstreamModelsImportDialog({
   const resetState = useCallback(() => {
     setPhase("idle");
     setModels([]);
+    setEntriesById(new Map());
     setFetchError(null);
     setSelected(new Set());
     setFilter("");
+    setUseSharedConfig(false);
     setConfigDraft(DEFAULT_BATCH_CONFIG);
     setInvalidField(null);
   }, []);
@@ -265,14 +321,34 @@ export function UpstreamModelsImportDialog({
   const handleImport = async () => {
     const ids = [...selected];
     if (ids.length === 0) return;
-    const built = buildBatchPersonalConfig(configDraft);
-    if ("invalidField" in built) {
-      setInvalidField(built.invalidField);
-      return;
+    let items: Array<{ modelId: string; config: ModelConfigObject }>;
+    if (useSharedConfig) {
+      const built = buildBatchPersonalConfig(configDraft);
+      if ("invalidField" in built) {
+        setInvalidField(built.invalidField);
+        return;
+      }
+      items = ids.map((modelId) => ({ modelId, config: built.config }));
+    } else {
+      // 默认：上下文/最大输出等取自上游模型信息，缺失字段继承系统默认规则。
+      items = ids.map((modelId) => {
+        const entry = entriesById.get(modelId);
+        return {
+          modelId,
+          config: buildUpstreamEntryConfig(entry),
+          // XCode fork：可读名与倍率只写 provider overlay 的元数据表，不进模型配置。
+          ...(entry?.displayName ? { displayName: entry.displayName } : {}),
+          ...(entry?.priceFactor !== undefined ? { priceFactor: entry.priceFactor } : {}),
+          ...(entry?.contextTiers ? { contextTiers: entry.contextTiers } : {}),
+          ...(entry?.thinkingEfforts?.length
+            ? { thinkingEfforts: entry.thinkingEfforts }
+            : {}),
+        };
+      });
     }
     setImporting(true);
     try {
-      const summary = await onImportModels(ids, built.config);
+      const summary = await onImportModels(items);
       if (summary.failed === 0) {
         // 全部成功：与单个添加一致，保存完成后关窗；结果由 Card 层 toast 汇总。
         setImporting(false);
@@ -355,11 +431,37 @@ export function UpstreamModelsImportDialog({
               </p>
             ) : (
               <>
-                {/* 统一模型配置：勾选的所有模型共用这一套（与单个添加模型对话框同款字段）。 */}
+                {/* 统一模型配置开关：默认关闭——上下文/最大输出等取自上游模型信息；
+                    开启后勾选的所有模型共用弹窗内这一套（与单个添加模型对话框同款字段）。 */}
+                <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border p-3">
+                  <Checkbox
+                    checked={useSharedConfig}
+                    onCheckedChange={(checked) => {
+                      setUseSharedConfig(checked === true);
+                      setInvalidField(null);
+                    }}
+                    disabled={importing}
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-ui-base font-medium text-foreground">
+                      {intl.formatMessage({
+                        id: "settings.modelProvider.importModels.sharedConfig",
+                      })}
+                    </span>
+                    <span className="mt-0.5 block text-ui-sm text-foreground-subtle">
+                      {intl.formatMessage({
+                        id: useSharedConfig
+                          ? "settings.modelProvider.importModels.sharedConfigHintEnabled"
+                          : "settings.modelProvider.importModels.sharedConfigHintDisabled",
+                      })}
+                    </span>
+                  </span>
+                </label>
+                {useSharedConfig ? (
                 <div className="space-y-3 rounded-lg border border-border p-3">
                   <div className="text-ui-base font-medium text-foreground">
                     {intl.formatMessage({
-                      id: "settings.modelProvider.importModels.sharedConfig",
+                      id: "settings.modelProvider.importModels.sharedConfigValues",
                     })}
                   </div>
                   <div>
@@ -487,6 +589,7 @@ export function UpstreamModelsImportDialog({
                     </p>
                   ) : null}
                 </div>
+                ) : null}
 
                 <Input
                   value={filter}
@@ -526,6 +629,26 @@ export function UpstreamModelsImportDialog({
                           disabled={alreadyAdded || importing}
                         />
                         <span className="truncate text-ui-sm">{id}</span>
+                        {/* XCode fork：上游给了可读名/倍率时在旁边补小字标注
+                            （Qoder：qmodel_38max → Qwen3.8-Max · 0.2×）。 */}
+                        {entriesById.get(id)?.displayName ? (
+                          <span
+                            className="min-w-0 shrink truncate text-ui-sm text-foreground-subtle"
+                            title={entriesById.get(id)?.displayName}
+                          >
+                            {entriesById.get(id)?.displayName}
+                          </span>
+                        ) : null}
+                        {entriesById.get(id)?.priceFactor !== undefined ? (
+                          <span
+                            className="shrink-0 font-mono text-ui-sm text-foreground-subtle"
+                            title={intl.formatMessage({
+                              id: "settings.modelProvider.qoderPriceFactorHint",
+                            })}
+                          >
+                            {formatQoderPriceFactor(entriesById.get(id)!.priceFactor!)}
+                          </span>
+                        ) : null}
                         {alreadyAdded && (
                           <span className="ml-auto shrink-0 text-ui-sm text-foreground-subtle">
                             {intl.formatMessage({

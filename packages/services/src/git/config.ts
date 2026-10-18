@@ -51,7 +51,7 @@ const GIT_LOCAL_ENV_VARS = [
 ];
 
 export function getGitBinaryCandidates(): string[] {
-  const candidates = [process.env.ZCODE_GIT_BINARY?.trim(), "git"];
+  const candidates = [process.env.XCODE_GIT_BINARY?.trim(), "git"];
   if (process.platform === "win32") {
     candidates.push(...WINDOWS_GIT_BINARY_CANDIDATES);
   }

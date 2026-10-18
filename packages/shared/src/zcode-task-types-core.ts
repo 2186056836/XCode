@@ -146,7 +146,20 @@ export interface XCodeTaskGoalChangedPatch {
 }
 // ---- XCode task 模式 ----
 
-export type XCodeTaskMode = "yolo" | "plan" | "edit" | "auto" | "autoEdit" | "build";
+// 1010 扩宽（off-peak guarded 档 + 会话权限模式 default/acceptEdits/dontAsk/bypassPermissions）
+// fork 原为 6 值；扩宽是超集，旧代码不受影响
+export type XCodeTaskMode =
+  | "default"
+  | "yolo"
+  | "guarded"
+  | "plan"
+  | "edit"
+  | "acceptEdits"
+  | "auto"
+  | "dontAsk"
+  | "bypassPermissions"
+  | "autoEdit"
+  | "build";
 
 export type XCodeOffPeakRunType = "init" | "resume";
 
@@ -197,8 +210,11 @@ export interface XCodePromptFileAttachment {
   filename: string;
   mimeType: string;
   sizeBytes: number;
-  /** 附件来源；clipboard-text 表示由长文本粘贴落盘生成，agent 只应按临时文件引用处理。 */
-  sourceKind?: "clipboard-text";
+  /** 附件来源；clipboard-text 表示由长文本粘贴落盘生成，topic-history 表示群组话题历史导出。
+   *  agent 只应按临时文件引用处理。 */
+  sourceKind?: "clipboard-text" | "topic-history";
+  /** topic-history 附件携带的原始消息条数，让 agent 知道这个导出覆盖了多少轮对话。 */
+  messageCount?: number;
   /** 旧版/无路径环境的兼容回退；新桌面 GUI 不再为普通文件发送 base64。 */
   dataBase64?: string;
   /** 无本地路径时的小文本回退；有 localPath 时由 agent 自行读取。 */

@@ -98,7 +98,11 @@ export function createAccountProviderConnectionResolver(
           config.access?.type === "zhipu-account" &&
           config.access.accountType === family &&
           config.access.mode &&
-          config.access.mode !== "off-peak"
+          config.access.mode !== "off-peak" &&
+          // 1010 新增：highspeed 与 off-peak 同族 —— 都是「已连接的个人/团队 Coding Plan」派生出的
+          // 执行入口（鉴权分别来自 ticket 与加速卡 JWT），本身没有可校验的套餐 Key，
+          // 因此不进入 Coding Plan availability 校验。
+          config.access.mode !== "highspeed"
             ? [{ providerId, config, planKind: config.access.mode }]
             : [],
         );

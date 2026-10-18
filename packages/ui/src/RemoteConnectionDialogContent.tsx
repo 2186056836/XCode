@@ -19,6 +19,7 @@ import type {
 import {
   AlertTriangleIcon,
   ChevronRightIcon,
+  CloudIcon,
   LoaderIcon,
   MonitorCogIcon,
   ServerIcon,
@@ -41,6 +42,8 @@ function getKindIcon(kind: RemoteTarget["kind"]) {
   switch (kind) {
     case "ssh":
       return ServerIcon;
+    case "server":
+      return CloudIcon;
     case "docker":
       return MonitorCogIcon;
     case "wsl":

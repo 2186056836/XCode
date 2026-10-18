@@ -1,4 +1,4 @@
-import { ZCODE_FILE_LOCK_TIMEOUT_ERROR_CODE } from "../errors.js";
+import { XCODE_FILE_LOCK_TIMEOUT_ERROR_CODE } from "../errors.js";
 import { mkdir, readFile, readdir, rmdir, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -165,7 +165,7 @@ function createFileLockTimeoutError(
   const error = new Error(
     `Timed out after ${waitedMs}ms waiting for the XCode file lock: ${lockFile}`,
   ) as NodeJS.ErrnoException & { cause?: unknown };
-  error.code = ZCODE_FILE_LOCK_TIMEOUT_ERROR_CODE;
+  error.code = XCODE_FILE_LOCK_TIMEOUT_ERROR_CODE;
   error.path = filePath;
   error.syscall = "mkdir";
   error.cause = cause;

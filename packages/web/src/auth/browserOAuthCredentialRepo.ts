@@ -10,7 +10,7 @@ import {
 import { toUserInfo } from "./zaiWebOAuthProvider.js";
 
 const ACTIVE_PROVIDER_KEY = "oauth:active_provider";
-const ZCODE_JWT_TOKEN_KEY = "zcodejwttoken";
+const XCODE_JWT_TOKEN_KEY = "zcodejwttoken";
 const ZAI_ACCESS_TOKEN_KEY = "oauth:zai:access_token";
 const ZAI_USER_INFO_KEY = "oauth:zai:user_info";
 const BIGMODEL_ACCESS_TOKEN_KEY = "oauth:bigmodel:access_token";
@@ -21,7 +21,7 @@ const OAUTH_PENDING_PROVIDER_KEY = "oauth_pending_provider";
 /** 本仓支持的登录 provider。private 分享的 owner 身份是 provider 特定的，两边都要能登。 */
 export type WebOAuthProviderId = typeof ZAI_PROVIDER_ID | typeof BIGMODEL_PROVIDER_ID;
 
-function isWebOAuthProviderId(value: unknown): value is WebOAuthProviderId {
+export function isWebOAuthProviderId(value: unknown): value is WebOAuthProviderId {
   return value === ZAI_PROVIDER_ID || value === BIGMODEL_PROVIDER_ID;
 }
 
@@ -85,9 +85,9 @@ export class BrowserOAuthCredentialRepo {
 
     this.localStorage.setItem(providerKeys(provider).accessToken, accessToken);
     if (zcodeJwtToken) {
-      this.localStorage.setItem(ZCODE_JWT_TOKEN_KEY, zcodeJwtToken);
+      this.localStorage.setItem(XCODE_JWT_TOKEN_KEY, zcodeJwtToken);
     } else {
-      this.localStorage.removeItem(ZCODE_JWT_TOKEN_KEY);
+      this.localStorage.removeItem(XCODE_JWT_TOKEN_KEY);
     }
   }
 
@@ -116,7 +116,7 @@ export class BrowserOAuthCredentialRepo {
 
   loadCachedSessionState(): OAuthCachedSessionRestoreResult {
     const activeProvider = this.localStorage.getItem(ACTIVE_PROVIDER_KEY);
-    const zcodeJwtToken = this.localStorage.getItem(ZCODE_JWT_TOKEN_KEY);
+    const zcodeJwtToken = this.localStorage.getItem(XCODE_JWT_TOKEN_KEY);
     // 一次只有一个 activeProvider（切换 provider = 重新登录并覆盖），所以按它选 key 段读。
     const keys = isWebOAuthProviderId(activeProvider) ? providerKeys(activeProvider) : null;
     const accessToken = keys ? this.localStorage.getItem(keys.accessToken) : null;
@@ -152,13 +152,13 @@ export class BrowserOAuthCredentialRepo {
   loadXCodeJwtToken(): string | null {
     const session = this.loadCachedSessionState();
     if (session.status !== "authenticated") return null;
-    return this.localStorage.getItem(ZCODE_JWT_TOKEN_KEY)?.trim() || null;
+    return this.localStorage.getItem(XCODE_JWT_TOKEN_KEY)?.trim() || null;
   }
 
   private hasAnyStoredCredential(): boolean {
     return Boolean(
       this.localStorage.getItem(ACTIVE_PROVIDER_KEY) ||
-      this.localStorage.getItem(ZCODE_JWT_TOKEN_KEY) ||
+      this.localStorage.getItem(XCODE_JWT_TOKEN_KEY) ||
       this.localStorage.getItem(ZAI_ACCESS_TOKEN_KEY) ||
       this.localStorage.getItem(ZAI_USER_INFO_KEY) ||
       this.localStorage.getItem(BIGMODEL_ACCESS_TOKEN_KEY) ||
@@ -168,7 +168,7 @@ export class BrowserOAuthCredentialRepo {
 
   clearAll(): void {
     this.localStorage.removeItem(ACTIVE_PROVIDER_KEY);
-    this.localStorage.removeItem(ZCODE_JWT_TOKEN_KEY);
+    this.localStorage.removeItem(XCODE_JWT_TOKEN_KEY);
     // 两个 provider 的 key 段一起清：切换 provider 时不能留下上一个身份的残片，
     // 否则 loadCachedSessionState 可能读到半套凭据。
     this.localStorage.removeItem(ZAI_ACCESS_TOKEN_KEY);

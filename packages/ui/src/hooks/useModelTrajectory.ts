@@ -3,7 +3,7 @@ import type { XCodeModelTrajectory } from "@zcode/services";
 import { logger } from "@/logger.js";
 import { useXCodeTaskService } from "@/hooks/useXCodeTaskService.js";
 
-interface ModelTrajectoryState {
+export interface ModelTrajectoryState {
   loading: boolean;
   data: XCodeModelTrajectory | null;
   error: string | null;

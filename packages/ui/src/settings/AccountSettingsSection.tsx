@@ -6,6 +6,7 @@ import { useXCodeStore } from "@/store/StoreProvider.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import { SettingsGroupCard } from "@/settings/SettingsPageParts.js";
 import {
+  claimMarketingForAccount,
   claimMarketingForAllAccounts,
   type MarketingClaimAllAccountResult,
 } from "@/lib/marketingClaimAll.js";
@@ -111,6 +112,11 @@ export function AccountSettingsSection({
   const [claimAllRunning, setClaimAllRunning] = useState(false);
   const [claimAllProgress, setClaimAllProgress] = useState<{ done: number; total: number } | null>(null);
   const [claimAllResults, setClaimAllResults] = useState<MarketingClaimAllAccountResult[] | null>(null);
+  /** 单账号领取：当前运行中的 accountRef + 各账号最近一次结果。 */
+  const [claimingRef, setClaimingRef] = useState<string | null>(null);
+  const [claimOneResults, setClaimOneResults] = useState<
+    Record<string, MarketingClaimAllAccountResult>
+  >({});
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -209,6 +215,47 @@ export function AccountSettingsSection({
     }
   };
 
+  /**
+   * 单账号领取：与一键领取同一条 claimForAccount 链路，仅领该账号。
+   * 验证码弹窗是全局互斥的 UI，因此任意领取进行中时其他领取按钮全部禁用。
+   */
+  const handleClaimOne = async (account: AccountEntry) => {
+    const ref = `${account.provider}:${account.identity}`;
+    if (claimingRef || claimAllRunning || !claimService || !touchService) return;
+    setClaimingRef(ref);
+    try {
+      const result = await claimMarketingForAccount(
+        {
+          queryTouch: (accountRef) => touchService.query({ locale, accountRef }),
+          getCaptchaConfig: () => claimService.getCaptchaConfig(),
+          claimManualPlan: (input) => claimService.claimManualPlan(input),
+          getManualClaimPlanPlans: (input) => claimService.getManualClaimPlanPlans(input),
+          locale,
+          messages: {
+            captchaFailed: intl.formatMessage({ id: "marketing.captchaFailed" }),
+            captchaLoadFailed: intl.formatMessage({ id: "marketing.captchaLoadFailed" }),
+            claimFailed: intl.formatMessage({ id: "marketing.claimFailed" }),
+          },
+        },
+        { accountRef: ref, displayName: account.displayName, provider: account.provider },
+      );
+      setClaimOneResults((prev) => ({ ...prev, [ref]: result }));
+    } catch (error) {
+      setClaimOneResults((prev) => ({
+        ...prev,
+        [ref]: {
+          accountRef: ref,
+          displayName: account.displayName,
+          provider: account.provider,
+          status: "failed",
+          message: error instanceof Error ? error.message : String(error),
+        },
+      }));
+    } finally {
+      setClaimingRef(null);
+    }
+  };
+
   const claimAllStatusLabel = (result: MarketingClaimAllAccountResult): string => {
     switch (result.status) {
       case "claimed":
@@ -266,6 +313,29 @@ export function AccountSettingsSection({
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
+                    {/* 单账号领取结果回显（复用一键领取的状态文案） */}
+                    {claimOneResults[ref] ? (
+                      <span
+                        className="max-w-36 truncate text-xs text-muted-foreground"
+                        title={claimOneResults[ref].message ?? ""}
+                      >
+                        {claimAllStatusLabel(claimOneResults[ref])}
+                      </span>
+                    ) : null}
+                    {/* 领取：与一键领取同链路，仅领该账号；位于切换左侧 */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={claimingRef !== null || claimAllRunning || !claimService || !touchService}
+                      onClick={() => void handleClaimOne(account)}
+                    >
+                      {claimingRef === ref ? (
+                        <Loader2Icon className="size-3.5 animate-spin" />
+                      ) : (
+                        <Gift className="size-3.5" />
+                      )}
+                      {intl.formatMessage({ id: "settings.accounts.claimOne" })}
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon-sm"

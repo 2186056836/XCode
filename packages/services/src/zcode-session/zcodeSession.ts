@@ -6,6 +6,7 @@ import type {
   XCodeMessageWithParts,
   ModelSelection,
   XCodePermissionRequestParams,
+  XCodeProviderRuntimeHeadersRequestParams,
   XCodeUserInputRequestParams,
   XCodeUserInputResponse,
   XCodeSessionInfo,
@@ -18,6 +19,7 @@ import type {
   XCodeWorkspacePresentation,
 } from "@zcode/shared";
 import { createServiceDescriptor } from "#src/descriptors.js";
+import type { ProviderRuntimeHeadersUiResponse } from "#src/zcode-agent/zcodeAgent.js";
 
 export interface XCodeSessionWorkspaceTarget {
   workspacePath: string;
@@ -93,6 +95,11 @@ export interface XCodeSessionSetModeParams extends XCodeTaskTarget {
   expectedRevision?: number;
 }
 
+export interface XCodeSessionRespondProviderRuntimeHeadersParams extends XCodeTaskTarget {
+  requestId: string;
+  response: ProviderRuntimeHeadersUiResponse;
+}
+
 export interface XCodeSessionSubscribeParams extends XCodeTaskTarget {
   deliveryKind: XCodeDeliveryKind;
   afterSeq?: number;
@@ -113,6 +120,7 @@ export type XCodeSessionServiceEvent =
       requestId: string;
       response: XCodeUserInputResponse;
     }
+  | { type: "providerRuntimeHeaders.request"; request: XCodeProviderRuntimeHeadersRequestParams }
   | { type: "snapshot"; snapshot: XCodeSessionStateSnapshot };
 
 export interface XCodeSessionInitializeResult {
@@ -152,7 +160,12 @@ export interface IXCodeSessionService {
   setModel(params: XCodeSessionSetModelParams): Promise<XCodeSessionStateSnapshot>;
   setThoughtLevel(params: XCodeSessionSetThoughtLevelParams): Promise<XCodeSessionStateSnapshot>;
   setMode(params: XCodeSessionSetModeParams): Promise<XCodeSessionStateSnapshot>;
-  // renderer 订阅面走 agentService 的 conversation/sessions-index 帧通道。
+  respondProviderRuntimeHeaders(
+    params: XCodeSessionRespondProviderRuntimeHeadersParams,
+  ): Promise<void>;
+  // M5 删波次 2：onDynamicSessionEvent（旧 session/subscribe 词表的 renderer 订阅面）
+  // 已删除——v4 UI 走 agentService 的 conversation/sessions-index 帧通道，
+  // 该方法在 renderer 侧已无任何调用者（grep packages/ui packages/desktop 为零）。
 }
 
 export const IXCodeSessionService = createServiceDescriptor<IXCodeSessionService>(

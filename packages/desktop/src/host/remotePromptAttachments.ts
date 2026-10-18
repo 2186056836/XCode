@@ -6,14 +6,14 @@ import { randomUUID } from "node:crypto";
 const REMOTE_PROMPT_ATTACHMENT_ROOT = "~/.xcode/tmp/prompt-attachments";
 const REMOTE_PROMPT_ATTACHMENT_RELATIVE_ROOT = ".xcode/tmp/prompt-attachments";
 
-interface RemotePromptAttachmentMaterializeInput {
+export interface RemotePromptAttachmentMaterializeInput {
   taskId?: string;
   content: string;
   traceId: TraceId | string;
   attachments?: XCodePromptAttachment[];
 }
 
-interface RemotePromptAttachmentMaterializeResult {
+export interface RemotePromptAttachmentMaterializeResult {
   content: string;
   attachments?: XCodePromptAttachment[];
   uploadedCount: number;
@@ -127,7 +127,7 @@ export async function cleanupStaleRemotePromptAttachments(
   );
 }
 
-function buildRemotePromptAttachmentPath(params: {
+export function buildRemotePromptAttachmentPath(params: {
   filename: string;
   index: number;
   nonce?: string;

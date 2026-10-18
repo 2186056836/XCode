@@ -1,18 +1,18 @@
 import { randomUUID } from "node:crypto";
 import {
-  ZCODE_PROCESS_DIAGNOSTIC_PREFIX,
-  ZCODE_PROCESS_DIAGNOSTIC_NAME_MAX_CHARS,
-  ZCODE_PROCESS_DIAGNOSTIC_MESSAGE_MAX_CHARS,
-  ZCODE_PROCESS_DIAGNOSTIC_STACK_MAX_CHARS,
+  XCODE_PROCESS_DIAGNOSTIC_PREFIX,
+  XCODE_PROCESS_DIAGNOSTIC_NAME_MAX_CHARS,
+  XCODE_PROCESS_DIAGNOSTIC_MESSAGE_MAX_CHARS,
+  XCODE_PROCESS_DIAGNOSTIC_STACK_MAX_CHARS,
   type XCodeProcessDiagnostic,
 } from "@zcode/shared/process-diagnostic";
 
-interface CliProcessErrorBoundaryTarget {
+export interface CliProcessErrorBoundaryTarget {
   on(event: string, listener: (...args: unknown[]) => void): unknown;
   off(event: string, listener: (...args: unknown[]) => void): unknown;
 }
 
-interface CliProcessErrorBoundaryOptions {
+export interface CliProcessErrorBoundaryOptions {
   onFatal: (reason: unknown) => void;
   target?: CliProcessErrorBoundaryTarget;
   stderr?: {
@@ -88,7 +88,7 @@ function writeProcessErrorDiagnostic(
   reason: unknown,
 ): void {
   try {
-    const detail = formatProcessError(reason).slice(0, ZCODE_PROCESS_DIAGNOSTIC_STACK_MAX_CHARS);
+    const detail = formatProcessError(reason).slice(0, XCODE_PROCESS_DIAGNOSTIC_STACK_MAX_CHARS);
     const diagnostic: XCodeProcessDiagnostic = {
       version: 1,
       errorId: randomUUID(),
@@ -96,11 +96,11 @@ function writeProcessErrorDiagnostic(
       origin: origin === "unhandledRejection" ? origin : "uncaughtException",
       name: (reason instanceof Error ? reason.name || "Error" : "Error").slice(
         0,
-        ZCODE_PROCESS_DIAGNOSTIC_NAME_MAX_CHARS,
+        XCODE_PROCESS_DIAGNOSTIC_NAME_MAX_CHARS,
       ),
       message: (reason instanceof Error ? reason.message : detail).slice(
         0,
-        ZCODE_PROCESS_DIAGNOSTIC_MESSAGE_MAX_CHARS,
+        XCODE_PROCESS_DIAGNOSTIC_MESSAGE_MAX_CHARS,
       ),
       ...(reason instanceof Error && reason.stack ? { stack: detail } : {}),
       occurredAt: Date.now(),
@@ -108,7 +108,7 @@ function writeProcessErrorDiagnostic(
     // 根因：进程存活时旧 stderr 只进 debug，Electron SDK 无法捕获子进程异常。
     // 增加单行结构化事件供 Host 立即转发，保留可读文本兼容旧 Host 和 crash tail。
     stderr.write(
-      `${ZCODE_PROCESS_DIAGNOSTIC_PREFIX}${JSON.stringify(diagnostic)}\n[zcode] process error kind=${kind} origin=${origin}\n${detail}\n`,
+      `${XCODE_PROCESS_DIAGNOSTIC_PREFIX}${JSON.stringify(diagnostic)}\n[zcode] process error kind=${kind} origin=${origin}\n${detail}\n`,
     );
   } catch {
     // 诊断输出不能再次击穿进程级异常边界。

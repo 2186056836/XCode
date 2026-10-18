@@ -8,6 +8,10 @@ import alibabaModelStudioLogo from "@/assets/provider-icons/model-provider-aliba
 import anthropicLogo from "@/assets/provider-icons/model-provider-anthropic.png";
 import bigModelLogo from "@/assets/provider-icons/logo-bigmodel.svg";
 import deepSeekLogo from "@/assets/provider-icons/model-provider-deepseek.png";
+import kiloFreeLogo from "@/assets/provider-icons/model-provider-kilo-free.png";
+import opencodeFreeLogo from "@/assets/provider-icons/model-provider-opencode-free.png";
+import codebuddyLogo from "@/assets/provider-icons/model-provider-codebuddy.png";
+import qoderLogo from "@/assets/provider-icons/model-provider-qoder.png";
 import miniMaxLogo from "@/assets/provider-icons/model-provider-minimax.png";
 import moumingAiLogo from "@/assets/provider-icons/model-provider-mouming-ai.jpg";
 import moonshotKimiLogo from "@/assets/provider-icons/model-provider-moonshot-kimi.png";
@@ -46,9 +50,16 @@ const BUILTIN_PROVIDER_LOGO_ASSETS: Readonly<Record<string, BuiltinProviderLogoA
   opencode: { light: opencodeLight, dark: opencodeDark },
   // 免费供应商「冇名AI」。
   "mouming-ai": { light: moumingAiLogo },
+  // 免费供应商「Kilo Free」（免鉴权网关）。
+  "kilo-free": { light: kiloFreeLogo },
+  // 免费供应商「OpenCode Free」（Zen 免费档）；opencode key 已被上游 OpenCode Zen/Go 占用。
+  "opencode-free": { light: opencodeFreeLogo },
+  // 其他登录型供应商「CodeBuddy」「Qoder」（预置 Qoder 备用）。
+  codebuddy: { light: codebuddyLogo },
+  qoder: { light: qoderLogo },
 };
 
-function resolveBuiltinProviderLogoAsset(
+export function resolveBuiltinProviderLogoAsset(
   logo: ProviderLogoRef | null | undefined,
   theme: ResolvedTheme,
 ): string | null {

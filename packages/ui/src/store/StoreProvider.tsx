@@ -16,7 +16,7 @@ import type { IBroadcastService } from "@zcode/services";
 import { createXCodeStore, type XCodeStore, type XCodeState } from "./index.js";
 
 // 导出 Context 供测试直接注入已构造的 store 实例（如跨窗口广播抑制用例）。
-const StoreContext = createContext<XCodeStore | null>(null);
+export const StoreContext = createContext<XCodeStore | null>(null);
 
 export function StoreProvider({
   broadcastService,

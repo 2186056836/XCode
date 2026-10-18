@@ -12,7 +12,7 @@ import type {
 
 const DEFAULT_LIMIT = 100;
 const MAX_SCAN_LIMIT = 500;
-export const UNLIMITED_ZCODE_SCAN_LIMIT_INPUT = "unlimited";
+export const UNLIMITED_XCODE_SCAN_LIMIT_INPUT = "unlimited";
 const STORAGE_KEY = "zcode-migration:session-import";
 
 const RANGE_TO_DURATION_MS: Record<Exclude<ClaudeMigrationRange, "all">, number> = {
@@ -67,7 +67,7 @@ function resolveModifiedSince(range: ClaudeMigrationRange): number | undefined {
 }
 
 function resolveScanLimit(limitInput: string): number | undefined {
-  if (limitInput === UNLIMITED_ZCODE_SCAN_LIMIT_INPUT) return undefined;
+  if (limitInput === UNLIMITED_XCODE_SCAN_LIMIT_INPUT) return undefined;
   const parsed = Number.parseInt(limitInput.trim(), 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_LIMIT;
   return Math.min(parsed, MAX_SCAN_LIMIT);

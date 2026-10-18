@@ -15,13 +15,13 @@ import { WORKFLOW_DRAFTS_DIR } from "@zcode/contracts";
  * 判定所需的 `node:path` 子集。做成参数是为了在测试里注入 `path.win32` / `path.posix`：
  * 盘符、反斜杠和大小写这些 Windows 语义，只有用 win32 实现跑一遍才算验过。
  */
-interface WorkflowDraftPathModule {
+export interface WorkflowDraftPathModule {
   isAbsolute: (path: string) => boolean;
   relative: (from: string, to: string) => string;
   resolve: (...paths: string[]) => string;
 }
 
-interface WorkflowDraftPathInput {
+export interface WorkflowDraftPathInput {
   /** 工具输入里的写入目标，相对路径按 workingDirectory 解析，绝对路径原样保留。 */
   filePath: string;
   /** 会话工作目录；缺席（空串）即不成立，见下。 */
@@ -37,7 +37,7 @@ interface WorkflowDraftPathInput {
  */
 const WORKFLOW_DRAFT_PREAPPROVED_TOOL_NAMES = new Set(["Edit", "Write"]);
 
-interface WorkflowDraftWriteInput {
+export interface WorkflowDraftWriteInput {
   toolName: string;
   /** 工具输入（尚未按具体工具的 schema 解析），只从中取 `file_path`。 */
   input: unknown;

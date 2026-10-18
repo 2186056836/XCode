@@ -23,6 +23,12 @@ export interface MarketingClaimAllAccountResult {
   message?: string;
 }
 
+/** 单账号领取所需的最小依赖（claimForAccount 实际消费的子集）。 */
+export type MarketingClaimSingleDeps = Pick<
+  MarketingClaimAllDeps,
+  "queryTouch" | "getCaptchaConfig" | "claimManualPlan" | "getManualClaimPlanPlans" | "locale" | "messages"
+>;
+
 export interface MarketingClaimAllDeps {
   listAccounts(): Promise<Array<{ provider: string; identity: string; displayName: string }>>;
   queryTouch(accountRef: string): Promise<MarketingTouchResponse>;
@@ -71,7 +77,7 @@ function findClaimableDelivery(deliveries: MarketingTouchDelivery[]):
 }
 
 async function claimForAccount(
-  deps: MarketingClaimAllDeps,
+  deps: MarketingClaimSingleDeps,
   base: { accountRef: string; displayName: string; provider: string },
 ): Promise<MarketingClaimAllAccountResult> {
   let deliveries: MarketingTouchDelivery[];
@@ -143,6 +149,18 @@ async function claimForAccount(
     }
     return { ...base, status: "failed", message };
   }
+}
+
+/**
+ * 单账号领取权益：与一键领取走**同一条** claimForAccount 链路（查询营销活动 →
+ * 找领取入口 → 验证码 → 领取），只处理指定账号。不切换激活账号、不改全局镜像
+ * ——查询与领取都带 accountRef，host 直接读 `zcodejwt:{accountRef}` 组鉴权头。
+ */
+export async function claimMarketingForAccount(
+  deps: MarketingClaimSingleDeps,
+  base: { accountRef: string; displayName: string; provider: string },
+): Promise<MarketingClaimAllAccountResult> {
+  return claimForAccount(deps, base);
 }
 
 /** 逐账号按凭据领取全部权益；激活账号全程不动。 */

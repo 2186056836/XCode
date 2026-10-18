@@ -30,7 +30,7 @@ import type {
   ConversationFindMatchState,
 } from "@/v4/legacyChatViewTypes.js";
 
-interface V4ChatPaneProps {
+export interface V4ChatPaneProps {
   workspacePath: string;
   workspaceIdentity?: string;
   /** Prompt 模板埋点当前仅覆盖 Desktop。 */

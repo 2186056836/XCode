@@ -13,11 +13,11 @@ import {
 } from "./builtin-provider-config.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const useTurboBuild = process.env.ZCODE_DESKTOP_AGENT_BUILD_MODE === "turbo";
-const useBootstrapWithRemoteBuild = process.env.ZCODE_BOOTSTRAP_WITH_REMOTE === "1";
+const useTurboBuild = process.env.XCODE_DESKTOP_AGENT_BUILD_MODE === "turbo";
+const useBootstrapWithRemoteBuild = process.env.XCODE_BOOTSTRAP_WITH_REMOTE === "1";
 const pnpmRunEnv = {
   ...process.env,
-  ZCODE_ENV: await resolveBuiltinProviderBuildEnvironment({ root: repoRoot }),
+  XCODE_ENV: await resolveBuiltinProviderBuildEnvironment({ root: repoRoot }),
   // pnpm 11 的 verify-deps-before-run 会在 apps/zcode-cli 子 workspace
   // 执行每个 run 前触发 pnpm install；子 workspace 运行时依赖根仓库 @zcode/shared，
   // 自动 install 无法解析根 workspace 包，导致 dev:desktop:test 和 E2E onPrepare 失败。

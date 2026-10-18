@@ -104,9 +104,11 @@ export function MigrationSection({
             </Alert>
           )}
 
-          {migration.progress > 0 ? (
+          {/* 只在运行中显示：progress 完成后保留最后值，若只看 progress > 0，
+              完成卡片下方会残留一张"正在迁移中"，误导用户以为还没结束。 */}
+          {migration.isRunning && migration.progress > 0 ? (
             <Alert>
-              <Check className="size-4" />
+              <Loader2 className="size-4 animate-spin" />
               <AlertTitle>
                 {intl.formatMessage({ id: "settings.migration.zcodeData.inProgressTitle" })}
               </AlertTitle>

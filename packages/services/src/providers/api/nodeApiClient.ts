@@ -1,6 +1,6 @@
 import {
   ApiError,
-  DEFAULT_ZCODE_ENDPOINT_ORIGIN,
+  DEFAULT_XCODE_ENDPOINT_ORIGIN,
   normalizeXCodeEndpointOrigin,
   rewriteXCodeEndpointUrl,
   type ApiClient,
@@ -56,7 +56,7 @@ function withXCodeEndpointHeaders(
     });
   }
 
-  if (next.get("HTTP-Referer") === DEFAULT_ZCODE_ENDPOINT_ORIGIN) {
+  if (next.get("HTTP-Referer") === DEFAULT_XCODE_ENDPOINT_ORIGIN) {
     next.set("HTTP-Referer", endpointOrigin);
   }
   return next;
@@ -96,7 +96,7 @@ export class NodeApiClient implements ApiClient {
     const endpointOrigin = this.resolveXCodeEndpointOrigin
       ? await this.resolveXCodeEndpointOrigin()
       : undefined;
-    const activeEndpointOrigin = endpointOrigin ?? DEFAULT_ZCODE_ENDPOINT_ORIGIN;
+    const activeEndpointOrigin = endpointOrigin ?? DEFAULT_XCODE_ENDPOINT_ORIGIN;
     const requestInput = rewriteXCodeEndpointUrl(input, activeEndpointOrigin);
     const url = resolveUrl(requestInput);
     const method = resolveMethod(init);

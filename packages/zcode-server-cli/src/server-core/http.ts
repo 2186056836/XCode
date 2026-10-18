@@ -10,6 +10,7 @@ import {
   VSBuffer,
   SocketProtocol,
   ChannelServer,
+  ChannelClient,
   LoggingChannelServer,
   type ISocket,
 } from "@zcode/rpc";
@@ -18,16 +19,17 @@ import {
   IXCodeAgentService,
   ServiceCollection,
 } from "@zcode/services";
-import { createServiceLogger } from "@zcode/services/node";
+import { createServiceLogger, type TopicResourcePeers } from "@zcode/services/node";
 import {
   SERVER_REMOTE_PROTOCOL_VERSION,
-  ZCODE_RPC_HOST_CAPABILITY_HEADER,
-  ZCODE_VERSION,
+  TOPIC_RESOURCE_RELAY_CHANNEL,
+  XCODE_RPC_HOST_CAPABILITY_HEADER,
+  XCODE_VERSION,
   type ServerRemoteInfo,
 } from "@zcode/shared";
 import { createHostCapabilityStore, type HostCapabilityStore } from "./hostCapability.js";
 
-interface CoreHttpServer {
+export interface CoreHttpServer {
   host: string;
   port: number;
   close: () => Promise<void>;
@@ -89,14 +91,20 @@ function exposeWebSocket(
   ws: WebSocket,
   services: ServiceCollection,
   clientMode: "desktop-continuous" | "web-remote-replayable",
+  resourcePeers?: TopicResourcePeers,
 ): void {
   const socket = wrapWebSocket(ws);
   const protocol = new SocketProtocol(socket);
   const rawServer = new ChannelServer(protocol, "server");
   const server = new LoggingChannelServer(rawServer, (...args) => log.debug(undefined, ...args));
   const agentService = services.getOptional(IXCodeAgentService);
+  const reverseClient =
+    clientMode === "desktop-continuous" && resourcePeers ? new ChannelClient(protocol) : undefined;
+  const peer = reverseClient
+    ? resourcePeers?.attach(reverseClient.getChannel(TOPIC_RESOURCE_RELAY_CHANNEL))
+    : undefined;
   const scope = agentService
-    ? createXCodeAgentConnectionScope(agentService, {
+    ? createXCodeAgentConnectionScope(peer ? peer.wrapAgent(agentService) : agentService, {
         connectionId: `server-core-ws-${randomUUID()}`,
         clientMode,
         role: clientMode === "desktop-continuous" ? "trusted-host-relay" : "terminal-client",
@@ -107,6 +115,8 @@ function exposeWebSocket(
     scope ? new Map([[IXCodeAgentService.channelName, scope.service]]) : new Map(),
   );
   socket.onClose(() => {
+    peer?.dispose();
+    reverseClient?.dispose();
     void scope?.dispose();
     rawServer.dispose();
   });
@@ -119,20 +129,21 @@ export async function createCoreHttpServer(
     port?: number;
     serverId?: string;
     hostCapabilityStore?: HostCapabilityStore;
+    topicResourcePeers?: TopicResourcePeers;
   } = {},
 ): Promise<CoreHttpServer> {
   const app = new Hono();
   const { injectWebSocket, upgradeWebSocket, wss } = createNodeWebSocket({ app });
   const host = options.host ?? "127.0.0.1";
   if (!isLoopbackHost(host)) {
-    // 当前只有本机/SSH 隧道入口，Core 尚未接入 token middleware；对外监听必须 fail-closed。
+    // R2 当前只有本机/SSH 隧道入口，Core 尚未接入 token middleware；对外监听必须 fail-closed。
     throw new Error(
       `Non-loopback host ${host} requires authentication before the server can listen`,
     );
   }
   const info: ServerRemoteInfo = {
     serverId: options.serverId ?? hostname() ?? "zcode-server",
-    version: ZCODE_VERSION,
+    version: XCODE_VERSION,
     protocolVersion: SERVER_REMOTE_PROTOCOL_VERSION,
     authRequired: false,
     workspaces: [],
@@ -155,7 +166,7 @@ export async function createCoreHttpServer(
     })),
   );
   app.use("/ws/host", async (context, next) => {
-    const capability = context.req.header(ZCODE_RPC_HOST_CAPABILITY_HEADER);
+    const capability = context.req.header(XCODE_RPC_HOST_CAPABILITY_HEADER);
     if (!capabilities.consume(capability)) {
       return context.json({ error: "Invalid or expired host capability" }, 401);
     }
@@ -165,7 +176,12 @@ export async function createCoreHttpServer(
     "/ws/host",
     upgradeWebSocket(() => ({
       onOpen(_event, socket) {
-        exposeWebSocket(socket.raw as WebSocket, services, "desktop-continuous");
+        exposeWebSocket(
+          socket.raw as WebSocket,
+          services,
+          "desktop-continuous",
+          options.topicResourcePeers,
+        );
       },
     })),
   );

@@ -12,7 +12,7 @@
 
 import type { ModelCatalogEntry, ModelSelection } from "@zcode/contracts";
 import {
-  ZCODE_MODEL_REASONING_SEPARATOR,
+  XCODE_MODEL_REASONING_SEPARATOR,
   formatModelPickerValue,
   parseModelPickerValue,
 } from "@zcode/shared/model-selection";
@@ -127,7 +127,7 @@ export function formatModelCatalogId(entry: ModelCatalogEntry): string {
 function splitReasoningLevel(text: string): { reference: string; level?: string } {
   const providerSeparatorIndex = text.indexOf("/");
   const searchFrom = providerSeparatorIndex + 1;
-  const index = text.indexOf(ZCODE_MODEL_REASONING_SEPARATOR, searchFrom);
+  const index = text.indexOf(XCODE_MODEL_REASONING_SEPARATOR, searchFrom);
   // 空的一侧（`$high`、`glm$`）不算档位：那是拼错，让它落到 not_found 去列清单。
   if (index <= searchFrom || index >= text.length - 1) return { reference: text };
   return { reference: text.slice(0, index), level: text.slice(index + 1) };

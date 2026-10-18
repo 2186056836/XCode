@@ -1,5 +1,6 @@
 import { app } from "electron";
 import { join } from "node:path";
+import { XCODE_ENV } from "@zcode/shared";
 
 export function resolveXCodeBuiltinProviderConfigFilePath(options?: {
   readonly appPath?: string;
@@ -7,7 +8,7 @@ export function resolveXCodeBuiltinProviderConfigFilePath(options?: {
   readonly isPackaged?: boolean;
   readonly resourcesPath?: string;
 }): string {
-  const explicitPath = (options?.env ?? process.env)["ZCODE_BUILTIN_PROVIDER_CONFIG_FILE"]?.trim();
+  const explicitPath = (options?.env ?? process.env)["XCODE_BUILTIN_PROVIDER_CONFIG_FILE"]?.trim();
   if (explicitPath) return explicitPath;
   if (options?.isPackaged ?? app.isPackaged) {
     return join(
@@ -15,7 +16,7 @@ export function resolveXCodeBuiltinProviderConfigFilePath(options?: {
       "config/provider/zcode-builtin.json",
     );
   }
-  // 开发态与打包共用唯一线上配置源。
-  const filename = "zcode-builtin.json";
+  // 开发态没有 resources 复制步骤，必须与构建注入的产品环境读取同一份源文件。
+  const filename = XCODE_ENV === "production" ? "zcode-builtin.json" : "zcode-builtin.test.json";
   return join(options?.appPath ?? app.getAppPath(), "../../config/provider", filename);
 }

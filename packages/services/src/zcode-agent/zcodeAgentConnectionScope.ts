@@ -44,7 +44,7 @@ type TrustedConnectionCarrier = {
   [TRUSTED_CONNECTION_FIELD]?: XCodeAgentV4ConnectionContext;
 };
 
-interface TrustedXCodeAgentV4UnsubscribeRoute {
+export interface TrustedXCodeAgentV4UnsubscribeRoute {
   topic: string;
   connectionId: string;
 }

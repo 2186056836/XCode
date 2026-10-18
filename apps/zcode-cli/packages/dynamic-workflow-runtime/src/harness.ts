@@ -61,7 +61,10 @@ export type DriverFactory = (sink: WorkflowReportSink) => WorkflowDriver;
  * 全在引擎里（`setMaxConcurrency` 返回 false 即这次什么也没发生）。
  */
 export interface RunControlBinding {
-  bind(engine: Pick<WorkflowEngine, "setMaxConcurrency">): void;
+  // 1010 扩宽：留白补全与开放留白查询（fork 原本只有并发控制）
+  bind(
+    engine: Pick<WorkflowEngine, "setMaxConcurrency" | "fillHole" | "openHoles" | "filledHoles">,
+  ): void;
 }
 
 /**

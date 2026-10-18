@@ -4,9 +4,9 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import type { ApiClient, FeedbackDeviceInfo } from "@zcode/shared";
 import {
   buildRuntimeXCodeApiUrl,
-  ZCODE_BUILD_TIME,
-  ZCODE_COMMIT,
-  ZCODE_VERSION,
+  XCODE_BUILD_TIME,
+  XCODE_COMMIT,
+  XCODE_VERSION,
 } from "@zcode/shared";
 import { Emitter } from "@zcode/rpc";
 import { arch, platform, release, type as osType } from "node:os";
@@ -19,7 +19,7 @@ import { cleanupLogArchive, prepareCompactLogArchive } from "./compactLogArchive
 import { getFeedbackAttachmentDir } from "../paths.js";
 import { FeedbackLocalTicketStore } from "#src/feedback/feedbackLocalTicketStore.js";
 
-const ZCODE_JWT_TOKEN_KEY = "zcodejwttoken";
+const XCODE_JWT_TOKEN_KEY = "zcodejwttoken";
 
 export interface CreateFeedbackServiceOptions {
   credentialService: ICredentialService;
@@ -39,16 +39,16 @@ export interface CreateFeedbackServiceOptions {
 function resolveApiBaseUrl(explicit?: string): string {
   return (
     explicit?.trim() ||
-    process.env.ZCODE_FEEDBACK_API_BASE?.trim() ||
+    process.env.XCODE_FEEDBACK_API_BASE?.trim() ||
     buildRuntimeXCodeApiUrl(process.env, "/api/v1")
   );
 }
 
 function buildDeviceSnapshot(): FeedbackDeviceInfo {
   return {
-    appVersion: ZCODE_VERSION,
-    buildCommitId: ZCODE_COMMIT,
-    buildTime: ZCODE_BUILD_TIME,
+    appVersion: XCODE_VERSION,
+    buildCommitId: XCODE_COMMIT,
+    buildTime: XCODE_BUILD_TIME,
     nodeVersion: process.version,
     osType: osType(),
     osPlatform: platform(),
@@ -74,7 +74,7 @@ export function createFeedbackService(options: CreateFeedbackServiceOptions): IF
   }
 
   async function getXcodeJwtToken(): Promise<string | undefined> {
-    return (await options.credentialService.load(ZCODE_JWT_TOKEN_KEY))?.trim() || undefined;
+    return (await options.credentialService.load(XCODE_JWT_TOKEN_KEY))?.trim() || undefined;
   }
 
   async function hasXcodeJwtToken(): Promise<boolean> {

@@ -1,5 +1,6 @@
-import type { XCodeError, TraceId } from "@zcode/shared";
+import type { XCodeError, XCodeTaskMeta, TraceId } from "@zcode/shared";
 import { errorAttributionSchema, type ErrorAttribution } from "@zcode/shared/zcode-protocol-v4";
+import { resolveRequestVerificationBusinessCode } from "@/lib/providerBusinessError.js";
 
 export interface XCodeUiError extends XCodeError {
   attribution?: ErrorAttribution;
@@ -15,7 +16,7 @@ interface NormalizeXCodeUiErrorOptions {
   taskId?: string;
 }
 
-const GENERIC_ZCODE_UI_ERROR_MESSAGES = new Set([
+const GENERIC_XCODE_UI_ERROR_MESSAGES = new Set([
   "Internal error",
   "Turn execution failed",
   "Compact failed",
@@ -196,12 +197,12 @@ export function normalizeXCodeUiError(
   // zcode-cli 已经把 provider/network 根因放进 detail 或 data.zcode.error，
   // 外层仍可能保留 "Internal error" 这类包装文案。主提示优先选非泛化候选，避免根因被盖住。
   const primaryMessage =
-    candidates.find((candidate) => !GENERIC_ZCODE_UI_ERROR_MESSAGES.has(candidate)) ??
+    candidates.find((candidate) => !GENERIC_XCODE_UI_ERROR_MESSAGES.has(candidate)) ??
     candidates[0] ??
     options.fallbackMessage ??
     "Internal error";
   const detailMessage = candidates.find(
-    (candidate) => candidate !== primaryMessage && !GENERIC_ZCODE_UI_ERROR_MESSAGES.has(candidate),
+    (candidate) => candidate !== primaryMessage && !GENERIC_XCODE_UI_ERROR_MESSAGES.has(candidate),
   );
   const codeFromError = readFirstStringFromPaths(error, [
     ["code"],
@@ -233,6 +234,10 @@ export function normalizeXCodeUiError(
     ["data", "zcode", "error", "underlyingErrorDetail"],
   ]);
   const providerCodeFromDetail = detailFromError?.match(/provider_code=([0-9]+)/)?.[1];
+  const verificationRejectedCode = resolveRequestVerificationBusinessCode(
+    codeFromError ?? providerCodeFromDetail,
+    primaryMessage,
+  );
   const traceIdFromError = readFirstStringFromPaths(error, [
     ["traceId"],
     ["data", "traceId"],
@@ -251,7 +256,12 @@ export function normalizeXCodeUiError(
     // 部分上游错误外层 code 只是 PROVIDER_BUSINESS_ERROR，
     // 真实 GLM / zcode-plan 业务码只保存在 detail 的 provider_code=xxxx。
     // 业务码需要进入统一错误分类层，否则 ChatView quota 横幅无法命中。
-    code: providerCodeFromDetail ?? codeFromError ?? options.fallbackCode ?? "UNKNOWN",
+    code:
+      verificationRejectedCode ??
+      providerCodeFromDetail ??
+      codeFromError ??
+      options.fallbackCode ??
+      "UNKNOWN",
     message: primaryMessage,
     detail: detailMessage,
     ...(underlyingErrorMessage ? { underlyingErrorMessage } : {}),
@@ -260,4 +270,18 @@ export function normalizeXCodeUiError(
     taskId: options.taskId ?? taskIdFromError,
     ...(attribution ? { attribution } : {}),
   };
+}
+
+export function normalizeRestoredTaskFailureError(meta: XCodeTaskMeta): XCodeUiError | null {
+  if (!meta.lastError) {
+    return null;
+  }
+
+  // Bugfix: 手机 Web 断连恢复时可能只拿到 error snapshot，看不到断连期间的 task_error。
+  // 没有服务端持久化的 lastError 时不再编造兜底文案，避免展示没有实际根因的错误。
+  return normalizeXCodeUiError(meta.lastError, {
+    fallbackCode: meta.lastError.code,
+    traceId: meta.lastError.traceId ?? meta.traceId,
+    taskId: meta.lastError.taskId ?? meta.taskId,
+  });
 }

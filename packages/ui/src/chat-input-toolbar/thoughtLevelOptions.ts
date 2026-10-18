@@ -2,7 +2,7 @@ import type { XCodeConfigOption, XCodeProvider } from "@zcode/shared";
 import type { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import { getConfigOptionEntryLabel } from "@/chat-input-toolbar/display.js";
 
-type ThoughtLevelEntry = NonNullable<XCodeConfigOption["options"]>[number];
+export type ThoughtLevelEntry = NonNullable<XCodeConfigOption["options"]>[number];
 
 const NO_THOUGHT_LEVEL_VALUES = new Set([
   "disabled",

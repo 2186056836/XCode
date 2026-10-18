@@ -12,7 +12,7 @@ export function buildRemoteAgentBundleWrapper(runtimeResourceDir: string): strin
   return [
     "#!/bin/sh",
     "set -eu",
-    'runtime_root="${ZCODE_SERVER_RUNTIME_ROOT:-$HOME/.xcode/server}"',
+    'runtime_root="${XCODE_SERVER_RUNTIME_ROOT:-$HOME/.xcode/server}"',
     `exec "$runtime_root/node" "$HOME/.xcode/server/agents/${runtimeResourceDir}/${REMOTE_AGENT_BUNDLE_NAME}" "$@"`,
     "",
   ].join("\n");

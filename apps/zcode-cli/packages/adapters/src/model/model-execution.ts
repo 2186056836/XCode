@@ -6,6 +6,10 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { tmpdir } from "node:os";
+import type { createModelRequestSecurityState } from "./request-security-edition/index.js";
+import { appendFileSync } from "node:fs";
+import { join } from "node:path";
 import type { LanguageModel } from "ai";
 import {
   compileModelOptionMaps,
@@ -19,11 +23,16 @@ import {
   type ModelRequestAuth,
 } from "@zcode/contracts";
 import type { RegistryProviderConfig } from "@zcode/provider";
-import { withOpenRouterAttributionHeaders } from "@zcode/shared";
+import { isOffReasoningLevel, mapReasoningEffortForOpenCode, withOpenRouterAttributionHeaders } from "@zcode/shared";
 import { createAnthropicCompatFetch } from "./anthropic-stream-compat.js";
 import { createOpenAIResponsesJsonCompatFetch } from "./openai-responses-json-compat.js";
 import { createModelOptionMapFetch, type RawRequestBodyCapture } from "./model-option-map-fetch.js";
 import { createNetworkProxyFetch } from "../network/proxy-fetch.js";
+import {
+  buildSignedQoderRequest,
+  unwrapQoderSseStream,
+  type QoderRequestIdentity,
+} from "./qoderProtocol.js";
 import { createOfficialCodingPlanGatewayFetch } from "./official-coding-plan-gateway.js";
 import { normalizeModelTlsFailure } from "./failure-tls.js";
 import { mergeModelRequestHeaders } from "./model-request-headers.js";
@@ -40,6 +49,7 @@ interface AiSdkProviderConfig {
   headers?: Record<string, string>;
   providerOptions?: Record<string, unknown>;
   name?: string;
+  requestProfile?: RegistryProviderConfig["requestProfile"];
 }
 
 export interface AiSdkModelExecutionConfig {
@@ -49,7 +59,11 @@ export interface AiSdkModelExecutionConfig {
   network?: AiSdkNetworkConfig;
 }
 
+/** 1010 新增：请求安全状态（token 指纹防重放 / 项目 token 拒绝集）。
+ *  用返回类型推导，避免在 shared 侧重复声明这个结构。 */
 export interface AiSdkModelExecutionOptions {
+  /** 1010 新增：请求安全状态（token 指纹防重放 / 项目 token 拒绝集）。 */
+  requestSecurityState?: ReturnType<typeof createModelRequestSecurityState>;
   logger?: Logger;
   transport?: ProviderFetch;
 }
@@ -179,7 +193,8 @@ export class AiSdkModelExecution {
     readonly providerConfig: RegistryProviderConfig;
     readonly supportsJsonSchemaOutput: boolean;
     readonly optionSpecs: {
-      readonly reasoningLevel: { readonly map: string };
+      /** XCode fork：values 是该模型宣告的思考档位全集，OpenCode 画像按它钳制。 */
+      readonly reasoningLevel: { readonly map: string; readonly values?: readonly string[] };
       readonly maxOutputTokens: { readonly map: string };
     };
   }): AiSdkBoundModelResolution {
@@ -198,6 +213,9 @@ export class AiSdkModelExecution {
     readonly modelId: string;
     readonly providerConfig: RegistryProviderConfig;
     readonly supportsJsonSchemaOutput: boolean;
+    readonly optionSpecs?: {
+      readonly reasoningLevel: { readonly values?: readonly string[] };
+    };
   }): AiSdkModelSnapshot {
     const configuredProvider = toAiSdkProviderConfig(input.providerId, input.providerConfig);
     // 重构后模型 SDK 曾只接到用户 Header，漏掉版本和站点归因；在公共绑定边界恢复，
@@ -219,6 +237,8 @@ export class AiSdkModelExecution {
       providerId: input.providerId as ModelProviderId,
       modelId: input.modelId as ModelId,
       supportsJsonSchemaOutput: input.supportsJsonSchemaOutput,
+      // XCode fork：冻结该模型宣告的思考档位，请求期钳制要用（值域逐模型不同）。
+      reasoningLevelValues: input.optionSpecs?.reasoningLevel.values,
     };
   }
 
@@ -239,6 +259,7 @@ export class AiSdkModelExecution {
       optionValues,
       rawRequestBodyCapture,
       snapshot.supportsJsonSchemaOutput,
+      snapshot.reasoningLevelValues,
     );
     return {
       baseURL: providerConfig.baseURL,
@@ -259,12 +280,27 @@ export class AiSdkModelExecution {
     optionValues: ModelOptionValues | undefined,
     rawRequestBodyCapture: RawRequestBodyCapture,
     supportsJsonSchemaOutput: boolean,
+    /** XCode fork：该模型宣告的思考档位全集，OpenCode 画像按它钳制。 */
+    reasoningLevelValues: readonly string[] | undefined,
   ): LanguageModelFactory {
     const apiKey = this.resolveApiKey(providerConfig);
     const headers = providerConfig.headers;
     const providerTransport = this.resolveProviderTransport(providerId);
-    const fetch = createProviderBusinessErrorFetch({
+    const profiledTransport = createUpstreamRequestProfileFetch({
+      profile: providerConfig.requestProfile ?? undefined,
+      kind: providerConfig.kind,
+      headers: providerConfig.headers,
+      apiKey:
+        providerConfig.access.type !== "zhipu-account"
+          ? providerConfig.access.apiKey ?? undefined
+          : undefined,
       fetch: providerTransport,
+      // persona 注入是请求级开关：默认关闭，仅当供应商 headers 显式声明开启时启用。
+      qoderInjectPersona: readQoderPersonaFlag(providerConfig.headers),
+      reasoningLevelValues,
+    });
+    const fetch = createProviderBusinessErrorFetch({
+      fetch: profiledTransport,
       providerId,
       providerKind: providerConfig.kind,
     });
@@ -345,6 +381,8 @@ interface AiSdkModelSnapshot {
   readonly providerConfig: AiSdkProviderConfig;
   readonly providerId: ModelProviderId;
   readonly modelId: ModelId;
+  /** XCode fork：该模型宣告的思考档位全集（OpenCode 画像按它钳制）。 */
+  readonly reasoningLevelValues?: readonly string[];
 }
 
 function toAiSdkProviderConfig(
@@ -359,6 +397,7 @@ function toAiSdkProviderConfig(
     ...(config.api.headers ? { headers: { ...config.api.headers } } : {}),
     providerOptions: { apiFormat: config.api.type },
     access: config.access,
+    requestProfile: config.requestProfile,
   };
   switch (config.api.type) {
     case "anthropic-messages":
@@ -382,6 +421,480 @@ function applyModelRequestAuth(
     ...(requestAuth.headers
       ? { headers: mergeModelRequestHeaders(providerConfig.headers, requestAuth.headers) }
       : {}),
+  };
+}
+
+// ============================================================
+// XCode fork：OpenCode 免费档请求画像（requestProfile = "opencode-free-tier"）
+//
+// OpenCode Zen 的免费模型带客户端闸门（403 FreeTierError "free tier can only
+// be used from within OpenCode"）。实测（2026-10）最小通过配方：
+//   1. 静态头（内置配置 api.headers 承载）：Authorization: Bearer public、
+//      User-Agent: opencode/1.18.31、x-opencode-client: desktop、
+//      x-opencode-session/request: 格式合法的占位 id、x-opencode-project: global；
+//   2. 请求体必须携带小写 bash/glob/grep/read 四个指纹工具（chat 用嵌套
+//      function 形状，responses 用扁平 {name} 形状）；
+//   3. stream 必须为 true；responses 通道还需 store:false。
+// 缺任一项都会被 403 拦截，这里在 fetch 层统一补齐。
+// ============================================================
+
+type UpstreamRequestProfile = NonNullable<RegistryProviderConfig["requestProfile"]>;
+
+const OPENCODE_FINGERPRINT_TOOLS = ["bash", "glob", "grep", "read"] as const;
+
+function fingerprintToolDescription(): string {
+  return "This tool is currently unavailable and must not be used.";
+}
+
+function toolNameOf(tool: unknown): string {
+  if (!tool || typeof tool !== "object") return "";
+  const record = tool as Record<string, unknown>;
+  if (typeof record.name === "string" && record.name.trim()) return record.name.trim();
+  const nested = record.function as Record<string, unknown> | undefined;
+  if (nested && typeof nested.name === "string" && nested.name.trim()) {
+    return nested.name.trim();
+  }
+  return "";
+}
+
+/**
+ * 对齐 OpenCode 免费档指纹契约：上游只认小写 bash/glob/grep/read，且同一成员
+ * 的大小写变体并存会被判重复。因此把客户端声明的大小写变体就地改名（如
+ * `Bash`→`bash`；模型回调由工具注册表的小写回退解析回原工具），缺失成员补齐。
+ */
+function canonicalizeFingerprintTools(
+  tools: unknown[],
+  makeTool: (name: string) => unknown,
+): void {
+  for (const name of OPENCODE_FINGERPRINT_TOOLS) {
+    const existing = tools.find(
+      (tool) => toolNameOf(tool).toLowerCase() === name && toolNameOf(tool) !== "",
+    );
+    if (existing !== undefined) {
+      const current = toolNameOf(existing);
+      if (current !== name) {
+        const record = existing as Record<string, unknown>;
+        if (typeof record.name === "string") record.name = name;
+        else if (record.function && typeof record.function === "object") {
+          (record.function as Record<string, unknown>).name = name;
+        }
+      }
+      continue;
+    }
+    tools.push(makeTool(name));
+  }
+}
+
+function appendChatFingerprintTools(body: Record<string, unknown>): void {
+  const tools = Array.isArray(body.tools) ? [...body.tools] : [];
+  canonicalizeFingerprintTools(tools, (name) => ({
+    type: "function",
+    function: {
+      name,
+      description: fingerprintToolDescription(),
+      parameters: { type: "object", properties: {} },
+    },
+  }));
+  body.tools = tools;
+}
+
+function appendResponsesFingerprintTools(body: Record<string, unknown>): void {
+  const tools = Array.isArray(body.tools) ? [...body.tools] : [];
+  canonicalizeFingerprintTools(tools, (name) => ({
+    type: "function",
+    name,
+    description: fingerprintToolDescription(),
+    parameters: { type: "object", properties: {} },
+  }));
+  body.tools = tools;
+}
+
+/**
+ * 归一化 OpenCode 网关的推理字段：只保留**合法**的档位表达。
+ *
+ * XCode fork（2026-10-12 实测 `opencode.ai/zen/v1/chat/completions`）：本函数原先
+ * 无条件 `delete body.reasoning_effort`，理由写的是「space-bunny-free 对
+ * reasoning_effort 直接 400」。复测证明该结论只对**非法值**成立，对合法值不成立：
+ *   space-bunny-free：reasoning_effort = minimal/low/medium/high/xhigh/max 全部 200，
+ *                     仅 none / ultra / disabled / on 报 400。
+ *   big-pickle（后端 sglang）：同样七个值全部 200，非法值回传 pydantic 原文
+ *                     `literal['none','minimal','low','medium','high','xhigh','max']`。
+ * 而真正承载档位语义的就是 reasoning_effort——同一模型上它随档位单调变化
+ * （big-pickle 的 reasoning_content 分片数：none 0 / minimal 8 / low 16 / medium 19 /
+ * high 31 / xhigh 11 / max 18）；`reasoning:{effort}` 在 space-bunny-free 上完全不生效
+ * （low/high/max 一律 5 片，ultra/disabled 反而 0 片）。
+ * 原实现把字段整个删掉，等于让「思考强度」选择器对 OpenCode 免费档完全失效——
+ * 用户选了 high 与 disabled 发出的是同一个请求。
+ *
+ * 因此改为：按该模型**自己宣告的**档位集钳制后下发，表外值（关闭族 + 任何未知值）
+ * 一律不发该字段（上游按自身默认思考），绝不原样透传一个会被 400 拒掉的值。
+ * `thinking`（Anthropic 风格）仍整体剥离：它不是 OpenAI chat 契约的一部分。
+ *
+ * `supportedReasoningLevels` 是该模型 `optionSpecs.reasoningLevel.values`（去掉
+ * 关闭档后的全集）。网关合法值域是**逐模型**的：space-bunny-free 目录档位
+ * low/medium/high/xhigh/max，收 none 会 400；big-pickle 目录为空、收 none 正常。
+ */
+function normalizeOpenCodeReasoningFields(
+  body: Record<string, unknown>,
+  supportedReasoningLevels: readonly string[] | undefined,
+): void {
+  delete body.thinking;
+  const effort = mapReasoningEffortForOpenCode(body.reasoning_effort, supportedReasoningLevels);
+  if (effort) {
+    body.reasoning_effort = effort;
+  } else {
+    delete body.reasoning_effort;
+  }
+  // reasoning:{effort}（Responses 风格）与 reasoning_effort 共用同一值域：
+  // big-pickle 收到非法值会 400「invalid reasoning effort」。两处都要归一化，
+  // 否则只修一半仍会被拒。
+  const reasoning = body.reasoning;
+  if (reasoning && typeof reasoning === "object" && !Array.isArray(reasoning)) {
+    const nested = reasoning as Record<string, unknown>;
+    const nestedEffort = mapReasoningEffortForOpenCode(nested.effort, supportedReasoningLevels);
+    if (nestedEffort) {
+      nested.effort = nestedEffort;
+    } else {
+      delete nested.effort;
+      if (Object.keys(nested).length === 0) delete body.reasoning;
+    }
+  }
+}
+
+/**
+ * CodeBuddy 统一网关：所有模型（GLM/Kimi/DeepSeek 等）都走 OpenAI 风格的
+ * reasoning_effort；thinking（Anthropic 风格）、enable_thinking、reasoning
+ * （Responses 风格）不在其请求契约内，统一剥离，避免网关侧 invalid_request。
+ */
+// Qoder 内部身份头（登录成功时写入 provider headers，随请求上行前会被剥掉）。
+const QODER_IDENTITY_USER_ID_HEADER = "x-qoder-internal-user-id";
+const QODER_IDENTITY_MACHINE_ID_HEADER = "x-qoder-internal-machine-id";
+
+/**
+ * Qoder IDE persona 注入开关。默认关闭——注入会让模型自称 Qoder，与本产品
+ * 身份冲突；仅在用户明确需要（怀疑账号被上游按 prompt 形状风控）时开启。
+ * 走 provider headers 通道，用户可在供应商配置里直接改。
+ */
+const QODER_PERSONA_HEADER = "x-qoder-inject-persona";
+
+function readQoderPersonaFlag(headers: Record<string, string> | undefined): boolean {
+  if (!headers) return false;
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() !== QODER_PERSONA_HEADER) continue;
+    const normalized = String(value).trim().toLowerCase();
+    return normalized === "1" || normalized === "true";
+  }
+  return false;
+}
+
+function readQoderIdentity(
+  headers: Record<string, string> | undefined,
+  accessToken: string | undefined,
+): QoderRequestIdentity | null {
+  if (!accessToken || !headers) return null;
+  const lower = new Map<string, string>();
+  for (const [key, value] of Object.entries(headers)) {
+    lower.set(key.toLowerCase(), value);
+  }
+  const userId = lower.get(QODER_IDENTITY_USER_ID_HEADER) ?? "";
+  // PAT（pt-）没有可预知的 userId——它要等运行时换成 job token 后从userinfo
+  // 取回。这里放行，让 qoderProtocol 的 PAT 交换补齐；dt-/jt- 仍必须有
+  // userId，缺失说明凭证没配全，直接短路比发出一个必然失败的签名请求更好。
+  if (!userId && !accessToken.startsWith("pt-")) return null;
+  // machineId 兜底放在这里（每请求一次的身份解析），而不是留在签名层的
+  // `creds.machineId || randomUUID()`：后者每 HTTP 请求重跑一次，会让
+  // Cosy-Machineid / Machinetoken 以及派生的 machinecode / hostname / clientip
+  // 全部逐请求刷新——上游看到的是"一个账号一天内用了上千台机器"，比稳定的
+  // 假指纹更像伪造客户端。此处按 userId 派生，取到的是每个账号恒定的值。
+  const machineId =
+    lower.get(QODER_IDENTITY_MACHINE_ID_HEADER) ?? (userId ? `qoder-local-${userId}` : "");
+  return {
+    accessToken,
+    userId,
+    machineId,
+    name: "",
+    email: "",
+  };
+}
+
+// 内部身份头不能上行（上游不需要，也会泄露本地身份信息）。
+function stripQoderIdentityHeaders(headers: Record<string, string> | undefined): Record<string, string> | undefined {
+  if (!headers) return headers;
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(headers)) {
+    const lowered = key.toLowerCase();
+    if (
+      lowered === QODER_IDENTITY_USER_ID_HEADER ||
+      lowered === QODER_IDENTITY_MACHINE_ID_HEADER ||
+      lowered === QODER_PERSONA_HEADER
+    ) {
+      continue;
+    }
+    out[key] = value;
+  }
+  return out;
+}
+
+function stripCodeBuddyIncompatibleReasoningFields(body: Record<string, unknown>): void {
+  delete body.thinking;
+  delete body.enable_thinking;
+  delete body.reasoning;
+  // 网关没有 "none" 档（与 Qoder 同规则）：禁用思考时 reasoning_effort 直接
+  // 不发（对齐官方 CLI / 9router），发了会被 400 拒绝。
+  //
+  // XCode fork：原先只判 none/off，漏掉了模型配置里真实存在的关闭档位名
+  // （导入上游模型时写入的是 "disabled"），它会被原样发出去并被网关拒绝。
+  // 这里改为按关闭族整族剥离，而不是逐个枚举。
+  const effort = body.reasoning_effort;
+  if (typeof effort === "string" && isOffReasoningLevel(effort)) {
+    delete body.reasoning_effort;
+  }
+}
+
+function isEventStreamResponseLike(response: Response): boolean {
+  const contentType = response.headers.get("content-type") ?? "";
+  return contentType.includes("text/event-stream");
+}
+
+/** 清理 CodeBuddy SSE chunk：剥掉空 reasoning_content 与恒空的噪音键。 */
+function cleanCodeBuddySseLine(line: string): string {
+  if (!line.startsWith("data:")) return line;
+  const payload = line.slice(5).trim();
+  if (!payload || payload === "[DONE]") return line;
+  try {
+    const chunk = JSON.parse(payload) as Record<string, unknown>;
+    const choices = Array.isArray(chunk.choices) ? chunk.choices : [];
+    for (const choice of choices) {
+      const delta = (choice as Record<string, unknown>)?.delta as
+        | Record<string, unknown>
+        | undefined;
+      if (!delta) continue;
+      if (delta.reasoning_content === "") delete delta.reasoning_content;
+      if (delta.refusal === "") delete delta.refusal;
+      if (delta.function_call === null) delete delta.function_call;
+      if (Array.isArray(delta.tool_calls) && delta.tool_calls.length === 0) {
+        delete delta.tool_calls;
+      }
+      if (delta.extra_fields === null) delete delta.extra_fields;
+    }
+    return `data: ${JSON.stringify(chunk)}`;
+  } catch {
+    return line;
+  }
+}
+
+function rewriteCodeBuddySseStream(response: Response): Response {
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  let buffer = "";
+  const stream = new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, controller) {
+      buffer += decoder.decode(chunk, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        controller.enqueue(encoder.encode(cleanCodeBuddySseLine(line) + "\n"));
+      }
+    },
+    flush(controller) {
+      if (buffer) controller.enqueue(encoder.encode(cleanCodeBuddySseLine(buffer)));
+    },
+  });
+  const headers = new Headers(response.headers);
+  headers.delete("content-length");
+  if (!response.body) return response;
+  return new Response(response.body.pipeThrough(stream), {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+/**
+ * 按 requestProfile 改写发往上游的 JSON 请求体；非目标画像、非 JSON POST
+ * （如 models 拉取）原样透传。放在 transport 之后、业务错误适配之前，
+ * 使 403 FreeTierError 仍能走统一的业务错误渲染。
+ */
+export function createUpstreamRequestProfileFetch(input: {
+  profile: UpstreamRequestProfile | undefined;
+  kind: AiSdkProviderKind;
+  headers?: Record<string, string>;
+  apiKey?: string;
+  fetch: ProviderFetch;
+  /** Qoder：是否注入官方 IDE 身份 persona（默认关闭，见 qoderProtocol）。 */
+  qoderInjectPersona?: boolean;
+  /** XCode fork：OpenCode 画像按该模型自己宣告的档位集钳制 reasoning_effort。 */
+  reasoningLevelValues?: readonly string[];
+}): ProviderFetch {
+  // Qoder 画像：COSY 签名 + WAF 编码 + 信封解包（协议非 OpenAI 兼容，
+  // 整个请求由 qoderProtocol 重建，AI SDK 的 model 仅承担消息结构化）。
+  if (input.profile === "qoder") {
+    const qoderFetch = input.fetch;
+    return async (request, init) => {
+      const method = (init?.method ?? "POST").toUpperCase();
+      const rawBody = init?.body;
+      if (method !== "POST" || typeof rawBody !== "string") {
+        return qoderFetch(request, init);
+      }
+      let openAiBody: Record<string, unknown>;
+      try {
+        const parsed: unknown = JSON.parse(rawBody);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+          return qoderFetch(request, init);
+        }
+        openAiBody = parsed as Record<string, unknown>;
+      } catch {
+        return qoderFetch(request, init);
+      }
+      const url = typeof request === "string" ? request : request instanceof URL ? request.toString() : request.url;
+      const model = typeof openAiBody.model === "string" ? openAiBody.model : "";
+      const identity = readQoderIdentity(input.headers, input.apiKey);
+      if (!identity) {
+        return new Response(
+          JSON.stringify({ error: { message: "qoder credential missing user identity; reconnect the account" } }),
+          { status: 401, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      const signed = await buildSignedQoderRequest({
+        region: url.includes("qoder.com.cn") ? "cn" : "intl",
+        model,
+        openAiBody,
+        identity,
+        fetchImpl: qoderFetch,
+        injectPersona: input.qoderInjectPersona === true,
+      });
+      const cleanedHeaders = stripQoderIdentityHeaders(input.headers);
+      const response = await qoderFetch(signed.url, {
+        method: "POST",
+        headers: {
+          ...cleanedHeaders,
+          ...signed.cosyHeaders,
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+          "Cache-Control": "no-cache",
+          // 官方客户端不发 X-Model-Key / X-Model-Source——模型选择完全走编码后
+          // payload 里的 model_config，这两个头本身就是非 IDE 特征。保留
+          // Accept-Encoding: identity 是必须的：gzip 会触发 Qoder CDN 的签名校验失败。
+          "Accept-Encoding": "identity",
+          "x-model-name": "",
+          "User-Agent": "Go-http-client/2.0",
+        },
+        body: new Uint8Array(signed.bodyBuf),
+      });
+      return unwrapQoderSseStream(response, model || signed.modelKey);
+    };
+  }
+
+  // CodeBuddy 画像：仅剥离非 OpenAI 风格推理字段，无指纹/流式改写。
+  if (input.profile === "codebuddy") {
+    const codebuddyFetch = input.fetch;
+    return async (request, init) => {
+      const method = (init?.method ?? "POST").toUpperCase();
+      const rawBody = init?.body;
+      if (method !== "POST" || typeof rawBody !== "string") {
+        return codebuddyFetch(request, init);
+      }
+      try {
+        const parsed: unknown = JSON.parse(rawBody);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+          return codebuddyFetch(request, init);
+        }
+        const body = parsed as Record<string, unknown>;
+        stripCodeBuddyIncompatibleReasoningFields(body);
+        const response = await codebuddyFetch(request, { ...init, body: JSON.stringify(body) });
+        // 网关的 SSE chunk 恒带空的 reasoning_content（与正文逐 token 交替），
+        // 解析端会把每次空思考当成一步导致回复碎裂；流式剥掉空键。
+        if (isEventStreamResponseLike(response)) {
+          return rewriteCodeBuddySseStream(response);
+        }
+        return response;
+      } catch {
+        return codebuddyFetch(request, init);
+      }
+    };
+  }
+  if (input.profile !== "opencode-free-tier") return input.fetch;
+  const baseFetch = input.fetch;
+  // 临时诊断（XCODE_PROFILE_DEBUG=1 时落盘请求/错误响应，定位上游 400 拒绝字段）。
+  const debugEnabled = process.env.XCODE_PROFILE_DEBUG === "1";
+  const debugFile = debugEnabled
+    ? join(tmpdir(), "xcode-profile-debug.log")
+    : undefined;
+  return async (request, init) => {
+    const method = (init?.method ?? "POST").toUpperCase();
+    const rawBody = init?.body;
+    if (method !== "POST" || typeof rawBody !== "string") {
+      return baseFetch(request, init);
+    }
+    let body: Record<string, unknown>;
+    try {
+      const parsed: unknown = JSON.parse(rawBody);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return baseFetch(request, init);
+      }
+      body = parsed as Record<string, unknown>;
+    } catch {
+      return baseFetch(request, init);
+    }
+
+    const url =
+      typeof request === "string"
+        ? request
+        : request instanceof URL
+          ? request.toString()
+          : request.url;
+    if (url.endsWith("/responses")) {
+      body.stream = true;
+      body.store = false;
+      normalizeOpenCodeReasoningFields(body, input.reasoningLevelValues);
+      appendResponsesFingerprintTools(body);
+      // muse-spark 上游要求 max_output_tokens >= 16，连通性探测只发 1 会被 400。
+      if (
+        typeof body.max_output_tokens === "number" &&
+        body.max_output_tokens > 0 &&
+        body.max_output_tokens < 16
+      ) {
+        body.max_output_tokens = 16;
+      }
+    } else {
+      body.stream = true;
+      normalizeOpenCodeReasoningFields(body, input.reasoningLevelValues);
+      appendChatFingerprintTools(body);
+    }
+    const nextInit = { ...init, body: JSON.stringify(body) };
+    let response: Response;
+    try {
+      response = await baseFetch(request, nextInit);
+    } catch (error) {
+      if (debugFile) {
+        try {
+          appendFileSync(
+            debugFile,
+            `${JSON.stringify({ at: new Date().toISOString(), url, phase: "fetch-throw", error: error instanceof Error ? `${error.name}: ${error.message}` : String(error), cause: error instanceof Error && error.cause ? String(error.cause).slice(0, 300) : undefined })}\n`,
+          );
+        } catch {
+          // 转储失败不影响原错误上抛。
+        }
+      }
+      throw error;
+    }
+    if (debugFile && !response.ok) {
+      try {
+        const errorText = await response.text();
+        appendFileSync(
+          debugFile,
+          `${JSON.stringify({ at: new Date().toISOString(), url, status: response.status, request: body, response: errorText.slice(0, 6000) })}\n`,
+        );
+        return new Response(errorText, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+        });
+      } catch {
+        // 转储失败不影响原响应透传。
+      }
+    }
+    return response;
   };
 }
 

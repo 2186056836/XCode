@@ -15,7 +15,7 @@ using Microsoft.Win32.SafeHandles;
 
 internal static class Program
 {
-    private const string Protocol = "ZCODE_BROWSER_IMPORT_V1";
+    private const string Protocol = "XCODE_BROWSER_IMPORT_V1";
     private const string HelperVersion = "2";
     private const int PipeTimeoutMs = 60000;
     private const int BrokerLifetimeMs = 90000;
@@ -46,7 +46,7 @@ internal static class Program
             {
                 string[] buildIdentity = GetBuildIdentity();
                 Console.Out.WriteLine(
-                    "ZCODE_BROWSER_IMPORT_HELPER\t" + HelperVersion + "\t" + GetProcessArchitecture() +
+                    "XCODE_BROWSER_IMPORT_HELPER\t" + HelperVersion + "\t" + GetProcessArchitecture() +
                     "\t" + buildIdentity[0] + "\t" + buildIdentity[1]);
                 return 0;
             }

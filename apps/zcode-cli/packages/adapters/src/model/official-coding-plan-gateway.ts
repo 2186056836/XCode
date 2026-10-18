@@ -1,3 +1,7 @@
+import type {
+  ProviderEndpointRoutingDecision,
+  ProviderEndpointRoutingPort,
+} from "@zcode/contracts";
 import { resolveRuntimeXCodeEndpointOrigin } from "@zcode/shared";
 import type { EnvRecord } from "./model-execution.js";
 
@@ -9,7 +13,7 @@ import type { EnvRecord } from "./model-execution.js";
  * 把官方模型端点替换为对应的网关端点，请求方法、请求体、鉴权头与响应均原样透传。
  *
  * 只对下表中的官方端点生效，按协议、主机、端口、路径精确匹配，用户自建 provider 与
- * 第三方模型服务不受影响。网关 origin 跟随 ZCODE_BASE_URL / ZCODE_ENDPOINT_ORIGIN，
+ * 第三方模型服务不受影响。网关 origin 跟随 XCODE_BASE_URL / XCODE_ENDPOINT_ORIGIN，
  * 缺省为线上 https://zcode.z.ai。
  */
 export interface OfficialCodingPlanGatewayRoute {
@@ -154,3 +158,40 @@ function normalizedPath(pathname: string): string {
   }
   return pathname.replace(/\/+$/u, "") || ROOT_PATH;
 }
+
+// ── 1010 新增：静态 endpoint 路由端口（与 fork 的 createOfficialCodingPlanGatewayFetch 并存）──
+const GATEWAY_PATH_BY_ENDPOINT: ReadonlyMap<string, string> = new Map([
+  ["https://open.bigmodel.cn:443/api/anthropic/v1/messages", "/api/v1/ultra/anthropic/v1/messages"],
+  ["https://api.z.ai:443/api/anthropic/v1/messages", "/api/v1/ultra-zai/anthropic/v1/messages"],
+]);
+
+/** 静态实现只提供 URL 决策；Host 清理、请求与响应透传由公共 fetch wrapper 负责。 */
+export function createStaticProviderEndpointRoutingPort(
+  endpointOrigin: string,
+): ProviderEndpointRoutingPort {
+  return {
+    async resolve(requestUrl): Promise<ProviderEndpointRoutingDecision> {
+      let parsed: URL;
+      try {
+        parsed = new URL(requestUrl);
+      } catch {
+        return { routed: false, url: requestUrl };
+      }
+      if (parsed.protocol !== "https:") return { routed: false, url: requestUrl };
+      const path =
+        parsed.pathname === ROOT_PATH
+          ? ROOT_PATH
+          : parsed.pathname.replace(/\/+$/u, "") || ROOT_PATH;
+      const key = `${parsed.protocol}//${parsed.hostname.toLowerCase()}:${parsed.port || HTTPS_DEFAULT_PORT}${path}`;
+      const targetPath = GATEWAY_PATH_BY_ENDPOINT.get(key);
+      if (!targetPath) return { routed: false, url: requestUrl };
+      const target = new URL(targetPath, endpointOrigin);
+      target.search = parsed.search;
+      return { routed: true, url: target.href };
+    },
+  };
+}
+
+// ── 1010 新增：静态 endpoint 路由端口（与 fork 网关转发共存）──
+/** 静态实现只提供 URL 决策；Host 清理、请求与响应透传由公共 fetch wrapper 负责。 */
+

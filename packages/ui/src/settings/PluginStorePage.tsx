@@ -1,6 +1,10 @@
 /* eslint-disable max-lines -- 插件商店容器统一编排列表/详情、市场源对话框、卸载确认、试用跳转与技能刷新收尾，集中维护保证交互一致。 */
 import { PluginAddMenu } from "@/settings/PluginAddMenu.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useStore } from "zustand";
+import { useOptionalTabStore } from "@/store/TabStoreProvider.js";
+import { isWorkspaceTab } from "@/store/tabStore.js";
+import { marketingNavigation, finishMarketingNavigation } from "@/lib/marketingNavigation.js";
 import { RefreshCw, Settings } from "lucide-react";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { Button } from "@/components/ui/button.js";
@@ -34,7 +38,7 @@ import {
   resolvePluginDisplayName,
   type StorePluginItem,
 } from "@/settings/pluginStoreListing.js";
-import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID } from "@zcode/shared";
+import { XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID } from "@zcode/shared";
 import { PluginUninstallConfirmDialog } from "@/settings/PluginUninstallConfirmDialog.js";
 import { usePluginUninstall } from "@/settings/usePluginUninstall.js";
 import { claimMarketplaceAutoRefresh } from "@/settings/officialMarketplaceAutoRefresh.js";
@@ -46,6 +50,7 @@ import {
 } from "@/settings/pluginStoreTryPrompt.js";
 
 interface PluginStorePageProps {
+  isWebRemoteControl?: boolean;
   workspacePath?: string | null;
   workspaceIdentity?: string;
   onCreateTask?: (request?: CreateTaskRequest) => void;
@@ -55,6 +60,7 @@ interface PluginStorePageProps {
 type PluginStoreView = "store" | "detail";
 
 export function PluginStorePage({
+  isWebRemoteControl = false,
   workspacePath,
   workspaceIdentity,
   onCreateTask,
@@ -129,12 +135,12 @@ export function PluginStorePage({
   // 否则新上架插件要等用户手动点刷新才可见；以 10 分钟窗口节流，并在发起时占位防抖（失败/在飞不重复），
   // 判据见 officialMarketplaceAutoRefresh。状态放模块级而非组件 ref，因为每次进入都是重新挂载。
   useEffect(() => {
-    const official = marketplaces.find((item) => item.id === ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID);
+    const official = marketplaces.find((item) => item.id === XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID);
     if (
       official &&
-      claimMarketplaceAutoRefresh(ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID, official.lastUpdated)
+      claimMarketplaceAutoRefresh(XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID, official.lastUpdated)
     ) {
-      void updateMarketplace(ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID, pluginManagementService);
+      void updateMarketplace(XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID, pluginManagementService);
     }
   }, [marketplaces, pluginManagementService, updateMarketplace]);
 
@@ -159,6 +165,52 @@ export function PluginStorePage({
   );
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
   const detailItem = detailPluginId ? (itemById.get(detailPluginId) ?? null) : null;
+  const marketingRequest = useStore(marketingNavigation, (state) => state.request);
+  const isMarketingDestinationVisible = useOptionalTabStore((state) => {
+    const tab = state.tabs.find((tab) => tab.id === state.activeTabId);
+    return Boolean(
+      tab &&
+      isWorkspaceTab(tab) &&
+      (tab.workspaceIdentity?.trim() || tab.workspacePath) ===
+        (workspaceIdentity?.trim() || workspacePath),
+    );
+  });
+  useEffect(() => {
+    if (marketingRequest?.target.page !== "plugin_marketplace") return;
+    if (!isMarketingDestinationVisible) return;
+    const pluginId = marketingRequest.target.plugin_id;
+    if (!workspacePath) {
+      finishMarketingNavigation(marketingRequest.id, new Error("marketing_navigation_unavailable"));
+      return;
+    }
+    if (
+      loading ||
+      loadedWorkspacePath !== workspacePath ||
+      loadedWorkspaceIdentity !== normalizedWorkspaceIdentity
+    )
+      return;
+    if (error || (pluginId && !itemById.has(pluginId))) {
+      finishMarketingNavigation(marketingRequest.id, new Error("marketing_plugin_unavailable"));
+    } else if (pluginId ? view === "detail" && detailPluginId === pluginId : view === "store") {
+      finishMarketingNavigation(marketingRequest.id);
+    } else {
+      setDetailPluginId(pluginId ?? null);
+      setView(pluginId ? "detail" : "store");
+      setQuery("");
+    }
+  }, [
+    marketingRequest,
+    isMarketingDestinationVisible,
+    workspacePath,
+    loading,
+    loadedWorkspacePath,
+    loadedWorkspaceIdentity,
+    normalizedWorkspaceIdentity,
+    error,
+    itemById,
+    view,
+    detailPluginId,
+  ]);
   // 插件自身 warning 诊断（如声明的技能路径扫描为空）：详情高级区展示，避免静默失败。
   const detailPluginInfo = detailItem?.info;
   const detailPluginWarnings = detailPluginInfo
@@ -450,6 +502,7 @@ export function PluginStorePage({
             </ControlHintTooltip>
             <PluginAddMenu
               testId="plugin-store-create"
+              isWebRemoteControl={isWebRemoteControl}
               onCreateTask={onCreateTask}
               onAddMarketplace={() => {
                 setAddMarketplaceError(null);

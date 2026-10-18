@@ -1,7 +1,7 @@
 export const DEFAULT_INTRANET_MACHINE_HOST = "";
 type IntranetEnv = {
   INTRANET_MACHINE_HOST?: string;
-  ZCODE_DEPS_BASE_URL?: string;
+  XCODE_DEPS_BASE_URL?: string;
 };
 
 function readProcessEnv(): IntranetEnv {
@@ -30,7 +30,7 @@ export const INTRANET_PROBE_SERVICE_URL = INTRANET_MACHINE_HOST
   : "";
 
 export function resolveIntranetDepsBaseUrl(env: IntranetEnv = readProcessEnv()) {
-  const depsBaseUrl = env.ZCODE_DEPS_BASE_URL?.trim();
+  const depsBaseUrl = env.XCODE_DEPS_BASE_URL?.trim();
   if (depsBaseUrl) {
     return depsBaseUrl.replace(/\/+$/, "");
   }
@@ -38,7 +38,7 @@ export function resolveIntranetDepsBaseUrl(env: IntranetEnv = readProcessEnv()) 
   const host = resolveIntranetMachineHost(env);
   if (!host)
     throw new Error(
-      "Configure ZCODE_DEPS_BASE_URL or INTRANET_MACHINE_HOST in .env before downloading internal dependencies",
+      "Configure XCODE_DEPS_BASE_URL or INTRANET_MACHINE_HOST in .env before downloading internal dependencies",
     );
   return `http://${host}:${INTRANET_ASSET_SERVICE_PORT}/zcode/deps`;
 }

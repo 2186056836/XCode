@@ -1,4 +1,4 @@
-import { ZCODE_VERSION } from "@zcode/shared";
+import { XCODE_VERSION } from "@zcode/shared";
 import type { IRemoteBackend, RemoteEnvironment } from "@zcode/server/remote/backend.js";
 import {
   REMOTE_BASE,
@@ -300,7 +300,7 @@ async function resolveComponentManifest(
         remoteCdnBaseUrl: options.remoteCdnBaseUrl,
         remoteCdnBaseUrls: options.remoteCdnBaseUrls,
         remoteCacheDir: options.remoteCacheDir,
-        version: ZCODE_VERSION,
+        version: XCODE_VERSION,
         platformArch: `${env.platform}-${env.arch}`,
         manifestRequestTimeoutMs: options.manifestRequestTimeoutMs,
         remoteAssetNetwork: options.remoteAssetNetwork,

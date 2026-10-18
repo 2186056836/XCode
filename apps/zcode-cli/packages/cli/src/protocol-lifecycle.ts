@@ -34,7 +34,7 @@ export function createProtocolProcessLifecycle(
     const timeoutMs =
       options.timeoutMs ??
       PROTOCOL_SHUTDOWN_TIMEOUT_MS +
-        (process.env.ZCODE_E2E_COVERAGE === "1" ? COVERAGE_FLUSH_ALLOWANCE_MS : 0);
+        (process.env.XCODE_E2E_COVERAGE === "1" ? COVERAGE_FLUSH_ALLOWANCE_MS : 0);
     deadlineAt = Date.now() + timeoutMs;
     // 保持 ref：即使初始化 Promise 永不 settle、已经没有 IO，也必须交付终态。
     deadlineTimer = setTimeout(() => exit(exitCode), timeoutMs);

@@ -5,10 +5,10 @@
    两侧必须同源，否则新增身份头时会漏掉黑名单，出现静态 header 覆盖凭证的缺口。 */
 
 /** `.mcp.json` 中 `auth.type` 的唯一合法值；区分大小写，不接受别名。 */
-export const ZCODE_OFFICIAL_MCP_AUTH_TYPE = "zcode_official" as const;
+export const XCODE_OFFICIAL_MCP_AUTH_TYPE = "zcode_official" as const;
 
 /** 第一阶段唯一合法的 provider。后续新增短期 Token 应新增 provider 值，不改变本值语义。 */
-export const ZCODE_OFFICIAL_MCP_AUTH_PROVIDER_JWT_TOKEN = "jwt_token" as const;
+export const XCODE_OFFICIAL_MCP_AUTH_PROVIDER_JWT_TOKEN = "jwt_token" as const;
 
 /**
  * 官方 MCP 使用用户身份和套餐身份两组独立凭据。
@@ -135,10 +135,10 @@ function normalizeLoopbackOrigin(candidate: string): string | undefined {
   }
 }
 
-export const OFFICIAL_MCP_DEV_TRUSTED_ORIGINS_ENV = "ZCODE_OFFICIAL_MCP_DEV_TRUSTED_ORIGINS";
+export const OFFICIAL_MCP_DEV_TRUSTED_ORIGINS_ENV = "XCODE_OFFICIAL_MCP_DEV_TRUSTED_ORIGINS";
 
 /** Host 在 spawn 时注入的真实 workspace identity；只用于隔离/审计，不用于文件执行。 */
-export const ZCODE_WORKSPACE_IDENTITY_ENV = "ZCODE_WORKSPACE_IDENTITY";
+export const XCODE_WORKSPACE_IDENTITY_ENV = "XCODE_WORKSPACE_IDENTITY";
 
 /** 身份头的安全日志摘要：只含 header 名、Team 成对性与 TargetType，不含任何值。 */
 export function summarizeOfficialMcpIdentityHeaders(

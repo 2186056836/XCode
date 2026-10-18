@@ -6,8 +6,8 @@ import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import {
-  ZCODE_PROTOCOL_NAME,
-  ZCODE_PROTOCOL_VERSION,
+  XCODE_PROTOCOL_NAME,
+  XCODE_PROTOCOL_VERSION,
   zcodeSessionStateSnapshotSchema,
 } from "@zcode/shared";
 import { TaskIndexRepo } from "../src/session/taskIndexRepo.js";
@@ -143,7 +143,7 @@ test("missing sessions report the owner error even when a valid ACP snapshot exi
 
 test("current session recovery preserves Desktop and replayable projections", async () => {
   const snapshot = zcodeSessionStateSnapshotSchema.parse({
-    protocol: { name: ZCODE_PROTOCOL_NAME, version: ZCODE_PROTOCOL_VERSION },
+    protocol: { name: XCODE_PROTOCOL_NAME, version: XCODE_PROTOCOL_VERSION },
     session: {
       sessionId: meta.taskId,
       workspace: { workspacePath: meta.workspacePath, workspaceKey: meta.workspacePath },

@@ -1,28 +1,28 @@
 !include nsDialogs.nsh
 !include FileFunc.nsh
 
-!ifndef ZCODE_INSTALLER_DEFAULT_LOG_PATH
-  !define ZCODE_INSTALLER_DEFAULT_LOG_PATH "$TEMP\ZCode-installer.log"
+!ifndef XCODE_INSTALLER_DEFAULT_LOG_PATH
+  !define XCODE_INSTALLER_DEFAULT_LOG_PATH "$TEMP\ZCode-installer.log"
 !endif
-!ifndef ZCODE_INSTALLER_ELEVATED_LOG_PATH
-  !define ZCODE_INSTALLER_ELEVATED_LOG_PATH "$WINDIR\Logs\ZCode-installer.log"
+!ifndef XCODE_INSTALLER_ELEVATED_LOG_PATH
+  !define XCODE_INSTALLER_ELEVATED_LOG_PATH "$WINDIR\Logs\ZCode-installer.log"
 !endif
-!ifndef ZCODE_INSTALLER_IS_ELEVATED_INNER
+!ifndef XCODE_INSTALLER_IS_ELEVATED_INNER
   ; 来源只在测试夹具模拟内层，正式默认恒假会让提权进程继续使用调用方 /LOG。
   ; 使用 electron-builder 同一 UAC 判据；隔离夹具仍可显式替换，不改变真正的提权流程。
   !include UAC.nsh
-  !define ZCODE_INSTALLER_IS_ELEVATED_INNER `${UAC_IsInnerInstance}`
+  !define XCODE_INSTALLER_IS_ELEVATED_INNER `${UAC_IsInnerInstance}`
 !endif
 
-!ifndef ZCODE_INSTALL_MANIFEST_NAME
-  !define ZCODE_INSTALL_MANIFEST_NAME ".zcode-install-manifest"
+!ifndef XCODE_INSTALL_MANIFEST_NAME
+  !define XCODE_INSTALL_MANIFEST_NAME ".zcode-install-manifest"
 !endif
 
-!ifndef ZCODE_UNINSTALLER_LOG_PATH
-  !define ZCODE_UNINSTALLER_LOG_PATH "$TEMP\ZCode-uninstaller.log"
+!ifndef XCODE_UNINSTALLER_LOG_PATH
+  !define XCODE_UNINSTALLER_LOG_PATH "$TEMP\ZCode-uninstaller.log"
 !endif
-!ifndef ZCODE_UNINSTALLER_FUNCTION_PREFIX
-  !define ZCODE_UNINSTALLER_FUNCTION_PREFIX "un."
+!ifndef XCODE_UNINSTALLER_FUNCTION_PREFIX
+  !define XCODE_UNINSTALLER_FUNCTION_PREFIX "un."
 !endif
 
 !ifdef BUILD_UNINSTALLER
@@ -32,10 +32,10 @@
   !macro ZCodeReportUninstallerStage MESSAGE
     DetailPrint "ZCode: ${MESSAGE}"
     Push "${MESSAGE}"
-    Call ${ZCODE_UNINSTALLER_FUNCTION_PREFIX}ZCodeWriteUninstallerLog
+    Call ${XCODE_UNINSTALLER_FUNCTION_PREFIX}ZCodeWriteUninstallerLog
   !macroend
 
-  Function ${ZCODE_UNINSTALLER_FUNCTION_PREFIX}ZCodeWriteUninstallerLog
+  Function ${XCODE_UNINSTALLER_FUNCTION_PREFIX}ZCodeWriteUninstallerLog
     Exch $R9
     Push $R0
     Push $R1
@@ -43,7 +43,7 @@
 
     StrCmp $ZCodeUninstallerLogUnavailable "1" zcodeUninstallerLogDone
     ClearErrors
-    FileOpen $R1 "${ZCODE_UNINSTALLER_LOG_PATH}" a
+    FileOpen $R1 "${XCODE_UNINSTALLER_LOG_PATH}" a
     IfErrors zcodeUninstallerLogFailed zcodeUninstallerLogWrite
     zcodeUninstallerLogWrite:
       System::Call "kernel32::GetCurrentProcessId() i.R0"
@@ -79,7 +79,7 @@
       !insertmacro customRemoveFilesDiagnosticsStart
     !endif
     ClearErrors
-    FileOpen $R0 "$INSTDIR\${ZCODE_INSTALL_MANIFEST_NAME}" r
+    FileOpen $R0 "$INSTDIR\${XCODE_INSTALL_MANIFEST_NAME}" r
     IfErrors zcodeManifestMissing
 
     zcodeManifestRead:
@@ -191,7 +191,7 @@
   Function ZCodeResetUninstallerLog
     StrCpy $ZCodeUninstallerDetailsUnavailable ""
     ClearErrors
-    FileOpen $R0 "${ZCODE_UNINSTALLER_LOG_PATH}" w
+    FileOpen $R0 "${XCODE_UNINSTALLER_LOG_PATH}" w
     IfErrors zcodeUninstallerDetailsResetFailed zcodeUninstallerDetailsResetSucceeded
     zcodeUninstallerDetailsResetSucceeded:
       FileClose $R0
@@ -210,7 +210,7 @@
 
     StrCmp $ZCodeUninstallerDetailsUnavailable "1" zcodeShowUninstallerDetailsDone
     ClearErrors
-    FileOpen $R0 "${ZCODE_UNINSTALLER_LOG_PATH}" r
+    FileOpen $R0 "${XCODE_UNINSTALLER_LOG_PATH}" r
     IfErrors zcodeShowUninstallerDetailsDone
     zcodeShowUninstallerDetailsRead:
       ClearErrors
@@ -277,13 +277,13 @@
   Function ZCodeDetectPreviousUninstallerCapabilities
     StrCpy $ZCodePreviousUninstallerSupportsManifest "0"
     ; manifest 是卸载器能力标记：存在即表示旧卸载器会按清单选择性删除。
-    IfFileExists "$INSTDIR\${ZCODE_INSTALL_MANIFEST_NAME}" 0 zcodePreviousUninstallerCapabilityCheckNested
+    IfFileExists "$INSTDIR\${XCODE_INSTALL_MANIFEST_NAME}" 0 zcodePreviousUninstallerCapabilityCheckNested
       StrCpy $ZCodePreviousUninstallerSupportsManifest "1"
       Return
 
     zcodePreviousUninstallerCapabilityCheckNested:
       ; assisted installer 的目录页会在后续 instfilesPre 才补上 APP_FILENAME 子目录，提前兼容两种形态。
-      IfFileExists "$INSTDIR\${APP_FILENAME}\${ZCODE_INSTALL_MANIFEST_NAME}" 0 zcodePreviousUninstallerCapabilityDone
+      IfFileExists "$INSTDIR\${APP_FILENAME}\${XCODE_INSTALL_MANIFEST_NAME}" 0 zcodePreviousUninstallerCapabilityDone
         StrCpy $ZCodePreviousUninstallerSupportsManifest "1"
 
     zcodePreviousUninstallerCapabilityDone:
@@ -298,7 +298,7 @@
       SetDetailsPrint listonly
       DetailPrint "ZCode: cleanup-failed exit-code=$R0"
       Call ZCodeShowUninstallerCleanupDetails
-      MessageBox MB_OK|MB_ICONSTOP "旧版本清理失败（错误码 $R0）。可能是文件被占用、权限不足或磁盘空间不足。详细日志：${ZCODE_UNINSTALLER_LOG_PATH}" /SD IDOK
+      MessageBox MB_OK|MB_ICONSTOP "旧版本清理失败（错误码 $R0）。可能是文件被占用、权限不足或磁盘空间不足。详细日志：${XCODE_UNINSTALLER_LOG_PATH}" /SD IDOK
       SetErrorLevel 2
       Quit
     ${endif}
@@ -311,7 +311,7 @@
   !macroend
 !endif
 
-!define ZCODE_INSTALL_DIR_BACK_BUTTON_WIDTH 180
+!define XCODE_INSTALL_DIR_BACK_BUTTON_WIDTH 180
 
 !macro customHeader
   !ifndef BUILD_UNINSTALLER
@@ -322,9 +322,9 @@
       Push $R1
       Push $R2
       StrCpy $ZCodeInstallerLogUnavailable ""
-      ${If} ${ZCODE_INSTALLER_IS_ELEVATED_INNER}
+      ${If} ${XCODE_INSTALLER_IS_ELEVATED_INNER}
         StrCpy $ZCodeInstallerProcessRole "elevated-inner"
-        StrCpy $ZCodeInstallerLogPath "${ZCODE_INSTALLER_ELEVATED_LOG_PATH}"
+        StrCpy $ZCodeInstallerLogPath "${XCODE_INSTALLER_ELEVATED_LOG_PATH}"
       ${Else}
         StrCpy $ZCodeInstallerProcessRole "outer"
         StrCpy $R0 $CMDLINE
@@ -335,7 +335,7 @@
         StrCpy $ZCodeInstallerLogPath $R1
         Goto zcodeInstallerLogPathReady
         zcodeInstallerLogUseDefault:
-          StrCpy $ZCodeInstallerLogPath "${ZCODE_INSTALLER_DEFAULT_LOG_PATH}"
+          StrCpy $ZCodeInstallerLogPath "${XCODE_INSTALLER_DEFAULT_LOG_PATH}"
         zcodeInstallerLogPathReady:
           ${GetParent} $ZCodeInstallerLogPath $R2
           StrCmp $R2 "" zcodeInstallerLogInitialized
@@ -370,17 +370,17 @@
     Push $R2
 
     StrCpy $R2 ""
-    System::Call 'Kernel32::SetEnvironmentVariableW(w "ZCODE_SHORTCUT_PATH", w "$R9") i.R1'
+    System::Call 'Kernel32::SetEnvironmentVariableW(w "XCODE_SHORTCUT_PATH", w "$R9") i.R1'
     StrCmp $R1 "0" zcodeReadShortcutTargetDone 0
 
-    nsExec::ExecToStack /TIMEOUT=5000 `"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -Command "[Console]::Out.Write(([Activator]::CreateInstance([type]::GetTypeFromProgID('WScript.Shell'))).CreateShortcut([Environment]::GetEnvironmentVariable('ZCODE_SHORTCUT_PATH')).TargetPath)"`
+    nsExec::ExecToStack /TIMEOUT=5000 `"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -Command "[Console]::Out.Write(([Activator]::CreateInstance([type]::GetTypeFromProgID('WScript.Shell'))).CreateShortcut([Environment]::GetEnvironmentVariable('XCODE_SHORTCUT_PATH')).TargetPath)"`
     Pop $R1
     Pop $R2
     StrCmp $R1 "0" zcodeReadShortcutTargetDone 0
     StrCpy $R2 ""
 
     zcodeReadShortcutTargetDone:
-      System::Call 'Kernel32::SetEnvironmentVariableW(w "ZCODE_SHORTCUT_PATH", p 0) i.R1'
+      System::Call 'Kernel32::SetEnvironmentVariableW(w "XCODE_SHORTCUT_PATH", p 0) i.R1'
       StrCpy $R9 "$R2"
       Pop $R2
       Pop $R1
@@ -450,13 +450,13 @@
 
     IntOp $7 $5 - $3
     IntOp $8 $6 - $4
-    IntCmp $7 ${ZCODE_INSTALL_DIR_BACK_BUTTON_WIDTH} zcodeResizeInstallDirBackButtonDone zcodeResizeInstallDirBackButtonResize zcodeResizeInstallDirBackButtonDone
+    IntCmp $7 ${XCODE_INSTALL_DIR_BACK_BUTTON_WIDTH} zcodeResizeInstallDirBackButtonDone zcodeResizeInstallDirBackButtonResize zcodeResizeInstallDirBackButtonDone
 
     zcodeResizeInstallDirBackButtonResize:
       ; 阻断页把“上一步”改成中文动作文案，NSIS 默认按钮宽度可能裁掉文字。
       ; 保持右边缘不动向左扩宽，避免和右侧“安装/取消”按钮重叠。
-      IntOp $3 $5 - ${ZCODE_INSTALL_DIR_BACK_BUTTON_WIDTH}
-      System::Call "user32::MoveWindow(p r1, i r3, i r4, i ${ZCODE_INSTALL_DIR_BACK_BUTTON_WIDTH}, i r8, i 1)"
+      IntOp $3 $5 - ${XCODE_INSTALL_DIR_BACK_BUTTON_WIDTH}
+      System::Call "user32::MoveWindow(p r1, i r3, i r4, i ${XCODE_INSTALL_DIR_BACK_BUTTON_WIDTH}, i r8, i 1)"
 
     zcodeResizeInstallDirBackButtonDone:
   FunctionEnd

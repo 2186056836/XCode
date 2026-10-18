@@ -1,4 +1,4 @@
-import { ZCODE_AGENT_PROVIDER, type PlanIdentitySnapshot, type XCodeProvider } from "@zcode/shared";
+import { XCODE_AGENT_PROVIDER, type PlanIdentitySnapshot, type XCodeProvider } from "@zcode/shared";
 import { buildPromptTelemetryExtraDetail } from "@/lib/messageTelemetry.js";
 import { encodeCustomModelValue } from "@/lib/zcodeCustomModelValue.js";
 import {
@@ -6,13 +6,13 @@ import {
   legacyTelemetryProviderId,
 } from "@/lib/providerTelemetryIdentity.js";
 
-function resolveLegacyConversationModelValue(params: {
+export function resolveLegacyConversationModelValue(params: {
   configProvider?: string | null;
   modelName?: string | null;
 }): string | null | undefined {
   const configProvider = params.configProvider?.trim();
   const modelName = params.modelName?.trim();
-  if (!configProvider || !modelName || configProvider === ZCODE_AGENT_PROVIDER) {
+  if (!configProvider || !modelName || configProvider === XCODE_AGENT_PROVIDER) {
     return params.modelName;
   }
   // 修复原因：V4 config 把 provider/model 拆开保存，直接上报 model 会丢失旧 UI
@@ -26,7 +26,7 @@ export function resolveLegacyRuntimeModelValue(params: {
 }): string | null | undefined {
   const configProvider = params.configProvider?.trim();
   const modelName = params.modelName?.trim();
-  if (!configProvider || !modelName || configProvider === ZCODE_AGENT_PROVIDER) {
+  if (!configProvider || !modelName || configProvider === XCODE_AGENT_PROVIDER) {
     return params.modelName;
   }
   if (modelName.startsWith(`${configProvider}/`)) return legacyTelemetryModelValue(modelName);
@@ -42,7 +42,7 @@ export function buildV4ConversationPromptTelemetryExtraDetail(params: {
   providerBaseURL?: string | null;
   planIdentitySnapshot?: PlanIdentitySnapshot | null;
 }): Record<string, string> {
-  const agentProvider = params.agentProvider ?? ZCODE_AGENT_PROVIDER;
+  const agentProvider = params.agentProvider ?? XCODE_AGENT_PROVIDER;
   const base = buildPromptTelemetryExtraDetail({
     askMode: params.askMode,
     modelName: resolveLegacyConversationModelValue(params),

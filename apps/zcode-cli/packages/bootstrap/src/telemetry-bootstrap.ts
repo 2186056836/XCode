@@ -18,10 +18,10 @@ export async function prepareXCodeTelemetryEnv(
     ...env,
   }, {
     ...options,
-    productVersion: options.productVersion ?? env.ZCODE_APP_VERSION,
+    productVersion: options.productVersion ?? env.XCODE_APP_VERSION,
   });
-  const deviceMid = prepared.ZCODE_TELEMETRY_DEVICE_MID;
-  return deviceMid ? { ...env, ZCODE_TELEMETRY_DEVICE_MID: deviceMid } : env;
+  const deviceMid = prepared.XCODE_TELEMETRY_DEVICE_MID;
+  return deviceMid ? { ...env, XCODE_TELEMETRY_DEVICE_MID: deviceMid } : env;
 }
 
 /**

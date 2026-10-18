@@ -86,7 +86,16 @@ export class ToolRegistryImpl implements ToolRegistry {
   }
 
   get(name: string): ToolEntry | undefined {
-    return this.tools.get(this.aliases.get(name) ?? name);
+    const exact = this.tools.get(this.aliases.get(name) ?? name);
+    if (exact) return exact;
+    // 部分上游（如 OpenCode 免费档）会强制把指纹工具名改成小写后回显，
+    // 模型回调的工具名与注册名仅大小写不同；此时按小写回退解析。
+    const lowered = name.trim().toLowerCase();
+    if (!lowered) return undefined;
+    for (const [registered, entry] of this.tools) {
+      if (registered.toLowerCase() === lowered) return entry;
+    }
+    return undefined;
   }
 
   has(name: string): boolean {

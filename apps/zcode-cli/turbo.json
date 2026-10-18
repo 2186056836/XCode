@@ -40,7 +40,7 @@
       ],
       "outputs": ["dist/**"],
       "cache": true,
-      "env": ["ZCODE_ENV", "ZCODE_BUILTIN_PROVIDER_CONFIG_FILE", "NODE_ENV"]
+      "env": ["XCODE_ENV", "XCODE_BUILTIN_PROVIDER_CONFIG_FILE", "NODE_ENV"]
     },
     "dev": {
       "cache": false,
@@ -76,7 +76,7 @@
       ],
       "outputs": ["dist/**"],
       "cache": true,
-      "env": ["ZCODE_ENV", "ZCODE_BUILTIN_PROVIDER_CONFIG_FILE", "NODE_ENV"]
+      "env": ["XCODE_ENV", "XCODE_BUILTIN_PROVIDER_CONFIG_FILE", "NODE_ENV"]
     }
   }
 }

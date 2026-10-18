@@ -52,9 +52,9 @@ const SKILL_CLI_SETTINGS_DIR = join(resolveUserHomeDir(), ".xcode", "cli");
 const SKILL_CLI_CONFIG_FILE = join(SKILL_CLI_SETTINGS_DIR, "config.json");
 const GIT_MARKER = ".git";
 const HOME_PREFIX = "~/";
-const ZCODE_OFFICIAL_PLUGIN_MARKETPLACE = "zcode-plugins-official";
-const ZCODE_INLINE_PLUGIN_MARKETPLACE = "inline";
-const ZCODE_PLUGIN_MANIFEST_PATH = join(".zcode-plugin", "plugin.json");
+const XCODE_OFFICIAL_PLUGIN_MARKETPLACE = "zcode-plugins-official";
+const XCODE_INLINE_PLUGIN_MARKETPLACE = "inline";
+const XCODE_PLUGIN_MANIFEST_PATH = join(".zcode-plugin", "plugin.json");
 const CLAUDE_PLUGIN_MANIFEST_PATH = join(".claude-plugin", "plugin.json");
 const CODEX_PLUGIN_MANIFEST_PATH = join(".codex-plugin", "plugin.json");
 
@@ -256,7 +256,7 @@ function collectMentionedSkillNames(prompt: string): Set<string> {
 function escapeXmlAttribute(value: string): string {
   return value
     .replaceAll("&", "&amp;")
-    .replaceAll('"', "&quot;")
+    .replaceAll("\"", "&quot;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
 }
@@ -457,7 +457,7 @@ function hasYamlUnsafeLooseInlineField(frontmatterText: string): boolean {
     const rawValue = line.slice(colonIndex + 1).trim();
     if (
       rawValue.length === 0 ||
-      rawValue.startsWith('"') ||
+      rawValue.startsWith("\"") ||
       rawValue.startsWith("'") ||
       rawValue.startsWith("|") ||
       rawValue.startsWith(">")
@@ -685,7 +685,7 @@ function resolveInside(rootPath: string, rawPath: string): string | null {
 }
 
 async function scanOfficialPluginCacheRoots(pluginStorageRoot: string): Promise<string[]> {
-  const cacheRoot = join(pluginStorageRoot, "cache", ZCODE_OFFICIAL_PLUGIN_MARKETPLACE);
+  const cacheRoot = join(pluginStorageRoot, "cache", XCODE_OFFICIAL_PLUGIN_MARKETPLACE);
   let pluginEntries: Dirent[] = [];
   try {
     pluginEntries = await readdir(cacheRoot, { withFileTypes: true });
@@ -742,7 +742,7 @@ async function readPluginManifest(rootPath: string): Promise<PluginManifestSumma
 
 async function findPluginManifestPath(rootPath: string): Promise<string | null> {
   for (const manifestPath of [
-    join(rootPath, ZCODE_PLUGIN_MANIFEST_PATH),
+    join(rootPath, XCODE_PLUGIN_MANIFEST_PATH),
     join(rootPath, CLAUDE_PLUGIN_MANIFEST_PATH),
     join(rootPath, CODEX_PLUGIN_MANIFEST_PATH),
   ]) {
@@ -785,12 +785,12 @@ async function resolvePluginSkillRootDescriptors(): Promise<SkillRootDescriptor[
   const candidates: PluginRootCandidate[] = [
     ...config.dirs.map((dir) => ({
       defaultEnabled: true,
-      marketplace: ZCODE_INLINE_PLUGIN_MARKETPLACE,
+      marketplace: XCODE_INLINE_PLUGIN_MARKETPLACE,
       rootPath: resolveConfigPath(dir),
     })),
     ...officialCacheRoots.map((rootPath) => ({
       defaultEnabled: false,
-      marketplace: ZCODE_OFFICIAL_PLUGIN_MARKETPLACE,
+      marketplace: XCODE_OFFICIAL_PLUGIN_MARKETPLACE,
       rootPath,
     })),
     ...installedRoots,
@@ -808,7 +808,7 @@ async function resolvePluginSkillRootDescriptors(): Promise<SkillRootDescriptor[
     // 官方 cache 时不经过 CLI resolve 的过滤，需要在这里同样跳过，否则被卸载的内置插件
     // 仍会从 cache 贡献技能。
     if (
-      candidate.marketplace === ZCODE_OFFICIAL_PLUGIN_MARKETPLACE &&
+      candidate.marketplace === XCODE_OFFICIAL_PLUGIN_MARKETPLACE &&
       config.suppressedBuiltins.includes(pluginId)
     ) {
       continue;
@@ -825,7 +825,7 @@ async function resolvePluginSkillRootDescriptors(): Promise<SkillRootDescriptor[
     }
     // agent runtime 已经从 plugin manifest 注入 skillRoots，但 UI 的 skillsService
     // 之前只扫描内置官方 cache/手动目录，漏掉 marketplace installed_plugins.json 中的
-    // Claude 官方和自建市场插件，导致插件详情页只有技能数量、没有技能名。
+    // 个人来源市场（claude-plugins-official、自建市场等）插件，导致插件详情页只有技能数量、没有技能名。
     for (const rootPath of resolvePluginSkillRoots({ manifest, rootPath: candidate.rootPath })) {
       descriptors.push({
         scope: "plugin",
@@ -845,7 +845,9 @@ async function discoverSkills(params: {
   includeUserSkills: boolean;
   provider: XCodeProvider;
 }): Promise<DiscoverResult> {
-  const workspaceRoots = dedupeRoots(await resolveAncestorWorkspaceRoots(params.workspacePath));
+  const workspaceRoots = dedupeRoots(
+    await resolveAncestorWorkspaceRoots(params.workspacePath),
+  );
   const roots: SkillRootDescriptor[] = workspaceRoots.map((rootPath) => ({
     scope: "workspace" as const,
     rootPath,
@@ -908,7 +910,10 @@ async function discoverSkills(params: {
         diagnostics.push({
           code: "skill_read_failed",
           severity: "warning",
-          message: error instanceof Error ? error.message : `Failed to read skill: ${skillPath}`,
+          message:
+            error instanceof Error
+              ? error.message
+              : `Failed to read skill: ${skillPath}`,
           path: skillPath,
         });
         continue;
@@ -996,7 +1001,10 @@ async function collectSkillMarkdownPaths(
       diagnostics.push({
         code: "skill_scan_failed",
         severity: "warning",
-        message: error instanceof Error ? error.message : `Failed to scan skill directory: ${path}`,
+        message:
+          error instanceof Error
+            ? error.message
+            : `Failed to scan skill directory: ${path}`,
         path,
       });
     },
@@ -1007,7 +1015,8 @@ async function collectSkillMarkdownPaths(
 }
 
 function resolveCapabilities(options?: SkillsServiceOptions): SkillsCapability {
-  const isDesktopRuntime = options?.isDesktopRuntime ?? Boolean(process.env.ZCODE_PROCESS_LABEL);
+  const isDesktopRuntime =
+    options?.isDesktopRuntime ?? Boolean(process.env.XCODE_PROCESS_LABEL);
   if (isDesktopRuntime) {
     return { userScopeAvailable: true };
   }
@@ -1218,7 +1227,10 @@ export function createSkillsService(options?: SkillsServiceOptions): ISkillsServ
         const canonicalRoot = await realpath(root).catch(() => root);
         const relativePath = relative(canonicalRoot, canonicalParent);
         // 父目录等于根（叶子直接位于根下）也是合法的常见场景，故允许 "".
-        if (relativePath === "" || (!relativePath.startsWith("..") && !isAbsolute(relativePath))) {
+        if (
+          relativePath === "" ||
+          (!relativePath.startsWith("..") && !isAbsolute(relativePath))
+        ) {
           contained = true;
           break;
         }
@@ -1236,3 +1248,10 @@ export function createSkillsService(options?: SkillsServiceOptions): ISkillsServ
     },
   };
 }
+
+// 仅供测试/调试，便于在 vitest 里直接 fixture 出诊断结果。
+export const __INTERNAL__ = {
+  discoverSkills,
+  readFrontmatter,
+  MAX_DESCRIPTION_LENGTH,
+};

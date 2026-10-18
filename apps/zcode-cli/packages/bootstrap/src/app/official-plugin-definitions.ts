@@ -1,4 +1,4 @@
-import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE } from "@zcode/contracts";
+import { XCODE_OFFICIAL_PLUGIN_MARKETPLACE } from "@zcode/contracts";
 
 // 内置插件的商店信息 seed（原样写入官方 marketplace.json 的条目 raw，键名与 CDN 目录
 // schema 一致：displayName_i18n / examplePrompts_i18n 等），解析复用 adapter 的
@@ -19,7 +19,7 @@ export interface OfficialPluginListingSeed {
 }
 
 const OFFICIAL_BROWSER_USE_PLUGIN_NAME = "browser-use";
-export const OFFICIAL_BROWSER_USE_PLUGIN_ID = `${OFFICIAL_BROWSER_USE_PLUGIN_NAME}@${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE}`;
+export const OFFICIAL_BROWSER_USE_PLUGIN_ID = `${OFFICIAL_BROWSER_USE_PLUGIN_NAME}@${XCODE_OFFICIAL_PLUGIN_MARKETPLACE}`;
 /**
  * node_repl 宿主。它不是面向用户的插件：没有 skill、没有 listing、不进市场，唯一职责是
  * 携带 `dist/mcp/server.js` 这个 Browser Use 与 Computer Use 共用的运行时产物。
@@ -30,9 +30,9 @@ export const OFFICIAL_BROWSER_USE_PLUGIN_ID = `${OFFICIAL_BROWSER_USE_PLUGIN_NAM
  * 各自只贡献自己的领域资产，谁启用都能拿到同一个宿主。
  */
 export const OFFICIAL_NODE_REPL_HOST_PLUGIN_NAME = "node-repl-host";
-export const OFFICIAL_NODE_REPL_HOST_PLUGIN_ID = `${OFFICIAL_NODE_REPL_HOST_PLUGIN_NAME}@${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE}`;
+export const OFFICIAL_NODE_REPL_HOST_PLUGIN_ID = `${OFFICIAL_NODE_REPL_HOST_PLUGIN_NAME}@${XCODE_OFFICIAL_PLUGIN_MARKETPLACE}`;
 const OFFICIAL_CUA_PLUGIN_NAME = "computer-use";
-export const OFFICIAL_CUA_PLUGIN_ID = `${OFFICIAL_CUA_PLUGIN_NAME}@${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE}`;
+export const OFFICIAL_CUA_PLUGIN_ID = `${OFFICIAL_CUA_PLUGIN_NAME}@${XCODE_OFFICIAL_PLUGIN_MARKETPLACE}`;
 
 export interface OfficialPluginDefinition {
   // 内容型 plugin (无 MCP server / 无系统依赖) 可以设为 true,
@@ -79,7 +79,7 @@ const OFFICIAL_CUA_REQUIRED_SEED_PATHS = [
 
 // zcode-guide 原本没有 requiredSeedPaths，seed 丢文件时会静默装出一个
 // 没有 /workflow 命令的插件——症状是命令不存在，没有任何诊断。commands/ 与技能正文都钉住。
-const OFFICIAL_ZCODE_GUIDE_REQUIRED_SEED_PATHS = [
+const OFFICIAL_XCODE_GUIDE_REQUIRED_SEED_PATHS = [
   "commands/workflow.md",
   "skills/dynamic-workflows/SKILL.md",
   "skills/dynamic-workflows/examples.md",
@@ -314,7 +314,7 @@ export const OFFICIAL_PLUGIN_DEFINITIONS: readonly OfficialPluginDefinition[] = 
       },
     },
     name: "zcode-guide",
-    requiredSeedPaths: OFFICIAL_ZCODE_GUIDE_REQUIRED_SEED_PATHS,
+    requiredSeedPaths: OFFICIAL_XCODE_GUIDE_REQUIRED_SEED_PATHS,
     rootCandidates: [
       "packages/zcode-guide-plugin",
       "../zcode-guide-plugin",
@@ -369,13 +369,13 @@ export const OFFICIAL_PLUGIN_DEFINITIONS: readonly OfficialPluginDefinition[] = 
 // 都必须把这个集合传给 discoverNodePluginsSync, 否则 defaultEnabled 不生效。
 export const DEFAULT_ENABLED_OFFICIAL_PLUGIN_IDS: ReadonlySet<string> = new Set(
   OFFICIAL_PLUGIN_DEFINITIONS.filter((definition) => definition.defaultEnabled).map(
-    (definition) => `${definition.name}@${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE}`,
+    (definition) => `${definition.name}@${XCODE_OFFICIAL_PLUGIN_MARKETPLACE}`,
   ),
 );
 
 export function resolveOfficialPluginHostMcpServerNames(pluginId: string): string[] {
   const definition = OFFICIAL_PLUGIN_DEFINITIONS.find(
-    (candidate) => `${candidate.name}@${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE}` === pluginId,
+    (candidate) => `${candidate.name}@${XCODE_OFFICIAL_PLUGIN_MARKETPLACE}` === pluginId,
   );
   return definition?.hostMcpServerNames ? [...definition.hostMcpServerNames] : [];
 }

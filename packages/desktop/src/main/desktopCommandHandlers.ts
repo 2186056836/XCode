@@ -1,30 +1,30 @@
+import { getPluginSandboxHost } from "./pluginSandbox/index.js";
 /* eslint-disable max-lines -- 桌面命令分发需要共享窗口与平台上下文，集中维护更便于一致性 */
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
-import { app, BrowserWindow, dialog, session, shell } from "electron";
-import type { MessageBoxOptions } from "electron";
+import { readXCodeStdioTapDevState, setXCodeStdioTapDevEnabled } from "@zcode/services/node";
 import {
-  DEFAULT_ZCODE_ENDPOINT_ORIGIN,
+  buildXCodeEndpointUrls,
+  DEFAULT_XCODE_ENDPOINT_ORIGIN,
   DesktopCommandIds,
+  REWARDS_PARTITION,
+  TEST_XCODE_ENDPOINT_ORIGIN,
+  getCommunityUrlFromConfigs,
+  getFeedbackUrlFromConfig,
+  normalizeXCodeEndpointOrigin,
   PlatformChannels,
+  resolveHelpAppConfig,
+  resolveXCodeEndpointOrigin,
+  XCODE_ENV,
+  XCODE_PRODUCT_FLAVOR,
   type AppSettings,
   type DesktopCommandId,
   type Locale,
-  resolveRuntimeXCodeEndpointOrigin,
-  ZCODE_ENV,
-  ZCODE_PRODUCT_FLAVOR,
-  buildXCodeEndpointUrls,
-  getCommunityUrlFromConfigs,
-  getFeedbackUrlFromConfig,
-  resolveHelpAppConfig,
-  normalizeXCodeEndpointOrigin,
-  resolveXCodeEndpointOrigin,
 } from "@zcode/shared";
-import { readXCodeStdioTapDevState, setXCodeStdioTapDevEnabled } from "@zcode/services/node";
+import type { MessageBoxOptions } from "electron";
+import { app, BrowserWindow, dialog, session, shell } from "electron";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { showAboutDialog } from "./about.js";
 import { checkForUpdateMenuClick } from "./autoUpdater.js";
-import { exportLogs } from "./exportLogs.js";
-import { openResourceManager } from "./resourceManagerWindow.js";
 import { resolveCuaOsSupport } from "./cuaOsSupport.js";
 import { syncWindowControlsOverlayForZoomLevel } from "./desktopWindowButtonPosition.js";
 import {
@@ -36,11 +36,13 @@ import {
   resolveDesktopZoomFactorForLevel,
   resolveDesktopZoomLevelFromFactor,
 } from "./desktopZoom.js";
+import { exportLogs } from "./exportLogs.js";
+import { openResourceManager } from "./resourceManagerWindow.js";
 
 export const HELP_TOGGLE_DEV_TOOLS_MENU_ID = "help.toggle-dev-tools";
-export const HELP_TOGGLE_ZCODE_STDIO_TAP_MENU_ID = "help.toggle-zcode-stdio-tap";
-const ZCODE_ENDPOINT_PROMPT_WIDTH = 460;
-const ZCODE_ENDPOINT_PROMPT_HEIGHT = 210;
+export const HELP_TOGGLE_XCODE_STDIO_TAP_MENU_ID = "help.toggle-zcode-stdio-tap";
+const XCODE_ENDPOINT_PROMPT_WIDTH = 460;
+const XCODE_ENDPOINT_PROMPT_HEIGHT = 210;
 const CODING_PLAN_WEBVIEW_PARTITION = "persist:zcode-coding-plan";
 
 function resolveTargetWindow(senderWindow?: BrowserWindow | null) {
@@ -50,7 +52,7 @@ function resolveTargetWindow(senderWindow?: BrowserWindow | null) {
 
   return BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0] ?? null;
 }
-function updateDesktopZoomLevel(
+export function updateDesktopZoomLevel(
   targetWindow: BrowserWindow | null | undefined,
   action: "reset" | "in" | "out",
 ) {
@@ -99,6 +101,7 @@ async function clearAllDataAndRelaunch(options: {
     return;
   }
 
+  await getPluginSandboxHost()?.clearBrowserData();
   const { rm } = await import("node:fs/promises");
   try {
     await rm(options.credentialsDir, { recursive: true, force: true });
@@ -139,6 +142,7 @@ export async function clearCodingPlanWebviewStorage(options: {
     // Coding Plan webview 使用独立持久 partition，默认窗口 session.clearStorageData()
     // 不会覆盖它；退出登录/清理数据时必须显式清除，避免旧账号 token 被下一次官网首屏读到。
     await session.fromPartition(CODING_PLAN_WEBVIEW_PARTITION).clearStorageData();
+    await session.fromPartition(REWARDS_PARTITION).clearStorageData();
     options.logger.info("[coding-plan-webview] cleared persistent partition storage");
   } catch (error) {
     options.logger.warn(
@@ -153,7 +157,7 @@ async function fetchRemoteAppConfig(fetchRemoteConfig?: () => Promise<unknown>):
   return fetchRemoteConfig();
 }
 
-function resolveLocalAppConfigPath(options?: {
+export function resolveLocalAppConfigPath(options?: {
   appPath?: string;
   isPackaged?: boolean;
   resourcesPath?: string;
@@ -322,8 +326,8 @@ function buildXCodeEndpointPromptHtml(currentValue: string): string {
   <body>
     <form id="form">
       <label for="endpoint">XCode endpoint origin</label>
-      <input id="endpoint" value="${value}" placeholder="https://endpoint.example.com" spellcheck="false" />
-      <div class="hint">Use an http or https origin, for example https://endpoint.example.com.</div>
+      <input id="endpoint" value="${value}" placeholder="https://zcode.z.ai" spellcheck="false" />
+      <div class="hint">Use an http or https origin, for example https://zcode.z.ai.</div>
       <div class="actions">
         <button id="cancel" type="button">Cancel</button>
         <button type="submit">Save</button>
@@ -353,8 +357,8 @@ function showXCodeEndpointPromptWindow(options: {
   return new Promise((resolve) => {
     let settled = false;
     const promptWindow = new BrowserWindow({
-      width: ZCODE_ENDPOINT_PROMPT_WIDTH,
-      height: ZCODE_ENDPOINT_PROMPT_HEIGHT,
+      width: XCODE_ENDPOINT_PROMPT_WIDTH,
+      height: XCODE_ENDPOINT_PROMPT_HEIGHT,
       parent: options.parentWindow,
       modal: Boolean(options.parentWindow),
       resizable: false,
@@ -409,7 +413,7 @@ async function setXCodeEndpointOverride(options: {
   onXCodeEndpointChanged: () => Promise<void> | void;
   logger: { warn: (...args: unknown[]) => void };
 }) {
-  if (ZCODE_ENV === "production") {
+  if (XCODE_ENV === "production") {
     return;
   }
   const normalized = options.value ? normalizeXCodeEndpointOrigin(options.value) : undefined;
@@ -447,7 +451,7 @@ function toggleXCodeStdioTapDevProxy(options: {
 
 function resolveChangelogUrl(
   locale: Locale,
-  endpointOrigin = DEFAULT_ZCODE_ENDPOINT_ORIGIN,
+  endpointOrigin = DEFAULT_XCODE_ENDPOINT_ORIGIN,
 ): string {
   // 帮助菜单里的外链以前只有固定英文地址，切到中文界面后仍会落到英文 changelog。
   // 这里统一收口到主进程按当前应用语言分流，避免菜单模板里手写分支后续再出现多处不一致。
@@ -457,7 +461,7 @@ function resolveChangelogUrl(
 
 export async function openChangelog(
   locale: Locale,
-  endpointOrigin = DEFAULT_ZCODE_ENDPOINT_ORIGIN,
+  endpointOrigin = DEFAULT_XCODE_ENDPOINT_ORIGIN,
 ) {
   await shell.openExternal(resolveChangelogUrl(locale, endpointOrigin));
 }
@@ -468,7 +472,7 @@ async function resolveCurrentXCodeEndpointOrigin(settingService: {
 }): Promise<string> {
   const settings = await settingService.get();
   return resolveXCodeEndpointOrigin({
-    env: ZCODE_ENV,
+    env: XCODE_ENV,
     envBaseOrigin: settingService.envBaseOrigin,
     overrideOrigin: settings.zcodeEndpointOrigin,
   });
@@ -590,7 +594,7 @@ export async function executeDesktopCommand(options: {
       return;
     case DesktopCommandIds.CheckForUpdates:
       // 按产品身份而不是后端环境放行：生产后端的 Preview 同样没有更新器。
-      if (ZCODE_PRODUCT_FLAVOR === "production") {
+      if (XCODE_PRODUCT_FLAVOR === "production") {
         checkForUpdateMenuClick(targetWindow);
       } else {
         options.logger.info("[auto-update] Preview 已禁用手动更新检查");
@@ -626,7 +630,7 @@ export async function executeDesktopCommand(options: {
       return;
     case DesktopCommandIds.SetXCodeEndpointProduction:
       await setXCodeEndpointOverride({
-        value: DEFAULT_ZCODE_ENDPOINT_ORIGIN,
+        value: DEFAULT_XCODE_ENDPOINT_ORIGIN,
         settingService: options.settingService,
         onXCodeEndpointChanged: options.onXCodeEndpointChanged,
         logger: options.logger,
@@ -634,7 +638,7 @@ export async function executeDesktopCommand(options: {
       return;
     case DesktopCommandIds.SetXCodeEndpointTest:
       await setXCodeEndpointOverride({
-        value: options.zcodeEndpointEnvBaseOrigin ?? resolveRuntimeXCodeEndpointOrigin(),
+        value: TEST_XCODE_ENDPOINT_ORIGIN,
         settingService: options.settingService,
         onXCodeEndpointChanged: options.onXCodeEndpointChanged,
         logger: options.logger,
@@ -642,7 +646,7 @@ export async function executeDesktopCommand(options: {
       return;
     case DesktopCommandIds.SetXCodeEndpointCustom: {
       const current =
-        (await options.settingService.get()).zcodeEndpointOrigin ?? DEFAULT_ZCODE_ENDPOINT_ORIGIN;
+        (await options.settingService.get()).zcodeEndpointOrigin ?? DEFAULT_XCODE_ENDPOINT_ORIGIN;
       const value = await promptCustomXCodeEndpoint(targetWindow, current);
       if (!value) {
         return;

@@ -1,7 +1,7 @@
 /**
  * Node dist 下载源的唯一解析点（本包内）。
  *
- * 与 `.gitlab/ci/00-workflow.yml` 的 `ZCODE_NODE_DIST_MIRROR` CI 变量、
+ * 与 `.gitlab/ci/00-workflow.yml` 的 `XCODE_NODE_DIST_MIRROR` CI 变量、
  * `scripts/prepare-prebuilds.mjs` 的 `nodeDistBase()`、
  * `scripts/cua-helper-sea-base.mjs` 的 `DEFAULT_MIRROR` 是同一个约定和同一个默认值。
  * 四处必须保持一致——CI 变量会覆盖
@@ -18,6 +18,6 @@
 export const DEFAULT_NODE_DIST_BASE = "https://cdn.npmmirror.com/binaries/node";
 
 export function resolveNodeDistBase(env: NodeJS.ProcessEnv = process.env): string {
-  const mirror = env.ZCODE_NODE_DIST_MIRROR?.trim();
+  const mirror = env.XCODE_NODE_DIST_MIRROR?.trim();
   return (mirror || DEFAULT_NODE_DIST_BASE).replace(/\/+$/u, "");
 }

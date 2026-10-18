@@ -75,7 +75,7 @@ export function registerCliShutdownHandlers(options: CliShutdownOptions): () => 
 }
 
 export async function flushE2ECoverage(): Promise<void> {
-  if (process.env.ZCODE_E2E_COVERAGE !== "1" || !process.env.NODE_V8_COVERAGE?.trim()) {
+  if (process.env.XCODE_E2E_COVERAGE !== "1" || !process.env.NODE_V8_COVERAGE?.trim()) {
     return;
   }
   try {

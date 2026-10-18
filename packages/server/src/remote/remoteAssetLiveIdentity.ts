@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { ZCODE_VERSION } from "@zcode/shared";
+import { XCODE_VERSION } from "@zcode/shared";
 import type { IRemoteBackend } from "@zcode/server/remote/backend.js";
 import type { RemoteEnvironment } from "@zcode/server/remote/backend.js";
 import {
@@ -205,14 +205,14 @@ async function resolveFreshComponentManifest(
   if (options.mockCdnDir) {
     try {
       const content = await readFile(
-        join(options.mockCdnDir, "releases", ZCODE_VERSION, `manifest-${platformArch}.json`),
+        join(options.mockCdnDir, "releases", XCODE_VERSION, `manifest-${platformArch}.json`),
         "utf8",
       );
       return {
         manifest: JSON.parse(content) as RemoteAssetManifest,
         releaseBaseCandidatesForComponents: buildReleaseBaseCandidates(
           resolveRemoteCdnBaseUrls(options),
-          ZCODE_VERSION,
+          XCODE_VERSION,
         ),
       };
     } catch (error) {
@@ -229,7 +229,7 @@ async function resolveFreshComponentManifest(
         remoteCdnBaseUrl: options.remoteCdnBaseUrl,
         remoteCdnBaseUrls: options.remoteCdnBaseUrls,
         remoteCacheDir: options.remoteCacheDir,
-        version: ZCODE_VERSION,
+        version: XCODE_VERSION,
         platformArch,
         manifestRequestTimeoutMs: options.manifestRequestTimeoutMs,
         remoteAssetNetwork: options.remoteAssetNetwork,

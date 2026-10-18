@@ -19,7 +19,7 @@ import {
   type ProviderSettingsFormProvider,
 } from "@/lib/providerSettingsFormTypes.js";
 import { ArrowRightIcon, AstroidIcon, UsersIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   type CodingPlanStatus,
@@ -55,6 +55,9 @@ import { resolveStartPlanEntitlementSummary } from "./StartPlanCard.js";
 import { useCodingPlanProducts } from "./useCodingPlanProducts.js";
 import { useEnterpriseCodingPlanProducts } from "./useEnterpriseCodingPlanProducts.js";
 import { useUsageEntitlement } from "@/hooks/useUsageEntitlement.js";
+import { useServices } from "@/hooks/useServices.js";
+import { CodeBuddyLoginSection } from "./CodeBuddyLoginSection.js";
+import { QoderLoginSection } from "./QoderLoginSection.js";
 import {
   createCodingPlanFunnelContext,
   resolveCodingPlanEntryPlanState,
@@ -72,6 +75,8 @@ const PERSONAL_PLAN_ENTRY_BANNER_CLASS =
   "min-h-20 w-full overflow-hidden rounded-xl border border-border bg-[radial-gradient(circle_at_14%_12%,color-mix(in_srgb,#4099ff_24%,var(--color-background)_76%)_0%,color-mix(in_srgb,#4099ff_10%,var(--color-surface)_90%)_64%,var(--color-surface)_300%)] p-4 text-left transition-colors hover:border-border-hover";
 const TEAM_PLAN_ENTRY_BANNER_CLASS =
   "min-h-20 w-full overflow-hidden rounded-xl border border-border bg-[radial-gradient(circle_at_14%_12%,color-mix(in_srgb,#0ea5e9_24%,var(--color-background)_76%)_0%,color-mix(in_srgb,#0ea5e9_10%,var(--color-surface)_90%)_64%,var(--color-surface)_300%)] p-4 text-left transition-colors hover:border-border-hover";
+const TEAM_PLAN_ADVANCED_ENTRY_BANNER_CLASS =
+  "min-h-20 w-full overflow-hidden rounded-xl border border-border bg-[radial-gradient(circle_at_14%_12%,color-mix(in_srgb,#14b8a6_24%,var(--color-background)_76%)_0%,color-mix(in_srgb,#14b8a6_10%,var(--color-surface)_90%)_64%,var(--color-surface)_300%)] p-4 text-left transition-colors hover:border-border-hover";
 
 function isPlanNavItem(
   item: ModelProviderNavItem | null,
@@ -93,7 +98,7 @@ function hasTeamPlanContext(item: ModelProviderNavItem | null): item is Extract<
   );
 }
 
-function resolveTeamScopedPlanNavItem(
+export function resolveTeamScopedPlanNavItem(
   item: Extract<ModelProviderNavItem, { type: "codingPlan" | "teamPlan" }>,
   entitlement: ReturnType<typeof useUsageEntitlement>,
 ): Extract<ModelProviderNavItem, { type: "codingPlan" | "teamPlan" }> {
@@ -187,7 +192,7 @@ function resolveTeamScopedPlanNavItem(
   };
 }
 
-function resolveTeamPlanInspectionAccess(
+export function resolveTeamPlanInspectionAccess(
   item: Extract<ModelProviderNavItem, { type: "teamPlan" }>,
 ) {
   // 不可用套餐仍需查询失效原因；组织/项目身份来自团队导航，不能被执行可用性门禁清空。
@@ -206,7 +211,7 @@ function resolveTeamPlanInspectionAccess(
   };
 }
 
-function resolvePlanSettingsProvider({
+export function resolvePlanSettingsProvider({
   view,
   providerId,
   fallback,
@@ -316,6 +321,7 @@ export function ModelProviderSectionDetail({
   const rootProviderSettingsView =
     rootProviderSettingsRead.state.status === "ready" ? rootProviderSettingsRead.state.view : null;
   const providerSettingsView = providerSettingsViewOverride ?? rootProviderSettingsView;
+  const { providerSettingsService } = useServices();
   // 账号分支曾漏传删除回调，出现只删 UI 不写盘。所有详情共用同一套模型操作装配。
   const modelEditingProps = {
     onAddPersonalModel,
@@ -323,6 +329,11 @@ export function ModelProviderSectionDetail({
     onSetPersonalModelEnabled,
     onDeletePersonalModel,
     onFetchUpstreamModels,
+    onResolveModelConfig: useCallback(
+      (cardProviderId: string, modelId: string) =>
+        providerSettingsService.resolveModelConfig({ providerId: cardProviderId, modelId }),
+      [providerSettingsService],
+    ),
     settingsRevision: providerSettingsView?.revision,
   };
   const selectedPlanAccess = useMemo(() => {
@@ -461,6 +472,46 @@ export function ModelProviderSectionDetail({
         hideApiKeySection
         upstreamImportEnabled
         nameEditable={false}
+      />
+    );
+  }
+
+  // 其他登录型供应商详情（CodeBuddy 等）——连接信息只读；模型列表上方为
+  // 登录区（OAuth 设备码 + API Key 双模式），登录成功后令牌写入 personal
+  // overlay 的 access.apiKey，执行链按普通 openai-compatible Bearer 发送。
+  if (selectedNavItem.type === "other") {
+    const otherProvider = selectedNavItem.provider;
+    return (
+      <InlineEditableProviderCard
+        provider={otherProvider}
+        onSave={onSave}
+        {...modelEditingProps}
+        onReorderModelIds={
+          onReorderProviderModels
+            ? (modelIds) => onReorderProviderModels(otherProvider.providerId, modelIds)
+              : undefined
+        }
+        onTestModel={onTestModel}
+        readOnlyEndpoints
+        hideConnectionSection
+        hideApiKeySection
+        upstreamImportEnabled
+        nameEditable={false}
+        loginSection={otherProvider.providerId.includes("qoder")
+          ? (
+            <QoderLoginSection
+              providerId={otherProvider.providerId}
+              region={otherProvider.providerId.includes("qoder-cn") ? "cn" : "intl"}
+              name={otherProvider.providerId.includes("qoder-cn") ? "Qoder CN" : "Qoder"}
+            />
+          )
+          : (
+            <CodeBuddyLoginSection
+              providerId={otherProvider.providerId}
+              region={otherProvider.providerId.includes("codebuddy-cn") ? "cn" : "intl"}
+              name={otherProvider.providerId.includes("codebuddy-cn") ? "CodeBuddy CN" : "CodeBuddy"}
+            />
+          )}
       />
     );
   }
@@ -897,7 +948,9 @@ export function ModelProviderSectionDetail({
   );
 }
 
-function resolvePurchaseChoiceSelectionIntent(status: CodingPlanStatus): "login" | "purchase" {
+export function resolvePurchaseChoiceSelectionIntent(
+  status: CodingPlanStatus,
+): "login" | "purchase" {
   return status === "disconnected" ? "login" : "purchase";
 }
 
@@ -1090,13 +1143,37 @@ function CodingPlanPurchaseChoiceBanners({
   );
 }
 
-function resolvePurchaseChoiceBannerProductsProviderId(
+export function resolveEnterpriseTeamPlanBannerClass(tierKey: string): string {
+  const normalized = tierKey.trim().toLowerCase();
+  if (normalized === "max" || normalized.includes("advanced")) {
+    return TEAM_PLAN_ADVANCED_ENTRY_BANNER_CLASS;
+  }
+  return TEAM_PLAN_ENTRY_BANNER_CLASS;
+}
+
+export function resolveEnterpriseTeamPlanBannerIconClass(tierKey: string): string {
+  const normalized = tierKey.trim().toLowerCase();
+  if (normalized === "max" || normalized.includes("advanced")) {
+    return "text-[#14b8a6]";
+  }
+  return "text-[#0ea5e9]";
+}
+
+export function resolveEnterpriseTeamPlanBannerDescriptionId(tierKey: string): string {
+  const normalized = tierKey.trim().toLowerCase();
+  if (normalized === "max" || normalized.includes("advanced")) {
+    return "settings.modelProvider.codingPlan.purchaseBanner.teamAdvancedDescription";
+  }
+  return "settings.modelProvider.codingPlan.purchaseBanner.teamStandardDescription";
+}
+
+export function resolvePurchaseChoiceBannerProductsProviderId(
   providerId: CodingPlanProviderId,
 ): CodingPlanProviderId {
   return resolveCodingPlanUpgradeProductsProviderId(providerId) ?? providerId;
 }
 
-function resolvePurchaseChoiceBannerPrice({
+export function resolvePurchaseChoiceBannerPrice({
   providerId,
   audience,
   products,
@@ -1147,7 +1224,7 @@ function resolvePurchaseChoiceBannerPrice({
   return null;
 }
 
-function resolveEnterprisePurchaseChoiceBannerPrice(
+export function resolveEnterprisePurchaseChoiceBannerPrice(
   group: EnterpriseCodingPlanProductGroup,
 ): { kind: "price"; price: number; currency: string } | null {
   const product = group.products

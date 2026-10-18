@@ -13,12 +13,12 @@ export interface XCodeStreamingToolInputPreview {
 
 export type XCodeStreamingToolInputPreviewMode = "active-live" | "background-summary";
 
-export const ZCODE_ACTIVE_STREAMING_TOOL_INPUT_EAGER_DELTA_COUNT = 1;
-export const ZCODE_ACTIVE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS = 750;
-export const ZCODE_ACTIVE_STREAMING_TOOL_INPUT_PREVIEW_MIN_RAW_GROWTH = 8 * 1024;
-export const ZCODE_FILE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS = 1_000;
-export const ZCODE_ACTIVE_STREAMING_TOOL_INPUT_TIME_BUDGET_MAX_RAW_INPUT =
-  ZCODE_ACTIVE_STREAMING_TOOL_INPUT_PREVIEW_MIN_RAW_GROWTH;
+export const XCODE_ACTIVE_STREAMING_TOOL_INPUT_EAGER_DELTA_COUNT = 1;
+export const XCODE_ACTIVE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS = 750;
+export const XCODE_ACTIVE_STREAMING_TOOL_INPUT_PREVIEW_MIN_RAW_GROWTH = 8 * 1024;
+export const XCODE_FILE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS = 1_000;
+export const XCODE_ACTIVE_STREAMING_TOOL_INPUT_TIME_BUDGET_MAX_RAW_INPUT =
+  XCODE_ACTIVE_STREAMING_TOOL_INPUT_PREVIEW_MIN_RAW_GROWTH;
 
 const PARTIAL_JSON_STRING_FIELD_KEYS = [
   "file_path",
@@ -102,7 +102,7 @@ export function shouldMaterializeXCodeStreamingToolInputPreview(
     return false;
   }
   const deltaCount = state.deltaCount ?? 0;
-  if (deltaCount <= ZCODE_ACTIVE_STREAMING_TOOL_INPUT_EAGER_DELTA_COUNT) {
+  if (deltaCount <= XCODE_ACTIVE_STREAMING_TOOL_INPUT_EAGER_DELTA_COUNT) {
     return true;
   }
   const lastPreviewAt = state.lastPreviewAt ?? 0;
@@ -111,23 +111,23 @@ export function shouldMaterializeXCodeStreamingToolInputPreview(
     // 大字节 chunk 不能绕过一秒窗口，否则模型输出越快，UI 反而更新越频繁。
     return (
       (options.now ?? Date.now()) - lastPreviewAt >=
-      ZCODE_FILE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS
+      XCODE_FILE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS
     );
   }
   const lastPreviewRawInputLength = state.lastPreviewRawInputLength ?? 0;
   const rawGrowth = state.rawInput.length - lastPreviewRawInputLength;
-  if (rawGrowth >= ZCODE_ACTIVE_STREAMING_TOOL_INPUT_PREVIEW_MIN_RAW_GROWTH) {
+  if (rawGrowth >= XCODE_ACTIVE_STREAMING_TOOL_INPUT_PREVIEW_MIN_RAW_GROWTH) {
     return true;
   }
   const intervalElapsed =
     (options.now ?? Date.now()) - lastPreviewAt >=
-    ZCODE_ACTIVE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS;
+    XCODE_ACTIVE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS;
   if (!intervalElapsed) {
     return false;
   }
   // 性能修复：大 Write/Edit 参数通常会被 provider 以 4KB 左右的慢速 chunk 推送。
   // 若只按时间预算，active 任务仍会每个 chunk 解析累计 JSON；超过小输入范围后改由 raw growth 控制。
-  return state.rawInput.length <= ZCODE_ACTIVE_STREAMING_TOOL_INPUT_TIME_BUDGET_MAX_RAW_INPUT;
+  return state.rawInput.length <= XCODE_ACTIVE_STREAMING_TOOL_INPUT_TIME_BUDGET_MAX_RAW_INPUT;
 }
 
 export function isXCodeFileStreamingToolInputPreviewTool(toolName?: string): boolean {

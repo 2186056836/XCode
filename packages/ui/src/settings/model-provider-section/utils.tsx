@@ -1,8 +1,12 @@
 import type { ReactNode } from "react";
-import { type BuiltinModelProviderId } from "@zcode/shared";
+import { type BuiltinModelProviderId, type OAuthProviderId } from "@zcode/shared";
 import { PackageIcon } from "lucide-react";
 import { ProviderLogo } from "./ProviderLogo.js";
-import { type ModelProviderNavItem } from "./constants.js";
+import {
+  CODING_PLAN_PROVIDER_SPECS,
+  PRESET_PROVIDER_SPEC_BY_ID,
+  type ModelProviderNavItem,
+} from "./constants.js";
 
 export function createPresetProviderNodeKey(id: BuiltinModelProviderId): string {
   return `preset:${id}`;

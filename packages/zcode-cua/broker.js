@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-export const BROKER_SOCKET_ENV = "ZCODE_CUA_PERMISSION_BROKER_SOCKET";
-export const BROKER_UNAVAILABLE_ENV = "ZCODE_CUA_PERMISSION_BROKER_UNAVAILABLE";
+export const BROKER_SOCKET_ENV = "XCODE_CUA_PERMISSION_BROKER_SOCKET";
+export const BROKER_UNAVAILABLE_ENV = "XCODE_CUA_PERMISSION_BROKER_UNAVAILABLE";
 
 export class BrokerError extends Error {
   constructor(message, options = {}) {

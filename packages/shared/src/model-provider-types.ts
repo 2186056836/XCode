@@ -84,8 +84,37 @@ export type ModelConnectivityResult =
  * XCode fork：从自定义供应商上游拉取模型列表的结果（GET {baseUrl}/models）。
  * 成功时 models 为去重后的模型 ID 列表（可能为空数组）；失败时按边界分类错误码。
  */
+export interface UpstreamModelEntry {
+  readonly id: string;
+  /** 上游模型信息自带的上下文窗口（token）；缺失时继承系统默认规则。 */
+  readonly contextWindow?: number;
+  /** 上游模型信息自带的最大输出上限（token）；缺失时继承系统默认规则。 */
+  readonly maxOutputTokens?: number;
+  /**
+   * XCode fork：上游给的可读名（Qoder 的 `qmodel_38max` → "Qwen3.8-Max"）。
+   * 仅用于展示，随导入写入 provider overlay 的模型元数据表；请求上游始终发 `id`。
+   */
+  readonly displayName?: string;
+  /** XCode fork：上游相对倍率（Qoder 的 `price_factor`，0 表示免费）。仅用于展示。 */
+  readonly priceFactor?: number;
+  /** XCode fork：上下文档位（Qoder 的 context_config，升序）；contextWindow 即取其中最大档。 */
+  readonly contextTiers?: ReadonlyArray<{ readonly name: string; readonly tokenCount: number }>;
+  /**
+   * XCode fork：思考强度档位（Qoder 的 thinking_config.enabled.efforts 键）。
+   * 导入时写进模型的思考强度选项，聊天里即可选上游支持的档位。
+   */
+  readonly thinkingEfforts?: ReadonlyArray<string>;
+  /** XCode fork：默认思考强度档位。 */
+  readonly thinkingDefault?: string;
+}
+
 export type UpstreamModelListResult =
-  | { readonly success: true; readonly models: readonly string[] }
+  | {
+      readonly success: true;
+      readonly models: readonly string[];
+      /** 与 models 对齐的上游元数据（仅当响应携带时给出）；XCode fork。 */
+      readonly entries?: readonly UpstreamModelEntry[];
+    }
   | {
       readonly success: false;
       readonly error: {

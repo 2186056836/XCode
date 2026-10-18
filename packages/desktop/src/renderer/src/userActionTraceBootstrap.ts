@@ -1,8 +1,8 @@
 import {
   DISABLED_RENDERER_ACTION_TRACE_CONFIG,
   RENDERER_ACTION_TRACE_SERVICE_NAME,
-  ZCODE_ENV,
-  ZCODE_VERSION,
+  XCODE_ENV,
+  XCODE_VERSION,
   type IPlatformService,
   type RendererActionTraceConfigV1,
 } from "@zcode/shared";
@@ -24,8 +24,8 @@ export function initializeDesktopUserActionTrace(options: {
     config: DISABLED_RENDERER_ACTION_TRACE_CONFIG,
     resource: {
       serviceName: RENDERER_ACTION_TRACE_SERVICE_NAME,
-      serviceVersion: ZCODE_VERSION || "unknown",
-      deploymentEnvironment: options.isLocalDevelopmentRuntime ? "development" : ZCODE_ENV,
+      serviceVersion: XCODE_VERSION || "unknown",
+      deploymentEnvironment: options.isLocalDevelopmentRuntime ? "development" : XCODE_ENV,
       rendererInstanceId,
     },
     sendBatch: (batch) => sendBatch(batch),

@@ -75,7 +75,7 @@ function resolveCommitId() {
       .toString()
       .trim();
   } catch {
-    return process.env.ZCODE_COMMIT ?? "unknown";
+    return process.env.XCODE_COMMIT ?? "unknown";
   }
 }
 

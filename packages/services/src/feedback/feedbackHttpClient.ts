@@ -578,7 +578,7 @@ function toFeedbackEnvironment(input: CreateFeedbackTicketInput): Record<string,
     "platform",
     resolveClientConfigPlatform(device.osPlatform, device.osArch),
   );
-  assignDefined(environment, "release_channel", process.env.ZCODE_ENV?.trim() || "stable");
+  assignDefined(environment, "release_channel", process.env.XCODE_ENV?.trim() || "stable");
   assignDefined(environment, "os_category", device.osPlatform ?? process.platform);
   assignDefined(environment, "os_version", device.osVersion ?? device.osRelease ?? process.version);
   assignDefined(environment, "build_commit_id", device.buildCommitId);

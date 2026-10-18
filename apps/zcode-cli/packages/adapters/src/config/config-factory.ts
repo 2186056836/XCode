@@ -123,7 +123,7 @@ export interface PluginConfigSources {
  * 1. System defaults
  * 2. User config file (~/.xcode/cli/config.json)
  * 3. Project config files (root to cwd, then explicit projectConfigPath)
- * 4. Environment variables (ZCODE_*)
+ * 4. Environment variables (XCODE_*)
  * 5. CLI overrides
  */
 export function createConfig(options: ConfigFactoryOptions = {}): ConfigResult {

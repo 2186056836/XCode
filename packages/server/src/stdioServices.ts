@@ -1,9 +1,9 @@
 import { createLocalServices, type XCodeAgentCommandResolver } from "@zcode/services/node";
 import {
   parseServiceAuthorityMode,
-  ZCODE_REMOTE_HTTP_PROXY_ENV_KEY,
-  ZCODE_REMOTE_NO_PROXY_ENV_KEY,
-  ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY,
+  XCODE_REMOTE_HTTP_PROXY_ENV_KEY,
+  XCODE_REMOTE_NO_PROXY_ENV_KEY,
+  XCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY,
 } from "@zcode/shared";
 
 interface CreateStdioServicesOptions {
@@ -20,12 +20,12 @@ interface RemoteAgentNetworkOptions {
 function resolveRemoteAgentNetworkFromEnv(
   env: Record<string, string | undefined>,
 ): RemoteAgentNetworkOptions | undefined {
-  if (env[ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY]?.trim() !== "1") {
+  if (env[XCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY]?.trim() !== "1") {
     return undefined;
   }
   return {
-    httpProxy: env[ZCODE_REMOTE_HTTP_PROXY_ENV_KEY]?.trim() || undefined,
-    noProxy: env[ZCODE_REMOTE_NO_PROXY_ENV_KEY]?.trim() || undefined,
+    httpProxy: env[XCODE_REMOTE_HTTP_PROXY_ENV_KEY]?.trim() || undefined,
+    noProxy: env[XCODE_REMOTE_NO_PROXY_ENV_KEY]?.trim() || undefined,
   };
 }
 

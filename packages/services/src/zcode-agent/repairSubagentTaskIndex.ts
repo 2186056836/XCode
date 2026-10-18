@@ -1,4 +1,4 @@
-import { resolveWorkspaceKey, ZCODE_AGENT_PROVIDER } from "@zcode/shared";
+import { resolveWorkspaceKey, XCODE_AGENT_PROVIDER } from "@zcode/shared";
 import type { TaskIndexRepo } from "#src/session/taskIndexRepo.js";
 import type { IXCodeAgentService, XCodeAgentWorkspaceTarget } from "#src/zcode-agent/zcodeAgent.js";
 
@@ -14,7 +14,7 @@ export async function repairSubagentTaskIndex(params: {
   onRemoved: () => void;
 }): Promise<void> {
   const { target, taskIndexRepo, agentService, isCurrent } = params;
-  const rows = await taskIndexRepo.listTaskMetas({ ...target, provider: ZCODE_AGENT_PROVIDER });
+  const rows = await taskIndexRepo.listTaskMetas({ ...target, provider: XCODE_AGENT_PROVIDER });
   const ids = rows
     .filter((row) => !params.visibleSessionIds.has(row.taskId))
     .map((row) => row.taskId);

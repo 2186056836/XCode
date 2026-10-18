@@ -184,3 +184,7 @@ export type {
   SessionEventSink,
 } from "@zcode/contracts";
 export { LogLevel, SessionEventType } from "@zcode/contracts";
+
+// ── 1010 新增 barrel 导出 ──
+export * from "./tool/handlers/workflow-script-analysis.js";
+export * from "./tool/handlers/workflow-drafts.js";

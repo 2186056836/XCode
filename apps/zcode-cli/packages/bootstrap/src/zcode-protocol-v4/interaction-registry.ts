@@ -27,9 +27,9 @@ export type V4InteractionAnswer = {
   content?: Record<string, unknown>;
 };
 
-const ASK_USER_QUESTION_HIDDEN_GRACE_MS = 60_000;
-const ASK_USER_QUESTION_AUTO_RESOLUTION_MS = 300_000;
-interface V4InteractionRegistryOptions {
+export const ASK_USER_QUESTION_HIDDEN_GRACE_MS = 60_000;
+export const ASK_USER_QUESTION_AUTO_RESOLUTION_MS = 300_000;
+export interface V4InteractionRegistryOptions {
   hiddenGraceMs?: number;
   autoResolutionMs?: number;
   now?: () => number;
@@ -38,7 +38,7 @@ interface V4InteractionRegistryOptions {
 export function resolveV4InteractionRegistryOptionsFromEnv(
   env: NodeJS.ProcessEnv,
 ): V4InteractionRegistryOptions | undefined {
-  if (env.ZCODE_ENV !== "test") return undefined;
+  if (env.XCODE_ENV !== "test") return undefined;
   const rawScale = env[ASK_USER_QUESTION_E2E_CLOCK_SCALE_ENV]?.trim();
   if (!rawScale) return undefined;
   const scale = Number(rawScale);

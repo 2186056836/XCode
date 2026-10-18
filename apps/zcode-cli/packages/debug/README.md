@@ -22,4 +22,4 @@ The debug server also starts a local network capture proxy by default:
 - Proxy: `http://127.0.0.1:4184`
 - Local CA: `packages/debug/certs/network-ca/certs/ca.pem`
 
-Run the CLI you want to inspect with the environment values shown in the Network panel, usually `ZCODE_HTTP_PROXY` and `ZCODE_AGENT_CA_CERT`. The agent derives standard proxy and CA variables only inside controlled subprocess boundaries. Disable the proxy with `ZCODE_DEBUG_NETWORK_CAPTURE=0` when you only want log/DB inspection.
+Run the CLI you want to inspect with the environment values shown in the Network panel, usually `XCODE_HTTP_PROXY` and `XCODE_AGENT_CA_CERT`. The agent derives standard proxy and CA variables only inside controlled subprocess boundaries. Disable the proxy with `XCODE_DEBUG_NETWORK_CAPTURE=0` when you only want log/DB inspection.

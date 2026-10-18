@@ -4,8 +4,8 @@ import {
   desktopMenuMessageIds,
   getDesktopMenuMessage,
   isValidShortcutBinding,
-  ZCODE_ENV,
-  ZCODE_PRODUCT_FLAVOR,
+  XCODE_ENV,
+  XCODE_PRODUCT_FLAVOR,
   type DesktopCommandId,
   type Locale,
 } from "@zcode/shared";
@@ -17,11 +17,11 @@ import {
   clampDesktopZoomLevel,
 } from "./desktopZoom.js";
 import {
-  HELP_TOGGLE_ZCODE_STDIO_TAP_MENU_ID,
+  HELP_TOGGLE_XCODE_STDIO_TAP_MENU_ID,
   HELP_TOGGLE_DEV_TOOLS_MENU_ID,
 } from "./desktopCommandHandlers.js";
 
-const HELP_ZCODE_ENDPOINT_PRODUCTION_MENU_ID = "help.xcode-endpoint.production";
+const HELP_XCODE_ENDPOINT_PRODUCTION_MENU_ID = "help.xcode-endpoint.production";
 
 export function getDesktopMenuLabel(
   locale: Locale,
@@ -39,7 +39,7 @@ export function resolveSystemApplicationLocale(): Locale {
 
 export function updateXCodeStdioTapDevMenuState() {
   const menu = Menu.getApplicationMenu();
-  const item = menu?.getMenuItemById(HELP_TOGGLE_ZCODE_STDIO_TAP_MENU_ID);
+  const item = menu?.getMenuItemById(HELP_TOGGLE_XCODE_STDIO_TAP_MENU_ID);
   if (!item) {
     return;
   }
@@ -118,7 +118,7 @@ function buildApplicationMenuTemplate(options: {
                 click: () => void options.executeDesktopCommand(DesktopCommandIds.ShowAbout),
               },
               // 更新入口跟随产品身份：Preview 禁用更新器，生产后端的 Preview 也不例外。
-              ...(ZCODE_PRODUCT_FLAVOR === "production"
+              ...(XCODE_PRODUCT_FLAVOR === "production"
                 ? [
                     {
                       id: CHECK_FOR_UPDATE_MENU_ID,
@@ -259,7 +259,7 @@ function buildApplicationMenuTemplate(options: {
                 label: getLabel(desktopMenuMessageIds.helpAbout),
                 click: () => void options.executeDesktopCommand(DesktopCommandIds.ShowAbout),
               },
-              ...(ZCODE_PRODUCT_FLAVOR === "production"
+              ...(XCODE_PRODUCT_FLAVOR === "production"
                 ? [
                     {
                       id: CHECK_FOR_UPDATE_MENU_ID,
@@ -280,7 +280,7 @@ function buildApplicationMenuTemplate(options: {
         ...(isLocalDevelopmentRuntime && stdioTapState.visible
           ? [
               {
-                id: HELP_TOGGLE_ZCODE_STDIO_TAP_MENU_ID,
+                id: HELP_TOGGLE_XCODE_STDIO_TAP_MENU_ID,
                 label: getLabel(desktopMenuMessageIds.helpToggleXCodeStdioTap),
                 type: "checkbox" as const,
                 checked: stdioTapState.enabled,
@@ -290,13 +290,13 @@ function buildApplicationMenuTemplate(options: {
               { type: "separator" as const },
             ]
           : []),
-        ...(ZCODE_ENV === "test"
+        ...(XCODE_ENV === "test"
           ? [
               {
                 label: getLabel(desktopMenuMessageIds.helpXCodeEndpoint),
                 submenu: [
                   {
-                    id: HELP_ZCODE_ENDPOINT_PRODUCTION_MENU_ID,
+                    id: HELP_XCODE_ENDPOINT_PRODUCTION_MENU_ID,
                     label: getLabel(desktopMenuMessageIds.helpXCodeEndpointProduction),
                     type: "radio" as const,
                     checked: (options.zcodeEndpointSelection ?? "production") === "production",
@@ -304,6 +304,14 @@ function buildApplicationMenuTemplate(options: {
                       void options.executeDesktopCommand(
                         DesktopCommandIds.SetXCodeEndpointProduction,
                       ),
+                  },
+                  {
+                    id: HELP_XCODE_ENDPOINT_TEST_MENU_ID,
+                    label: getLabel(desktopMenuMessageIds.helpXCodeEndpointTest),
+                    type: "radio" as const,
+                    checked: options.zcodeEndpointSelection === "test",
+                    click: () =>
+                      void options.executeDesktopCommand(DesktopCommandIds.SetXCodeEndpointTest),
                   },
                   { type: "separator" as const },
                   {

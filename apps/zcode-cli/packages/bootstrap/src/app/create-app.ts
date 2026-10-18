@@ -36,7 +36,7 @@ import {
 } from "@zcode/contracts";
 import { isRemoteWorkspaceIdentity, resolveXCodeRuntimeEnv } from "@zcode/shared";
 import {
-  ZCODE_ATTACHMENT_FAULT_CODES,
+  XCODE_ATTACHMENT_FAULT_CODES,
   XCodeAttachmentFaultError,
 } from "@zcode/shared/zcode-protocol-v4";
 
@@ -361,7 +361,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       (messageEnabled
         ? createNodeSessionMailboxAdapter({
             rootDir: resolvePath(
-              (options.env ?? process.env).ZCODE_MAILBOX_ROOT ?? "~/.xcode/mailbox",
+              (options.env ?? process.env).XCODE_MAILBOX_ROOT ?? "~/.xcode/mailbox",
             ),
           })
         : undefined);
@@ -568,6 +568,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       mcpPort,
       modelFactory,
       permissionService,
+      pluginSkillRoots: pluginOutcome.skillRoots,
       prepareUserExecutionBoundary,
       getRuntime,
       runtimeConfig,
@@ -639,6 +640,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
                   // 不各自冻结一份。
                   modelFactory,
                   permissionService,
+                  pluginSkillRoots: pluginOutcome.skillRoots,
                   runtime: getRuntime(),
                   runtimeConfig,
                   sessionId,
@@ -1050,7 +1052,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
         const { ref, mediaType, artifactUri } = await resolvePromptAttachment(input);
         if (artifactUri) {
           if (!artifactStore.statToolResultArtifact) {
-            throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.statUnsupported);
+            throw new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.statUnsupported);
           }
           const result = await artifactStore.statToolResultArtifact({
             uri: artifactUri,
@@ -1066,7 +1068,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
         if (result.kind !== "file") {
           // 目录/符号链接/已消失都意味着「这个附件不再是可分享的文件」，用稳定码上抛，
           // 让 share 预检按确定分类处理，而不是靠错误文本猜。
-          throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.statNotFile);
+          throw new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.statNotFile);
         }
         return {
           totalBytes: result.sizeBytes,
@@ -1129,12 +1131,14 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
               runId: string;
               afterSequence?: number;
               limit?: number;
+              maxBytes?: number;
             }) =>
               dynamicWorkflowRunPort.listEvents(input.runId, {
                 ...(input.afterSequence === undefined
                   ? {}
                   : { afterSequence: input.afterSequence }),
                 ...(input.limit === undefined ? {} : { limit: input.limit }),
+                ...(input.maxBytes === undefined ? {} : { maxBytes: input.maxBytes }),
               }),
           }),
       // workflow run 的**用户面产物**读面。三条一起注册、
@@ -1154,12 +1158,16 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
               artifactId: string;
               afterSequence?: number;
               limit: number;
+              maxBytes: number;
+              fields?: readonly string[];
             }) =>
               dynamicWorkflowRunPort.listArtifactItems!(input.runId, input.artifactId, {
                 ...(input.afterSequence === undefined
                   ? {}
                   : { afterSequence: input.afterSequence }),
                 limit: input.limit,
+                maxBytes: input.maxBytes,
+                ...(input.fields === undefined ? {} : { fields: input.fields }),
               }),
             readDynamicWorkflowRunArtifact: async (input: {
               runId: string;

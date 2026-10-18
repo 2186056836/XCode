@@ -26,7 +26,7 @@ export type ProcessResourceRole = (typeof PROCESS_RESOURCE_ROLES)[number];
  * CLI 侧是定时器周期，main 侧既是「多久算一个 CLI 样本」也是过期判据（2 个周期）的基数。
  * 两侧必须同源，否则改 CLI 节拍会让 main 的 `sample_count` 静默偏离约定值。
  */
-export const ZCODE_CLI_RESOURCE_SAMPLE_INTERVAL_MS = 60_000;
+export const XCODE_CLI_RESOURCE_SAMPLE_INTERVAL_MS = 60_000;
 
 /**
  * zcode-cli 的进程泳道。

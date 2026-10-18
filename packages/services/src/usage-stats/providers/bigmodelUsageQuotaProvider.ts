@@ -3,6 +3,7 @@ import { z } from "zod";
 import type {
   ApiClient,
   ApiRequestInit,
+  CodingPlanRegularTpsRequest,
   CodingPlanUsageRequest,
   CodingPlanUsageSnapshot,
   CodingPlanResetOpportunityRequest,
@@ -71,7 +72,7 @@ import { normalizeLimits, pickPrimaryLimit } from "./bigmodelUsageQuotaMapper.js
 
 const BIGMODEL_QUOTA_PATH = "/api/monitor/usage/quota/limit";
 const CODING_PLAN_RESET_BASE_PATH = "/api/v1/coding-plan/reset";
-const ZCODE_JWT_TOKEN_KEY = "zcodejwttoken";
+const XCODE_JWT_TOKEN_KEY = "zcodejwttoken";
 const ZAI_OAUTH_ACCESS_TOKEN_KEY = "oauth:zai:access_token";
 const BIGMODEL_OAUTH_ACCESS_TOKEN_KEY = "oauth:bigmodel:access_token";
 const REQUEST_TIMEOUT_MS = 15_000;
@@ -656,7 +657,7 @@ export class BigModelUsageQuotaProvider {
       providerId: request.preferredProviderId,
       accountAccess,
     });
-    const zcodeJwt = (await this.credentialService?.load(ZCODE_JWT_TOKEN_KEY))?.trim() ?? "";
+    const zcodeJwt = (await this.credentialService?.load(XCODE_JWT_TOKEN_KEY))?.trim() ?? "";
     if (!zcodeJwt) {
       throw new Error("coding_plan_reset_zcode_jwt_required");
     }
@@ -743,6 +744,93 @@ export class BigModelUsageQuotaProvider {
     });
   }
 
+  async getCodingPlanRegularTps(
+    request: CodingPlanRegularTpsRequest,
+  ): Promise<number | undefined> {
+    const startedAt = Date.now();
+    let requestUrl: string | undefined;
+    let responseHeaders: Record<string, string> = {};
+    let responseStatus: number | undefined;
+    let responseStatusText: string | undefined;
+    let responseCode: number | undefined;
+    try {
+      const resolved = await this.resolveAuthorization({
+        preferredProviderId: request.preferredProviderId,
+        accountAccess: request.accountAccess,
+        requirePreferredProvider: true,
+        allowEnvApiKey: false,
+      });
+      if (!resolved) throw new Error(resolveCodingPlanApiKeyError(request.preferredProviderId));
+
+      const timeRange = resolveModelPerformanceTimeRange(request.timeZone, "7d");
+      requestUrl = buildModelPerformanceMonitorUrl(
+        resolved,
+        timeRange.startTime,
+        timeRange.endTime,
+      );
+      const response = await this.apiClient.request(requestUrl, {
+        method: "GET",
+        timeoutMs: REQUEST_TIMEOUT_MS,
+        headers: createBigModelUsageHeaders(resolved),
+      });
+      responseStatus = response.status;
+      responseStatusText = response.statusText;
+      responseHeaders = readApiDiagnosticHeaders(response.headers) ?? {};
+      let payload: BigModelUsageModelPerformanceEnvelope | undefined;
+      let parseError: unknown;
+      try {
+        payload = JSON.parse(await response.text()) as BigModelUsageModelPerformanceEnvelope;
+        responseCode = typeof payload.code === "number" ? payload.code : undefined;
+      } catch (error) {
+        parseError = error;
+      }
+      if (!response.ok) {
+        throw new ApiError({
+          message: readApiErrorMessage(payload, `HTTP ${response.status}`),
+          url: requestUrl,
+          method: "GET",
+          status: response.status,
+          responseHeaders,
+          cause: parseError,
+        });
+      }
+      if (parseError !== undefined || payload === undefined) {
+        throw new ApiError({
+          message: parseError instanceof Error ? parseError.message : "Invalid JSON response",
+          url: requestUrl,
+          method: "GET",
+          status: response.status,
+          responseHeaders,
+          cause: parseError,
+        });
+      }
+      const data = readSuccessfulBigModelMonitorData<BigModelUsageModelPerformancePayload>(
+        payload,
+        "BigModel model performance failed",
+        EMPTY_MODEL_PERFORMANCE_PAYLOAD,
+        { allowMissingData: true },
+      );
+      return data.proMaxDecodeSpeed?.findLast(
+        (value) => Number.isFinite(value) && value > 0,
+      );
+    } catch (error) {
+      // Bug 原因：Highspeed 仅在 Renderer 记录了 TPS 读取失败文案，Host 层丢失了
+      // monitor 的 HTTP status 和 request id，无法与后端日志对账。只输出 ApiError 中的安全诊断头。
+      log.warn(undefined, "Highspeed 普通 TPS 健康检查失败", {
+        error: error instanceof Error ? error.message : String(error),
+        providerId: request.preferredProviderId,
+        durationMs: Date.now() - startedAt,
+        status: error instanceof ApiError ? error.status : (responseStatus ?? null),
+        statusText: responseStatusText ?? null,
+        responseCode: responseCode ?? null,
+        responseHeaders:
+          error instanceof ApiError ? (error.responseHeaders ?? responseHeaders) : responseHeaders,
+        url: sanitizeMonitorDiagnosticUrl(error instanceof ApiError ? error.url : requestUrl),
+      });
+      throw error;
+    }
+  }
+
   private async resolveAuthorization(
     request: {
       preferredProviderId?: string;
@@ -753,7 +841,7 @@ export class BigModelUsageQuotaProvider {
   ): Promise<ResolvedQuotaAuthorization | null> {
     if (request.allowEnvApiKey !== false && request.requirePreferredProvider !== true) {
       const envApiKey =
-        readEnv(this.env, "ZCODE_BIGMODEL_USAGE_API_KEY") ??
+        readEnv(this.env, "XCODE_BIGMODEL_USAGE_API_KEY") ??
         readEnv(this.env, "BIGMODEL_USAGE_API_KEY");
       if (envApiKey) {
         return {
@@ -910,7 +998,7 @@ function createCodingPlanResetHeaders(
   return headers;
 }
 
-function readCodingPlanResetErrorMessage(payload: unknown, fallback: string): string {
+function readApiErrorMessage(payload: unknown, fallback: string): string {
   if (!payload || typeof payload !== "object") {
     return fallback;
   }
@@ -924,9 +1012,7 @@ function readCodingPlanResetErrorMessage(payload: unknown, fallback: string): st
   return fallback;
 }
 
-function readCodingPlanResetDiagnosticHeaders(
-  headers: Headers,
-): Record<string, string> | undefined {
+function readApiDiagnosticHeaders(headers: Headers): Record<string, string> | undefined {
   const result: Record<string, string> = {};
   for (const name of ["x-request-id", "x-trace-id", "x-span-id"] as const) {
     const value = headers.get(name)?.trim();
@@ -974,11 +1060,11 @@ async function readCodingPlanResetApiJson(
 
   if (!response.ok) {
     throw new ApiError({
-      message: readCodingPlanResetErrorMessage(payload, `HTTP ${response.status}`),
+      message: readApiErrorMessage(payload, `HTTP ${response.status}`),
       url: input,
       method: init.method,
       status: response.status,
-      responseHeaders: readCodingPlanResetDiagnosticHeaders(response.headers),
+      responseHeaders: readApiDiagnosticHeaders(response.headers),
       cause: parseError,
     });
   }
@@ -1148,6 +1234,16 @@ async function readBestEffortBigModelMonitorData<TData extends object>(
 
 function readBigModelEnvelopeMessage(payload: { message?: string; msg?: string }): string {
   return payload.msg?.trim() || payload.message?.trim() || "";
+}
+
+function sanitizeMonitorDiagnosticUrl(url: string | undefined): string {
+  if (!url) return "<unknown-monitor-url>";
+  try {
+    const parsed = new URL(url);
+    return `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    return "<invalid-monitor-url>";
+  }
 }
 
 function hasExplicitBigModelSuccessSignal(payload: { code?: number; success?: boolean }): boolean {
@@ -1563,7 +1659,7 @@ function addDaysToDateKey(dateKey: string, days: number): string {
 }
 
 function resolveQuotaUrlFromEnv(env: NodeJS.ProcessEnv): string | undefined {
-  return readEnv(env, "ZCODE_BIGMODEL_USAGE_QUOTA_URL") ?? readEnv(env, "BIGMODEL_USAGE_QUOTA_URL");
+  return readEnv(env, "XCODE_BIGMODEL_USAGE_QUOTA_URL") ?? readEnv(env, "BIGMODEL_USAGE_QUOTA_URL");
 }
 
 function resolveCodingPlanApiKeyError(providerId: string | undefined): string {
