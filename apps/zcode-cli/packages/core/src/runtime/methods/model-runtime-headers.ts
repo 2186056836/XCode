@@ -17,6 +17,8 @@ export function createRefreshRuntimeHeadersBeforeModelAttempt(
       accountAccess?: XCodeProviderAccountAccess;
       expectedAccountScope?: string;
       rejectedProjectTokenFingerprint?: string;
+      excludedConnectionIds?: readonly string[];
+      lastFailure?: { statusCode?: number; providerErrorCode?: string; connectionId?: string };
       attempt: number;
       reason?: RequestVerificationReason;
       abortSignal?: AbortSignal;
@@ -48,6 +50,10 @@ export function createRefreshRuntimeHeadersBeforeModelAttempt(
       accountAccess: attemptInput.accountAccess,
       expectedAccountScope: attemptInput.expectedAccountScope,
       rejectedProjectTokenFingerprint: attemptInput.rejectedProjectTokenFingerprint,
+      ...(attemptInput.excludedConnectionIds && attemptInput.excludedConnectionIds.length > 0
+        ? { excludedConnectionIds: attemptInput.excludedConnectionIds }
+        : {}),
+      ...(attemptInput.lastFailure ? { lastFailure: attemptInput.lastFailure } : {}),
       abortSignal: attemptInput.abortSignal ?? input.abortSignal,
       modelId: String(input.model.modelId),
       providerId: String(input.model.providerId),

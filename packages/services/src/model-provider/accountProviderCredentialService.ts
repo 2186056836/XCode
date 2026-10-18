@@ -3,7 +3,16 @@ import { createServiceLogger } from "../logger/serviceLogger.js";
 
 const log = createServiceLogger("account-project-token");
 interface AccountProviderCredentialServiceOptions {
-  readonly loadOAuthAccessToken: (family: ProviderFamilyDomain) => Promise<string | null>;
+  /**
+   * 读取某 family 的 OAuth access token。
+   *
+   * 传入 accountRef（`${provider}:${identity}`）时读**该账号**的凭据；缺省读当前激活账号。
+   * 账号轮询换到非激活账号后，此处必须能按账号取，否则会拿错登录态去换项目 Token。
+   */
+  readonly loadOAuthAccessToken: (
+    family: ProviderFamilyDomain,
+    accountRef?: string,
+  ) => Promise<string | null>;
   readonly resolveProviderMaterial: (
     family: ProviderFamilyDomain,
     accessToken: string,
@@ -15,6 +24,8 @@ interface LoadCodingPlanApiKeyInput {
   readonly providerId: string;
   readonly family: ProviderFamilyDomain;
   readonly accountIdentity: string;
+  /** 指定账号轮询选中的账号；缺省表示当前激活账号。 */
+  readonly accountRef?: string;
   readonly forceRefresh?: boolean;
   readonly rejectedProjectTokenFingerprint?: string;
 }
@@ -35,7 +46,7 @@ export function createAccountProviderCredentialService(
       return (await this.loadCodingPlanMaterial(input))?.token ?? null;
     },
     async loadCodingPlanMaterial(input) {
-      const loginToken = (await options.loadOAuthAccessToken(input.family))?.trim();
+      const loginToken = (await options.loadOAuthAccessToken(input.family, input.accountRef))?.trim();
       if (!loginToken) return null;
       // Map 仅存进程内并发状态；登录态变化不能加入旧账号请求。
       const key = JSON.stringify([
@@ -53,7 +64,9 @@ export function createAccountProviderCredentialService(
           input.accountIdentity,
           input.rejectedProjectTokenFingerprint,
         );
-        if ((await options.loadOAuthAccessToken(input.family))?.trim() !== loginToken) {
+        if (
+          (await options.loadOAuthAccessToken(input.family, input.accountRef))?.trim() !== loginToken
+        ) {
           log.warn(undefined, "项目 Token 签发期间登录态变化，丢弃结果", {
             family: input.family,
           });

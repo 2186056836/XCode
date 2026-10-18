@@ -61,11 +61,17 @@ export function serializeRegistryProviderConfig(
       type: config.api.type,
       baseUrl: config.api.baseUrl,
       ...(config.api.headers == null ? {} : { headers: config.api.headers }),
+      // XCode fork：供应商级代理绑定必须随 Registry 序列化下发，否则 agent 请求层
+      // 拿不到绑定（agent 读不到 host 的 setting.json）。
+      ...(config.api.proxy == null ? {} : { proxy: config.api.proxy }),
     },
     ...(config.builtinModelIds == null ? {} : { builtinModelIds: [...config.builtinModelIds] }),
     ...(config.personalModelIds == null ? {} : { personalModelIds: [...config.personalModelIds] }),
     ...(config.modelOrder == null ? {} : { modelOrder: [...config.modelOrder] }),
     ...(config.visibility === undefined ? {} : { visibility: config.visibility }),
+    // XCode fork：模型展示元数据（可读名/倍率）随 Registry 下发，选择器靠它
+    // 显示上游可读名而不是原始 ID。
+    ...(config.modelMeta == null ? {} : { modelMeta: config.modelMeta }),
   };
 }
 

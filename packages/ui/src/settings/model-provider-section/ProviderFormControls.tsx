@@ -14,8 +14,7 @@ import type { ModelConfigResolution, ProviderConfigObject } from "@zcode/provide
 import { shouldShowModelVisionBadge } from "@/lib/modelVisionBadge.js";
 import {
   formatQoderPriceFactor,
-  parseQoderModelMeta,
-  readQoderModelMetaHeaderValue,
+  readProviderModelMetaTable,
 } from "@/lib/qoderModelDisplayNames.js";
 import { useProviderDetailFeedback } from "@/settings/model-provider-section/ProviderDetailFeedback.js";
 
@@ -36,8 +35,8 @@ export function ModelRowInput({
   selected,
   onSelectedChange,
   selectTestId,
-  /** XCode fork：provider 的 api.headers，读取模型元数据表（Qoder 可读名/倍率）。 */
-  providerMetaHeaders,
+  /** XCode fork：provider 的模型展示元数据表（可读名/倍率/档位）。 */
+  providerModelMeta,
 }: {
   model: ProviderSettingsFormModel;
   providerId: string;
@@ -60,8 +59,8 @@ export function ModelRowInput({
   /** XCode fork：传入即渲染行首勾选框（内置模型不传，保持不可勾选）。 */
   onSelectedChange?: (checked: boolean) => void;
   selectTestId?: string;
-  /** XCode fork：provider 的 api.headers，读取模型元数据表（Qoder 可读名/倍率）。 */
-  providerMetaHeaders?: Record<string, string>;
+  /** XCode fork：provider 的模型展示元数据表（可读名/倍率/档位）。 */
+  providerModelMeta?: ProviderConfigObject["modelMeta"];
 }) {
   const { intl, locale } = useXCodeIntl();
   const { showFeedback } = useProviderDetailFeedback();
@@ -261,7 +260,7 @@ export function ModelRowInput({
   );
   // XCode fork：可读名与倍率来自拉取上游时写入的 overlay 元数据表（真实值，
   // 上游改价/改名后重新拉取即生效），不是静态映射。缺失时静默不显示。
-  const qoderMeta = parseQoderModelMeta(readQoderModelMetaHeaderValue(providerMetaHeaders));
+  const qoderMeta = readProviderModelMetaTable(providerModelMeta);
   const qoderDisplayName = qoderMeta[model.modelId]?.name;
   const qoderPriceFactor = qoderMeta[model.modelId]?.priceFactor;
   const qoderPriceLabel =

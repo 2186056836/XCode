@@ -176,6 +176,8 @@ CloudContent: "cloud-content",
   HighspeedCard: "highspeed-card",
   /** Onboarding 完成记录服务（本地持久化，后续上传服务器） */
   OnboardingRecord: "onboarding-record",
+  /** 代理池：池条目 CRUD / 连通性测试 / 供应商级代理绑定（纯增量，与全局 httpProxy 独立） */
+  ProxyPool: "proxy-pool",
 } as const;
 
 export type ServiceChannelName = (typeof ServiceChannels)[keyof typeof ServiceChannels];

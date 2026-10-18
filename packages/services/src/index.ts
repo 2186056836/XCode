@@ -8,6 +8,22 @@ export {
   type ModelSelectionViewInput,
   type ProviderSettingsProviderView,
   type ProviderSettingsView,
+  type QoderCheckinRegion,
+  type QoderCheckinResult,
+  type QoderCheckinStats,
+  type QoderCheckinStatus,
+  type QoderCheckinSummary,
+  type CodeBuddyCheckinRegion,
+  type CodeBuddyCheckinResult,
+  type CodeBuddyCheckinStats,
+  type CodeBuddyCheckinStatus,
+  type CodeBuddyCheckinSummary,
+  type CodeBuddyAutoCheckinSettings,
+  // XCode fork：额度/配额查看（Qoder / CodeBuddy）共享类型。
+  type AccountQuotaSnapshot,
+  type QuotaBatchResult,
+  type QuotaProvider,
+  type QuotaSummary,
 } from "./model-provider/providerFacadeServices.js";
 export {
   createAccountRequestAuthService,
@@ -277,6 +293,26 @@ export { IPluginManagementService } from "./plugins/pluginManagement.js";
 
 // Subagents service — ISubagentsService is both a type (interface) and value (descriptor)
 export { ISubagentsService } from "./subagents/subagents.js";
+
+// ProxyPool service — IProxyPoolService 同时是类型与描述符。
+// 只导出契约：实现依赖 settingService、provider facade 与 undici，属于 host 侧装配，
+// 从 index 导出会把 node 依赖链拖进 renderer bundle（同 createSettingService 的惯例）。
+export {
+  IProxyPoolService,
+  supportsAccountBinding,
+  supportsProviderBinding,
+  type ProxyPoolSaveInput,
+  type ProxyPoolState,
+  type ProxyPoolTestResult,
+  type ProxyProviderAccountView,
+  type ProxyProviderBindingView,
+} from "./proxy-pool/proxyPool.js";
+
+// 账号轮询设置（Qoder / CodeBuddy）——类型只读，实现留在 host 侧。
+export type {
+  AccountRotationSettings,
+  AccountRotationStrategy,
+} from "./model-provider/accountRotation.js";
 
 // Commands service — ICommandsService is both a type (interface) and value (descriptor)
 export { ICommandsService } from "./commands/commands.js";

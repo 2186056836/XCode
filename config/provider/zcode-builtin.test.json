@@ -588,7 +588,7 @@
             },
             "api": {
               "type": "openai-responses",
-              "baseUrl": "https://opencode.ai/zen/v1"
+              "baseUrl": "https://opencode.ai/inference/openai/v1"
             },
             "builtinModelIds": [
               "gpt-6-astra",
@@ -625,7 +625,7 @@
             },
             "api": {
               "type": "anthropic-messages",
-              "baseUrl": "https://opencode.ai/zen/v1"
+              "baseUrl": "https://opencode.ai/inference/openai/v1"
             },
             "builtinModelIds": [
               "claude-fable-5-1",
@@ -663,7 +663,7 @@
             },
             "api": {
               "type": "openai-chat-completions",
-              "baseUrl": "https://opencode.ai/zen/v1"
+              "baseUrl": "https://opencode.ai/inference/openai/v1"
             },
             "builtinModelIds": [
               "kimi-k3",

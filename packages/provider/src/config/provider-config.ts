@@ -128,16 +128,56 @@ export type ProviderLogoRef = Readonly<z.infer<typeof providerLogoDataSchema>>;
 
 export type ProviderApiConfigInput = Readonly<z.infer<typeof providerApiDataSchema>>;
 
+/**
+ * api.headers 逐键合并（大小写不敏感，上层覆盖同名键），而不是整块替换。
+ *
+ * 整块替换会静默丢掉内置层的客户端指纹头：zcode-builtin.json 给 CodeBuddy 配了
+ * `User-Agent: IDE/2.108.1 CodeBuddy/2.108.1` + X-Product/X-IDE-Type/X-IDE-Name/
+ * x-requested-with/x-codebuddy-request，给 OpenCode 免费档配了 opencode 四段式 UA
+ * 与全套 x-opencode-* 头。用户层只要写入任意一个自己的 header（模型导入功能会写
+ * X-Qoder-Model-Meta），整块替换就把指纹头全部抹掉，出站请求变成
+ * `user-agent: XCode/<版本>`，上游回 11128 request illegal / 403 FreeTierError。
+ * 逐键合并让用户层只影响它显式声明的键，也顺带修正了账号层与用户层互相覆盖的问题。
+ *
+ * headers 值只允许字符串，逐键合并时无法表达“删除某一个内置头”的意图；
+ * 唯一的清空语法是整块写 null（与 api.proxy 的显式关闭同构），要改内置头就改
+ * zcode-builtin.json。
+ */
+function overlayHeaders(
+  base: ProviderApiConfigInput["headers"],
+  next: ProviderApiConfigInput["headers"],
+): ProviderApiConfigInput["headers"] {
+  if (next === undefined) return base;
+  // null = 显式清空整组 headers（schema 降级也会落到 null），沿用整体替换语义。
+  if (next === null) return null;
+  if (base === undefined || base === null) return next;
+
+  const merged: Record<string, string> = { ...base };
+  for (const [key, value] of Object.entries(next)) {
+    const normalizedKey = key.toLowerCase();
+    for (const existing of Object.keys(merged)) {
+      if (existing.toLowerCase() === normalizedKey) {
+        delete merged[existing];
+      }
+    }
+    merged[key] = value;
+  }
+  return merged;
+}
+
 export class ProviderApiConfig extends ConfigOverlay<ProviderApiConfig> {
   readonly type?: ProviderApiConfigInput["type"];
   readonly baseUrl?: ProviderApiConfigInput["baseUrl"];
   readonly headers?: ProviderApiConfigInput["headers"];
+  /** XCode fork：供应商级代理绑定；随 Registry 下发到 agent 请求层。 */
+  readonly proxy?: ProviderApiConfigInput["proxy"];
 
   constructor(input: ProviderApiConfigInput = {}) {
     super();
     this.type = input.type;
     this.baseUrl = input.baseUrl;
     this.headers = input.headers ? Object.freeze({ ...input.headers }) : input.headers;
+    this.proxy = input.proxy ? Object.freeze({ ...input.proxy }) : input.proxy;
     Object.freeze(this);
   }
 
@@ -145,7 +185,9 @@ export class ProviderApiConfig extends ConfigOverlay<ProviderApiConfig> {
     return new ProviderApiConfig({
       type: this.overlayValue(this.type, next.type),
       baseUrl: this.overlayValue(this.baseUrl, next.baseUrl),
-      headers: this.overlayValue(this.headers, next.headers),
+      headers: overlayHeaders(this.headers, next.headers),
+      // 代理绑定是整块替换语义：null 表示显式关闭，undefined 表示本层不表态。
+      proxy: next.proxy === undefined ? this.proxy : next.proxy,
     });
   }
 
@@ -159,6 +201,7 @@ export class ProviderApiConfig extends ConfigOverlay<ProviderApiConfig> {
       type: this.type,
       baseUrl: this.baseUrl,
       headers: this.headers,
+      proxy: this.proxy,
     });
   }
 }
@@ -181,6 +224,8 @@ export class ProviderConfig extends ConfigOverlay<ProviderConfig> {
   readonly visibility?: ProviderConfigObject["visibility"];
   readonly upstreamModelIdFilter?: ProviderConfigObject["upstreamModelIdFilter"];
   readonly requestProfile?: ProviderConfigObject["requestProfile"];
+  /** XCode fork：模型展示元数据（可读名/倍率/档位），从 api.headers 的 X-Qoder-Model-Meta 迁来。 */
+  readonly modelMeta?: ProviderConfigObject["modelMeta"];
 
   constructor(input: ProviderConfigInput = {}) {
     super();
@@ -194,6 +239,7 @@ export class ProviderConfig extends ConfigOverlay<ProviderConfig> {
     this.visibility = input.visibility;
     this.upstreamModelIdFilter = input.upstreamModelIdFilter;
     this.requestProfile = input.requestProfile;
+    this.modelMeta = input.modelMeta ? Object.freeze({ ...input.modelMeta }) : input.modelMeta;
     Object.freeze(this);
   }
 
@@ -212,6 +258,8 @@ export class ProviderConfig extends ConfigOverlay<ProviderConfig> {
         next.upstreamModelIdFilter,
       ),
       requestProfile: this.overlayValue(this.requestProfile, next.requestProfile),
+      // 整块替换即可：只有个人层写它，且写方（批量导入）自己负责与旧值合并。
+      modelMeta: this.overlayValue(this.modelMeta, next.modelMeta),
     });
   }
 
@@ -238,6 +286,7 @@ export class ProviderConfig extends ConfigOverlay<ProviderConfig> {
       visibility: this.visibility,
       upstreamModelIdFilter: this.upstreamModelIdFilter,
       requestProfile: this.requestProfile,
+      modelMeta: this.modelMeta,
     });
   }
 
@@ -254,6 +303,7 @@ export class ProviderConfig extends ConfigOverlay<ProviderConfig> {
       visibility: this.visibility,
       upstreamModelIdFilter: this.upstreamModelIdFilter,
       requestProfile: this.requestProfile,
+      modelMeta: this.modelMeta,
     });
   }
 
@@ -274,6 +324,7 @@ export class ProviderConfig extends ConfigOverlay<ProviderConfig> {
       visibility: this.visibility,
       upstreamModelIdFilter: this.upstreamModelIdFilter,
       requestProfile: this.requestProfile,
+      modelMeta: this.modelMeta,
     });
   }
 }

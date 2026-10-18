@@ -19,6 +19,7 @@ export * from "./skill.js";
 export * from "./todo.js";
 export * from "./automation.js";
 export * from "./off-peak.js";
+export * from "./proxy-pool.js";
 export * from "./target.js";
 export * from "./plan-mode.js";
 export * from "./ask-user-question.js";

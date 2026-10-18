@@ -439,8 +439,13 @@ function RootInner({
     modelSelectionViewHydrated:
       rootProviderAvailability.hydrated || rootModelSelectionRead.state.status === "error",
   });
+  // fork 未接入 Web 远控（RootProps 无 webRemoteControlWorkspaceSwitcher），
+  // 这里恒为 false，行为与 0924 的门禁完全一致，同时满足 1010 的新签名。
+  const isWebRemoteControlRoot = false;
   const providerAvailabilityLoginEntryGuardEnabled =
-    shouldEnableProviderAvailabilityLoginEntryGuard();
+    shouldEnableProviderAvailabilityLoginEntryGuard({
+      isWebRemoteControlRoot,
+    });
   const { startupCheckCompleted: providerAvailabilityStartupCheckCompleted } =
     useProviderAvailabilityLoginEntryGuard({
       enabled: providerAvailabilityLoginEntryGuardEnabled,
@@ -467,6 +472,7 @@ function RootInner({
       },
     });
   const isResolvingProviderStartupState = shouldResolveProviderStartupState({
+    isWebRemoteControlRoot,
     providerStartupSyncPending,
     providerAvailabilityStartupCheckCompleted,
   });

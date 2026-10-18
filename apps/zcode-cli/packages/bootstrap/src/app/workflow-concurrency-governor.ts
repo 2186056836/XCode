@@ -88,6 +88,8 @@ const THROTTLE_REASONS: ReadonlySet<string> = new Set<ConcurrencyThrottleReason>
 const NON_FAILURE_RETRY_REASONS: ReadonlySet<string> = new Set([
   "reasoning_signature_repair",
   "auth_refresh",
+  // 账号轮询：换号重试不是 provider 故障，不记失败、不减并发。
+  "account_rotation",
 ]);
 
 interface Waiter {

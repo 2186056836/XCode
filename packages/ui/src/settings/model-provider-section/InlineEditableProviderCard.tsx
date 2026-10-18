@@ -20,11 +20,7 @@ import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import { Switch } from "@/components/ui/switch.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { isImeComposingKeyEvent } from "@/lib/imeComposition.js";
-import {
-  isQoderModelMetaHeader,
-  parseQoderModelMeta,
-  readQoderModelMetaHeaderValue,
-} from "@/lib/qoderModelDisplayNames.js";
+import { readProviderModelMetaTable } from "@/lib/qoderModelDisplayNames.js";
 import { resolvePendingProviderDraftSave, type ProviderDraftValues } from "./ProviderDraftSave.js";
 import {
   ProviderApiKeySection,
@@ -834,8 +830,9 @@ export function InlineEditableProviderCard({
       }
 
       // XCode fork：把上游的可读名与倍率写进 provider overlay 的模型元数据表。
-      // 存headers 而非模型规则——规则 schema 是 strict 的，加字段会波及所有
-      // provider 的配置解析（未知键被拒会让整层 personal 配置加载失败）。
+      // 存放在 personalConfig.modelMeta（独立字段），不再塞进 api.headers——
+      // headers 是请求配置，写进去会随请求发给上游（越界指纹），也会跟内置
+      // 客户端指纹头互相覆盖（参见 ProviderApiConfig.overlay 的逐键合并修复）。
       const metaEntries = items
         .map((rawItem) => {
           const modelId = rawItem.modelId.trim();
@@ -862,24 +859,14 @@ export function InlineEditableProviderCard({
       if (metaEntries.length > 0) {
         try {
           const previous = provider.personalConfig;
-          const baseHeaders = {
-            ...((previous?.api?.headers as Record<string, string> | undefined) ?? {}),
-          };
           // 合并而非覆盖：同provider 多次拉取时保留先前的元数据。
           const merged = {
-            ...parseQoderModelMeta(readQoderModelMetaHeaderValue(baseHeaders)),
+            ...readProviderModelMetaTable(previous?.modelMeta),
             ...Object.fromEntries(metaEntries),
           };
-          for (const key of Object.keys(baseHeaders)) {
-            if (isQoderModelMetaHeader(key)) delete baseHeaders[key];
-          }
-          baseHeaders["X-Qoder-Model-Meta"] = JSON.stringify(merged);
           await onSave({
             ...provider,
-            personalConfig: {
-              ...previous,
-              api: { ...(previous?.api ?? {}), headers: baseHeaders },
-            },
+            personalConfig: { ...previous, modelMeta: merged },
           });
         } catch (metaError) {
           // 元数据是展示增强，写失败不影响已导入的模型。
@@ -1034,7 +1021,7 @@ export function InlineEditableProviderCard({
           providerName={getProviderFormLabel(provider)}
           providerEnabled={provider.enabled}
           providerAccess={provider.config.access}
-          providerApiHeaders={provider.config.api?.headers as Record<string, string> | undefined}
+          providerModelMeta={provider.config?.modelMeta}
           models={models}
           onTestModel={onTestModel ? handleTestModel : undefined}
           onModelCommit={handleModelCommit}

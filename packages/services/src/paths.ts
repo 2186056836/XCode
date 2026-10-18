@@ -146,6 +146,17 @@ export function getAppConfigDir(): string {
   return join(getXCodeDataRootDir(), "v2");
 }
 
+/**
+ * GLM（唯一 agent provider）的配置目录：{dataBaseDir}/.xcode/cli。
+ * Bugfix：GLM 配置改为直接读写新版 xcode-cli 的全局配置目录，不做 workspace 隔离，
+ * 避免同机不同工作区配置漂移。
+ */
+export function getProviderWorkspaceConfigDir(): string {
+  return XCODE_AGENT_RUNTIME.nativeConfigDir
+    ? join(getDataBaseDir(), XCODE_AGENT_RUNTIME.nativeConfigDir)
+    : join(getDataBaseDir(), ".xcode", "cli");
+}
+
 function readEnvValue(env: Record<string, string | undefined>, key: string): string | undefined {
   const direct = env[key]?.trim();
   if (direct) {

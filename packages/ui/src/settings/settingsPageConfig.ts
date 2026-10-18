@@ -21,6 +21,7 @@ import {
   FileSearch,
   UserRound,
   ShieldOff,
+  Network,
 } from "lucide-react";
 import { isSettingsSectionEnabled, type SettingsSectionId } from "@/lib/settingsNavigation.js";
 import type { Theme } from "@/useTheme.js";
@@ -80,6 +81,14 @@ const BASE_SETTINGS_SECTIONS: SettingsSectionDefinition[] = [
     id: "accounts",
     icon: UserRound,
     titleId: "settings.accounts.title",
+    groupId: "basics",
+  },
+  // 代理池紧跟「账号管理」：代理绑定的是供应商与账号（哪个账号走哪条出口），
+  // 放在账号设置之后、浏览器控制之前，用户在同一处理解「账号 → 出口代理」的关系。
+  {
+    id: "proxyPool",
+    icon: Network,
+    titleId: "settings.proxyPool.title",
     groupId: "basics",
   },
   {

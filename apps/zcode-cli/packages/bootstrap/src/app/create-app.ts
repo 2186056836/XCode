@@ -776,6 +776,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       modelCatalogPort,
       automationPort: options.automationPort,
       offPeakPort: options.offPeakPort,
+      proxyPoolPort: options.proxyPoolPort,
       appVersion,
       traceContext,
     });

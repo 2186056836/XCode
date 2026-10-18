@@ -1,3 +1,4 @@
+/* oxlint-disable max-lines -- 营销活动拉取/持久化/展示生命周期集中，拆分让活动状态流转分散。 */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   MarketingCampaign,

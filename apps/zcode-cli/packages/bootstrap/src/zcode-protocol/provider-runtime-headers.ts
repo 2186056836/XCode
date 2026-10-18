@@ -48,6 +48,10 @@ export function createProviderRuntimeHeadersPort(
             ...(input.rejectedProjectTokenFingerprint
               ? { rejectedProjectTokenFingerprint: input.rejectedProjectTokenFingerprint }
               : {}),
+            ...(input.excludedConnectionIds && input.excludedConnectionIds.length > 0
+              ? { excludedConnectionIds: [...input.excludedConnectionIds] }
+              : {}),
+            ...(input.lastFailure ? { lastFailure: input.lastFailure } : {}),
             reason: input.reason,
           },
           zcodeProviderRuntimeHeadersResponseSchema,
@@ -93,6 +97,10 @@ export function createProviderRuntimeHeadersPort(
             ...(input.rejectedProjectTokenFingerprint
               ? { rejectedProjectTokenFingerprint: input.rejectedProjectTokenFingerprint }
               : {}),
+            ...(input.excludedConnectionIds && input.excludedConnectionIds.length > 0
+              ? { excludedConnectionIds: [...input.excludedConnectionIds] }
+              : {}),
+            ...(input.lastFailure ? { lastFailure: input.lastFailure } : {}),
             reason: input.reason,
             workspaceKey: workspace.workspaceKey,
           },

@@ -2,6 +2,7 @@ import type { ProviderApiType } from "@zcode/provider";
 import type { UpstreamModelEntry, UpstreamModelListResult } from "@zcode/shared";
 import { isOffReasoningLevel, sortReasoningLevelsByIntensity } from "@zcode/shared";
 import { createServiceLogger } from "../logger/serviceLogger.js";
+import { providerFetch } from "../providers/api/providerNetwork.js";
 import { fetchQoderUpstreamModels, type QoderUpstreamRegion } from "./qoderUpstreamModels.js";
 import { fetchCodeBuddyUpstreamModels } from "./codebuddyUpstreamModels.js";
 
@@ -10,7 +11,8 @@ import { fetchCodeBuddyUpstreamModels } from "./codebuddyUpstreamModels.js";
  *
  * 与 testModelConnectivity 不同，拉取发生在模型保存之前，无法复用 Model 执行链，
  * 因此由 Host 直接发 GET {baseUrl}/models（OpenAI 兼容事实标准，Anthropic 官方
- * 也提供同形端点）。网络出口复用 hostApiNetworkTransport（自带代理与 CA 设置）。
+ * 也提供同形端点）。网络出口按 providerId 解析：配置了代理池的供应商走池
+ * （见 providers/api/providerPoolFetch.ts），否则跟随全局代理状态。
  */
 
 export interface UpstreamModelListRequest {
@@ -20,6 +22,13 @@ export interface UpstreamModelListRequest {
   readonly headers?: Readonly<Record<string, string>>;
   /** XCode fork：requestProfile=qoder 时走 COSY 签名的模型目录端点。 */
   readonly requestProfile?: string;
+  /**
+   * XCode fork：发起本次拉取的供应商 id，用于解析该供应商的代理池绑定。
+   * 不传时退回 deps.fetch（= 全局代理链），保持既有测试装配与旧调用点行为不变。
+   */
+  readonly providerId?: string;
+  /** XCode fork：对应账号 id（多账号供应商），用于账号级代理绑定。 */
+  readonly accountId?: string;
 }
 
 export type ProviderSettingsUpstreamModelsFetcher = (
@@ -209,7 +218,7 @@ async function loadModelsDevDatabase(fetchImpl: typeof globalThis.fetch): Promis
  * 从 models.dev 的推理声明里取出该模型的可选档位（已按强度升序）。
  *
  * 与 Qoder/CodeBuddy 不同，这里**上游没有为 OpenCode 提供档位端点**：
- * 实测 `opencode.ai/zen/v1/models` 的响应只有 `{id, object, created, owned_by}`，
+ * 实测 `opencode.ai/inference/v1/models` 的响应只有 `{id, object, created, owned_by}`，
  * 官方客户端的档位信息同样来自 models.dev，所以这是同一份上游事实、同一来源。
  *
  * 取值规则（依据 reasoning_options 的三种实测形态）：
@@ -406,19 +415,35 @@ export function createUpstreamModelListFetcher(deps: {
   timeoutMs?: number;
 }): ProviderSettingsUpstreamModelsFetcher {  const timeoutMs = deps.timeoutMs ?? UPSTREAM_MODELS_TIMEOUT_MS;
   return async (input) => {
+    // XCode fork：优先按供应商解析出口（配置了代理池 → 只走池，绕开全局代理）。
+    // 没带 providerId 的调用点（含既有测试装配）继续用注入的 deps.fetch。
+    // 注意：models.dev 的补充元数据请求仍然用 deps.fetch——那不是供应商流量，
+    // 应当跟随全局代理状态，不该占用供应商的池出口。
+    const fetchImpl = input.providerId ? providerFetch(input.providerId, input.accountId) : deps.fetch;
     // XCode fork：Qoder 的模型目录不是 `{baseUrl}/models`，而是 COSY 签名的
     // `/algo/api/v2/model/list`。走通用分支会拼出 `.../algo/api/v2/models`——
     // 该端点不存在，恒 404。
     if (input.requestProfile === "qoder") {
-      return fetchQoderCatalog(input, deps.fetch);
+      return fetchQoderCatalog(input, fetchImpl);
     }
     if (input.requestProfile === "codebuddy") {
-      return fetchCodeBuddyCatalog(input, deps.fetch);
+      return fetchCodeBuddyCatalog(input, fetchImpl);
+    }
+
+    // XCode fork：OpenCode 免费档的 chat 端点已迁到 /inference/openai/v1，但模型
+    // 目录仍在 /inference/v1/models（`{baseUrl}/models` 现在 404）。按 origin 拼。
+    let openCodeFreeCatalogUrl: string | undefined;
+    if (input.requestProfile === "opencode-free-tier") {
+      try {
+        openCodeFreeCatalogUrl = new URL("/inference/v1/models", input.baseUrl).toString();
+      } catch {
+        openCodeFreeCatalogUrl = undefined;
+      }
     }
 
     let url: string;
     try {
-      url = resolveUpstreamModelsUrl(input.baseUrl, input.apiType);
+      url = openCodeFreeCatalogUrl ?? resolveUpstreamModelsUrl(input.baseUrl, input.apiType);
       // 提前校验 URL 合法性，避免 fetch 抛出难以归类的 TypeError。
       const parsed = new URL(url);
       if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
@@ -436,7 +461,7 @@ export function createUpstreamModelListFetcher(deps: {
 
     let response: Response;
     try {
-      response = await deps.fetch(url, {
+      response = await fetchImpl(url, {
         method: "GET",
         headers: buildAuthHeaders(input),
         signal: AbortSignal.timeout(timeoutMs),

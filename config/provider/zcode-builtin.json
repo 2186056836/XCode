@@ -607,7 +607,7 @@
             },
             "api": {
               "type": "openai-responses",
-              "baseUrl": "https://opencode.ai/zen/v1"
+              "baseUrl": "https://opencode.ai/inference/openai/v1"
             },
             "builtinModelIds": [
               "gpt-6-astra",
@@ -644,7 +644,7 @@
             },
             "api": {
               "type": "anthropic-messages",
-              "baseUrl": "https://opencode.ai/zen/v1"
+              "baseUrl": "https://opencode.ai/inference/openai/v1"
             },
             "builtinModelIds": [
               "claude-fable-5-1",
@@ -682,7 +682,7 @@
             },
             "api": {
               "type": "openai-chat-completions",
-              "baseUrl": "https://opencode.ai/zen/v1"
+              "baseUrl": "https://opencode.ai/inference/openai/v1"
             },
             "builtinModelIds": [
               "kimi-k3",
@@ -1086,18 +1086,21 @@
             },
             "api": {
               "type": "openai-chat-completions",
-              "baseUrl": "https://opencode.ai/zen/v1",
+              "baseUrl": "https://opencode.ai/inference/openai/v1",
               "headers": {
-                "Authorization": "Bearer public",
-                "User-Agent": "opencode/1.18.31",
-                "x-opencode-client": "desktop",
+                "User-Agent": "opencode/1.19.0 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+                "x-opencode-client": "cli",
                 "x-opencode-session": "ses_000000000000AAAAAAAAAAAAAA",
+                "x-opencode-session-id": "ses_000000000000AAAAAAAAAAAAAA",
+                "x-session-id": "ses_000000000000AAAAAAAAAAAAAA",
+                "x-session-affinity": "ses_000000000000AAAAAAAAAAAAAA",
                 "x-opencode-request": "msg_000000000000AAAAAAAAAAAAAA",
-                "x-opencode-project": "global"
+                "x-opencode-project": "global",
+                "Authorization": "Bearer public"
               }
             },
             "builtinModelIds": [],
-            "upstreamModelIdFilter": "^(?!.*muse-spark).*free",
+            "upstreamModelIdFilter": "^(?!.*jev-1\\.13-free)(?:.*free|big-pickle)",
             "requestProfile": "opencode-free-tier",
             "logo": {
               "type": "builtin",

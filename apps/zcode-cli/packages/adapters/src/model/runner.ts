@@ -184,6 +184,17 @@ export class AiSdkModelAdapter {
       // 调用级 runtime header Port 只服务绑定完整 Account Access 的账号型 Model；
       // 普通 API-key Model 若也消费该 Port，会把静态鉴权误送到 Host 刷新并在请求前失败。
       // 派生模式保留执行作用域票据/卡身份；Off-Peak 的 PAT 仍逐请求向原账号 owner 刷新。
+      // XCode fork：Qoder / CodeBuddy 是多账号供应商，但没有 execution-scope 鉴权源。
+      // 把 host 的 per-attempt 回调接上，用它做账号轮询（host 返回选中账号的
+      // apiKey + Qoder 身份头；失败换号由 AccountRotationRetry 驱动）。
+      // 普通 api-key 供应商不接：host 没有可返回的材料，接了只会把静态鉴权误送刷新。
+      // zai / bigmodel 的 Coding Plan 账号（zhipu-account）本来就走上面的 runtime-header
+      // 分支，回调已在位，因此同样受账号轮询驱动；换号与否由 host 按请求判定。
+      const accountRotationEligible =
+        options.providerConfig.access.type !== "zhipu-account" &&
+        (options.providerConfig.requestProfile === "qoder" ||
+          options.providerConfig.requestProfile === "codebuddy") &&
+        contextRefreshRuntimeHeadersBeforeAttempt !== undefined;
       const refreshRuntimeHeadersBeforeAttempt = requestAuthRequired
         ? async (input: ModelRequestAuthSourceInput) => {
             const requestAuth = await requestAuthDependency?.source?.resolve(input);
@@ -213,7 +224,9 @@ export class AiSdkModelAdapter {
                 `Account model request auth is unavailable: ${resolved.providerId}/${resolved.modelId}`,
               );
             }))
-          : undefined;
+          : accountRotationEligible
+            ? contextRefreshRuntimeHeadersBeforeAttempt
+            : undefined;
       return {
         messages: request.messages,
         tools: request.tools,

@@ -312,12 +312,19 @@ export async function resolveCurrentAccountAccess(input: {
   readonly access: XCodeProviderAccountAccess;
   readonly readSettings: () => Promise<AccountProviderConnectionSettings>;
   readonly loadAccountIdentity: (family: ProviderFamilyDomain) => Promise<string | null>;
+  /**
+   * 账号轮询选中的账号身份（user_info.id）。传入时用它替代「当前激活账号」做存在性校验，
+   * 使同一 family 的兄弟账号也能解析出 Access；family/mode/team scope 仍按当前选择校验。
+   */
+  readonly accountIdentity?: string;
 }): Promise<XCodeAccountAccess | null> {
   const settings = await input.readSettings();
   const { accountType, mode } = input.access;
   if (settings.providerFamilyDomain !== accountType) return null;
+  const identity = async (): Promise<string | null> =>
+    input.accountIdentity ?? input.loadAccountIdentity(accountType);
   if (mode === "start-plan") {
-    if (!(await input.loadAccountIdentity(accountType))?.trim()) return null;
+    if (!(await identity())?.trim()) return null;
     return { type: "zhipu-account", family: accountType, planKind: "start-plan" };
   }
   const selection = settings.selections[accountType];
@@ -329,7 +336,7 @@ export async function resolveCurrentAccountAccess(input: {
   } else if (selection.kind !== mode) {
     return null;
   }
-  if (!(await input.loadAccountIdentity(accountType))?.trim()) return null;
+  if (!(await identity())?.trim()) return null;
   if (selection.kind === "team-coding-plan") {
     return {
       type: "zhipu-account",

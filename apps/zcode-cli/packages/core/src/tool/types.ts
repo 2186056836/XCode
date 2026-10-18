@@ -23,6 +23,7 @@ import type {
   ModelMessageContent,
   ModelToolSideEffectScope,
   OffPeakPort,
+  ProxyPoolPort,
   TopicResourcePort,
   PdfDocumentPort,
   PermissionBrokerReasonSource,
@@ -172,6 +173,8 @@ export interface ToolExecutionContext {
   artifactStore?: ToolArtifactStorePort;
   automationPort?: AutomationPort;
   offPeakPort?: OffPeakPort;
+  /** 代理池配置端口；在场则为该会话注册 ProxyPool（设置页同款配置面）。 */
+  proxyPoolPort?: ProxyPoolPort;
   topicResourcePort?: TopicResourcePort;
   sessionStore?: SessionStorePort;
   sessionModePort?: SessionModePort;

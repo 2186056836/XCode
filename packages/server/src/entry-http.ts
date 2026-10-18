@@ -1,4 +1,4 @@
-import { createLocalServices, getAppConfigDir } from "@zcode/services/node";
+import { createLocalServices, createTopicResourcePeers, getAppConfigDir } from "@zcode/services/node";
 import {
   materializeBundledXCodeBuiltinProviderConfig,
   readBundledXCodeBuiltinProviderConfig,
@@ -14,12 +14,15 @@ async function main(): Promise<void> {
   const host = process.env["XCODE_SERVER_HOST"]?.trim() || process.env["HOST"]?.trim() || undefined;
   const staticRoot = process.env["XCODE_WEB_STATIC_ROOT"]?.trim() || undefined;
   const authToken = process.env["XCODE_SERVER_AUTH_TOKEN"]?.trim() || undefined;
+  const topicResourcePeers = createTopicResourcePeers();
   const services = createLocalServices({
+    topicResourceRelayChannel: (request) => topicResourcePeers.getChannel(request),
     zcodeBuiltinProviderConfigFilePath,
     providerProvisioningTargetEnabled: Boolean(authToken),
   });
 
   createHttpServer(services, port, {
+    topicResourcePeers,
     ...(host ? { host } : {}),
     ...(staticRoot ? { staticRoot, spaFallback: true } : {}),
     ...(authToken ? { authToken, authRequired: true } : {}),

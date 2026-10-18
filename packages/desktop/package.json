@@ -1,5 +1,6 @@
 {
   "name": "@zcode/desktop",
+  "version": "3.15.2",
   "private": true,
   "description": "ZCode Desktop App",
   "author": "ZCode",

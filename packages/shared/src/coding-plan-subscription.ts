@@ -1,6 +1,7 @@
 /* eslint-disable max-lines -- Coding Plan 订阅协议类型需要集中导出给 UI、services 和 RPC 共享，拆散会增加跨包类型入口复杂度。 */
 import type { ProviderFamilyDomain } from "./model-provider-family.js";
 import type { BUILTIN_MODEL_PROVIDER_IDS } from "./model-provider-types.js";
+import type { Locale } from "./protocol.js";
 import type { RequestVerificationProof } from "./request-security-edition/verification-policy.js";
 
 export type CodingPlanPayType = "ALI" | "WECHAT";
@@ -115,6 +116,15 @@ export interface StartPlanPreviewConfig {
   entitlements: StartPlanPreviewEntitlement[];
 }
 
+/** Coding Plan 活动/折扣文案（单个 locale 下的全部字段，1010 定义）。 */
+export interface CodingPlanBillingDiscountLocaleCopy {
+  cardTitle?: string;
+  cardBody?: string;
+  badgeBody?: string;
+  infoTitle?: string;
+  infoBody?: string;
+}
+
 /** Coding Plan 活动/折扣文案（单个 locale 下的全部字段）。 */
 export interface CodingPlanBillingDiscountText {
   /** 徽标短文案，如「150% 配额」。 */
@@ -128,8 +138,16 @@ export interface CodingPlanBillingDiscountText {
 /**
  * 官方 client/configs 下发的 Coding Plan 活动/折扣配置，键为 locale（如 en-US / zh-CN）。
  * badageBody 存在且活跃（active）时才显示徽标；字段缺失按官方语义隐藏。
+ *
+ * fork 叠加 1010：CodingPlanBillingDiscountText 是 fork 自有的严格变体（badgeBody 必填），
+ * 被 settings/model-provider-section/CodingPlanBillingDiscount.tsx 使用；1010 侧改用
+ * CodingPlanBillingDiscountLocaleCopy + Record<string, unknown> 索引签名。
+ * 这里取两者交集：既满足 fork 对 badgeBody 的必填要求，也允许 1010 的宽松 locale 键。
  */
-export type CodingPlanBillingDiscountConfig = Record<string, CodingPlanBillingDiscountText>;
+export type CodingPlanBillingDiscountConfig = Record<
+  string,
+  CodingPlanBillingDiscountText & Partial<CodingPlanBillingDiscountLocaleCopy>
+>;
 
 /**
  * fork 回填：W 类合并后的 bigmodelCodingPlanSubscriptionProvider 已按 1010 引用下列

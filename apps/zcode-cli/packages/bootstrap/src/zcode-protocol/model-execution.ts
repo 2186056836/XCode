@@ -25,6 +25,8 @@ function freezeRequestAuth(input: ModelRequestAuth): ModelRequestAuth {
     ...(input.accountScope ? { accountScope: input.accountScope } : {}),
     ...(input.apiKey ? { apiKey: input.apiKey } : {}),
     ...(input.apiKeyId ? { apiKeyId: input.apiKeyId } : {}),
+    // 连接（账号）id：zhipu-account 唯一可用的账号身份来源，丢了它连接级代理绑定会失效。
+    ...(input.connectionId ? { connectionId: input.connectionId } : {}),
     ...(input.headers ? { headers: Object.freeze({ ...input.headers }) } : {}),
   });
 }

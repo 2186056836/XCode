@@ -389,6 +389,7 @@ function modelRetryReasonCode(
     case "network_error":
       return "fault.network.unreachable";
     case "auth_refresh":
+    case "account_rotation":
     case "reasoning_signature_repair":
       return "fault.provider.requestFailed";
   }

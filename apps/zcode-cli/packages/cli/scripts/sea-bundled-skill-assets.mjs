@@ -16,6 +16,7 @@ export const bundledSkillPackRequiredPaths = [
   "skills/dynamic-workflows/SKILL.md",
   "skills/dynamic-workflows/patterns.md",
   "skills/dynamic-workflows/examples.md",
+  "skills/xcode-proxy-pool/SKILL.md",
 ];
 
 export const collectSeaBundledSkillAssets = async ({ root, stagingDirectory }) => {

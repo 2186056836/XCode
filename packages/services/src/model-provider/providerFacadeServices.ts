@@ -1,3 +1,4 @@
+/* oxlint-disable max-lines -- 多 provider 的编排 facade 集中聚合，拆分会让单个提供商配置面分散到多个文件。 */
 import type { Event } from "@zcode/rpc";
 import { ServiceChannels } from "@zcode/shared";
 import {
@@ -20,6 +21,11 @@ import {
 import { createServiceDescriptor } from "../descriptors.js";
 import type { ModelConnectivityResult, UpstreamModelListResult } from "@zcode/shared";
 import {
+  providerFetch,
+  qoderProviderId,
+  resolveProviderAccountId,
+} from "../providers/api/providerNetwork.js";
+import {
   activateQoderPro,
   queryQoderProStatus,
   beginQoderLogin,
@@ -29,6 +35,29 @@ import {
   switchQoderAccount,
   upsertQoderAccount,
 } from "./qoderAuth.js";
+import {
+  qoderCheckinAccount,
+  qoderCheckinAll,
+  qoderCheckinStats,
+  type QoderCheckinRegion,
+  type QoderCheckinResult,
+  type QoderCheckinStats,
+  type QoderCheckinSummary,
+} from "./qoderCheckin.js";
+import {
+  codebuddyCheckinAccount,
+  codebuddyCheckinAll,
+  codebuddyCheckinStats,
+  type CodeBuddyCheckinRegion,
+  type CodeBuddyCheckinResult,
+  type CodeBuddyCheckinStats,
+  type CodeBuddyCheckinSummary,
+} from "./codebuddyCheckin.js";
+import {
+  listCodeBuddyAutoCheckinSettings,
+  updateCodeBuddyAutoCheckinSettings,
+  type CodeBuddyAutoCheckinSettings,
+} from "./codebuddyAutoCheckin.js";
 import {
   beginCodeBuddyLogin,
   describeCodeBuddyAccessToken,
@@ -40,6 +69,18 @@ import {
   upsertCodeBuddyAccount,
   type CodeBuddyPollResult,
 } from "./codebuddyAuth.js";
+// XCode fork：额度/配额查看（Qoder / CodeBuddy）。以下为额度功能新增导入。
+import { queryCodeBuddyAccountQuota, queryCodeBuddyQuotaBatch } from "./codebuddyQuota.js";
+import {
+  queryQoderAccountQuota,
+  queryQoderQuotaBatch,
+  type QoderGatewayQuotaReader,
+} from "./qoderQuota.js";
+import type {
+  AccountQuotaSnapshot,
+  QuotaBatchResult,
+  QuotaSummary,
+} from "./accountQuota.js";
 import { createServiceLogger } from "../logger/serviceLogger.js";
 import type { ProviderSettingsUpstreamModelsFetcher } from "./upstreamModelListFetcher.js";
 
@@ -49,6 +90,33 @@ export type {
   ModelSelectionViewInput,
   ProviderSettingsView,
 } from "@zcode/provider";
+
+// XCode fork：Qoder 签到相关类型随服务接口一起导出，UI 直接消费。
+export type {
+  QoderCheckinRegion,
+  QoderCheckinResult,
+  QoderCheckinStats,
+  QoderCheckinStatus,
+  QoderCheckinSummary,
+} from "./qoderCheckin.js";
+
+// XCode fork：CodeBuddy 签到 / 自动签到相关类型随服务接口一起导出，UI 直接消费。
+export type {
+  CodeBuddyCheckinRegion,
+  CodeBuddyCheckinResult,
+  CodeBuddyCheckinStats,
+  CodeBuddyCheckinStatus,
+  CodeBuddyCheckinSummary,
+} from "./codebuddyCheckin.js";
+export type { CodeBuddyAutoCheckinSettings } from "./codebuddyAutoCheckin.js";
+
+// XCode fork：额度/配额查看相关类型随服务接口一起导出，UI 直接消费。
+export type {
+  AccountQuotaSnapshot,
+  QuotaBatchResult,
+  QuotaProvider,
+  QuotaSummary,
+} from "./accountQuota.js";
 
 export interface IProviderSettingsService {
   readonly onDidChange: Event<ProviderSettingsView>;
@@ -215,12 +283,94 @@ export interface IProviderSettingsService {
     message: string;
   }>;
 
+  /**
+   * XCode fork：Qoder 每日签到（单账号）。走 campaigns→claim 权威流程，
+   * host 按区域分流；命中账号持久化的真实 machinetoken 一并上行。
+   */
+  qoderCheckin(input: {
+    region: QoderCheckinRegion;
+    accountId: string;
+  }): Promise<QoderCheckinResult>;
+  /**
+   * XCode fork：Qoder 每日签到（批量）。默认遍历 cn + intl 全部已登录账号，
+   * 也可用 regions 限定区域。
+   */
+  qoderCheckinAll(input?: {
+    regions?: readonly QoderCheckinRegion[];
+  }): Promise<QoderCheckinSummary>;
+  /** XCode fork：只读获取本地签到统计（连续/累计天数、累计积分，不触发上游请求）。 */
+  qoderCheckinStats(input: {
+    region: QoderCheckinRegion;
+    accountId: string;
+  }): Promise<QoderCheckinStats>;
+
+  /**
+   * XCode fork：CodeBuddy 每日签到（单账号）。走 /v2/billing/meter/* 流程
+   * （checkin-activity-status → daily-checkin），host 按区域分流端点。
+   */
+  codebuddyCheckin(input: {
+    region: CodeBuddyCheckinRegion;
+    accountId: string;
+  }): Promise<CodeBuddyCheckinResult>;
+  /** XCode fork：CodeBuddy 每日签到（批量，并发 4）。默认 cn + intl 全部账号。 */
+  codebuddyCheckinAll(input?: {
+    regions?: readonly CodeBuddyCheckinRegion[];
+  }): Promise<CodeBuddyCheckinSummary>;
+  /** XCode fork：只读获取本地签到统计（不上行任何请求）。 */
+  codebuddyCheckinStats(input: {
+    region: CodeBuddyCheckinRegion;
+    accountId: string;
+  }): Promise<CodeBuddyCheckinStats>;
+  /** XCode fork：CodeBuddy 每账号自动签到设置（开关 + HH:MM）。 */
+  codebuddyListAutoCheckin(region: CodeBuddyCheckinRegion): Promise<
+    Array<{ accountId: string; accountName: string } & CodeBuddyAutoCheckinSettings>
+  >;
+  /** XCode fork：更新某账号的自动签到设置（局部更新，时间先校验再落盘）。 */
+  codebuddyUpdateAutoCheckin(
+    region: CodeBuddyCheckinRegion,
+    accountId: string,
+    update: { enabled?: boolean; time?: string },
+  ): Promise<CodeBuddyAutoCheckinSettings>;
+
   /** XCode fork：CodeBuddy 令牌刷新（对应区域当前激活账号）。 */
   codebuddyRefreshStored(region: "cn" | "intl"): Promise<{
     accessToken: string;
     refreshToken: string;
     expiresAt: number;
   } | null>;
+
+  /**
+   * XCode fork：查询单个 Qoder 账号的剩余额度/配额。
+   * intl 走 openapi Bearer-only 的 /api/v2/quota/usage；cn 走 COSY 网关
+   * （node.ts 已注入 qoderProStatusGatewayFetcher，未注入时如实报错）。
+   */
+  qoderQueryAccountQuota(input: {
+    region: "cn" | "intl";
+    accountId: string;
+  }): Promise<AccountQuotaSnapshot>;
+  /**
+   * XCode fork：批量查询 Qoder 额度并汇总（账号数/总额/平均/最小/最大，
+   * 对齐 9router check_quota.sh）。默认 cn + intl 全部账号，并发上限 4。
+   */
+  qoderQueryAllQuotas(input?: {
+    regions?: readonly ("cn" | "intl")[];
+  }): Promise<QuotaBatchResult>;
+  /**
+   * XCode fork：查询单个 CodeBuddy 账号的剩余额度/配额。
+   * 企业 seat 走 tenant meter（get-enterprise-user-usage，404/405 回退），
+   * 其余走个人资源查询（get-user-resource）。
+   */
+  codebuddyQueryAccountQuota(input: {
+    region: "cn" | "intl";
+    accountId: string;
+  }): Promise<AccountQuotaSnapshot>;
+  /**
+   * XCode fork：批量查询 CodeBuddy 额度并汇总（维度同上）。
+   * 默认 cn + intl 全部账号，并发上限 4。
+   */
+  codebuddyQueryAllQuotas(input?: {
+    regions?: readonly ("cn" | "intl")[];
+  }): Promise<QuotaBatchResult>;
 }
 
 export const IProviderSettingsService = createServiceDescriptor<IProviderSettingsService>(
@@ -269,6 +419,11 @@ export type QoderProStatusGatewayFetcher = (input: {
   accessToken: string;
   userId: string;
   machineId: string;
+  /**
+   * XCode fork：出口覆盖。facade 会按供应商（+账号）解析后注入，
+   * 让网关查询同样绕开全局代理；不传时实现侧退回裸 fetch。
+   */
+  fetchImpl?: typeof globalThis.fetch;
 }) => Promise<{
   isPro: boolean;
   userType: string;
@@ -285,6 +440,15 @@ export function createProviderSettingsService(
   fetchUpstreamModels?: ProviderSettingsUpstreamModelsFetcher,
   qoderProStatusGatewayFetcher?: QoderProStatusGatewayFetcher,
 ): IProviderSettingsService {
+  // XCode fork：CN 网关查询器是 host-only 实现，出口必须按供应商解析
+  // （配了代理池的 Qoder 走池）。这里统一包一层把 fetchImpl 补齐，避免每个调用点重复。
+  const qoderGatewayFetcher: QoderProStatusGatewayFetcher | undefined = qoderProStatusGatewayFetcher
+    ? (input) =>
+        qoderProStatusGatewayFetcher({
+          ...input,
+          fetchImpl: providerFetch(qoderProviderId(input.region), input.userId),
+        })
+    : undefined;
   return {
     onDidChange: toEvent((listener) => facade.onDidChange(listener)),
     getView: async () => {
@@ -412,6 +576,12 @@ export function createProviderSettingsService(
       }
       const access = provider.effectiveConfig.access;
       const apiKey = isApiKeyAccess(access) ? access.apiKey?.trim() || undefined : undefined;
+      // XCode fork：账号 id 从同一份请求上下文里解析（Qoder 读内部身份头、
+      // CodeBuddy 读 JWT 的 sub），用于账号级代理绑定选中正确的池条目。
+      const proxyAccountId = resolveProviderAccountId({
+        ...(api?.headers ? { headers: api.headers } : {}),
+        ...(apiKey ? { token: apiKey } : {}),
+      });
       const result = await fetchUpstreamModels({
         baseUrl,
         ...(apiKey ? { apiKey } : {}),
@@ -423,6 +593,10 @@ export function createProviderSettingsService(
           ? { requestProfile: provider.effectiveConfig.requestProfile }
           : {}),
         ...(api?.headers ? { headers: api.headers } : {}),
+        // XCode fork：带上供应商 id，让出口按该供应商的代理池绑定解析
+        // （配了池就绕开全局代理）。
+        providerId: input.providerId,
+        ...(proxyAccountId ? { accountId: proxyAccountId } : {}),
       });
       // XCode fork：提供商可配置 upstreamModelIdFilter（正则片段，不区分大小写），
       // 上游列表只保留匹配的模型 ID（如 Kilo Free 只暴露带 free 的免费模型）。
@@ -537,20 +711,79 @@ export function createProviderSettingsService(
       if (!account) return { isPro: false, userType: "", planTier: "" };
       // CN 的 plan/quota 端点在网关且需 COSY 签名（openapi 上不存在），走注入的
       // host-only 查询器；国际版走 Bearer-only 查询。
-      if (region === "cn" && qoderProStatusGatewayFetcher) {
-        return qoderProStatusGatewayFetcher({
+      if (region === "cn" && qoderGatewayFetcher) {
+        return qoderGatewayFetcher({
           region,
           accessToken: account.accessToken,
           userId: account.id,
           machineId: account.machineId ?? "",
         });
       }
-      const status = await queryQoderProStatus(region, account.accessToken);
+      const status = await queryQoderProStatus(region, account.accessToken, account.id);
       return { isPro: status.isPro, userType: status.userType, planTier: status.planTier };
     },
     qoderActivatePro: async (region, id, options) => {
       await ensureReady();
       return activateQoderPro(region, id, options ?? {});
+    },
+    qoderCheckin: async (input) => {
+      await ensureReady();
+      return qoderCheckinAccount(input.region, input.accountId);
+    },
+    qoderCheckinAll: async (input) => {
+      await ensureReady();
+      return qoderCheckinAll(input ?? {});
+    },
+    qoderCheckinStats: async (input) => {
+      await ensureReady();
+      return qoderCheckinStats(input.region, input.accountId);
+    },
+    codebuddyCheckin: async (input) => {
+      await ensureReady();
+      return codebuddyCheckinAccount(input.region, input.accountId);
+    },
+    codebuddyCheckinAll: async (input) => {
+      await ensureReady();
+      return codebuddyCheckinAll(input ?? {});
+    },
+    codebuddyCheckinStats: async (input) => {
+      await ensureReady();
+      return codebuddyCheckinStats(input.region, input.accountId);
+    },
+    codebuddyListAutoCheckin: async (region) => {
+      await ensureReady();
+      return listCodeBuddyAutoCheckinSettings(region);
+    },
+    codebuddyUpdateAutoCheckin: async (region, accountId, update) => {
+      await ensureReady();
+      return updateCodeBuddyAutoCheckinSettings(region, accountId, update);
+    },
+    // XCode fork：额度/配额查看。CN 的 Qoder 额度复用已注入的 COSY 网关查询器
+    // （qoderProStatusGatewayFetcher 同时在 PRO 状态与额度两条链路使用）。
+    qoderQueryAccountQuota: async (input) => {
+      await ensureReady();
+      return queryQoderAccountQuota(input.region, input.accountId, {
+        ...(qoderGatewayFetcher
+          ? { gateway: qoderGatewayFetcher as QoderGatewayQuotaReader }
+          : {}),
+      });
+    },
+    qoderQueryAllQuotas: async (input) => {
+      await ensureReady();
+      return queryQoderQuotaBatch({
+        ...(input?.regions ? { regions: input.regions } : {}),
+        ...(qoderGatewayFetcher
+          ? { gateway: qoderGatewayFetcher as QoderGatewayQuotaReader }
+          : {}),
+      });
+    },
+    codebuddyQueryAccountQuota: async (input) => {
+      await ensureReady();
+      return queryCodeBuddyAccountQuota(input.region, input.accountId);
+    },
+    codebuddyQueryAllQuotas: async (input) => {
+      await ensureReady();
+      return queryCodeBuddyQuotaBatch(input?.regions ? { regions: input.regions } : {});
     },
   };
 }

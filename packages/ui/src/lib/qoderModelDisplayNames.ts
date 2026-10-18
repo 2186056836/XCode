@@ -1,15 +1,17 @@
 /**
- * XCode fork：Qoder 模型可读名与倍率的读取（**仅展示**）。
+ * XCode fork：模型可读名与倍率的读取（**仅展示**）。
  *
  * 数据来源是拉取上游模型目录时的真实响应（`display_name` / `price_factor`），
  * 随「从上游获取」一起写进该 provider 的 personal overlay：
  *
- *   api.headers["X-Qoder-Model-Meta"] = JSON.stringify({ "<modelId>": {name, priceFactor} })
+ *   modelMeta["<modelId>"] = { name, priceFactor, tiers, efforts }
  *
- * 为什么不写进模型规则（modelConfigRules）：那套 schema 是 strict 的，加字段会
- * 波及所有 provider 的 personal 配置解析——未知键一旦被拒，整层配置加载失败，
- * 所有供应商的模型会一起消失。曾踩过这个坑，改为放在 overlay 的自由格式
- * headers 里（与 X-Qoder-Internal-User-Id 同一通道），不经过模型规则校验。
+ * 历史上存在 api.headers["X-Qoder-Model-Meta"]（JSON 字符串）里——那会随请求
+ * 发往上游（越界指纹），且把 headers 变成强耦合通道；provider_config.json
+ * schemaVersion 1→2 迁移已把它提升为独立的 modelMeta 字段。
+ *
+ * schema 只验「是张表」不验条目；这里负责归一化——坏条目静默丢弃，
+ * 绝不让展示数据影响配置加载。
  *
  * 请求上游始终发原始 modelId，可读名与倍率都不参与。
  */
@@ -32,65 +34,49 @@ export interface QoderModelMeta {
   readonly efforts?: ReadonlyArray<string>;
 }
 
-/** 存放模型元数据的 overlay header 键（大小写不敏感匹配）。 */
-const QODER_MODEL_META_HEADER = "x-qoder-model-meta";
-
-export function isQoderModelMetaHeader(key: string): boolean {
-  return key.toLowerCase() === QODER_MODEL_META_HEADER;
+/** 读取并归一化 provider 配置里的模型元数据表；格式异常时返回空表（不抛）。 */
+export function readProviderModelMetaTable(modelMeta: unknown): Record<string, QoderModelMeta> {
+  if (!modelMeta || typeof modelMeta !== "object" || Array.isArray(modelMeta)) return {};
+  const out: Record<string, QoderModelMeta> = {};
+  for (const [modelId, value] of Object.entries(modelMeta as Record<string, unknown>)) {
+    const entry = value && typeof value === "object" && !Array.isArray(value)
+      ? normalizeModelMetaEntry(value as Record<string, unknown>)
+      : undefined;
+    if (entry) out[modelId] = entry;
+  }
+  return out;
 }
 
-export function readQoderModelMetaHeaderValue(headers: unknown): string | undefined {
-  if (!headers || typeof headers !== "object") return undefined;
-  for (const [key, value] of Object.entries(headers as Record<string, unknown>)) {
-    if (isQoderModelMetaHeader(key) && typeof value === "string" && value.trim()) {
-      return value;
-    }
+function normalizeModelMetaEntry(record: Record<string, unknown>): QoderModelMeta | undefined {
+  const name =
+    typeof record.name === "string" && record.name.trim() ? record.name.trim() : undefined;
+  const priceFactor =
+    typeof record.priceFactor === "number" && Number.isFinite(record.priceFactor)
+      ? record.priceFactor
+      : undefined;
+  const efforts =
+    Array.isArray(record.efforts) && record.efforts.every((e) => typeof e === "string")
+      ? (record.efforts as string[])
+      : undefined;
+  const rawTiers = Array.isArray(record.tiers) ? record.tiers : [];
+  const tiers = rawTiers
+    .map((tier) => {
+      if (!tier || typeof tier !== "object") return null;
+      const t = tier as Record<string, unknown>;
+      const tierName = typeof t.name === "string" ? t.name : "";
+      const tokenCount = typeof t.tokenCount === "number" && t.tokenCount > 0 ? t.tokenCount : undefined;
+      return tierName && tokenCount ? { name: tierName, tokenCount } : null;
+    })
+    .filter((tier): tier is QoderContextTier => tier !== null);
+  if (name || priceFactor !== undefined || tiers.length > 0 || (efforts?.length ?? 0) > 0) {
+    return {
+      ...(name ? { name } : {}),
+      ...(priceFactor !== undefined ? { priceFactor } : {}),
+      ...(tiers.length > 0 ? { tiers } : {}),
+      ...(efforts?.length ? { efforts } : {}),
+    };
   }
   return undefined;
-}
-
-/** 解析 overlay 里的模型元数据表；格式异常时返回空表（不抛）。 */
-export function parseQoderModelMeta(raw: string | undefined): Record<string, QoderModelMeta> {
-  if (!raw) return {};
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
-    const out: Record<string, QoderModelMeta> = {};
-    for (const [modelId, value] of Object.entries(parsed as Record<string, unknown>)) {
-      if (!value || typeof value !== "object") continue;
-      const record = value as Record<string, unknown>;
-      const name = typeof record.name === "string" && record.name.trim() ? record.name.trim() : undefined;
-      const priceFactor =
-        typeof record.priceFactor === "number" && Number.isFinite(record.priceFactor)
-          ? record.priceFactor
-          : undefined;
-      const efforts =
-        Array.isArray(record.efforts) && record.efforts.every((e) => typeof e === "string")
-          ? (record.efforts as string[])
-          : undefined;
-      const rawTiers = Array.isArray(record.tiers) ? record.tiers : [];
-      const tiers = rawTiers
-        .map((tier) => {
-          if (!tier || typeof tier !== "object") return null;
-          const t = tier as Record<string, unknown>;
-          const tierName = typeof t.name === "string" ? t.name : "";
-          const tokenCount = typeof t.tokenCount === "number" && t.tokenCount > 0 ? t.tokenCount : undefined;
-          return tierName && tokenCount ? { name: tierName, tokenCount } : null;
-        })
-        .filter((tier): tier is QoderContextTier => tier !== null);
-      if (name || priceFactor !== undefined || tiers.length > 0 || (efforts?.length ?? 0) > 0) {
-        out[modelId] = {
-          ...(name ? { name } : {}),
-          ...(priceFactor !== undefined ? { priceFactor } : {}),
-          ...(tiers.length > 0 ? { tiers } : {}),
-          ...(efforts?.length ? { efforts } : {}),
-        };
-      }
-    }
-    return out;
-  } catch {
-    return {};
-  }
 }
 
 /** 倍率的展示文案：0 表示免费，其余显示 0.2× 这样的相对值（去掉尾零）。 */

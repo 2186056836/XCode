@@ -5,9 +5,13 @@ export function buildDesktopContextSection(): ContextSection {
   return createDesktopSection("XCode Desktop Context", "desktop_context", buildDesktopContextBody());
 }
 
-/** 官方 XCode 版桌面段：start-plan 端点对 system 逐字校验，不能含 XCode 标识。正文内容保持 fork 不变。 */
+/** 官方 ZCode 桌面段：start-plan 端点对 system 逐字校验，任何 XCode 标识都会触发 405。标识必须用 ZCode。 */
 export function buildOfficialDesktopContextSection(): ContextSection {
-  return createDesktopSection("XCode Desktop Context", "desktop_context", buildDesktopContextBody().replace("# XCode Desktop Context", "# XCode Desktop Context"));
+  return createDesktopSection(
+    "ZCode Desktop Context",
+    "desktop_context",
+    buildDesktopContextBody().replace("# XCode Desktop Context", "# ZCode Desktop Context"),
+  );
 }
 
 function buildDesktopContextBody(): string {

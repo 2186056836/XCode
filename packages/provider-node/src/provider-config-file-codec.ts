@@ -9,11 +9,86 @@ import {
   type ProviderConfigLayerUpdate,
 } from "@zcode/provider";
 
-const CURRENT_SCHEMA_VERSION = 1 as const;
+const CURRENT_SCHEMA_VERSION = 2 as const;
 
 type ProviderConfigFileMigration = (input: unknown) => unknown;
 
-const migrations: ReadonlyMap<number, ProviderConfigFileMigration> = new Map();
+const migrations: ReadonlyMap<number, ProviderConfigFileMigration> = new Map([
+  [
+    1,
+    // v1 → v2：把 api.headers["X-Qoder-Model-Meta"]（JSON 字符串）提升为
+    // config.modelMeta 并从头里删除。展示元数据历史上借道 headers 存储，代价：
+    // ① 它作为请求头发往上游，是越界指纹（CodeBuddy 11128 request illegal 的
+    //   同案犯）；② 个人层写 headers 会跟内置客户端指纹头互相覆盖（该坑另由
+    //   ProviderApiConfig.overlay 的逐键合并修复）。展示数据不上电线、不进 wire
+    // 配置。元数据解不出来时直接丢弃：纯展示数据，不值得让整层配置加载失败。
+    // 只走 providerRules（模板规则从不写元数据）。
+    (input) => {
+      if (!isRecord(input) || !isRecord(input.config)) {
+        return { ...(isRecord(input) ? input : {}), schemaVersion: 2 as const };
+      }
+      const config = input.config;
+      const rules = isRecord(config.providerConfigRules)
+        ? config.providerConfigRules
+        : undefined;
+      const providerRules = rules && Array.isArray(rules.providerRules) ? rules.providerRules : null;
+      return {
+        ...input,
+        schemaVersion: 2 as const,
+        config:
+          providerRules === null
+            ? config
+            : {
+                ...config,
+                providerConfigRules: {
+                  ...rules,
+                  providerRules: providerRules.map(liftQoderModelMeta),
+                },
+              },
+      };
+    },
+  ],
+]);
+
+/** 头里只剩元数据时连 headers 键一起删——个人层落回「对 headers 不表态」。 */
+const QODER_MODEL_META_HEADER_KEY = "x-qoder-model-meta";
+
+function liftQoderModelMeta(rule: unknown): unknown {
+  if (!isRecord(rule) || !isRecord(rule.config)) return rule;
+  const config = rule.config;
+  if (!isRecord(config.api) || !isRecord(config.api.headers)) return rule;
+
+  const headers = { ...config.api.headers };
+  const metaKey = Object.keys(headers).find(
+    (key) => key.toLowerCase() === QODER_MODEL_META_HEADER_KEY,
+  );
+  if (!metaKey) return rule;
+
+  const rawMeta = headers[metaKey];
+  delete headers[metaKey];
+
+  let lifted: Record<string, unknown> | undefined;
+  if (typeof rawMeta === "string" && rawMeta.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(rawMeta);
+      if (isRecord(parsed)) lifted = parsed;
+    } catch {
+      lifted = undefined;
+    }
+  }
+  const merged = lifted
+    ? isRecord(config.modelMeta)
+      ? { ...config.modelMeta, ...lifted }
+      : lifted
+    : undefined;
+
+  const { headers: _dropped, ...apiWithoutHeaders } = config.api;
+  const nextApi = Object.keys(headers).length > 0 ? { ...config.api, headers } : apiWithoutHeaders;
+  return {
+    ...rule,
+    config: merged === undefined ? { ...config, api: nextApi } : { ...config, api: nextApi, modelMeta: merged },
+  };
+}
 
 const storedProviderConfigSchema = z
   .object({

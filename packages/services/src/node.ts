@@ -12,7 +12,11 @@ import {
 import { getAppConfigDir as resolveAppConfigDir } from "./paths.js";
 import {
   buildLocalMediaPreviewUrl,
+  channelReplyHostRequestSchema,
+  channelReplyResultSchema,
   isProviderProvisioningAccountCredentialKey,
+  resolveModelProviderFamilyIdByProviderId,
+  type DynamicWorkflowMode,
   type ProviderProvisioningTrigger,
   type CustomSystemMessagesSettings,
 } from "@zcode/shared";
@@ -203,6 +207,19 @@ export { createTopicResourceRelayChannel } from "./zcode-agent/topicResourceRela
 export { localRuntimeNetworkCapture } from "./zcode-agent/localRuntimeNetworkCapture.js";
 export { createOutputStyleService } from "./output-style/outputStyleService.js";
 export { createAccountProviderCredentialService } from "./model-provider/accountProviderCredentialService.js";
+export {
+  createAccountRotationService,
+  DEFAULT_ACCOUNT_ROTATION_SETTINGS,
+  normalizeAccountRotationSettings,
+  type AccountRotationService,
+  type AccountRotationSettings,
+} from "./model-provider/accountRotation.js";
+import {
+  createAccountRotationService,
+  createJsonFileAccountRotationStore,
+  type AccountRotationCandidate,
+  type AccountRotationService,
+} from "./model-provider/accountRotation.js";
 export { createUsageStatsService } from "./usage-stats/usageStatsService.js";
 // Storage：service 与 adapters 工厂；desktop host 负责组装（Worker runner 在 desktop 包内）
 export { createStorageService } from "./storage/app/storageService.js";
@@ -353,14 +370,22 @@ import { createGitCheckpointService } from "./git/gitCheckpointService.js";
 import { createSystemService } from "./system/systemService.js";
 import { createTerminalService } from "./terminal/terminalService.js";
 import { createSettingServiceWithMigrations } from "./setting/settingService.js";
-import {
-  createOnboardingRecordService,
-} from "./onboarding/onboardingRecordService.js";
+import { createOnboardingRecordService } from "./onboarding/onboardingRecordService.js";
 import { createLegacyTeamOrganizationResolver } from "./model-provider/legacyTeamOrganizationResolver.js";
 import { createObservableSettingService } from "./setting/observableSettingService.js";
 import { createCredentialService } from "./credential/credentialService.js";
 import { setCodeBuddyAccountStore } from "./model-provider/codebuddyAuth.js";
 import { setQoderAccountStore } from "./model-provider/qoderAuth.js";
+import { setQoderCheckinHistoryStore } from "./model-provider/qoderCheckin.js";
+import {
+  setCodeBuddyCheckinHistoryStore,
+  setCodeBuddyDeviceTokenProvider,
+} from "./model-provider/codebuddyCheckin.js";
+import { createCodeBuddyDeviceTokenProvider } from "./model-provider/codebuddyDeviceToken.js";
+import {
+  setCodeBuddyAutoCheckinSettingsStore,
+  startCodeBuddyAutoCheckinScheduler,
+} from "./model-provider/codebuddyAutoCheckin.js";
 import { createBroadcastService } from "./broadcast/broadcastService.js";
 import { createXCodeAgentService } from "./zcode-agent/zcodeAgentService.js";
 import type { XCodeAgentCommandResolver } from "./zcode-agent/zcodeAgentProcessManager.js";
@@ -404,6 +429,13 @@ import {
   IModelSelectionService,
   IProviderSettingsService,
 } from "./model-provider/providerFacadeServices.js";
+import { createProxyPoolService } from "./proxy-pool/proxyPoolService.js";
+import {
+  IProxyPoolService,
+  resolveAccountFamilyProviderId,
+  supportsAccountBinding,
+  type ProxyProviderAccountView,
+} from "./proxy-pool/proxyPool.js";
 import { createProviderSettingsConnectivityTester } from "./model-provider/providerSettingsConnectivity.js";
 import { createUpstreamModelListFetcher } from "./model-provider/upstreamModelListFetcher.js";
 import { fetchQoderProStatusViaGateway } from "./model-provider/qoderUpstreamModels.js";
@@ -445,11 +477,27 @@ import {
 } from "./feedback/feedbackService.js";
 import { createLocalPromptAttachmentTransferService } from "./prompt-attachment-transfer/promptAttachmentTransferService.js";
 import { createNodeApiClient } from "./providers/api/nodeApiClient.js";
+import type { PluginSandboxHandle, PluginSandboxRegisterInput } from "@zcode/shared/mcp-apps";
+import type { IChannel } from "@zcode/rpc";
+import {
+  readTopicResourceFromRelay,
+  validateTopicResourceFromRelay,
+} from "./zcode-agent/topicResourceRelayClient.js";
+import { createPluginUiBridgeService } from "./plugin-ui-bridge/index.js";
+import { createPluginUiAccountBindings } from "./plugin-ui-bridge/instanceAccounts.js";
 import { ensureDeviceMidForAccountSync } from "./device/deviceMid.js";
 import {
   createHostApiNetworkTransport,
   type HostApiNetworkTransport,
 } from "./providers/api/nodeApiNetwork.js";
+import {
+  createProviderPoolFetch,
+  type ProviderPoolFetch,
+} from "./providers/api/providerPoolFetch.js";
+import {
+  providerNetworkRegion,
+  setProviderFetchResolver,
+} from "./providers/api/providerNetwork.js";
 import type {
   RuntimeProcessLifecycleReporter,
   RuntimeTaskReporter,
@@ -481,6 +529,7 @@ import {
   createOfficialMcpTrustedOriginRegistry,
   OFFICIAL_MCP_DEV_TRUSTED_ORIGINS_ENV,
 } from "@zcode/shared";
+import type { ProviderProxyBinding } from "@zcode/shared/proxy-pool";
 import {
   BROKER_SOCKET_ENV,
   BROKER_UNAVAILABLE_ENV,
@@ -705,6 +754,9 @@ export function getOffPeakRequestAuthBuilder(
   return offPeakRequestAuthBuilders.get(services);
 }
 const managedHostApiNetworkTransports = new WeakMap<ServiceCollection, HostApiNetworkTransport>();
+// XCode fork：供应商级代理池出口也要跟着 services 生命周期收口（否则 undici dispatcher
+// 的 keep-alive socket 会挂住进程退出）。
+const managedProviderPoolFetches = new WeakMap<ServiceCollection, ProviderPoolFetch>();
 
 export function registerManagedCuaHelperHostForDispose(
   services: ServiceCollection,
@@ -718,6 +770,13 @@ export function registerHostApiNetworkTransportForDispose(
   transport: HostApiNetworkTransport,
 ): void {
   managedHostApiNetworkTransports.set(services, transport);
+}
+
+export function registerProviderPoolFetchForDispose(
+  services: ServiceCollection,
+  poolFetch: ProviderPoolFetch,
+): void {
+  managedProviderPoolFetches.set(services, poolFetch);
 }
 
 export function shouldEnableDefaultCuaProductHelper(
@@ -1319,13 +1378,15 @@ function hasMeaningfulCustomSystemMessages(
 ): boolean {
   return Boolean(
     customSystemMessages.cliPrefix?.trim() ||
-      (customSystemMessages.prefill?.enabled === true &&
-        (customSystemMessages.prefill.messages?.length ?? 0) > 0) ||
-      customSystemMessages.obfuscation?.enabled,
+    (customSystemMessages.prefill?.enabled === true &&
+      (customSystemMessages.prefill.messages?.length ?? 0) > 0) ||
+    customSystemMessages.obfuscation?.enabled,
   );
 }
 
 export function createLocalServices(options: {
+  /** 已鉴权 Desktop stdio 连接提供的私有回查频道；不作为公共 service 暴露。 */
+  topicResourceRelayChannel?: (request: unknown) => IChannel;
   parentPort?: Parameters<typeof createBroadcastService>[0];
   /** Host 装配层注入的设置权威；与网络 transport 必须来自同一 Window Host 生命周期。 */
   settingService?: ISettingService;
@@ -1337,6 +1398,13 @@ export function createLocalServices(options: {
   hostApiNetworkTransport?: HostApiNetworkTransport;
   /** Desktop Host 请求 Main 登记 Agent 已授权的精确本地视频路径。 */
   authorizeLocalMediaPreviewPath?: (path: string) => Promise<string>;
+  /**
+   * 动态工作流用户选择变化后的转发口（docs/dynamic-workflow/launch.md「The user's choice」）：
+   * Desktop Host 把本机设置里的选择推给本窗口所有在线的 desktop-attached remote Host。
+   */
+  forwardDynamicWorkflowUserMode?: (mode: DynamicWorkflowMode | undefined) => void;
+  /** Desktop Host 请求 Main 登记已校验的插件 UI HTML，换取沙箱句柄。 */
+  registerPluginSandbox?: (input: PluginSandboxRegisterInput) => Promise<PluginSandboxHandle>;
   feedback?: Partial<
     Omit<CreateFeedbackServiceOptions, "apiClient" | "credentialService" | "oauthService">
   >;
@@ -1376,7 +1444,7 @@ export function createLocalServices(options: {
   ) => void;
   serviceAuthorityMode?: ServiceAuthorityMode;
   cuaProductMcpServerResolver?: CuaProductMcpServerResolver;
-  agentRuntimeContext?: {
+  agentTelemetry?: {
     getDeviceMid?: () => string | undefined;
     runtimeSurface?: "desktop_local_host" | "remote_workspace_host";
   };
@@ -1445,8 +1513,11 @@ export function createLocalServices(options: {
       overrideOrigin: (await settingService.get()).zcodeEndpointOrigin,
     });
   const provisioningOAuthKeys = new Set<string>(PROVIDER_PROVISIONING_OAUTH_CREDENTIAL_KEYS);
+  let invalidatePluginUiAccounts: (() => void) | undefined;
   const credentialService = createCredentialService({
     onDidMutate: ({ key }) => {
+      if (key === "oauth:active_provider" || /^oauth:[^:]+:user_info$/.test(key))
+        invalidatePluginUiAccounts?.();
       if (provisioningOAuthKeys.has(key) || isProviderProvisioningAccountCredentialKey(key)) {
         options.onProviderProvisioningSourceChanged?.("credential");
       }
@@ -1504,12 +1575,21 @@ export function createLocalServices(options: {
   );
   const accountProviderCredentialService = createAccountProviderCredentialService({
     // 1010 起 credentialStore 参数被 loadOAuthAccessToken 取代（凭据统一走 OAuth token）
-    async loadOAuthAccessToken(family) {
+    async loadOAuthAccessToken(family, accountRef) {
+      // 账号轮询可能用到非激活账号：给了 accountRef 就必须读该账号自己的 token，
+      // 否则会拿激活账号的登录态去给别的账号换项目 Token。
+      if (accountRef)
+        return (await oauthCredentialRepo.loadTokenSetForAccount(accountRef))?.accessToken ?? null;
       const oauthProviderId = family === "zai" ? ZAI_PROVIDER_ID : BIGMODEL_PROVIDER_ID;
       return (await oauthCredentialRepo.loadTokenSet(oauthProviderId))?.accessToken ?? null;
     },
     // 1010 起从「拿 key」改为「拿完整材料」（ProjectAccessTokenMaterial）
-    resolveProviderMaterial: (family, accessToken, accountIdentity, rejectedProjectTokenFingerprint) =>
+    resolveProviderMaterial: (
+      family,
+      accessToken,
+      accountIdentity,
+      rejectedProjectTokenFingerprint,
+    ) =>
       accountProviderApiKeyResolver.resolveProviderMaterial(
         family === "zai" ? ZAI_PROVIDER_ID : BIGMODEL_PROVIDER_ID,
         accessToken,
@@ -1541,21 +1621,33 @@ export function createLocalServices(options: {
   };
   const accountRequestAuthService = createAccountRequestAuthService(
     createAccountProviderRequestAuthService({
-      resolveCurrentAccountAccess: (access) =>
+      resolveCurrentAccountAccess: (access, accountIdentity) =>
         resolveCurrentAccountAccess({
           access,
           readSettings: readAccountProviderSettings,
           loadAccountIdentity,
+          ...(accountIdentity ? { accountIdentity } : {}),
         }),
-      loadOAuthTokenSet: (providerId) => oauthCredentialRepo.loadTokenSet(providerId),
-      async loadIndividualPlanMaterial(providerId, family, rejectedProjectTokenFingerprint) {
+      // 账号轮询选中的账号读它自己的 token set；缺省仍是激活账号的镜像 key。
+      loadOAuthTokenSet: (providerId, accountRef) =>
+        accountRef
+          ? oauthCredentialRepo.loadTokenSetForAccount(accountRef)
+          : oauthCredentialRepo.loadTokenSet(providerId),
+      async loadIndividualPlanMaterial(
+        providerId,
+        family,
+        accountIdentity,
+        rejectedProjectTokenFingerprint,
+      ) {
         const oauthProviderId = family === "zai" ? ZAI_PROVIDER_ID : BIGMODEL_PROVIDER_ID;
-        const accountIdentity = (await oauthCredentialRepo.loadUserProfile(oauthProviderId))?.id;
-        if (!accountIdentity) return null;
+        const identity =
+          accountIdentity ?? (await oauthCredentialRepo.loadUserProfile(oauthProviderId))?.id;
+        if (!identity) return null;
         return accountProviderCredentialService.loadCodingPlanMaterial({
           providerId,
           family,
-          accountIdentity,
+          accountIdentity: identity,
+          ...(accountIdentity ? { accountRef: `${family}:${identity}` } : {}),
           rejectedProjectTokenFingerprint,
         });
       },
@@ -1676,6 +1768,27 @@ export function createLocalServices(options: {
     load: (key) => credentialService.load(key),
     save: (key, value) => credentialService.save(key, value),
   });
+  // Qoder 签到历史（本地连续签到天数）与账号列表同一加密通道持久化。
+  setQoderCheckinHistoryStore({
+    load: (key) => credentialService.load(key),
+    save: (key, value) => credentialService.save(key, value),
+  });
+  // CodeBuddy 签到历史（本地累计天数 + 自动签到"已领取当天"去重）与自动签到
+  // 设置（每账号开关 + HH:MM）同样走 credentialService 加密通道。
+  setCodeBuddyCheckinHistoryStore({
+    load: (key) => credentialService.load(key),
+    save: (key, value) => credentialService.save(key, value),
+  });
+  setCodeBuddyAutoCheckinSettingsStore({
+    load: (key) => credentialService.load(key),
+    save: (key, value) => credentialService.save(key, value),
+  });
+  // CodeBuddy 设备风控 token（X-Device-Token）：从本机 WorkBuddy 桌面端自带的
+  // TuringShield SDK 取，带 10 分钟缓存；取不到就按无 token 继续签到。
+  setCodeBuddyDeviceTokenProvider(createCodeBuddyDeviceTokenProvider());
+  // 自动签到调度（进程内单例 interval + globalThis 守卫，unref 不保活）。
+  // 启动即扫一次（10s 延迟）：用户下午打开应用也能补上当天的档期。
+  startCodeBuddyAutoCheckinScheduler();
   const providerRuntime = createProviderRuntimeFromConfigRuntime({
     configRuntime: providerConfigRuntime,
     accountSource: accountProviderConfigSource,
@@ -1708,6 +1821,131 @@ export function createLocalServices(options: {
     accountProviderCredentialStore,
     refreshAccountProviders: (reason: string) => accountProviderConfigSource.refresh(reason),
   });
+  // XCode fork：供应商级代理池出口装配。
+  //
+  // 解决的是「全局代理会把提供商相关请求也代理掉」这个冲突：把 Host 侧所有**面向模型供应商**
+  // 的网络调用（上游模型目录、Qoder/CodeBuddy 的登录/签到/额度）从 hostApiNetworkTransport
+  // （= 全局代理链）上摘下来，改走 providerFetch(providerId, accountId)。
+  // 规则与 agent 侧同源（shared 的 resolveProviderProxyRoute）：
+  //   该账号绑定了池 → 只走那条池；没绑定 → inheritFetch（跟随全局代理状态）；
+  //   绑了但条目不可用 → 硬直连，绝不回落全局代理。
+  // 平台自身接口（apiClient）不在此列：它打的是 XCode 自己的后端，本来就该走全局代理。
+  const providerProxyBindingCache = new Map<
+    string,
+    { expiresAt: number; binding: ProviderProxyBinding | undefined }
+  >();
+  // 绑定变更走 setting/credential 广播 + saveProviderProxy，1s TTL 只是兜底防抖：
+  // 一次请求链上可能连着打好几个端点，别每个都读一遍 provider settings view。
+  const PROVIDER_PROXY_BINDING_TTL_MS = 1_000;
+  const invalidateProviderProxyBinding = (providerId?: string): void => {
+    if (providerId) providerProxyBindingCache.delete(providerId);
+    else providerProxyBindingCache.clear();
+  };
+  const resolveProviderProxyBinding = async (
+    providerId: string,
+  ): Promise<ProviderProxyBinding | undefined> => {
+    const cached = providerProxyBindingCache.get(providerId);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.binding;
+    }
+    const view = await providerRuntime.providerSettings.getView();
+    const binding =
+      view.providers.find((item) => item.providerId === providerId)?.effectiveConfig.api?.proxy ??
+      undefined;
+    providerProxyBindingCache.set(providerId, {
+      expiresAt: Date.now() + PROVIDER_PROXY_BINDING_TTL_MS,
+      binding,
+    });
+    return binding;
+  };
+  const providerPoolFetch = createProviderPoolFetch({
+    inheritFetch: hostApiNetworkTransport.fetch,
+    resolveBinding: resolveProviderProxyBinding,
+    resolveCaCertPath: async () => (await settingService.get()).httpProxyCaCertPath,
+  });
+  setProviderFetchResolver((providerId, accountId) =>
+    providerPoolFetch.fetchFor(providerId, accountId),
+  );
+  // XCode fork：多账号轮询（Qoder / CodeBuddy / zai / bigmodel），对齐 9router 的
+  // fill-first / round-robin + sticky + per-model lock。
+  // host 是唯一能看到全部账号凭据的地方，agent 通过 provider runtime headers
+  // 反向 RPC 在每次 attempt 前取「本次用哪个账号」。
+  //
+  // zai / bigmodel 的账号是 Coding Plan 的 OAuth 账号，落在 oauthCredentialRepo 里，
+  // 不属于任何单个 provider：账号 id 用 accountRef（`${provider}:${identity}`），
+  // 与账号管理页、代理出口绑定表用同一个值对齐。
+  const listAccountFamilyRotationCandidates = async (
+    family: ProviderFamilyDomain,
+  ): Promise<{ requestProfile: ProviderFamilyDomain; candidates: AccountRotationCandidate[] }> => {
+    const activeRef = await oauthCredentialRepo.loadActiveAccountRef();
+    const accounts = (await oauthCredentialRepo.listAccounts()).filter(
+      (account) => account.provider === family,
+    );
+    const candidates: AccountRotationCandidate[] = [];
+    for (const account of accounts) {
+      const accountRef = `${account.provider}:${account.identity}`;
+      const tokenSet = await oauthCredentialRepo.loadTokenSetForAccount(accountRef);
+      // 登录态被清掉的账号（凭证缺失）不参与轮询：选中它只会在请求前抛
+      // AccountRequestCredentialUnavailable，白烧一次 attempt 才轮换。
+      if (!tokenSet?.accessToken?.trim()) {
+        continue;
+      }
+      candidates.push({
+        id: accountRef,
+        displayName: account.displayName || account.username,
+        accessToken: tokenSet.accessToken,
+        active: accountRef === activeRef,
+      });
+    }
+    return { requestProfile: family, candidates };
+  };
+  const accountRotationService: AccountRotationService = createAccountRotationService({
+    source: {
+      listCandidates: async (providerId) => {
+        // zai / bigmodel：账号是 Coding Plan 的 OAuth 账号，与 providerId 无关（同族多个
+        // provider 共享同一份账号表），因此先判 family 再判 requestProfile。
+        const family = resolveModelProviderFamilyIdByProviderId(providerId);
+        if (family) {
+          return listAccountFamilyRotationCandidates(family);
+        }
+        const providerView = await providerRuntime.providerSettings.getView();
+        const requestProfile = providerView.providers.find((item) => item.providerId === providerId)
+          ?.effectiveConfig.requestProfile;
+        if (requestProfile !== "qoder" && requestProfile !== "codebuddy") {
+          return undefined;
+        }
+        const region = providerNetworkRegion(providerId);
+        if (!region) {
+          return undefined;
+        }
+        const facade = providerRuntime.providerSettings;
+        if (requestProfile === "qoder") {
+          const { accounts } = await facade.qoderListAccounts(region);
+          return {
+            requestProfile,
+            candidates: accounts.map((account) => ({
+              id: account.id,
+              displayName: account.displayName,
+              accessToken: account.accessToken,
+              ...(account.machineId ? { machineId: account.machineId } : {}),
+              active: account.active,
+            })),
+          };
+        }
+        const { accounts } = await facade.codebuddyListAccounts(region);
+        return {
+          requestProfile,
+          candidates: accounts.map((account) => ({
+            id: account.id,
+            displayName: account.displayName,
+            accessToken: account.accessToken,
+            active: account.active,
+          })),
+        };
+      },
+    },
+    store: createJsonFileAccountRotationStore(join(resolveAppConfigDir(), "account-rotation.json")),
+  });
   // 官方 Server MCP 的凭证解析源。MCP 调用的身份头与 MCP 额度查询（/api/v1/mcp/usage）
   // 必须共用这一份实现，否则两处对"当前选中的 Coding Plan 连接"的判定会分叉。
   // 额度侧注入的是凭证解析而非 resolveHeaders：归属校验需要 providerFamily，
@@ -1727,6 +1965,34 @@ export function createLocalServices(options: {
     listMcpServerStatuses: (params) => zcodeAgentService.listMcpServerStatuses(params),
   });
   const pluginSyncService = createPluginSyncService();
+  const pluginUiAccounts = createPluginUiAccountBindings({
+    async readAccount() {
+      const provider = await oauthCredentialRepo.loadActiveProvider();
+      const profile = provider ? await oauthCredentialRepo.loadUserProfile(provider) : null;
+      return [provider, profile?.id ?? null];
+    },
+    open: (params) => zcodeAgentService.openMcpUiInstance(params),
+    close: (params) => zcodeAgentService.closeMcpUiInstance(params),
+  });
+  invalidatePluginUiAccounts = () => pluginUiAccounts.invalidate();
+  const pluginUiBridgeService = createPluginUiBridgeService({
+    openInstance: (params) => pluginUiAccounts.open(params),
+    closeInstance: (params) => pluginUiAccounts.close(params),
+    validateInstance: (params) => zcodeAgentService.validateMcpUiInstance(params),
+    recycleInstance: (params) => zcodeAgentService.recycleMcpUiInstance(params),
+    // 插件 UI：资源读取与 UI 工具调用都发生在 session 所在的 agent 进程；host 只做校验与登记。
+    readMcpResource: (params) => zcodeAgentService.readMcpResource(params),
+    callMcpToolForUi: (params) => zcodeAgentService.callMcpToolForUi(params),
+    cancelMcpToolCallForUi: (params) => zcodeAgentService.cancelMcpToolCallForUi(params),
+    readMcpResourceForUi: (params) => zcodeAgentService.readMcpResourceForUi(params),
+    listMcpResourcesForUi: (params) => zcodeAgentService.listMcpResourcesForUi(params),
+    listMcpResourceTemplatesForUi: (params) =>
+      zcodeAgentService.listMcpResourceTemplatesForUi(params),
+    subscribeMcpResourceForUi: (params) => zcodeAgentService.subscribeMcpResourceForUi(params),
+    unsubscribeMcpResourceForUi: (params) => zcodeAgentService.unsubscribeMcpResourceForUi(params),
+    listPluginUiSurfaces: (params) => zcodeAgentService.listPluginUiSurfaces(params),
+    registerSandbox: options?.registerPluginSandbox,
+  });
   const subagentsService = createSubagentsService({
     isDesktopRuntime: true,
   });
@@ -2128,9 +2394,16 @@ export function createLocalServices(options: {
       }
     },
   };
+  // 动态工作流的用户选择（docs/dynamic-workflow/launch.md「The user's choice」）：本机设置文件是唯一来源，
+  // 每次使用时读取。desktop-attached remote Host 读不到桌面的设置，选择由 desktop 推送
+  // （zcodeAgentService.syncDynamicWorkflowUserMode），这里不注入。读取失败按「跟随」处理。
+  const resolveDynamicWorkflowUserMode = isDesktopAttachedRemote
+    ? undefined
+    : async () => (await settingService.get()).dynamicWorkflowMode;
   const codingPlanSubscriptionService = createCodingPlanSubscriptionService({
     apiClient,
     credentialService,
+    ...(resolveDynamicWorkflowUserMode ? { resolveDynamicWorkflowUserMode } : {}),
     resolveOffPeakModelSelectionView: async () => {
       await providerRuntime.start();
       return buildOffPeakModelSelectionView(providerRuntime.registryService.getView());
@@ -2139,6 +2412,10 @@ export function createLocalServices(options: {
   // OffPeakTaskService 单例在下方 DI register IIFE 中创建（晚于 agent service）；
   // 用前向引用 holder 惰性绑定——offPeak/create 协议请求只会发生在服务集合装配完成后。
   let offPeakTaskServiceForAgent: OffPeakTaskService | undefined;
+  // ProxyPool 服务同样晚于 agent service 创建（在下方的 DI register 链里）。
+  // ProxyPool 工具的 proxyPool/* 协议 handler 经这个前向引用 holder 惰性取用，
+  // 与上一条同理：协议请求只会在服务集合装配完成之后到达。
+  let proxyPoolServiceForAgent: IProxyPoolService | undefined;
   // desktop-attached-remote 装配不暴露 Off-Peak 工具面（远程不在支持范围）。
   const offPeakToolWiring =
     options?.serviceAuthorityMode === "desktop-attached-remote"
@@ -2152,17 +2429,24 @@ export function createLocalServices(options: {
       ? { accountProviderConfigSource: agentAccountProviderConfigSource }
       : {}),
     accountRequestAuthService,
+    accountRotationService,
     ...(modelSelectionReadinessSource ? { modelSelectionReadinessSource } : {}),
     authorizeLocalMediaPreviewPath: options?.authorizeLocalMediaPreviewPath,
     ...offPeakToolWiring,
+    // ProxyPool 工具面不按 serviceAuthorityMode 裁剪：代理池落盘在本 Host 的设置里，
+    // 远程 Host 的 agent 就该改远程 Host 自己的出口。host 侧 IProxyPoolService 缺失时
+    // resolveProxyPoolService 返回 undefined，协议回 -32601，工具侧报能力不可用。
+    resolveProxyPoolService: () => proxyPoolServiceForAgent,
     // 动态工作流灰度：与 Off-Peak 不同，
     // 这里不按 serviceAuthorityMode 裁剪——SSH/WSL/Docker 的 desktop-attached-remote Host
     // 是它自己那些 workspace 的唯一裁决者，灰度开启时远程 workspace 同样提供工作流。
     resolveDynamicWorkflowClientConfig: () =>
       codingPlanSubscriptionService.getDynamicWorkflowClientConfig(),
+    ...(resolveDynamicWorkflowUserMode ? { resolveDynamicWorkflowUserMode } : {}),
+    forwardDynamicWorkflowUserMode: options?.forwardDynamicWorkflowUserMode,
     commandResolver: options?.zcodeAgentCommandResolver,
     presentationSurface: resolveXCodeAgentPresentationSurface({
-      runtimeSurface: options?.agentRuntimeContext?.runtimeSurface,
+      runtimeSurface: options?.agentTelemetry?.runtimeSurface,
       serviceAuthorityMode: options?.serviceAuthorityMode,
       desktopContextPromptEnabled,
     }),
@@ -2174,6 +2458,52 @@ export function createLocalServices(options: {
     spawnFallbackCwd: options?.zcodeAgentSpawnFallbackCwd,
     // browser-use：host→main 执行桥透传给 agent service 的 onRequest browserExecute 路由。
     browserControlExecutor: options?.browserControlExecutor,
+    // 机器人凭据只归属于授权 Host；远端独立服务不能借用本机配置扩大读取范围。
+    channelReplyExecutor: async (value) => {
+      const request = channelReplyHostRequestSchema.parse(value);
+      if (
+        options?.topicResourceRelayChannel &&
+        (isDesktopAttachedRemote || request.remoteSessionId)
+      )
+        return channelReplyResultSchema.parse(
+          await options.topicResourceRelayChannel(request).call("reply", request),
+        );
+      if (isDesktopAttachedRemote) throw new Error("Desktop channel reply peer unavailable");
+      const bots = services.getOptional(IBotsService);
+      if (!bots?.replyToChannel) throw new Error("Bot channel reply unavailable");
+      return bots.replyToChannel(request);
+    },
+    topicResourceExecutor: async (request, signal) => {
+      if (
+        options?.topicResourceRelayChannel &&
+        (isDesktopAttachedRemote || request.remoteSessionId)
+      )
+        return readTopicResourceFromRelay(
+          options.topicResourceRelayChannel(request),
+          request,
+          signal,
+        );
+      if (isDesktopAttachedRemote) throw new Error("Desktop topic resource peer unavailable");
+      const bots = services.getOptional(IBotsService);
+      if (!bots?.readTopicResource) throw new Error("Topic resource service is unavailable");
+      return bots.readTopicResource({ ...request, signal });
+    },
+    topicResourceValidator: async (request, signal) => {
+      if (
+        options?.topicResourceRelayChannel &&
+        (isDesktopAttachedRemote || request.remoteSessionId)
+      )
+        return validateTopicResourceFromRelay(
+          options.topicResourceRelayChannel(request),
+          request,
+          signal,
+        );
+      if (isDesktopAttachedRemote) throw new Error("Desktop topic resource peer unavailable");
+      const bots = services.getOptional(IBotsService);
+      if (!bots?.validateTopicResource)
+        throw new Error("Topic resource authorization is unavailable");
+      return bots.validateTopicResource({ ...request, signal });
+    },
     // 官方 Server MCP 身份头：host 是唯一身份权威，Agent 经反向请求索取。
     // Provider 存在性读取正式 Model Selection View；不恢复旧 Provider Snapshot。
     officialMcpAuthHeadersResolver: createOfficialMcpAuthHeadersResolver({
@@ -2278,7 +2608,7 @@ export function createLocalServices(options: {
         ? await oauthCredentialRepo.loadActiveUserProfile().catch(() => null)
         : null;
       const telemetryDeviceMid = telemetryConfigured
-        ? options?.agentRuntimeContext?.getDeviceMid?.()?.trim()
+        ? options?.agentTelemetry?.getDeviceMid?.()?.trim()
         : undefined;
       // Host 是旧配置迁移的唯一写入者。Agent spawn 前等待初始化完成，避免 Worker
       // 先拿到尚不存在的 provider_config.json 并发布短暂空 Registry。
@@ -2299,7 +2629,7 @@ export function createLocalServices(options: {
         ...cuaProductHelperEnv,
         ...buildAgentTelemetrySpawnEnv({
           deviceMid: telemetryDeviceMid,
-          runtimeSurface: options?.agentRuntimeContext?.runtimeSurface ?? "remote_workspace_host",
+          runtimeSurface: options?.agentTelemetry?.runtimeSurface ?? "remote_workspace_host",
           telemetryEnv,
           userId: telemetryProfile?.id,
         }),
@@ -2448,12 +2778,10 @@ export function createLocalServices(options: {
         }
       }
       // 切号后刷新 account 源，让 providerSettingsView / 套餐权益跟随新账号。
-      void accountProviderConfigSource
-        .refresh("oauth-account-switch")
-        .catch((error) => {
-          // 刷新失败不阻断切号；由下一次 onDidChange/主动刷新收敛。
-          console.warn("[oauth] account source refresh after switch failed", error);
-        });
+      void accountProviderConfigSource.refresh("oauth-account-switch").catch((error) => {
+        // 刷新失败不阻断切号；由下一次 onDidChange/主动刷新收敛。
+        console.warn("[oauth] account source refresh after switch failed", error);
+      });
     },
   });
   // 迁移旧单账号数据为首条账号记录，并同步激活账号引用（供 X-Device-Mid 按账号读取）。
@@ -2628,10 +2956,7 @@ export function createLocalServices(options: {
       }),
     )
     .register(IClientScenesService, createClientScenesService({ apiClient }))
-    .register(
-      IMarketingTouchService,
-      createMarketingTouchService({ apiClient, credentialService }),
-    )
+    .register(IMarketingTouchService, createMarketingTouchService({ apiClient, credentialService }))
     .register(
       IOffPeakTaskService,
       (() => {
@@ -2751,6 +3076,7 @@ export function createLocalServices(options: {
     },
   });
   registerHostApiNetworkTransportForDispose(services, hostApiNetworkTransport);
+  registerProviderPoolFetchForDispose(services, providerPoolFetch);
   // disposer 注册完成后才排预热。若 createLocalServices 中途抛错，不能留下一个无人持有、却会在当前
   // 调用栈结束后才创建的高权限 Helper；若返回后立即 dispose，terminal fence 会先于 acquire 生效。
   // Helper 懒启动：不预热——Helper 由 SDK 首次 CUA 调用拉起（spawn env 注入
@@ -2764,7 +3090,98 @@ export function createLocalServices(options: {
   providerProvisioningTriggerDisposers.set(services, providerProvisioningDisposers);
   services
     .register(IProviderSettingsService, providerRuntime.providerSettings)
-    .register(IModelSelectionService, providerRuntime.modelSelection);
+    .register(IModelSelectionService, providerRuntime.modelSelection)
+    .register(
+      IProxyPoolService,
+      // 赋值表达式把单例回写到上面的前向引用 holder：zcodeAgentService 早于这里构造，
+      // 只能靠这种惰性绑定把 ProxyPool 工具接到同一实例上。
+      (proxyPoolServiceForAgent = createProxyPoolService({
+        settingService,
+        getProviderSettingsView: () => providerRuntime.providerSettings.getView(),
+        // Provider overlay 是整份替换语义，直接传只带 proxy 的 config 会抹掉
+        // baseUrl / headers / type。这里显式做 read-modify-write，只替换 api.proxy。
+        saveProviderProxy: async (providerId, binding) => {
+          const view = await providerRuntime.providerSettings.getView();
+          const provider = view.providers.find((item) => item.providerId === providerId);
+          if (!provider) {
+            throw new Error(`Provider 不存在: ${providerId}`);
+          }
+          // savePersonalProviderOverlay 是**整份替换个人层**，不是 overlay 到内置层上。因此
+          // 基线必须用 personalConfig：用 effectiveConfig 会把内置层的 access 一起写进个人层，
+          // 而 `account:` 前缀的 provider（zai / bigmodel 各套餐）在个人层声明 access 会被
+          // rule schema 直接拒绝（「固定 Account Provider 的 Access 只能由 Built-in Config 声明」）。
+          const personal = provider.personalConfig ?? {};
+          await providerRuntime.providerSettings.savePersonalProviderOverlay(providerId, {
+            ...personal,
+            api: {
+              ...(personal.api ?? {}),
+              proxy: binding ?? null,
+            },
+          });
+          // 绑定刚落盘就让下次请求读到新的出口，别让 TTL 内的旧缓存把请求发错代理。
+          invalidateProviderProxyBinding(providerId);
+        },
+        listProviderAccounts: async (providerId, requestProfile) => {
+          // zai / bigmodel：账号是 family 级的 OAuth 账号，providerId 传的是 family id。
+          // 注意 family 伪 id（"zai" / "bigmodel"）不在 providerId→family 的映射表里——那张表
+          // 只认 `account:zai-start-plan` 这类真实 providerId，所以必须先用 resolveAccountFamilyProviderId
+          // 认伪 id，再用映射表兜住真实 providerId 的调用。
+          const family =
+            resolveAccountFamilyProviderId(providerId) ??
+            resolveModelProviderFamilyIdByProviderId(providerId);
+          if (family) {
+            const activeRef = await oauthCredentialRepo.loadActiveAccountRef();
+            const accounts = (await oauthCredentialRepo.listAccounts()).filter(
+              (account) => account.provider === family,
+            );
+            const result: ProxyProviderAccountView[] = [];
+            for (const account of accounts) {
+              const accountRef = `${account.provider}:${account.identity}`;
+              // 只列当前有凭证的账号：登出后账号仍留在列表里，但不会再被轮询选中，给它
+              // 一个出口绑定只会是一条永不生效的配置（与轮询候选保持同一套过滤）。
+              const tokenSet = await oauthCredentialRepo.loadTokenSetForAccount(accountRef);
+              if (!tokenSet?.accessToken?.trim()) {
+                continue;
+              }
+              result.push({
+                id: accountRef,
+                displayName: account.displayName || account.username,
+                active: accountRef === activeRef,
+              });
+            }
+            return result;
+          }
+          // 只有 Qoder / CodeBuddy 有账号列表；其余供应商无账号概念，返回空数组走策略。
+          if (!supportsAccountBinding(requestProfile, providerId)) {
+            return [];
+          }
+          // 只列该供应商自己那一个区的账号：`other:qoder` 与 `other:qoder-cn` 是两份独立
+          // 账号表。合并两区会让「共 N 个账号」与账号行数对不上，批量分配/轮流分配还会
+          // 把绑定写到另一个区的账号 id 上。
+          const region = providerNetworkRegion(providerId);
+          if (!region) {
+            return [];
+          }
+          const facade = providerRuntime.providerSettings;
+          const { accounts } =
+            requestProfile === "qoder"
+              ? await facade.qoderListAccounts(region).catch(() => ({ accounts: [] as never[] }))
+              : await facade
+                  .codebuddyListAccounts(region)
+                  .catch(() => ({ accounts: [] as never[] }));
+          return accounts.map((account) => ({
+            id: account.id,
+            displayName: account.displayName,
+            ...(account.email ? { email: account.email } : {}),
+            active: account.active,
+          }));
+        },
+        accountRotationSettings: {
+          get: (providerId) => accountRotationService.getSettings(providerId),
+          save: (providerId, settings) => accountRotationService.saveSettings(providerId, settings),
+        },
+      })),
+    );
   if (isDesktopAttachedRemote || options.providerProvisioningTargetEnabled === true) {
     services.register(
       IProviderProvisioningTargetService,
@@ -2912,6 +3329,7 @@ export function disposeServiceResources(services: ServiceCollection): void {
   providerProvisioningTriggerDisposers.delete(services);
   providerProvisioningSources.delete(services);
   managedHostApiNetworkTransports.get(services)?.dispose();
+  managedProviderPoolFetches.get(services)?.dispose();
 }
 
 export async function disposeServiceResourcesAndWait(services: ServiceCollection): Promise<void> {
@@ -2949,6 +3367,10 @@ export async function disposeServiceResourcesAndWait(services: ServiceCollection
   providerProvisioningTriggerDisposers.delete(services);
   providerProvisioningSources.delete(services);
   await managedHostApiNetworkTransports
+    .get(services)
+    ?.disposeAndWait()
+    .catch(() => {});
+  await managedProviderPoolFetches
     .get(services)
     ?.disposeAndWait()
     .catch(() => {});

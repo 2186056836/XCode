@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { sparseShape } from "@zcode/shared/config-schema";
+// 用子路径而不是根入口：根入口会拉进 shared 的 node 依赖模块（env.ts / mcp.ts 等），
+// provider 的 tsconfig 没有 node types，编译会因 process 未定义整片失败。
+import { providerProxyBindingSchema } from "@zcode/shared/proxy-pool";
 
 export const providerApiTypeDataSchema = z.enum([
   "anthropic-messages",
@@ -73,12 +76,19 @@ export const completeProviderApiDataSchema = z
     type: providerApiTypeDataSchema,
     baseUrl: nonBlankRequiredString.pipe(z.string().url()),
     headers: z.record(z.string(), z.string()).readonly().nullable().optional(),
+    // XCode fork：连接级代理池绑定（{ bindings: { [accountId]: 池条目 } }）。
+    // 随 provider config 下发到 agent，请求层即可自包含地按账号选出口；
+    // 与全局 httpProxy 互斥（绑了池的账号不走全局），未绑定的账号跟随全局。
+    // 旧形状（enabled/strategy/entryIds/accountBindings）会被 schema 降级为 null，
+    // 不会让整份 provider overlay 解析失败。
+    proxy: providerProxyBindingSchema.nullable().optional(),
   })
   .strict();
 export const providerApiDataSchema = z
   .object({
     ...sparseShape(completeProviderApiDataSchema.shape),
     baseUrl: z.string().url().nullable().optional(),
+    proxy: providerProxyBindingSchema.nullable().optional(),
   })
   .strict();
 // Personal 允许暂存编辑中的 endpoint；完整 schema 仍拒绝，且只影响该 Provider 的准入。
@@ -102,9 +112,22 @@ export const providerConfigDataSchema = z
     upstreamModelIdFilter: z.string().min(1).nullable().optional(),
     // XCode fork：上游请求画像。opencode-free-tier = OpenCode 免费档：
     // 请求体注入 bash/glob/grep/read 指纹工具并强制 stream（chat 通道）/
-    // store:false（responses 通道），配合 api.headers 里的 Bearer public 等
-    // 静态头，绕过「free tier can only be used from within OpenCode」客户端闸门。
+    // store:false（responses 通道），配合 api.headers 里的静态客户端头
+    // （UA、x-opencode-client、x-opencode-session/request/project）。
+    // 注意：free 档的「free tier can only be used from within OpenCode」闸门
+    // 判定的是真实 OpenCode 会话，不能用伪造 header 绕过；用户必须用官方
+    // OpenCode CLI 登录并把会话 token 填进 provider apiKey，SDK 才会上行
+    // Authorization: Bearer <token>（所以 api.headers 里不要硬编码 Authorization，
+    // 否则会按 SDK 头合并优先级遮蔽用户 token）。指纹+stream 是请求体侧必需契约。
     requestProfile: z.enum(["opencode-free-tier", "codebuddy", "qoder"]).nullable().optional(),
+    // XCode fork：供应商级模型展示元数据（可读名/倍率/上下文档位/思考档位），
+    // 「从上游获取」时写入。历史上存成 api.headers["X-Qoder-Model-Meta"]（JSON
+    // 字符串），会随请求发往上游（越界指纹），且把 headers 变成强耦合通道；
+    // provider_config.json schemaVersion 1→2 迁移把它提升到这里。
+    // 刻意只验「是张表」、条目内容不校验——字段纯粹服务展示，坏条目由读取端
+    // 归一化丢弃，绝不能让整层 personal 配置加载失败（headers 方案当年就是
+    // 为了绕开 strict 校验才借道的）。
+    modelMeta: z.record(z.string().min(1), z.unknown()).readonly().nullable().optional(),
   })
   .strict();
 export const completeProviderConfigDataSchema = providerConfigDataSchema.extend({

@@ -36,6 +36,13 @@ import { isModelStreamIdleTimeoutError } from "./stream-idle-timeout.js";
 
 const PROVIDER_BUSINESS_ERROR_WRAPPER_CODE = "PROVIDER_BUSINESS_ERROR";
 
+/**
+ * OpenCode 免费档闸门拒绝的固定标识（线上原文，见 opencode-build-agent.ts 头注释）。
+ * 上游把「出口 IP / 区域风控」与「非官方客户端」折叠成同一个 403 `FreeTierError`。
+ */
+const OPENCODE_FREE_TIER_GATE_ERROR_TYPE = "FreeTierError";
+const OPENCODE_FREE_TIER_GATE_MESSAGE = /can only be used from within OpenCode/i;
+
 export interface ClassifiedModelFailure {
   code: ModelErrorCodeType;
   message: string;
@@ -198,6 +205,21 @@ export function classifyModelFailure(
       message: "Provider is overloaded.",
       reason: ModelFailureReasonValue.ProviderOverloaded,
       retryReason: ModelRetryReasonValue.ProviderOverloaded,
+      retryable: true,
+      retryAfterMs,
+      statusCode,
+    };
+  }
+
+  // OpenCode 免费档的 403 是出口风控，不是凭证问题：判限流 + 可重试，让退避重试继续跑，
+  // 用户换出口 IP（或供应商级代理池换出口）后下一次尝试就能过。落到下面的通用 401/403
+  // 鉴权分支会被硬编成 auth_failed / retryable=false，连重试窗口都没有。
+  if (isOpenCodeFreeTierGateRejection(unwrapped, statusCode)) {
+    return {
+      code: ModelErrorCode.ModelRateLimited,
+      message: "Provider rate limited the model request.",
+      reason: ModelFailureReasonValue.RateLimited,
+      retryReason: ModelRetryReasonValue.RateLimited,
       retryable: true,
       retryAfterMs,
       statusCode,
@@ -613,6 +635,35 @@ function collectNestedRecords(value: unknown): Record<string, unknown>[] {
   }
 
   return result;
+}
+
+/**
+ * 判断一个 403 是否属于 OpenCode 免费档的出口风控拒绝。
+ *
+ * 2026-10-18 消融实测（新端点）：把 UA / session 头 / tools / Authorization 逐项打掉，
+ * 响应仍是同一个 403 `FreeTierError`——判据已经不在客户端签名层，而在出口 IP
+ * （同批响应 cf-ray 落 SEA、cf-placement 是 IAD，随出口漂移）。这类拒绝会随出口 IP
+ * 改变自愈，属于「等一会儿/换个出口就能过」的限流，因此按可重试分类。
+ *
+ * 只认 403 + 上游固定标识（error.type 或那句 message 文案），不做 status 泛化：
+ * 真凭证错误（如 401、无效 key）仍应停在鉴权分支，不该白重试 6 分钟。
+ */
+function isOpenCodeFreeTierGateRejection(error: unknown, statusCode?: number): boolean {
+  if (normalizeHttpFailureStatus(statusCode) !== 403) {
+    return false;
+  }
+  for (const record of collectNestedRecords(getApiCallResponseBody(error) ?? error)) {
+    if (record.type === OPENCODE_FREE_TIER_GATE_ERROR_TYPE) {
+      return true;
+    }
+    for (const key of ["message", "providerMessage"] as const) {
+      const text = record[key];
+      if (typeof text === "string" && OPENCODE_FREE_TIER_GATE_MESSAGE.test(text)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 function numberProperty(record: Record<string, unknown>, key: string): number | undefined {

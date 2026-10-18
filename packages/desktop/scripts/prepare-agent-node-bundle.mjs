@@ -122,6 +122,7 @@ const bundledSkillPack = {
     "skills/dynamic-workflows/SKILL.md",
     "skills/dynamic-workflows/patterns.md",
     "skills/dynamic-workflows/examples.md",
+    "skills/xcode-proxy-pool/SKILL.md",
   ],
   stagedPath: "packages/bundled-skills",
   topLevelPaths: ["skills"],

@@ -1,3 +1,4 @@
+/* oxlint-disable max-lines -- 各 provider 的业务码行为语义必须集中登记在同一张表里，拆文件会让人漏看已有的码语义；待业务码引入 provider 维度后再按厂商拆分。 */
 import {
   ModelErrorCode,
   ModelFailureReason as ModelFailureReasonValue,
@@ -344,6 +345,72 @@ for (const code of ["406", "416"]) {
 
 // 排队/算力紧张，属可恢复的瞬时拥塞。
 PROVIDER_BUSINESS_CODE_MAPPINGS.set("10605", RETRYABLE_RATE_LIMIT_MAPPING);
+
+// XCode fork: Qoder 的 HTTP 状态语义码。
+// 上游对限流/额度耗尽一律只报通用 `provider_error`（实测 429 +
+// {"code":"provider_error","message":"All backends failed"}），语义全丢，
+// 上层只能降级成 reason=unknown、retryable=false——用户看到的是一句
+// 无从下手的 "All backends failed"。qoderProtocol 会把信封状态码映射成
+// 下面这些标准码，这里登记其行为语义。
+for (const code of ["rate_limit_exceeded", "rate_limit_error", "rate_limited"]) {
+  // 429：模型级并发/配额限流。Qoder 实测同一账号换模型即可成功，
+  // 属可恢复，标 retryable 让上层重试/降级而不是直接判死。
+  PROVIDER_BUSINESS_CODE_MAPPINGS.set(code, RETRYABLE_RATE_LIMIT_MAPPING);
+}
+
+for (const code of ["insufficient_quota", "quota_exceeded"]) {
+  // 402/403：额度耗尽。要等计费周期重置，重试无意义。
+  PROVIDER_BUSINESS_CODE_MAPPINGS.set(code, TERMINAL_RATE_LIMIT_MAPPING);
+}
+
+PROVIDER_BUSINESS_CODE_MAPPINGS.set(
+  "invalid_api_key",
+  // 401：凭证过期。重试同样是 401，必须走重新登录（AuthRefresh 语义）。
+  {
+    code: ModelErrorCode.ModelRequestFailed,
+    reason: ModelFailureReasonValue.AuthFailed,
+    retryReason: ModelRetryReasonValue.AuthRefresh,
+    retryable: false,
+  },
+);
+
+for (const code of ["upstream_unavailable", "upstream_error"]) {
+  // 5xx 网关故障：典型可恢复。
+  PROVIDER_BUSINESS_CODE_MAPPINGS.set(code, {
+    code: ModelErrorCode.ModelRequestFailed,
+    reason: ModelFailureReasonValue.ServerError,
+    retryReason: ModelRetryReasonValue.ServerError,
+    retryable: true,
+  });
+}
+
+// XCode fork: CodeBuddy 业务码。
+// CodeBuddy 网关（Intl=www.codebuddy.ai / CN=copilot.tencent.com）用 5 位数字业务码：
+//   11128 = 网关判定请求非法（客户端指纹不匹配或缺头，实测 HTTP 400）；
+//   12403 = UA 校验失败（UA 里必须能解析出客户端版本；/v3/config 与聊天网关共用该码）；
+//   11217 = 待授权（登录轮询语义，落到请求层表示账号授权未完成）。
+// 三者都不是可重试的瞬时故障：原样重发会被同样拒绝，登记为终止语义，避免上层把
+// 重试预算/额度浪费在必然失败的请求上；同时把 400 以外的状态（12403/11217 也可能
+// 以 200 信封或 403 返回）从通用分支里择出来——否则会被归因成 AuthFailed，
+// 引导用户去做无效的重新登录。
+const TERMINAL_CLIENT_REJECTION_MAPPING: ProviderBusinessCodeMapping = {
+  code: ModelErrorCode.InvalidModelRequest,
+  reason: ModelFailureReasonValue.InvalidRequest,
+  retryReason: ModelRetryReasonValue.NetworkError,
+  retryable: false,
+};
+
+for (const code of ["11128", "12403"]) {
+  PROVIDER_BUSINESS_CODE_MAPPINGS.set(code, TERMINAL_CLIENT_REJECTION_MAPPING);
+}
+
+PROVIDER_BUSINESS_CODE_MAPPINGS.set("11217", {
+  // 账号授权未完成：重试无用，必须重新登录并完成授权（AuthRefresh 语义）。
+  code: ModelErrorCode.ProviderNotConfigured,
+  reason: ModelFailureReasonValue.AuthFailed,
+  retryReason: ModelRetryReasonValue.AuthRefresh,
+  retryable: false,
+});
 
 export function getProviderBusinessCodeMapping(
   providerCode: string,

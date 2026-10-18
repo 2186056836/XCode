@@ -24,6 +24,16 @@ export function createFreeProviderNodeKey(id: string): string {
   return `free:${id}`;
 }
 
+export function resolveOAuthProviderIdByPreset(
+  presetId: BuiltinModelProviderId,
+): OAuthProviderId | null {
+  return (
+    PRESET_PROVIDER_SPEC_BY_ID.get(presetId)?.oauthProviderId ??
+    CODING_PLAN_PROVIDER_SPECS.find((spec) => spec.id === presetId)?.oauthProviderId ??
+    null
+  );
+}
+
 export function resolveModelProviderNavLogo(item: ModelProviderNavItem) {
   // 品牌主入口沿用 Start 导航 ID，但不能因此显示体验套餐图标。
   if (item.type === "preset") return item.logo;

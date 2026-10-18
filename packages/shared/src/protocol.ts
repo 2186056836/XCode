@@ -6,6 +6,7 @@ import type { XCodeProvider } from "./zcode-task-types-core.js";
 import type { WorkspacePurpose } from "./workspacePurpose.js";
 import type { DynamicWorkflowMode } from "./dynamic-workflow-feature.js";
 import type { EmbeddedBrowserViewportPreference } from "./browser-use/command-metadata.js";
+import type { ProxyPoolSettings } from "./proxy-pool.js";
 import { z } from "zod";
 import { customSkinSchema } from "./validationAppSettings.js";
 
@@ -467,4 +468,11 @@ export interface AppSettings {
   };
   /** 设置页里的临时 endpoint override；正式/测试默认 base url 由 XCODE_BASE_URL env 管理。 */
   zcodeEndpointOrigin?: string;
+  /**
+   * 代理池配置：条目列表 + 轮询策略 + 当前选中项。
+   *
+   * 优先级高于 httpProxy 单代理——选中且 isActive 的池条目覆盖 httpProxy 出口；
+   * 未配置 / 未选中 / 条目被停用时回退 httpProxy，最后才是直连。与 httpProxy 同层持久化。
+   */
+  proxyPools?: ProxyPoolSettings;
 }

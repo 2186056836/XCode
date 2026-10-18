@@ -37,6 +37,7 @@ import type {
   ModelToolCall,
   ModelUsage,
   OffPeakPort,
+  ProxyPoolPort,
   TopicResourcePort,
   PdfDocumentPort,
   PermissionBrokerPort,
@@ -203,6 +204,8 @@ export interface XCodeAppOptions {
   onWorkflowEvent?: (event: WorkflowEvent) => void | Promise<void>;
   automationPort?: AutomationPort;
   offPeakPort?: OffPeakPort;
+  /** 代理池配置端口；host 侧 IProxyPoolService 在场即注入。 */
+  proxyPoolPort?: ProxyPoolPort;
   topicResourcePort?: TopicResourcePort;
   /** 首次真实用户执行或 cold-resume fallback 时解析一次，之后由 app 生命周期缓存。 */
   resolveInitialBashShellSelection?: () => Promise<ExecutionShellSelection | undefined>;

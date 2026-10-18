@@ -2791,6 +2791,22 @@ export const zcodeProviderRuntimeHeadersRequestParamsSchema = z
       .string()
       .regex(/^[a-f0-9]{64}$/)
       .optional(),
+    /**
+     * 本次逻辑请求里已经失败、本轮不得再选的连接（账号）id。
+     * XCode fork：账号轮询的 fallback 语义——adapter 在账号级失败后把已试过的连接
+     * 带回来，host 选一个未排除的账号重试（对齐 9router 的 excludeConnectionIds）。
+     */
+    excludedConnectionIds: z.array(nonEmptyString).max(32).optional(),
+    /** 上一次失败的类型；host 用于写模型锁 / 判断是否值得换号。 */
+    lastFailure: z
+      .object({
+        statusCode: z.number().int().optional(),
+        providerErrorCode: z.string().optional(),
+        /** 失败的那条连接；host 据此写模型锁（excludedConnectionIds 之外的显式证据）。 */
+        connectionId: nonEmptyString.optional(),
+      })
+      .strict()
+      .optional(),
     reason: zcodeProviderRuntimeHeadersRequestReasonSchema,
   })
   .strict();
@@ -2823,6 +2839,11 @@ export const zcodeProviderRuntimeHeadersResponseSchema = z.discriminatedUnion("h
             .string()
             .regex(/^[a-f0-9]{64}$/)
             .optional(),
+          /**
+           * 本次请求实际使用的连接（账号）id；账号轮询下 host 每次选择可能不同，
+           * adapter 据此把失败账号加入下一次的 excludedConnectionIds。
+           */
+          connectionId: nonEmptyString.optional(),
           headers: z.record(nonEmptyString, nonEmptyString).optional(),
         })
         .strict(),
@@ -4096,6 +4117,155 @@ export const zcodeOffPeakListResultSchema = z
   .strict();
 export type XCodeOffPeakListProtocolResult = z.infer<typeof zcodeOffPeakListResultSchema>;
 
+// ------------------------------------------------------------
+// 代理池配置（proxyPool/*）
+// ------------------------------------------------------------
+// 与 Off-Peak 同族的独立方法族：把设置页「代理池配置 / 代理出口」那套配置面开放给 agent。
+// 绑定单位是**单条连接**（= 一个账号 / 一份凭据），没有供应商级开关。三种状态的语义：
+// 绑定某池 = 该连接独占池出口且不再走全局代理；未绑定 = 跟随全局代理状态；
+// 绑定但池停用/地址无效 = 硬直连，绝不回落全局代理。
+//
+// 所有写方法回同一个 snapshot：全量池 + 支持连接的供应商摘要（+ 该供应商详情 / 探针结果）。
+// 模型改完立刻看到真值，不需要额外读一次；host 也不必为每个方法各造一种结果形状。
+
+/** 一条池条目；type 由 host 从 proxyUrl 推导，不接受手工指定。 */
+export const zcodeProxyPoolEntrySchema = z
+  .object({
+    // id / proxyUrl 用宽松 string：这些是 host 侧的**存量**数据投影，一条被手工编辑过的
+    // settings.json 条目不该让整份 snapshot 校验失败（那会让工具连只读都做不了）。
+    id: z.string(),
+    name: z.string(),
+    proxyUrl: z.string(),
+    noProxy: z.string().optional(),
+    isActive: z.boolean(),
+    type: z.string(),
+    strictProxy: z.boolean().optional(),
+  })
+  .strict();
+export type XCodeProxyPoolProtocolEntry = z.infer<typeof zcodeProxyPoolEntrySchema>;
+
+/** 一个可绑定的连接；boundEntryId 缺席即「未绑定 = 跟随全局代理」。 */
+export const zcodeProxyPoolAccountSchema = z
+  .object({
+    id: z.string(),
+    displayName: z.string(),
+    email: z.string().optional(),
+    active: z.boolean(),
+    boundEntryId: z.string().optional(),
+  })
+  .strict();
+
+export const zcodeProxyPoolProviderSummarySchema = z
+  .object({
+    providerId: nonEmptyString,
+    providerName: z.string(),
+    requestProfile: z.string().optional(),
+    supportsConnections: z.boolean(),
+    accountCount: z.number().int().nonnegative(),
+    boundAccountCount: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const zcodeProxyPoolProviderViewSchema = z
+  .object({
+    providerId: nonEmptyString,
+    providerName: z.string(),
+    requestProfile: z.string().optional(),
+    supportsConnections: z.boolean(),
+    pools: z.array(zcodeProxyPoolEntrySchema),
+    accounts: z.array(zcodeProxyPoolAccountSchema),
+  })
+  .strict();
+
+export const zcodeProxyPoolTestOutcomeSchema = z
+  .object({
+    ok: z.boolean(),
+    status: z.number().int().optional(),
+    statusText: z.string().optional(),
+    url: z.string().optional(),
+    elapsedMs: z.number().nonnegative().optional(),
+    exitIp: z.string().optional(),
+    error: z.string().optional(),
+  })
+  .strict();
+
+/**
+ * 所有 proxyPool/* 方法的统一结果快照。provider 只在入参带 providerId（或该操作本来就
+ * 针对某个供应商）时出现；test 只在 test 方法出现。
+ */
+export const zcodeProxyPoolSnapshotResultSchema = z
+  .object({
+    pools: z.array(zcodeProxyPoolEntrySchema),
+    providers: z.array(zcodeProxyPoolProviderSummarySchema),
+    provider: zcodeProxyPoolProviderViewSchema.optional(),
+    test: zcodeProxyPoolTestOutcomeSchema.optional(),
+  })
+  .strict();
+export type XCodeProxyPoolProtocolSnapshot = z.infer<typeof zcodeProxyPoolSnapshotResultSchema>;
+
+export const zcodeProxyPoolListParamsSchema = z
+  .object({ providerId: nonEmptyString.optional() })
+  .strict();
+export type XCodeProxyPoolListProtocolParams = z.infer<typeof zcodeProxyPoolListParamsSchema>;
+
+/** poolId 省略 = 新建（id 由 host 生成，模型不能指定）；提供 = 按 id 更新。 */
+export const zcodeProxyPoolSaveParamsSchema = z
+  .object({
+    poolId: nonEmptyString.optional(),
+    name: nonEmptyString,
+    proxyUrl: nonEmptyString,
+    noProxy: z.string().optional(),
+    isActive: z.boolean().optional(),
+    strictProxy: z.boolean().optional(),
+  })
+  .strict();
+export type XCodeProxyPoolSaveProtocolParams = z.infer<typeof zcodeProxyPoolSaveParamsSchema>;
+
+export const zcodeProxyPoolDeleteParamsSchema = z.object({ poolId: nonEmptyString }).strict();
+export type XCodeProxyPoolDeleteProtocolParams = z.infer<typeof zcodeProxyPoolDeleteParamsSchema>;
+
+export const zcodeProxyPoolSetActiveParamsSchema = z
+  .object({ poolId: nonEmptyString, isActive: z.boolean() })
+  .strict();
+export type XCodeProxyPoolSetActiveProtocolParams = z.infer<
+  typeof zcodeProxyPoolSetActiveParamsSchema
+>;
+
+export const zcodeProxyPoolTestParamsSchema = z
+  .object({
+    poolId: nonEmptyString.optional(),
+    proxyUrl: nonEmptyString.optional(),
+    testUrl: nonEmptyString.optional(),
+  })
+  .strict();
+export type XCodeProxyPoolTestProtocolParams = z.infer<typeof zcodeProxyPoolTestParamsSchema>;
+
+/** poolId 传 null = 取消绑定（回到「跟随全局代理状态」）。 */
+export const zcodeProxyPoolBindParamsSchema = z
+  .object({
+    providerId: nonEmptyString,
+    accountId: nonEmptyString,
+    poolId: nonEmptyString.nullable(),
+  })
+  .strict();
+export type XCodeProxyPoolBindProtocolParams = z.infer<typeof zcodeProxyPoolBindParamsSchema>;
+
+/** poolId 传 null = 全部取消绑定（对齐设置页的「改为跟随全局」）。 */
+export const zcodeProxyPoolApplyToAllParamsSchema = z
+  .object({ providerId: nonEmptyString, poolId: nonEmptyString.nullable() })
+  .strict();
+export type XCodeProxyPoolApplyToAllProtocolParams = z.infer<
+  typeof zcodeProxyPoolApplyToAllParamsSchema
+>;
+
+/** poolIds 为空数组 = 由 host 取当前全部启用的池，按列表顺序轮流分配。 */
+export const zcodeProxyPoolDistributeParamsSchema = z
+  .object({ providerId: nonEmptyString, poolIds: z.array(nonEmptyString) })
+  .strict();
+export type XCodeProxyPoolDistributeProtocolParams = z.infer<
+  typeof zcodeProxyPoolDistributeParamsSchema
+>;
+
 export const zcodeProtocolMethods = {
   runtimeCapabilities: "runtime/capabilities",
   computerUseOperationEvent: "computer-use/operation-event",
@@ -4212,6 +4382,16 @@ export const zcodeProtocolMethods = {
   // Off-Peak 会话内创建：与 automation 兄弟并列的独立方法族。
   offPeakCreate: "offPeak/create",
   offPeakList: "offPeak/list",
+  // 代理池配置：设置页「代理池配置 / 代理出口」的 agent 面。同为独立方法族，
+  // 与 offPeak 一样只在 host 确认能力在场时才注册工具（端口在场即曝光）。
+  proxyPoolList: "proxyPool/list",
+  proxyPoolSave: "proxyPool/save",
+  proxyPoolDelete: "proxyPool/delete",
+  proxyPoolSetActive: "proxyPool/setActive",
+  proxyPoolTest: "proxyPool/test",
+  proxyPoolBindAccount: "proxyPool/bindAccount",
+  proxyPoolApplyToAll: "proxyPool/applyToAll",
+  proxyPoolDistribute: "proxyPool/distribute",
   // @deprecated：host 消费已清零（zcodeAgentService 改走 v4/usage/stats）。
   // 仅剩 CLI server 的 wire 兼容 case；随旧词整体删除时一并移除。
   usageStats: "usage/stats",

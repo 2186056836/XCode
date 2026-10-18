@@ -58,6 +58,8 @@ import { useUsageEntitlement } from "@/hooks/useUsageEntitlement.js";
 import { useServices } from "@/hooks/useServices.js";
 import { CodeBuddyLoginSection } from "./CodeBuddyLoginSection.js";
 import { QoderLoginSection } from "./QoderLoginSection.js";
+import { ProviderProxyPoolControl } from "./ProviderAccountBinding.js";
+// XCode fork：账号额度/配额内联在账号行（见 QoderLoginSection / CodeBuddyLoginSection）。
 import {
   createCodingPlanFunnelContext,
   resolveCodingPlanEntryPlanState,
@@ -472,6 +474,8 @@ export function ModelProviderSectionDetail({
         hideApiKeySection
         upstreamImportEnabled
         nameEditable={false}
+        // 免费档没有账号可绑，但上游按出口 IP 风控 —— 给 provider 级池 + 轮询入口。
+        loginSection={<ProviderProxyPoolControl providerId={freeProvider.providerId} />}
       />
     );
   }

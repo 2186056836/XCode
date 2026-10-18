@@ -10,7 +10,7 @@ import { readIncomingResponse, toWebResponse } from "./incoming-response.js";
 
 export type NetworkFetch = typeof globalThis.fetch;
 
-interface NetworkProxyFetchOptions {
+export interface NetworkProxyFetchOptions {
   caCertFile?: string;
   env?: Record<string, string | undefined>;
   fetch?: NetworkFetch;

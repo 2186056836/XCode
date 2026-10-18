@@ -115,6 +115,7 @@ import { buildAppUsageSnapshot, resolveTzOffsetMs } from "./usage-stats-builder.
 import { createProtocolInteractionBroker } from "./interaction-broker.js";
 import { createProtocolAutomationPort } from "./automation-port.js";
 import { createProtocolOffPeakPort } from "./offpeak-port.js";
+import { createProtocolProxyPoolPort } from "./proxy-pool-port.js";
 import { createProtocolTopicResourcePort } from "./topic-resource-port.js";
 import { createProtocolBrowserControlBroker } from "./browser-control-broker.js";
 import { mapComputerUseOperationEvent } from "./computer-use-operation-event.js";
@@ -3432,6 +3433,10 @@ async function createRecord(
     context.appRuntimePreferences.offPeakToolEnabled === true
       ? { offPeakPort: createProtocolOffPeakPort(context, () => ownSessionRecord) }
       : {}),
+    // 代理池配置面与 offPeak 同族的端口门，但没有灰度 flag：代理池是设置页里已经在的功能，
+    // host 侧 IProxyPoolService 在任何装配形态下都注册，所以这里直接注入。
+    // 老 host 没实现 proxyPool/* 时请求会被拒（-32601），工具侧报「能力不可用」而不是静默失败。
+    proxyPoolPort: createProtocolProxyPoolPort(context),
     resolveInitialBashShellSelection: startupPreferences.resolveInitialBashShellSelection,
     ...(startupPreferences.subagentRuntimeConfigEnabled &&
     !(workspace.workspaceIdentity && isRemoteWorkspaceIdentity(workspace.workspaceIdentity))

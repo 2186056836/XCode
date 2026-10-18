@@ -119,6 +119,10 @@ const REQUIRED_ASAR_RUNTIME_MODULES = [
   "@opentelemetry/exporter-trace-otlp-proto",
   "@opentelemetry/exporter-metrics-otlp-proto",
   "pngjs",
+  // Bugfix: @arms/rum-core 把 @babel/runtime 声明成 peerDependency，pnpm 安装时可由 peer
+  // 解析兜住，但 electron-builder 打包时仍可能漏，线上曾出现安装包启动即报
+  // Cannot find module '@babel/runtime/helpers/interopRequireDefault'。显式注入（对齐官方）。
+  "@babel/runtime",
   // @zcode/services 的代理连通性探测会动态 require("undici") 取 ProxyAgent。
   // tsup 虽然把 services 代码并进了主/host 产物，但不会把这个运行时 require 的包内联进去，
   // electron-builder 产物又可能漏掉 hoisted 的 undici，最终 mac 安装包启动即报 Cannot find module "undici"。
@@ -138,6 +142,11 @@ const REQUIRED_ASAR_RUNTIME_MODULES = [
   // 要到 bundle 校验阶段才报「缺少运行时依赖 pend」。这里以 yauzl 作为闭包根注入，
   // 与 bundle.mjs 的校验名单保持一致，让递归依赖收集把 pend 一起补进产物。
   "yauzl",
+  // Bugfix: 主进程 manifestUpdateProvider 直接 `import { parse } from "yaml"`，
+  // pnpm hoisted 布局下 electron-builder 既不放它进 app.asar，files 白名单也不覆盖它，
+  // 结果安装包启动即在 out/main/chunk-*.js 报 ERR_MODULE_NOT_FOUND "yaml"。
+  // 与 yauzl/undici 同一类隐患：显式以闭包根注入，让递归依赖收集补齐。
+  "yaml",
   // Bugfix: 飞书 SDK 被 desktop main/host 外置后，安装包运行时必须能从 app.asar 解析到它。
   // 这里显式注入 scoped 包，避免开发态正常、生产包启动时才报 Cannot find module。
   "@larksuiteoapi/node-sdk",
@@ -698,6 +707,12 @@ export default {
   win: {
     target: ["nsis"],
     artifactName: buildDesktopArtifactName("win"),
+    // 无签名发布（fork 一贯如此）：产物保持未签名，SmartScreen 仍提示未知发布者。
+    // 但 rcedit 不能关（默认 true）：exe 的图标与 FileDescription/ProductName/FileVersion
+    // 等版本资源只在 rcedit 阶段写入，关掉后安装出来的桌面快捷方式会显示 Electron 默认
+    // 原子图标。Windows 原生构建走本地 app-builder.exe 的 rcedit 分支，不下载 winCodeSign；
+    // winCodeSign 仅用于 Linux/macOS 交叉构建 Windows 产物（wine）那条路径。
+    // 本配置未设证书，signIf 会直接跳过，所以打开 rcedit 不会额外触发签名。
   },
   linux: {
     target: ["AppImage", "deb", "rpm", "pacman"],
@@ -759,6 +774,10 @@ export default {
     installerIcon: "build/icon_installer.ico",
     uninstallerIcon: "build/icon_installer.ico",
     installerHeaderIcon: "build/icon_installer.ico",
+    // 卸载器脚本（<stdin>）不含 installer.nsh 自定义宏插入，其中 ZCodeResetUninstallerLog
+    // 等只被主安装包引用的函数在卸载器编译里未被引用，NSIS 报 6010。electron-builder
+    // 默认给 makensis 传 -WX（warning 当 error）会让构建失败——该警告对产物无影响。
+    warningsAsErrors: false,
   },
   detectUpdateChannel: false,
   publish: {

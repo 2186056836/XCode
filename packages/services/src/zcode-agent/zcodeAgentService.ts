@@ -99,6 +99,16 @@ import {
   zcodeAutomationUpdateParamsSchema,
   zcodeOffPeakCreateParamsSchema,
   zcodeOffPeakListParamsSchema,
+  zcodeProxyPoolApplyToAllParamsSchema,
+  zcodeProxyPoolBindParamsSchema,
+  zcodeProxyPoolDeleteParamsSchema,
+  zcodeProxyPoolDistributeParamsSchema,
+  zcodeProxyPoolListParamsSchema,
+  zcodeProxyPoolSaveParamsSchema,
+  zcodeProxyPoolSetActiveParamsSchema,
+  zcodeProxyPoolTestParamsSchema,
+  type ProxyPoolEntry,
+  type XCodeProxyPoolProtocolSnapshot,
   OFF_PEAK_PROVIDER_IDS,
   zcodeComputerUseOperationEventSchema,
   zcodeProviderRuntimeHeadersCancelledSchema,
@@ -159,6 +169,7 @@ import type {
   AccountRequestAuthMaterial,
   IAccountRequestAuthService,
 } from "#src/model-provider/accountRequestAuthService.js";
+import type { AccountRotationService } from "#src/model-provider/accountRotation.js";
 import {
   mergeAutomationMutationToolDenylist,
   mergeOffPeakMutationToolDenylist,
@@ -353,6 +364,7 @@ import { XCodeAgentMcpStatusModeUnsupportedError } from "#src/zcode-agent/zcodeA
 import { XCodeAgentProcessManager } from "./zcodeAgentProcessManager.js";
 import type { XCodeAgentProcessManagerOptions } from "./zcodeAgentProcessManager.js";
 import type { IOffPeakTaskService } from "#src/session/offPeakTask.js";
+import type { IProxyPoolService, ProxyPoolState, ProxyProviderBindingView } from "#src/proxy-pool/proxyPool.js";
 import {
   XCodeProtocolRequestTimeoutError,
   type XCodeProtocolClient,
@@ -956,6 +968,12 @@ interface CreateXCodeAgentServiceOptions extends Omit<
   mcpStatusIdleTimeoutMs?: number;
   accountProviderConfigSource?: ProviderSource<AccountProviderConfigSnapshot>;
   accountRequestAuthService?: IAccountRequestAuthService;
+  /**
+   * 多账号轮询（Qoder / CodeBuddy）。adapter 只在账号级失败后经由
+   * `excludedConnectionIds` 触发换号；正常请求也走它返回当前激活账号的材料，
+   * 保证「选的账号」与请求实际使用的 token 一致。
+   */
+  accountRotationService?: AccountRotationService;
   /** Desktop Host 请求 Main 登记 Agent 已授权的精确本地视频路径。 */
   authorizeLocalMediaPreviewPath?: (path: string) => Promise<string>;
   modelSelectionReadinessSource?: ModelSelectionReadinessSource;
@@ -995,6 +1013,12 @@ interface CreateXCodeAgentServiceOptions extends Omit<
   resolveOffPeakTaskService?: () =>
     | Pick<IOffPeakTaskService, "createTask" | "list" | "getCodingPlanSupport">
     | undefined;
+  /**
+   * 代理池服务：agent 的 ProxyPool 工具经 proxyPool/* 协议落到这里。
+   * node.ts 直接注入本来就注册在 DI 里的 IProxyPoolService 实例；缺省（未装配代理池的
+   * host）不注入，协议回 -32601，工具侧报能力不可用而不是静默失败。
+   */
+  resolveProxyPoolService?: () => IProxyPoolService | undefined;
   /**
    * browser-use 执行桥：把 agent 的 interaction/browserExecute 反向请求转发到 main
    * （WebContentsView+CDP）。desktop host 装配时注入；缺省（纯 CLI/远控无 main）则
@@ -1122,6 +1146,262 @@ async function respondOffPeakInternalError(
     code: -32603,
     message: OFF_PEAK_INTERNAL_ERROR_MESSAGE,
     data: { errorCode: OFF_PEAK_INTERNAL_ERROR_CODE },
+  });
+}
+
+// ------------------------------------------------------------
+// 代理池配置（proxyPool/*）
+// ------------------------------------------------------------
+// agent 的 ProxyPool 工具经这一族方法落到 host 的 IProxyPoolService —— 与设置页
+// 「代理池配置 / 代理出口」是同一份服务、同一份落盘数据，不存在第二套写入路径。
+// 语义与设置页逐字一致：绑定某池 = 该连接独占池出口且不再走全局代理；未绑定 = 跟随全局
+// 代理状态；绑定但池停用或地址无效 = 硬直连（绝不回落全局代理）。
+//
+// 每个方法都回同一个 snapshot（全量池 + 支持连接的供应商摘要，外加该供应商详情 / 探针结果），
+// 模型改完立刻看到真值，不必再读一次。入参类错误（池名缺失、URL scheme 不支持等）按稳定
+// errorCode 过协议，不收敛成「内部错误」——模型要靠它修正入参。
+
+export const PROXY_POOL_INTERNAL_ERROR_CODE = "proxypool_internal_error";
+export const PROXY_POOL_INTERNAL_ERROR_MESSAGE = "Internal proxy pool service error";
+
+const PROXY_POOL_METHODS: ReadonlySet<string> = new Set([
+  zcodeProtocolMethods.proxyPoolList,
+  zcodeProtocolMethods.proxyPoolSave,
+  zcodeProtocolMethods.proxyPoolDelete,
+  zcodeProtocolMethods.proxyPoolSetActive,
+  zcodeProtocolMethods.proxyPoolTest,
+  zcodeProtocolMethods.proxyPoolBindAccount,
+  zcodeProtocolMethods.proxyPoolApplyToAll,
+  zcodeProtocolMethods.proxyPoolDistribute,
+]);
+
+/**
+ * 服务层为「入参可修正」抛出的稳定错误码（shared validateProxyPoolUrl / savePool）。
+ * 只有这些原样回给模型；其它异常按内部错误收敛，不外泄文件路径与栈。
+ */
+const PROXY_POOL_REJECTION_CODES: ReadonlySet<string> = new Set([
+  "proxy-pool-name-required",
+  "proxy-url-required",
+  "proxy-url-invalid",
+  "proxy-url-invalid-characters",
+  "proxy-url-unparsable",
+  "proxy-url-unsupported-scheme",
+  "proxy-url-missing-host",
+]);
+
+export function isProxyPoolProtocolMethod(method: string): boolean {
+  return PROXY_POOL_METHODS.has(method);
+}
+
+function toProxyPoolProtocolEntry(pool: ProxyPoolEntry) {
+  return {
+    id: pool.id,
+    name: pool.name,
+    proxyUrl: pool.proxyUrl,
+    ...(pool.noProxy ? { noProxy: pool.noProxy } : {}),
+    isActive: pool.isActive,
+    type: pool.type,
+    ...(pool.strictProxy ? { strictProxy: pool.strictProxy } : {}),
+  };
+}
+
+function toProxyPoolProtocolProvider(view: ProxyProviderBindingView) {
+  return {
+    providerId: view.providerId,
+    providerName: view.providerName,
+    ...(view.requestProfile ? { requestProfile: view.requestProfile } : {}),
+    supportsConnections: view.supportsConnections,
+    pools: view.pools.map(toProxyPoolProtocolEntry),
+    accounts: view.accounts.map((account) => ({
+      id: account.id,
+      displayName: account.displayName,
+      ...(account.email ? { email: account.email } : {}),
+      active: account.active,
+      ...(account.boundEntryId ? { boundEntryId: account.boundEntryId } : {}),
+    })),
+  };
+}
+
+/**
+ * 视图 → 协议 snapshot。刻意只挑字段：ProxyProviderBindingView 上的 `binding`
+ * 是「已绑定条目的快照」，协议里用不到，带过去会被 strict schema 拒。
+ */
+function toProxyPoolSnapshot(
+  state: ProxyPoolState,
+  provider?: ProxyProviderBindingView,
+): XCodeProxyPoolProtocolSnapshot {
+  return {
+    pools: state.pools.map(toProxyPoolProtocolEntry),
+    providers: state.providers.map((view) => ({
+      providerId: view.providerId,
+      providerName: view.providerName,
+      ...(view.requestProfile ? { requestProfile: view.requestProfile } : {}),
+      supportsConnections: view.supportsConnections,
+      accountCount: view.accounts.length,
+      boundAccountCount: view.accounts.filter((account) => account.boundEntryId).length,
+    })),
+    ...(provider ? { provider: toProxyPoolProtocolProvider(provider) } : {}),
+  };
+}
+
+type ProxyPoolDispatchResult =
+  | { ok: true; snapshot: XCodeProxyPoolProtocolSnapshot }
+  | { ok: false; message: string; data?: unknown };
+
+/** 导出给测试：这条 switch 是 proxyPool/* 的唯一 host 侧映射，协议快照的字段裁剪也在里面。 */
+export async function dispatchProxyPoolRequest(
+  service: IProxyPoolService,
+  request: { method: string; params?: unknown },
+): Promise<ProxyPoolDispatchResult> {
+  const invalid = (message: string, data?: unknown): ProxyPoolDispatchResult => ({
+    ok: false,
+    message,
+    ...(data === undefined ? {} : { data }),
+  });
+
+  /** 绑定类操作的收尾：连接级绑定一定回该供应商视图；null 说明 providerId 不存在。 */
+  const finishProviderMutation = async (
+    providerId: string,
+    view: ProxyProviderBindingView | null,
+  ): Promise<ProxyPoolDispatchResult> => {
+    if (!view) {
+      return invalid(
+        `Unknown provider id: ${providerId}. Pass one of the providerId values returned by list.`,
+      );
+    }
+    return { ok: true, snapshot: toProxyPoolSnapshot(await service.getState(), view) };
+  };
+
+  switch (request.method) {
+    case zcodeProtocolMethods.proxyPoolList: {
+      const parsed = zcodeProxyPoolListParamsSchema.safeParse(request.params ?? {});
+      if (!parsed.success) return invalid("Invalid proxy pool list params", parsed.error.flatten());
+      const state = await service.getState();
+      if (!parsed.data.providerId) {
+        return { ok: true, snapshot: toProxyPoolSnapshot(state) };
+      }
+      const provider = await service.getProviderBinding(parsed.data.providerId);
+      if (!provider) {
+        return invalid(
+          `Unknown provider id: ${parsed.data.providerId}. Pass one of the providerId values returned by list.`,
+        );
+      }
+      return { ok: true, snapshot: toProxyPoolSnapshot(state, provider) };
+    }
+
+    case zcodeProtocolMethods.proxyPoolSave: {
+      const parsed = zcodeProxyPoolSaveParamsSchema.safeParse(request.params);
+      if (!parsed.success) return invalid("Invalid proxy pool save params", parsed.error.flatten());
+      const state = await service.savePool({
+        ...(parsed.data.poolId ? { id: parsed.data.poolId } : {}),
+        name: parsed.data.name,
+        proxyUrl: parsed.data.proxyUrl,
+        ...(parsed.data.noProxy === undefined ? {} : { noProxy: parsed.data.noProxy }),
+        ...(parsed.data.isActive === undefined ? {} : { isActive: parsed.data.isActive }),
+        ...(parsed.data.strictProxy === undefined ? {} : { strictProxy: parsed.data.strictProxy }),
+      });
+      return { ok: true, snapshot: toProxyPoolSnapshot(state) };
+    }
+
+    case zcodeProtocolMethods.proxyPoolDelete: {
+      const parsed = zcodeProxyPoolDeleteParamsSchema.safeParse(request.params);
+      if (!parsed.success) {
+        return invalid("Invalid proxy pool delete params", parsed.error.flatten());
+      }
+      const state = await service.deletePool(parsed.data.poolId);
+      return { ok: true, snapshot: toProxyPoolSnapshot(state) };
+    }
+
+    case zcodeProtocolMethods.proxyPoolSetActive: {
+      const parsed = zcodeProxyPoolSetActiveParamsSchema.safeParse(request.params);
+      if (!parsed.success) {
+        return invalid("Invalid proxy pool setActive params", parsed.error.flatten());
+      }
+      const state = await service.setPoolActive(parsed.data.poolId, parsed.data.isActive);
+      return { ok: true, snapshot: toProxyPoolSnapshot(state) };
+    }
+
+    case zcodeProtocolMethods.proxyPoolTest: {
+      const parsed = zcodeProxyPoolTestParamsSchema.safeParse(request.params);
+      if (!parsed.success) return invalid("Invalid proxy pool test params", parsed.error.flatten());
+      if (!parsed.data.poolId && !parsed.data.proxyUrl) {
+        return invalid("proxyPool/test requires poolId or proxyUrl");
+      }
+      const test = await service.testPool({
+        ...(parsed.data.poolId ? { poolId: parsed.data.poolId } : {}),
+        ...(parsed.data.proxyUrl ? { proxyUrl: parsed.data.proxyUrl } : {}),
+        ...(parsed.data.testUrl ? { testUrl: parsed.data.testUrl } : {}),
+      });
+      return {
+        ok: true,
+        snapshot: { ...toProxyPoolSnapshot(await service.getState()), test },
+      };
+    }
+
+    case zcodeProtocolMethods.proxyPoolBindAccount: {
+      const parsed = zcodeProxyPoolBindParamsSchema.safeParse(request.params);
+      if (!parsed.success) return invalid("Invalid proxy pool bind params", parsed.error.flatten());
+      const view = await service.saveAccountBinding(
+        parsed.data.providerId,
+        parsed.data.accountId,
+        parsed.data.poolId,
+      );
+      return finishProviderMutation(parsed.data.providerId, view);
+    }
+
+    case zcodeProtocolMethods.proxyPoolApplyToAll: {
+      const parsed = zcodeProxyPoolApplyToAllParamsSchema.safeParse(request.params);
+      if (!parsed.success) {
+        return invalid("Invalid proxy pool applyToAll params", parsed.error.flatten());
+      }
+      const view = await service.applyPoolToAllAccounts(
+        parsed.data.providerId,
+        parsed.data.poolId,
+      );
+      return finishProviderMutation(parsed.data.providerId, view);
+    }
+
+    case zcodeProtocolMethods.proxyPoolDistribute: {
+      const parsed = zcodeProxyPoolDistributeParamsSchema.safeParse(request.params);
+      if (!parsed.success) {
+        return invalid("Invalid proxy pool distribute params", parsed.error.flatten());
+      }
+      // 空数组 = 用当前全部启用的池，按列表顺序（镜像设置页「按序轮流分配」按钮的行为）。
+      const poolIds =
+        parsed.data.poolIds.length > 0
+          ? parsed.data.poolIds
+          : (await service.getState()).pools
+              .filter((pool) => pool.isActive)
+              .map((pool) => pool.id);
+      if (poolIds.length === 0) {
+        return invalid("There is no active proxy pool to distribute; create or enable one first.");
+      }
+      const view = await service.distributePools(parsed.data.providerId, poolIds);
+      return finishProviderMutation(parsed.data.providerId, view);
+    }
+
+    default:
+      return invalid(`Unsupported proxy pool method: ${request.method}`);
+  }
+}
+
+/** 内部错误收敛：原始异常只进服务端日志，对外固定稳定错误码。 */
+async function respondProxyPoolInternalError(
+  client: Pick<XCodeProtocolClient, "respondError">,
+  request: { id: XCodeProtocolRequestId; method: string },
+  workspace: XCodeAgentWorkspaceTarget,
+  error: unknown,
+): Promise<void> {
+  logger.warn(undefined, "代理池协议请求处理失败", {
+    method: request.method,
+    workspaceKey: resolveWorkspaceKey(workspace),
+    errorName: error instanceof Error ? error.name : typeof error,
+    message: error instanceof Error ? error.message : String(error),
+  });
+  await client.respondError(request.id, {
+    code: -32603,
+    message: PROXY_POOL_INTERNAL_ERROR_MESSAGE,
+    data: { errorCode: PROXY_POOL_INTERNAL_ERROR_CODE },
   });
 }
 
@@ -1326,6 +1606,7 @@ export function createXCodeAgentService(
   const accountConfigReceivedRevisionByClient = new WeakMap<XCodeProtocolClient, string>();
   const sessionTraceIdBySessionKey = new Map<string, TraceId>();
   const accountRequestAuthService = options?.accountRequestAuthService;
+  const accountRotationService = options?.accountRotationService;
   const accountProviderConfigSource = options?.accountProviderConfigSource;
   const modelSelectionReadinessSource = options?.modelSelectionReadinessSource;
   const sessionRuntimePreferencesAuthority = options?.sessionRuntimePreferencesAuthority ?? "local";
@@ -1383,20 +1664,108 @@ export function createXCodeAgentService(
     invalidateWorkspaceClient(event.workspaceKey, active.client);
   });
 
+  /**
+   * XCode fork：zai / bigmodel（Coding Plan 账号族）的轮询选号。
+   *
+   * 只有**允许换号**的语境才选：
+   * - 带 `expectedAccountScope` 的是 PAT 刷新重试，必须留在同一账号，换号会串身份；
+   * - 带 `rejectedProjectTokenFingerprint` 的是项目 Token 被拒后的换证，同样不能换号；
+   * - `reason=usage` 是配额查询，换号会读到别的账号的额度并白推轮询游标；
+   * - `team-coding-plan` 的材料按组织/项目解析，与账号身份无关，不参与轮询。
+   *
+   * 命中时返回 accountRef（`${family}:${identity}`，与账号管理页同一套 id），由
+   * accountRequestAuthService 用该账号自己的 OAuth 凭据与身份解析材料。选不出账号时返回
+   * undefined，回落「当前激活账号」，即改造前行为。
+   *
+   * adapter 的账号级重试会把已失败的连接放进 `excludedConnectionIds` 再来一次，因此这里的
+   * 第一次尝试选中的一定是当前激活账号（fill-first/round-robin 都把 active 排在最前），
+   * 换号只发生在真的失败之后。
+   */
+  async function resolveRotatedAccountRef(
+    request: XCodeProviderRuntimeHeadersRequestParams,
+  ): Promise<string | undefined> {
+    const access = request.accountAccess;
+    const rotation = accountRotationService;
+    if (!access || !rotation) return undefined;
+    if (request.expectedAccountScope !== undefined) return undefined;
+    if (request.rejectedProjectTokenFingerprint !== undefined) return undefined;
+    // reason 在这条路径上只可能是 "model-request"（协议层枚举就这一个值）：配额查询走的是
+    // 宿主的独立查询接口，不经过这里，所以不需要额外的 reason 判定。
+    if (access.mode !== "start-plan" && access.mode !== "individual-coding-plan") return undefined;
+    try {
+      const selection = await rotation.select({
+        providerId: request.providerId,
+        modelId: request.modelSelection.modelId,
+        ...(request.excludedConnectionIds && request.excludedConnectionIds.length > 0
+          ? { excludedConnectionIds: request.excludedConnectionIds }
+          : {}),
+        ...(request.lastFailure ? { lastFailure: request.lastFailure } : {}),
+      });
+      return selection?.connectionId;
+    } catch (error) {
+      // 账号族轮的只是「换哪个账号」，与 Qoder 那类「没账号就没法鉴权」不同：选号失败时
+      // 当前激活账号仍可正常出码，因此这里降级而不是把请求打死。
+      logger.warn(undefined, "账号轮询选号失败，回落当前激活账号", {
+        providerId: request.providerId,
+        error,
+      });
+      return undefined;
+    }
+  }
+
   async function resolveAccountRequestAuth(
     request: XCodeProviderRuntimeHeadersRequestParams,
   ): Promise<AccountRequestAuthMaterial | undefined> {
-    if (!request.accountAccess || !accountRequestAuthService) {
+    if (request.accountAccess) {
+      if (!accountRequestAuthService) {
+        return undefined;
+      }
+      const rotatedAccountRef = await resolveRotatedAccountRef(request);
+      return accountRequestAuthService.resolveCurrent({
+        providerId: request.providerId,
+        modelId: request.modelSelection.modelId,
+        accountAccess: request.accountAccess,
+        expectedAccountScope: request.expectedAccountScope,
+        rejectedProjectTokenFingerprint: request.rejectedProjectTokenFingerprint,
+        reason: request.reason,
+        ...(rotatedAccountRef ? { accountRef: rotatedAccountRef } : {}),
+      });
+    }
+    // XCode fork：Qoder / CodeBuddy 是 api-key 型多账号供应商，没有 accountAccess。
+    // 由轮询服务选择本次使用的连接；不支持轮询的供应商返回 undefined。
+    if (!accountRotationService) {
       return undefined;
     }
-    return accountRequestAuthService.resolveCurrent({
+    const selection = await accountRotationService.select({
       providerId: request.providerId,
       modelId: request.modelSelection.modelId,
-      accountAccess: request.accountAccess,
-      expectedAccountScope: request.expectedAccountScope,
-      rejectedProjectTokenFingerprint: request.rejectedProjectTokenFingerprint,
-      reason: request.reason,
+      ...(request.excludedConnectionIds && request.excludedConnectionIds.length > 0
+        ? { excludedConnectionIds: request.excludedConnectionIds }
+        : {}),
+      ...(request.lastFailure ? { lastFailure: request.lastFailure } : {}),
     });
+    if (!selection) {
+      // 供应商支持轮询但当前选不出账号（例如账号列表尚未加载 / 全部被排除）：
+      // 返回空材料而不是 undefined——adapter 会保留 provider config 里的静态鉴权，
+      // 与改造前行为一致；undefined 会被协议层当作「刷新失败」，把可用的请求打死。
+      return {};
+    }
+    return {
+      apiKey: selection.accessToken,
+      connectionId: selection.connectionId,
+      ...(selection.requestProfile === "qoder"
+        ? {
+            headers: {
+              // Qoder 的内部身份头必须与 apiKey（accessToken）同源；否则 COSY 签名
+              // 用的 userId/machineId 会停留在旧账号上。发往上游前会被 adapter 剥掉。
+              "X-Qoder-Internal-User-Id": selection.connectionId,
+              ...(selection.machineId
+                ? { "X-Qoder-Internal-Machine-Id": selection.machineId }
+                : {}),
+            },
+          }
+        : {}),
+    };
   }
 
   async function respondAccountRequestAuthWithoutInteraction(params: {
@@ -2533,10 +2902,15 @@ export function createXCodeAgentService(
             workspacePath: workspace.workspacePath,
           });
           const accountAccess = parsed.data.accountAccess;
+          // 账号轮询（Qoder / CodeBuddy）没有 accountAccess，但同样必须由 Host 自动应答：
+          // 它们的材料来自 host 的账号列表，不是 renderer 的请求校验交互。漏掉这一条会让
+          // 每次模型请求都去等一个 UI 订阅者，无 pane 的后台任务直接超时。
+          const accountRotationEligible = !accountAccess && accountRotationService !== undefined;
           if (
-            accountRequestAuthService &&
-            accountAccess &&
-            !requiresRequestVerification(accountAccess)
+            accountRotationEligible ||
+            (accountRequestAuthService &&
+              accountAccess &&
+              !requiresRequestVerification(accountAccess))
           ) {
             // Account API Key / Team Runtime Key 不需要 Renderer 交互。Host 按 Model
             // 固定的 Account Access 自动应答，避免后台任务和无 pane 会话依赖 UI 订阅者。
@@ -2966,6 +3340,47 @@ export function createXCodeAgentService(
               });
             } catch (error) {
               await respondOffPeakInternalError(client, request, workspace, error);
+            }
+          })();
+          return;
+        }
+
+        if (isProxyPoolProtocolMethod(request.method)) {
+          void (async () => {
+            try {
+              const proxyPoolService = options?.resolveProxyPoolService?.();
+              if (!proxyPoolService) {
+                await client.respondError(request.id, {
+                  code: -32601,
+                  message: "Proxy pool service is unavailable on this host",
+                });
+                return;
+              }
+              let outcome: ProxyPoolDispatchResult;
+              try {
+                outcome = await dispatchProxyPoolRequest(proxyPoolService, request);
+              } catch (error) {
+                const code = error instanceof Error ? error.message : String(error);
+                if (!PROXY_POOL_REJECTION_CODES.has(code)) throw error;
+                // 入参可修正的拒绝：稳定错误码原样过协议，模型据此改正后再试。
+                await client.respondError(request.id, {
+                  code: -32602,
+                  message: `Proxy pool request rejected: ${code}`,
+                  data: { errorCode: code },
+                });
+                return;
+              }
+              if (!outcome.ok) {
+                await client.respondError(request.id, {
+                  code: -32602,
+                  message: outcome.message,
+                  ...(outcome.data === undefined ? {} : { data: outcome.data }),
+                });
+                return;
+              }
+              await client.respond(request.id, outcome.snapshot);
+            } catch (error) {
+              await respondProxyPoolInternalError(client, request, workspace, error);
             }
           })();
           return;
@@ -5528,13 +5943,18 @@ export function createXCodeAgentService(
         requestHeaders,
         allowRequestVerificationHeaders(params.response.runtimeProviderHeaders ?? {}),
       );
+      // 账号轮询可能返回空材料（{}）：这表示「保留静态 provider config 鉴权」，
+      // 不是失败。只有完全没解析出材料（undefined）才回 headersApplied:false。
       const requestAuth =
-        accountRequestAuth?.apiKey || Object.keys(requestHeaders).length > 0
+        accountRequestAuth !== undefined
           ? {
-              ...(accountRequestAuth?.apiKey ? { apiKey: accountRequestAuth.apiKey } : {}),
-              ...(accountRequestAuth?.apiKeyId ? { apiKeyId: accountRequestAuth.apiKeyId } : {}),
-              ...(accountRequestAuth?.accountScope
+              ...(accountRequestAuth.apiKey ? { apiKey: accountRequestAuth.apiKey } : {}),
+              ...(accountRequestAuth.apiKeyId ? { apiKeyId: accountRequestAuth.apiKeyId } : {}),
+              ...(accountRequestAuth.accountScope
                 ? { accountScope: accountRequestAuth.accountScope }
+                : {}),
+              ...(accountRequestAuth.connectionId
+                ? { connectionId: accountRequestAuth.connectionId }
                 : {}),
               ...(Object.keys(requestHeaders).length > 0 ? { headers: requestHeaders } : {}),
             }

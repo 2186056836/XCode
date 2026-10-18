@@ -9,10 +9,7 @@ import type { ModelSelectionView } from "@zcode/services";
 import type { ModelSelectGroup } from "@/ModelConfigSelect.js";
 import { decodeCustomModelValue, encodeCustomModelValue } from "@/lib/zcodeCustomModelValue.js";
 import { shouldShowModelVisionBadge } from "@/lib/modelVisionBadge.js";
-import {
-  parseQoderModelMeta,
-  readQoderModelMetaHeaderValue,
-} from "@/lib/qoderModelDisplayNames.js";
+import { readProviderModelMetaTable } from "@/lib/qoderModelDisplayNames.js";
 
 export interface ModelProviderGroupLabelOptions {
   apiKeyLabel?: string;
@@ -52,9 +49,7 @@ export function buildRegistryModelSelectGroups(
     // XCode fork：Qoder 的选择器只显示上游可读名（Qwen3.8-Max），不显示原始 ID
     // ——ID 对用户不可读。数据来自拉取上游时写入的 overlay 元数据表；value 仍是
     // modelId，请求上游不受影响。其他 provider 无元数据，行为与改动前一致。
-    const qoderMeta = parseQoderModelMeta(
-      readQoderModelMetaHeaderValue(provider.config?.api?.headers),
-    );
+    const providerMeta = readProviderModelMetaTable(provider.config?.modelMeta);
 
     return [
       {
@@ -68,7 +63,7 @@ export function buildRegistryModelSelectGroups(
           // XCode fork：Qoder 的选择器只显示上游可读名（Qwen3.8-Max），不显示
           // 原始 ID——ID 对用户不可读。value 仍是 modelId，请求上游不受影响；
           // 其他 provider 无元数据，行为与改动前一致。
-          name: qoderMeta[modelId]?.name ?? modelId,
+          name: providerMeta[modelId]?.name ?? modelId,
           ...(shouldShowModelVisionBadge(
             modelId,
             config.properties?.inputFormat?.supportsImage,

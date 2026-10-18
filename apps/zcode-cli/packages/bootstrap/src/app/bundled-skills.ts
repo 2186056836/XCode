@@ -33,11 +33,17 @@ export const BUNDLED_SKILL_PACK_SKILLS_DIRECTORY = "skills";
 /** 门与技能包共用一个名字：常量住在 contracts（core 的技能门也读它），这里只转出。 */
 export { DYNAMIC_WORKFLOW_SKILL_NAME };
 
+/** 代理池配置技能：教模型用 ProxyPool 工具改 XCode 的代理池与账号绑定。 */
+const PROXY_POOL_SKILL_NAME = "xcode-proxy-pool";
+
 /** 技能包里每个文件都是必需资产：丢任何一个都拒绝整包，而不是装出一个引用文件缺失的技能。 */
 export const BUNDLED_SKILL_PACK_REQUIRED_PATHS = [
   `skills/${DYNAMIC_WORKFLOW_SKILL_NAME}/SKILL.md`,
   `skills/${DYNAMIC_WORKFLOW_SKILL_NAME}/patterns.md`,
   `skills/${DYNAMIC_WORKFLOW_SKILL_NAME}/examples.md`,
+  // 代理池配置面（ProxyPool 工具）的说明书，同样必须随 CLI 一起发出去：
+  // 工具在场而说明书缺失时，模型只能靠工具描述猜 providerId / accountId 的取值来源。
+  `skills/${PROXY_POOL_SKILL_NAME}/SKILL.md`,
 ] as const;
 
 /** 与 official-plugin-definitions 的 rootCandidates 同形，覆盖 monorepo src/dist、cli/dist 与桌面 resources/glm 布局。 */

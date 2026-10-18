@@ -43,6 +43,12 @@ export const PROVIDER_BUSINESS_ERROR_CODES = [
   "3102",
   "2007",
   "429",
+  // XCode fork: CodeBuddy 网关业务码。11128 请求非法（客户端标识校验未通过）、
+  // 12403 UA 校验失败、11217 账号授权未完成。不登记这组码时，横幅会把上游英文
+  // 原文（"request illegal"）直接当摘要在报错横幅里展示，用户拿不到可执行提示。
+  "11128",
+  "12403",
+  "11217",
 ] as const;
 
 export type ProviderBusinessErrorCode = (typeof PROVIDER_BUSINESS_ERROR_CODES)[number];
@@ -68,6 +74,9 @@ export const PROVIDER_BUSINESS_ERROR_MESSAGE_IDS: Record<ProviderBusinessErrorCo
   "3102": "zcode.error.providerBusiness.3102",
   "2007": "zcode.error.providerBusiness.2007",
   "429": "zcode.error.providerBusiness.429",
+  "11128": "zcode.error.providerBusiness.11128",
+  "12403": "zcode.error.providerBusiness.12403",
+  "11217": "zcode.error.providerBusiness.11217",
 };
 
 export const PROVIDER_BUSINESS_ERROR_ACTION_MESSAGE_IDS: Record<
@@ -100,6 +109,10 @@ const PROVIDER_BUSINESS_ERROR_UI_ACTIONS: Record<
   "3102": null,
   "2007": "retry-later",
   "429": "retry-later",
+  // CodeBuddy 客户端标识/授权类拒绝：恢复动作只有重新登录该供应商账号。
+  "11128": "login",
+  "12403": "login",
+  "11217": "login",
 };
 
 export function isProviderBusinessErrorCode(

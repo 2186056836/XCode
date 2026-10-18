@@ -68,6 +68,9 @@ __pycache__/
 packages/desktop/.e2e-artifacts/
 packages/desktop/.e2e-cache/
 packages/desktop/.e2e-network-capture/
+# 仓库根的临时验证脚本/截图（曾随 58bc3788 误入库，已 untrack——别再 add 进来）。
+/.e2e-verify.cjs
+/.shot-*.png
 .zcode-runtime/
 
 # fork 开发日志，不随仓库分发
@@ -77,3 +80,8 @@ apps/zcode-cli/packages/node-repl-host/dist-types/
 
 # tsc 产物：cli 包 tsconfig 无 outDir，构建时落在 src 旁
 apps/zcode-cli/packages/cli/src/**/*.js
+
+# 本地调试残留（dev 启动日志、mitm 录制产物），可随时删除
+/tmp-*.log
+/tmp-*.txt
+/tmp-*.cjs

@@ -1,4 +1,5 @@
 import { createServiceLogger } from "../logger/serviceLogger.js";
+import { providerFetch, codeBuddyProviderId } from "../providers/api/providerNetwork.js";
 
 /**
  * XCode fork：CodeBuddy 登录认证 + 多账号管理（CN/Intl 双区），协议对齐 9router
@@ -98,8 +99,13 @@ export interface CodeBuddyPollFailed {
 
 export type CodeBuddyPollResult = CodeBuddyPollPending | CodeBuddyPollSuccess | CodeBuddyPollFailed;
 
-async function fetchJson(url: string, init: RequestInit): Promise<Record<string, unknown>> {
-  const response = await fetch(url, {
+/** 出口由调用方按供应商解析（配了代理池走池，绕开全局代理）；默认保留裸 fetch。 */
+async function fetchJson(
+  url: string,
+  init: RequestInit,
+  fetchImpl: typeof fetch = fetch,
+): Promise<Record<string, unknown>> {
+  const response = await fetchImpl(url, {
     ...init,
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
@@ -118,16 +124,21 @@ async function fetchJson(url: string, init: RequestInit): Promise<Record<string,
 export async function beginCodeBuddyLogin(region: CodeBuddyRegion): Promise<CodeBuddyLoginSession> {
   const config = regionConfig(region);
   const url = `${config.stateUrl}?platform=${config.platform}`;
-  const envelope = await fetchJson(url, {
-    method: "POST",
-    headers: {
-      ...baseHeaders(config),
-      "Content-Type": "application/json",
-      "X-No-Authorization": "true",
-      "X-No-User-Id": "true",
+  // 此刻账号尚未落库，无 accountId；按供应商策略选池条目。
+  const envelope = await fetchJson(
+    url,
+    {
+      method: "POST",
+      headers: {
+        ...baseHeaders(config),
+        "Content-Type": "application/json",
+        "X-No-Authorization": "true",
+        "X-No-User-Id": "true",
+      },
+      body: "{}",
     },
-    body: "{}",
-  });
+    providerFetch(codeBuddyProviderId(region)),
+  );
   const data = envelope.data as { state?: string; authUrl?: string } | undefined;
   if (envelope.code !== 0 || !data?.state || !data?.authUrl) {
     throw new Error(`CodeBuddy state error: ${String(envelope.msg ?? "missing state/authUrl")}`);
@@ -143,16 +154,20 @@ export async function pollCodeBuddyLogin(
   const config = regionConfig(region);
   const url = `${config.tokenUrl}?state=${encodeURIComponent(state)}`;
   try {
-    const envelope = await fetchJson(url, {
-      method: "GET",
-      headers: {
-        ...baseHeaders(config),
-        "X-No-Authorization": "true",
-        "X-No-User-Id": "true",
-        "X-No-Enterprise-Id": "true",
-        "X-No-Department-Info": "true",
+    const envelope = await fetchJson(
+      url,
+      {
+        method: "GET",
+        headers: {
+          ...baseHeaders(config),
+          "X-No-Authorization": "true",
+          "X-No-User-Id": "true",
+          "X-No-Enterprise-Id": "true",
+          "X-No-Department-Info": "true",
+        },
       },
-    });
+      providerFetch(codeBuddyProviderId(region)),
+    );
     if (envelope.code === 11217) return { status: "pending" };
     const data = envelope.data as
       | { accessToken?: string; refreshToken?: string; expiresIn?: number }
@@ -187,6 +202,10 @@ export interface CodeBuddyTokenIdentity {
   readonly sub: string;
   readonly displayName: string;
   readonly email: string;
+  /** 企业席位标识（CN 侧令牌带 enterprise_id；个人账号是空串）。 */
+  readonly enterpriseId: string;
+  /** 租户标识；令牌没有独立 tenant 声明时与 enterpriseId 同值。 */
+  readonly tenantId: string;
 }
 
 /** 从访问令牌解出账号身份：name > preferred_username > email 作为显示名。 */
@@ -208,10 +227,21 @@ export function describeCodeBuddyAccessToken(
     >;
     const sub = typeof payload.sub === "string" ? payload.sub : "";
     if (!sub) return null;
-    const pick = (key: string): string =>
-      typeof payload[key] === "string" ? (payload[key] as string).trim() : "";
+    const pick = (key: string): string => {
+      const value = payload[key];
+      if (typeof value === "string") return value.trim();
+      if (typeof value === "number" && Number.isFinite(value)) return String(value);
+      return "";
+    };
     const displayName = pick("name") || pick("preferred_username") || pick("email");
-    return { sub, displayName, email: pick("email") };
+    const enterpriseId = pick("enterprise_id") || pick("enterpriseId");
+    return {
+      sub,
+      displayName,
+      email: pick("email"),
+      enterpriseId,
+      tenantId: pick("tenant_id") || pick("tenantId") || enterpriseId,
+    };
   } catch {
     return null;
   }

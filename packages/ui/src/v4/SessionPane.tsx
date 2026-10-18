@@ -3079,7 +3079,9 @@ export function SessionPane({
           // editUserQuery 的 attachments 缺省表示保留 canonical 原附件；
           // 只有显式透传 []，CLI 才能区分“用户删除全部”与“调用方未修改附件”。
           ...(attachments ? { attachments: [...attachments] } : {}),
-          // 编辑重发改用当前输入区选中的模型（缺省回退原 intent 记录的模型）。
+          // 编辑重发改用当前输入区选中的模型：CLI 侧 canonical-intent-replay 会用这个
+          // Selection 覆盖原 intent 记录的模型；无 Composer 草稿的只读子会话才会
+          // 缺省回退原 intent 的模型。
           modelSelection: createSubmissionFromComposer()?.modelSelection,
         },
         sessionId,

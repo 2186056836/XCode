@@ -51,6 +51,8 @@ import type {
   AiSdkModelTextRequest,
   ResolvedAiSdkModel,
 } from "./runner-runtime.js";
+import { AccountRequestRetry } from "./account-request-retry.js";
+import { AccountRotationRetry } from "./account-rotation-retry.js";
 import { resolveModelForAttempt, RuntimeHeadersRefreshError } from "./runner-runtime-headers.js";
 import { retryAllowedByFailurePolicy } from "./workflow-model-failure-policy.js";
 import { modelFailureStatusFields, providerRequestIdFromHeaders } from "./runner-telemetry.js";
@@ -90,6 +92,8 @@ export async function runGenerateText(input: {
   const isDev = isDevelopmentModelIOEnv(input.env);
   let requestMessages = input.request.messages;
   let signatureRepairAttempted = false;
+  const authRetry = new AccountRequestRetry(input.request, input.resolved, input.logger);
+  const rotationRetry = new AccountRotationRetry(input.request, input.resolved, input.logger);
   let emptyCompletionRetryCount = 0;
 
   for (
@@ -97,12 +101,18 @@ export async function runGenerateText(input: {
     retryAttemptLoopContinues(
       retryBudget,
       attempt,
-      input.retry.maxAttempts + Number(signatureRepairAttempted),
+      input.retry.maxAttempts +
+        Number(signatureRepairAttempted) +
+        authRetry.extraAttempts +
+        rotationRetry.extraAttempts,
     );
     attempt += 1
   ) {
     const retryBudgetAttempt =
-      attempt - Number(signatureRepairAttempted);
+      attempt -
+      Number(signatureRepairAttempted) -
+      authRetry.extraAttempts -
+      rotationRetry.extraAttempts;
     const attemptRequest = { ...input.request, messages: requestMessages };
     const startedAt = Date.now();
     let resolved = input.resolved;
@@ -110,7 +120,7 @@ export async function runGenerateText(input: {
       {
         ...baseStatusContext,
         maxAttempts: statusMaxAttempts(
-          Number(signatureRepairAttempted),
+          Number(signatureRepairAttempted) + authRetry.extraAttempts + rotationRetry.extraAttempts,
         ),
       },
       attempt,
@@ -160,7 +170,8 @@ export async function runGenerateText(input: {
     try {
       resolved = await resolveModelForAttempt({
         attempt,
-        request: attemptRequest,
+        reason: authRetry.takeReason(),
+        request: rotationRetry.prepareRequest(authRetry.prepareRequest(attemptRequest)),
         resolveModel: input.resolveModel,
       });
       const anthropicMetadataUserId = await resolveAnthropicRequestMetadataUserId({
@@ -374,7 +385,7 @@ export async function runGenerateText(input: {
         requestMessages = repairedMessages;
         statusContext = {
           ...statusContext,
-          maxAttempts: statusMaxAttempts(1),
+          maxAttempts: statusMaxAttempts(1 + authRetry.extraAttempts + rotationRetry.extraAttempts),
         };
       }
       const canRetryWithFailurePolicy =
@@ -387,7 +398,19 @@ export async function runGenerateText(input: {
               retryBudget,
               inspectProviderFailure(error).providerErrorCode,
             );
-      const canRetry = retryWithRepairedHistory || canRetryWithFailurePolicy;
+      const retryWithAuth = authRetry.claim(error, options === undefined);
+      // 账号级失败（401/402/403/429）且 host 支持轮询：换一条连接立即重试。
+      // 放在普通预算之外，但与 authRetry 共享「已耗尽」语义（各自有上限）。
+      const retryWithRotation = rotationRetry.claim(error, options === undefined);
+      if (retryWithAuth || retryWithRotation)
+        statusContext = {
+          ...statusContext,
+          maxAttempts: statusMaxAttempts(
+            Number(signatureRepairAttempted) + authRetry.extraAttempts + rotationRetry.extraAttempts,
+          ),
+        };
+      const canRetry =
+        retryWithRotation || retryWithAuth || retryWithRepairedHistory || canRetryWithFailurePolicy;
 
       if (options) {
         recordGenerateTextDebug({
@@ -440,6 +463,32 @@ export async function runGenerateText(input: {
         throw toAdapterError(error, failure, statusContext, attempt, {
           errorPhase: requestInvocationCompleted ? "response" : "prepare",
         });
+      }
+
+      if (retryWithRotation) {
+        await publishRetryScheduledStatus(
+          input,
+          statusContext,
+          attempt,
+          0,
+          { ...failure, retryReason: ModelRetryReason.AccountRotation },
+          requestHeaders,
+          responseHeaders,
+        );
+        continue;
+      }
+
+      if (retryWithAuth) {
+        await publishRetryScheduledStatus(
+          input,
+          statusContext,
+          attempt,
+          0,
+          { ...failure, retryReason: ModelRetryReason.AuthRefresh },
+          requestHeaders,
+          responseHeaders,
+        );
+        continue;
       }
 
       if (retryWithRepairedHistory) {
@@ -599,11 +648,13 @@ function statusPublishOptions(
   input: {
     logger?: Logger;
     request: AiSdkModelTextRequest;
+    resolved?: Pick<ResolvedAiSdkModel, "requestObservations">;
     statusSink?: ModelStatusSink;
   },
   admission?: AttemptAdmission,
 ) {
   return {
+    requestObservations: input.resolved?.requestObservations,
     logger: input.logger,
     requestStatusSink: input.request.statusSink,
     statusSink: input.statusSink,

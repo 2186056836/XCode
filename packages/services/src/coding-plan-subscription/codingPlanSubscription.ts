@@ -1,4 +1,5 @@
 import type {
+  RequestVerificationConfig,
   CodingPlanAgreementResponse,
   CodingPlanBatchPreviewRequest,
   CodingPlanBatchPreviewResponse,
@@ -47,6 +48,9 @@ import type {
   MarketingCaptchaConfig,
   MarketingClaimPlanResponse,
   MarketingManualPlanPreview,
+  ManualClaimPlanPreviewSnapshot,
+  ManualClaimPlanClaimRequest,
+  ManualClaimPlanClaimResult,
 } from "@zcode/shared";
 import type { ModelSelectionView } from "@zcode/provider";
 import { ServiceChannels } from "@zcode/shared";

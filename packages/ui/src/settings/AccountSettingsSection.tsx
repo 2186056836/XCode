@@ -6,11 +6,23 @@ import { useXCodeStore } from "@/store/StoreProvider.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import { SettingsGroupCard } from "@/settings/SettingsPageParts.js";
 import {
+  AccountAvatar,
+  AccountFamilyControls,
+  ClaimAllResultsPanel,
+  ProviderBadge,
+  claimStatusLabel,
+} from "@/settings/AccountSettingsParts.js";
+import {
   claimMarketingForAccount,
   claimMarketingForAllAccounts,
   type MarketingClaimAllAccountResult,
 } from "@/lib/marketingClaimAll.js";
-import type { MarketingCaptchaConfig, MarketingClaimPlanResponse, MarketingTouchResponse } from "@zcode/shared";
+import { ProviderAccountBinding } from "./model-provider-section/ProviderAccountBinding.js";
+import type {
+  MarketingCaptchaConfig,
+  MarketingClaimPlanResponse,
+  MarketingTouchResponse,
+} from "@zcode/shared";
 
 /** 与 services OAuthAccountEntry 对齐的展示结构（UI 侧本地声明，避免跨包类型耦合）。 */
 interface AccountEntry {
@@ -39,54 +51,18 @@ interface CodingPlanClaimCapableService {
     captchaRegion?: string;
     accountRef?: string;
   }): Promise<MarketingClaimPlanResponse>;
-  getManualClaimPlanPlans(input: {
-    accountRef: string;
-  }): Promise<{
-    plans: Array<{ planId?: string; name?: string; status?: string; endsAt?: number | string | null }>;
+  getManualClaimPlanPlans(input: { accountRef: string }): Promise<{
+    plans: Array<{
+      planId?: string;
+      name?: string;
+      status?: string;
+      endsAt?: number | string | null;
+    }>;
   }>;
 }
 
 interface MarketingTouchQueryCapableService {
   query(input: { locale: string; accountRef?: string }): Promise<MarketingTouchResponse>;
-}
-
-const PROVIDER_LABEL: Record<string, string> = {
-  zai: "Z.AI",
-  bigmodel: "BigModel",
-};
-
-function providerBadgeClass(provider: string): string {
-  if (provider === "zai") return "bg-blue-500/10 text-blue-600";
-  if (provider === "bigmodel") return "bg-purple-500/10 text-purple-600";
-  return "bg-surface text-foreground-subtle";
-}
-
-function ProviderBadge({ provider }: { provider: string }) {
-  return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${providerBadgeClass(provider)}`}
-    >
-      {PROVIDER_LABEL[provider] ?? provider}
-    </span>
-  );
-}
-
-function AccountAvatar({ account }: { account: AccountEntry }) {
-  if (account.avatarUrl) {
-    return (
-      <img
-        src={account.avatarUrl}
-        alt=""
-        aria-hidden="true"
-        className="size-10 shrink-0 rounded-full object-cover ring-1 ring-border"
-      />
-    );
-  }
-  return (
-    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface text-ui-base font-semibold text-foreground ring-1 ring-border">
-      {(account.displayName || account.username || "?").slice(0, 1).toUpperCase()}
-    </span>
-  );
 }
 
 export function AccountSettingsSection({
@@ -110,8 +86,12 @@ export function AccountSettingsSection({
   const [activeAccount, setActiveAccount] = useState<AccountEntry | null>(null);
   const [loading, setLoading] = useState(false);
   const [claimAllRunning, setClaimAllRunning] = useState(false);
-  const [claimAllProgress, setClaimAllProgress] = useState<{ done: number; total: number } | null>(null);
-  const [claimAllResults, setClaimAllResults] = useState<MarketingClaimAllAccountResult[] | null>(null);
+  const [claimAllProgress, setClaimAllProgress] = useState<{ done: number; total: number } | null>(
+    null,
+  );
+  const [claimAllResults, setClaimAllResults] = useState<MarketingClaimAllAccountResult[] | null>(
+    null,
+  );
   /** 单账号领取：当前运行中的 accountRef + 各账号最近一次结果。 */
   const [claimingRef, setClaimingRef] = useState<string | null>(null);
   const [claimOneResults, setClaimOneResults] = useState<
@@ -256,19 +236,6 @@ export function AccountSettingsSection({
     }
   };
 
-  const claimAllStatusLabel = (result: MarketingClaimAllAccountResult): string => {
-    switch (result.status) {
-      case "claimed":
-        return intl.formatMessage({ id: "settings.accounts.claimAll.claimed" });
-      case "already-claimed":
-        return intl.formatMessage({ id: "settings.accounts.claimAll.alreadyClaimed" });
-      case "no-campaign":
-        return intl.formatMessage({ id: "settings.accounts.claimAll.noCampaign" });
-      default:
-        return intl.formatMessage({ id: "settings.accounts.claimAll.failed" });
-    }
-  };
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
@@ -281,141 +248,130 @@ export function AccountSettingsSection({
       </div>
       <SettingsGroupCard>
         <div className="flex flex-col gap-4 px-6 py-5">
-
-        {loading && !hasAccounts ? (
-          <div className="flex items-center justify-center rounded-xl border border-dashed py-10 text-sm text-muted-foreground">
-            {intl.formatMessage({ id: "settings.accounts.loading" })}
-          </div>
-        ) : !hasAccounts ? (
-          <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-10 text-center">
-            <span className="text-sm text-muted-foreground">
-              {intl.formatMessage({ id: "settings.accounts.empty" })}
-            </span>
-          </div>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {accounts.map((account) => {
-              const ref = `${account.provider}:${account.identity}`;
-              const isActive = ref === activeAccountRef;
-              return (
-                <li
-                  key={ref}
-                  className="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm"
-                >
-                  <AccountAvatar account={account} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate font-medium">{account.displayName}</span>
-                      <ProviderBadge provider={account.provider} />
-                    </div>
-                    <div className="truncate text-xs text-muted-foreground">
-                      {account.username}
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    {/* 单账号领取结果回显（复用一键领取的状态文案） */}
-                    {claimOneResults[ref] ? (
-                      <span
-                        className="max-w-36 truncate text-xs text-muted-foreground"
-                        title={claimOneResults[ref].message ?? ""}
-                      >
-                        {claimAllStatusLabel(claimOneResults[ref])}
-                      </span>
-                    ) : null}
-                    {/* 领取：与一键领取同链路，仅领该账号；位于切换左侧 */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={claimingRef !== null || claimAllRunning || !claimService || !touchService}
-                      onClick={() => void handleClaimOne(account)}
+          {loading && !hasAccounts ? (
+            <div className="flex items-center justify-center rounded-xl border border-dashed py-10 text-sm text-muted-foreground">
+              {intl.formatMessage({ id: "settings.accounts.loading" })}
+            </div>
+          ) : !hasAccounts ? (
+            <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-10 text-center">
+              <span className="text-sm text-muted-foreground">
+                {intl.formatMessage({ id: "settings.accounts.empty" })}
+              </span>
+            </div>
+          ) : (
+            <>
+              {/* 族级出口/轮询：zai / bigmodel 的账号是 OAuth 账号族，轮询游标与出口绑定按族共享。 */}
+              <AccountFamilyControls accounts={accounts} />
+              <ul className="flex flex-col gap-3">
+                {accounts.map((account) => {
+                  const ref = `${account.provider}:${account.identity}`;
+                  const isActive = ref === activeAccountRef;
+                  return (
+                    <li
+                      key={ref}
+                      className="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm"
                     >
-                      {claimingRef === ref ? (
-                        <Loader2Icon className="size-3.5 animate-spin" />
-                      ) : (
-                        <Gift className="size-3.5" />
-                      )}
-                      {intl.formatMessage({ id: "settings.accounts.claimOne" })}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={intl.formatMessage({ id: "settings.accounts.delete" })}
-                      onClick={() => void handleRemoveAccount(ref)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                    {isActive ? (
-                      <span className="shrink-0 rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
-                        {intl.formatMessage({ id: "settings.accounts.active" })}
-                      </span>
-                    ) : (
-                      <Button variant="outline" size="sm" onClick={() => void handleSwitch(ref)}>
-                        {intl.formatMessage({ id: "settings.accounts.switch" })}
-                      </Button>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                      <AccountAvatar account={account} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate font-medium">{account.displayName}</span>
+                          <ProviderBadge provider={account.provider} />
+                        </div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {account.username}
+                        </div>
+                        {/* 账号级代理出口：只在该族启用代理且池有条目时渲染（组件内部判空）。 */}
+                        <ProviderAccountBinding providerId={account.provider} accountId={ref} />
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {/* 单账号领取结果回显（复用一键领取的状态文案） */}
+                        {claimOneResults[ref] ? (
+                          <span
+                            className="max-w-36 truncate text-xs text-muted-foreground"
+                            title={claimOneResults[ref].message ?? ""}
+                          >
+                            {claimStatusLabel(intl, claimOneResults[ref])}
+                          </span>
+                        ) : null}
+                        {/* 领取：与一键领取同链路，仅领该账号；位于切换左侧 */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={
+                            claimingRef !== null ||
+                            claimAllRunning ||
+                            !claimService ||
+                            !touchService
+                          }
+                          onClick={() => void handleClaimOne(account)}
+                        >
+                          {claimingRef === ref ? (
+                            <Loader2Icon className="size-3.5 animate-spin" />
+                          ) : (
+                            <Gift className="size-3.5" />
+                          )}
+                          {intl.formatMessage({ id: "settings.accounts.claimOne" })}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={intl.formatMessage({ id: "settings.accounts.delete" })}
+                          onClick={() => void handleRemoveAccount(ref)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                        {isActive ? (
+                          <span className="shrink-0 rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
+                            {intl.formatMessage({ id: "settings.accounts.active" })}
+                          </span>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void handleSwitch(ref)}
+                          >
+                            {intl.formatMessage({ id: "settings.accounts.switch" })}
+                          </Button>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
 
-        {hasAccounts && (
-          <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
-            <Button
-              variant="outline"
-              disabled={claimAllRunning || !claimService || !touchService}
-              onClick={() => void handleClaimAll()}
-            >
-              {claimAllRunning ? (
-                <Loader2Icon className="size-3.5 animate-spin" />
-              ) : (
-                <Gift className="size-3.5" />
-              )}
-              {claimAllRunning && claimAllProgress
-                ? intl.formatMessage(
-                    { id: "settings.accounts.claimAll.running" },
-                    { done: claimAllProgress.done, total: claimAllProgress.total },
-                  )
-                : intl.formatMessage({ id: "settings.accounts.claimAll" })}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                if (activeAccountRef) void handleLogout(activeAccountRef);
-              }}
-            >
-              {intl.formatMessage({ id: "settings.accounts.logout" })}
-            </Button>
-          </div>
-        )}
+          {hasAccounts && (
+            <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+              <Button
+                variant="outline"
+                disabled={claimAllRunning || !claimService || !touchService}
+                onClick={() => void handleClaimAll()}
+              >
+                {claimAllRunning ? (
+                  <Loader2Icon className="size-3.5 animate-spin" />
+                ) : (
+                  <Gift className="size-3.5" />
+                )}
+                {claimAllRunning && claimAllProgress
+                  ? intl.formatMessage(
+                      { id: "settings.accounts.claimAll.running" },
+                      { done: claimAllProgress.done, total: claimAllProgress.total },
+                    )
+                  : intl.formatMessage({ id: "settings.accounts.claimAll" })}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (activeAccountRef) void handleLogout(activeAccountRef);
+                }}
+              >
+                {intl.formatMessage({ id: "settings.accounts.logout" })}
+              </Button>
+            </div>
+          )}
 
-        {claimAllResults ? (
-          <ul className="flex flex-col gap-1.5 border-t border-border pt-3 text-sm">
-            {claimAllResults.map((result) => (
-              <li key={result.accountRef} className="flex min-w-0 flex-col gap-0.5">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="truncate font-medium">{result.displayName}</span>
-                  <ProviderBadge provider={result.provider} />
-                  <span
-                    className={
-                      result.status === "claimed"
-                        ? "ml-auto shrink-0 text-success"
-                        : result.status === "failed"
-                          ? "ml-auto shrink-0 text-destructive"
-                          : "ml-auto shrink-0 text-muted-foreground"
-                    }
-                  >
-                    {claimAllStatusLabel(result)}
-                  </span>
-                </div>
-                {result.message && (result.status === "failed" || result.status === "already-claimed") ? (
-                  <div className="truncate text-xs text-muted-foreground">{result.message}</div>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        ) : null}
+          {claimAllResults ? <ClaimAllResultsPanel results={claimAllResults} /> : null}
         </div>
       </SettingsGroupCard>
     </div>

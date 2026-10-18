@@ -382,7 +382,7 @@ export function ProviderModelsSection({
   providerName,
   providerEnabled = true,
   providerAccess,
-  providerApiHeaders,
+  providerModelMeta,
   models,
   onTestModel,
   onModelCommit,
@@ -398,8 +398,8 @@ export function ProviderModelsSection({
   providerName?: string;
   providerEnabled?: boolean;
   providerAccess?: ProviderConfigObject["access"];
-  /** XCode fork：provider 的 api.headers，读取模型元数据表（Qoder 可读名/倍率）。 */
-  providerApiHeaders?: Record<string, string>;
+  /** XCode fork：provider 的模型展示元数据表（可读名/倍率/档位）。 */
+  providerModelMeta?: ProviderConfigObject["modelMeta"];
   models: ProviderSettingsFormModel[];
   onTestModel?: (model: string) => Promise<ModelConnectivityResult>;
   onModelCommit: (
@@ -716,7 +716,7 @@ export function ProviderModelsSection({
                     providerName={providerName}
                     providerEnabled={providerEnabled}
                     providerAccess={providerAccess}
-                    providerMetaHeaders={providerApiHeaders}
+                    providerModelMeta={providerModelMeta}
                     inputTestId={testId(TID_MODEL_PROVIDER_MODEL_INPUT, String(index))}
                     deleteTestId={testId(TID_MODEL_PROVIDER_MODEL_DELETE_BUTTON, String(index))}
                     selected={selectedModelIds.has(model.modelId)}

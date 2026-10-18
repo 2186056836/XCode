@@ -18,6 +18,7 @@ import type {
   Model,
   ModelCatalogPort,
   OffPeakPort,
+  ProxyPoolPort,
   TopicResourcePort,
   PdfDocumentPort,
   PermissionBrokerPort,
@@ -107,6 +108,8 @@ export interface ToolExecutorOptions {
   artifactStore?: ToolArtifactStorePort;
   automationPort?: AutomationPort;
   offPeakPort?: OffPeakPort;
+  /** 代理池配置端口；缺席则 ProxyPool 报能力缺席。 */
+  proxyPoolPort?: ProxyPoolPort;
   topicResourcePort?: TopicResourcePort;
   sessionStore?: SessionStorePort;
   sessionModePort?: SessionModePort;
@@ -221,6 +224,8 @@ export interface ToolExecutorDeps {
   artifactStore?: ToolArtifactStorePort;
   automationPort?: AutomationPort;
   offPeakPort?: OffPeakPort;
+  /** 代理池配置端口；缺席则 ProxyPool 报能力缺席。 */
+  proxyPoolPort?: ProxyPoolPort;
   topicResourcePort?: TopicResourcePort;
   sessionStore?: SessionStorePort;
   sessionModePort?: SessionModePort;

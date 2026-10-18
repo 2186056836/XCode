@@ -74,6 +74,7 @@ import type {
   ExecutionShellSelection,
   AutomationPort,
   OffPeakPort,
+  ProxyPoolPort,
   TopicResourcePort,
   FileSystemPort,
   HttpClientPort,
@@ -390,6 +391,8 @@ export interface AgentRuntimeDeps {
   artifactStore?: ToolArtifactStorePort;
   automationPort?: AutomationPort;
   offPeakPort?: OffPeakPort;
+  /** 代理池配置端口；在场即注册 ProxyPool，缺席即该能力对小美不可见。 */
+  proxyPoolPort?: ProxyPoolPort;
   topicResourcePort?: TopicResourcePort;
   contextSourcePort?: ContextSourcePort;
   eventSink?: SessionEventSink;
@@ -422,6 +425,9 @@ export interface ProviderRuntimeHeadersPort {
     accountAccess?: XCodeProviderAccountAccess;
     expectedAccountScope?: string;
     rejectedProjectTokenFingerprint?: string;
+    /** 账号轮询：本次逻辑请求里已经失败的连接 id。 */
+    excludedConnectionIds?: readonly string[];
+    lastFailure?: { statusCode?: number; providerErrorCode?: string; connectionId?: string };
     abortSignal?: AbortSignal;
     modelId: string;
     providerId: string;

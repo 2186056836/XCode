@@ -438,6 +438,7 @@ async function executeToolCallImpl(
         artifactStore: deps.artifactStore,
         automationPort: deps.automationPort,
         offPeakPort: deps.offPeakPort,
+        proxyPoolPort: deps.proxyPoolPort,
         topicResourcePort: deps.topicResourcePort,
         sessionStore: deps.sessionStore,
         sessionModePort: deps.sessionModePort,

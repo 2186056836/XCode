@@ -34,6 +34,10 @@ export interface ModelInvocationContext {
     accountAccess?: XCodeProviderAccountAccess;
     expectedAccountScope?: string;
     rejectedProjectTokenFingerprint?: string;
+    /** 本次逻辑请求里已经失败、不得再选的连接（账号）id。 */
+    excludedConnectionIds?: readonly string[];
+    /** 上一次失败的类型；host 用于写模型锁 / 判断是否换号。 */
+    lastFailure?: { statusCode?: number; providerErrorCode?: string; connectionId?: string };
     attempt: number;
     reason?: RequestVerificationReason;
     abortSignal?: AbortSignal;
@@ -49,6 +53,8 @@ export interface ModelInvocationContext {
 /** Adapter 为单个物理请求 attempt 使用的动态鉴权材料。 */
 export interface ModelRequestAuth {
   accountScope?: string;
+  /** 账号轮询：本次选中的连接（账号）id。 */
+  connectionId?: string;
   apiKey?: string;
   apiKeyId?: string;
   headers?: Record<string, string>;

@@ -8,6 +8,7 @@ import {
   ISystemService,
   ITerminalService,
   ISettingService,
+  IProxyPoolService,
   IOnboardingRecordService,
   ICredentialService,
   IBroadcastService,
@@ -64,6 +65,8 @@ export class RemoteServiceAccess implements IServiceAccessor {
   readonly systemService: ISystemService;
   readonly terminalService: ITerminalService;
   readonly settingService: ISettingService;
+  /** 代理池（池 CRUD + 供应商绑定）；旧 host 可能不注册此 channel，UI 侧按缺失降级。 */
+  readonly proxyPoolService?: IProxyPoolService;
   readonly onboardingRecordService: IOnboardingRecordService;
   readonly credentialService: ICredentialService;
   readonly broadcastService: IBroadcastService;
@@ -133,6 +136,15 @@ export class RemoteServiceAccess implements IServiceAccessor {
     this.settingService = ProxyChannel.toService<ISettingService>(
       channelClient.getChannel(ISettingService.channelName),
     );
+    // 旧 host 未注册 proxy-pool channel 时 getChannel 会抛错；按可选能力降级，
+    // 让设置页在旧远端上隐藏代理池入口而不是整页崩掉。
+    try {
+      this.proxyPoolService = ProxyChannel.toService<IProxyPoolService>(
+        channelClient.getChannel(IProxyPoolService.channelName),
+      );
+    } catch {
+      this.proxyPoolService = undefined;
+    }
     this.onboardingRecordService = ProxyChannel.toService<IOnboardingRecordService>(
       channelClient.getChannel(IOnboardingRecordService.channelName),
     );

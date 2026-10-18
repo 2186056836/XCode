@@ -132,6 +132,8 @@ export const ModelRetryReason = {
   StreamIdleTimeout: "stream_idle_timeout",
   StaleConnection: "stale_connection",
   AuthRefresh: "auth_refresh",
+  /** 账号级失败（401/402/403/429）后换一个账号重试；对齐 9router 的 account fallback。 */
+  AccountRotation: "account_rotation",
   /** Anthropic 明确拒绝历史 thinking signature 后，对请求副本清理并立即重试一次。 */
   ReasoningSignatureRepair: "reasoning_signature_repair",
   /** off-peak 闲时排队（429/3105+Retry-After）：豁免重试预算、无限探测（仅 idle plan provider）。 */

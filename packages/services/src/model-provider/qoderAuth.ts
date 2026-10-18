@@ -1,5 +1,7 @@
+/* oxlint-disable max-lines -- 登录轮询/多账号/会话恢复状态机集中维护，拆分会割裂登录事务。 */
 import { createUuid } from "@zcode/shared";
 import { createServiceLogger } from "../logger/serviceLogger.js";
+import { providerFetch, qoderProviderId } from "../providers/api/providerNetwork.js";
 
 /**
  * XCode fork：Qoder 登录认证（自定义设备流）+ 多账号管理，协议对齐 9router
@@ -111,11 +113,20 @@ async function sha256Bytes(data: Uint8Array): Promise<Uint8Array> {
   return new Uint8Array(digest);
 }
 
-async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+/**
+ * XCode fork：出口由调用方按供应商/账号解析（配置了代理池的供应商走池，绕开全局代理）。
+ * 默认值保留裸 fetch，供未装配 providerFetch 的场景（renderer / 单测）与设备指纹等
+ * 非供应商端点使用。
+ */
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  fetchImpl: typeof fetch = fetch,
+): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort("timeout"), FETCH_TIMEOUT_MS);
   try {
-    return await fetch(url, { ...init, signal: controller.signal });
+    return await fetchImpl(url, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timer);
   }
@@ -159,7 +170,7 @@ export async function beginQoderLogin(region: QoderAuthRegion): Promise<QoderLog
     nonce,
   });
   // 三件套在本会话开始前取一次，与该账号一号一绑。
-  const machine = await fetchMachineIdentity().catch(() => null);
+  const machine = await fetchMachineIdentity(region).catch(() => null);
   if (!machine) {
     logger().warn(undefined, "Qoder 登录会话未能预取设备标识三件套", { region });
   }
@@ -231,10 +242,15 @@ export async function pollQoderLogin(
   const url = `${endpoints.deviceTokenUrl}?nonce=${encodeURIComponent(nonce)}&verifier=${encodeURIComponent(codeVerifier)}&challenge_method=S256`;
   let response: Response;
   try {
-    response = await fetchWithTimeout(url, {
-      method: "GET",
-      headers: { Accept: "application/json", "User-Agent": "Go-http-client/2.0" },
-    });
+    response = await fetchWithTimeout(
+      url,
+      {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": "Go-http-client/2.0" },
+      },
+      // 此刻账号还没落库，没有 accountId 可用；按供应商策略选池条目。
+      providerFetch(qoderProviderId(region)),
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     // 连续网络失败要如实上报，不能伪装成 pending —— 否则用户看到的是
@@ -282,14 +298,19 @@ export async function pollQoderLogin(
   // best-effort 用户信息（失败不阻断登录），同时兜底 userId：
   // 执行链的 COSY 签名必须有 userId，上游偶尔不在 token 响应里给。
   try {
-    const infoResponse = await fetchWithTimeout(endpoints.userInfoUrl, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${body.token}`,
-        "User-Agent": "Go-http-client/2.0",
+    const infoResponse = await fetchWithTimeout(
+      endpoints.userInfoUrl,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${body.token}`,
+          "User-Agent": "Go-http-client/2.0",
+        },
       },
-    });
+      // 同上：账号尚未入库，走供应商策略。若上游已给 user_id，也能命中账号级绑定。
+      providerFetch(qoderProviderId(region), resolvedUserId || undefined),
+    );
     if (infoResponse.ok) {
       const info = (await infoResponse.json()) as {
         name?: string;
@@ -525,15 +546,26 @@ function readEnv(name: string): string {
 }
 
 /**
- * mi-token 接口默认地址。用户可用 QODER_MI_TOKEN_URL 覆盖。
+ * mi-token 接口地址（按优先级）。登录取设备指纹与激活 PRO 都走它。
+ * 主 qdmt，备 tele，主不通自动切备。可用 QODER_MI_TOKEN_URL 覆盖（多个用逗号分隔）。
  * 匿名调用每次只能取 1 个（count>1 返回 403），带 X-Api-Key 才能批量。
  */
-const MI_TOKEN_DEFAULT_URL = "https://tele.869869869.xyz/generate";
+const MI_TOKEN_DEFAULT_URLS = [
+  "https://qdmt.869869869.xyz/generate",
+  "https://tele.869869869.xyz/generate",
+] as const;
 
-function miTokenConfig(): { url: string; apiKey: string; timeoutMs: number } {
+function miTokenConfig(): {
+  urls: readonly string[];
+  apiKey: string;
+  timeoutMs: number;
+} {
   const rawTimeout = Number(readEnv("QODER_MI_TOKEN_TIMEOUT_MS"));
+  const override = readEnv("QODER_MI_TOKEN_URL");
   return {
-    url: readEnv("QODER_MI_TOKEN_URL") || MI_TOKEN_DEFAULT_URL,
+    urls: override
+      ? override.split(",").map((item) => item.trim()).filter(Boolean)
+      : MI_TOKEN_DEFAULT_URLS,
     apiKey: readEnv("QODER_MI_TOKEN_API_KEY") || readEnv("QODER_MI_TOKEN_AUTH"),
     timeoutMs: Number.isFinite(rawTimeout) && rawTimeout > 0 ? rawTimeout : 30_000,
   };
@@ -584,24 +616,29 @@ function isProfessional(userType: string): boolean {
  * 响应为 `{ success, failed, tokens: [{ machineToken, machineType, machineCode }] }`。
  * 取不到返回 null，由调用方给出可读错误，而不是发一个注定被拒的 claim。
  */
-async function fetchMachineIdentity(): Promise<{
+/** 从单个 mi-token 端点取设备指纹；这个端点不可用时返回 null，由调用方切下一个。 */
+async function fetchMachineIdentityFrom(
+  url: string,
+  apiKey: string,
+  timeoutMs: number,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{
   machineToken: string;
   machineType: string;
   machineCode: string;
 } | null> {
-  const { url, apiKey, timeoutMs } = miTokenConfig();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort("timeout"), timeoutMs);
   try {
     const headers: Record<string, string> = { Accept: "application/json" };
     if (apiKey) headers["X-Api-Key"] = apiKey;
-    const response = await fetch(url, {
+    const response = await fetchImpl(url, {
       method: "POST",
       headers,
       signal: controller.signal,
     });
     if (!response.ok) {
-      logger().warn(undefined, "Qoder mi-token 接口返回非 2xx", { status: response.status });
+      logger().warn(undefined, "Qoder mi-token 接口返回非 2xx", { url, status: response.status });
       return null;
     }
     const data = (await response.json()) as {
@@ -613,7 +650,7 @@ async function fetchMachineIdentity(): Promise<{
     // 该服务把结果裹在 tokens[] 里；同时兼容平铺格式以便换用其他服务。
     const entry = data.tokens?.[0] ?? data;
     if (!entry?.machineToken) {
-      logger().warn(undefined, "Qoder mi-token 响应缺少 machineToken");
+      logger().warn(undefined, "Qoder mi-token 响应缺少 machineToken", { url });
       return null;
     }
     return {
@@ -623,12 +660,36 @@ async function fetchMachineIdentity(): Promise<{
     };
   } catch (error) {
     logger().warn(undefined, "Qoder mi-token 请求失败", {
+      url,
       message: error instanceof Error ? error.message : String(error),
     });
     return null;
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * 取设备指纹三件套：按顺序试主端点，不通切备用。
+ * 每个端点只试一次（无状态领取，重试同一台没意义；有效降级是换一台）。
+ *
+ * region 只用于解析出口（mi-token 服务本身是第三方，但仍属该供应商的登录链路，
+ * 应当与该供应商的模型请求走同一个出口，否则代理池场景下会出现"登录通了、
+ * 拿指纹不通"的半截故障）。
+ */
+async function fetchMachineIdentity(region?: QoderAuthRegion): Promise<{
+  machineToken: string;
+  machineType: string;
+  machineCode: string;
+} | null> {
+  const { urls, apiKey, timeoutMs } = miTokenConfig();
+  const fetchImpl = region ? providerFetch(qoderProviderId(region)) : fetch;
+  for (const url of urls) {
+    const identity = await fetchMachineIdentityFrom(url, apiKey, timeoutMs, fetchImpl);
+    if (identity) return identity;
+  }
+  logger().warn(undefined, "Qoder mi-token 全部端点不可用", { urls });
+  return null;
 }
 
 /**
@@ -644,16 +705,21 @@ async function triggerQoderPro(
   region: QoderAuthRegion,
   accessToken: string,
   machine: { machineToken: string; machineType: string; machineCode: string },
+  accountId?: string,
 ): Promise<string> {
   try {
-    const response = await fetchWithTimeout(REGION_ENDPOINTS[region].userStatusUrl, {
-      method: "GET",
-      headers: {
-        ...proHeaders(machine),
-        authorization: `Bearer ${accessToken}`,
-        "user-agent": proElectronUa(region),
+    const response = await fetchWithTimeout(
+      REGION_ENDPOINTS[region].userStatusUrl,
+      {
+        method: "GET",
+        headers: {
+          ...proHeaders(machine),
+          authorization: `Bearer ${accessToken}`,
+          "user-agent": proElectronUa(region),
+        },
       },
-    });
+      providerFetch(qoderProviderId(region), accountId),
+    );
     if (!response.ok) return "";
     const body = (await response.json()) as { userType?: string };
     return String(body.userType ?? "");
@@ -676,6 +742,7 @@ async function triggerQoderPro(
 export async function queryQoderProStatus(
   region: QoderAuthRegion,
   accessToken: string,
+  accountId?: string,
 ): Promise<{ isPro: boolean; userType: string; planTier: string }> {
   // 刻意不接收设备三件套：本端点只带 Bearer、不带 COSY 头，不需要也不应该触碰
   // 设备标识——那正是它不触发设备指纹复核的原因。
@@ -685,10 +752,14 @@ export async function queryQoderProStatus(
   // userinfo.userType 是回显性质的冗余——列表刷新要的是布尔值，不需要它们。
   let plan: Record<string, unknown> = {};
   try {
-    const response = await fetchWithTimeout(REGION_ENDPOINTS[region].userPlanUrl, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
-    });
+    const response = await fetchWithTimeout(
+      REGION_ENDPOINTS[region].userPlanUrl,
+      {
+        method: "GET",
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
+      },
+      providerFetch(qoderProviderId(region), accountId),
+    );
     if (response.ok) {
       const body: unknown = await response.json();
       if (body && typeof body === "object" && !Array.isArray(body)) {
@@ -747,7 +818,7 @@ export async function activateQoderPro(
         machineType: account.machineType || QODER_MACHINE_TYPE,
         machineCode: options.machineCode ?? account.machineCode ?? "",
       }
-    : await fetchMachineIdentity();
+    : await fetchMachineIdentity(region);
   if (!machine) {
     return {
       ok: false,
@@ -764,17 +835,21 @@ export async function activateQoderPro(
   //    二者绑定，绑定未建立时随后的 status 会被判无效。
   if (account.machineId) {
     try {
-      await fetchWithTimeout(`${ACTIVATION_CENTER_BASE[region]}/algo/api/v1/ping`, {
-        method: "GET",
-        headers: proHeaders({ ...machine, machineId: account.machineId }),
-      });
+      await fetchWithTimeout(
+        `${ACTIVATION_CENTER_BASE[region]}/algo/api/v1/ping`,
+        {
+          method: "GET",
+          headers: proHeaders({ ...machine, machineId: account.machineId }),
+        },
+        providerFetch(qoderProviderId(region), account.id),
+      );
     } catch {
       // ping 失败不阻断：绑定可能在上一次激活时已建立。
     }
   }
 
   // 2. 触发 PRO：GET /api/v3/user/status（带设备指纹复核），返回授予后的 userType。
-  const userType = await triggerQoderPro(region, account.accessToken, machine);
+  const userType = await triggerQoderPro(region, account.accessToken, machine, account.id);
   const isPro = isProfessional(userType);
   return {
     ok: isPro,
