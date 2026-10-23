@@ -1405,6 +1405,10 @@ function RootInner({
     onOpenWorkspace: handleOpenWorkspace,
     allowOpenWorkspace,
     onLogin: !user ? handleOpenLoginEntry : undefined,
+    // 「账号管理 → 添加账号」是已登录状态下再加一个账号，与未登录时的 onLogin
+    // 是两条入口。之前这里没传 onOpenLogin，AccountSettingsSection 的按钮拿到的是
+    // undefined，点下去毫无反应（没有任何报错，只是没弹窗）。
+    onOpenLogin: handleOpenLoginEntry,
     onLogout: user ? handleLogout : undefined,
     user,
   };
@@ -1543,6 +1547,10 @@ function RootInner({
                 handleBackFromSettings={handleBackFromSettings}
                 handleLogout={user ? handleLogout : undefined}
                 onLogin={!user ? handleOpenLoginEntry : undefined}
+                // 工作区内打开设置页走的是 RootWorkspaceContent → WorkspaceSettingsLayer，
+                // 与直接渲染 SettingsPage 是两条路径；漏传这一项会让
+                // 「账号管理 → 添加账号」在已登录时点了毫无反应。
+                onOpenLogin={handleOpenLoginEntry}
                 user={user}
                 reconnectingRemoteWorkspaceKeys={reconnectingRemoteWorkspaceKeys}
                 remoteWorkspaceRecoveryByWorkspaceKey={remoteWorkspaceRecoveryByWorkspaceKey}

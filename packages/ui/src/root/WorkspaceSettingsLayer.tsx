@@ -65,6 +65,7 @@ export function WorkspaceSettingsLayer({
           onOpenRemoteWorkspace={onOpenRemoteWorkspace}
           allowOpenWorkspace={allowOpenWorkspace}
           onLogin={onLogin}
+          onOpenLogin={onOpenLogin}
           onLogout={onLogout}
           user={user}
         />

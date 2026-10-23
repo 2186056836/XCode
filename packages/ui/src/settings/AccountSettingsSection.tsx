@@ -244,7 +244,18 @@ export function AccountSettingsSection({
         <p className="text-sm text-foreground-subtle">
           {intl.formatMessage({ id: "settings.accounts.description" })}
         </p>
-        <Button size="default" onClick={onOpenLogin}>
+        <Button
+          size="default"
+          data-debug-onopenlogin={typeof onOpenLogin}
+          onClick={
+            onOpenLogin ??
+            (() => {
+              // 兜底不该发生：Root 未传 onOpenLogin 时按钮会静默失效。
+              // 这里留一条可见痕迹，避免再出现「点了没反应也没报错」。
+              console.error("[AccountSettingsSection] onOpenLogin is missing");
+            })
+          }
+        >
           {intl.formatMessage({ id: "settings.accounts.add" })}
         </Button>
       </div>
