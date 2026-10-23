@@ -31,15 +31,22 @@ export function createMarketingTouchService(options: {
 }): IMarketingTouchService {
   let previousToken: string | undefined;
   let scope = randomUUID();
-  async function context(locale: "zh-CN" | "en-US") {
-    const token = (await options.credentialService.load(XCODE_JWT_TOKEN_KEY))?.trim() || "";
+  /**
+   * 组本次请求的鉴权头。
+   *
+   * `accountRef` 给定时读该账号自己的 JWT（`zcodejwt:{accountRef}`）与 Device-Mid，
+   * 而不是全局镜像。一键领取要对每个账号「用谁的凭据查投放」——用激活账号的凭据去查，
+   * 拿到的就是激活账号的投放，再拿别的账号的凭据去领，服务端自然判无活动。
+   */
+  async function context(locale: "zh-CN" | "en-US", accountRef?: string) {
+    const tokenKey = accountRef ? `zcodejwt:${accountRef}` : XCODE_JWT_TOKEN_KEY;
+    const token = (await options.credentialService.load(tokenKey))?.trim() || "";
     if (previousToken !== token) {
       previousToken = token;
       scope = randomUUID();
     }
-    // Device-Mid / App-Version / 渠道等成套 source 头统一由 fork 的 sourceHeaders 构造，
-    // 与其他出口保持一致；locale 由调用方显式覆盖。
-    const sourceHeaders = buildXCodeSourceHeaders();
+    // Device-Mid 必须与被查询账号配对：source 头里的 mid 与 JWT 不同源时服务端会拒绝。
+    const sourceHeaders = buildXCodeSourceHeaders(accountRef ? { accountRef } : {});
     const headers: Record<string, string> = {
       ...sourceHeaders,
       "X-Client-Language": localeSchema.parse(locale),
@@ -49,8 +56,8 @@ export function createMarketingTouchService(options: {
     return { scope, headers };
   }
   return {
-    async query({ locale }) {
-      const identity = await context(locale);
+    async query({ locale, accountRef }) {
+      const identity = await context(locale, accountRef);
       const url = new URL(XCODE_MARKETING_TOUCH_URL);
       url.searchParams.set("seq", String(bootRequestSeq++));
       const response = await readApiJson<unknown>(options.apiClient, url.href, {
@@ -59,7 +66,7 @@ export function createMarketingTouchService(options: {
         timeoutMs: 15_000,
         redirect: "error",
       });
-      if ((await context(locale)).scope !== identity.scope)
+      if ((await context(locale, accountRef)).scope !== identity.scope)
         throw new Error("marketing_identity_changed");
       const snapshot = parseMarketingTouchResponse(response);
       options.onSnapshot?.(snapshot);
