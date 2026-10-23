@@ -26,7 +26,7 @@ import {
   TID_MODEL_PROVIDER_NAME_INPUT,
   TID_MODEL_PROVIDER_SELECT_ALL_MODEL,
   testId,
-} from "@zcode/shared";
+} from "@zcode/shared/test-ids";
 import {
   InfoIcon,
   Loader2Icon,

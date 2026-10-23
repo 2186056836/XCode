@@ -19,6 +19,8 @@ import {
   type JsonSchema,
 } from "@zcode/contracts";
 import type { ToolEntry } from "../types.js";
+import { deferredToolCallEntry } from "./deferred-tool-call.js";
+import { toolSearchToolEntry } from "./tool-search.js";
 import { readToolEntry } from "./read.js";
 import { writeToolEntry } from "./write.js";
 import { editToolEntry } from "./edit.js";
@@ -46,6 +48,8 @@ import {
 } from "./cron.js";
 import { offPeakCreateToolEntry, offPeakListToolEntry } from "./off-peak.js";
 import { proxyPoolToolEntry } from "./proxy-pool.js";
+import { modelJailbreakToolEntry } from "./model-jailbreak.js";
+import { providerAccountToolEntry } from "./provider-account.js";
 import {
   createEnterPlanModeToolEntry,
   enterPlanModeToolEntry,
@@ -77,6 +81,8 @@ import { createToolRuleNameSet } from "../tool-visibility.js";
 // 统一隐藏 Glob/Grep，并通过 Bash find/grep 接管搜索。
 
 export const builtInTools: ToolEntry[] = [
+  toolSearchToolEntry,
+  deferredToolCallEntry,
   readToolEntry,
   writeToolEntry,
   editToolEntry,
@@ -96,6 +102,10 @@ export const builtInTools: ToolEntry[] = [
   offPeakListToolEntry,
   // 代理池配置面：与 OffPeak 同族，端口在场才注册（见 includeProxyPool）。
   proxyPoolToolEntry,
+  // 模型越狱配置面：设置页「模型越狱」四块（身份提示词 / 模板 / prefill / 混淆）。
+  modelJailbreakToolEntry,
+  // 账号凭据面：Qoder / CodeBuddy / zai / bigmodel 的导入与账号管理。
+  providerAccountToolEntry,
   enterPlanModeToolEntry,
   exitPlanModeToolEntry,
   askUserQuestionToolEntry,
@@ -198,6 +208,16 @@ interface RegisterBuiltInToolsOptions {
    */
   includeProxyPool?: boolean;
   /**
+   * 模型越狱配置工具面。与 includeProxyPool 同门：host 侧设置服务在场即注入端口。
+   * 子会话按 subagent_child 规则不暴露。
+   */
+  includeModelJailbreak?: boolean;
+  /**
+   * 账号凭据工具面。与 includeModelJailbreak 同门：host 侧账号服务在场即注入端口。
+   * 子会话按 subagent_child 规则不暴露。
+   */
+  includeProviderAccount?: boolean;
+  /**
    * 动态工作流灰度门。**只有显式 false
    * 才下架** DYNAMIC_WORKFLOW_TOOL_NAMES：缺席代表调用方不参与灰度（TUI、headless、
    * workflow_child），它们必须保留全部工具面；fail-closed 的缺省值落在协议服务端的
@@ -276,6 +296,18 @@ export function registerBuiltInTools(
       continue;
     }
     if (entry.metadata.name === "ProxyPool" && options.includeProxyPool !== true) {
+      continue;
+    }
+    if (
+      entry.metadata.name === "ModelJailbreak" &&
+      options.includeModelJailbreak !== true
+    ) {
+      continue;
+    }
+    if (
+      entry.metadata.name === "ProviderAccount" &&
+      options.includeProviderAccount !== true
+    ) {
       continue;
     }
     if (

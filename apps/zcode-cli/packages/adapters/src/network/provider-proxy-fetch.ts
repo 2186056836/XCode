@@ -54,6 +54,13 @@ export interface ProviderProxyFetchOptions {
    */
   caCertFile?: string;
   env?: Record<string, string | undefined>;
+  /**
+   * 本次请求实际命中的池条目回调。
+   *
+   * 供应商级轮询在 fetch 时才挑池，记账层（core）拿不到结果；这里把真实命中的条目
+   * 回传，让「使用详情」显示节点名而不是候选数量。直连/跟随全局时不回调。
+   */
+  onResolvedPool?: (entry: { id: string; name?: string }) => void;
 }
 
 const QODER_IDENTITY_USER_ID_HEADER = "x-qoder-internal-user-id";
@@ -186,6 +193,8 @@ export function createProviderProxyFetch(options: ProviderProxyFetchOptions): Pr
     if (proxyNoProxyMatches(requestUrl.href, entry.noProxy)) {
       return directFetch(input, init);
     }
+    // 真正经池出站才回报命中节点：noProxy 直连没有走这个池，记成它会误导排查。
+    options.onResolvedPool?.({ id: entry.id, ...(entry.name ? { name: entry.name } : {}) });
 
     const request = await normalizeRequest(input, init);
     try {

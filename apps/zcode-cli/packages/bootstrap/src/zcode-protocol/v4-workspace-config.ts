@@ -47,7 +47,12 @@ export async function buildLiveWorkspaceConfigStateV4(
     (candidate) => candidate.workspace.workspaceKey === workspaceId,
   );
   if (!record) return null;
-  const settings = await mapSessionSettings(record.app);
+  // prefillOverride 必须一起传：漏掉它，会话级「强制开/关」在 workspace 目录里
+  // 会退化成 inherit，UI 的 PreFill 行永远显示「跟随全局」。
+  const settings = await mapSessionSettings(record.app, {
+    personaOverride: record.personaOverride,
+    prefillOverride: record.prefillOverride,
+  });
   const slashCommands = await listProtocolSlashCommands({
     // 灰度门是 Host 判定的 workspace 级事实，目录装配读进程缓存。
     dynamicWorkflowEnabled: context.appRuntimePreferences.dynamicWorkflowEnabled,

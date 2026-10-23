@@ -1,3 +1,4 @@
+import type { ToolSearchExecutionContext, ModelCallWrapper } from "@zcode/contracts";
 import type { McpToolUiDescriptor } from "@zcode/shared/mcp-apps";
 // ============================================================
 // Tool Types - Core tool types for registry and executor
@@ -24,6 +25,8 @@ import type {
   ModelToolSideEffectScope,
   OffPeakPort,
   ProxyPoolPort,
+  ModelJailbreakPort,
+  ProviderAccountPort,
   TopicResourcePort,
   PdfDocumentPort,
   PermissionBrokerReasonSource,
@@ -68,6 +71,9 @@ import type {
 // -----------------------------------------------
 
 export interface ToolMetadata {
+  shouldDefer?: boolean;
+  alwaysLoad?: boolean;
+  searchHint?: string;
   name: string;
   description?: string;
   modelInstructions?: readonly string[];
@@ -135,6 +141,7 @@ export interface BackgroundTaskControlPort {
 }
 
 export interface ToolExecutionContext {
+  toolSearch?: ToolSearchExecutionContext;
   toolCallId: string;
   /**
    * 当前 Tool 的实时观测写入器。Handler 只能通过窄接口写事实，不能接触原始 OTel Span。
@@ -175,6 +182,9 @@ export interface ToolExecutionContext {
   offPeakPort?: OffPeakPort;
   /** 代理池配置端口；在场则为该会话注册 ProxyPool（设置页同款配置面）。 */
   proxyPoolPort?: ProxyPoolPort;
+  /** 模型越狱配置端口；在场则为该会话注册 ModelJailbreak（设置页同款配置面）。 */
+  modelJailbreakPort?: ModelJailbreakPort;
+  providerAccountPort?: ProviderAccountPort;
   topicResourcePort?: TopicResourcePort;
   sessionStore?: SessionStorePort;
   sessionModePort?: SessionModePort;
@@ -508,6 +518,7 @@ export interface ToolBatchResult {
 // -----------------------------------------------
 
 export interface ExecutableToolCall {
+  modelCallWrapper?: ModelCallWrapper;
   id: string;
   name: string;
   input: unknown;

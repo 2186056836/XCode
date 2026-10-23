@@ -49,6 +49,7 @@ import {
 import { isClosableSessionStore } from "./session-store.js";
 import { createSubagentObservation } from "./subagent-observation.js";
 import type { PrepareUserExecutionBoundary, XCodeApp } from "./types.js";
+import type { CliDefaultSelection } from "./cli-default-selection.js";
 
 type SessionFacade = Pick<
   XCodeApp,
@@ -58,6 +59,7 @@ type SessionFacade = Pick<
   | "close"
   | "callMcpToolForUi"
   | "getMcpAppConnectionSnapshot"
+  | "waitForMcpAppConnection"
   | "onMcpAppConnectionInvalidated"
   | "replaceMcpAppProvidedTools"
   | "connectMcpServer"
@@ -114,6 +116,7 @@ interface SessionResourceCloseInput {
 }
 
 interface CreateSessionFacadeDeps {
+  cliDefaultSelection?: CliDefaultSelection;
   /**
    * 停下本会话拥有的 dwf run：
    * run service 的 `close()`。缺席即本装配没有 dwf 端口（journal 窄化失败、测试装配）。
@@ -157,7 +160,7 @@ export function createSessionFacade(deps: CreateSessionFacadeDeps): SessionFacad
         selection?: ResolvedRegistrySelection;
       } => {
     const registry = deps.providerRegistry;
-    const selection = deps.runtime.getSessionModelSelection();
+    const selection = readUserModelSelection(deps);
     if (!selection) return { owned: false };
     const { providerId } = selection;
     if (!registry.getProvider(providerId)) return { owned: false };
@@ -330,17 +333,17 @@ export function createSessionFacade(deps: CreateSessionFacadeDeps): SessionFacad
       return await closePromise;
     },
     getMode: () => deps.runtime.getMode(),
-    getModel: () => formatLegacyRuntimeModelValue(deps.runtime.getSessionModelSelection()),
+    getModel: () => formatLegacyRuntimeModelValue(readUserModelSelection(deps)),
     getLocale: () => currentLocale,
     getTheme: () => deps.configResult.config.ui.theme as UiThemePreference,
     getDefaultThoughtLevel: () => {
       const registryState = currentRegistrySelection();
       return registryState.owned
         ? resolveRegistryThoughtLevel(registryState.selection)
-        : deps.runtime.getSessionModelSelection()?.options?.reasoningLevel;
+        : readUserModelSelection(deps)?.options?.reasoningLevel;
     },
     // 当前档位只读会话事实；缺失时不能借默认档位伪装成已完成选择。
-    getThoughtLevel: () => deps.runtime.getSessionModelSelection()?.options?.reasoningLevel,
+    getThoughtLevel: () => readUserModelSelection(deps)?.options?.reasoningLevel,
     loadSessionTranscript: async () =>
       await loadSessionTranscriptFromStore({
         sessionId: deps.sessionId,
@@ -365,7 +368,7 @@ export function createSessionFacade(deps: CreateSessionFacadeDeps): SessionFacad
       return listRegistryBackedModels(deps.providerRegistry);
     },
     getCurrentModelOption: () => {
-      const selection = deps.runtime.getSessionModelSelection();
+      const selection = readUserModelSelection(deps);
       return selection && getRegistryBackedModel(deps.providerRegistry, selection);
     },
     getModelOption: (selection) => getRegistryBackedModel(deps.providerRegistry, selection),
@@ -467,6 +470,10 @@ export function createSessionFacade(deps: CreateSessionFacadeDeps): SessionFacad
     onMcpAppConnectionInvalidated: (name, listener) =>
       deps.mcpPort?.onAppConnectionInvalidated?.(name, listener) ?? (() => {}),
     getMcpAppConnectionSnapshot: (name) => deps.mcpPort?.appConnectionSnapshot?.(name) ?? null,
+    waitForMcpAppConnection: async (name) =>
+      deps.mcpPort?.waitForAppConnection
+        ? deps.mcpPort.waitForAppConnection(name)
+        : (deps.mcpPort?.appConnectionSnapshot?.(name) ?? null),
     callMcpToolForUi: async (serverName, toolName, args, options) => {
       if (!deps.mcpPort) {
         throw new Error("MCP is disabled");
@@ -655,7 +662,7 @@ export function createSessionFacade(deps: CreateSessionFacadeDeps): SessionFacad
       if (!registrySelection) {
         throw new Error(`Provider Registry 中不存在 Model: ${modelId}`);
       }
-      const previousSelection = deps.runtime.getSessionModelSelection();
+      const previousSelection = readUserModelSelection(deps);
       const previousModel = formatLegacyRuntimeModelValue(previousSelection);
       const model = formatLegacyRuntimeModelValue(registrySelection.selection);
       const sessionSelection: ModelSelection = {
@@ -665,7 +672,11 @@ export function createSessionFacade(deps: CreateSessionFacadeDeps): SessionFacad
           ? { options: { ...registrySelection.selection.options } }
           : {}),
       };
-      deps.runtime.setSessionModelSelection(sessionSelection);
+      if (deps.cliDefaultSelection && !options?.transient) {
+        deps.cliDefaultSelection.set(sessionSelection);
+      } else {
+        deps.runtime.setSessionModelSelection(sessionSelection);
+      }
       // transient 切换不产出 modelChange 聊天通知：应用/还原成对出现会刷出两条无意义通知。
       if (!options?.transient) {
         deps.runtime.recordPendingModelChange({
@@ -693,7 +704,7 @@ export function createSessionFacade(deps: CreateSessionFacadeDeps): SessionFacad
     setThoughtLevel: async (level) => {
       const registryState = currentRegistrySelection();
       if (registryState.owned) {
-        const currentSelection = deps.runtime.getSessionModelSelection();
+        const currentSelection = readUserModelSelection(deps);
         if (!currentSelection) throw new Error("Select a model before choosing reasoning effort");
         const registrySelection =
           registryState.selection ??
@@ -706,13 +717,15 @@ export function createSessionFacade(deps: CreateSessionFacadeDeps): SessionFacad
           currentSelection.options?.reasoningLevel,
         );
         const thoughtLevel = requireRegistryThoughtLevel(registrySelection, level);
-        deps.runtime.setSessionModelSelection({
+        const nextSelection = {
           ...currentSelection,
           options: {
             ...currentSelection.options,
             reasoningLevel: thoughtLevel,
           },
-        });
+        };
+        if (deps.cliDefaultSelection) deps.cliDefaultSelection.set(nextSelection);
+        else deps.runtime.setSessionModelSelection(nextSelection);
         await persistSessionModelSelection(deps);
         deps.logger.info("Session reasoning effort updated", {
           ...traceContextToLogContext(deps.traceContext),
@@ -834,7 +847,7 @@ async function closeSessionResourceWithinDeadline(
 
 async function persistSessionModelSelection(deps: CreateSessionFacadeDeps): Promise<void> {
   if (!deps.sessionStore.saveSessionEntry) return;
-  const selection = deps.runtime.getSessionModelSelection();
+  const selection = readUserModelSelection(deps);
   if (!selection) return;
   const timestamp = Date.now();
   try {
@@ -893,4 +906,10 @@ function goalStateChangeReminderText(
     default:
       return undefined;
   }
+}
+
+function readUserModelSelection(deps: CreateSessionFacadeDeps): ModelSelection | undefined {
+  return deps.cliDefaultSelection
+    ? deps.cliDefaultSelection.get()
+    : deps.runtime.getSessionModelSelection();
 }

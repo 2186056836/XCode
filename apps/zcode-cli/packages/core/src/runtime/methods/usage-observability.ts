@@ -8,6 +8,8 @@ import {
 import type {
   MessageId,
   Model,
+  ModelRequestAuth,
+  ModelUsage,
   SessionEvent,
   ToolCallId,
   TraceContext,
@@ -60,12 +62,17 @@ export async function recordModelUsageFact(
   if (!usageStore) return;
 
   const completedAt = Date.now();
-  const usage = input.result?.usage;
   const networkEvents = modelNetworkEvents(input.events.slice(input.networkEventStartIndex));
   const retryCount = networkEvents.filter((event) => event.type === "model_retry_scheduled").length;
   const failedNetworkEvent = networkEvents.findLast(
     (event) => event.type === "model_request_failed",
   );
+  const usage = input.result?.usage ?? failedNetworkEvent?.usage;
+  // 本次请求实际用到的账号与出口代理（host 选号时下发）。
+  const requestAuth = runtime.getLastModelRequestAuth?.();
+  // 供应商级轮询是 per-request 选择：host 只能给候选快照，真实命中的节点由 adapter
+  // 在 fetch 层回报。有它就覆盖，否则保留 host 的出口信息（连接级绑定 / 跟随全局）。
+  const resolvedEgress = runtime.getLastResolvedEgress?.();
   const firstTokenAt = firstModelTokenAt(input.events, input.networkEventStartIndex);
   const durationMs = completedAt - input.startedAt;
   const errorInfo = errorInfoFor(input.error, failedNetworkEvent);
@@ -115,7 +122,11 @@ export async function recordModelUsageFact(
       errorCode: errorInfo.code,
       errorMessage: errorInfo.message,
       rawUsage: usage,
-      providerMetadata: input.result?.providerMetadata,
+      providerMetadata: mergeProviderMetadata(
+        input.result?.providerMetadata,
+        requestAuth,
+        resolvedEgress,
+      ),
     });
   } catch (error) {
     runtime.logger?.warn("Usage model fact write failed", {
@@ -366,6 +377,7 @@ function modelNetworkEvents(events: readonly SessionEvent[]) {
         reason?: string;
         retryable?: boolean;
         message?: string;
+        usage?: ModelUsage;
       } => Boolean(payload && typeof payload === "object" && "type" in payload),
     );
 }
@@ -423,4 +435,39 @@ function stringValue(value: unknown): string | undefined {
 
 function numberValue(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
+}
+
+/**
+ * 把账号 / 出口代理并进 providerMetadata。
+ *
+ * 「使用详情」要按请求展示这两个维度，但它们不在 usage 表的独立列里，
+ * 只能借 providerMetadata（JSON 列）承载。provider 自带的 metadata 优先保留。
+ *
+ * 出口代理优先用 `resolvedEgress`：供应商级轮询的池是 adapter 在 fetch 时才挑的，
+ * host 下发的 `requestAuth.proxyDisplayName` 只是候选快照（「轮询 N 个池」）。
+ * 真正出站过哪个节点，只有 adapter 回报的那份算数。
+ */
+function mergeProviderMetadata(
+  providerMetadata: unknown,
+  requestAuth: ModelRequestAuth | undefined,
+  resolvedEgress?: { proxyPoolId?: string; proxyDisplayName?: string },
+): unknown {
+  const accountId = requestAuth?.connectionId;
+  const accountDisplayName = requestAuth?.accountDisplayName;
+  const proxyPoolId = resolvedEgress?.proxyPoolId ?? requestAuth?.proxyPoolId;
+  const proxyDisplayName = resolvedEgress?.proxyDisplayName ?? requestAuth?.proxyDisplayName;
+  if (!accountId && !accountDisplayName && !proxyPoolId && !proxyDisplayName) {
+    return providerMetadata;
+  }
+  const base =
+    providerMetadata && typeof providerMetadata === "object" && !Array.isArray(providerMetadata)
+      ? (providerMetadata as Record<string, unknown>)
+      : {};
+  return {
+    ...base,
+    ...(accountId ? { accountId } : {}),
+    ...(accountDisplayName ? { accountDisplayName } : {}),
+    ...(proxyPoolId ? { proxyPoolId } : {}),
+    ...(proxyDisplayName ? { proxyDisplayName } : {}),
+  };
 }

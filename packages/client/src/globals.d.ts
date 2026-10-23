@@ -1,4 +1,5 @@
 import type {
+  ArmsCustomEventPayload,
   DesktopCommandId,
   DesktopZoomState,
   DesktopWindowChromeState,
@@ -8,7 +9,6 @@ import type {
   PrepareCuaHelperPermissionDragResult,
   AppSettings,
   BrowserViewOperationPayload,
-  BrowserGuestAttachResult,
   BrowserViewScreenshotSurfacePreparePayload,
   BrowserViewScreenshotSurfaceReadyPayload,
   BrowserViewScreenshotSurfaceReleasePayload,
@@ -37,13 +37,12 @@ import type {
   WebRemoteControlReconnectWorkspaceResult,
   WebRemoteControlStartOperationResult,
   WebRemoteControlStatus,
-  WebRemoteControlTaskTarget,
   WebRemoteControlWorkspaceTarget,
   OAuthStateRegistration,
+  WebRemoteControlAuthStateChange,
   PostUpdateReleaseNotesPayload,
   RemoteConnectionRuntimeLog,
   RemoteSessionClosedEvent,
-  BotRemoteWorkspaceReconnectedEvent,
   RemoteTarget,
   SSHConfigAliasOption,
   RendererTelemetryEventPayload,
@@ -70,6 +69,7 @@ declare global {
     /** 插件 UI 沙箱 preload 命名空间；旧 preload 下为 undefined。 */
     zcodePluginSandbox?: {
       supportsRetainedMove?: boolean;
+      setExecutionActive?(sandboxId: string, initId: number, active: boolean): Promise<void>;
       copyImage?(
         input: import("@zcode/shared/mcp-apps").PluginSandboxCaptureRequest,
       ): Promise<void>;
@@ -82,11 +82,13 @@ declare global {
         options: RemoteTarget,
         requestId?: string,
         context?: {
-          workspacePath: string;
+          workspacePath?: string;
           workspaceIdentity?: string;
           connectTrigger?: import("@zcode/shared").RemoteWorkspaceConnectTrigger;
+          confirmSourceServerInstall?: boolean;
         },
       ): Promise<{ success: boolean; error?: string; sessionId?: string }>;
+      requestSourceSettingsAttachment?(sourceServerId: string): Promise<{ attachmentId: string }>;
       /** 取消当前窗口尚未建立完成的远程连接 */
       cancelPendingRemoteConnection?(requestId?: string): Promise<void>;
       /** 绑定远程 logical session 的 canonical workspace context */
@@ -94,13 +96,9 @@ declare global {
         remoteSessionId: string;
         workspacePath: string;
         workspaceIdentity?: string;
-      }): Promise<BrowserGuestAttachResult>;
+      }): Promise<import("@zcode/shared").BindRemoteWorkspaceSessionContextResult>;
       /** 为当前 workspace 开启 Web 远程控制 */
       startWebRemoteControl(
-        context: WebRemoteControlContext,
-      ): Promise<WebRemoteControlStartOperationResult>;
-      /** 清除旧配对材料并重新生成 Web 远程控制二维码 */
-      refreshWebRemoteControlPairing(
         context: WebRemoteControlContext,
       ): Promise<WebRemoteControlStartOperationResult>;
       /** 关闭当前窗口的 Web 远程控制 */
@@ -121,10 +119,24 @@ declare global {
       listDockerContainers(): Promise<DockerContainerInfo[]>;
       /** 列出当前机器 SSH config 里可用于快速填表的 alias */
       listSSHConfigAliases(): Promise<SSHConfigAliasOption[]>;
+      /** 读取宿主环境中的原生 MCP 用户目录配置 */
+      loadMcpFromUserDirectory(
+        payload?: import("@zcode/shared").LoadCliMcpFromUserDirectoryRequest,
+      ): Promise<import("@zcode/shared").LoadCliMcpFromUserDirectoryResult>;
+      /** 写入宿主环境中的原生 MCP 用户目录配置 */
+      saveMcpToUserDirectory(
+        payload: import("@zcode/shared").SaveCliMcpToUserDirectoryRequest,
+      ): Promise<{ success: boolean; error?: string }>;
+      /** 迁移旧版 Common MCP 配置 */
+      migrateLegacyCommonMcp(
+        payload?: import("@zcode/shared").MigrateLegacyCommonMcpRequest,
+      ): Promise<import("@zcode/shared").MigrateLegacyCommonMcpResult>;
       /** renderer 日志通过 IPC 传到 main 进程统一存储 */
       log(level: "info" | "warn" | "error", args: unknown[]): void;
       /** 打开系统目录选择框，返回选中路径或 null */
       selectDirectory(): Promise<string | null>;
+      /** 打开系统多目录选择框；取消时返回空数组 */
+      selectDirectories(): Promise<string[]>;
       /** 打开系统文件选择框，返回选中文件路径或 null */
       selectFile(): Promise<string | null>;
       /** 打开系统多文件选择框，返回选中文件路径；取消时返回空数组 */
@@ -137,6 +149,10 @@ declare global {
       printPageToPdf?(): Promise<import("@zcode/shared").PrintPageToPdfResult>;
       /** 从系统拖拽/文件输入得到的 Web File 解析真实本地路径 */
       getPathForFile?(file: File): string | null;
+      /** 长文本粘贴落盘为真正的本地附件 */
+      createTempTextAttachment(
+        payload: import("@zcode/shared").CreateTempTextAttachmentRequest,
+      ): Promise<import("@zcode/shared").CreateTempTextAttachmentResult>;
       /** dwf 产物「作为文件打开」：把某一版的字节落成本机副本，返回其路径 */
       materializeWorkflowArtifactFile(
         payload: import("@zcode/shared").MaterializeWorkflowArtifactFileRequest,
@@ -145,9 +161,9 @@ declare global {
       onRemoteConnectionLog(handler: (entry: RemoteConnectionRuntimeLog) => void): () => void;
       /** 订阅远程 workspace session 关闭事件，返回 disposer */
       onRemoteSessionClosed(handler: (event: RemoteSessionClosedEvent) => void): () => void;
-      /** 订阅 Bot 触发的远程 workspace 重连成功事件，返回 disposer */
-      onBotRemoteWorkspaceReconnected(
-        handler: (event: BotRemoteWorkspaceReconnectedEvent) => void,
+      /** 订阅 Source 自动重连后的 logical session 换代事件，返回 disposer */
+      onRemoteSessionReconnected?(
+        handler: (event: import("@zcode/shared").RemoteSessionReconnectedEvent) => void,
       ): () => void;
       /** 检查目录是否已在其他窗口打开 */
       activateOrSetWorkspace?(path: string): Promise<{ activated: boolean }>;
@@ -156,7 +172,6 @@ declare global {
       /** 同步当前窗口里 Web 远程控制允许切换的 workspace */
       syncWebRemoteControlWorkspaces?(workspaces: WebRemoteControlWorkspaceTarget[]): void;
       /** 同步当前窗口里 Web 远程控制可展示的 task 快照 */
-      syncWebRemoteControlTasks?(tasks: WebRemoteControlTaskTarget[]): void;
       /** 注册手机端 Web 远控请求重连 workspace 的回调 */
       onWebRemoteControlReconnectWorkspace?(
         handler: (
@@ -170,6 +185,8 @@ declare global {
       syncAppSettings?(patch: Partial<AppSettings>): void;
       /** 查询关闭驻留托盘能力（Linux 置灰判断；spec：docs/desktop/linux-close-to-tray.md） */
       getCloseToTrayCapability?(): Promise<import("@zcode/shared").DesktopCloseToTrayCapability>;
+      /** 快捷键设置页录制态开关：main 暂时摘除可配置菜单 accelerator */
+      setShortcutRecordingActive?(active: boolean): void;
       /** 注册 main 进程要求聚焦指定 workspace tab 的回调，返回 disposer */
       onFocusTab(handler: (path: string) => void): () => void;
       /** 注册 main 进程触发新建 tab 的回调，返回 disposer */
@@ -239,10 +256,16 @@ declare global {
       ): () => void;
       /** 注册 main 进程触发新建任务的回调，返回 disposer */
       onNewTask(handler: () => void): () => void;
+      /** 注册 main 进程请求关闭当前上下文的回调，返回 disposer */
+      onCloseActiveContextRequest?(handler: () => void): () => void;
       /** 注册 main 进程触发打开工作区的回调，返回 disposer */
       onOpenWorkspace?(handler: () => void): () => void;
       /** 注册 main 进程通过 deep link 直接打开本地工作区目录的回调，返回 disposer */
       onOpenWorkspacePath?(handler: (path: string) => void): () => void;
+      /** 注册 main 进程打开内置反馈对话框的回调，返回 disposer */
+      onOpenFeedbackDialog?(handler: () => void): () => void;
+      /** 注册 main 进程打开我的工单面板的回调，返回 disposer */
+      onOpenTicketsPanel?(handler: () => void): () => void;
       /** 注册窗口全屏状态变化回调，返回 disposer */
       onWindowFullscreenChanged(handler: (isFullscreen: boolean) => void): () => void;
       /** 读取窗口最大化状态与系统原生圆角能力 */
@@ -250,6 +273,12 @@ declare global {
       /** 订阅窗口最大化状态与系统原生圆角能力变化 */
       onDesktopWindowChromeStateChanged?(
         handler: (state: DesktopWindowChromeState) => void,
+      ): () => void;
+      /** 同步读取当前原生窗口控制区安全边距 */
+      getWindowControlsOverlayMetrics?(): import("@zcode/shared").WindowControlsOverlayMetrics | null;
+      /** 注册原生窗口控制区安全边距变化回调，返回 disposer */
+      onWindowControlsOverlayChanged?(
+        handler: (metrics: import("@zcode/shared").WindowControlsOverlayMetrics) => void,
       ): () => void;
       /** 读取当前桌面窗口页面缩放档位 */
       getDesktopZoomLevel?(): Promise<DesktopZoomState>;
@@ -277,16 +306,21 @@ declare global {
       startCuaHelperPermissionDrag?(): void;
       /** 上报 OAuth state 用于 deep link 路由 */
       registerOAuthState(payload: OAuthStateRegistration): void;
+      notifyWebRemoteControlAuthStateChanged(change: WebRemoteControlAuthStateChange): void;
       /** 注册 OAuth deep link 回调，返回 disposer */
       onOAuthCallback(cb: (url: string) => void): () => void;
       /** 注册支付 deep link 回调，返回 disposer */
       onPaymentCallback(cb: (url: string) => void): () => void;
+      /** 注册分享链接导入的回调，返回 disposer */
+      onShareImport?(callback: (payload: { shareCode: string }) => void): () => void;
       /** 通知 main process renderer 已就绪 */
       notifyRendererReady(): void;
       /** 同步当前 renderer 的 telemetry 上下文到 main process */
       syncTelemetryContext(context: TelemetryRendererContext): void;
       /** 通过 main process 统一上报业务 telemetry 事件 */
       reportTelemetryEvent(payload: RendererTelemetryEventPayload): Promise<void>;
+      /** 通过 main process 统一上报 ARMS 自定义事件 */
+      reportArmsCustomEvent(payload: ArmsCustomEventPayload): Promise<void>;
       /** 读取 Desktop Renderer 用户操作 Trace 灰度配置。 */
       getRendererActionTraceConfig?(): Promise<RendererActionTraceConfigV1>;
       /** 订阅 Renderer 用户操作 Trace 灰度配置变化。 */
@@ -295,6 +329,8 @@ declare global {
       ): () => void;
       /** 发送已结束的 ui_action batch；Main 不返回业务结果。 */
       reportRendererActionTraceBatch?(batch: RendererActionTraceBatchV1): void;
+      /** 发送已结束的本地首字延迟 batch；单向 send，Main 不回执。 */
+      reportLocalTtftBatch(batch: import("@zcode/shared").LocalTtftBatch): void;
       /** 主窗口 renderer 的 60 秒 heap 读数；单向 send，Main 不回执。 */
       reportRendererHeapSample?(sample: RendererHeapSample): void;
       /** 触发任务状态对应的系统通知 */
@@ -315,7 +351,7 @@ declare global {
         remoteSessionId?: string;
         sessionId?: string;
         residencyGeneration?: number;
-      }): Promise<void>;
+      }): Promise<import("@zcode/shared").BrowserGuestAttachResult>;
       /** 重建 `<webview>` 前让 main 精确断开旧 guest 的 CDP。 */
       browserViewDetachGuest?(payload: { key: string; webContentsId: number }): Promise<boolean>;
       browserViewCloseTab?(payload: BrowserViewCloseTabRequest): Promise<void>;
@@ -375,7 +411,7 @@ declare global {
       /** 用户确认重启安装更新 */
       quitAndInstallUpdate(): Promise<void>;
       /** 获取已安装的编辑器/终端列表（含图标） */
-      getInstalledEditors(): Promise<EditorInfo[]>;
+      getInstalledEditors(filePath?: string): Promise<EditorInfo[]>;
       /** 按兼容 bundle id 或结构化 locator 获取系统应用图标 */
       getApplicationIcon?(
         request: string | ApplicationIconRequest,
@@ -394,6 +430,8 @@ declare global {
       getSystemLocale?(): Promise<Locale>;
       /** 同步标题栏亮暗色 */
       setTitleBarTheme(theme: DesktopTitleBarTheme): Promise<void>;
+      /** 读取开发态 stdio tap proxy 开关状态 */
+      getXCodeStdioTapDevState?(): Promise<import("@zcode/shared").XCodeStdioTapDevState>;
     };
   }
 }

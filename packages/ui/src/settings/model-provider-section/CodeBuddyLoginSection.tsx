@@ -4,14 +4,6 @@ import { Copy, ExternalLink, Gift, Info, Loader2Icon, LogIn, RefreshCw, Trash2, 
 import { Button } from "@/components/ui/button.js";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.js";
 import { Input } from "@/components/ui/input.js";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select.js";
-import { Switch } from "@/components/ui/switch.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
@@ -24,6 +16,8 @@ import {
   ProviderAccountRotationControl,
   ProviderProxyBatchActions,
 } from "./ProviderAccountBinding.js";
+import { AccountPaginationBar, useAccountPagination } from "./AccountPagination.js";
+import { AutoCheckinSettings } from "./AutoCheckinSettings.js";
 
 /**
  * XCode fork：CodeBuddy（其他登录型供应商）登录区，渲染在供应商详情模型列表上方。
@@ -50,13 +44,6 @@ const POLL_TIMEOUT_MS = 5 * 60 * 1000;
 
 /** 批量签到结果回显用的聚合键（不对应任何账号）。 */
 const CHECKIN_ALL_KEY = "__all__";
-
-/** 半点粒度的小时:分钟选项（0:00 / 0:30 / … / 23:30），与 host 侧选项一致。 */
-const AUTO_CHECKIN_TIME_OPTIONS: readonly string[] = Array.from(
-  { length: 48 },
-  (_, index) =>
-    `${`${Math.floor(index / 2)}`.padStart(2, "0")}:${index % 2 === 0 ? "00" : "30"}`,
-);
 
 interface AutoCheckinSettingRow {
   accountId: string;
@@ -91,6 +78,7 @@ export function CodeBuddyLoginSection({
   const [phase, setPhase] = useState<LoginPhase>({ kind: "idle" });
   const [error, setError] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<readonly AccountRow[]>([]);
+  const accountPage = useAccountPagination(accounts);
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [apiKeySaving, setApiKeySaving] = useState(false);
   const [switchingId, setSwitchingId] = useState<string | null>(null);
@@ -438,10 +426,10 @@ export function CodeBuddyLoginSection({
       {/* 账号轮询：fill-first / round-robin + sticky，对齐 9router。 */}
       <ProviderAccountRotationControl providerId={providerId} />
 
-      {/* 账号列表（多账号：切换/删除） */}
+      {/* 账号列表（多账号：切换/删除）。账号会持续累积，按页切分避免设置页被拉长。 */}
       {accounts.length > 0 ? (
         <div className="space-y-1.5">
-          {accounts.map((account) => (
+          {accountPage.pageItems.map((account) => (
             <Fragment key={account.id}>
             {/* 卡片允许换行：额度块在自己的整宽行里，不再受右侧按钮组宽度影响（见下方注释）。 */}
             <div
@@ -547,6 +535,15 @@ export function CodeBuddyLoginSection({
             ) : null}
             </Fragment>
           ))}
+          {accountPage.needsPagination ? (
+            <AccountPaginationBar
+              page={accountPage.page}
+              totalPages={accountPage.totalPages}
+              pageSize={accountPage.pageSize}
+              onChange={accountPage.setPage}
+              onPageSizeChange={accountPage.setPageSize}
+            />
+          ) : null}
         </div>
       ) : null}
 
@@ -580,49 +577,13 @@ export function CodeBuddyLoginSection({
       ) : null}
 
       {/* 自动签到设置：每账号独立开关 + HH:MM（半点粒度），host 侧调度。 */}
-      {autoCheckinRows.length > 0 ? (
-        <details className="text-ui-sm text-foreground-subtle">
-          <summary className="cursor-pointer select-none">
-            {intl.formatMessage({ id: "settings.codebuddy.autoCheckinTitle" })}
-          </summary>
-          <p className="mt-2">{intl.formatMessage({ id: "settings.codebuddy.autoCheckinHint" })}</p>
-          <div className="mt-2 space-y-1.5">
-            {autoCheckinRows.map((row) => (
-              <div
-                key={row.accountId}
-                className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-2"
-              >
-                <span className="min-w-0 flex-1 truncate text-foreground">{row.accountName}</span>
-                <Switch
-                  checked={row.enabled}
-                  disabled={autoCheckinSavingId !== null}
-                  onCheckedChange={(next) => void toggleAutoCheckin(row.accountId, next)}
-                  aria-label={intl.formatMessage(
-                    { id: "settings.codebuddy.autoCheckinToggle" },
-                    { name: row.accountName },
-                  )}
-                />
-                <Select
-                  value={row.time}
-                  disabled={!row.enabled || autoCheckinSavingId !== null}
-                  onValueChange={(next) => void changeAutoCheckinTime(row.accountId, next)}
-                >
-                  <SelectTrigger size="sm" className="w-24 justify-between">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent align="end">
-                    {AUTO_CHECKIN_TIME_OPTIONS.map((time) => (
-                      <SelectItem key={time} value={time}>
-                        {time}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ))}
-          </div>
-        </details>
-      ) : null}
+      <AutoCheckinSettings
+        intlKeyPrefix="settings.codebuddy"
+        rows={autoCheckinRows}
+        savingAccountId={autoCheckinSavingId}
+        onToggle={(accountId, enabled) => void toggleAutoCheckin(accountId, enabled)}
+        onChangeTime={(accountId, time) => void changeAutoCheckinTime(accountId, time)}
+      />
 
       <div className="flex items-center gap-2">
         <Button

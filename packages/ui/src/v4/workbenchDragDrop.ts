@@ -78,6 +78,10 @@ export function parseWorkbenchSessionDragPayload(
   }
 }
 
+/**
+ * 指针拖到面板边缘时的落点判定：取离指针最近的一条边，超过 32% 宽度/高度视为落在面板内部，
+ * 此时不触发分屏（返回 null）。
+ */
 export function resolveWorkbenchDropSide(
   rect: RectLike,
   clientX: number,

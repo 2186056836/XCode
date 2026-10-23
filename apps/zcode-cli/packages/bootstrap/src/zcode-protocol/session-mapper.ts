@@ -1,4 +1,5 @@
 import {
+  GODMODE_TEMPLATES,
   XCODE_PROTOCOL_NAME,
   XCODE_PROTOCOL_VERSION,
   getXCodeGoalActiveIterationCount,
@@ -68,6 +69,10 @@ export async function buildSessionSnapshot(input: {
   persistedGoalVerificationEvents?: SessionEvent[];
   persistedContextUsageBreakdownEvents?: SessionEvent[];
   session?: SessionInfo | null;
+  /** undefined = 继承全局；null = 内置身份；string = 模板 id。 */
+  personaOverride?: string | null;
+  /** undefined = 跟随全局；true = 强制开启；false = 强制关闭。 */
+  prefillOverride?: boolean;
   stateRevision: number;
   slashCommandOptions?: ListProtocolSlashCommandsOptions;
   target?: SessionGoal | null;
@@ -124,6 +129,8 @@ export async function buildSessionSnapshot(input: {
     settings: await mapSessionSettings(input.app, {
       currentModelContextWindow: projection.contextWindow,
       modelAvailability: input.modelAvailability,
+      personaOverride: input.personaOverride,
+      prefillOverride: input.prefillOverride,
     }),
     slashCommands: await listProtocolSlashCommands({
       ...input.slashCommandOptions,
@@ -217,6 +224,8 @@ export async function mapSessionSettings(
   options: {
     currentModelContextWindow?: number;
     modelAvailability?: "all" | "current";
+    personaOverride?: string | null;
+    prefillOverride?: boolean;
   } = {},
 ): Promise<XCodeSessionSettingsState> {
   const thoughtLevels = app.listThoughtLevels();
@@ -249,9 +258,35 @@ export async function mapSessionSettings(
             .listModels()
             .filter((candidate) => formatProtocolModelSelection(candidate.ref) === currentModel)
       : app.listModels();
+  // XCode fork：本会话生效的身份模板。runtime 覆盖可能来自全局设置在物化时的冻结，
+  // 也可能是用户在本会话手动切换的模板；逐字比对模板正文即可还原 id。
+  const promptOverrides = app.runtime.getSystemPromptOverrides();
+  const activePrefix = promptOverrides?.cliPrefix?.trim() ?? "";
+  // 显式覆盖优先用记录里的 id（内置或用户自定义），否则按正文反查内置模板。
+  const explicitTemplateId =
+    typeof options.personaOverride === "string" ? options.personaOverride : null;
+  const matchedTemplateId =
+    explicitTemplateId ??
+    (activePrefix
+      ? (GODMODE_TEMPLATES.find((template) => template.prompt.trim() === activePrefix)?.id ?? null)
+      : null);
   return {
     mode: {
       current: app.getMode(),
+    },
+    persona: {
+      source: options.personaOverride === undefined ? "inherit" : "session",
+      templateId: matchedTemplateId,
+      custom:
+        explicitTemplateId === null && activePrefix.length > 0 && matchedTemplateId === null,
+    },
+    prefill: {
+      mode:
+        options.prefillOverride === undefined
+          ? "inherit"
+          : options.prefillOverride
+            ? "on"
+            : "off",
     },
     model: {
       // app/stdio 场景下 provider catalog 属于 app 状态，不应随每次 session/read、
@@ -300,7 +335,6 @@ export function mapSessionInfo(input: {
     input.projection?.updatedAt.getTime() ??
     createdAt;
   return {
-    archivedAt: input.session?.time.archived,
     createdAt,
     mode: input.projection?.mode ?? input.app?.getMode?.() ?? "build",
     model: input.app ? optionalModelSelectionFromString(input.app.getModel()) : undefined,

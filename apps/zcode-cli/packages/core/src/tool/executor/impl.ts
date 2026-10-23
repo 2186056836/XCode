@@ -61,6 +61,8 @@ export class ToolExecutorImpl implements ToolExecutor {
       automationPort: options.automationPort,
       offPeakPort: options.offPeakPort,
       proxyPoolPort: options.proxyPoolPort,
+      modelJailbreakPort: options.modelJailbreakPort,
+      providerAccountPort: options.providerAccountPort,
       topicResourcePort: options.topicResourcePort,
       sessionStore: options.sessionStore,
       sessionModePort: options.sessionModePort,

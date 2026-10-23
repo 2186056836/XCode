@@ -34,7 +34,11 @@ import type {
   ContextBuilder,
   ExecutionShellSelection,
 } from "./deps.js";
-import type { BackgroundResultOriginMeta, ContextUsageBreakdownItem } from "@zcode/contracts";
+import type {
+  BackgroundResultOriginMeta,
+  ContextUsageBreakdownItem,
+  ModelRequestAuth,
+} from "@zcode/contracts";
 import type { RuntimeCommand, RuntimeCommandId } from "./command-queue.js";
 import type { RuntimeMessageEntry } from "../agent/message-history.js";
 import type {
@@ -66,8 +70,11 @@ import type {
 
 export interface AgentRuntimeCoreMethods {
   updateConfig(
-    patch: Pick<AgentRuntimeConfig, "mode" | "planEnabled" | "language" | "outputStyle">,
+    patch: Pick<AgentRuntimeConfig, "mode" | "planEnabled" | "language" | "outputStyle"> & {
+      systemPromptOverrides?: import("../context/types.js").SystemPromptOverrides;
+    },
   ): void;
+  getSystemPromptOverrides(): import("../context/types.js").SystemPromptOverrides | undefined;
   initializeSessionShellEnvironmentIfNeeded(
     selection: ExecutionShellSelection | (() => ExecutionShellSelection),
   ): boolean;
@@ -80,6 +87,14 @@ export interface AgentRuntimeCoreMethods {
     traceContext?: TraceContext,
   ): Promise<void>;
   getSessionModelSelection(): ModelSelection | undefined;
+  /** 最近一次物理模型请求的身份材料（账号 / 出口代理）。 */
+  getLastModelRequestAuth(): ModelRequestAuth | undefined;
+  setLastModelRequestAuth(auth: ModelRequestAuth | undefined): void;
+  /** adapter 回报的、本次真实命中的出口节点（供应商级轮询）。 */
+  getLastResolvedEgress(): { proxyPoolId?: string; proxyDisplayName?: string } | undefined;
+  setLastResolvedEgress(
+    egress: { proxyPoolId?: string; proxyDisplayName?: string } | undefined,
+  ): void;
   setSessionModelSelection(selection: ModelSelection | undefined): void;
   getProjectId(): ProjectId;
   setWorkingDirectory(cwd: string): void;

@@ -24,6 +24,7 @@ import {
   type ModelOptionValues,
 } from "@zcode/model-option-map";
 import {
+  getCurrentModelInvocationContext,
   type Logger,
   type ModelId,
   type ModelProviderId,
@@ -330,11 +331,20 @@ export class AiSdkModelExecution {
       fetch: this.resolveProviderTransport(providerId),
       caCertFile: this.network.caCertFile,
       env: this.env,
+      // 轮询在 fetch 时才挑池；把真实命中的节点回报给调用级上下文，
+      // 记账层据此写具体池名，而不是候选数量。
+      onResolvedPool: (entry) => {
+        getCurrentModelInvocationContext()?.reportResolvedEgress?.({
+          proxyPoolId: entry.id,
+          ...(entry.name ? { proxyDisplayName: entry.name } : {}),
+        });
+      },
     });
     const profiledTransport = createUpstreamRequestProfileFetch({
       profile: providerConfig.requestProfile ?? undefined,
       kind: providerConfig.kind,
       headers: providerConfig.headers,
+      baseUrl: providerConfig.baseURL,
       apiKey:
         providerConfig.access.type !== "zhipu-account"
           ? providerConfig.access.apiKey ?? undefined
@@ -657,6 +667,21 @@ function requestUrlOf(request: string | URL | { url: string }): string {
 }
 
 /**
+ * CodeBuddy 上游 host 判定（CN=copilot.tencent.com，Intl=www.codebuddy.ai）。
+ * 只在 provider config 没声明 requestProfile 时兜底用：用户层 overlay 整块替换 api
+ * 或旧内置配置缺字段时，靠 host 仍能把请求送进 CodeBuddy 画像。
+ */
+function isCodeBuddyUpstreamUrl(baseUrl: string | undefined): boolean {
+  if (!baseUrl) return false;
+  try {
+    const host = new URL(baseUrl).hostname.toLowerCase();
+    return host === "copilot.tencent.com" || host.endsWith(".codebuddy.ai") || host === "codebuddy.ai";
+  } catch {
+    return false;
+  }
+}
+
+/**
  * CodeBuddy 网关按客户端指纹放行：UA 必须形如 `IDE/2.x CodeBuddy/2.x`（Intl）或
  * `CLI/2.x CodeBuddy/2.x`（CN），且 X-Product / X-IDE-Type / X-IDE-Name /
  * x-requested-with / x-codebuddy-request 齐备；缺项实测回
@@ -924,18 +949,60 @@ function stripQoderIdentityHeaders(headers: Record<string, string> | undefined):
   return out;
 }
 
-function stripCodeBuddyIncompatibleReasoningFields(body: Record<string, unknown>): void {
+/**
+ * CodeBuddy 网关接受的 `reasoning_effort` 值域（2026-10-19 对 CN 端点
+ * copilot.tencent.com 逐值实测：`none/low/minimal/medium/high/xhigh/max/ultra`
+ * 200，其余一律 400 + 业务码 11133；Intl 同源值域）。
+ *
+ * 关键区别：`none` **是合法值**，而关闭族的别名（`disabled`/`off`/`no_think`…）
+ * 全部 11133。所以「关闭思考」只能发 `none` 或干脆不发，绝不能把
+ * `isOffReasoningLevel` 命中的原值透传——历史实现只删字段，遇到模型配置里
+ * 写着 `disabled` 的上游模型（导入时就是这么写的）仍会把它拼进 map 结果。
+ */
+const CODEBUDDY_REASONING_EFFORTS: ReadonlySet<string> = new Set([
+  "none",
+  "minimal",
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "ultra",
+  "max",
+]);
+
+/** 关闭族 → 网关唯一认可的关闭值。 */
+const CODEBUDDY_OFF_EFFORT = "none";
+
+/**
+ * 把任意档位值收敛到 CodeBuddy 合法值域。无法判定时返回 undefined（不发该字段），
+ * 因为「不发」永远比「发一个会被 11133 拒绝的值」安全。
+ */
+export function normalizeCodeBuddyReasoningEffort(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return undefined;
+  if (CODEBUDDY_REASONING_EFFORTS.has(normalized)) return normalized;
+  if (isOffReasoningLevel(normalized)) return CODEBUDDY_OFF_EFFORT;
+  // 强度语义等价但拼写不同（如 extra-high / on / enabled）按 high 处理，
+  // 与 reasoning-levels.ts 的秩表保持一致。
+  if (normalized === "extra-high" || normalized === "extra_high") return "xhigh";
+  if (normalized === "on" || normalized === "enable" || normalized === "enabled") return "high";
+  if (normalized === "true") return "high";
+  return undefined;
+}
+
+export function stripCodeBuddyIncompatibleReasoningFields(body: Record<string, unknown>): void {
   delete body.thinking;
   delete body.enable_thinking;
   delete body.reasoning;
-  // 网关没有 "none" 档（与 Qoder 同规则）：禁用思考时 reasoning_effort 直接
-  // 不发（对齐官方 CLI / 9router），发了会被 400 拒绝。
-  //
-  // XCode fork：原先只判 none/off，漏掉了模型配置里真实存在的关闭档位名
-  // （导入上游模型时写入的是 "disabled"），它会被原样发出去并被网关拒绝。
-  // 这里改为按关闭族整族剥离，而不是逐个枚举。
+  // 网关不接受任何 Anthropic / Responses 风格思考字段，只认 reasoning_effort。
+  // 关闭档必须收敛成 `none`（合法）或整字段删除；透传 `disabled` 会 11133。
   const effort = body.reasoning_effort;
-  if (typeof effort === "string" && isOffReasoningLevel(effort)) {
+  if (effort === undefined) return;
+  const normalized = normalizeCodeBuddyReasoningEffort(effort);
+  if (normalized) {
+    body.reasoning_effort = normalized;
+  } else {
     delete body.reasoning_effort;
   }
 }
@@ -963,112 +1030,53 @@ function isEventStreamResponseLike(response: Response): boolean {
 }
 
 /**
- * CodeBuddy SSE 重写：把上游「思考与正文逐 token 交替」的流整理成
- * 「一段思考 → 一段正文」，否则 XCode 会把一段思考切成 N 张卡片。
+ * CodeBuddy SSE 重写：剥掉空白 reasoning 与噪音键，保留思考的实时流式。
  *
- * 上游形态（实测 hy3）：
- *   {reasoning_content:"思"}、{reasoning_content:" ",content:"a"}、
- *   {reasoning_content:"\n",content:"b"}、{reasoning_content:"",content:"c"} …
- * 即每个正文 token 都夹带一个 reasoning_content（真实思考或纯空白）。
+ * 上游形态（实测 hy3 / deepseek-v4.1-flash）：
+ *   - 思考阶段：连续多帧 `{reasoning_content:"思"}`；
+ *   - 正文阶段：连续多帧 `{content:"答", reasoning_content:""}`；
+ *   - 两阶段**不交替**（实测 228 帧纯思考 → 151 帧纯正文，同帧同时有两者为 0 帧）。
  *
- * AI SDK 的 openai-compatible 解析器用 `if (reasoningContent)` 判真：真实思考会让它
- * 开 reasoning 段，遇到 `delta.content` 立刻发 reasoning-end；下一个思考 token 再开新段。
- * 结果就是投影层每段思考一张「思考 · 持续了几秒」卡片。
+ * 唯一的坑是正文帧恒带空 `reasoning_content`（`""` / `" "` / `"\n"` 都见过）。
+ * AI SDK 的 openai-compatible 解析器用 `if (reasoningContent)` 判真：`" "` 和 `"\n"`
+ * 都是 truthy，会让它在每个正文帧前开一次 reasoning 段、遇 `delta.content` 又立刻
+ * 关掉，于是投影层把一段思考切成 N 张「思考 · 持续了几秒」卡片。
  *
- * 处理规则：
- * 1. 空白 reasoning（`""` / `" "` / `"\n"` / `"\t"`）直接丢弃——它不是内容；
- * 2. 真实 reasoning 累积到缓冲区，按「思考突发段」整段下发：
- *    - 一帧里**同时**有 reasoning 和 content 时，先把缓冲区 flush（这通常是正文阶段的
- *      夹带碎片，说明这段思考已经结束），再放行正文；
- *    - 连续多帧纯 reasoning 会一直累积，不会每个 token 开一段；
- *    - 流结束（`[DONE]` / `flush()`）时把剩余缓冲下发。
- * 3. 这样一条「思考 → 正文」的回复只会产生一次 reasoning-start；正文阶段夹带的
- *    思考碎片会并进同一次 flush，不会退化成 N 张卡片。
+ * 因此这里**只做删除**：空白 reasoning 一律剥掉，真实思考原样透传。
+ * 不缓冲、不合并——上游本身已经是「一段思考 → 一段正文」，逐帧透传既能保持
+ * 实时打字机效果，也不会产生多余分段。
  */
 function createCodeBuddySseRewriter(): {
   push(line: string): string[];
   flush(): string[];
 } {
-  /** 已累积但尚未下发的思考文本。 */
-  let buffered = "";
-  /** 缓冲区所属的 chunk 骨架（保留 id/model/created）。 */
-  let skeleton: Record<string, unknown> | null = null;
-
-  const flushReasoning = (): string[] => {
-    if (!buffered || !skeleton) return [];
-    const chunk: Record<string, unknown> = {
-      ...skeleton,
-      choices: [
-        {
-          ...((skeleton.choices as Record<string, unknown>[] | undefined)?.[0] ?? {}),
-          delta: { reasoning_content: buffered },
-        },
-      ],
-    };
-    buffered = "";
-    skeleton = null;
-    return [`data: ${JSON.stringify(chunk)}`];
-  };
-
   const rewrite = (line: string): string[] => {
     if (!line.startsWith("data:")) return [line];
     const payload = line.slice(5).trim();
-    if (!payload || payload === "[DONE]") {
-      // 先下发剩余思考，再放行 [DONE]；之后 flush() 不会再产出任何东西。
-      return [...flushReasoning(), line];
-    }
+    if (!payload || payload === "[DONE]") return [line];
     try {
       const chunk = JSON.parse(payload) as Record<string, unknown>;
       const choices = Array.isArray(chunk.choices) ? chunk.choices : [];
-      const out: string[] = [];
       for (const choice of choices) {
         const delta = (choice as Record<string, unknown>)?.delta as
           | Record<string, unknown>
           | undefined;
         if (!delta) continue;
+        // 空白思考不是内容，只是网关填充：删掉它，SDK 才不会为它开一段。
+        if (
+          typeof delta.reasoning_content === "string" &&
+          !delta.reasoning_content.trim()
+        ) {
+          delete delta.reasoning_content;
+        }
         if (delta.refusal === "") delete delta.refusal;
         if (delta.function_call === null) delete delta.function_call;
         if (Array.isArray(delta.tool_calls) && delta.tool_calls.length === 0) {
           delete delta.tool_calls;
         }
         if (delta.extra_fields === null) delete delta.extra_fields;
-
-        const reasoning =
-          typeof delta.reasoning_content === "string" ? delta.reasoning_content : "";
-        const hasReasoning = Boolean(reasoning && reasoning.trim());
-        if (reasoning) {
-          // 空白不是内容，直接丢。
-          if (hasReasoning) {
-            buffered += reasoning;
-            skeleton ??= chunk;
-          }
-          delete delta.reasoning_content;
-        } else if ("reasoning_content" in delta) {
-          delete delta.reasoning_content;
-        }
-
-        const hasBody =
-          (typeof delta.content === "string" && delta.content.length > 0) ||
-          (Array.isArray(delta.tool_calls) && delta.tool_calls.length > 0);
-        // 同一帧里既有思考又有正文/工具 → 这段思考到此为止，整段 flush 后再放行正文。
-        // 纯正文帧不 flush（正文阶段夹带的碎片会并进下一次 flush）；纯思考帧继续累积。
-        if (hasBody && hasReasoning) {
-          out.push(...flushReasoning());
-        } else if (hasBody && Array.isArray(delta.tool_calls)) {
-          // 工具调用是步骤边界：即使这一帧没带思考，也把之前攒的整段下发。
-          out.push(...flushReasoning());
-        }
       }
-      const hasAnyDelta = choices.some((choice) => {
-        const delta = (choice as Record<string, unknown>)?.delta as
-          | Record<string, unknown>
-          | undefined;
-        return delta !== undefined && Object.keys(delta).length > 0;
-      });
-      if (hasAnyDelta) {
-        out.push(`data: ${JSON.stringify(chunk)}`);
-      }
-      return out;
+      return [`data: ${JSON.stringify(chunk)}`];
     } catch {
       return [line];
     }
@@ -1079,7 +1087,7 @@ function createCodeBuddySseRewriter(): {
       return rewrite(line);
     },
     flush() {
-      return flushReasoning();
+      return [];
     },
   };
 }
@@ -1089,11 +1097,10 @@ function rewriteCodeBuddySseStream(response: Response): Response {
   const encoder = new TextEncoder();
   let buffer = "";
   const rewriter = createCodeBuddySseRewriter();
-  // SSE 里相邻的 `data:` 行属于**同一个事件**，事件之间必须有一个空行。重写器可能把
-  // 一条输入行扩成多条输出行（注入整段 reasoning），因此这里统一由输出侧补事件边界：
-  // 每个事件写成 `data: ...\n\n`，输入里的空行直接丢弃，不原样透传。
-  // 之前逐行 `out + "\n"` 会让注入的 reasoning 行与紧随其后的 `data: [DONE]` 粘成
-  // 同一个事件，AI SDK 报 `Unexpected non-whitespace character after JSON`。
+  // SSE 里相邻的 `data:` 行属于**同一个事件**，事件之间必须有一个空行。
+  // 这里统一由输出侧补事件边界（每个事件写成 `data: ...\n\n`），输入里的空行直接丢弃。
+  // 之前逐行 `out + "\n"` 会让相邻事件粘成同一个，AI SDK 报
+  // `Unexpected non-whitespace character after JSON`。
   const emit = (controller: TransformStreamDefaultController<Uint8Array>, lines: string[]) => {
     for (const line of lines) {
       controller.enqueue(encoder.encode(`${line}\n\n`));
@@ -1136,6 +1143,8 @@ export function createUpstreamRequestProfileFetch(input: {
   kind: AiSdkProviderKind;
   headers?: Record<string, string>;
   apiKey?: string;
+  /** 供应商 baseURL：仅在 requestProfile 缺失时用于按 host 兜底识别 CodeBuddy。 */
+  baseUrl?: string;
   fetch: ProviderFetch;
   /** XCode fork：OpenCode 画像按该模型自己宣告的档位集钳制 reasoning_effort。 */
   reasoningLevelValues?: readonly string[];
@@ -1200,7 +1209,17 @@ export function createUpstreamRequestProfileFetch(input: {
 
   // CodeBuddy 画像：剥离非 OpenAI 风格推理字段 + 保住客户端指纹头，无流式改写以外
   // 的协议改造。
-  if (input.profile === "codebuddy") {
+  //
+  // XCode fork（2026-10-19）：画像不能只靠 provider config 的 `requestProfile`。
+  // 个人层 overlay 曾整块替换 api（只剩 `{proxy:null}`），旧版本内置配置也出现过
+  // CN 条目缺 requestProfile 的情况；一旦缺失，这里会整段跳过，症状是：
+  //   1. 思考链被拆成一堆碎片（SSE 里的空白 reasoning 没人剥）；
+  //   2. 关闭档 `reasoning_effort: "disabled"` 原样上行 → 400 + 11133。
+  // 因此按上游 host 兜底识别：copilot.tencent.com（CN）/ codebuddy.ai（Intl）。
+  const codebuddyProfile =
+    input.profile === "codebuddy" ||
+    (input.profile === undefined && isCodeBuddyUpstreamUrl(input.baseUrl));
+  if (codebuddyProfile) {
     const codebuddyFetch = input.fetch;
     const conversationId = randomUUID();
     return async (request, init) => {
@@ -1218,6 +1237,35 @@ export function createUpstreamRequestProfileFetch(input: {
         const body = parsed as Record<string, unknown>;
         stripCodeBuddyIncompatibleReasoningFields(body);
         ensureCodeBuddyLeadingSystemMessage(body);
+        // XCODE_PROFILE_DEBUG=1：落盘出站体，用于定位 11133 这类「模型侧拒绝参数」
+        // 的具体字段（上游只回一句 rejected by the model provider，不带 param）。
+        if (process.env.XCODE_PROFILE_DEBUG === "1") {
+          try {
+            // 先写一行摘要再写正文：正文可能很长，按 20k 截断会切掉 reasoning_effort
+            // 这类位于 messages 之后的字段，只看截断 JSON 会误判「没发」。
+            const summary = {
+              model: body.model,
+              stream: body.stream,
+              reasoning_effort: body.reasoning_effort,
+              max_tokens: body.max_tokens,
+              max_completion_tokens: body.max_completion_tokens,
+              tool_choice: body.tool_choice,
+              tools: Array.isArray(body.tools) ? body.tools.length : undefined,
+              messages: Array.isArray(body.messages) ? body.messages.length : undefined,
+            };
+            appendFileSync(
+              join(tmpdir(), "xcode-profile-debug.log"),
+              `\n=== codebuddy request ${requestUrlOf(request)} ===\n${JSON.stringify(summary)}\n${JSON.stringify(body).slice(0, 20000)}\n`,
+            );
+            // 完整请求体逐条追加（JSONL），用于原样回放复现上游 400。
+            appendFileSync(
+              join(tmpdir(), "xcode-profile-debug-full.jsonl"),
+              `${JSON.stringify({ url: requestUrlOf(request), body })}\n`,
+            );
+          } catch {
+            // 诊断写入失败不能影响主链路。
+          }
+        }
         const response = await codebuddyFetch(request, {
           ...fingerprintedInit,
           body: JSON.stringify(body),

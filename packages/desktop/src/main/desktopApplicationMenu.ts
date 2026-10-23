@@ -22,6 +22,7 @@ import {
 } from "./desktopCommandHandlers.js";
 
 const HELP_XCODE_ENDPOINT_PRODUCTION_MENU_ID = "help.xcode-endpoint.production";
+const HELP_XCODE_ENDPOINT_TEST_MENU_ID = "help.xcode-endpoint.test";
 
 export function getDesktopMenuLabel(
   locale: Locale,

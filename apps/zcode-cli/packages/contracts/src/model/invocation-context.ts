@@ -30,6 +30,13 @@ export interface ModelInvocationContext {
   streamIdleTimeoutRetryNumber?: number;
   streamRecovery?: ModelStreamRecoveryStatus;
   preserveProviderStreamBoundaries?: boolean;
+  /**
+   * adapter 在真正发出请求时回报本次命中的出口节点。
+   *
+   * 供应商级轮询是 per-request 选择，只有 adapter 的 fetch 层知道这一次抽中了哪个池；
+   * host 的 requestAuth 只能给候选快照。记账要显示真实节点名，必须由 adapter 回填。
+   */
+  reportResolvedEgress?: (egress: { proxyPoolId?: string; proxyDisplayName?: string }) => void;
   refreshRuntimeHeadersBeforeAttempt?: (input: {
     accountAccess?: XCodeProviderAccountAccess;
     expectedAccountScope?: string;
@@ -55,9 +62,23 @@ export interface ModelRequestAuth {
   accountScope?: string;
   /** 账号轮询：本次选中的连接（账号）id。 */
   connectionId?: string;
+  /** 本次选中的账号显示名；「使用详情」按它区分多账号供应商的具体账号。 */
+  accountDisplayName?: string;
+  /** 本次请求的出口代理池 id 与显示名；未绑定时缺席（跟随全局代理状态）。 */
+  proxyPoolId?: string;
+  proxyDisplayName?: string;
   apiKey?: string;
   apiKeyId?: string;
   headers?: Record<string, string>;
+  /**
+   * 账号轮询的失败换号策略，由 host 随本次选号一起下发。
+   * 缺席 = 不换号（默认）：请求出错直接报错，不偷偷消耗别的账号。
+   */
+  accountFailover?: {
+    enabled: boolean;
+    /** 只有这些状态码才换号；host 已按设置收敛过。 */
+    statusCodes: number[];
+  };
 }
 
 export interface ModelRequestAuthSourceInput {

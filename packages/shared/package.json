@@ -2,9 +2,13 @@
   "name": "@zcode/shared",
   "private": true,
   "type": "module",
+  "imports": {
+    "#src/*": "./src/*"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./runtime-env": "./src/runtimeEnv.ts",
+    "./test-ids": "./src/test-ids.ts",
     "./mcp": "./src/mcp.ts",
     "./runtime-tool-runtime": "./src/runtime-tool-runtime.ts",
     "./node-repl-browser-broker": "./src/browser-use/nodeReplBroker.ts",
@@ -15,6 +19,7 @@
     "./config-schema": "./src/config-schema.ts",
     "./proxy-pool": "./src/proxy-pool.ts",
     "./node": "./src/node.ts",
+    "./sqlite-migrations": "./src/sqlite-migrations/index.ts",
     "./zcodeEndpoint": "./src/zcodeEndpoint.ts",
     "./workspaceFileSearch": "./src/workspaceFileSearch.ts",
     "./workspaceFileEntriesCodec": "./src/workspaceFileEntriesCodec.ts",
@@ -25,17 +30,23 @@
     "./workspace-hook-trust-store-file": "./src/workspace-hook-trust-store-file.ts",
     "./mcp-apps": "./src/mcp-apps/index.ts",
     "./gen-ui": "./src/gen-ui/index.ts",
-    "./request-security": "./src/request-security-edition/index.ts"
+    "./testing/fake-relay-v2": "./test/fixtures/fake-relay-v2.ts",
+    "./request-security": "./src/request-security-edition/index.ts",
+    "./web-remote-relay": "./src/web-remote-relay/index.ts"
   },
   "scripts": {
     "lint": "oxlint",
-    "lint:fix": "oxlint --fix"
+    "lint:fix": "oxlint --fix",
+    "generate:prompts": "node scripts/generate-godmode-templates.mjs"
   },
   "dependencies": {
     "@zcode/model-option-map": "workspace:*",
     "zod": "4.6.5"
   },
   "devDependencies": {
-    "typescript": "^6.0.2"
+    "@modelcontextprotocol/ext-apps": "2.0.0",
+    "@types/ws": "8.18.1",
+    "typescript": "^6.0.2",
+    "ws": "8.20.0"
   }
 }

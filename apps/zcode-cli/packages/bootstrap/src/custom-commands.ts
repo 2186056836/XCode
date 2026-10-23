@@ -18,6 +18,7 @@ export interface ListXCodeCustomCommandsOptions {
   skipUserConfig?: boolean;
   userConfigPath?: string;
   workingDirectory?: string;
+  additionalDirectories?: readonly string[];
 }
 
 export interface InspectXCodeCustomCommandOptions extends ListXCodeCustomCommandsOptions {
@@ -92,6 +93,7 @@ function createCustomCommandDiscovery(options: ListXCodeCustomCommandsOptions) {
       extraResolvedRoots: pluginOutcome.commandRoots,
       disabledPaths: collectDisabledPaths(configResult.config.commandOverrides),
       homeDirectory: options.homeDirectory,
+      additionalDirectories: options.additionalDirectories,
     }),
     workingDirectory,
   };
@@ -100,3 +102,4 @@ function createCustomCommandDiscovery(options: ListXCodeCustomCommandsOptions) {
 function normalizeCommandName(name: string): string {
   return name.trim().replace(/^\/+/, "").toLowerCase();
 }
+

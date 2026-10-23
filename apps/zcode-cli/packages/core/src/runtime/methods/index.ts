@@ -3,10 +3,17 @@ import {
   getSessionShellSelection,
   initializeSessionShellEnvironmentIfNeeded,
   updateConfig,
+  getSystemPromptOverrides,
   setExecutionState,
 } from "./config.js";
 import { getMode, getPlanEnabled } from "./config.js";
 import { getSessionModelSelection, setSessionModelSelection } from "./config.js";
+import {
+  getLastModelRequestAuth,
+  getLastResolvedEgress,
+  setLastModelRequestAuth,
+  setLastResolvedEgress,
+} from "./config.js";
 import { getProjectId } from "./config.js";
 import { setWorkingDirectory } from "./config.js";
 import { ensureSessionPersistedForExternalActivity } from "./config.js";
@@ -202,6 +209,7 @@ type AgentRuntimeConstructor = { prototype: object };
 export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void {
   const proto = ctor.prototype as Record<string, unknown>;
   proto.updateConfig = updateConfig;
+  proto.getSystemPromptOverrides = getSystemPromptOverrides;
   proto.setExecutionState = setExecutionState;
   proto.grantPermissionFullAccess = grantPermissionFullAccess;
   proto.initializeSessionShellEnvironmentIfNeeded = initializeSessionShellEnvironmentIfNeeded;
@@ -210,6 +218,10 @@ export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void 
   proto.getPlanEnabled = getPlanEnabled;
   proto.getSessionModelSelection = getSessionModelSelection;
   proto.setSessionModelSelection = setSessionModelSelection;
+  proto.getLastModelRequestAuth = getLastModelRequestAuth;
+  proto.setLastModelRequestAuth = setLastModelRequestAuth;
+  proto.getLastResolvedEgress = getLastResolvedEgress;
+  proto.setLastResolvedEgress = setLastResolvedEgress;
   proto.getProjectId = getProjectId;
   proto.setWorkingDirectory = setWorkingDirectory;
   proto.ensureSessionPersistedForExternalActivity = ensureSessionPersistedForExternalActivity;

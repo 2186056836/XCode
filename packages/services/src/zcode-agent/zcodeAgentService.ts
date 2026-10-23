@@ -1,3 +1,16 @@
+import { isAuxiliarySessionKind } from "@zcode/shared";
+import {
+  pluginUiToolResultNotificationSchema,
+  type PluginUiToolResultNotification,
+} from "@zcode/shared/mcp-apps";
+import { supportsHistoryFirst } from "./independentPlanSupport.js";
+import {
+  offPeakControlParamsSchema,
+  offPeakControlResultSchema,
+  offPeakLifecycleNotificationSchema,
+  type OffPeakLifecycleNotification,
+  type OffPeakControlParams,
+} from "@zcode/shared";
 import {
   requiresRequestVerification,
   allowRequestVerificationHeaders,
@@ -113,6 +126,7 @@ import {
   zcodeComputerUseOperationEventSchema,
   zcodeProviderRuntimeHeadersCancelledSchema,
   zcodeProviderRuntimeHeadersRequestParamsSchema,
+  zcodeProviderRefreshRegistryResultSchema,
   zcodeProviderTestModelConnectivityResultSchema,
   zcodeOfficialMcpAuthHeadersRequestParamsSchema,
   summarizeOfficialMcpIdentityHeaders,
@@ -153,6 +167,8 @@ import {
   type DynamicWorkflowClientConfig,
   type DynamicWorkflowMode,
   applyDynamicWorkflowUserMode,
+  createDynamicWorkflowClientConfig,
+  DEFAULT_DYNAMIC_WORKFLOW_MODE,
   isDynamicWorkflowModeEnabled,
   normalizeDynamicWorkflowMode,
   type AgentLaneResourceSample,
@@ -195,6 +211,7 @@ import type {
   XCodeAgentRuntimeLifecycleEvent,
   XCodeAgentAddPluginMarketplaceParams,
   XCodeAgentAppUsageParams,
+  XCodeAgentUsageRequestDetailsParams,
   XCodeAgentCancelPluginOperationParams,
   XCodeAgentCompactParams,
   XCodeAgentConfigurePluginParams,
@@ -224,6 +241,8 @@ import type {
   XCodeAgentTaskTokenUsageParams,
   XCodeAgentSetModeParams,
   XCodeAgentSetModelParams,
+  XCodeAgentSetPersonaParams,
+  XCodeAgentSetPrefillParams,
   XCodeAgentSetPluginEnabledParams,
   XCodeAgentSetThoughtLevelParams,
   XCodeAgentPluginReferenceCatalogParams,
@@ -305,6 +324,7 @@ import {
   conversationTelemetryFactSchema,
   cuaPermissionObservationSchema,
   sessionsIndexTopic,
+  sessionsIndexReconcileResultSchema,
   sessionsIndexTopicWireCandidateSchema,
   MAX_LEGACY_TASK_IDS_PER_SUBSCRIBE,
   V4_METHODS,
@@ -337,6 +357,7 @@ import {
   v4ConversationSubscribeResultSchema,
   v4ConversationUsageResultSchema,
   v4SessionsIndexSubscribeResultSchema,
+  v4UsageRequestDetailsResultSchema,
   v4UsageStatsResultSchema,
   v4WorkspaceConfigSubscribeResultSchema,
   workspaceConfigTopic,
@@ -366,10 +387,23 @@ import type { XCodeAgentProcessManagerOptions } from "./zcodeAgentProcessManager
 import type { IOffPeakTaskService } from "#src/session/offPeakTask.js";
 import type { IProxyPoolService, ProxyPoolState, ProxyProviderBindingView } from "#src/proxy-pool/proxyPool.js";
 import {
+  dispatchModelJailbreakRequest,
+  isModelJailbreakProtocolMethod,
+  type ModelJailbreakDispatchResult,
+  type ModelJailbreakSettingStore,
+} from "./modelJailbreakDispatch.js";
+import {
+  dispatchProviderAccountRequest,
+  PROVIDER_ACCOUNT_METHOD,
+  type ProviderAccountDispatchResult,
+  type ProviderAccountStore,
+} from "./providerAccountDispatch.js";
+import {
   XCodeProtocolRequestTimeoutError,
   type XCodeProtocolClient,
 } from "./zcodeProtocolClient.js";
 import { getDataBaseDir } from "../paths.js";
+import { resolveConnectionEgress } from "./modelRequestEgress.js";
 import {
   collectBrowserAmbientContext,
   type BrowserAmbientContextExecutor,
@@ -411,6 +445,7 @@ interface PendingProviderRuntimeHeadersRequest extends PendingPermissionRequest 
 }
 
 interface PendingSessionRuntimePreferencesRequest extends PendingPermissionRequest {
+  workspace: XCodeAgentWorkspaceTarget;
   request: XCodeAgentSessionRuntimePreferencesRequest;
   timeout: ReturnType<typeof setTimeout>;
   workspaceKey: string;
@@ -695,6 +730,7 @@ function buildSessionCreateParams(
 ) {
   return {
     sessionId: params.sessionId,
+    additionalDirectories: params.additionalDirectories,
     workspace: buildWorkspaceRef(params),
     parentSessionId: params.parentSessionId,
     mode: params.mode,
@@ -764,6 +800,7 @@ function buildSessionResumeParams(
 ) {
   return {
     sessionId: params.sessionId,
+    additionalDirectories: params.additionalDirectories,
     workspace: buildWorkspaceRef(params),
     ...(params.thoughtLevel !== undefined && !omittedFields.has("thoughtLevel")
       ? { thoughtLevel: params.thoughtLevel }
@@ -947,6 +984,26 @@ interface ActiveWorkspaceClient {
   dynamicWorkflowPolicyMode: DynamicWorkflowMode;
 }
 
+function requiresProviderRegistryRefresh(commandType: string): boolean {
+  // Bug 原因：模型切换遗漏刷新屏障，会用存量 Worker 的旧 Registry 校验新下发的 Provider。
+  // 复用同一刷新队列，成功后才下发切换命令，失败则直接拒绝本次切换。
+  switch (commandType) {
+    case "createSession":
+    case "createSelectionSideSession":
+    case "sendText":
+    case "sendGoalCommand":
+    case "compact":
+    case "forkAssistant":
+    case "editUserQuery":
+    case "retryTurn":
+    case "sendQueuedNow":
+    case "switchModelConfig":
+      return true;
+    default:
+      return false;
+  }
+}
+
 function createRuntimeUnavailableError(params: XCodeAgentWorkspaceTarget): Error & {
   code: typeof XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE;
   workspaceKey: string;
@@ -982,6 +1039,16 @@ interface CreateXCodeAgentServiceOptions extends Omit<
     workspaceIdentity?: string;
   }) => Promise<SubagentRuntimeConfig>;
   sessionRuntimePreferencesAuthority?: "local" | "external";
+  prepareProjectExecution?: (
+    projectId: string,
+  ) => Promise<import("@zcode/shared").ProjectExecutionSnapshot>;
+  prepareSessionCreation?: (
+    target: XCodeAgentSessionTarget & {
+      projectId: string | null;
+      additionalDirectories?: string[];
+    },
+  ) => Promise<string[]>;
+  resolveSessionDirectories?: (target: XCodeAgentSessionTarget) => Promise<string[]>;
   resolveSessionRuntimePreferences?: (
     scope: XCodeSessionRuntimePreferencesScope,
   ) => Promise<XCodeSessionRuntimePreferencesResult>;
@@ -1019,6 +1086,18 @@ interface CreateXCodeAgentServiceOptions extends Omit<
    * host）不注入，协议回 -32601，工具侧报能力不可用而不是静默失败。
    */
   resolveProxyPoolService?: () => IProxyPoolService | undefined;
+  /**
+   * 模型越狱配置：agent 的 ModelJailbreak 工具经 modelJailbreak/* 协议落到这里。
+   * node.ts 注入一个只读写 customSystemMessages 的窄 store；缺省（未装配的 host）
+   * 不注入，协议回 -32601，工具侧报能力不可用而不是静默失败。
+   */
+  resolveModelJailbreakStore?: () => ModelJailbreakSettingStore | undefined;
+  /**
+   * 账号凭据：agent 的 ProviderAccount 工具经 providerAccount/manage 协议落到这里。
+   * node.ts 注入账号表 + OAuth 仓储的窄 store；缺省（未装配的 host）不注入，
+   * 协议回 -32601，工具侧报能力不可用而不是静默失败。
+   */
+  resolveProviderAccountStore?: () => ProviderAccountStore | undefined;
   /**
    * browser-use 执行桥：把 agent 的 interaction/browserExecute 反向请求转发到 main
    * （WebContentsView+CDP）。desktop host 装配时注入；缺省（纯 CLI/远控无 main）则
@@ -1469,7 +1548,7 @@ export function createXCodeAgentService(
       : undefined;
   // AutomationRepo 也持有 tasks-index.sqlite 连接，disposeAll 需一并收口（见下方 disposeAll 注释）
   const automationRepo = new AutomationRepo();
-  const automationService = new AutomationService(automationRepo);
+  const automationService = new AutomationService(automationRepo, options?.prepareProjectExecution);
   const automationTaskIndexRepo = new TaskIndexRepo();
   const pluginProcessManager = new XCodeAgentProcessManager({
     commandResolver: options?.commandResolver,
@@ -1538,6 +1617,10 @@ export function createXCodeAgentService(
   const conversationFrameEmitters = new Map<string, Emitter<ConversationTopicWireCandidate>>();
   const localTtftFactsEmitter = new Emitter<{ workspaceKey: string; facts: LocalTtftFacts }>();
   const conversationTelemetryFactEmitters = new Map<string, Emitter<ConversationTelemetryFact>>();
+  const offPeakLifecycleEmitters = new Map<string, Emitter<OffPeakLifecycleNotification>>();
+  const pluginUiToolResultEmitter = new Emitter<
+    PluginUiToolResultNotification & XCodeAgentWorkspaceTarget
+  >();
   const cuaPermissionObservationEmitter = new Emitter<XCodeAgentCuaPermissionObservation>();
   // sessions-index 帧 fan-out：与 conversation 同一 conversationFrame 通知，按 topic 前缀分流到此 emitter。
   const sessionsIndexFrameEmitters = new Map<string, Emitter<SessionsIndexTopicWireCandidate>>();
@@ -1683,7 +1766,9 @@ export function createXCodeAgentService(
    */
   async function resolveRotatedAccountRef(
     request: XCodeProviderRuntimeHeadersRequestParams,
-  ): Promise<string | undefined> {
+  ): Promise<
+    { accountRef: string; accountFailover: { enabled: boolean; statusCodes: number[] } } | undefined
+  > {
     const access = request.accountAccess;
     const rotation = accountRotationService;
     if (!access || !rotation) return undefined;
@@ -1701,7 +1786,11 @@ export function createXCodeAgentService(
           : {}),
         ...(request.lastFailure ? { lastFailure: request.lastFailure } : {}),
       });
-      return selection?.connectionId;
+      // 账号族这条路径交给 adapter 的只有 accountRef，不像 api-key 型供应商能带整个
+      // selection，所以换号策略必须在这里一起取出并显式透传。
+      return selection
+        ? { accountRef: selection.connectionId, accountFailover: selection.failover }
+        : undefined;
     } catch (error) {
       // 账号族轮的只是「换哪个账号」，与 Qoder 那类「没账号就没法鉴权」不同：选号失败时
       // 当前激活账号仍可正常出码，因此这里降级而不是把请求打死。
@@ -1720,16 +1809,25 @@ export function createXCodeAgentService(
       if (!accountRequestAuthService) {
         return undefined;
       }
-      const rotatedAccountRef = await resolveRotatedAccountRef(request);
-      return accountRequestAuthService.resolveCurrent({
+      const rotated = await resolveRotatedAccountRef(request);
+      const material = await accountRequestAuthService.resolveCurrent({
         providerId: request.providerId,
         modelId: request.modelSelection.modelId,
         accountAccess: request.accountAccess,
         expectedAccountScope: request.expectedAccountScope,
         rejectedProjectTokenFingerprint: request.rejectedProjectTokenFingerprint,
         reason: request.reason,
-        ...(rotatedAccountRef ? { accountRef: rotatedAccountRef } : {}),
+        ...(rotated
+          ? { accountRef: rotated.accountRef, accountFailover: rotated.accountFailover }
+          : {}),
       });
+      // 账号族路径同样要记账账号与出口代理。
+      const egress = await resolveConnectionEgress(
+        options?.resolveProxyPoolService?.(),
+        request.providerId,
+        rotated?.accountRef,
+      );
+      return { ...material, ...egress };
     }
     // XCode fork：Qoder / CodeBuddy 是 api-key 型多账号供应商，没有 accountAccess。
     // 由轮询服务选择本次使用的连接；不支持轮询的供应商返回 undefined。
@@ -1748,11 +1846,25 @@ export function createXCodeAgentService(
       // 供应商支持轮询但当前选不出账号（例如账号列表尚未加载 / 全部被排除）：
       // 返回空材料而不是 undefined——adapter 会保留 provider config 里的静态鉴权，
       // 与改造前行为一致；undefined 会被协议层当作「刷新失败」，把可用的请求打死。
-      return {};
+      // 无账号概念的免费供应商（Kilo Free 等）也走这里：出口代理仍要能记账。
+      const egress = await resolveConnectionEgress(
+        options?.resolveProxyPoolService?.(),
+        request.providerId,
+        undefined,
+      );
+      return { ...egress };
     }
+    const egress = await resolveConnectionEgress(
+      options?.resolveProxyPoolService?.(),
+      request.providerId,
+      selection.connectionId,
+    );
     return {
       apiKey: selection.accessToken,
       connectionId: selection.connectionId,
+      ...(selection.displayName ? { accountDisplayName: selection.displayName } : {}),
+      ...egress,
+      accountFailover: selection.failover,
       ...(selection.requestProfile === "qoder"
         ? {
             headers: {
@@ -1880,6 +1992,7 @@ export function createXCodeAgentService(
   async function syncAccountProviderConfigToClient(params: {
     client: XCodeProtocolClient;
     reason: string;
+    refreshRegistry?: boolean;
   }): Promise<void> {
     if (!accountProviderConfigSource) return;
     const previous = accountConfigSyncByClient.get(params.client) ?? Promise.resolve();
@@ -1891,33 +2004,41 @@ export function createXCodeAgentService(
         // 排队前异步读取可能晚返回，把旧结果排在新结果之后。读取与交付
         // 共用现有 Client 串行队列；不新增发送屏障，也不按内容 revision 猜测时间先后。
         const snapshot = await accountProviderConfigSource.read();
-        if (accountConfigReceivedRevisionByClient.get(params.client) === snapshot.revision) return;
-        const result = await params.client.request(
-          zcodeProtocolMethods.providerUpdateAccountConfig,
-          {
-            revision: snapshot.revision,
-            basedOnXCodeBuiltinRevision: snapshot.basedOnXCodeBuiltinRevision,
-            // Account 是运行时事实信封，不是磁盘 Provider 规则集合；保持原有协议字典。
-            providers: Object.fromEntries(
-              [...snapshot.providers.entries()].map(([providerId, config]) => [
-                providerId,
-                config.toJSON(),
-              ]),
-            ),
-            states: snapshot.states ?? {},
-          },
-          zcodeProviderUpdateAccountConfigResultSchema,
-        );
-        if (result.receivedRevision !== snapshot.revision) {
-          throw new Error("Account Config 接收回执版本与交付版本不一致");
+        if (accountConfigReceivedRevisionByClient.get(params.client) !== snapshot.revision) {
+          const result = await params.client.request(
+            zcodeProtocolMethods.providerUpdateAccountConfig,
+            {
+              revision: snapshot.revision,
+              basedOnXCodeBuiltinRevision: snapshot.basedOnXCodeBuiltinRevision,
+              // Account 是运行时事实信封，不是磁盘 Provider 规则集合；保持原有协议字典。
+              providers: Object.fromEntries(
+                [...snapshot.providers.entries()].map(([providerId, config]) => [
+                  providerId,
+                  config.toJSON(),
+                ]),
+              ),
+              states: snapshot.states ?? {},
+            },
+            zcodeProviderUpdateAccountConfigResultSchema,
+          );
+          if (result.receivedRevision !== snapshot.revision) {
+            throw new Error("Account Config 接收回执版本与交付版本不一致");
+          }
+          accountConfigReceivedRevisionByClient.set(params.client, result.receivedRevision);
+          logger.info(undefined, "account provider config 已交付到 XCode agent", {
+            providerCount: result.providerCount,
+            reason: params.reason,
+            receivedRevision: result.receivedRevision,
+            status: result.status,
+          });
         }
-        accountConfigReceivedRevisionByClient.set(params.client, result.receivedRevision);
-        logger.info(undefined, "account provider config 已交付到 XCode agent", {
-          providerCount: result.providerCount,
-          reason: params.reason,
-          receivedRevision: result.receivedRevision,
-          status: result.status,
-        });
+        if (params.refreshRegistry) {
+          await params.client.request(
+            zcodeProtocolMethods.providerRefreshRegistry,
+            { reason: params.reason },
+            zcodeProviderRefreshRegistryResultSchema,
+          );
+        }
       });
     accountConfigSyncByClient.set(params.client, current);
     try {
@@ -1933,10 +2054,12 @@ export function createXCodeAgentService(
     client: XCodeProtocolClient;
     reason: string;
     workspace: XCodeAgentWorkspaceTarget;
+    refreshRegistry?: boolean;
   }): Promise<void> {
     await syncAccountProviderConfigToClient({
       client: params.client,
       reason: params.reason,
+      refreshRegistry: params.refreshRegistry,
     });
   }
 
@@ -2032,6 +2155,7 @@ export function createXCodeAgentService(
             client,
             reason: `startup_ready:${event.reason}`,
             workspace,
+            refreshRegistry: true,
           });
           logger.info(undefined, "provider/model 就绪后已启动等待中的 XCode agent", {
             providerCount: event.snapshot.providerCount,
@@ -2100,6 +2224,16 @@ export function createXCodeAgentService(
     const created = new Emitter<ConversationTelemetryFact>();
     conversationTelemetryFactEmitters.set(key, created);
     return created;
+  }
+
+  function getOffPeakLifecycleEmitter(workspace: XCodeAgentWorkspaceTarget) {
+    const key = resolveWorkspaceKey(workspace);
+    let emitter = offPeakLifecycleEmitters.get(key);
+    if (!emitter) {
+      emitter = new Emitter<OffPeakLifecycleNotification>();
+      offPeakLifecycleEmitters.set(key, emitter);
+    }
+    return emitter;
   }
 
   function getSessionsIndexFrameEmitter(workspace: XCodeAgentWorkspaceTarget) {
@@ -2577,7 +2711,35 @@ export function createXCodeAgentService(
           }
           return;
         }
+        if (message.method === V4_NOTIFICATIONS.offPeakLifecycle) {
+          const parsed = offPeakLifecycleNotificationSchema.safeParse(message.params);
+          if (parsed.success) getOffPeakLifecycleEmitter(workspace).fire(parsed.data);
+          else
+            logger.warn(undefined, "丢弃无效闲时生命周期通知", {
+              workspaceKey: resolveWorkspaceKey(workspace),
+            });
+          return;
+        }
 
+        if (message.method === V4_NOTIFICATIONS.pluginUiToolResult) {
+          const parsed = pluginUiToolResultNotificationSchema.safeParse(message.params);
+          // 只接受当前本地 runtime；旧进程迟到结果和远程客户端不能在本窗口创建 UI。
+          if (
+            parsed.success &&
+            !workspace.remoteSessionId &&
+            !isRemoteWorkspaceIdentity(workspace.workspaceIdentity ?? "") &&
+            activeClientsByWorkspaceKey.get(resolveWorkspaceKey(workspace))?.client === client
+          ) {
+            pluginUiToolResultEmitter.fire({
+              ...parsed.data,
+              workspacePath: workspace.workspacePath,
+              ...(workspace.workspaceIdentity
+                ? { workspaceIdentity: workspace.workspaceIdentity }
+                : {}),
+            });
+          }
+          return;
+        }
         if (message.method === V4_NOTIFICATIONS.cuaPermissionObservation) {
           const parsed = cuaPermissionObservationSchema.safeParse(message.params);
           if (
@@ -2766,6 +2928,15 @@ export function createXCodeAgentService(
                     memoryEnabled: false,
                   },
                 );
+                if (
+                  parsed.data.scope === "runtime-materialization" &&
+                  options?.resolveSessionDirectories
+                ) {
+                  preferences.additionalDirectories = await options.resolveSessionDirectories({
+                    ...workspace,
+                    sessionId: parsed.data.sessionId,
+                  });
+                }
                 preferences.subagentRuntimeConfigEnabled =
                   Boolean(options?.readSubagentRuntimeConfig) &&
                   !(
@@ -2795,6 +2966,7 @@ export function createXCodeAgentService(
             client,
             protocolRequestId: request.id,
             request: dynamicRequest,
+            workspace,
             timeout: setTimeout(
               () => expireSessionRuntimePreferencesRequest(requestId),
               XCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
@@ -3175,12 +3347,11 @@ export function createXCodeAgentService(
                   })
                   .catch(() => null);
                 if (taskMeta) {
-                  await automationTaskIndexRepo.syncTaskMeta({
-                    meta: {
-                      ...taskMeta,
+                  await automationTaskIndexRepo.updateTaskPresentation({
+                    ...taskMeta,
+                    presentation: {
                       // 会话内创建的 automation 复用当前 session；显式写入标记供 V4 侧栏展示。
                       cronAutomationId: automation.automationId,
-                      updatedAt: Math.max(taskMeta.updatedAt, Date.now()),
                     },
                   });
                 }
@@ -3381,6 +3552,90 @@ export function createXCodeAgentService(
               await client.respond(request.id, outcome.snapshot);
             } catch (error) {
               await respondProxyPoolInternalError(client, request, workspace, error);
+            }
+          })();
+          return;
+        }
+
+        if (isModelJailbreakProtocolMethod(request.method)) {
+          void (async () => {
+            try {
+              const store = options?.resolveModelJailbreakStore?.();
+              if (!store) {
+                await client.respondError(request.id, {
+                  code: -32601,
+                  message: "Model jailbreak settings are unavailable on this host",
+                });
+                return;
+              }
+              let outcome: ModelJailbreakDispatchResult;
+              try {
+                outcome = await dispatchModelJailbreakRequest(store, request);
+              } catch (error) {
+                await client.respondError(request.id, {
+                  code: -32603,
+                  message:
+                    error instanceof Error ? error.message : "Internal model jailbreak error",
+                });
+                return;
+              }
+              if (!outcome.ok) {
+                await client.respondError(request.id, {
+                  code: -32602,
+                  message: outcome.message,
+                  ...(outcome.data === undefined ? {} : { data: outcome.data }),
+                });
+                return;
+              }
+              await client.respond(request.id, outcome.snapshot);
+            } catch (error) {
+              await client.respondError(request.id, {
+                code: -32603,
+                message:
+                  error instanceof Error ? error.message : "Internal model jailbreak error",
+              });
+            }
+          })();
+          return;
+        }
+
+        if (request.method === PROVIDER_ACCOUNT_METHOD) {
+          void (async () => {
+            try {
+              const store = options?.resolveProviderAccountStore?.();
+              if (!store) {
+                await client.respondError(request.id, {
+                  code: -32601,
+                  message: "Provider accounts are unavailable on this host",
+                });
+                return;
+              }
+              let outcome: ProviderAccountDispatchResult;
+              try {
+                outcome = await dispatchProviderAccountRequest(store, request);
+              } catch (error) {
+                await client.respondError(request.id, {
+                  code: -32603,
+                  message:
+                    error instanceof Error ? error.message : "Internal provider account error",
+                });
+                return;
+              }
+              if (!outcome.ok) {
+                await client.respondError(request.id, {
+                  code: -32602,
+                  message: outcome.message,
+                  ...(outcome.data === undefined ? {} : { data: outcome.data }),
+                });
+                return;
+              }
+              await client.respond(request.id, outcome.snapshot);
+            } catch (error) {
+              await client.respondError(request.id, {
+                code: -32603,
+                message:
+                  error instanceof Error ? error.message : "Internal provider account error",
+              });
             }
           })();
           return;
@@ -3913,8 +4168,11 @@ export function createXCodeAgentService(
       emitter.dispose();
     }
     conversationTelemetryFactEmitters.clear();
+    for (const emitter of offPeakLifecycleEmitters.values()) emitter.dispose();
+    offPeakLifecycleEmitters.clear();
     localTtftFactsEmitter.dispose();
     cuaPermissionObservationEmitter.dispose();
+    pluginUiToolResultEmitter.dispose();
     for (const emitter of workspaceConfigFrameEmitters.values()) {
       emitter.dispose();
     }
@@ -3994,10 +4252,16 @@ export function createXCodeAgentService(
    * 生效模式 = 闩住的「提供」+ 此刻的用户选择。策略同步与三条创建路径同源调用，所以不会出现
    * "策略说开、create 说关"的裂口；选择不闩，改设置后下一次建会话立刻拿到新值。
    * `onDemand` 原样送到 CLI：它决定十个工具是首请求就注册还是等首次 `/workflow`。
+   *
+   * 用户选择永远生效（launch.md「The user's choice」）：提供读取失败或拿不到值时按默认 disabled
+   * 处理，再套用户选择——过去这里直接返回 disabled，离线启动的 Host 会连用户明确打开的功能一起关掉。
+   * 没装配 resolver 的 Host 不接这个功能，选择不生效。
    */
   async function resolveDynamicWorkflowGate(): Promise<DynamicWorkflowMode> {
-    const offer = await resolveDynamicWorkflowOffer();
-    if (!offer) return "disabled";
+    if (!options?.resolveDynamicWorkflowClientConfig) return "disabled";
+    const offer =
+      (await resolveDynamicWorkflowOffer()) ??
+      createDynamicWorkflowClientConfig(DEFAULT_DYNAMIC_WORKFLOW_MODE, "default");
     return applyDynamicWorkflowUserMode(offer, await resolveDynamicWorkflowUserMode()).mode;
   }
 
@@ -4053,24 +4317,42 @@ export function createXCodeAgentService(
   ): Promise<CommandEnvelope> {
     const envelope = params.envelope;
     if (envelope.type === "createSession") {
-      // V4 createSession 绕过 legacy session/create 的参数构造，工具面 flag 必须在
-      // 信封处同源注入；门禁 false 时不写字段（缺省即 fail-closed，与 legacy 一致）。
       const { dynamicWorkflowEnabled, dynamicWorkflowMode } =
         await resolveDynamicWorkflowSessionFlags();
-      const offPeakToolEnabled = isOffPeakToolSupported(params);
-      if (!offPeakToolEnabled && !dynamicWorkflowEnabled) return envelope;
       const payload = commandPayloadSchemas.createSession.parse(envelope.payload);
+      const sessionId =
+        params.projectId !== undefined || options?.prepareSessionCreation
+          ? `session_${createHash("sha256")
+              .update(
+                JSON.stringify([
+                  resolveWorkspaceKey(params),
+                  envelope.clientId,
+                  envelope.commandId,
+                ]),
+              )
+              .digest("hex")
+              .slice(0, 32)}`
+          : payload.sessionId;
+      const additionalDirectories =
+        params.projectId !== undefined || options?.prepareSessionCreation
+          ? await options?.prepareSessionCreation?.({
+              ...params,
+              sessionId: sessionId!,
+              projectId: params.projectId ?? null,
+              additionalDirectories: payload.additionalDirectories,
+            })
+          : payload.additionalDirectories;
+      if (params.projectId !== undefined && !options?.prepareSessionCreation)
+        throw new Error("project.creation-unavailable");
+      const offPeakToolEnabled = isOffPeakToolSupported(params);
       return {
         ...envelope,
         payload: {
           ...payload,
+          ...(dynamicWorkflowEnabled ? { dynamicWorkflowEnabled: true, dynamicWorkflowMode } : {}),
+          ...(sessionId ? { sessionId } : {}),
+          ...(additionalDirectories !== undefined ? { additionalDirectories } : {}),
           ...(offPeakToolEnabled ? { offPeakToolEnabled: true } : {}),
-          // 动态工作流灰度：V4 createSession 是桌面新会话的实际创建路径，不透传则九个工具
-          // 永不注册。
-          ...(dynamicWorkflowEnabled ? { dynamicWorkflowEnabled: true } : {}),
-          ...(dynamicWorkflowEnabled && dynamicWorkflowMode !== undefined
-            ? { dynamicWorkflowMode }
-            : {}),
         },
       };
     }
@@ -4207,12 +4489,28 @@ export function createXCodeAgentService(
     },
 
     async createSession(params: XCodeAgentCreateSessionParams) {
+      if (options?.prepareSessionCreation) {
+        const sessionId = params.sessionId ?? `session_${randomUUID()}`;
+        const directories = await options.prepareSessionCreation({
+          ...params,
+          sessionId,
+          projectId: params.projectId ?? null,
+        });
+        params = {
+          ...params,
+          sessionId,
+          additionalDirectories: params.additionalDirectories ?? directories,
+        };
+      } else if (params.projectId !== undefined) {
+        throw new Error("project.creation-unavailable");
+      }
       const startedAt = Date.now();
       const client = await getClient(params);
       await ensureAccountProviderConfigSynced({
         client,
         reason: "session_create",
         workspace: params,
+        refreshRegistry: true,
       });
       const sessionTraceId = params.sessionTraceId;
       logger.info(sessionTraceId, "开始请求 XCode Protocol session/create", {
@@ -4321,12 +4619,18 @@ export function createXCodeAgentService(
     },
 
     async resumeSession(params: XCodeAgentResumeSessionParams) {
+      params = {
+        ...params,
+        additionalDirectories:
+          params.additionalDirectories ?? (await options?.resolveSessionDirectories?.(params)),
+      };
       const startedAt = Date.now();
       const client = await getClient(params);
       await ensureAccountProviderConfigSynced({
         client,
         reason: "session_resume",
         workspace: params,
+        refreshRegistry: true,
       });
       const cachedTraceId = getSessionTraceId(params);
       const offPeakToolEnabled = isOffPeakToolSupported(params);
@@ -4403,7 +4707,6 @@ export function createXCodeAgentService(
         zcodeProtocolMethods.sessionList,
         {
           workspace: buildWorkspaceRef(params),
-          includeArchived: params.includeArchived ?? false,
           limit: params.limit,
           ...(params.sessionIds ? { sessionIds: params.sessionIds } : {}),
         },
@@ -4445,6 +4748,29 @@ export function createXCodeAgentService(
         V4_METHODS.usageStats,
         { range: params.range, timeZone: params.timeZone },
         v4UsageStatsResultSchema,
+      );
+    },
+
+    async getUsageRequestDetails(params: XCodeAgentUsageRequestDetailsParams) {
+      // usage 表位于全局 session 库；复用任意已连接的 workspace client 即可拿到全应用范围数据。
+      const active = activeClientsByWorkspaceKey.values().next().value;
+      if (!active) {
+        throw new Error("no_active_workspace");
+      }
+      // 「使用详情」→ v4/usage/requestDetails（additive query，同 usage/stats 的事实源）。
+      return active.client.request(
+        V4_METHODS.usageRequestDetails,
+        {
+          page: params.page,
+          pageSize: params.pageSize,
+          ...(params.since !== undefined ? { since: params.since } : {}),
+          ...(params.until !== undefined ? { until: params.until } : {}),
+          ...(params.providerId ? { providerId: params.providerId } : {}),
+          ...(params.modelId ? { modelId: params.modelId } : {}),
+          ...(params.sessionId ? { sessionId: params.sessionId } : {}),
+          ...(params.status ? { status: params.status } : {}),
+        },
+        v4UsageRequestDetailsResultSchema,
       );
     },
 
@@ -5393,6 +5719,7 @@ export function createXCodeAgentService(
 
     async createAutomation(params: XCodeAgentCreateAutomationParams) {
       return automationService.create({
+        projectId: params.projectId,
         title: params.title,
         cronExpr: params.cronExpr,
         relativeDelayMinutes: params.relativeDelayMinutes,
@@ -5494,6 +5821,7 @@ export function createXCodeAgentService(
         client,
         reason: "workspace_generate_text",
         workspace: params,
+        refreshRegistry: true,
       });
       const operationId = params.signal ? randomUUID() : undefined;
       const cancel = () => {
@@ -5549,6 +5877,7 @@ export function createXCodeAgentService(
         client,
         reason: "provider_test_model_connectivity",
         workspace: params,
+        refreshRegistry: true,
       });
       return client.request(
         zcodeProtocolMethods.providerTestModelConnectivity,
@@ -5564,6 +5893,12 @@ export function createXCodeAgentService(
     async sendPrompt(params: XCodeAgentSendPromptParams) {
       const startedAt = Date.now();
       const client = await getClient(params);
+      await ensureAccountProviderConfigSynced({
+        client,
+        reason: "session_send",
+        workspace: params,
+        refreshRegistry: true,
+      });
       const sessionTraceId = params.sessionTraceId?.trim() || getSessionTraceId(params);
       const logTraceId = sessionTraceId ?? params.inputId;
       const browserAmbientContext =
@@ -5805,6 +6140,35 @@ export function createXCodeAgentService(
       return snapshot;
     },
 
+    async setPersona(params: XCodeAgentSetPersonaParams) {
+      const client = await getClient(params);
+      return client.request(
+        zcodeProtocolMethods.sessionSetPersona,
+        {
+          sessionId: params.sessionId,
+          personaMode: params.personaMode,
+          ...(params.templateId ? { templateId: params.templateId } : {}),
+          ...(params.inherited ? { inherited: params.inherited } : {}),
+          ...(params.custom ? { custom: params.custom } : {}),
+          expectedRevision: params.expectedRevision,
+        },
+        zcodeSessionStateSnapshotSchema,
+      );
+    },
+
+    async setPrefill(params: XCodeAgentSetPrefillParams) {
+      const client = await getClient(params);
+      return client.request(
+        zcodeProtocolMethods.sessionSetPrefill,
+        {
+          sessionId: params.sessionId,
+          prefillMode: params.prefillMode,
+          expectedRevision: params.expectedRevision,
+        },
+        zcodeSessionStateSnapshotSchema,
+      );
+    },
+
     async setMode(params: XCodeAgentSetModeParams) {
       const client = await getClient(params);
       return client.request(
@@ -5854,6 +6218,16 @@ export function createXCodeAgentService(
         preferences = zcodeSessionRuntimePreferencesResultSchema.parse(
           params.resolution.preferences,
         );
+        // 远端组织态由远端 Host 读取；客户端设置回包不能覆盖本机目录事实。
+        if (
+          pending.request.scope === "runtime-materialization" &&
+          options?.resolveSessionDirectories
+        ) {
+          preferences.additionalDirectories = await options.resolveSessionDirectories({
+            ...pending.workspace,
+            sessionId: pending.request.sessionId,
+          });
+        }
       } catch (error) {
         logger.warn(undefined, "Host 返回运行时偏好格式非法", {
           ...responseContext,
@@ -5955,6 +6329,17 @@ export function createXCodeAgentService(
                 : {}),
               ...(accountRequestAuth.connectionId
                 ? { connectionId: accountRequestAuth.connectionId }
+                : {}),
+              // 账号 / 出口代理只用于「使用详情」记账；这里漏传会让 core 永远记成
+              // 「无账号 + 跟随全局」，即使 host 已经按代理池选好了实际出口。
+              ...(accountRequestAuth.accountDisplayName
+                ? { accountDisplayName: accountRequestAuth.accountDisplayName }
+                : {}),
+              ...(accountRequestAuth.proxyPoolId
+                ? { proxyPoolId: accountRequestAuth.proxyPoolId }
+                : {}),
+              ...(accountRequestAuth.proxyDisplayName
+                ? { proxyDisplayName: accountRequestAuth.proxyDisplayName }
                 : {}),
               ...(Object.keys(requestHeaders).length > 0 ? { headers: requestHeaders } : {}),
             }
@@ -6194,6 +6579,7 @@ export function createXCodeAgentService(
           // 与 connection scope 的 hello 同一份能力集：直连 base service 的宿主内部消费者
           // 也能收到 `workflowRun.*` 增量（是否真收由它自己的 clientHello 决定）。
           workflowRunDeltas: true,
+          historyFirst: true,
         },
         auth: {},
       };
@@ -6235,12 +6621,14 @@ export function createXCodeAgentService(
         client,
         reason: "conversation_subscribe",
         workspace: params,
+        refreshRegistry: true,
       });
       const providerRegistrySyncMs = Math.max(
         0,
         Math.round(performance.now() - providerRegistryStartedAt),
       );
       const connection = resolveV4Connection(params);
+      const historyFirst = connection.historyFirst === true && (await supportsHistoryFirst(client));
       const topic = conversationTopic(params.sessionId);
       const taskMetaStartedAt = performance.now();
       const resumeThoughtLevel = await automationTaskIndexRepo
@@ -6263,6 +6651,39 @@ export function createXCodeAgentService(
           });
           return undefined;
         });
+      let directorySessionId = params.sessionId;
+      if (options?.resolveSessionDirectories) {
+        // 子会话按设计不进主任务索引；直接查 child 的项目会被远端必选项目校验拒绝。
+        // 旧 child 索引也不能证明主任务身份；只信 Agent 持久化父链，再执行原项目校验。
+        const visited = new Set<string>();
+        while (true) {
+          if (visited.has(directorySessionId)) throw new Error("project.session-lineage-invalid");
+          visited.add(directorySessionId);
+          const { sessions } = await client.request(
+            zcodeProtocolMethods.sessionList,
+            { workspace: buildWorkspaceRef(params), sessionIds: [directorySessionId] },
+            zcodeSessionListResultSchema,
+          );
+          const session = sessions.find((entry) => entry.sessionId === directorySessionId);
+          if (!session) {
+            if (directorySessionId !== params.sessionId)
+              throw new Error("project.session-lineage-invalid");
+            break;
+          }
+          if (
+            resolveWorkspaceKey(session.workspace) !== resolveWorkspaceKey(params) ||
+            session.workspace.workspacePath !== params.workspacePath
+          )
+            throw new Error("project.session-lineage-invalid");
+          if (!isAuxiliarySessionKind(session.sessionKind)) break;
+          if (!session.parentSessionId) throw new Error("project.session-lineage-invalid");
+          directorySessionId = session.parentSessionId;
+        }
+      }
+      const additionalDirectories = await options?.resolveSessionDirectories?.({
+        ...params,
+        sessionId: directorySessionId,
+      });
       const taskMetaReadMs = Math.max(0, Math.round(performance.now() - taskMetaStartedAt));
       const cliRequestStartedAt = performance.now();
       const result = await client.request(
@@ -6275,10 +6696,19 @@ export function createXCodeAgentService(
           // 缺席即 CLI 按旧消费者发整键 patch，并先裁到旧界——重订阅、recovery、手机
           // relay attachment 都走这一条 subscribe，所以这一处写全即可。
           ...(connection.workflowRunDeltas === true ? { workflowRunDeltas: true } : {}),
+          ...(historyFirst
+            ? {
+                historyFirst: true,
+                ...(params.retryInitialization
+                  ? { retryInitialization: params.retryInitialization }
+                  : {}),
+              }
+            : {}),
           // Bug 根因：冷订阅过去只传 sessionId，CLI 只能从历史 session.path 反推
           // workspace 身份；该路径已可能被 path.resolve 改写。当前 attachment 才是权威来源。
           workspace: buildWorkspaceRef(params),
           ...(resumeThoughtLevel ? { resumeThoughtLevel } : {}),
+          ...(additionalDirectories !== undefined ? { additionalDirectories } : {}),
           ...(params.base ? { base: params.base } : {}),
           ...(params.visibility ? { visibility: params.visibility } : {}),
         },
@@ -6339,16 +6769,15 @@ export function createXCodeAgentService(
         readTrustedXCodeAgentV4Connection(params)?.clientMode ??
         params.clientMode ??
         "desktop-continuous";
-      if (params.envelope.type === "createSession") {
-        // V4 草稿预热直接走 command 转发；新会话创建前只需等待 Account Config，
-        // XCode Built-in / Personal 已由 Worker 进程 Registry 自己装配。
+      let envelope = await buildConversationCommandEnvelope(params);
+      if (requiresProviderRegistryRefresh(envelope.type)) {
         await ensureAccountProviderConfigSynced({
           client,
-          reason: "v4_command_create_session",
+          reason: "v4_command",
           workspace: params,
+          refreshRegistry: true,
         });
       }
-      let envelope = await buildConversationCommandEnvelope(params);
       // TTFT 首版只允许可信桌面本地 continuous，手机/远端透传不能开启本地观测。
       if (
         commandClientMode !== "desktop-continuous" ||
@@ -6769,13 +7198,35 @@ export function createXCodeAgentService(
     onDynamicConversationTelemetryFact(params: XCodeAgentWorkspaceTarget) {
       return getConversationTelemetryFactEmitter(params).event;
     },
+    onDynamicOffPeakLifecycle(params: XCodeAgentWorkspaceTarget) {
+      return getOffPeakLifecycleEmitter(params).event;
+    },
+    async controlOffPeakExecutionV4(
+      params: XCodeAgentWorkspaceTarget & { control: OffPeakControlParams },
+    ) {
+      const control = offPeakControlParamsSchema.parse(params.control);
+      const client = await getReadOnlyClient(params, "existing-only");
+      return client.request(V4_METHODS.offPeakControl, control, offPeakControlResultSchema);
+    },
 
+    onDynamicPluginUiToolResult() {
+      return pluginUiToolResultEmitter.event;
+    },
     onDynamicCuaPermissionObservation() {
       return cuaPermissionObservationEmitter.event;
     },
 
     // ── sessions-index 通道（列表活性）：复用 conversationSubscribe RPC，
     // 按 topic 前缀由 CLI server 分派 ──
+
+    async reconcileSessionsIndexV4(params) {
+      const client = await getReadOnlyClient(params, "existing-only");
+      return client.request(
+        V4_METHODS.sessionsIndexReconcile,
+        { workspaceId: resolveWorkspaceKey(params), sessionIds: params.sessionIds },
+        sessionsIndexReconcileResultSchema,
+      );
+    },
 
     async subscribeSessionsIndexV4(params: XCodeAgentSessionsIndexSubscribeParams) {
       // 侧栏会同时登记所有 restored workspace。被动订阅若使用启动型 client，

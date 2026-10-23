@@ -52,23 +52,15 @@ export function createXCodeSessionService({
   const { withApiRetryRuntime } = createXCodeSessionApiRetryRuntimeTracker();
   const deferredDraftSessions = createXCodeDeferredDraftRegistry();
 
-  function notifySyncer(
-    target: XCodeTaskTarget,
-    options?: {
-      includeSnapshot?: boolean;
-    },
-  ): void {
+  function notifySyncer(target: XCodeTaskTarget): void {
     if (!taskIndexSyncer) {
       return;
     }
-    taskIndexSyncer.ensureSessionSubscription(
-      {
-        workspacePath: target.workspacePath,
-        workspaceIdentity: target.workspaceIdentity,
-        sessionId: target.sessionId,
-      },
-      options,
-    );
+    taskIndexSyncer.ensureSessionSubscription({
+      workspacePath: target.workspacePath,
+      workspaceIdentity: target.workspaceIdentity,
+      sessionId: target.sessionId,
+    });
   }
 
   function getSessionSnapshotDiagnostics(snapshot: XCodeSessionStateSnapshot) {
@@ -336,7 +328,7 @@ export function createXCodeSessionService({
         );
       }
       const agentDurationMs = Date.now() - startedAt;
-      notifySyncer(agentParams, { includeSnapshot: shouldBroadcastSnapshot });
+      notifySyncer(agentParams);
       const broadcastStartedAt = Date.now();
       const modelOverride = agentParams.model
         ? formatModelPickerValue(agentParams.model)

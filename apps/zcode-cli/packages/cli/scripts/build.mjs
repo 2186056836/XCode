@@ -4,6 +4,7 @@ import { readThirdPartyNotices, stageThirdPartyNotices } from "../../../../../sc
 import { basename, dirname, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
+import sharedPackage from "../../../../../packages/shared/package.json" with { type: "json" };
 import { stageBuiltinProviderConfig } from "../../../../../scripts/builtin-provider-config.mjs";
 
 const cliRoot = resolve(import.meta.dirname, "..");
@@ -162,6 +163,8 @@ export const resolveBuildAliases = ({
 } = {}) => ({
   "@zcode/shared-types": resolve(cliDirectory, "../shared-types/dist/index.js"),
   // 所有 shared 子路径必须排在通用 "@zcode/shared" 之前（esbuild 前缀改写规则，见上）。
+  // 清单以 packages/shared/package.json 的 exports 为单一事实源生成（与上游 1019
+  // 同一做法），通用入口放在最后，避免两份清单漂移。
   ...Object.fromEntries(resolveSharedSubpathAliases(rootDirectory)),
   "@zcode/shared": resolve(sharedPackageDirectory(rootDirectory), "src/index.ts"),
   "@zcode/core": resolve(cliDirectory, "../core/dist/index.js"),

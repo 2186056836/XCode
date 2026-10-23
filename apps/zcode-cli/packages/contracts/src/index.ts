@@ -28,6 +28,8 @@ export * from "./interfaces/model-catalog.port.js";
 export * from "./interfaces/automation.port.js";
 export * from "./interfaces/off-peak.port.js";
 export * from "./interfaces/proxy-pool.port.js";
+export * from "./interfaces/model-jailbreak.port.js";
+export * from "./interfaces/provider-account.port.js";
 export * from "./interfaces/mcp.port.js";
 
 export * from "./interfaces/runtime-input-presentation.js";

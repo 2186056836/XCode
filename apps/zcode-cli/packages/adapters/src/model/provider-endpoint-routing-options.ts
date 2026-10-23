@@ -6,6 +6,7 @@ export interface ProviderEndpointRoutingFactoryOptions {
   appVersion?: string;
   httpClient: HttpClientPort;
   logger?: Logger;
+  readXCodeJwt?: () => Promise<string | null>;
   sourceHeaders?: () =>
     | Promise<Readonly<Record<string, string>>>
     | Readonly<Record<string, string>>;

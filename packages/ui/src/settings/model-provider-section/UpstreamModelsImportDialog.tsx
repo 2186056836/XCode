@@ -153,10 +153,16 @@ function buildBatchPersonalConfig(
  * 未启用统一配置时按上游模型信息构造个人配置：上下文窗口/最大输出取上游，
  * 上游未提供的字段不写（继承系统默认规则），两者皆无则为空覆盖。
  */
-/** 思考强度选项对齐上游：disabled + 上游档位；payload 只读 reasoning_effort。 */
-const QODER_REASONING_LEVEL_MAP = JSON.stringify({
-  reasoning_effort: 'reasoningLevel == "disabled" ? "none" : reasoningLevel',
-});
+/**
+ * 思考强度选项对齐上游：disabled + 上游档位；payload 只读 reasoning_effort。
+ *
+ * 必须手写 JSON，**不能** `JSON.stringify({ reasoning_effort: '<CEL>' })`：
+ * 那样表达式会变成带引号的字符串字面量，求值结果是表达式原文，
+ * 上游收到 `reasoning_effort: 'reasoningLevel == "disabled" ? ...'` 直接 400
+ * （CodeBuddy 业务码 11133，Intl / CN 同源）。键值这里的 `...` 必须是裸表达式。
+ */
+const QODER_REASONING_LEVEL_MAP =
+  '{"reasoning_effort": reasoningLevel == "disabled" ? "none" : reasoningLevel}';
 
 function buildUpstreamEntryConfig(entry: UpstreamModelEntry | undefined): ModelConfigObject {
   if (!entry) return {};

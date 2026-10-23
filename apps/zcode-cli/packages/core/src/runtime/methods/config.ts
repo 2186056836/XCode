@@ -1,3 +1,4 @@
+import { resolveToolSearchMode } from "../../tool/search/exposure.js";
 import type {
   CollaborationMode,
   ExecutionShellSelection,
@@ -17,6 +18,7 @@ import type {
   ContextBuilder,
 } from "../deps.js";
 import { isInspectablePermissionBroker, projectIdFromDirectory } from "../helpers/index.js";
+import type { ModelRequestAuth } from "../deps.js";
 import {
   deriveChildClientPorts,
   type ChildClientPortsContext,
@@ -48,7 +50,9 @@ export async function setExecutionState(
 
 export function updateConfig(
   this: AgentRuntimeInternal,
-  patch: Pick<AgentRuntimeConfig, "mode" | "planEnabled" | "language" | "outputStyle">,
+  patch: Pick<AgentRuntimeConfig, "mode" | "planEnabled" | "language" | "outputStyle"> & {
+    systemPromptOverrides?: import("../../context/types.js").SystemPromptOverrides;
+  },
 ): void {
   if (patch.mode !== undefined || patch.planEnabled !== undefined) {
     const previous = resolveExecutionState(this.config);
@@ -69,6 +73,23 @@ export function updateConfig(
       rebuildContextPrefix(this);
     }
   }
+  if ("systemPromptOverrides" in patch) {
+    // 显式 undefined = 清除覆盖；config 是逐轮读取的，重建前缀后下一轮立即生效。
+    if (patch.systemPromptOverrides === undefined) {
+      delete this.config.systemPromptOverrides;
+    } else {
+      this.config.systemPromptOverrides = patch.systemPromptOverrides;
+    }
+    if (!this.activeTurn) {
+      rebuildContextPrefix(this);
+    }
+  }
+}
+
+export function getSystemPromptOverrides(
+  this: AgentRuntimeInternal,
+): import("../../context/types.js").SystemPromptOverrides | undefined {
+  return this.config.systemPromptOverrides;
 }
 
 export function initializeSessionShellEnvironmentIfNeeded(
@@ -102,6 +123,48 @@ export function setSessionModelSelection(
 ): void {
   // 恢复/配置刷新可以清除失效选择；未绑定不应借用默认模型，也不影响正在执行的 Active Model。
   this.sessionModelSelection = selection && cloneModelSelection(selection);
+}
+
+/**
+ * 最近一次物理模型请求的身份材料（选中的账号、出口代理）。
+ *
+ * 「使用详情」要按请求展示账号与代理，而这两项只在 host 选号时才知道
+ * （ModelRequestAuth 由 host 随 requestAuth 下发），core 只能在 headers 刷新
+ * 时把它记下来。
+ */
+export function getLastModelRequestAuth(
+  this: AgentRuntimeInternal,
+): ModelRequestAuth | undefined {
+  return this.lastModelRequestAuth;
+}
+
+export function setLastModelRequestAuth(
+  this: AgentRuntimeInternal,
+  auth: ModelRequestAuth | undefined,
+): void {
+  this.lastModelRequestAuth = auth;
+  // 每次新 attempt 都要清掉上一次命中的节点：否则重试到别的池、或这次走直连时，
+  // 记账会把上一次的池名带过来。
+  this.lastResolvedEgress = undefined;
+}
+
+/**
+ * adapter 在 fetch 层回报本次真正命中的出口节点。
+ *
+ * 供应商级轮询是 per-request 选择，host 的 requestAuth 只有候选快照；
+ * 记账要写具体节点名，只能靠这个回填。
+ */
+export function setLastResolvedEgress(
+  this: AgentRuntimeInternal,
+  egress: { proxyPoolId?: string; proxyDisplayName?: string } | undefined,
+): void {
+  this.lastResolvedEgress = egress;
+}
+
+export function getLastResolvedEgress(
+  this: AgentRuntimeInternal,
+): { proxyPoolId?: string; proxyDisplayName?: string } | undefined {
+  return this.lastResolvedEgress;
 }
 
 export function getProjectId(this: AgentRuntimeInternal): ProjectId {
@@ -139,6 +202,12 @@ export function getTools(this: AgentRuntimeInternal, model?: Model): ModelToolCo
     this.cachedTools = filterRuntimeVisibleTools.call(this, this.registry.toContracts());
   }
   return this.cachedTools
+    .filter(
+      (tool) =>
+        (tool.name !== "ToolSearch" && tool.name !== "DeferredToolCall") ||
+        !model ||
+        resolveToolSearchMode(model, this.config.toolSearch?.mode) !== "off",
+    )
     .filter((tool) => tool.name !== "WebSearch" || shouldExposeWebSearch.call(this, model))
     .map((tool) =>
       projectToolModelContract(tool, this.registry.get(tool.name), {

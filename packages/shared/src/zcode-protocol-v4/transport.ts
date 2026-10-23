@@ -6,6 +6,10 @@ import { z } from "zod";
 import { APP_USAGE_RANGES, appUsageSnapshotSchema } from "../usage-stats.js";
 import { zcodeWorkspaceRefSchema } from "../zcode-protocol-legacy-types.js";
 import {
+  zcodeUsageRequestDetailsParamsSchema,
+  zcodeUsageRequestDetailsResultSchema,
+} from "../zcode-protocol/index.js";
+import {
   PROTOCOL_V4_LIMITS,
   V4_WIRE_PROTOCOL_VERSION,
   conversationRowTargetSchema,
@@ -35,6 +39,7 @@ export const hostCapabilitiesSchema = z.object({
    * `state.updated`，并且先经 `clampWorkflowRunsForLegacy` 裁到旧界。
    */
   workflowRunDeltas: z.boolean().optional(),
+  historyFirst: z.boolean().optional(),
 });
 export type HostCapabilities = z.infer<typeof hostCapabilitiesSchema>;
 
@@ -82,6 +87,7 @@ export const clientHelloSchema = z
          * 是 `.strict()` 的，老 Host 见到不认识的键会整条 clientHello 解析失败、连接握不上手。
          */
         workflowRunDeltas: z.boolean().optional(),
+        historyFirst: z.boolean().optional(),
       })
       .strict()
       .optional(),
@@ -112,6 +118,8 @@ export const subscribeParamsSchema = z
     topic: z.string(),
     // 水位不变量：仅当客户端真持有该时刻一致状态才允许带。
     base: z.object({ logEpoch: z.string(), seq: z.number() }).optional(),
+    // 手动重试仅消费当前 failed attempt；普通重连不重跑 hook。
+    retryInitialization: z.string().min(1).optional(),
     // QoS hint，只影响调度，不影响语义。
     visibility: z.enum(["foreground", "background"]).optional(),
   })
@@ -142,6 +150,7 @@ export const conversationOpenTimingSchema = z
     cliRequestMs: openTimingMsSchema,
     cliBootstrapMs: openTimingMsSchema,
     cliSessionRestoreMs: openTimingMsSchema,
+    historyReadyMs: openTimingMsSchema,
     initialFrameEncodeMs: openTimingMsSchema,
     cliProcessState: z.enum(["spawned", "reused"]).optional(),
     sessionRuntimeState: z.enum(["cold", "warm"]).optional(),
@@ -335,6 +344,7 @@ export const V4_METHODS = {
   controllerResync: "v4/controller/resync",
   controllerUnsubscribe: "v4/controller/unsubscribe",
   conversationSubscribe: "v4/conversation/subscribe",
+  sessionsIndexReconcile: "v4/sessionsIndex/reconcile",
   conversationResync: "v4/conversation/resync",
   conversationUnsubscribe: "v4/conversation/unsubscribe",
   // 行分页 query（rows/range）：只读、无状态、超时重发安全。
@@ -343,6 +353,7 @@ export const V4_METHODS = {
   conversationPlans: "v4/conversation/plans",
   conversationFileChanges: "v4/conversation/fileChanges",
   backgroundBashOutput: "v4/conversation/backgroundBashOutput",
+  offPeakControl: "v4/conversation/offPeakControl",
   conversationFileRewindPreview: "v4/conversation/fileRewindPreview",
   // workflow run 的事件日志分页（详情页审计面）：只读、无状态、超时重发安全。
   // 新方法天然偏斜安全——旧桌面根本不会调用它。
@@ -364,6 +375,8 @@ export const V4_METHODS = {
   // usage 事实源在 CLI 的 session 库（model_usage/turn_usage 聚合），host 侧无副本，
   // 故收敛为 v4 query 而非 host 直连；旧词 usage/stats、session/usage 就此消费清零。
   usageStats: "v4/usage/stats",
+  // 「使用详情」逐请求查询：model_usage 行视图，过滤 + 分页（只读、无状态）。
+  usageRequestDetails: "v4/usage/requestDetails",
   conversationUsage: "v4/conversation/usage",
   // 附件事务：禁止 full-data RPC。每个 chunk 的 decoded bytes <=512KiB，
   // renderer->host Channel 与 host->CLI NDJSON 都必须逐 request 证明 <=1MiB。
@@ -405,6 +418,7 @@ export type V4ConnectionFlowParams = z.infer<typeof v4ConnectionFlowParamsSchema
 export const v4ConnectionFlowResultSchema = z.object({}).strict();
 
 export const V4_NOTIFICATIONS = {
+  offPeakLifecycle: "v4/offPeak/lifecycle",
   // 下行帧（snapshot / deltas），params = ConversationTopicFrame。
   conversationFrame: "v4/conversation/frame",
   // 仅 live ingest 的无正文事实；不进入 topic snapshot/recovery。
@@ -412,6 +426,7 @@ export const V4_NOTIFICATIONS = {
   localTtftFacts: "v4/telemetry/local-ttft",
   // 仅当前进程 live ToolCallResult 产生；历史与 replayable 链路不得补造。
   cuaPermissionObservation: "v4/cua/permission-observation",
+  pluginUiToolResult: "v4/plugin-ui/tool-result",
 } as const;
 
 /** 3.3.6 SSH 历史任务归属证明与 sessions-index 冷种子共享同一有界窗口。 */
@@ -420,6 +435,7 @@ export const MAX_LEGACY_TASK_IDS_PER_SUBSCRIBE = 200;
 // subscribe 请求 = 通用 SubscribeParams + connectionId（重订阅替换按
 // (connectionId, topic) 判定；stdio 单管道场景由 host 为每个下游客户端分配）。
 export const v4ConversationSubscribeParamsSchema = subscribeParamsSchema.extend({
+  additionalDirectories: z.array(z.string().trim().min(1)).max(256).optional(),
   connectionId: z.string(),
   clientMode: z.enum(["desktop-continuous", "web-remote-replayable"]),
   // 当前可信 attachment 的 workspace；cold resume 优先使用它恢复身份，live 不消费。
@@ -434,6 +450,7 @@ export const v4ConversationSubscribeParamsSchema = subscribeParamsSchema.extend(
    * 不是某一次订阅可以自选的口味。缺席 = 按旧消费者处理（整键 patch + 旧界裁剪）。
    */
   workflowRunDeltas: z.boolean().optional(),
+  historyFirst: z.boolean().optional(),
 });
 export type V4ConversationSubscribeParams = z.infer<typeof v4ConversationSubscribeParamsSchema>;
 
@@ -790,6 +807,12 @@ export const v4UsageStatsParamsSchema = z
 export type V4UsageStatsParams = z.infer<typeof v4UsageStatsParamsSchema>;
 export const v4UsageStatsResultSchema = appUsageSnapshotSchema;
 export type V4UsageStatsResult = z.infer<typeof v4UsageStatsResultSchema>;
+
+// 「使用详情」逐请求查询：与旧 usage/requestDetails 同形。
+export const v4UsageRequestDetailsParamsSchema = zcodeUsageRequestDetailsParamsSchema;
+export const v4UsageRequestDetailsResultSchema = zcodeUsageRequestDetailsResultSchema;
+export type V4UsageRequestDetailsParams = z.infer<typeof v4UsageRequestDetailsParamsSchema>;
+export type V4UsageRequestDetailsResult = z.infer<typeof v4UsageRequestDetailsResultSchema>;
 
 // 会话级 token 用量（旧 session/usage 的 v4 名字空间落位：会话是协议一等概念，
 // task 是 UI 投影概念不进协议词表）。字段与旧 result 同形，旧 schema 随词一起死。

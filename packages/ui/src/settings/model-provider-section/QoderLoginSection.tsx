@@ -26,6 +26,8 @@ import {
   ProviderAccountRotationControl,
   ProviderProxyBatchActions,
 } from "./ProviderAccountBinding.js";
+import { AccountPaginationBar, useAccountPagination } from "./AccountPagination.js";
+import { AutoCheckinSettings, type AutoCheckinRow } from "./AutoCheckinSettings.js";
 import { TECHNICAL_INPUT_ATTRIBUTES } from "@/lib/technicalInputAttributes.js";
 import { generateId } from "./constants.js";
 
@@ -110,6 +112,7 @@ export function QoderLoginSection({
   const [phase, setPhase] = useState<LoginPhase>({ kind: "idle" });
   const [error, setError] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<readonly AccountRow[]>([]);
+  const accountPage = useAccountPagination(accounts);
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [apiKeySaving, setApiKeySaving] = useState(false);
   const [switchingId, setSwitchingId] = useState<string | null>(null);
@@ -131,6 +134,9 @@ const [proMessage, setProMessage] = useState<string>("");
   const [checkinStatsMap, setCheckinStatsMap] = useState<ReadonlyMap<string, QoderCheckinStats>>(
     () => new Map(),
   );
+  /** 每账号自动签到设置（随账号列表刷新）。 */
+  const [autoCheckinRows, setAutoCheckinRows] = useState<readonly AutoCheckinRow[]>([]);
+  const [autoCheckinSavingId, setAutoCheckinSavingId] = useState<string | null>(null);
   /** 本区账号额度（剩余/总额），按 accountId 索引；账号行内联展示。 */
   const accountQuota = useAccountQuota({ family: "qoder", region });
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -184,6 +190,12 @@ const [proMessage, setProMessage] = useState<string>("");
         if (stats) statsMap.set(accountId, stats);
       }
       setCheckinStatsMap(statsMap);
+      // 自动签到设置与签到统计同源刷新；失败不阻断账号列表。
+      try {
+        setAutoCheckinRows(await providerSettingsService.qoderListAutoCheckin(region));
+      } catch (autoCheckinError) {
+        logger.warn("[QoderLogin] 拉取自动签到设置失败", autoCheckinError);
+      }
     } catch (listError) {
       logger.warn("[QoderLogin] 拉取账号列表失败", listError);
     }
@@ -499,6 +511,43 @@ if (account) {
     setCheckinBusyId(null);
   }, [intl, providerSettingsService, refreshAccounts, region]);
 
+  /** 切换某账号的自动签到开关（局部更新，host 落盘）。 */
+  const toggleAutoCheckin = useCallback(
+    async (accountId: string, enabled: boolean) => {
+      setAutoCheckinSavingId(accountId);
+      // 先本地回显，失败时由 refresh 拉回真实值。
+      setAutoCheckinRows((prev) =>
+        prev.map((row) => (row.accountId === accountId ? { ...row, enabled } : row)),
+      );
+      try {
+        await providerSettingsService.qoderUpdateAutoCheckin(region, accountId, { enabled });
+      } catch (saveError) {
+        logger.warn("[QoderLogin] 保存自动签到开关失败", saveError);
+        await refreshAccounts();
+      }
+      setAutoCheckinSavingId(null);
+    },
+    [providerSettingsService, refreshAccounts, region],
+  );
+
+  /** 修改某账号的自动签到时间（host 先校验 HH:MM 再落盘）。 */
+  const changeAutoCheckinTime = useCallback(
+    async (accountId: string, time: string) => {
+      setAutoCheckinSavingId(accountId);
+      setAutoCheckinRows((prev) =>
+        prev.map((row) => (row.accountId === accountId ? { ...row, time } : row)),
+      );
+      try {
+        await providerSettingsService.qoderUpdateAutoCheckin(region, accountId, { time });
+      } catch (saveError) {
+        logger.warn("[QoderLogin] 保存自动签到时间失败", saveError);
+        await refreshAccounts();
+      }
+      setAutoCheckinSavingId(null);
+    },
+    [providerSettingsService, refreshAccounts, region],
+  );
+
   const saveApiKey = useCallback(async () => {
     const token = apiKeyInput.trim();
     if (!token) return;
@@ -582,7 +631,7 @@ if (account) {
 
       {accounts.length > 0 ? (
         <div className="space-y-1.5">
-          {accounts.map((account) => {
+          {accountPage.pageItems.map((account) => {
             const checkinStats = checkinStatsMap.get(account.id);
             const checkinMessage = checkinMessages[account.id];
             return (
@@ -713,6 +762,15 @@ if (account) {
             </div>
             );
           })}
+          {accountPage.needsPagination ? (
+            <AccountPaginationBar
+              page={accountPage.page}
+              totalPages={accountPage.totalPages}
+              pageSize={accountPage.pageSize}
+              onChange={accountPage.setPage}
+              onPageSizeChange={accountPage.setPageSize}
+            />
+          ) : null}
         </div>
       ) : null}
 
@@ -744,6 +802,15 @@ if (account) {
           </span>
         </div>
       ) : null}
+
+      {/* 自动签到设置：每账号独立开关 + HH:MM（半点粒度），host 侧调度。 */}
+      <AutoCheckinSettings
+        intlKeyPrefix="settings.qoder"
+        rows={autoCheckinRows}
+        savingAccountId={autoCheckinSavingId}
+        onToggle={(accountId, enabled) => void toggleAutoCheckin(accountId, enabled)}
+        onChangeTime={(accountId, time) => void changeAutoCheckinTime(accountId, time)}
+      />
 
       {proMessage ? (
         <p className="text-ui-sm text-foreground-subtle" role="status">

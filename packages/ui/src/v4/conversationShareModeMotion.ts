@@ -26,6 +26,10 @@ export function resolveConversationShareSelectionPanelMotion(prefersReducedMotio
   };
 }
 
+/**
+ * 遮罩层（scrim）只做透明度淡入淡出：不带位移。
+ * 面板（panel）才有 -50% 居中与水平偏移，两者的动效口径不能混用。
+ */
 export function resolveConversationShareSelectionScrimMotion(prefersReducedMotion: boolean) {
   if (prefersReducedMotion) {
     return {

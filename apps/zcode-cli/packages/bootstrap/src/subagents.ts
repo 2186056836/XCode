@@ -1,5 +1,7 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
+import { readFile, readdir } from "node:fs/promises";
+import { basename, join, resolve } from "node:path";
+import { parseRuntimeSubagentConfig } from "./runtime-subagents/index.js";
 import { migrateUserSubagentMarkdown, migrateSubagentStateFile } from "@zcode/shared/node";
 import {
   parseAgentProfileFromMarkdown,
@@ -8,7 +10,6 @@ import {
 } from "@zcode/core";
 import type { Logger, PluginMetadata } from "@zcode/contracts";
 import {
-  createAgentStateId,
   createPluginAgentStateId,
   parsePluginSubagentModelSelectionOverrides,
   modelSelectionSchema,
@@ -21,6 +22,7 @@ interface LoadXCodeAgentProfilesInput {
   logger?: Logger;
   storageRoot: string;
   workingDirectory: string;
+  additionalDirectories?: readonly string[];
 }
 
 interface LoadXCodeAgentProfilesResult {
@@ -51,10 +53,20 @@ export async function loadXCodeAgentProfiles(
 ): Promise<LoadXCodeAgentProfilesResult> {
   const migration = await migrateUserSubagentMarkdown(join(input.storageRoot, "agents"));
   await migrateSubagentStateFile(join(input.storageRoot, "v2", "agents-state.json"));
-  const roots = [
+  const roots: Array<{ path: string; source: "user" | "project"; namespace?: string }> = [
     { path: join(input.storageRoot, "agents"), source: "user" as const },
     { path: join(input.workingDirectory, ".xcode", "agents"), source: "project" as const },
   ];
+  for (const directory of new Set(
+    (input.additionalDirectories ?? []).map((path) => resolve(path)),
+  )) {
+    if (directory === resolve(input.workingDirectory)) continue;
+    roots.push({
+      path: join(directory, ".xcode", "agents"),
+      source: "project",
+      namespace: basename(directory),
+    });
+  }
   const diagnostics: AgentProfileParseDiagnostic[] = [];
   for (const failure of migration.failures) {
     diagnostics.push({
@@ -68,47 +80,42 @@ export async function loadXCodeAgentProfiles(
       error: String(failure.error),
     });
   }
-  const agentState = readAgentState(input.storageRoot);
-  const profiles: AgentProfile[] = [];
-
-  for (const root of roots) {
-    for (const filePath of listMarkdownFiles(root.path)) {
-      const content = readFileSync(filePath, "utf8");
-      const result = parseAgentProfileFromMarkdown({
-        content,
-        path: filePath,
-        source: root.source,
-      });
-      if (result.diagnostic) {
-        diagnostics.push(result.diagnostic);
-        input.logger?.warn("Agent profile diagnostic", {
-          code: result.diagnostic.code,
-          message: result.diagnostic.message,
-          module: "bootstrap.subagents",
-          path: filePath,
-        });
-      }
-      if (result.profile) {
-        const profile = sanitizeProjectAgentProfile(result.profile);
-        if (isDisabledUserProfile(profile, agentState.disabledAgentIds)) {
-          continue;
-        }
-        profiles.push(profile);
-      }
-    }
-  }
-
+  const agentState = await readAgentState(input.storageRoot);
+  const documents = (
+    await Promise.all(
+      roots.map(async (root) =>
+        Promise.all(
+          (await listMarkdownFiles(root.path)).map(async (path) => ({
+            path,
+            source: root.source,
+            namespace: root.namespace,
+            content: await readFile(path, "utf8"),
+          })),
+        ),
+      ),
+    )
+  ).flat();
+  const parsed = parseRuntimeSubagentConfig({
+    documents,
+    state: { ...agentState, disabledAgentIds: [...agentState.disabledAgentIds] },
+  });
+  for (const diagnostic of parsed.diagnostics)
+    input.logger?.warn("Agent profile diagnostic", {
+      ...diagnostic,
+      module: "bootstrap.subagents",
+    });
   input.logger?.debug("Agent profiles loaded", {
-    diagnosticCount: diagnostics.length,
+    diagnosticCount: diagnostics.length + parsed.diagnostics.length,
     module: "bootstrap.subagents",
-    profileCount: profiles.length,
+    profileCount: parsed.profiles.length,
   });
 
   return {
     builtInModelSelectionOverrides: agentState.builtInModelSelectionOverrides,
     pluginAgentModelSelectionOverrides: agentState.pluginAgentModelSelectionOverrides,
-    diagnostics,
-    profiles,
+    diagnostics: [...diagnostics, ...parsed.diagnostics],
+    // fork 安全约束：项目级 profile 不能靠 frontmatter 把 child runtime 切到 bypass/yolo。
+    profiles: parsed.profiles.map(sanitizeProjectAgentProfile),
   };
 }
 
@@ -253,13 +260,13 @@ function countBareProfileNames(
   return counts;
 }
 
-function readAgentState(storageRoot: string): {
+async function readAgentState(storageRoot: string): Promise<{
   builtInModelSelectionOverrides: BuiltInSubagentModelSelectionOverrides;
   pluginAgentModelSelectionOverrides: PluginSubagentModelSelectionOverrides;
   disabledAgentIds: Set<string>;
-} {
+}> {
   try {
-    const raw = readFileSync(join(storageRoot, "v2", "agents-state.json"), "utf8");
+    const raw = await readFile(join(storageRoot, "v2", "agents-state.json"), "utf8");
     const parsed = JSON.parse(raw) as {
       builtInModelSelectionOverrides?: unknown;
       pluginAgentModelSelectionOverrides?: unknown;
@@ -301,31 +308,18 @@ function normalizeBuiltInSelectionOverrides(
   return result;
 }
 
-function isDisabledUserProfile(
-  profile: AgentProfile,
-  disabledAgentIds: ReadonlySet<string>,
-): boolean {
-  if (profile.source !== "user") {
-    return false;
-  }
-  return disabledAgentIds.has(
-    createAgentStateId({
-      name: profile.name,
-      scope: "user",
-      source: "user",
-    }),
+async function listMarkdownFiles(root: string): Promise<string[]> {
+  const entries = await readdir(root, { withFileTypes: true }).catch(
+    (error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT" || error.code === "ENOTDIR") return [];
+      throw error;
+    },
   );
-}
-
-function listMarkdownFiles(root: string): string[] {
-  if (!existsSync(root)) return [];
-  if (!statSync(root).isDirectory()) return [];
-
   const result: string[] = [];
-  for (const entry of readdirSync(root, { withFileTypes: true })) {
+  for (const entry of entries) {
     const path = join(root, entry.name);
     if (entry.isDirectory()) {
-      result.push(...listMarkdownFiles(path));
+      result.push(...(await listMarkdownFiles(path)));
       continue;
     }
     if (entry.isFile() && /\.(md|markdown)$/iu.test(entry.name)) {

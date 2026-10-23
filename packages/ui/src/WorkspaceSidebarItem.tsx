@@ -1171,7 +1171,6 @@ export const WorkspaceSidebarItem = memo(function WorkspaceSidebarItem({
         workspaceIdentity={tab.workspaceIdentity}
         onSkillsSynced={async () => {
           await invalidateDeferredDraftSessionForSkillChange({
-            zcodeSessionService: services.zcodeSessionService,
             workspacePath: tab.workspacePath,
             workspaceIdentity: tab.workspaceIdentity,
             reason: "sidebar-remote-skill-sync",
@@ -1200,7 +1199,6 @@ export const WorkspaceSidebarItem = memo(function WorkspaceSidebarItem({
             workspaceIdentity: tab.workspaceIdentity,
             workspacePath: tab.workspacePath,
             zcodeAgentService: services.zcodeAgentService,
-            zcodeSessionService: services.zcodeSessionService,
           });
         }}
       />

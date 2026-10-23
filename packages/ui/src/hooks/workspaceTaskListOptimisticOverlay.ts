@@ -5,13 +5,11 @@ import { buildTaskEntityKey, buildTaskWorkspaceKey } from "@/lib/taskQueryCache.
 import { compareXCodeTaskListItems } from "@/lib/taskListOrdering.js";
 import { mergeTaskWithOptimisticMeta } from "@/lib/zcodeTaskMetaMerge.js";
 import { selectWorkspaceXCodeState, useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
-import type { GroupedDraftTaskState } from "@/store/zcodeSessionStoreTypes.js";
 import { mergeTaskListMembershipFields } from "@/v4/taskListRowActivity.js";
 
 export interface WorkspaceOptimisticTaskOverlay {
   activeTaskId: string | null;
   tasks: XCodeTaskMeta[];
-  promotedGroupedDraftTaskByTaskId: Record<string, GroupedDraftTaskState>;
 }
 
 type WorkspaceTaskListSortBy = "created" | "updated";
@@ -89,22 +87,16 @@ export function useWorkspaceTaskOptimisticOverlayByWorkspaceKey(
           scope.workspaceKey,
           workspaceState.activeTaskId,
           Object.values(workspaceState.optimisticTaskListByTaskId)
-            .map((task) => {
-              const promotedDraft = workspaceState.promotedGroupedDraftTaskByTaskId[task.taskId];
-              return [
-                task.taskId,
-                task.title,
-                task.createdAt,
-                task.updatedAt,
-                task.status,
-                task.unreadAt,
-                task.provider,
-                task.model,
-                promotedDraft?.createdAt,
-                promotedDraft?.placement.type,
-                promotedDraft?.placement.type === "group" ? promotedDraft.placement.groupId : null,
-              ];
-            })
+            .map((task) => [
+              task.taskId,
+              task.title,
+              task.createdAt,
+              task.updatedAt,
+              task.status,
+              task.unreadAt,
+              task.provider,
+              task.model,
+            ])
             .sort(([leftTaskId], [rightTaskId]) =>
               String(leftTaskId).localeCompare(String(rightTaskId)),
             ),
@@ -127,7 +119,6 @@ export function useWorkspaceTaskOptimisticOverlayByWorkspaceKey(
           {
             activeTaskId: workspaceState.activeTaskId,
             tasks: Object.values(workspaceState.optimisticTaskListByTaskId),
-            promotedGroupedDraftTaskByTaskId: workspaceState.promotedGroupedDraftTaskByTaskId,
           },
         ];
       }),

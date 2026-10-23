@@ -399,9 +399,14 @@ export function refreshProviderProxyBinding(
         provider = { strategy: "none", pools: [first] };
       }
     } else {
-      // 轮询/随机：候选 = **全部启用中的池**，与 9router 的 noAuth 路径一致
-      // （它每次请求都从 `getProxyPools({isActive:true})` 现取，新加的池自动入列）。
-      const rotated = pools.filter((pool) => pool.isActive);
+      // 轮询/随机：候选 = 用户显式选中的子集（按 id 刷新快照），只保留仍然启用中的。
+      // 用户配了「只用这几条线路轮换」就只该用这几条；把所有启用池都塞进来会让
+      // 刚加的、或明确不想用的池混进轮换队列。选中的池全部失效时退回全量启用池，
+      // 否则供应商会静默变成「跟随全局」，与用户选过轮询的意图相反。
+      const selected = binding.provider.pools
+        .map((entry) => byId.get(entry.id))
+        .filter((entry): entry is ProxyPoolEntry => Boolean(entry?.isActive));
+      const rotated = selected.length > 0 ? selected : pools.filter((pool) => pool.isActive);
       if (rotated.length > 0) {
         provider = { strategy: binding.provider.strategy, pools: rotated };
       }

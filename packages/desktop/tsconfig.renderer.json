@@ -2,12 +2,20 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "out/renderer",
-    "rootDir": "src/renderer",
+    // renderer 入口会 import src/shared 下的 ARMS 浏览器初始化（与 preload 共用同一份实现），
+    // rootDir 必须覆盖到 src，否则该文件会触发 TS6059/TS6307。
+    "rootDir": "src",
     "lib": ["es2025", "dom", "dom.iterable"],
     "jsx": "react-jsx",
     "noEmit": true
   },
-  "include": ["src/renderer"],
+  // src/shared 只列 renderer 实际经由 armsBrowserInit 链引入的两个文件；
+  // 同目录的 armsRumBridgeForward 依赖 electron，不能进 renderer 工程。
+  "include": [
+    "src/renderer",
+    "src/shared/armsBrowserInit.ts",
+    "src/shared/armsRumShared.ts"
+  ],
   // renderer 直接 import 了 shared；把它补进 references，避免 renderer 单独检查时再走源码回退路径。
   "references": [{ "path": "../shared" }, { "path": "../ui" }, { "path": "../client" }]
 }

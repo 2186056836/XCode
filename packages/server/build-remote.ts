@@ -4,7 +4,11 @@ import { validateRemoteServerBundle } from "./buildRemoteValidation.js";
 import { loadBuiltinProviderConfig } from "../../scripts/builtin-provider-config.mjs";
 import { stageThirdPartyNotices } from "../../scripts/third-party-notices.mjs";
 
-const { version } = JSON.parse(readFileSync("../../package.json", "utf-8"));
+const { version, zcodeCompatibility } = JSON.parse(readFileSync("../../package.json", "utf-8")) as {
+  version: string;
+  zcodeCompatibility?: { minCompatibleVersion?: string };
+};
+const minCompatibleVersion = zcodeCompatibility?.minCompatibleVersion ?? version;
 const { content: zcodeBuiltinProviderConfigJson } = await loadBuiltinProviderConfig();
 
 /**
@@ -44,6 +48,8 @@ const buildResult = await build({
     "import.meta.url": "__import_meta_url",
     "import.meta.dirname": "__import_meta_dirname",
     __XCODE_VERSION__: JSON.stringify(version),
+    // 兼容版本下限沿用 Z 形态宏名：shared/src/source-server/compatibility.ts 声明的就是 __ZCODE_MIN_COMPATIBLE_VERSION__。
+    __ZCODE_MIN_COMPATIBLE_VERSION__: JSON.stringify(minCompatibleVersion),
     __XCODE_BUILTIN_PROVIDER_CONFIG_JSON__: JSON.stringify(zcodeBuiltinProviderConfigJson),
   },
   metafile: true,

@@ -20,6 +20,8 @@ export * from "./todo.js";
 export * from "./automation.js";
 export * from "./off-peak.js";
 export * from "./proxy-pool.js";
+export * from "./model-jailbreak.js";
+export * from "./provider-account.js";
 export * from "./target.js";
 export * from "./plan-mode.js";
 export * from "./ask-user-question.js";
@@ -62,3 +64,5 @@ export * from "./performance.js";
 
 // Shared types (only once to avoid duplicates)
 export type { DiffHunk, GitDiff } from "./write.js";
+export * from "./tool-search.js";
+export * from "./deferred-tool-call.js";

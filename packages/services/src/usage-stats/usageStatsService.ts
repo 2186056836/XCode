@@ -15,6 +15,8 @@ import type {
   UsageEntitlementSnapshot,
   UsageStatsRequest,
   UsageStatsSnapshot,
+  XCodeUsageRequestDetailsParams,
+  XCodeUsageRequestDetailsResult,
 } from "@zcode/shared";
 import { isCodingPlanModelProviderId } from "@zcode/shared";
 import type { ICredentialService } from "../credential/credential.js";
@@ -40,7 +42,7 @@ interface UsageStatsServiceDependencies {
   credentialService?: Pick<ICredentialService, "load">;
   env?: NodeJS.ProcessEnv;
   /** App Usage 经 XCode Protocol 读取 agent 数据库真实统计。 */
-  zcodeAgentService: Pick<IXCodeAgentService, "getAppUsageStats">;
+  zcodeAgentService: Pick<IXCodeAgentService, "getAppUsageStats" | "getUsageRequestDetails">;
   /**
    * 官方 Server MCP 额度的凭证来源（与 server MCP 调用同一套 5 个身份头）。
    * 缺省时 entitlement 快照不含 MCP 额度。
@@ -90,6 +92,21 @@ export function createUsageStatsService(
       return dependencies.zcodeAgentService.getAppUsageStats({
         range: request.range,
         timeZone: request.timeZone,
+      });
+    },
+    async getRequestDetails(
+      request: XCodeUsageRequestDetailsParams,
+    ): Promise<XCodeUsageRequestDetailsResult> {
+      // 「使用详情」与 App Usage 同源（agent 侧 model_usage 表），经 v4/usage/requestDetails 取回。
+      return dependencies.zcodeAgentService.getUsageRequestDetails({
+        page: request.page,
+        pageSize: request.pageSize,
+        ...(request.since !== undefined ? { since: request.since } : {}),
+        ...(request.until !== undefined ? { until: request.until } : {}),
+        ...(request.providerId ? { providerId: request.providerId } : {}),
+        ...(request.modelId ? { modelId: request.modelId } : {}),
+        ...(request.sessionId ? { sessionId: request.sessionId } : {}),
+        ...(request.status ? { status: request.status } : {}),
       });
     },
     async getCodingPlanUsageSnapshot(

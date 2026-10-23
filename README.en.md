@@ -13,26 +13,11 @@
 
 XCode is an AI coding workspace with desktop, browser, and terminal interfaces. This repository contains the clients, backend services, shared UI, and Agent CLI and runtime source code.
 
-| Interface                    | Purpose                                                                                   | Development command            |
-| ---------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------ |
-| Desktop                      | Electron desktop application                                                              | `pnpm dev:desktop`             |
-| Web / XCode CLI distribution | Terminal and browser workspace; packages the TUI, Web client, backend, and Agent together | `pnpm dev:web`                 |
-| Agent CLI                    | The `xcode` terminal interface, which also provides the Agent runtime for Desktop and Web | `pnpm --filter @zcode/cli dev` |
-
-## Change Highlights
-
-New / improved capabilities on top of the official release:
-
-- **Multiple accounts**: Sign in to multiple ZAI / BigModel accounts at once. The account management page supports adding, switching, signing out, and deleting accounts; each account keeps its own credentials and device identity, and model requests and billing follow the target account after switching.
-- **Custom skin**: Support custom skin with DreamSkin theme package import and live preview in the skin studio.
-- **Marketing campaigns & one-click claim**: Integrates marketing placements (banner / popup), and the account page supports "Claim benefits for all".
-- **Model jailbreak**: New "Model jailbreak" settings page for custom system prompt (Agent prompt), Prefill toggle, and input obfuscation, wired into the composer.
-- **Data migration**: The settings page can migrate historical data and sessions from the official release.
-- **Custom model providers**: Built-in free model providers; fetch models from upstream — upstream model metadata (context window, max output) is used by default, with an optional shared config override.
-
 ## Updates
 
-- 2026-10-7: Built-in free model providers (keyless); upstream-model import now prefers upstream metadata; full XCode branding across UI and environment variables.
+- **2026-10-19**: Updated to XCode v3.16.2.
+- **2026-10-16**: Updated to XCode v3.16.1.
+- 2026-10-10: Updated to XCode v3.15.1.
 - 2026-9-23: Updated to XCode v3.14.3.
 
 ## Setup
@@ -72,10 +57,10 @@ pnpm dev:desktop:test
 
 `pnpm dev:desktop` defaults to `pnpm dev:desktop:prod` and uses production service configuration. The startup script prepares local runtime assets, builds the desktop Agent, then starts Electron and source watchers.
 
-Set `XCODE_DATA_BASE_DIR` to use a separate development data directory. For example, on macOS / Linux:
+Set `ZCODE_DATA_BASE_DIR` to use a separate development data directory. For example, on macOS / Linux:
 
 ```bash
-XCODE_DATA_BASE_DIR="$HOME/.xcode-dev-home" pnpm dev:desktop:test
+ZCODE_DATA_BASE_DIR="$HOME/.zcode-dev-home" pnpm dev:desktop:test
 ```
 
 ### Web Development
@@ -86,7 +71,7 @@ Use development mode when editing Web or backend source code:
 pnpm dev:web
 
 # Set the backend workspace (macOS / Linux)
-XCODE_SERVER_WORKSPACE=/path/to/project pnpm dev:web
+ZCODE_SERVER_WORKSPACE=/path/to/project pnpm dev:web
 ```
 
 This starts both the Web development server (default: `http://localhost:5173`) and the backend (default: `http://localhost:3030`). Open the Web development server in your browser. `/ws` and general `/api` requests are proxied to the local backend; `/api/v1/oauth/token` is proxied separately to the configured product service.
@@ -95,30 +80,32 @@ After changing Agent source code, run `pnpm --filter @zcode/cli... build` and re
 
 ### XCode CLI distribution
 
-The command-line distribution includes the TUI, Web client, and Agent behind one `xcode` command. With no arguments it starts the TUI; a leading `--web` starts Web mode; all other arguments go to the existing Agent CLI. Both modes run locally without Electron.
+The command-line distribution includes the TUI, Web client, and Agent behind one `zcode` command. With no arguments it starts the TUI; a leading `--web` starts Web mode; all other arguments go to the existing Agent CLI. Both modes run locally without Electron.
 
 ```bash
 # Start the terminal UI by default
-xcode
+zcode
 
 # Start the Web interface
-xcode --web
+zcode --web
 
 # Set the project and port without opening a browser automatically
-xcode --web --workspace /path/to/project --port 3030 --no-open
+zcode --web --workspace /path/to/project --port 3030 --no-open
 
 # Show CLI or Web options
-xcode --help
-xcode --web --help
+zcode --help
+zcode --web --help
 ```
 
 In Web mode, it uses the current directory as the workspace, listens on `127.0.0.1` without token authentication by default, selects an available port, and opens a browser. Use the URL printed in the terminal and press `Ctrl+C` to stop the service. For LAN access, use `--host 0.0.0.0`; listening on a non-local address generates an access token by default. Use the token-bearing URL printed in the terminal. Set a token with `--token`, or disable token authentication with `--no-token`.
 
-When starting the general Web service's HTTP entry directly, configure API/WebSocket authentication with `XCODE_SERVER_AUTH_TOKEN`. When creating the service programmatically, use the `authToken` option.
+When starting the general Web service's HTTP entry directly, configure API/WebSocket authentication with `ZCODE_SERVER_AUTH_TOKEN`. When creating the service programmatically, use the `authToken` option.
 
-See Packaging below for build instructions. `pnpm build:zcode` only creates the distribution; it does not replace an existing `xcode` on `PATH`. If the command still points to an older installation or another checkout, check it with `command -v xcode` on macOS / Linux or `where.exe xcode` on Windows.
+See Packaging below for build instructions. `pnpm build:zcode` only creates the distribution; it does not replace an existing `zcode` on `PATH`. If the command still points to an older installation or another checkout, check it with `command -v zcode` on macOS / Linux or `where.exe zcode` on Windows.
 
 ### CLI Source Development
+
+See the [CLI usage guide (Chinese)](apps/zcode-cli/docs/usage/README.md) for model configuration, non-interactive runs, tools and extensions, batch evaluation, and trajectory capture.
 
 Use the source entry when developing the TUI or Agent:
 
@@ -131,7 +118,13 @@ pnpm --filter @zcode/cli... build
 node apps/zcode-cli/packages/cli/dist/zcode.cjs --help
 ```
 
-This entry runs the Agent CLI directly and does not handle the distribution's `--web` switch. Use `pnpm dev:web` for Web development, or the extracted `bin/xcode.mjs` shown below to test the unified command.
+This entry runs the Agent CLI directly and does not handle the distribution's `--web` switch. Use `pnpm dev:web` for Web development, or the extracted `bin/zcode.mjs` shown below to test the unified command.
+
+### UI Plugin development
+
+See the [UI Plugin guide](UI_PLUGIN.en.md) for the Excalidraw workflow, supported APIs, plugin installation and updates, and host debugging.
+
+**Plugin PRs in `zcode-plugins` must declare whether they affect a UI Plugin and list the plugin names in the PR template.** See the [required plugin-type declaration](UI_PLUGIN.en.md#declare-the-plugin-type-in-pull-requests).
 
 ## Configuration
 
@@ -139,10 +132,10 @@ The root [.env.example](.env.example) provides sample service URLs and build con
 
 | Setting                              | Purpose                                                                                 |
 | ------------------------------------ | --------------------------------------------------------------------------------------- |
-| `XCODE_DATA_BASE_DIR`                | Base directory for application data, stored under its `.xcode/` subdirectory            |
-| `XCODE_SERVER_WORKSPACE`             | Workspace path for the Web backend                                                      |
-| `XCODE_BUILTIN_PROVIDER_CONFIG_FILE` | Path to a local provider configuration file; uses the built-in configuration when unset |
-| `XCODE_DIST_BASE_URL`                | Download base URL used by the CLI distribution installer                                |
+| `ZCODE_DATA_BASE_DIR`                | Base directory for application data, stored under its `.zcode/` subdirectory            |
+| `ZCODE_SERVER_WORKSPACE`             | Workspace path for the Web backend                                                      |
+| `ZCODE_BUILTIN_PROVIDER_CONFIG_FILE` | Path to a local provider configuration file; uses the built-in configuration when unset |
+| `ZCODE_DIST_BASE_URL`                | Download base URL used by the CLI distribution installer                                |
 
 Runtime variables can be set explicitly in the environment of the startup command. See [config/README.md](config/README.md) for the default configuration shipped with the client.
 
@@ -167,12 +160,12 @@ The default target is macOS arm64, and the default output directory is `packages
 
 Run `pnpm build:zcode` to build the CLI/TUI, backend, and Web client, collect the TUI native libraries, workers, and runtime dependencies, then assemble the distribution. Running the distribution still requires Node.js; use the version specified in `mise.toml`.
 
-Before packaging, set the download base URL with `XCODE_DIST_BASE_URL` in `.env`, `.env.local`, or the process environment, or pass it through `--base-url`. The URL below is a placeholder; replace it with your hosting URL when publishing:
+Before packaging, set the download base URL with `ZCODE_DIST_BASE_URL` in `.env`, `.env.local`, or the process environment, or pass it through `--base-url`. The URL below is a placeholder; replace it with your hosting URL when publishing:
 
 ```bash
 pnpm build:zcode --base-url https://downloads.example.com/zcode/
 
-# When XCODE_DIST_BASE_URL is already configured
+# When ZCODE_DIST_BASE_URL is already configured
 pnpm build:zcode
 
 # Repackage existing Agent, backend, and Web build outputs
@@ -188,7 +181,7 @@ The version defaults to the root `package.json` version. Output is written to `d
 - `releases/<version>/sha256.txt`: checksum file.
 - `latest.json` and `install.sh`: version index and installer.
 
-Upload the entire directory to the configured download base URL. The installer downloads the runtime package from that URL, installs it to `~/.xcode/runtime` by default, and creates the `xcode` command in `~/.local/bin`. Override these directories with `XCODE_DIST_HOME` and `XCODE_DIST_BIN_DIR`, respectively.
+Upload the entire directory to the configured download base URL. The installer downloads the runtime package from that URL, installs it to `~/.zcode/runtime` by default, and creates the `zcode` command in `~/.local/bin`. Override these directories with `ZCODE_DIST_HOME` and `ZCODE_DIST_BIN_DIR`, respectively.
 
 Existing Lite users should switch to the new build command, environment variables, and installer. Installation does not remove old Lite directories or migrate/delete session data.
 
@@ -200,10 +193,10 @@ mkdir -p dist/zcode/debug
 tar -xzf "dist/zcode/releases/$zcode_version/zcode-$zcode_version.tar.gz" \
   -C dist/zcode/debug
 # Start the TUI by default
-node dist/zcode/debug/zcode/bin/xcode.mjs
+node dist/zcode/debug/zcode/bin/zcode.mjs
 
 # Start Web mode
-node dist/zcode/debug/zcode/bin/xcode.mjs --web \
+node dist/zcode/debug/zcode/bin/zcode.mjs --web \
   --workspace "$PWD" --port 3030 --no-open
 ```
 

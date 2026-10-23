@@ -204,7 +204,9 @@ export function ConversationDraftEmptyState({
       <div
         aria-hidden="true"
         className={cn(
-          "pointer-events-none absolute left-1/2 top-1/2 aspect-[5/4] w-[min(72vw,25rem)] -mt-10",
+          // 背景水印取 75% 尺寸：原来 min(72vw,25rem) 在宽屏上占满 400px，
+          // 比问候语还抢眼。等比缩到 54vw / 18.75rem，偏移量一起收。
+          "pointer-events-none absolute left-1/2 top-1/2 aspect-[5/4] w-[min(54vw,18.75rem)] -mt-[1.875rem]",
           "-translate-x-1/2 -translate-y-1/2 text-foreground-subtlest",
         )}
       >

@@ -15,6 +15,8 @@ import {
 } from "./server-types.js";
 import { runSessionModelConfigMutation } from "../zcode-protocol-v4/model-config-mutation.js";
 import { createProviderRuntimeHeadersPort } from "./provider-runtime-headers.js";
+import { offPeakLifecycleNotificationSchema } from "@zcode/shared";
+import { V4_NOTIFICATIONS } from "@zcode/shared/zcode-protocol-v4";
 
 export async function readWorkspacePresentation(
   context: XCodeProtocolAgentServerContext,
@@ -75,6 +77,11 @@ export async function createWorkspaceXCodeApp(
     options.providerRuntimeHeadersPort ?? createProviderRuntimeHeadersPort(context, workspace);
   return context.deps.createXCodeApp({
     ...options,
+    onOffPeakLifecycleEvent: (event) =>
+      context.notify({
+        method: V4_NOTIFICATIONS.offPeakLifecycle,
+        params: offPeakLifecycleNotificationSchema.parse(event),
+      }),
     includeVisualize: true,
     platform: context.deps.platform,
     providerRuntimeHeadersPort,
@@ -140,3 +147,4 @@ export function resolveSessionModelContextWindow(
   const value = selection && record.app.getModelOption?.(selection)?.contextWindow;
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined;
 }
+

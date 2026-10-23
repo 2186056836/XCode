@@ -127,6 +127,13 @@ export interface IProxyPoolService {
   /** 读取单个供应商的绑定视图（含连接列表）；用于供应商页的内联选择器。 */
   getProviderBinding(providerId: string): Promise<ProxyProviderBindingView | null>;
   /**
+   * 直读供应商的原始代理绑定（不过 UI 视图过滤）。
+   *
+   * 视图会把「不支持 provider 级出口」的供应商的 provider 轮询摘掉，但请求侧
+   * 仍按原始绑定出站——记账要显示真实出口，必须读原始绑定。
+   */
+  getProviderProxyBinding(providerId: string): Promise<ProviderProxyBinding | undefined>;
+  /**
    * 只改一条连接的绑定；poolId 传 null = 取消绑定（回到「跟随全局代理状态」）。
    * 不动该供应商其他连接。返回更新后的该供应商绑定视图。
    */
@@ -152,8 +159,9 @@ export interface IProxyPoolService {
    * 设置无账号供应商的 provider 级出口（对齐 9router noAuth 的 proxyPoolId +
    * rotateStrategy）。传 null = 清除，回到「跟随全局代理状态」。
    *
-   * strategy = "none" 时只取 poolIds[0]；round-robin / random 时每个请求在全部
-   * poolIds 之间挑一条。停用或不存在的池会被丢弃。
+   * strategy = "none" 时只取 poolIds[0]；round-robin / random 时每个请求在传入的
+   * poolIds 子集之间挑一条（**只认用户选中的线路**，不自动扩到全部启用池）。
+   * 停用或不存在的池会被丢弃；传了 id 但全部无效时按「清除」处理。
    */
   saveProviderBinding(
     providerId: string,

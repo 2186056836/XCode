@@ -5,9 +5,9 @@ import {
   TID_WORKFLOWS_LIST,
   TID_WORKFLOW_PROJECT_GROUP,
   resolveWorkspaceKey,
-  testId,
   type XCodeSavedWorkflowEntry,
 } from "@zcode/shared";
+import { testId } from "@zcode/shared/test-ids";
 import { Button } from "@/components/ui/button.js";
 import { toast } from "@/components/ui/toast.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";

@@ -2,6 +2,8 @@ import { resolveWorkspaceKey, type RemoteTarget, type WorkspacePurpose } from "@
 import { isWorkspaceTab, isWorkspaceTabReadOnly, type WindowTabState } from "@/store/tabStore.js";
 
 export interface AutomationWorkspaceOption {
+  projectId?: string | null;
+  hostId?: string;
   workspacePath: string;
   workspaceIdentity?: string;
   remoteSessionId?: string;
@@ -11,9 +13,14 @@ export interface AutomationWorkspaceOption {
 }
 
 export function resolveAutomationWorkspaceSelectionKey(
-  workspace: Pick<AutomationWorkspaceOption, "workspacePath" | "workspaceIdentity">,
+  workspace: Pick<
+    AutomationWorkspaceOption,
+    "workspacePath" | "workspaceIdentity" | "projectId" | "hostId"
+  >,
 ): string {
-  return resolveWorkspaceKey(workspace);
+  return workspace.projectId
+    ? JSON.stringify([workspace.hostId ?? "local", workspace.projectId])
+    : resolveWorkspaceKey(workspace);
 }
 
 export function findAutomationWorkspaceOptionByKey(
@@ -30,7 +37,10 @@ export function findAutomationWorkspaceOptionByKey(
 export function reconcileAutomationWorkspaceSelectionKey(
   options: readonly AutomationWorkspaceOption[],
   currentWorkspaceKey: string | null,
-  preferredWorkspace?: Pick<AutomationWorkspaceOption, "workspacePath" | "workspaceIdentity">,
+  preferredWorkspace?: Pick<
+    AutomationWorkspaceOption,
+    "workspacePath" | "workspaceIdentity" | "projectId" | "hostId"
+  >,
 ): string | null {
   const current = findAutomationWorkspaceOptionByKey(options, currentWorkspaceKey);
   if (current) return resolveAutomationWorkspaceSelectionKey(current);
@@ -53,6 +63,10 @@ function workspaceLabelFromPath(path: string): string {
  * 构建纯项目候选，供不允许“无项目会话”的边界使用。
  * 定时任务表单额外展示的单一“无项目会话”目标由 useAutomationProjectOptions 显式归并；
  * recentProjects、conversation backing 与失效目录不能作为普通项目混入这里。
+ *
+ * 1019 上游把这里换成了「项目目录 + host」模型（useAutomationProjectOptions /
+ * useSavedWorkflowProjectOptions），但 fork 的 run 保存控件仍按「已打开的工作区页签」取候选，
+ * 因此这里保留 fork 独有的页签口径实现，不回退上游的新模型。
  */
 export function buildAutomationWorkspaceOptions(
   tabs: readonly WindowTabState[],

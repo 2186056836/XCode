@@ -22,8 +22,6 @@ import {
   BUILTIN_MODEL_PROVIDER_IDS,
   getModelProviderFamilySpec,
   resolveModelProviderFamilySpecByProviderId,
-  TID_V4_MODEL_CONFIG,
-  TID_V4_COMPOSER_INPUT,
   XCODE_AGENT_PROVIDER,
   type ProviderFamilyConnectionSelection,
   type ProviderFamilyConnectionSelectionSettings,
@@ -35,13 +33,20 @@ import {
   type XCodeProvider,
   type ModelJailbreakObfuscationSettings,
   type ModelJailbreakObfuscationTier,
+  GODMODE_TEMPLATES,
 } from "@zcode/shared";
+import { TID_V4_MODEL_CONFIG, TID_V4_COMPOSER_INPUT } from "@zcode/shared/test-ids";
 import type {
   SessionConfigState,
   SessionPhase,
   SessionUsageState,
 } from "@zcode/shared/zcode-protocol-v4";
-import { ModelConfigSelect, type ModelSelectGroup } from "@/ModelConfigSelect.js";
+import {
+  ModelConfigSelect,
+  type ModelSelectGroup,
+  type ModelSelectPersonaSection,
+} from "@/ModelConfigSelect.js";
+import type { ComposerModelOptions } from "@/chat-input-toolbar/ComposerModelMenu.js";
 import { Button } from "@/components/ui/button.js";
 import { HighspeedModelIndicator } from "@/highspeed/HighspeedModelIndicator.js";
 import { formatHighspeedRemainingTime } from "@/highspeed/highspeedTime.js";
@@ -54,6 +59,7 @@ import {
   hasChatStartPlanBalance,
   type ChatStartPlanBalanceConfig,
 } from "@/chat-input-toolbar/StartPlanContextBalance.js";
+import { ThoughtLevelCycleControl } from "@/chat-input-toolbar/ThoughtLevelCycleControl.js";
 import {
   getNextThoughtLevelValue,
   getThoughtLevelLabel,
@@ -71,9 +77,21 @@ import {
 } from "@/lib/settingsNavigation.js";
 import { useTabStore } from "@/store/TabStoreProvider.js";
 import type { ModelSelectionView } from "@zcode/services";
-import type { ModelSelectionState } from "@/hooks/useModelSelectionView.js";
+import type {
+  ModelSelectionState,
+  ModelSelectionRefreshResult,
+} from "@/hooks/useModelSelectionView.js";
 import { useProviderSettingsView } from "@/hooks/useProviderSettingsView.js";
+import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
+import { useComposerConnectionSwitch } from "@/hooks/useComposerConnectionSwitch.js";
+import {
+  buildComposerPlanGroups,
+  composerConnectionKey,
+  chooseConnectionModel,
+} from "@/lib/composerPlanGroups.js";
+import { useXCodeStoreWithDefault } from "@/store/StoreProvider.js";
 import { useSettings } from "@/hooks/useSettingService.js";
+import { useServices } from "@/hooks/useServices.js";
 import {
   useUsageEntitlement,
   type UsageEntitlementRefreshOptions,
@@ -378,6 +396,7 @@ export interface V4ComposerToolbarProps {
   modelSelectionView?: ModelSelectionView | null;
   modelSelectionState?: ModelSelectionState;
   modelSelectionReload?: () => void;
+  modelSelectionRefresh?: () => Promise<ModelSelectionRefreshResult>;
   sessionId: string | null;
   phase: SessionPhase | null;
   provider?: XCodeProvider;
@@ -414,9 +433,16 @@ export interface V4ComposerToolbarProps {
     provider: string,
     model: string,
     sourceModel: ModelSelectionSource | null,
+    reasoningLevel?: string,
   ) => void;
   /** 选中思考深度；modelContext 固定本次用户操作的目标模型。 */
   onSelectThought: (thought: string, modelContext: { provider: string; model: string }) => void;
+  /** 草稿态（尚未创建会话）选择身份模板；createSession 时在首条输入前应用。 */
+  onSelectDraftPersona?: (
+    persona: NonNullable<import("@zcode/shared/zcode-protocol-v4").SessionConfigState["persona"]>,
+  ) => void;
+  /** 草稿态 PreFill 开关；null = 跟随全局（移除草稿覆盖）。 */
+  onSelectDraftPrefill?: (mode: "inherit" | "on" | "off" | null) => void;
   onSwitchMode: (mode: string) => void;
   /** prepare/configOptions 失败时，custom provider 选择走 workspace recovery 链。 */
   onRecoverCustomModelSelection?: (
@@ -430,9 +456,11 @@ export interface V4ComposerToolbarProps {
 function V4ComposerModelControlsImpl({
   workspacePath,
   workspaceIdentity,
+  sessionId,
   modelSelectionView = null,
   modelSelectionState = MODEL_SELECTION_LOADING_STATE,
   modelSelectionReload,
+  modelSelectionRefresh,
   provider,
   isWebRemoteControl = false,
   isMobileViewport = false,
@@ -450,6 +478,8 @@ function V4ComposerModelControlsImpl({
   onConfigPickerOpenChange,
   onSelectModel,
   onSelectThought,
+  onSelectDraftPersona,
+  onSelectDraftPrefill,
   onSendCompressionCommand,
   onRecoverCustomModelSelection,
 }: V4ComposerToolbarProps) {
@@ -467,7 +497,124 @@ function V4ComposerModelControlsImpl({
     providerSettingsRead.state.status === "ready" ? providerSettingsRead.state.view : null;
   const providerSourcesLoading = providerSettingsRead.state.status !== "ready";
   // 配置面存活服务读（过渡归宿 = 配置面 v4 化）：连接方式选中键喂 BigModel Team Plan 门控豁免。
-  const { settings: sharedSettings, update: updateSharedSettings } = useSettings();
+  const baseServices = useBaseWorkspaceServices();
+  const { settings: sharedSettings, update: updateSharedSettings } = useSettings({
+    services: baseServices,
+  });
+  const { zcodeAgentService } = useServices();
+  // 会话级身份模板：来自协议 snapshot（settings.persona）。draft 态无 sessionId，选择器不生效。
+  const [personaSource, setPersonaSource] = useState<"inherit" | "session">("inherit");
+  const [personaId, setPersonaId] = useState<string | null>(null);
+  const [personaCustom, setPersonaCustom] = useState(false);
+  const [prefillMode, setPrefillMode] = useState<"inherit" | "on" | "off">("inherit");
+  useEffect(() => {
+    if (!sessionId) {
+      setPersonaSource("inherit");
+      setPersonaId(null);
+      setPersonaCustom(false);
+      setPrefillMode("inherit");
+      return;
+    }
+    let cancelled = false;
+    void Promise.resolve(
+      zcodeAgentService.readSession({
+        sessionId,
+        workspacePath,
+        ...(workspaceIdentity ? { workspaceIdentity } : {}),
+        messageLimit: 1,
+        contentProfile: "index",
+      }),
+    )
+      .then((snapshot) => {
+        if (cancelled) return;
+        setPersonaSource(snapshot.settings.persona?.source ?? "inherit");
+        setPersonaId(snapshot.settings.persona?.templateId ?? null);
+        setPersonaCustom(snapshot.settings.persona?.custom === true);
+        setPrefillMode(snapshot.settings.prefill?.mode ?? "inherit");
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, workspacePath, workspaceIdentity, zcodeAgentService]);
+  const globalCustomSystemMessages = sharedSettings?.customSystemMessages;
+  const customPersonaTemplates = sharedSettings?.customPersonaTemplates ?? [];
+  const CUSTOM_PERSONA_PREFIX = "custom:";
+
+  /** 把选择器的 value 解析成协议三态；内置模板与自定义模板在这里分流。 */
+  const resolvePersonaSelection = useCallback(
+    (value: string) => {
+      if (value === "inherit") {
+        return {
+          mode: "inherit" as const,
+          ...(globalCustomSystemMessages
+            ? { inherited: globalCustomSystemMessages }
+            : {}),
+        };
+      }
+      if (value === "builtin") return { mode: "builtin" as const };
+      if (value.startsWith(CUSTOM_PERSONA_PREFIX)) {
+        const id = value.slice(CUSTOM_PERSONA_PREFIX.length);
+        const template = customPersonaTemplates.find((item) => item.id === id);
+        if (!template) return null;
+        return {
+          mode: "custom" as const,
+          custom: {
+            id: template.id,
+            cliPrefix: template.cliPrefix,
+            ...(template.prefill ? { prefill: template.prefill } : {}),
+          },
+        };
+      }
+      return { mode: "template" as const, templateId: value };
+    },
+    [customPersonaTemplates, globalCustomSystemMessages],
+  );
+
+  const selectPersona = useCallback(
+    (value: string) => {
+      const selection = resolvePersonaSelection(value);
+      if (!selection) return;
+      // 草稿态：写进 draftConfig，createSession 在首条输入之前应用。
+      if (!sessionId) {
+        onSelectDraftPersona?.(selection);
+        return;
+      }
+      const target = {
+        sessionId,
+        workspacePath,
+        ...(workspaceIdentity ? { workspaceIdentity } : {}),
+      };
+      const params =
+        selection.mode === "template"
+          ? { ...target, personaMode: "template" as const, templateId: selection.templateId }
+          : selection.mode === "custom"
+            ? { ...target, personaMode: "custom" as const, custom: selection.custom }
+            : selection.mode === "builtin"
+              ? { ...target, personaMode: "builtin" as const }
+              : {
+                  ...target,
+                  personaMode: "inherit" as const,
+                  ...("inherited" in selection ? { inherited: selection.inherited } : {}),
+                };
+      void Promise.resolve(zcodeAgentService.setPersona(params))
+        .then((snapshot) => {
+          setPersonaSource(snapshot.settings.persona?.source ?? "inherit");
+          setPersonaId(snapshot.settings.persona?.templateId ?? null);
+          setPersonaCustom(snapshot.settings.persona?.custom === true);
+        })
+        .catch(() => undefined);
+    },
+    [
+      resolvePersonaSelection,
+      sessionId,
+      workspacePath,
+      workspaceIdentity,
+      zcodeAgentService,
+      onSelectDraftPersona,
+    ],
+  );
+
   const {
     entitlements,
     enabledStartPlanProviderIds,
@@ -480,6 +627,7 @@ function V4ComposerModelControlsImpl({
   });
   const openSettingsTab = useTabStore((state) => state.openSettingsTab);
   const modelTriggerRef = useRef<HTMLSpanElement | null>(null);
+  const thoughtTriggerRef = useRef<HTMLSpanElement | null>(null);
   // Ctrl+M 热键：递增 openRequestKey 请求 ModelConfigSelect 打开菜单（旧 handleOpenModelMenuShortcut 语义）。
   const [modelMenuOpenRequestKey, setModelMenuOpenRequestKey] = useState(0);
   const [recoveryPending, setRecoveryPending] = useState(false);
@@ -489,6 +637,12 @@ function V4ComposerModelControlsImpl({
   const handleModelPickerOpenChange = useCallback(
     (open: boolean) => {
       onConfigPickerOpenChange("model", open);
+    },
+    [onConfigPickerOpenChange],
+  );
+  const handleThoughtPickerOpenChange = useCallback(
+    (open: boolean) => {
+      onConfigPickerOpenChange("thought", open);
     },
     [onConfigPickerOpenChange],
   );
@@ -597,34 +751,62 @@ function V4ComposerModelControlsImpl({
     ? contextStartPlanBalanceConfig
     : undefined;
 
-  // 原 hook 不传 family，默认只拉 bigmodel 企业 pricing，
-  // zai team plan 拿不到订阅产品，模型选择器里的 team 模型组建不出来。
-  // 按 contextPlanConnection.family 让 hook 拉对应 family 的 team products。
+  // 按当前连接 family 拉取团队产品，避免 zai 团队误用 bigmodel 产品目录。
+  const connectionFamily =
+    resolveModelProviderFamilySpecByProviderId(effectiveConfig?.provider ?? "")?.id ??
+    sharedSettings?.providerFamilyDomain ??
+    "bigmodel";
+  const user = useXCodeStoreWithDefault((state) => state.user, undefined);
+  const connectionAuthenticated =
+    user !== null &&
+    Boolean(
+      providerSettingsView?.providers.some(
+        (p) =>
+          p.effectiveConfig.access?.type === "zhipu-account" &&
+          p.effectiveConfig.access.accountType === connectionFamily &&
+          p.enabled &&
+          p.accountState?.unavailableReason !== "not-authenticated" &&
+          (p.effectiveConfig.access.mode === "team-coding-plan" ||
+            p.accountState?.availability === "available"),
+      ),
+    );
   const enterpriseProducts = useEnterpriseCodingPlanProducts({
     enabled:
       !providerSourcesLoading &&
-      contextPlanConnection.kind === "teamCoding" &&
-      Boolean(contextAccountProviderAccess),
-    authenticated: true,
-    family: contextPlanConnection.kind === "teamCoding" ? contextPlanConnection.family : undefined,
+      (contextPlanConnection.kind === "teamCoding" || activeConfigPicker === "model") &&
+      connectionAuthenticated,
+    authenticated: connectionAuthenticated,
+    family: connectionFamily,
   });
   const subscribedTeamProducts = useMemo(
     () =>
-      enterpriseProducts.snapshot?.productList.filter((product) => product.subscribed === true) ??
-      [],
-    [enterpriseProducts.snapshot?.productList],
+      (connectionAuthenticated
+        ? enterpriseProducts.snapshot?.productList.filter((product) => product.subscribed === true)
+        : undefined) ?? [],
+    [connectionAuthenticated, enterpriseProducts.snapshot?.productList],
   );
-  const contextTeamUsageSourceCacheRef = useRef<CodingPlanUsageSource[]>([]);
+  const authSessionSeq = useXCodeStoreWithDefault((state) => state.authSessionSeq, 0);
+  const teamUsageScope = useMemo(
+    () => ({}),
+    [baseServices, connectionFamily, user?.id, authSessionSeq],
+  );
+  const contextTeamUsageSourceCacheRef = useRef<{
+    scope: object;
+    sources: CodingPlanUsageSource[];
+  }>({ scope: teamUsageScope, sources: [] });
+  // 原因：独立来源缓存可复活已清空的目录；鉴权边界要在本次渲染就隔离，不能等待 Provider 刷新。
+  if (contextTeamUsageSourceCacheRef.current.scope !== teamUsageScope || !connectionAuthenticated)
+    contextTeamUsageSourceCacheRef.current = { scope: teamUsageScope, sources: [] };
   const contextCodingPlanUsageProviderId =
     contextPlanConnection.kind === "personalCoding" || contextPlanConnection.kind === "teamCoding"
       ? contextPlanConnection.providerId
       : undefined;
   const contextCodingPlanUsageTeamSource = useMemo(
     () =>
-      contextPlanConnection.kind === "teamCoding"
+      connectionAuthenticated && contextPlanConnection.kind === "teamCoding"
         ? resolveContextCodingPlanUsageSource({
             accountAccess: contextAccountProviderAccess?.access,
-            cachedTeamSources: contextTeamUsageSourceCacheRef.current,
+            cachedTeamSources: contextTeamUsageSourceCacheRef.current.sources,
             // 原硬取 bigmodelCodingPlan 的 entitlement snapshot，
             // zai team plan 查不到额度。改为按 connection.providerId 取对应 snapshot。
             entitlementSnapshot: entitlements[contextPlanConnection.providerId]?.snapshot ?? null,
@@ -634,6 +816,8 @@ function V4ComposerModelControlsImpl({
           })
         : null,
     [
+      connectionAuthenticated,
+      teamUsageScope,
       contextAccountProviderAccess?.access,
       contextPlanConnection,
       entitlements,
@@ -644,13 +828,16 @@ function V4ComposerModelControlsImpl({
     if (!contextCodingPlanUsageTeamSource) {
       return;
     }
-    const cache = contextTeamUsageSourceCacheRef.current;
+    const cache = contextTeamUsageSourceCacheRef.current.sources;
     const nextCache = cache.filter((source) => source.id !== contextCodingPlanUsageTeamSource.id);
     nextCache.unshift(contextCodingPlanUsageTeamSource);
     // Team -> Personal(no_plan) -> Team 期间企业商品或个人 snapshot 可能短暂缺失。
     // 保留最近解析过的团队 source，避免输入框 context 余额跟随水合顺序闪断。
-    contextTeamUsageSourceCacheRef.current = nextCache.slice(0, 8);
-  }, [contextCodingPlanUsageTeamSource]);
+    contextTeamUsageSourceCacheRef.current = {
+      scope: teamUsageScope,
+      sources: nextCache.slice(0, 8),
+    };
+  }, [contextCodingPlanUsageTeamSource, teamUsageScope]);
   const contextCodingPlanUsageSelectedSourceId: SidebarUsageCodingPlanSourceId | undefined =
     contextPlanConnection.kind === "teamCoding"
       ? contextCodingPlanUsageTeamSource?.id
@@ -793,9 +980,8 @@ function V4ComposerModelControlsImpl({
     });
   }, [draftMode, effectiveConfig, modelSelectionView?.revision]);
 
-  const modelSelectGroups = useMemo<ModelSelectGroup[]>(() => {
-    if (!modelSelectionView) return [];
-    return buildRegistryModelSelectGroups(displayProvider, modelSelectionView, {
+  const modelGroupLabels = useMemo(
+    () => ({
       apiKeyLabel: intl.formatMessage({ id: "settings.modelProvider.apiKey" }),
       apiKeyBadgeLabel: intl.formatMessage({
         id: "settings.modelProvider.connectionMode.apiKeyBadge",
@@ -818,8 +1004,13 @@ function V4ComposerModelControlsImpl({
       teamPlanFallbackLabel: intl.formatMessage({
         id: "settings.modelProvider.connectionMode.teamPlan",
       }),
-    });
-  }, [displayProvider, intl, modelSelectionView]);
+    }),
+    [intl],
+  );
+  const modelSelectGroups = useMemo<ModelSelectGroup[]>(() => {
+    if (!modelSelectionView) return [];
+    return buildRegistryModelSelectGroups(displayProvider, modelSelectionView, modelGroupLabels);
+  }, [displayProvider, modelGroupLabels, modelSelectionView]);
 
   // 修复：恢复「管理模型」入口（老版 onManageModels = 打开设置页并定位模型供应商区）。
   const handleOpenModelProviderSettings = useCallback(() => {
@@ -882,7 +1073,7 @@ function V4ComposerModelControlsImpl({
     triggerDisplay.placeholder,
   ]);
   const handleModelValueChange = useCallback(
-    (value: string) => {
+    (value: string, reasoningLevel?: string) => {
       if (modelLocked) return;
       const decoded = decodeCustomModelValue(value);
       // 草稿的点击时可见模型可能只存在于 catalog，或已经被最新 draft
@@ -927,7 +1118,9 @@ function V4ComposerModelControlsImpl({
         return;
       }
       if (decoded) {
-        onSelectModel(decoded.providerId, decoded.modelName ?? "", sourceModel);
+        if (reasoningLevel !== undefined)
+          onSelectModel(decoded.providerId, decoded.modelName ?? "", sourceModel, reasoningLevel);
+        else onSelectModel(decoded.providerId, decoded.modelName ?? "", sourceModel);
         return;
       }
       const slashIndex = value.indexOf("/");
@@ -952,6 +1145,60 @@ function V4ComposerModelControlsImpl({
       workspacePath,
     ],
   );
+
+  const planGroups = useMemo(
+    () =>
+      buildComposerPlanGroups(
+        modelSelectGroups,
+        subscribedTeamProducts,
+        providerSettingsView,
+        displayProvider,
+        modelGroupLabels,
+        sharedSettings?.providerFamilyConnectionSelections,
+      ),
+    [
+      modelSelectGroups,
+      subscribedTeamProducts,
+      providerSettingsView,
+      displayProvider,
+      modelGroupLabels,
+      sharedSettings?.providerFamilyConnectionSelections,
+    ],
+  );
+  const connectionSwitch = useComposerConnectionSwitch({
+    workspacePath,
+    workspaceIdentity,
+    agentProvider: displayProvider,
+    normalizedValue: normalizedModelValue,
+    onSelectModel: handleModelValueChange,
+    waitForPresentation: true,
+    refreshPresentation: modelSelectionRefresh,
+    presentationStatus: modelSelectionState.status,
+    presentationRevision: modelSelectionView?.revision,
+    presentationErrorRevision:
+      modelSelectionState.status === "ready"
+        ? modelSelectionState.refreshError?.revision
+        : undefined,
+  });
+  const selectedProviderId = decodeCustomModelValue(normalizedModelValue)?.providerId;
+  const selectedPlanGroup = planGroups.find((group) => {
+    const connection = group.connection;
+    if (!connection || connection.providerId !== selectedProviderId) return false;
+    const selection = sharedSettings?.providerFamilyConnectionSelections?.[connection.family];
+    return (
+      connection.selection?.kind !== "team-coding-plan" ||
+      (selection && composerConnectionKey(connection.family, selection) === connection.key)
+    );
+  });
+  const selectedPlanKey = connectionSwitch.pending
+    ? connectionSwitch.previousKey
+    : (selectedPlanGroup?.key ??
+      // 团队共用模型 value；当前过期行隐藏后，不能误选另一团队并阻止用户点击它。
+      planGroups.find(
+        (group) =>
+          group.connection?.selection?.kind !== "team-coding-plan" &&
+          group.items.some((item) => item.value === normalizedModelValue),
+      )?.key);
 
   const draftModelThoughtOption = useMemo(
     () =>
@@ -997,40 +1244,6 @@ function V4ComposerModelControlsImpl({
     },
     [effectiveConfig, onSelectThought],
   );
-
-  // 合并按钮的「推理强度」子菜单段：预计算 labels（ModelConfigSelect 自身不依赖 intl），
-  // 并跟随 thoughtOption 的受控值。仅在档位可切换（select 且 >0 项）时提供。
-  const thoughtSection = useMemo(() => {
-    if (!thoughtOption || thoughtOption.type !== "select") return null;
-    const entries = thoughtOption.options ?? [];
-    if (entries.length === 0) return null;
-    const currentValue = String(thoughtOption.currentValue);
-    const selectedEntry =
-      entries.find((entry) => entry.value === currentValue) ?? entries[0];
-    const currentLabel = selectedEntry
-      ? getThoughtLevelLabel(intl, displayProvider, thoughtOption, selectedEntry)
-      : "";
-    return {
-      label: intl.formatMessage({ id: "chat.toolbar.thoughtLevel.label" }),
-      currentLabel,
-      items: entries.map((entry) => ({
-        value: entry.value,
-        label: getThoughtLevelLabel(intl, displayProvider, thoughtOption, entry),
-        selected: entry.value === currentValue,
-      })),
-      onValueChange: handleThoughtValueChange,
-    };
-  }, [displayProvider, handleThoughtValueChange, intl, thoughtOption]);
-
-  // 合并按钮（模型 + 思考强度）的触发文案：模型名后追加当前档位，形成「5.6 Sol 轻度 (low)」。
-  // 只取纯模型名（不拼提供商前缀），输入区不再重复展示 my9router/ 等 provider。
-  const thoughtCurrentLabel = thoughtSection?.currentLabel ?? "";
-  const combinedModelTriggerLabel = thoughtCurrentLabel
-    ? `${modelTriggerDisplay.modelLabel} ${thoughtCurrentLabel}`
-    : modelTriggerDisplay.modelLabel;
-  const combinedModelTriggerValue = thoughtCurrentLabel
-    ? `${modelTriggerDisplay.modelLabel} ${thoughtCurrentLabel}`
-    : modelTriggerDisplay.modelLabel;
 
   // 「高级」段：Parseltongue 输入混淆（godmode）。读写 sharedSettings.customSystemMessages.obfuscation，
   // 与「模型越狱」页同一份持久化，保证两边联动。组装为 ModelConfigSelect 的 advancedSection（4 档：关闭/轻度/标准/重度）。
@@ -1085,6 +1298,150 @@ function V4ComposerModelControlsImpl({
     };
   }, [intl, sharedSettings?.customSystemMessages, updateSharedSettings]);
 
+  // 会话身份段：default = 内置身份（无覆盖）；其余是 GODMODE 模板 id。
+  // 与设置页共用同一份模板清单，选中后按会话写入提示词 + 配套 prefill。
+  // 有效身份：已有会话读 snapshot；草稿态读 draftConfig.persona（首条输入前由 createSession 应用）。
+  const effectivePersona = useMemo(() => {
+    if (sessionId) {
+      return {
+        source: personaSource,
+        templateId: personaId,
+        custom: personaCustom,
+      };
+    }
+    const draft = draftConfig?.persona;
+    if (!draft || draft.mode === "inherit") {
+      return { source: "inherit" as const, templateId: null, custom: false };
+    }
+    if (draft.mode === "builtin") {
+      return { source: "session" as const, templateId: null, custom: false };
+    }
+    if (draft.mode === "template") {
+      return {
+        source: "session" as const,
+        templateId: draft.templateId ?? null,
+        custom: false,
+      };
+    }
+    return {
+      source: "session" as const,
+      templateId: draft.custom?.id ?? null,
+      custom: false,
+    };
+  }, [sessionId, personaSource, personaId, personaCustom, draftConfig?.persona]);
+
+  const selectPrefill = useCallback(
+    (value: string) => {
+      const mode = value === "on" || value === "off" ? value : "inherit";
+      if (!sessionId) {
+        onSelectDraftPrefill?.(mode === "inherit" ? null : mode);
+        return;
+      }
+      void Promise.resolve(
+        zcodeAgentService.setPrefill({
+          sessionId,
+          workspacePath,
+          ...(workspaceIdentity ? { workspaceIdentity } : {}),
+          prefillMode: mode,
+        }),
+      )
+        .then((snapshot) => {
+          setPrefillMode(snapshot.settings.prefill?.mode ?? "inherit");
+        })
+        .catch(() => undefined);
+    },
+    [sessionId, workspacePath, workspaceIdentity, zcodeAgentService, onSelectDraftPrefill],
+  );
+
+  const effectivePrefillMode = sessionId
+    ? prefillMode
+    : (draftConfig?.prefillMode ?? "inherit");
+
+  const prefillSection = useMemo<ModelSelectPersonaSection>(() => {
+    const inheritLabel = intl.formatMessage({ id: "chat.toolbar.prefill.inherit" });
+    const onLabel = intl.formatMessage({ id: "chat.toolbar.prefill.on" });
+    const offLabel = intl.formatMessage({ id: "chat.toolbar.prefill.off" });
+    // 「跟随全局」必须自证跟随到什么状态：否则用户看不出全局是开还是关，
+    // 只能去设置页翻。全局值取自设置快照的 customSystemMessages.prefill.enabled。
+    const globalPrefillEnabled = globalCustomSystemMessages?.prefill?.enabled === true;
+    const inheritWithGlobal = `${inheritLabel} · ${globalPrefillEnabled ? onLabel : offLabel}`;
+    const items = [
+      { value: "inherit", label: inheritWithGlobal, selected: effectivePrefillMode === "inherit" },
+      { value: "on", label: onLabel, selected: effectivePrefillMode === "on" },
+      { value: "off", label: offLabel, selected: effectivePrefillMode === "off" },
+    ];
+    return {
+      label: intl.formatMessage({ id: "chat.toolbar.prefill" }),
+      currentLabel:
+        effectivePrefillMode === "inherit"
+          ? inheritWithGlobal
+          : effectivePrefillMode === "on"
+            ? onLabel
+            : offLabel,
+      items,
+      onValueChange: selectPrefill,
+    };
+  }, [intl, effectivePrefillMode, selectPrefill, globalCustomSystemMessages]);
+
+  const personaSection = useMemo<ModelSelectPersonaSection>(() => {
+    const inheritLabel = intl.formatMessage({ id: "chat.toolbar.persona.inherit" });
+    const builtinLabel = intl.formatMessage({ id: "chat.toolbar.persona.builtin" });
+    const customLabel = intl.formatMessage({ id: "chat.toolbar.persona.custom" });
+    const findTemplateName = (id: string | null): string | null =>
+      id
+        ? (GODMODE_TEMPLATES.find((template) => template.id === id)?.name ??
+          customPersonaTemplates.find((template) => template.id === id)?.name ??
+          null)
+        : null;
+    // 全局身份当前命中哪套模板（含用户自定义模板），只用于「跟随全局」的副标签。
+    const globalPrefix = globalCustomSystemMessages?.cliPrefix?.trim() ?? "";
+    const globalTemplateName = globalPrefix
+      ? (GODMODE_TEMPLATES.find((template) => template.prompt.trim() === globalPrefix)?.name ??
+        customPersonaTemplates.find((template) => template.cliPrefix.trim() === globalPrefix)
+          ?.name ??
+        customLabel)
+      : null;
+    const items = [
+      {
+        value: "inherit",
+        label: inheritLabel,
+        selected: effectivePersona.source === "inherit",
+      },
+      ...GODMODE_TEMPLATES.map((template) => ({
+        value: template.id,
+        label: template.name,
+        selected:
+          effectivePersona.source === "session" && effectivePersona.templateId === template.id,
+      })),
+      ...customPersonaTemplates.map((template) => ({
+        value: `${CUSTOM_PERSONA_PREFIX}${template.id}`,
+        label: template.name,
+        selected:
+          effectivePersona.source === "session" && effectivePersona.templateId === template.id,
+      })),
+    ];
+    const currentLabel =
+      effectivePersona.source === "inherit"
+        ? globalTemplateName
+          ? `${inheritLabel} · ${globalTemplateName}`
+          : inheritLabel
+        : effectivePersona.custom
+          ? customLabel
+          : (findTemplateName(effectivePersona.templateId) ?? builtinLabel);
+    return {
+      label: intl.formatMessage({ id: "chat.toolbar.persona" }),
+      currentLabel,
+      items,
+      onValueChange: selectPersona,
+    };
+  }, [
+    intl,
+    effectivePersona,
+    globalCustomSystemMessages,
+    customPersonaTemplates,
+    selectPersona,
+  ]);
+
   // Ctrl+T 热键：按目录顺序循环下一次 Submission 的思考深度。
   const handleCycleThoughtLevel = useCallback(() => {
     if (!thoughtOption || thoughtOption.type !== "select") {
@@ -1114,6 +1471,71 @@ function V4ComposerModelControlsImpl({
   // 工具条热键已转正为命令表命令：tooltip 快捷键文案读生效表，
   // 改绑后按钮提示即时跟随（不能用硬编码文案）。
   const modelShortcutLabel = useShortcutCommandLabel("openModelMenu");
+  const thoughtShortcutLabel = useShortcutCommandLabel("cycleThoughtLevel");
+  const selectConnection = connectionSwitch.select;
+  // 原因：内联对象会在无关渲染时使 memo 选择器失效；按展示事实和回调缓存选项。
+  const composerOptions = useMemo<ComposerModelOptions>(
+    () => ({
+      providerMenu: {
+        groups: planGroups,
+        selectedKey: selectedPlanKey,
+        pending: connectionSwitch.pending,
+        // 团队目录查询不是用户的连接切换操作，不能把登录错误挂到 API 菜单。
+        error: connectionSwitch.error,
+        onSelect: (group) => {
+          // 原因：展示失败时设置可能已成功；已选连接仍须允许重试，不能被同 key 短路。
+          if (group.key === selectedPlanKey && !connectionSwitch.error) return;
+          if (group.connection) {
+            void selectConnection(group.connection, selectedPlanKey);
+          } else {
+            const model = chooseConnectionModel(
+              group.items,
+              decodeCustomModelValue(normalizedModelValue)?.modelName,
+            );
+            const providerId = decodeCustomModelValue(model?.value ?? "")?.providerId;
+            // 原因：普通 API 原先绕过连接切换 owner，缺少 loading 且会暴露旧目录。
+            if (providerId)
+              void selectConnection(
+                {
+                  key: group.key,
+                  label: group.label,
+                  providerId,
+                  family: connectionFamily,
+                  items: group.items,
+                },
+                selectedPlanKey,
+              );
+          }
+        },
+      },
+      providerLabel: intl.formatMessage({ id: "chat.toolbar.combined.provider" }),
+      modelsLabel: intl.formatMessage({ id: "chat.toolbar.combined.models" }),
+      effortLabel: intl.formatMessage({ id: "chat.toolbar.combined.effort" }),
+      effortShortcutLabel: thoughtShortcutLabel,
+      selectModelLabel: intl.formatMessage({ id: "chat.toolbar.combined.selectModel" }),
+      levels:
+        thoughtOption?.options?.map((entry) => ({
+          value: entry.value,
+          label: getThoughtLevelLabel(intl, displayProvider, thoughtOption, entry),
+        })) ?? [],
+      value: String(thoughtOption?.currentValue ?? ""),
+      onValueChange: handleThoughtValueChange,
+    }),
+    [
+      planGroups,
+      selectedPlanKey,
+      connectionSwitch.pending,
+      connectionSwitch.error,
+      selectConnection,
+      normalizedModelValue,
+      connectionFamily,
+      intl,
+      thoughtShortcutLabel,
+      thoughtOption,
+      displayProvider,
+      handleThoughtValueChange,
+    ],
+  );
   const isModelOptionLocked = useCallback(() => false, []);
 
   // 键盘热键（旧 useToolbarShortcutBindings）：Ctrl+M 打开模型菜单、Ctrl+T 循环思考深度。
@@ -1129,8 +1551,9 @@ function V4ComposerModelControlsImpl({
       : undefined;
   useToolbarShortcutBindings({
     hasAnyOption: Boolean(modelOption) || Boolean(thoughtOption),
-    toolbarDisabled: disabled || recoveryPending,
-    modelMenuDisabled: disabled || recoveryPending || modelLocked || !modelMenuVisible,
+    toolbarDisabled: disabled || recoveryPending || connectionSwitch.pending,
+    modelMenuDisabled:
+      disabled || recoveryPending || modelLocked || connectionSwitch.pending || !modelMenuVisible,
     modelOption,
     thoughtOption: thoughtOption ?? undefined,
     onOpenModelMenu: handleOpenModelMenuShortcut,
@@ -1207,12 +1630,29 @@ function V4ComposerModelControlsImpl({
                 : "chat.toolbar.model.targetMissing",
           })}
         </span>
+      ) : modelMenuVisible &&
+        !providerSourcesLoading &&
+        planGroups.length === 0 &&
+        !connectionSwitch.pending ? (
+        // 空配置是正常状态；直接复用 Provider 设置入口，不展开无名称、无模型的菜单。
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-ui-sm"
+          data-testid="chat-model-select-trigger"
+          onClick={handleOpenModelProviderSettings}
+        >
+          {manageModelsLabel}
+        </Button>
       ) : modelMenuVisible ? (
         <ModelConfigSelect
+          key={workspaceIdentity?.trim() || workspacePath}
           modelGroups={modelSelectGroups}
+          contentAlign="center"
           normalizedValue={normalizedModelValue}
-          triggerLabel={combinedModelTriggerLabel}
-          triggerLabelValue={combinedModelTriggerValue}
+          triggerLabel={modelTriggerDisplay.modelLabel}
+          composerOptions={composerOptions}
           showManageModelsAction={showManageModelsAction}
           manageModelsLabel={manageModelsLabel}
           onManageModels={handleOpenModelProviderSettings}
@@ -1223,8 +1663,14 @@ function V4ComposerModelControlsImpl({
           })}
           isItemLocked={isModelOptionLocked}
           onValueChange={handleModelValueChange}
-          disabled={disabled || recoveryPending || modelSelectionState.status !== "ready"}
-          tooltipTitle={combinedModelTriggerLabel}
+          disabled={
+            disabled ||
+            recoveryPending ||
+            modelLocked ||
+            (modelSelectionState.status !== "ready" &&
+              !(modelSelectionState.status === "loading" && modelSelectionState.catalog))
+          }
+          tooltipTitle={modelTriggerDisplay.fullLabel}
           shortcutLabel={modelShortcutLabel}
           triggerRef={modelTriggerRef}
           open={!modelLocked && activeConfigPicker === "model"}
@@ -1233,12 +1679,34 @@ function V4ComposerModelControlsImpl({
           labelVisibilityClassName="hidden @sm/composer:inline-flex"
           indicatorClassName="block group-data-[composer-model-icon=true]/toolbar:hidden"
           triggerLabelClassName="block min-w-0 text-left group-data-[composer-model-icon=true]/toolbar:hidden [&>span]:max-w-full [&>span>span]:block [&>span>span]:truncate"
-          triggerClassName="composer-model-trigger group-data-[composer-model-icon=true]/toolbar:size-7 group-data-[composer-model-icon=true]/toolbar:p-0 group-data-[composer-model-icon=true]/toolbar:gap-0 group-data-[composer-model-icon=true]/toolbar:justify-center"
+          triggerClassName="composer-model-trigger group-data-[composer-model-icon=true]/toolbar:px-1.5 group-data-[composer-model-icon=true]/toolbar:justify-center"
           triggerIconClassName="hidden group-data-[composer-model-icon=true]/toolbar:inline-flex"
           focusSelectorOnClose={V4_COMPOSER_INPUT_SELECTOR}
           providerSubmenuClassName={providerSubmenuClassName}
-          thoughtSection={thoughtSection}
           advancedSection={advancedSection}
+          personaSection={personaSection}
+          prefillSection={prefillSection}
+        />
+      ) : null}
+      {highspeedPresented && highspeedExpiresAt !== undefined ? (
+        <HighspeedCountdown expiresAt={highspeedExpiresAt} />
+      ) : null}
+      {thoughtOption && (modelLocked || highspeedPresented) ? (
+        <ThoughtLevelCycleControl
+          composerCollapsePriority={3}
+          labelVisibilityClassName="inline-flex"
+          indicatorClassName="block"
+          triggerClassName={cn(highspeedPresented && "text-ui-caption")}
+          option={thoughtOption}
+          onValueChange={handleThoughtValueChange}
+          disabled={disabled || recoveryPending}
+          intl={intl}
+          provider={displayProvider}
+          shortcutLabel={thoughtShortcutLabel}
+          triggerRef={thoughtTriggerRef}
+          open={activeConfigPicker === "thought"}
+          onOpenChange={handleThoughtPickerOpenChange}
+          restoreFocusSelector={V4_COMPOSER_INPUT_SELECTOR}
         />
       ) : null}
     </>

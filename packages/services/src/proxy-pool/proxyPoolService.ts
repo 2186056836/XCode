@@ -277,6 +277,16 @@ export function createProxyPoolService(
       return views.readProviderView(providerId, await readPools());
     },
 
+    async getProviderProxyBinding(
+      providerId: string,
+    ): Promise<ProviderProxyBinding | undefined> {
+      // 直读 effectiveConfig：UI 视图会按能力裁掉 provider 级出口（无 group 的
+      // 免费供应商会被 drop），但请求侧仍按原始绑定出站——记账要显示真实出口。
+      const view = await dependencies.getProviderSettingsView();
+      const provider = view.providers.find((item) => item.providerId === providerId);
+      return provider?.effectiveConfig.api?.proxy ?? undefined;
+    },
+
     async saveAccountBinding(
       providerId: string,
       accountId: string,
@@ -359,16 +369,14 @@ export function createProxyPoolService(
       }
       const byId = new Map(pools.map((pool) => [pool.id, pool]));
       const strategy = input?.strategy ?? "none";
-      // 固定线路：只取用户选中的第一条。
-      // 轮询/随机：候选 = 全部启用中的池（对齐 9router 每次请求现取 active 列表），
-      // 忽略调用方传了哪几个 id——否则新加的池要等用户重存才参与轮询。
-      const entries =
-        strategy === "none"
-          ? (input?.poolIds ?? [])
-              .map((poolId) => byId.get(poolId))
-              .filter((entry): entry is ProxyPoolEntry => Boolean(entry?.isActive))
-              .slice(0, 1)
-          : pools.filter((pool) => pool.isActive);
+      // 三种策略都只认用户显式选中的池：
+      // - 固定线路：取第一条；
+      // - 轮询/随机：取选中的全部（用户要的是「在这几条之间切」，不是「所有启用池都参与」）。
+      // 传了 id 但都已停用/删除时 entries 为空，走下面的 clear 分支，不静默扩大候选集。
+      const requested = (input?.poolIds ?? [])
+        .map((poolId) => byId.get(poolId))
+        .filter((entry): entry is ProxyPoolEntry => Boolean(entry?.isActive));
+      const entries = strategy === "none" ? requested.slice(0, 1) : requested;
       const rotation =
         input && entries.length > 0
           ? {

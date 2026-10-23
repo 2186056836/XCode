@@ -1,3 +1,4 @@
+import type { ToolSearchExecutionContext } from "@zcode/contracts";
 import type {
   AgentExecutionTelemetryPort,
   AgentTelemetryActorKind,
@@ -19,6 +20,8 @@ import type {
   ModelCatalogPort,
   OffPeakPort,
   ProxyPoolPort,
+  ModelJailbreakPort,
+  ProviderAccountPort,
   TopicResourcePort,
   PdfDocumentPort,
   PermissionBrokerPort,
@@ -110,6 +113,9 @@ export interface ToolExecutorOptions {
   offPeakPort?: OffPeakPort;
   /** 代理池配置端口；缺席则 ProxyPool 报能力缺席。 */
   proxyPoolPort?: ProxyPoolPort;
+  /** 模型越狱配置端口；缺席则 ModelJailbreak 报能力缺席。 */
+  modelJailbreakPort?: ModelJailbreakPort;
+  providerAccountPort?: ProviderAccountPort;
   topicResourcePort?: TopicResourcePort;
   sessionStore?: SessionStorePort;
   sessionModePort?: SessionModePort;
@@ -178,6 +184,7 @@ export interface ToolExecutor {
 }
 
 export interface ToolExecuteOptions {
+  toolSearch?: ToolSearchExecutionContext;
   automationTurn?: boolean;
   offPeakTurn?: boolean;
   signal?: AbortSignal;
@@ -226,6 +233,9 @@ export interface ToolExecutorDeps {
   offPeakPort?: OffPeakPort;
   /** 代理池配置端口；缺席则 ProxyPool 报能力缺席。 */
   proxyPoolPort?: ProxyPoolPort;
+  /** 模型越狱配置端口；缺席则 ModelJailbreak 报能力缺席。 */
+  modelJailbreakPort?: ModelJailbreakPort;
+  providerAccountPort?: ProviderAccountPort;
   topicResourcePort?: TopicResourcePort;
   sessionStore?: SessionStorePort;
   sessionModePort?: SessionModePort;

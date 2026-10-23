@@ -9,7 +9,7 @@ import type { ModelSelectionView } from "@zcode/services";
 import type { ModelSelectGroup } from "@/ModelConfigSelect.js";
 import { decodeCustomModelValue, encodeCustomModelValue } from "@/lib/zcodeCustomModelValue.js";
 import { shouldShowModelVisionBadge } from "@/lib/modelVisionBadge.js";
-import { readProviderModelMetaTable } from "@/lib/qoderModelDisplayNames.js";
+import { formatQoderPriceFactor, readProviderModelMetaTable } from "@/lib/qoderModelDisplayNames.js";
 
 export interface ModelProviderGroupLabelOptions {
   apiKeyLabel?: string;
@@ -51,11 +51,20 @@ export function buildRegistryModelSelectGroups(
     // modelId，请求上游不受影响。其他 provider 无元数据，行为与改动前一致。
     const providerMeta = readProviderModelMetaTable(provider.config?.modelMeta);
 
+    // 合并菜单仍需区分同名供应商的接入方式；API 标识直接来自 access，不能从名称猜测。
+    const labelBadge =
+      accountPresentation?.labelBadge ??
+      (provider.config.access?.type === "api-key" ||
+      provider.config.access?.type === "zhipu-coding-plan-api-key"
+        ? (labels.apiKeyBadgeLabel ?? "API")
+        : undefined);
+
     return [
       {
         key: `registry-provider:${provider.providerId}`,
         label: accountPresentation?.label || provider.providerName?.trim() || provider.providerId,
-        ...(accountPresentation?.labelBadge ? { labelBadge: accountPresentation.labelBadge } : {}),
+        ...(provider.config.logo ? { logo: provider.config.logo } : {}),
+        ...(labelBadge ? { labelBadge } : {}),
         ...(accountPresentation ? { directItems: true } : {}),
         items: provider.models.map(({ modelId, config }) => ({
           key: `registry-provider:${provider.providerId}:${modelId}`,
@@ -64,6 +73,11 @@ export function buildRegistryModelSelectGroups(
           // 原始 ID——ID 对用户不可读。value 仍是 modelId，请求上游不受影响；
           // 其他 provider 无元数据，行为与改动前一致。
           name: providerMeta[modelId]?.name ?? modelId,
+          // 上游计费倍率（Qoder / CodeBuddy 拉取模型清单时写入）。与设置页的
+          // 「相对倍率」同一套文案：0 显示「免费」，其余显示 0.2×。
+          ...(providerMeta[modelId]?.priceFactor !== undefined
+            ? { priceLabel: formatQoderPriceFactor(providerMeta[modelId]!.priceFactor!) }
+            : {}),
           ...(shouldShowModelVisionBadge(
             modelId,
             config.properties?.inputFormat?.supportsImage,

@@ -85,6 +85,8 @@ export type { SessionCreateSource } from "./sessionCreateSource.js";
 export { resolveSafeEndpointHostname } from "./endpointHostname.js";
 export * from "./rendererActionTrace.js";
 export * from "./validation.js";
+export type { CustomPersonaTemplate } from "./validationAppSettings.js";
+export * from "./godmode-templates.js";
 export * from "./api.js";
 export * from "./zcode-protocol/index.js";
 export * from "./account-provider-state.js";
@@ -100,6 +102,7 @@ export * from "./official-mcp-auth.js";
 export * from "./official-mcp-tool-error.js";
 export * from "./conversation-message-projection-policy.js";
 export * from "./conversation-share.js";
+export * from "./conversation-share-content.js";
 export * from "./conversation-preview-artifacts.js";
 export * from "./zcode-session-task-status.js";
 export * from "./zcode-tool-projection-memory.js";
@@ -116,6 +119,7 @@ export * from "./dynamic-workflow-feature.js";
 export * from "./markdown-artifact-images.js";
 export * from "./serviceAuthority.js";
 export * from "./server-remote.js";
+export * from "./source-server/index.js";
 
 export interface ICredentialStore {
   get(key: string): Promise<string | null>;
@@ -123,6 +127,9 @@ export interface ICredentialStore {
   delete(key: string): Promise<void>;
 }
 
+// 上游 1019 把 test-ids 移出主入口（改为 "@zcode/shared/test-ids" 子路径），
+// 但 fork 仍有 21 个文件从主入口 import TID_*。主入口保留 re-export，
+// 子路径入口同时可用，两种 import 方式都成立。
 export * from "./test-ids.js";
 export * from "./test-ids-workflow.js";
 export * from "./channels.js";
@@ -160,14 +167,19 @@ export type {
   ConfigureFinalArmsCustomEventE2ERequest,
   FinalArmsCustomEventE2EEntry,
   FinalArmsCustomEventPayload,
+  MobilePluginDiscoveryTelemetry,
   RendererTelemetryEventPayload,
   TelemetryEventPayload,
   TelemetryRendererContext,
 } from "./telemetry.js";
 export {
+  PLUGIN_TELEMETRY_EVENTS,
+  mobilePluginDiscoveryTelemetrySchema,
+  sanitizePluginTelemetryDetail,
   collectTelemetryRendererContext,
   resolveSafeTelemetryHostname,
   sanitizeTelemetryErrorMessage,
+  sanitizeTelemetrySkillName,
   sanitizeTelemetryEventDetail,
 } from "./telemetry.js";
 export type {
@@ -189,9 +201,11 @@ export * from "./sessionCreateTelemetry.js";
 export type { LaunchMarks } from "./launchMarks.js";
 export { LAUNCH_MARKS_QUERY_KEY, parseLaunchMarks, serializeLaunchMarks } from "./launchMarks.js";
 export type {
+  BrowserViewSurfaceScaleMode,
   CancelPendingRemoteConnectionRequest,
   BindRemoteWorkspaceSessionContextRequest,
-  BotRemoteWorkspaceReconnectedEvent,
+  BindRemoteWorkspaceSessionContextIpcResult,
+  BindRemoteWorkspaceSessionContextResult,
   BrowserTabResidencyState,
   BrowserViewCloseTabNotification,
   BrowserViewCloseTabRequest,
@@ -210,13 +224,17 @@ export type {
   ConnectRemoteRequest,
   CreateTempTextAttachmentRequest,
   CreateTempTextAttachmentResult,
+  MaterializeWorkflowArtifactFileRequest,
+  MaterializeWorkflowArtifactFileResult,
   SaveFileRequest,
   SaveFileResult,
   PrintPageToPdfResult,
+  DesktopCloseToTrayCapability,
   DesktopCommandId,
   CuaOsSupport,
   DesktopWindowChromeState,
   DesktopTitleBarTheme,
+  DesktopZoomState,
   DockerContainerInfo,
   EditorInfo,
   ApplicationIconInfo,
@@ -232,12 +250,15 @@ export type {
   PostUpdateReleaseNotesPayload,
   RemoteConnectionRuntimeLog,
   RemoteSessionClosedEvent,
+  RemoteSessionReconnectedEvent,
   RemoteServiceSession,
   SSHConfigAliasOption,
   TaskNotificationPayload,
   UpdateCheckResultPayload,
   UpdateStatePayload,
   WSLDistro,
+  WindowControlsOverlayMetrics,
+  WindowControlsOverlayReadyPayload,
   XCodeStdioTapDevState,
 } from "./platform.js";
 export type {
@@ -296,6 +317,7 @@ export * from "./tool-identity.js";
 export * from "./streaming-tool-input-preview.js";
 export * from "./tool-plan-adapter.js";
 export * from "./permission-request-preview.js";
+
 export * from "./settings-sync.js";
 export * from "./uuid.js";
 export * from "./usage-stats.js";
@@ -392,3 +414,10 @@ export {
   isRequestSecurityFailure,
 } from "./request-security-edition/policy.js";
 export * from "./request-security-edition/verification-policy.js";
+
+export {
+  ACCOUNT_ROTATION_FAILOVER_STATUS,
+  type AccountRotationFailoverStatus,
+} from "./account-rotation-failover.js";
+
+export * from "./conversation-share-tool-presentation.js";

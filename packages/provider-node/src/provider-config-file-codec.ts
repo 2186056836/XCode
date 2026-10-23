@@ -147,7 +147,9 @@ export function decodeProviderConfigFile(input: unknown): ProviderConfigLayerUpd
   return Object.freeze({
     providers: parsePersonalProviderConfigMap(parsed.config.providerConfigRules),
     models: parsePersonalModelConfigRules(
-      normalizeLegacyManualRules(parsed.config.modelConfigRules),
+      normalizeLegacyManualRules(
+        normalizeStringifiedOptionMaps(parsed.config.modelConfigRules),
+      ),
     ),
     providerOrder: parsed.config.providerOrder,
     ...(parsed.config.defaultModelSelection === undefined
@@ -168,6 +170,80 @@ const legacyEditableManualSchema = manualModelConfigSchema.extend({
       completeModelConfigDataSchema.shape.properties.shape.requiresMfjsToolSchema,
   }),
 });
+
+/**
+ * 修复历史导入写坏的 option map。
+ *
+ * 旧版「上游模型批量导入」用 `JSON.stringify({ reasoning_effort: '<CEL>' })` 生成 map，
+ * 表达式因此变成带引号的字符串字面量：求值结果就是表达式原文，
+ * `reasoning_effort` 被原样发成 `'reasoningLevel == "disabled" ? ...'`，
+ * 上游直接 400（CodeBuddy 11133，Intl / CN 同源）。
+ *
+ * 这里在文件边界做一次幂等自愈：若某个 map 求值出的字符串值本身是一条
+ * 「引用了档位变量」的表达式，就把它还原成裸表达式。只处理这一种确定形态，
+ * 不猜其它损坏。
+ */
+function normalizeStringifiedOptionMaps(input: unknown): unknown {
+  if (!isRecord(input)) return input;
+  let changed = false;
+  const rules = Object.entries(input).map(([key, value]) => {
+    if (!Array.isArray(value)) return [key, value] as const;
+    const nextRules = value.map((rule: unknown) => {
+      const fixed = repairRuleOptionMaps(rule);
+      if (fixed !== rule) changed = true;
+      return fixed;
+    });
+    return [key, nextRules] as const;
+  });
+  return changed ? Object.fromEntries(rules) : input;
+}
+
+const OPTION_MAP_EXPRESSION_PATTERN = /\b(?:reasoningLevel|maxOutputTokens)\b/;
+
+function repairRuleOptionMaps(rule: unknown): unknown {
+  if (!isRecord(rule) || !isRecord(rule.config)) return rule;
+  const config = rule.config;
+  if (!isRecord(config.optionSpecs)) return rule;
+  const optionSpecs = config.optionSpecs;
+  let changed = false;
+  const repairedSpecs: Record<string, unknown> = { ...optionSpecs };
+  for (const [specKey, specValue] of Object.entries(optionSpecs)) {
+    if (!isRecord(specValue) || typeof specValue.map !== "string") continue;
+    const repaired = repairOptionMapSource(specValue.map);
+    if (repaired === specValue.map) continue;
+    repairedSpecs[specKey] = { ...specValue, map: repaired };
+    changed = true;
+  }
+  if (!changed) return rule;
+  return { ...rule, config: { ...config, optionSpecs: repairedSpecs } };
+}
+
+/** 把 `{"k":"<expr>"}` 形态的字符串字面量还原成 `{"k": <expr>}`。 */
+function repairOptionMapSource(source: string): string {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(source);
+  } catch {
+    return source;
+  }
+  if (!isRecord(parsed)) return source;
+  let changed = false;
+  const parts: string[] = [];
+  for (const [key, value] of Object.entries(parsed)) {
+    const isExpression =
+      typeof value === "string" &&
+      OPTION_MAP_EXPRESSION_PATTERN.test(value) &&
+      /[?:]|&&|\|\|/.test(value);
+    if (isExpression) {
+      changed = true;
+      // 表达式是 CEL 源码而非 JSON 值，必须裸插；再包一层引号就会退化成字面量。
+      parts.push(`${JSON.stringify(key)}: ${value}`);
+      continue;
+    }
+    parts.push(`${JSON.stringify(key)}: ${JSON.stringify(value)}`);
+  }
+  return changed ? `{${parts.join(", ")}}` : source;
+}
 
 function normalizeLegacyManualRules(input: unknown): unknown {
   if (!isRecord(input) || !Array.isArray(input.manualProviderModelRules)) return input;

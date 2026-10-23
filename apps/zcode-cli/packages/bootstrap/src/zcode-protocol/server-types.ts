@@ -16,6 +16,7 @@ import type { AccountProviderConfigSnapshot } from "@zcode/provider";
 
 import {
   zcodeProtocolErrorCodes,
+  type AppToolSearchMode,
   type XCodeAutomationBotDeliveryTarget,
   type XCodeDeliveryKind,
   type ModelSelection,
@@ -116,9 +117,21 @@ export interface XCodeProtocolSessionRecord {
   subagentRuntimeConfigEnabled?: boolean;
   memoryEnabled: boolean;
   nativeSearchEnhancementsEnabled: boolean;
+  toolSearchMode: AppToolSearchMode;
   modelContextBudgetStrategy: XCodeModelContextBudgetStrategy;
   /** XCode fork：物化时固化的自定义 system 消息；fork/子会话经 inherit 分支继承。 */
   customSystemMessages?: SessionCustomSystemMessages;
+  /**
+   * 会话身份来源：undefined = 继承全局（默认）；null = 显式内置身份；string = 模板 id。
+   * 只用于区分「跟随全局」与「会话覆盖」，生效内容仍是 customSystemMessages。
+   */
+  personaOverride?: string | null;
+  /**
+   * 会话级 PreFill 开关：undefined = 跟随全局（默认）；true = 强制开启；false = 强制关闭。
+   * prefillInheritedEnabled 暂存覆盖前的 enabled，供「跟随全局」恢复。
+   */
+  prefillOverride?: boolean;
+  prefillInheritedEnabled?: boolean;
   createdAt: number;
   deliveryKind?: XCodeDeliveryKind;
   /**
@@ -136,6 +149,7 @@ export interface XCodeProtocolSessionRecord {
   traceContext: TraceContext;
   unsubscribe?: () => void;
   updatedAt: number;
+  lastOutcome?: "completed" | "interrupted" | "error";
   workspace: XCodeWorkspaceRef;
   activeAbortController?: AbortController;
   /** background runner 释放 ready lock 后，持久化/snapshot/broadcast 尚未完成的引用计数。 */
@@ -187,6 +201,8 @@ export interface XCodeProtocolAgentServerContext {
   // 协议请求则持有 operation lease，禁止异步 handler 与容量回收交错。
   sessionResidentPool?: SessionResidentPool;
   sessions: Map<string, XCodeProtocolSessionRecord>;
+  /** 仅覆盖异步创建窗口，结束即释放；输入命令仍由 CommandInbox 排队。 */
+  sessionCreationIds?: Set<string>;
   notify(notification: XCodeProtocolNotification): void;
   requestClient<T>(
     method: XCodeProtocolMethod,

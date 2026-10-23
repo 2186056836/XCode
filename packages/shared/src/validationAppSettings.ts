@@ -1,5 +1,6 @@
 /* oxlint-disable eslint(max-lines) -- AppSettings schema 聚合历史迁移、默认值和 patch 校验，拆分会削弱设置迁移的单一入口。 */
 import { z } from "zod";
+import { appToolSearchModeSchema } from "./app-runtime-preferences.js";
 import type { AppSettings } from "./protocol.js";
 import { REMOTE_ASSET_INSTALL_MODES } from "./remoteAssetInstallMode.js";
 import { isKnownRemoteResourcePackageId } from "./remoteResourcePackages.js";
@@ -12,7 +13,13 @@ import {
   embeddedBrowserViewportPreferenceSchema,
 } from "./browser-use/command-metadata.js";
 import { providerFamilyConnectionSelectionSettingsSchema } from "./provider-family-connection-selection.js";
+
 import { proxyPoolSettingsSchema } from "./proxy-pool.js";
+import {
+  connectionProfileSchema,
+  sourceServerRecordSchema,
+  sourceServerWorkspaceHistoryEntrySchema,
+} from "./source-server/contracts.js";
 
 /** 引导职业枚举；单独导出供 onboarding 记录回填 settings 时做窄化校验。 */
 const appSettingsOccupationSchema = z.enum([
@@ -129,6 +136,7 @@ const appWorkspaceSessionEntrySchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("remote"),
     workspacePath: nonEmptyStringSchema,
+    workspacePurpose: z.enum(["project", "conversation"]).default("project"),
     localWorkspacePath: nonEmptyStringSchema.optional(),
     workspaceIdentity: nonEmptyStringSchema.optional(),
     target: remoteWorkspaceTargetSchema,
@@ -137,6 +145,18 @@ const appWorkspaceSessionEntrySchema = z.discriminatedUnion("kind", [
     lastConnectionError: z.string().optional(),
   }),
 ]);
+
+const webRemoteControlRelayV2DeviceSchema = z.object({
+  deviceSid: z.string().min(1),
+  userId: z.string().min(1),
+  endpointOrigin: z.url(),
+});
+const remoteConversationWorkspaceRecordSchema = z
+  .object({
+    workspacePath: nonEmptyStringSchema,
+    lastResolvedAt: z.number().int().nonnegative(),
+  })
+  .strict();
 
 const webRemoteControlExternalRelayDeviceSchema = z.object({
   deviceSid: nonEmptyStringSchema,
@@ -214,6 +234,28 @@ function sanitizeEmbeddedBrowserViewportPreference(value: unknown): unknown {
   // 显示偏好不是关键启动状态，单字段损坏不应让整份 setting.json 被隔离。
   // 读取时只丢弃坏偏好并回到默认值；patch 写入仍严格拒绝非法尺寸与缩放。
   return next;
+}
+
+function migrateRemoteBoundaryIntroAcknowledgement(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const raw = value as Record<string, unknown>;
+  if (raw.remoteBoundaryOnboardingVersion !== 3) return value;
+  // 原因：旧客户端只接受 2，写 3 会让整份设置回退默认值。迁移已确认的 3 到新字段，
+  // 同时恢复旧字段合同；不能仅收窄 schema，否则修复版读取存量 3 也会丢设置。
+  return {
+    ...raw,
+    remoteBoundaryOnboardingVersion: 2,
+    remoteBoundaryIntroAcknowledgedVersion: 1,
+  };
+}
+
+function migrateTaskAutoArchiveReset(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const raw = value as Record<string, unknown>;
+  if (raw.taskAutoArchiveResetVersion === 1) return value;
+  // 旧版开关开启后可能未执行；修复后直接沿用会在启动时突然归档历史会话。
+  // 首次读取统一关闭并持久化标记，用户重新开启后不再重置。
+  return { ...raw, taskAutoArchiveEnabled: false, taskAutoArchiveResetVersion: 1 };
 }
 
 function migrateCloseToTrayOnWindowsDefault(value: unknown): unknown {
@@ -491,6 +533,26 @@ export const customSystemMessagesSchema = z.object({
 });
 
 /**
+ * XCode fork：用户自定义身份模板。
+ *
+ * 内置模板是代码常量（GODMODE_TEMPLATES / PREFILL_TEMPLATES），用户不能改；
+ * 这里允许用户建自己的「提示词 + PreFill」组合，在设置页与会话身份选择器里与内置模板并列。
+ * id 由 UI 生成（`custom-<uuid>`），host 只在 apply 时按 id 取用，不依赖固定命名。
+ */
+export const customPersonaTemplateSchema = z
+  .object({
+    id: z.string().trim().min(1).max(100),
+    name: z.string().trim().min(1).max(100),
+    cliPrefix: z.string().max(65535),
+    prefill: modelJailbreakPrefillSettingsSchema.optional(),
+  })
+  .strict();
+
+export type CustomPersonaTemplate = z.infer<typeof customPersonaTemplateSchema>;
+
+export const customPersonaTemplatesSchema = z.array(customPersonaTemplateSchema).max(50);
+
+/**
  * 背景图 data URL 的字符上限，与 customSkinSchema 的 max 同源。
  * 注意这是 base64 编码后的长度：编码会比原文件膨胀约 4/3，所以按原文件大小
  * 做预检会放行 7.5MB 以上的图、保存时才被 Zod 打回来（用户只看到"保存失败"）。
@@ -749,7 +811,8 @@ const appSettingsObjectSchema = z.object({
   // default 只对缺省字段生效，显式存过 false 的用户仍保持展示。
   computerUseComposerEntryHidden: z.boolean().default(true),
   taskAutoArchiveEnabled: z.boolean().default(false),
-  taskAutoArchiveOlderThanDays: z.number().int().positive().max(365).default(7),
+  taskAutoArchiveResetVersion: z.literal(1).default(1),
+  taskAutoArchiveOlderThanDays: z.number().int().positive().max(365).default(30),
   closeToTrayOnWindows: z.boolean().default(true),
   closeToTrayOnWindowsMigrationInitialized: z.boolean().default(true),
   // default(false)：新装与存量用户首次启动都视为未归位，由 main 进程按平台决定是否迁移。
@@ -777,10 +840,24 @@ const appSettingsObjectSchema = z.object({
   providerFamilyDomainUpdatedAt: z.number().int().nonnegative().optional(),
   providerFamilyDomainMigrated: z.boolean().default(false),
   nativeSearchEnhancementsEnabled: z.boolean().default(true),
+  toolSearchMode: appToolSearchModeSchema.default("off"),
   onboardingOccupation: appSettingsOccupationSchema.nullish(),
   proactiveSuggestionsEnabled: z.boolean().optional(),
   memoryEnabled: z.boolean().default(false),
   lastWorkspaceSession: z.array(appWorkspaceSessionEntrySchema).default([]),
+  lastActiveWorkspace: appWorkspaceSessionEntrySchema.nullable().optional(),
+  remoteConversationWorkspaceBySourceServerId: z
+    .record(nonEmptyStringSchema, remoteConversationWorkspaceRecordSchema)
+    .optional(),
+  sourceServers: z.array(sourceServerRecordSchema).default([]),
+  connectionProfiles: z.array(connectionProfileSchema).default([]),
+  sourceServerWorkspaceHistory: z.array(sourceServerWorkspaceHistoryEntrySchema).default([]),
+  // Bug 原因：该开关过去只声明在 patch schema，SettingService 合并后再走完整 schema 时会把
+  // 显式 false 剥离，导致重启后恢复为默认开启。完整 schema 必须拥有这项持久化事实。
+  remoteStartupAutoReconnectEnabled: z.boolean().optional(),
+  sourceServerDirectoryMigrationVersion: z.literal(1).optional(),
+  remoteBoundaryOnboardingVersion: z.literal(2).optional(),
+  remoteBoundaryIntroAcknowledgedVersion: z.literal(1).optional(),
   lastActiveTabIndex: z.number().int().nonnegative().default(0),
   lastActiveTaskByWorkspace: z.record(z.string(), z.string()).optional(),
   dataBaseDir: z.string().trim().min(1).optional(),
@@ -789,10 +866,12 @@ const appSettingsObjectSchema = z.object({
   autoDownloadAndInstallUpdates: z.boolean().default(false),
   skippedElectronUpdateVersions: skippedElectronUpdateVersionsSchema,
   settingsSyncFirstRunPromptHandled: z.boolean().optional(),
+  webRemoteControlRelayV2Device: webRemoteControlRelayV2DeviceSchema.optional(),
   webRemoteControlExternalRelayDevice: webRemoteControlExternalRelayDeviceSchema.optional(),
   webRemoteControlLastEnabledContext: webRemoteControlLastEnabledContextSchema.optional(),
   zcodeEndpointOrigin: zcodeEndpointOriginSchema.optional(),
   customSystemMessages: customSystemMessagesSchema.optional(),
+  customPersonaTemplates: customPersonaTemplatesSchema.optional(),
   // null = 显式移除皮肤、回退官方主题（RPC/JSON 会吞 undefined，清空必须走 null）。
   customSkin: customSkinSchema.nullable().optional(),
   // 代理池：条目数组 + 策略 + 选中项。用 optional 而非 default，避免老 setting.json
@@ -808,7 +887,11 @@ export const appSettingsSchema = z.preprocess(
           migrateCloseToTrayOnWindowsDefault(
             migrateLegacyLocalePreference(
               sanitizeXCodeEndpointOrigin(
-                migrateLegacyWorkspaceSession(migrateLegacyBuiltinAgentCliProviders(value)),
+                migrateLegacyWorkspaceSession(
+                  migrateLegacyBuiltinAgentCliProviders(
+                    migrateRemoteBoundaryIntroAcknowledgement(migrateTaskAutoArchiveReset(value)),
+                  ),
+                ),
               ),
             ),
           ),
@@ -859,6 +942,7 @@ export const appSettingsPatchSchema = z.object({
   providerFamilyDomainUpdatedAt: z.number().int().nonnegative().optional(),
   providerFamilyDomainMigrated: z.boolean().optional(),
   nativeSearchEnhancementsEnabled: z.boolean().optional(),
+  toolSearchMode: appToolSearchModeSchema.optional(),
   onboardingOccupation: z
     .enum([
       "office",
@@ -880,6 +964,17 @@ export const appSettingsPatchSchema = z.object({
   proactiveSuggestionsEnabled: z.boolean().optional(),
   memoryEnabled: z.boolean().optional(),
   lastWorkspaceSession: z.array(appWorkspaceSessionEntrySchema).optional(),
+  lastActiveWorkspace: appWorkspaceSessionEntrySchema.nullable().optional(),
+  remoteConversationWorkspaceBySourceServerId: z
+    .record(nonEmptyStringSchema, remoteConversationWorkspaceRecordSchema)
+    .optional(),
+  sourceServers: z.array(sourceServerRecordSchema).optional(),
+  connectionProfiles: z.array(connectionProfileSchema).optional(),
+  sourceServerWorkspaceHistory: z.array(sourceServerWorkspaceHistoryEntrySchema).optional(),
+  remoteStartupAutoReconnectEnabled: z.boolean().optional(),
+  sourceServerDirectoryMigrationVersion: z.literal(1).optional(),
+  remoteBoundaryOnboardingVersion: z.literal(2).optional(),
+  remoteBoundaryIntroAcknowledgedVersion: z.literal(1).optional(),
   lastActiveTabIndex: z.number().int().nonnegative().optional(),
   lastActiveTaskByWorkspace: z.record(z.string(), z.string()).optional(),
   dataBaseDir: z.string().trim().min(1).optional(),
@@ -890,10 +985,12 @@ export const appSettingsPatchSchema = z.object({
     .partialRecord(electronReleaseChannelSchema, nonEmptyStringSchema)
     .optional(),
   settingsSyncFirstRunPromptHandled: z.boolean().optional(),
+  webRemoteControlRelayV2Device: webRemoteControlRelayV2DeviceSchema.optional(),
   webRemoteControlExternalRelayDevice: webRemoteControlExternalRelayDeviceSchema.optional(),
   webRemoteControlLastEnabledContext: webRemoteControlLastEnabledContextSchema.optional(),
   zcodeEndpointOrigin: zcodeEndpointOriginSchema.optional(),
   customSystemMessages: customSystemMessagesSchema.optional(),
+  customPersonaTemplates: customPersonaTemplatesSchema.optional(),
   // null = 显式移除皮肤、回退官方主题（RPC/JSON 会吞 undefined，清空必须走 null）。
   customSkin: customSkinSchema.nullable().optional(),
   // 代理池整块替换语义：UI 与服务层都按「读-改-写」提交完整 ProxyPoolSettings，

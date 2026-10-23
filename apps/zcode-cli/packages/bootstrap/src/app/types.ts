@@ -38,6 +38,8 @@ import type {
   ModelUsage,
   OffPeakPort,
   ProxyPoolPort,
+  ModelJailbreakPort,
+  ProviderAccountPort,
   TopicResourcePort,
   PdfDocumentPort,
   PermissionBrokerPort,
@@ -136,6 +138,10 @@ export type RevokeWorkspaceHookTrustInput =
 export type XCodeAppRuntimeConfigInput = AgentRuntimeConfig;
 
 export interface XCodeAppOptions {
+  /** 独立 CLI 的配置菜单编辑输入默认值；其他装配保留显式 Session 配置语义。 */
+  modelSelectionMode?: "cli-default";
+  /** Host 在运行实例创建时传入，运行中不刷新。 */
+  additionalDirectories?: readonly string[];
   sessionId?: SessionId;
   resume?: boolean;
   version?: string;
@@ -194,6 +200,7 @@ export interface XCodeAppOptions {
   mcpPortFactory?: (input: { workingDirectory?: string }) => McpPort;
   permissionBroker?: PermissionBrokerPort;
   eventSink?: SessionEventSink;
+  onOffPeakLifecycleEvent?: (event: import("@zcode/shared").OffPeakLifecycleNotification) => void;
   env?: NodeJS.ProcessEnv;
   platform?: NodeJS.Platform | string;
   projectConfigPath?: string;
@@ -206,6 +213,8 @@ export interface XCodeAppOptions {
   offPeakPort?: OffPeakPort;
   /** 代理池配置端口；host 侧 IProxyPoolService 在场即注入。 */
   proxyPoolPort?: ProxyPoolPort;
+  modelJailbreakPort?: ModelJailbreakPort;
+  providerAccountPort?: ProviderAccountPort;
   topicResourcePort?: TopicResourcePort;
   /** 首次真实用户执行或 cold-resume fallback 时解析一次，之后由 app 生命周期缓存。 */
   resolveInitialBashShellSelection?: () => Promise<ExecutionShellSelection | undefined>;
@@ -434,6 +443,9 @@ export interface XCodeApp {
   ): Promise<McpReadResourceResult>;
   onMcpAppConnectionInvalidated(serverName: string, listener: () => void): () => void;
   getMcpAppConnectionSnapshot(serverName: string): { identity: string; generation: number } | null;
+  waitForMcpAppConnection(
+    serverName: string,
+  ): Promise<{ identity: string; generation: number } | null>;
   callMcpToolForUi(
     serverName: string,
     toolName: string,

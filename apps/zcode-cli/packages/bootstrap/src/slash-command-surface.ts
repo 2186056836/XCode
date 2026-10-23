@@ -22,6 +22,7 @@ export const APP_PROTOCOL_APP_ONLY_BUILTIN_SLASH_COMMANDS = [
   },
 ] as const satisfies readonly XCodeSlashCommand[];
 
+// Plan 由 Composer 本地操作提供，保留名称以防自定义命令接管该入口。
 const EXTRA_RESERVED_SLASH_COMMAND_NAMES = ["compress", "plan"] as const;
 
 const RESERVED_SLASH_COMMAND_NAMES = new Set(

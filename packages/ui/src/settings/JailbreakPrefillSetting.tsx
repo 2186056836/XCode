@@ -18,11 +18,13 @@ import { SettingsGroupCard, SettingsRow } from "@/settings/SettingsPageParts.js"
 import { GODMODE_DEFAULT_PREFILL } from "@/settings/godmodeTemplates.js";
 
 /**
- * godmode Prefill（预置对话 / priming turns）。
+ * 全局 PreFill（预置对话 / priming turns）。
  *
  * 对齐 Hermes `prefill_messages`：把若干 user/assistant 轮作为 priming 注入
  * 到 system 之后、首个真实 user 之前。顶部下拉框控制开关（默认关闭），
  * 「编辑」按钮打开对话轮编辑对话框；默认载入 godmode 的 prefill.json 内容。
+ *
+ * 内置模板在「内置身份模板」卡片里按同一 id 连同提示词一起写入，这里只保留手改入口。
  */
 export function JailbreakPrefillSetting() {
   const { intl } = useXCodeIntl();
@@ -63,7 +65,7 @@ export function JailbreakPrefillSetting() {
         },
       });
       setOpen(false);
-    } catch (error) {
+    } catch {
       toast(intl.formatMessage({ id: "settings.modelJailbreak.prefill.saveError" }));
     }
   };

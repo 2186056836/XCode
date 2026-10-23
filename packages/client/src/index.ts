@@ -10,4 +10,10 @@ export {
   createAcknowledgedWebRemoteControlRelayProtocol,
   createWebRemoteControlRelayProtocol,
 } from "./webRemoteControlRelayProtocol.js";
+export type {
+  AcknowledgedWebRemoteControlRelayProtocolAdapter,
+  AcknowledgedWebRemoteControlRelayProtocolOptions,
+  WebRemoteControlRelayProtocolAdapter,
+  WebRemoteControlRelayProtocolOptions,
+} from "./webRemoteControlRelayProtocol.js";
 export * from "./webRemoteControlRelayPayloadSerializer.js";

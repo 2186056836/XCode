@@ -1,3 +1,4 @@
+import { configureOffPeakRuntime, controlOffPeakRuntime } from "./off-peak/runtime.js";
 import {
   createTurnAgentDefinitions,
   createAgentDefinitionsReader,
@@ -17,6 +18,7 @@ import {
   traceContextToLogContext,
 } from "./deps.js";
 import type {
+  ModelRequestAuth,
   CollaborationMode,
   Logger,
   BackgroundTaskCancelResult,
@@ -125,6 +127,8 @@ import type {
 } from "./types.js";
 import type { AgentRuntimeInternal } from "./internal.js";
 import { InMemoryRuntimeTaskRegistry, type RuntimeTaskRegistry } from "../runtime-task/registry.js";
+import type { WorkflowBlockedReminderClock } from "../runtime-task/workflow-blocked-reminder.js";
+import { createWorkflowBlockedReminder } from "./methods/dynamic-workflow-blocked-reminder.js";
 import type { ChildClientPortsContext, ClientFacingPorts } from "./helpers/child-client-ports.js";
 import type { ProjectMemoryExtractionScheduler } from "./helpers/project-memory-extraction.js";
 import { projectPersistentAgentMemoryTools } from "../subagent/persistent-memory.js";
@@ -135,6 +139,14 @@ import { cloneModelSelection } from "./model-selection.js";
 
 // oxlint-disable typescript-eslint/no-unsafe-declaration-merging
 export class AgentRuntime {
+  controlOffPeakExecution(
+    input: import("@zcode/shared").OffPeakControlParams,
+  ): Promise<import("@zcode/shared").OffPeakControlResult> {
+    return controlOffPeakRuntime(
+      this as unknown as import("./internal.js").AgentRuntimeInternal,
+      input,
+    );
+  }
   private sessionId: SessionId;
   private turnNumber: number;
   private config: AgentRuntimeConfig;
@@ -160,6 +172,9 @@ export class AgentRuntime {
   /** 模型请求准入端口；随每次模型请求进调用上下文。 */
   private modelRequestAdmission?: AgentRuntimeDeps["modelRequestAdmission"];
   private sessionModelSelection: ModelSelection | undefined;
+  /** 最近一次物理模型请求的身份材料（账号 / 出口代理）；写入 usage 明细。 */
+  private lastModelRequestAuth: ModelRequestAuth | undefined;
+  private lastResolvedEgress: { proxyPoolId?: string; proxyDisplayName?: string } | undefined;
   private messageHistory: MessageHistory;
   private readFileState: ReadFileStateMap;
   private cachedTools: ModelToolContract[] | null = null;
@@ -189,6 +204,8 @@ export class AgentRuntime {
   private dynamicWorkflowRunPort?: DynamicWorkflowRunPort;
   private modelCatalogPort?: ModelCatalogPort;
   private runtimeTaskRegistry: RuntimeTaskRegistry;
+  // 「run 还欠着决定、主代理闲着」的提醒钟；由命令队列的忙 / 闲沿驱动，beginShutdown 停掉。
+  private workflowBlockedReminder: WorkflowBlockedReminderClock;
   private branchGeneration = 0;
   private artifactStore?: ToolArtifactStorePort;
   private executionPort?: ExecutionPort;
@@ -243,10 +260,10 @@ export class AgentRuntime {
     this.sessionId = sessionId;
     this.turnNumber = 0;
     // 3.12.2：兼容旧 Host/内部调用传入 legacy，但本版本 Runtime、日志和子 Agent 只使用 preflight。
-    this.config = projectPersistentAgentMemoryTools({
+    this.config = {
       ...config,
       modelContextBudgetStrategy: DEFAULT_XCODE_MODEL_CONTEXT_BUDGET_STRATEGY,
-    });
+    };
     Object.assign(this.config, resolveExecutionState(config));
     const definitions = createTurnAgentDefinitions(
       deps.getAgentDefinitions ??
@@ -255,7 +272,10 @@ export class AgentRuntime {
         }),
       deps.loadAgentDefinitions,
     );
-    this.getAgentDefinitions = definitions.get;
+    // Host 每轮加载的快照会替代启动配置；在统一读取出口补齐 Memory 工具，
+    // 避免子 Agent 有持久记忆提示却没有 Write/Edit，也不回写原始配置。
+    this.getAgentDefinitions = () =>
+      projectPersistentAgentMemoryTools(definitions.get(), this.config.memory);
     this.prepareAgentDefinitions = definitions.prepare;
     this.agentTelemetry = new RuntimeTelemetryFacade({
       agentName: config.agentName,
@@ -293,9 +313,15 @@ export class AgentRuntime {
     this.providerRuntimeHeadersPort = deps.providerRuntimeHeadersPort;
     this.browserControlPort = deps.browserControlPort;
     this.modelRequestAdmission = deps.modelRequestAdmission;
+    configureOffPeakRuntime(
+      this as unknown as import("./internal.js").AgentRuntimeInternal,
+      deps.onOffPeakLifecycleEvent,
+    );
     // 旧会话的选择缺失不能阻断历史恢复；不在这里制造默认模型。
     this.sessionModelSelection =
       config.modelSelection && cloneModelSelection(config.modelSelection);
+    this.lastModelRequestAuth = undefined;
+    this.lastResolvedEgress = undefined;
     this.messageHistory = new MessageHistoryImpl();
     this.readFileState = new Map();
     this.runtimeCommandQueue = createRuntimeCommandQueue();
@@ -305,6 +331,7 @@ export class AgentRuntime {
     this.mcpPort = deps.mcpPort;
     this.runtimeTaskRegistry = deps.runtimeTaskRegistry ?? new InMemoryRuntimeTaskRegistry();
     this.runtimeTaskRegistry.setActiveBranchGeneration?.(this.branchGeneration);
+    this.workflowBlockedReminder = createWorkflowBlockedReminder(runtime);
     this.artifactStore = deps.artifactStore;
     this.executionPort = deps.executionPort;
     this.fileSystemPort = deps.fileSystemPort;
@@ -350,6 +377,8 @@ export class AgentRuntime {
     // ExecutionPort.close() 会把后台 Bash 收口为 cancelled；若允许
     // teardown terminal event 再唤醒模型，并与随后关闭的 session store 竞态。
     this.shuttingDown = true;
+    // 同一条理由：会话在关，提醒钟不能再到点唤起一轮。
+    this.workflowBlockedReminder.stop();
     // 关闭单个 session 后进程仍存活，
     // 因此必须先终止该 runtime 的 Extraction，不能只在超时后放弃等待。
     this.memoryExtractionScheduler?.shutdown();
@@ -361,8 +390,13 @@ export interface AgentRuntime {
   beginShutdown(): void;
   closeBrowserSession(): Promise<void>;
   updateConfig(
-    patch: Pick<AgentRuntimeConfig, "mode" | "planEnabled" | "language" | "outputStyle">,
+    patch: Pick<AgentRuntimeConfig, "mode" | "planEnabled" | "language" | "outputStyle"> & {
+      /** 显式传 undefined 表示清除；用 `"systemPromptOverrides" in patch` 判在场。 */
+      systemPromptOverrides?: import("../context/types.js").SystemPromptOverrides;
+    },
   ): void;
+  /** 当前会话物化的 system prompt 覆盖（身份提示词 / prefill / 混淆）。 */
+  getSystemPromptOverrides(): import("../context/types.js").SystemPromptOverrides | undefined;
   initializeSessionShellEnvironmentIfNeeded(
     selection: ExecutionShellSelection | (() => ExecutionShellSelection),
   ): boolean;

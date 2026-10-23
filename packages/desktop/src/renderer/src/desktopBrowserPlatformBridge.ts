@@ -1,4 +1,8 @@
-import type { IPlatformService } from "@zcode/shared";
+import type {
+  BrowserGuestAttachResult,
+  ChromeBrowserDataImportResult,
+  IPlatformService,
+} from "@zcode/shared";
 
 type DesktopBrowserPlatformBridge = Pick<
   IPlatformService,
@@ -27,7 +31,8 @@ type DesktopBrowserPlatformBridge = Pick<
 // Rebase 集成：browser bridge 若继续内联在 renderer 入口，会让入口越过 max-lines 门禁。
 // 独立对象只做 preload 委托与旧 bridge 兼容兜底，不持有 Browser 业务状态。
 export const desktopBrowserPlatformBridge = {
-  getPathForFile: (file) => window.zcode.getPathForFile?.(file) ?? null,
+  // IPlatformService 面向多端，file 只能收敛为 unknown；Desktop preload 的 webUtils 需要真实 File。
+  getPathForFile: (file) => window.zcode.getPathForFile?.(file as File) ?? null,
   saveFile: (payload) =>
     window.zcode.saveFile?.(payload) ?? Promise.resolve({ success: false, error: "not_supported" }),
   // 条件定义而非兜底返回失败：UI 靠方法是否存在做能力检测，旧 preload 下必须保持 undefined
@@ -43,7 +48,11 @@ export const desktopBrowserPlatformBridge = {
   onBrowserViewRestore: (handler) => window.zcode.onBrowserViewRestore?.(handler) ?? (() => {}),
   browserViewAttachGuest: (payload) =>
     window.zcode.browserViewAttachGuest?.(payload) ??
-    Promise.resolve({ ok: false, reason: "not-found", recoveryRequested: false }),
+    Promise.resolve<BrowserGuestAttachResult>({
+      ok: false,
+      reason: "not-found",
+      recoveryRequested: false,
+    }),
   browserViewDetachGuest: (payload) =>
     window.zcode.browserViewDetachGuest?.(payload) ?? Promise.resolve(false),
   browserViewCloseTab: (payload) =>
@@ -60,7 +69,7 @@ export const desktopBrowserPlatformBridge = {
     window.zcode.browserViewUpdateViewport?.(payload) ?? Promise.resolve(),
   importChromeBrowserData: (options) =>
     window.zcode.importChromeBrowserData?.(options) ??
-    Promise.resolve({
+    Promise.resolve<ChromeBrowserDataImportResult>({
       success: false,
       cookies: { imported: 0, skipped: 0, failed: 0 },
       localStorage: {
@@ -69,7 +78,8 @@ export const desktopBrowserPlatformBridge = {
         originsSkipped: 0,
         originsFailed: 0,
       },
-      error: "unsupported",
+      // 旧 preload 没有导入能力；用契约里的「不支持」错误码，UI 与真实失败路径展示一致。
+      error: "chrome_import_not_supported",
     }),
   clearEmbeddedBrowserData: (mode) =>
     window.zcode.clearEmbeddedBrowserData?.(mode) ??

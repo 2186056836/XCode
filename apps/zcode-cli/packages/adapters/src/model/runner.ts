@@ -43,6 +43,7 @@ import {
   type AiSdkModelTextRequest,
   type ResolvedAiSdkModel,
 } from "./runner-runtime.js";
+import { resolveToolSearchCapability } from "./tool-search.js";
 import { createModel, type ModelExecutionRequest } from "./model.js";
 import { refreshOffPeakRequestAuth } from "./off-peak-request-auth.js";
 
@@ -195,6 +196,11 @@ export class AiSdkModelAdapter {
         (options.providerConfig.requestProfile === "qoder" ||
           options.providerConfig.requestProfile === "codebuddy") &&
         contextRefreshRuntimeHeadersBeforeAttempt !== undefined;
+      const providerEgressEligible = shouldAttachProviderEgressRefresh({
+        accessType: options.providerConfig.access.type,
+        proxy: options.providerConfig.api?.proxy,
+        hasRuntimeHeadersPort: contextRefreshRuntimeHeadersBeforeAttempt !== undefined,
+      });
       const refreshRuntimeHeadersBeforeAttempt = requestAuthRequired
         ? async (input: ModelRequestAuthSourceInput) => {
             const requestAuth = await requestAuthDependency?.source?.resolve(input);
@@ -224,10 +230,11 @@ export class AiSdkModelAdapter {
                 `Account model request auth is unavailable: ${resolved.providerId}/${resolved.modelId}`,
               );
             }))
-          : accountRotationEligible
+          : accountRotationEligible || providerEgressEligible
             ? contextRefreshRuntimeHeadersBeforeAttempt
             : undefined;
       return {
+        toolSearchEnabled: request.toolSearchEnabled,
         messages: request.messages,
         tools: request.tools,
         responseJsonSchema: request.responseJsonSchema,
@@ -296,6 +303,12 @@ export class AiSdkModelAdapter {
           });
     };
     return createModel({
+      requestCapabilities: {
+        toolSearch: resolveToolSearchCapability(
+          options.providerConfig.api.type,
+          options.providerConfig.access,
+        ),
+      },
       providerId: resolved.providerId,
       modelId: resolved.modelId,
       displayName: options.displayName,
@@ -367,6 +380,29 @@ export class AiSdkModelAdapter {
       modelIoFullRetentionEnabled: this.modelIoFullRetentionEnabled,
     });
   }
+}
+
+/**
+ * 无账号供应商是否要接入 host 的 per-attempt 回调。
+ *
+ * 背景：Qoder / CodeBuddy 靠 `requestProfile` 判定是否接入，OpenCode Free / Kilo Free
+ * 这类免费供应商没有账号，但可以配 provider 级出口策略（轮询 / 随机）。不接入的话，
+ * host 侧 `resolveConnectionEgress` 永远不会执行，「使用详情」只能显示「跟随全局」，
+ * 看不出请求实际从哪个池出站。
+ *
+ * host 对这类供应商返回的 requestAuth 只带出口记账字段（没有 apiKey），adapter 拿到后
+ * 仍用 provider config 的静态鉴权发请求，因此接入不会污染鉴权。
+ */
+export function shouldAttachProviderEgressRefresh(input: {
+  accessType: string;
+  proxy: { provider?: { pools?: readonly unknown[] } } | null | undefined;
+  hasRuntimeHeadersPort: boolean;
+}): boolean {
+  if (!input.hasRuntimeHeadersPort) return false;
+  // zhipu-account 的 Coding Plan 走独立的鉴权刷新分支，不需要这条补充判定。
+  if (input.accessType === "zhipu-account") return false;
+  const pools = input.proxy?.provider?.pools;
+  return Array.isArray(pools) && pools.length > 0;
 }
 
 function requireMaxOutputTokens(options: ModelOptions): number {

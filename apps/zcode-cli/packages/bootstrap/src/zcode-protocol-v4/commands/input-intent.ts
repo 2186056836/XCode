@@ -30,6 +30,9 @@ export function inputIntentMetadata(
   envelope: CommandEnvelope,
   options: {
     text: string;
+    inputOrigin?: "desktop" | "mobile";
+    conversationQuotes?: TurnInputIntentMetadata["conversationQuotes"];
+    botGroupSource?: TurnInputIntentMetadata["botGroupSource"];
     requestedDelivery: TurnInputIntentMetadata["requestedDelivery"];
     admittedDelivery?: TurnInputIntentMetadata["admittedDelivery"];
     fallbackReasonCode?: string;
@@ -39,10 +42,14 @@ export function inputIntentMetadata(
     planEnabled?: boolean;
     obfuscation?: TurnObfuscationSettings;
     sharedContextRefs?: TurnInputIntentMetadata["sharedContextRefs"];
+    source?: TurnInputIntentMetadata["source"];
   },
 ): TurnInputIntentMetadata {
   const admission = commandAdmissionOf(envelope);
   return {
+    ...(options.inputOrigin ? { inputOrigin: options.inputOrigin } : {}),
+    ...(options.conversationQuotes ? { conversationQuotes: options.conversationQuotes } : {}),
+    ...(options.botGroupSource ? { botGroupSource: options.botGroupSource } : {}),
     sourceCommandId: envelope.commandId,
     queueItemId: admission.queueItemId,
     clientId: envelope.clientId || "cli",
@@ -72,6 +79,7 @@ export function inputIntentMetadata(
     ...(options.fallbackReasonCode ? { fallbackReasonCode: options.fallbackReasonCode } : {}),
     ...(options.attachmentRefs ? { attachmentRefs: [...options.attachmentRefs] } : {}),
     ...(options.sharedContextRefs ? { sharedContextRefs: [...options.sharedContextRefs] } : {}),
+    ...(options.source ? { source: options.source } : {}),
   };
 }
 

@@ -82,7 +82,11 @@ export async function ensureContextInitialized(
     memoryIndexContent: this.memoryIndexContent,
     model,
   });
+  // Bug 根因：模型创建失败轮会在 Context 首次可初始化前接纳并持久化用户输入。
+  // init 会替换全部内存历史，因此先保留这些权威运行条目，再接到新建的 Context 前缀之后。
+  const preContextEntries = [...this.messageHistory.borrowReadOnlyRuntimeEntries()];
   this.initializeMessageHistoryFromContext(this.contextBuilder, traceContext);
+  this.messageHistory.addEntries(preContextEntries);
   this.contextInitialized = true;
 }
 
@@ -134,6 +138,7 @@ export function createContextBuilderFromSnapshot(
 
   const contextConfig: ContextBuilderConfig = {
     workingDirectory: snapshot.workingDirectory,
+    additionalDirectories: this.config.additionalDirectories,
     envInfo,
     model: options.model,
     presentationSurface: this.config.presentationSurface,
@@ -298,16 +303,12 @@ export function initializeMessageHistoryFromContext(
 ): void {
   const contextResult = contextBuilder.build();
   this.latestContextBuildResult = contextResult;
-  const contextEntries = buildContextHistoryEntries(contextResult);
-  // godmode prefill：把 priming 对话轮拼到 system 之后、首个真实 user 之前。
-  const jailbreakPrefill = this.config.systemPromptOverrides?.prefill;
-  if (jailbreakPrefill?.enabled && jailbreakPrefill.messages?.length) {
-    contextEntries.push(
-      ...jailbreakPrefill.messages.map((p) => ({
-        message: { role: p.role, content: p.content },
-      })),
-    );
-  }
+  // godmode prefill：priming 轮作为 context prefix 的一部分注入，
+  // 这样后续每轮 rebuildContextPrefix 都会按当前 config 重新投影，而不是只在首轮生效。
+  const contextEntries = buildContextHistoryEntries(
+    contextResult,
+    this.config.systemPromptOverrides?.prefill,
+  );
   this.messageHistory.init(contextEntries);
 
   this.logger?.debug("Context built", {

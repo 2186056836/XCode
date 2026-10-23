@@ -65,6 +65,8 @@ export function createRefreshRuntimeHeadersBeforeModelAttempt(
     if (!refreshResult.headersApplied) {
       throw new Error("Provider runtime headers were not applied before model request attempt.");
     }
+    // 记账本次请求用到的账号与出口代理：host 选号时才知道，core 只能在刷新点记下来。
+    runtime.setLastModelRequestAuth(refreshResult.requestAuth);
     runtime.logger?.debug("Provider runtime headers refreshed before model request attempt", {
       ...traceContextToLogContext(input.traceContext),
       attempt: attemptInput.attempt,

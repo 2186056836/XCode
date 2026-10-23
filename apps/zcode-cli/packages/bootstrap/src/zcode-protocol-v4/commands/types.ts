@@ -39,11 +39,17 @@ export interface V4CommandLogger {
 
 export type V4QueueItemCommand = QueueItem;
 
+/** 单轮执行材料的协议原形。 */
+export type V4TurnExecution = NonNullable<CommandPayloadMap["sendText"]["modelExecution"]>;
+
 /**
- * 队列项的单轮执行材料（协议原形）。加速卡的 Selection 已随 QueueItem.modelSelection
- * 进入投影，这里只暂存不可投影的动态凭据，提升时再冻结成 ModelExecutionContext。
+ * Highspeed 队列项的临时执行包。QueueItem.modelSelection 只保存普通提交模型；
+ * 加速 Selection 必须与动态凭据一起驻留内存，提升时再冻结进本轮。
  */
-export type V4QueuedTurnExecution = NonNullable<CommandPayloadMap["sendText"]["modelExecution"]>;
+export interface V4QueuedTurnExecution {
+  modelSelection: NonNullable<CommandPayloadMap["sendText"]["modelSelection"]>;
+  modelExecution: V4TurnExecution;
+}
 
 export type V4StableForkTargetResolution =
   | {
@@ -81,6 +87,19 @@ export interface V4SessionRecordView {
   /** 恢复失败告警：存在时拒绝新 turn（历史损坏不能静默续写）。 */
   restoreWarning?: { message: string; type: string };
   taskType?: SessionTaskType;
+  /** XCode fork：会话身份覆盖（与旧协议 record 同字段）。 */
+  customSystemMessages?: {
+    cliPrefix?: string;
+    prefill?: {
+      enabled?: boolean;
+      messages?: Array<{ role: "user" | "assistant"; content: string }>;
+    };
+  };
+  /** undefined = 继承全局；null = 内置；string = 模板 id。 */
+  personaOverride?: string | null;
+  /** undefined = 跟随全局；true = 强制开启；false = 强制关闭。 */
+  prefillOverride?: boolean;
+  prefillInheritedEnabled?: boolean;
 }
 
 export interface V4CommandCoreHost {
@@ -264,11 +283,12 @@ export interface V4CommandCoreHost {
    */
   afterLegacyStateMutation?(record: V4SessionRecordView, reason: string): Promise<void>;
   /**
-   * 会话关闭（deleteSession 的执行面：退订事件 → app.close → 注册表摘除 → gateway 清通道）。
+   * 会话删除（deleteSession 的执行面：软删除持久化 → 退订事件 → app.close → 注册表摘除 →
+   * gateway 清通道）。
    * 过渡形态：会话注册表现归旧协议宿主，binder 内联实现（顺序对齐旧 closeSession op，
    * 见 zcode-protocol/server-operations.ts）；v4 自持会话注册表后收编为原生实现。
    */
-  closeSession?(sessionId: string): Promise<void>;
+  deleteSession?(sessionId: string): Promise<void>;
   /**
    * 会话记录创建（createSession 的执行面：record 建立/事件接线/模型 catalog 同步/
    * 失败清理，全部与旧协议宿主纠缠）。binder 实现调旧 createSession op；
@@ -276,6 +296,8 @@ export interface V4CommandCoreHost {
    * 语义决策（draft persistence / firstInput 提交）留在原生 handler，不进钩子。
    */
   createSessionRecord?(params: {
+    sessionId?: string;
+    additionalDirectories?: string[];
     workspaceId: string;
     permissionScope?: "session";
     mcpServers?: CommandPayloadMap["createSession"]["mcpServers"];
@@ -289,6 +311,13 @@ export interface V4CommandCoreHost {
     /** 与布尔同行的灰度 mode（launch.md「On demand: activation」）；缺省按 alwaysOn。 */
     dynamicWorkflowMode?: DynamicWorkflowMode;
   }): Promise<{ sessionId: string }>;
+  /**
+   * 会话身份 / PreFill 覆盖落库（session_entry）。
+   *
+   * draft 期 `persistence: deferred` 时由实现自行跳过；首条消息把 record 提升为
+   * immediate 后由 prompt-turn 再调一次补写。实现必须幂等（同一 id upsert）。
+   */
+  persistPromptOverrides?(record: V4SessionRecordView): Promise<void>;
   /** 从父会话稳定落盘边界创建隐藏 selection_side_chat child。 */
   createSelectionSideSession?(
     sessionId: string,

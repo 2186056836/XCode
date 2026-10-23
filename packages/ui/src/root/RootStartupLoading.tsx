@@ -25,9 +25,23 @@ export function RootStartupLoading({ label, children, busy = true }: RootStartup
 }
 
 /** 初始化与引导共用品牌图标，保持底色、描边、圆角和标志比例一致。 */
-export function XCodeStartupLogoBadge({ animated = true }: { animated?: boolean }) {
+export function XCodeStartupLogoBadge({
+  animated = true,
+  size = "default",
+}: {
+  animated?: boolean;
+  size?: "default" | "titlebar";
+}) {
   return (
-    <div className="relative flex size-24 items-center justify-center rounded-3xl bg-[linear-gradient(180deg,#000000_0%,#151718_100%)] text-[#ffffff] shadow-xl/20 before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:border before:border-[rgba(255,255,255,0.1)] before:content-['']">
+    <div
+      data-desktop-logo-badge={size === "titlebar" ? "true" : undefined}
+      className={cn(
+        "relative flex items-center justify-center bg-[linear-gradient(180deg,#000000_0%,#151718_100%)] text-[#ffffff] before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:border before:border-[rgba(255,255,255,0.1)] before:content-['']",
+        size === "titlebar"
+          ? "size-5 rounded shadow-sm/20 before:border-white/20"
+          : "size-24 rounded-3xl shadow-xl/20",
+      )}
+    >
       {/* 品牌 X：自 app-logo 抠出的白色空心 X 矢量化而来（同空态水印）。内联 SVG
           吃 currentColor（此处容器 text-[#ffffff]，黑渐变底上白标），
           fill-rule=evenodd 保留右撇空心；呼吸动画由 CSS keyframes 承接。 */}
@@ -35,7 +49,11 @@ export function XCodeStartupLogoBadge({ animated = true }: { animated?: boolean 
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 300 300"
         fill="none"
-        className={cn("h-auto w-12 shrink-0 text-current", animated && "app-startup-logo-breathe")}
+        className={cn(
+          "h-auto shrink-0 text-current",
+          size === "titlebar" ? "size-auto w-3.25" : "w-12",
+          animated && "app-startup-logo-breathe",
+        )}
         aria-hidden="true"
         focusable="false"
       >
@@ -46,5 +64,45 @@ export function XCodeStartupLogoBadge({ animated = true }: { animated?: boolean 
         />
       </svg>
     </div>
+  );
+}
+
+export function XCodeStartupLogo({
+  className,
+  animated = true,
+}: {
+  className?: string;
+  animated?: boolean;
+}) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="118"
+      height="100"
+      fill="none"
+      viewBox="0 0 256 218"
+      className={cn("shrink-0 text-current", className)}
+      aria-hidden="true"
+      focusable="false"
+    >
+      {animated ? (
+        <animate
+          attributeName="opacity"
+          begin="3s"
+          dur="1.8s"
+          repeatCount="indefinite"
+          values="1;0.4;1"
+        />
+      ) : null}
+      <path
+        fill="currentColor"
+        d="M134.4 0.130152L116.48 25.6022C113.665 29.5699 109.054 32.0019 104.064 32.0019H6.3999V0C6.3999 0.130149 134.4 0.130152 134.4 0.130152Z"
+      />
+      <path fill="currentColor" d="M256 0.130127L102.401 217.732H0L153.599 0.130127H256Z" />
+      <path
+        fill="currentColor"
+        d="M121.601 217.732L139.65 192.134C142.465 188.166 147.076 185.734 152.067 185.734H249.604V217.736H121.601V217.732Z"
+      />
+    </svg>
   );
 }

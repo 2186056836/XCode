@@ -58,6 +58,12 @@ try {
   // Preserve its runtime-asset preparation and stale `out` cleanup explicitly
   // before rebuilding bundles or starting Electron.
   await run(pnpmCommand, ["--filter", "@zcode/desktop", "pre-dev"]);
+  // dev 用隔离数据根时，账号凭据也必须指向正式版：否则「部分提供商没有账号」，
+  // 而复制一份会在正式版刷新 token 后留下过期副本。脚本内部按数据根判断是否需要处理，
+  // 未配置隔离根时是 no-op。
+  await run(process.platform === "win32" ? "node" : process.execPath, [
+    resolve(repoRoot, "scripts/link-dev-credentials.mjs"),
+  ]);
   // On Windows, use "node" (resolved via PATHEXT) to avoid "C:\Program Files\..." space issues
   await run(process.platform === "win32" ? "node" : process.execPath, [
     resolve(repoRoot, "scripts/build-desktop-agent-cli.mjs"),

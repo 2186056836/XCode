@@ -66,6 +66,15 @@ export interface AccountProviderConfigSourceOptions extends AccountProviderConne
 }
 
 /**
+ * off-peak 与 highspeed 都不是独立套餐，而是「已连接的个人/团队 Coding Plan」派生出的
+ * 执行入口：请求期鉴权分别来自 ticket 与加速卡 JWT，本身没有可校验的套餐 Key。
+ * 因此它们既不进入 Coding Plan availability 校验，也不按 selection.kind 直接比对模式。
+ */
+function isCodingPlanDerivedMode(mode: string | undefined): mode is "off-peak" | "highspeed" {
+  return mode === "off-peak" || mode === "highspeed";
+}
+
+/**
  * 把现有账号域、连接模式和套餐权益统一投影为领域层 Connection Result。
  *
  * 该适配器不保存凭据。Personal Coding Plan Key 的物理来源由注入端决定；
@@ -165,7 +174,10 @@ export function createAccountProviderConnectionResolver(
       // last-known-good 只对同账号、同 Team 身份成立。切账号后的网络失败不能复活旧权益。
       const scope = JSON.stringify([
         await loadAccountIdentity(access.accountType),
-        access.mode === "team-coding-plan" && selection?.kind === "team-coding-plan"
+        // 派生入口跟随当前套餐；它的 last-known-good 作用域也必须包含完整 Team 身份。
+        // 否则切 Team 后母体会 fail-closed，派生入口却可能沿用旧 Team 权益。
+        (access.mode === "team-coding-plan" || isCodingPlanDerivedMode(access.mode)) &&
+        selection?.kind === "team-coding-plan"
           ? [selection.organizationId, selection.projectId, selection.productId]
           : null,
       ]);
@@ -174,22 +186,27 @@ export function createAccountProviderConnectionResolver(
         previousScopes.has(providerId) && previousScopes.get(providerId) !== scope;
       if (access.mode === "off-peak") {
         const selectedPlanKind = selection?.kind;
-        const matchingPlanAvailable =
+        const entitlementSource =
           settings.providerFamilyDomain === access.accountType &&
-          (selectedPlanKind === "individual-coding-plan" ||
-            selectedPlanKind === "team-coding-plan") &&
-          configuredProviders
-            .entries()
-            .some(
-              ([candidateId, candidate]) =>
-                candidate.access?.type === "zhipu-account" &&
-                candidate.access.accountType === access.accountType &&
-                candidate.access.mode === selectedPlanKind &&
-                availabilityByProviderId.get(candidateId)?.kind === "available",
-            );
+          (selectedPlanKind === "individual-coding-plan" || selectedPlanKind === "team-coding-plan")
+            ? configuredProviders
+                .entries()
+                .find(
+                  ([, candidate]) =>
+                    candidate.access?.type === "zhipu-account" &&
+                    candidate.access.accountType === access.accountType &&
+                    candidate.access.mode === selectedPlanKind,
+                )
+            : undefined;
+        const sourceProviderId = entitlementSource?.[0];
+        const availability = sourceProviderId
+          ? (availabilityByProviderId.get(sourceProviderId) ?? { kind: "unknown" as const })
+          : undefined;
         connections.push({
           providerId,
-          status: matchingPlanAvailable ? "available" : "unavailable",
+          status: availability?.kind ?? "unavailable",
+          ...(sourceProviderId ? { entitlementSourceProviderId: sourceProviderId } : {}),
+          ...(resetPrevious ? { resetPrevious: true } : {}),
         });
         continue;
       }

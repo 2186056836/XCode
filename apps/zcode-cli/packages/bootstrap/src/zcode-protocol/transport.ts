@@ -25,6 +25,14 @@ type XCodeProtocolMessageHandler = (
 ) => Promise<XCodeProtocolOutgoingMessage | undefined>;
 
 const PROTOCOL_EOF_DRAIN_MS = 100;
+// 插件读请求收到即处理，不排在安装/更新之后。describe 写 manifest 的分支自带 storage lock；
+// list/overview 是同步 handler，执行中不让出事件循环，seed 只在内容变化时写盘，
+// 不会与安装跨 await 的读改写交错。
+const PLUGIN_READ_IMMEDIATE_METHODS = new Set<string>([
+  zcodeProtocolMethods.pluginsDescribe,
+  zcodeProtocolMethods.pluginsList,
+  zcodeProtocolMethods.pluginsOverview,
+]);
 // MCP App 的请求由实例凭证和 callId 隔离；若与普通命令一起等待完成，
 // uiCallTool 会挡住自己的 cancel/close，真实 stdio 链路将死锁。
 const MCP_APP_CONCURRENT_METHODS = new Set<string>([
@@ -216,6 +224,19 @@ export class XCodeProtocolNdjsonConnection {
       });
       return;
     }
+    if (
+      "id" in message &&
+      "method" in message &&
+      PLUGIN_READ_IMMEDIATE_METHODS.has(message.method)
+    ) {
+      // Bugfix：插件详情与列表曾排在串行队列里，安装 A 下载期间打开详情卡在组件 loading，
+      // 新建右侧标签页（新 store 首次加载 list/overview）卡在骨架屏。读请求不依赖前序请求的
+      // 执行结果，因此也不等 lastQueuedMessageStarted：否则 B 排在 A 后面时仍要等到 A 完成。
+      void this.handleMessage(message).catch((error: unknown) => {
+        this.fail(error instanceof Error ? error : new Error(String(error)));
+      });
+      return;
+    }
     if (this.shouldBypassProcessingQueue(message)) {
       // 停止/取消控制必须等它前面的普通请求真正进入 handler、建立 abort
       // controller，再越过该请求的异步执行；只延后一轮微任务会让控制请求提前成为空操作。
@@ -320,3 +341,4 @@ export class XCodeProtocolNdjsonConnection {
     });
   }
 }
+

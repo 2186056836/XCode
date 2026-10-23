@@ -35,7 +35,12 @@ export function rebuildContextPrefix(
     { memoryIndexContent: runtime.memoryIndexContent, model: options.model },
   );
   const effectiveContextResult = runtime.contextBuilder.build();
-  const contextEntries = buildContextHistoryEntries(effectiveContextResult);
+  // prefill 必须随每轮 rebuild 重新投影：它属于 context prefix，不是一次性首轮注入。
+  // 否则用户在第二轮之后切换身份模板 / 开关 PreFill 都不会生效。
+  const contextEntries = buildContextHistoryEntries(
+    effectiveContextResult,
+    runtime.config.systemPromptOverrides?.prefill,
+  );
   const canonicalEntries = runtime.messageHistory.borrowReadOnlyRuntimeEntries();
   const canonicalConversationEntries = canonicalEntries.slice(
     countContextPrefixMessages(canonicalEntries),

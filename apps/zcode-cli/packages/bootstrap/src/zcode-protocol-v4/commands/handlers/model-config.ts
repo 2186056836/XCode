@@ -9,6 +9,7 @@ import type {
   CommandPayloadMap,
   CommandResult,
 } from "@zcode/shared/zcode-protocol-v4";
+import { GODMODE_TEMPLATES, PREFILL_TEMPLATES } from "@zcode/shared";
 import { V4CommandNoopError } from "../../v4-gateway.js";
 import { runSessionModelConfigMutation } from "../../model-config-mutation.js";
 import { requireRecord } from "../record-access.js";
@@ -262,6 +263,115 @@ export async function applyRequestedSessionConfig(
   if (config.followupMode && config.followupMode !== "queue") {
     await record.app.setFollowupMode(config.followupMode);
   }
+
+  // 会话身份：必须在 firstInput 之前应用，首条消息就使用所选提示词/PreFill。
+  if (config.persona) {
+    applyPersonaConfig(record, config.persona);
+  }
+  // PreFill 开关在身份之后应用：身份可能重置 customSystemMessages，顺序反了会被覆盖。
+  if (config.prefillMode) {
+    applyPrefillMode(record, config.prefillMode);
+  }
+}
+
+/**
+ * 草稿态 PreFill 开关。内容沿用当前生效的 customSystemMessages（创建时已从全局偏好
+ * 物化），这里只改 `prefill.enabled`；override 语义与 `session/setPrefill` 一致。
+ */
+function applyPrefillMode(
+  record: V4SessionRecordView,
+  mode: NonNullable<NonNullable<CommandPayloadMap["createSession"]["config"]>["prefillMode"]>,
+): void {
+  if (mode === "inherit") {
+    delete record.prefillOverride;
+    delete record.prefillInheritedEnabled;
+    return;
+  }
+  const current =
+    record.app.runtime.getSystemPromptOverrides() ?? record.customSystemMessages ?? {};
+  if (record.prefillOverride === undefined) {
+    record.prefillInheritedEnabled = current.prefill?.enabled ?? false;
+  }
+  record.prefillOverride = mode === "on";
+  const overrides = {
+    ...current,
+    prefill: {
+      ...(current.prefill ?? {}),
+      enabled: mode === "on",
+    },
+  };
+  record.customSystemMessages = overrides;
+  record.app.runtime.updateConfig({ systemPromptOverrides: overrides });
+}
+
+/**
+ * 草稿身份三态写入。与 `session/setPersona` 同一套语义：
+ * - inherit：写入调用方提供的全局快照（或保留当前值），来源标记清除；
+ * - builtin：清除覆盖，来源标记 null；
+ * - template：从内置模板解析；
+ * - custom：使用调用方解析好的自定义模板。
+ *
+ * runtime 逐轮读取 config.systemPromptOverrides，写完后下一轮（这里是首条）
+ * 即生效。record 同步更新，供 resume/fork/快照使用。
+ */
+function applyPersonaConfig(
+  record: V4SessionRecordView,
+  persona: NonNullable<NonNullable<CommandPayloadMap["createSession"]["config"]>["persona"]>,
+): void {
+  let overrides: V4SessionRecordView["customSystemMessages"];
+  switch (persona.mode) {
+    case "inherit": {
+      overrides = persona.inherited ?? record.customSystemMessages;
+      delete record.personaOverride;
+      break;
+    }
+    case "builtin": {
+      overrides = undefined;
+      record.personaOverride = null;
+      break;
+    }
+    case "template": {
+      const templateId = persona.templateId;
+      const promptTemplate = templateId
+        ? GODMODE_TEMPLATES.find((item) => item.id === templateId)
+        : undefined;
+      if (!promptTemplate) {
+        throw new Error(`Unknown persona template: ${templateId ?? "(missing)"}`);
+      }
+      const prefillTemplate = templateId
+        ? PREFILL_TEMPLATES.find((item) => item.id === templateId)
+        : undefined;
+      overrides = {
+        cliPrefix: promptTemplate.prompt,
+        ...(prefillTemplate
+          ? {
+              prefill: {
+                enabled: true,
+                messages: prefillTemplate.messages.map((message) => ({ ...message })),
+              },
+            }
+          : {}),
+      };
+      record.personaOverride = templateId;
+      break;
+    }
+    case "custom": {
+      const custom = persona.custom;
+      if (!custom) throw new Error("custom persona payload is required");
+      overrides = {
+        cliPrefix: custom.cliPrefix,
+        ...(custom.prefill ? { prefill: custom.prefill } : {}),
+      };
+      record.personaOverride = custom.id;
+      break;
+    }
+  }
+  if (overrides) {
+    record.customSystemMessages = overrides;
+  } else {
+    delete record.customSystemMessages;
+  }
+  record.app.runtime.updateConfig({ systemPromptOverrides: overrides });
 }
 
 export const modelConfigHandlers = { switchModelConfig, switchCollaborationMode };

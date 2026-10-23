@@ -129,9 +129,8 @@ export async function importZcodeNativeSessions(params: {
             result.skipped.push({ provider: "zcode", sessionId, reason: "already_imported" });
             continue;
           }
-          const meta = await params.taskIndexRepo.syncTaskMeta({
+          const meta = await params.taskIndexRepo.applyCliFacts({
             meta: buildZcodeTaskMeta(row),
-            archived: false,
             deleted: false,
           });
           params.onTaskImported(meta);
@@ -150,9 +149,8 @@ export async function importZcodeNativeSessions(params: {
           yieldBetweenBatches: yieldToEventLoop,
         });
         rowsCopied = true;
-        const meta = await params.taskIndexRepo.syncTaskMeta({
+        const meta = await params.taskIndexRepo.applyCliFacts({
           meta: buildZcodeTaskMeta(row),
-          archived: false,
           deleted: false,
         });
         params.onTaskImported(meta);

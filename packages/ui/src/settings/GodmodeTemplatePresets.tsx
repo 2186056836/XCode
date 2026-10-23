@@ -5,13 +5,14 @@ import { toast } from "@/components/ui/toast.js";
 import { useSettings } from "@/hooks/useSettingService.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import { SettingsGroupCard, SettingsRow } from "@/settings/SettingsPageParts.js";
-import { GODMODE_TEMPLATES } from "@/settings/godmodeTemplates.js";
+import { GODMODE_TEMPLATES, PREFILL_TEMPLATES } from "@/settings/godmodeTemplates.js";
 
 /**
- * GODMODE CLASSIC 系统提示词模板预设（下拉选择）。
+ * 内置身份模板（提示词 + PreFill 成套预设）。
  *
- * 从下拉框选一套模板，点击「套用」即把整段 system 提示词写入
- * `customSystemMessages.cliPrefix`（复用「Agent 提示词」卡片，整段替换第 1 条 system 消息）。
+ * 内置模板的 system 提示词与 PreFill 按同一 id 绑定：点一次「使用」同时写入
+ * `customSystemMessages.cliPrefix` 与 `customSystemMessages.prefill`，避免两套
+ * 下拉框各选一次、还可能选到不配套的组合。
  */
 export function GodmodeTemplatePresets() {
   const { intl } = useXCodeIntl();
@@ -22,8 +23,20 @@ export function GodmodeTemplatePresets() {
 
   const applyTemplate = async () => {
     if (!selected) return;
+    const prefill = PREFILL_TEMPLATES.find((template) => template.id === selected.id);
     await update({
-      customSystemMessages: { ...settings?.customSystemMessages, cliPrefix: selected.prompt },
+      customSystemMessages: {
+        ...settings?.customSystemMessages,
+        cliPrefix: selected.prompt,
+        ...(prefill
+          ? {
+              prefill: {
+                enabled: true,
+                messages: prefill.messages.map((message) => ({ ...message })),
+              },
+            }
+          : {}),
+      },
     });
     toast(intl.formatMessage({ id: "settings.modelJailbreak.templateApplied" }));
   };

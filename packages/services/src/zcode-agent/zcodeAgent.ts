@@ -1,3 +1,4 @@
+import type { PluginUiToolResultNotification } from "@zcode/shared/mcp-apps";
 import type {
   BackgroundBashOutputResult,
   SessionDebugSnapshot,
@@ -6,7 +7,12 @@ import type {
 /* eslint-disable max-lines -- XCode agent service 接口集中声明 protocol/session/workspace 方法，拆分会增加 service descriptor 迁移成本。 */
 import type { Event, IDisposable } from "@zcode/rpc";
 import { ServiceChannels } from "@zcode/shared";
-import type { AppUsageRange, AppUsageSnapshot, XCodeTaskTokenUsageResult } from "@zcode/shared";
+import type {
+  AppUsageRange,
+  AppUsageSnapshot,
+  XCodeUsageRequestDetailsResult,
+  XCodeTaskTokenUsageResult,
+} from "@zcode/shared";
 import type { DynamicWorkflowMode } from "@zcode/shared";
 import type { XCodeAutomation, XCodeAutomationRun } from "@zcode/shared";
 import type {
@@ -96,6 +102,7 @@ import type {
   ConversationRowTarget,
   HelloMessage,
   SessionsIndexTopicWireCandidate,
+  SessionsIndexReconcileResult,
   V4AttachmentBeginResult,
   V4AttachmentChunkResult,
   V4AttachmentCommitResult,
@@ -177,6 +184,7 @@ export interface XCodeAgentSessionTarget extends XCodeAgentWorkspaceTarget {
 }
 
 export interface XCodeAgentResumeSessionParams extends XCodeAgentSessionTarget {
+  additionalDirectories?: string[];
   model?: ModelSelection;
   thoughtLevel?: string;
   mcpServers?: XCodeAgentMcpServer[];
@@ -221,6 +229,8 @@ export type XCodeAgentCuaPermissionObservation = CuaPermissionObservation &
   XCodeAgentWorkspaceTarget;
 
 export interface XCodeAgentCreateSessionParams extends XCodeAgentWorkspaceTarget {
+  projectId?: string | null;
+  additionalDirectories?: string[];
   sessionId?: string;
   sessionTraceId?: TraceId;
   parentSessionId?: string;
@@ -239,7 +249,6 @@ export interface XCodeAgentCreateSessionParams extends XCodeAgentWorkspaceTarget
 export interface XCodeAgentListSessionsParams extends XCodeAgentWorkspaceTarget {
   sessionIds?: string[];
   runtimePolicy?: XCodeAgentRuntimePolicy;
-  includeArchived?: boolean;
   limit?: number;
 }
 
@@ -253,6 +262,18 @@ export interface XCodeAgentListSessionSubagentsParams extends XCodeAgentSessionT
 export interface XCodeAgentAppUsageParams {
   range: AppUsageRange;
   timeZone?: string;
+}
+
+/** 「使用详情」查询参数：model_usage 逐请求视图（过滤 + 分页）。 */
+export interface XCodeAgentUsageRequestDetailsParams {
+  page: number;
+  pageSize: number;
+  since?: number;
+  until?: number;
+  providerId?: string;
+  modelId?: string;
+  sessionId?: string;
+  status?: "running" | "completed" | "error" | "cancelled";
 }
 
 export interface XCodeAgentTaskTokenUsageParams extends XCodeAgentSessionTarget {}
@@ -332,6 +353,32 @@ export interface XCodeAgentSetThoughtLevelParams extends XCodeAgentSessionTarget
   persistAsWorkspaceLastUsed?: boolean;
 }
 
+export interface XCodeAgentSetPersonaParams extends XCodeAgentSessionTarget {
+  /**
+   * inherit = 跟随全局（默认继承态）；builtin = 内置身份；template = 指定模板。
+   * inherit 时可带 inherited（UI 持有全局设置快照），host 会据此写入会话。
+   */
+  personaMode: "inherit" | "builtin" | "template" | "custom";
+  templateId?: string;
+  inherited?: import("@zcode/shared").CustomSystemMessagesSettings;
+  /** personaMode=custom 时由调用方解析自定义模板后传入。 */
+  custom?: {
+    id: string;
+    cliPrefix: string;
+    prefill?: {
+      enabled?: boolean;
+      messages?: Array<{ role: "user" | "assistant"; content: string }>;
+    };
+  };
+  expectedRevision?: number;
+}
+
+export interface XCodeAgentSetPrefillParams extends XCodeAgentSessionTarget {
+  /** inherit = 跟随全局；on/off = 会话强制开关。 */
+  prefillMode: "inherit" | "on" | "off";
+  expectedRevision?: number;
+}
+
 export interface XCodeAgentSetModeParams extends XCodeAgentSessionTarget {
   mode: XCodeSessionMode;
   expectedRevision?: number;
@@ -394,6 +441,7 @@ export interface XCodeAgentSessionSubscribeParams extends XCodeAgentSessionTarge
 // v4/conversation/frame 通知按 workspace fan-out 给 renderer。
 
 export interface XCodeAgentConversationSubscribeParams extends XCodeAgentSessionTarget {
+  retryInitialization?: string;
   /** 水位不变量：仅当客户端真持有该时刻一致状态才允许带。 */
   base?: { logEpoch: string; seq: number };
   visibility?: "foreground" | "background";
@@ -491,6 +539,8 @@ export interface XCodeAgentConversationFileRewindPreviewParams extends XCodeAgen
 }
 
 export interface XCodeAgentConversationCommandParams extends XCodeAgentWorkspaceTarget {
+  /** 仅 Host 消费；显式 NULL 表示全局任务，不向 CLI 发送项目概念。 */
+  projectId?: string | null;
   envelope: CommandEnvelope;
   /** 仅 host 内部用于 Browser Use runtime 边界，不进入 v4 wire envelope。 */
   clientMode?: XCodeTaskClientMode;
@@ -640,6 +690,10 @@ export interface IXCodeAgentService {
     params: XCodeAgentListSessionSubagentsParams,
   ): Promise<XCodeSessionSubagentsResult>;
   getAppUsageStats(params: XCodeAgentAppUsageParams): Promise<AppUsageSnapshot>;
+  /** 「使用详情」逐请求查询。 */
+  getUsageRequestDetails(
+    params: XCodeAgentUsageRequestDetailsParams,
+  ): Promise<XCodeUsageRequestDetailsResult>;
   getTaskTokenUsage(params: XCodeAgentTaskTokenUsageParams): Promise<XCodeTaskTokenUsageResult>;
   readSession(params: XCodeAgentReadSessionParams): Promise<XCodeSessionStateSnapshot>;
   readSessionMessages(
@@ -820,6 +874,8 @@ export interface IXCodeAgentService {
   ): Promise<boolean>;
   setModel(params: XCodeAgentSetModelParams): Promise<XCodeSessionStateSnapshot>;
   setThoughtLevel(params: XCodeAgentSetThoughtLevelParams): Promise<XCodeSessionStateSnapshot>;
+  setPersona(params: XCodeAgentSetPersonaParams): Promise<XCodeSessionStateSnapshot>;
+  setPrefill(params: XCodeAgentSetPrefillParams): Promise<XCodeSessionStateSnapshot>;
   setMode(params: XCodeAgentSetModeParams): Promise<XCodeSessionStateSnapshot>;
   respondProviderRuntimeHeaders(
     params: ZCodeAgentRespondProviderRuntimeHeadersParams,
@@ -958,9 +1014,25 @@ export interface IXCodeAgentService {
   onDynamicConversationTelemetryFact(
     params: XCodeAgentWorkspaceTarget,
   ): Event<ConversationTelemetryFact>;
+  /** Host 消费驻留 CLI 的闲时生命周期；不参与聊天快照恢复。 */
+  onDynamicOffPeakLifecycle(
+    params: XCodeAgentWorkspaceTarget,
+  ): Event<import("@zcode/shared").OffPeakLifecycleNotification>;
+  controlOffPeakExecutionV4(
+    params: XCodeAgentWorkspaceTarget & { control: import("@zcode/shared").OffPeakControlParams },
+  ): Promise<import("@zcode/shared").OffPeakControlResult>;
   /** 当前窗口全部本地 live task 的 CUA 权限观察；历史、远程与 replayable 不在此事件面。 */
   onDynamicCuaPermissionObservation(): Event<XCodeAgentCuaPermissionObservation>;
-  // ── sessions-index 通道（列表活性）──
+  /** 本地桌面窗口创建插件页面，不依赖 conversation 订阅。 */
+  onDynamicPluginUiToolResult(): Event<
+    PluginUiToolResultNotification & { workspacePath: string; workspaceIdentity?: string }
+  >;
+
+  /** 只读 CLI 持久事实；不恢复会话运行实例。旧远端可以不提供此能力。 */
+  reconcileSessionsIndexV4?(
+    params: XCodeAgentWorkspaceTarget & { sessionIds: string[] },
+  ): Promise<SessionsIndexReconcileResult>;
+  // ── M5 sessions-index 通道（列表活性）──
   subscribeSessionsIndexV4(
     params: XCodeAgentSessionsIndexSubscribeParams,
   ): Promise<V4SessionsIndexSubscribeResult>;

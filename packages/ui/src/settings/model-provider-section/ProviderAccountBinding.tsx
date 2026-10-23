@@ -6,11 +6,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select.js";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu.js";
+import { Button } from "@/components/ui/button.js";
 import { useServices } from "@/hooks/useServices.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import type { IProxyPoolService, ProxyProviderBindingView } from "@zcode/services";
 import type { AccountRotationStrategy } from "@zcode/services";
-import type { ProviderProxyRotationStrategy } from "@zcode/shared";
+import {
+  ACCOUNT_ROTATION_FAILOVER_STATUS,
+  type AccountRotationFailoverStatus,
+  type ProviderProxyRotationStrategy,
+} from "@zcode/shared";
 import {
   readProviderBindingSlot,
   subscribeProviderBinding,
@@ -182,6 +195,19 @@ export function ProviderProxyPoolControl({ providerId }: { providerId: string })
       .catch(() => undefined);
   };
   const allActivePoolIds = activePools.map((pool) => pool.id);
+  // 轮询/随机的候选集：用户显式选中的子集。历史配置可能存了全量池，
+  // 这里按 id 取交集，避免把已停用的池重新塞回候选。
+  const selectedPoolIds = (current?.poolIds ?? []).filter((id) => allActivePoolIds.includes(id));
+  const rotationPoolIds = selectedPoolIds.length > 0 ? selectedPoolIds : allActivePoolIds;
+
+  const toggleRotationPool = (poolId: string, checked: boolean) => {
+    const next = checked
+      ? [...rotationPoolIds, poolId].filter((id, index, list) => list.indexOf(id) === index)
+      : rotationPoolIds.filter((id) => id !== poolId);
+    // 至少留一条：全部取消等于没有出口，交给「跟随全局」表达。
+    if (next.length === 0) return;
+    save(strategy, next);
+  };
 
   return (
     <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-border px-2.5 py-2 text-ui-sm">
@@ -196,7 +222,8 @@ export function ProviderProxyPoolControl({ providerId }: { providerId: string })
             // 从轮询切回固定：优先保留原来选中的第一条，否则落到列表第一条。
             save("none", [selectedPoolId ?? allActivePoolIds[0]!]);
           } else {
-            save(next, allActivePoolIds);
+            // 保留用户已有的候选子集；首次切到轮询才默认全选。
+            save(next, rotationPoolIds);
           }
         }}
       >
@@ -237,12 +264,37 @@ export function ProviderProxyPoolControl({ providerId }: { providerId: string })
           </SelectContent>
         </Select>
       ) : (
-        <span className="text-foreground-subtle">
-          {intl.formatMessage(
-            { id: "settings.proxyPool.providerRotationHint" },
-            { count: activePools.length },
-          )}
-        </span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 font-normal">
+              {intl.formatMessage(
+                { id: "settings.proxyPool.providerRotationPools" },
+                { count: rotationPoolIds.length, total: activePools.length },
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuLabel>
+              {intl.formatMessage({ id: "settings.proxyPool.providerRotationSelectHint" })}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {activePools.map((pool) => {
+              const checked = rotationPoolIds.includes(pool.id);
+              return (
+                <DropdownMenuCheckboxItem
+                  key={pool.id}
+                  checked={checked}
+                  // 至少保留一条：取消最后一条会让供应商失去出口配置。
+                  disabled={checked && rotationPoolIds.length === 1}
+                  onCheckedChange={(value) => toggleRotationPool(pool.id, value === true)}
+                  onSelect={(event) => event.preventDefault()}
+                >
+                  {pool.name}
+                </DropdownMenuCheckboxItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     </div>
   );
@@ -267,7 +319,12 @@ export function ProviderAccountRotationControl({ providerId }: { providerId: str
     return null;
   }
 
-  const save = (next: { strategy: AccountRotationStrategy; stickyLimit: number }) => {
+  const save = (next: {
+    strategy: AccountRotationStrategy;
+    stickyLimit: number;
+    failoverOnError: boolean;
+    failoverStatusCodes: AccountRotationFailoverStatus[];
+  }) => {
     void service
       .saveAccountRotation(providerId, next)
       .then((value) => setView(value))
@@ -317,9 +374,41 @@ export function ProviderAccountRotationControl({ providerId }: { providerId: str
           />
         </label>
       ) : null}
-      <span className="text-foreground-subtle">
-        {intl.formatMessage({ id: "settings.accountRotation.hint" })}
-      </span>
+      <label className="flex items-center gap-1.5 text-foreground-subtle">
+        <input
+          type="checkbox"
+          checked={settings.failoverOnError === true}
+          onChange={(event) => save({ ...settings, failoverOnError: event.target.checked })}
+        />
+        <span>{intl.formatMessage({ id: "settings.accountRotation.failover" })}</span>
+      </label>
+      {settings.failoverOnError ? (
+        <span className="flex items-center gap-2">
+          <span className="text-foreground-subtle">
+            {intl.formatMessage({ id: "settings.accountRotation.hint" })}
+          </span>
+          {ACCOUNT_ROTATION_FAILOVER_STATUS.map((code) => {
+            const checked = settings.failoverStatusCodes.includes(code);
+            return (
+              <label key={code} className="flex items-center gap-1 text-foreground-subtle">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(event) => {
+                    const next: AccountRotationFailoverStatus[] = event.target.checked
+                      ? [...settings.failoverStatusCodes, code]
+                      : settings.failoverStatusCodes.filter((item) => item !== code);
+                    // 空集合会被 normalize 回落成默认 [429]；这里保留该语义，
+                    // 用户取消最后一个勾选等于恢复默认。
+                    save({ ...settings, failoverStatusCodes: next });
+                  }}
+                />
+                <span className="font-mono">{code}</span>
+              </label>
+            );
+          })}
+        </span>
+      ) : null}
     </div>
   );
 }

@@ -11,30 +11,13 @@
   简体中文 | <a href="README.en.md">English</a>
 </p>
 
-
-
 XCode 是 AI 编程工作台，提供桌面应用、浏览器界面和终端 Agent。本仓库包含客户端、后端服务、共享 UI，以及 Agent CLI 与运行时源码。
-
-| 入口                 | 用途                                                           | 开发命令                       |
-| -------------------- | -------------------------------------------------------------- | ------------------------------ |
-| Desktop              | Electron 桌面应用                                              | `pnpm dev:desktop`             |
-| Web / XCode 命令行版 | 终端与浏览器工作台；将 TUI、Web、后端和 Agent 组装为独立运行包 | `pnpm dev:web`                 |
-| Agent CLI            | 在终端中使用 `xcode`，也为 Desktop 和 Web 提供 Agent 运行时    | `pnpm --filter @zcode/cli dev` |
-
-## 改动介绍
-
-本仓库在官方版本基础上新增/改进的能力：
-
-- **多账号**：支持同时登录多个 ZAI / BigModel 账号。账号管理页可新增、切换、登出、删除账号；各账号持有独立凭证与设备标识，切换后模型请求与计费跟随目标账号。
-- **自定义换肤**：支持自定义皮肤，可导入 DreamSkin 主题包，并提供皮肤工坊实时预览。
-- **营销活动与一键领取**：接入营销投放（横幅 / 弹窗），账号管理页支持「一键领取权益」。
-- **模型越狱**：设置页新增「模型越狱」，支持自定义系统提示词（Agent 提示词）、Prefill 开关，以及输入混淆，并与输入区联动。
-- **数据迁移**：设置页支持从官方版本迁移历史数据与会话。
-- **自定义模型提供方**：内置免费模型提供方；支持从上游拉取模型，默认沿用上游模型元数据（上下文窗口、最大输出），可启用统一配置覆盖。
 
 ## 更新
 
-- 2026-10-7：内置免费模型提供方（免鉴权）；上游模型导入默认沿用上游元数据；界面与环境变量全面品牌化为 XCode。
+- **2026-10-19**：更新至 XCode v3.16.2 版本。
+- **2026-10-16**：更新至 XCode v3.16.1 版本。
+- 2026-10-10：更新至 XCode v3.15.1 版本。
 - 2026-9-23：更新至 XCode v3.14.3 版本。
 
 ## 初始化
@@ -74,14 +57,10 @@ pnpm dev:desktop:test
 
 `pnpm dev:desktop` 默认等同于 `pnpm dev:desktop:prod`，使用生产服务配置。启动脚本会准备本地运行资源、构建桌面 Agent，再启动 Electron 和源码监听。
 
-需要独立开发数据目录时，可设置 `XCODE_DATA_BASE_DIR`。例如在 macOS / Linux 中：
+需要独立开发数据目录时，可设置 `ZCODE_DATA_BASE_DIR`。例如在 macOS / Linux 中：
 
 ```bash
-# XCODE_DATA_BASE_DIR 是「父级数据基目录」，应用数据实际写入其下的 .xcode/ 子目录。
-# 下方命令会把配置/会话/任务库写到 $HOME/.xcode-dev-home/.xcode/v2/。
-# 命名约定：环境变量前缀保持 XCODE_（沿用官方命名）；数据目录统一用 .xcode（fork 品牌）。
-# 两者刻意不同源——别把 XCODE_DATA_BASE_DIR 当成 .zcode，也别把数据目录误写成 .zcode。
-XCODE_DATA_BASE_DIR="$HOME/.xcode-dev-home" pnpm dev:desktop:test
+ZCODE_DATA_BASE_DIR="$HOME/.zcode-dev-home" pnpm dev:desktop:test
 ```
 
 ### 远程功能（SSH/WSL）
@@ -96,7 +75,7 @@ XCODE_DATA_BASE_DIR="$HOME/.xcode-dev-home" pnpm dev:desktop:test
 pnpm dev:web
 
 # 指定后端工作区（macOS / Linux）
-XCODE_SERVER_WORKSPACE=/path/to/project pnpm dev:web
+ZCODE_SERVER_WORKSPACE=/path/to/project pnpm dev:web
 ```
 
 该命令同时启动 Web 开发服务器（默认 `http://localhost:5173`）和后端（默认 `http://localhost:3030`）；浏览器访问前者。`/ws` 和一般 `/api` 请求代理到本地后端，`/api/v1/oauth/token` 单独代理到当前配置的产品服务。
@@ -105,30 +84,32 @@ Agent 源码修改后，执行 `pnpm --filter @zcode/cli... build` 并重启服�
 
 ### XCode 命令行版
 
-命令行发行包包含 TUI、Web 和 Agent，统一使用 `xcode` 启动：无参数进入 TUI；第一个参数为 `--web` 时启动 Web；其他参数交给现有 Agent CLI 处理。两种模式都在本机运行，无需 Electron。
+命令行发行包包含 TUI、Web 和 Agent，统一使用 `zcode` 启动：无参数进入 TUI；第一个参数为 `--web` 时启动 Web；其他参数交给现有 Agent CLI 处理。两种模式都在本机运行，无需 Electron。
 
 ```bash
 # 默认进入终端交互界面
-xcode
+zcode
 
 # 启动 Web 界面
-xcode --web
+zcode --web
 
 # 指定项目和端口，不自动打开浏览器
-xcode --web --workspace /path/to/project --port 3030 --no-open
+zcode --web --workspace /path/to/project --port 3030 --no-open
 
 # 查看 CLI 或 Web 参数
-xcode --help
-xcode --web --help
+zcode --help
+zcode --web --help
 ```
 
 Web 模式默认工作目录为当前目录，监听 `127.0.0.1`，默认不启用访问令牌，自动选择空闲端口并打开浏览器。访问终端输出的地址，按 `Ctrl+C` 停止服务。局域网访问可使用 `--host 0.0.0.0`；监听非本机地址时默认生成访问令牌，使用终端输出的带令牌链接。可通过 `--token` 指定令牌或 `--no-token` 关闭令牌认证。
 
-直接启动通用 Web 服务的 HTTP 入口时，通过 `XCODE_SERVER_AUTH_TOKEN` 配置 API／WebSocket 认证；通过程序接口创建服务时，使用 `authToken` 选项。
+直接启动通用 Web 服务的 HTTP 入口时，通过 `ZCODE_SERVER_AUTH_TOKEN` 配置 API／WebSocket 认证；通过程序接口创建服务时，使用 `authToken` 选项。
 
-构建方式见下方打包章节。`pnpm build:zcode` 只生成发行包，不会替换 `PATH` 中已有的 `xcode`。如果命令仍指向旧安装或其他源码目录，macOS / Linux 可用 `command -v xcode` 检查，Windows 可用 `where.exe xcode` 检查。
+构建方式见下方打包章节。`pnpm build:zcode` 只生成发行包，不会替换 `PATH` 中已有的 `zcode`。如果命令仍指向旧安装或其他源码目录，macOS / Linux 可用 `command -v zcode` 检查，Windows 可用 `where.exe zcode` 检查。
 
 ### CLI 源码开发
+
+CLI 的模型配置、非交互调用、工具与扩展、批量评测和轨迹记录见 [CLI 使用指南](apps/zcode-cli/docs/usage/README.md)。
 
 直接开发 TUI 或 Agent 时，运行源码入口：
 
@@ -141,7 +122,13 @@ pnpm --filter @zcode/cli... build
 node apps/zcode-cli/packages/cli/dist/zcode.cjs --help
 ```
 
-这个入口直接运行 Agent CLI，不经过发行包的 `--web` 分流。开发 Web 用 `pnpm dev:web`；验证统一的 `xcode` 命令，用下方解压后的 `bin/xcode.mjs`。
+这个入口直接运行 Agent CLI，不经过发行包的 `--web` 分流。开发 Web 用 `pnpm dev:web`；验证统一的 `zcode` 命令，用下方解压后的 `bin/zcode.mjs`。
+
+### UI Plugin 开发
+
+参见 [UI Plugin：能力、API 与调试](UI_PLUGIN.md)，从 Excalidraw 的画布协作示例开始，了解插件安装更新、页面 API 和宿主联调入口。
+
+**向 `zcode-plugins` 提交插件 PR 时，必须在 PR 模板中声明是否为 UI Plugin，并填写插件名称。** 判断标准见[提交 PR 时声明插件类型](UI_PLUGIN.md#提交-pr-时声明插件类型)。
 
 ## 配置
 
@@ -149,10 +136,10 @@ node apps/zcode-cli/packages/cli/dist/zcode.cjs --help
 
 | 配置                                 | 用途                                             |
 | ------------------------------------ | ------------------------------------------------ |
-| `XCODE_DATA_BASE_DIR`                | 应用数据基目录，数据写入其下的 `.xcode/`         |
-| `XCODE_SERVER_WORKSPACE`             | Web 后端的工作区路径                             |
-| `XCODE_BUILTIN_PROVIDER_CONFIG_FILE` | 本地 Provider 配置文件路径；未设置时使用内置配置 |
-| `XCODE_DIST_BASE_URL`                | 命令行安装脚本使用的下载根地址                   |
+| `ZCODE_DATA_BASE_DIR`                | 应用数据基目录，数据写入其下的 `.zcode/`         |
+| `ZCODE_SERVER_WORKSPACE`             | Web 后端的工作区路径                             |
+| `ZCODE_BUILTIN_PROVIDER_CONFIG_FILE` | 本地 Provider 配置文件路径；未设置时使用内置配置 |
+| `ZCODE_DIST_BASE_URL`                | 命令行安装脚本使用的下载根地址                   |
 
 运行时变量可在启动命令的环境中显式设置。随客户端发布的默认配置见 [config/README.md](config/README.md)。
 
@@ -183,12 +170,12 @@ sudo xattr -rd com.apple.quarantine /Applications/XCode.app
 
 构建入口为 `pnpm build:zcode`。脚本会依次构建 CLI/TUI、后端和 Web，收集 TUI 的原生库、worker 与运行时依赖，再组装发行包；运行发行包仍需要 Node.js，版本以 `mise.toml` 为准。
 
-打包前必须设置下载根地址 `XCODE_DIST_BASE_URL`（可放在 `.env`、`.env.local` 或环境变量中），也可以通过 `--base-url` 传入。以下地址是占位示例，发布时替换为实际托管地址：
+打包前必须设置下载根地址 `ZCODE_DIST_BASE_URL`（可放在 `.env`、`.env.local` 或环境变量中），也可以通过 `--base-url` 传入。以下地址是占位示例，发布时替换为实际托管地址：
 
 ```bash
 pnpm build:zcode --base-url https://downloads.example.com/zcode/
 
-# 已配置 XCODE_DIST_BASE_URL 时
+# 已配置 ZCODE_DIST_BASE_URL 时
 pnpm build:zcode
 
 # 仅重新组包，复用已有的 Agent、后端和 Web 构建产物
@@ -204,7 +191,7 @@ pnpm build:zcode --help
 - `releases/<version>/sha256.txt`：校验摘要。
 - `latest.json`、`install.sh`：版本索引和安装脚本。
 
-完整目录可上传到配置的下载根地址。安装脚本从该地址下载运行包，默认安装到 `~/.xcode/runtime`，并在 `~/.local/bin` 创建 `xcode` 命令。安装目录可通过 `XCODE_DIST_HOME` 修改，命令目录可通过 `XCODE_DIST_BIN_DIR` 修改。
+完整目录可上传到配置的下载根地址。安装脚本从该地址下载运行包，默认安装到 `~/.zcode/runtime`，并在 `~/.local/bin` 创建 `zcode` 命令。安装目录可通过 `ZCODE_DIST_HOME` 修改，命令目录可通过 `ZCODE_DIST_BIN_DIR` 修改。
 
 旧 Lite 用户需要改用上述构建命令、环境变量和新的安装脚本。新安装不会删除旧 Lite 目录，也不会迁移或删除已有会话数据。
 
@@ -216,10 +203,10 @@ mkdir -p dist/zcode/debug
 tar -xzf "dist/zcode/releases/$zcode_version/zcode-$zcode_version.tar.gz" \
   -C dist/zcode/debug
 # 默认启动 TUI
-node dist/zcode/debug/zcode/bin/xcode.mjs
+node dist/zcode/debug/zcode/bin/zcode.mjs
 
 # 启动 Web
-node dist/zcode/debug/zcode/bin/xcode.mjs --web \
+node dist/zcode/debug/zcode/bin/zcode.mjs --web \
   --workspace "$PWD" --port 3030 --no-open
 ```
 

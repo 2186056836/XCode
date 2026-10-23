@@ -2,6 +2,66 @@ import { z } from "zod";
 import { modelSelectionSchema } from "../model-selection.js";
 
 // ── config──
+/**
+ * XCode fork：会话身份覆盖（三态）。
+ * - inherit：跟随全局；inherited 是 UI 解析好的全局 customSystemMessages；
+ * - builtin：内置身份；
+ * - template：内置模板 id；
+ * - custom：UI 解析好的自定义模板。
+ */
+export const sessionPersonaConfigSchema = z
+  .object({
+    mode: z.enum(["inherit", "builtin", "template", "custom"]),
+    templateId: z.string().min(1).optional(),
+    inherited: z
+      .object({
+        cliPrefix: z.string().max(65535).optional(),
+        prefill: z
+          .object({
+            enabled: z.boolean().optional(),
+            messages: z
+              .array(
+                z
+                  .object({ role: z.enum(["user", "assistant"]), content: z.string() })
+                  .strict(),
+              )
+              .optional(),
+          })
+          .strict()
+          .optional(),
+        obfuscation: z
+          .object({
+            enabled: z.boolean().optional(),
+            tier: z.enum(["light", "standard", "heavy"]).optional(),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .optional(),
+    custom: z
+      .object({
+        id: z.string().min(1),
+        cliPrefix: z.string().max(65535),
+        prefill: z
+          .object({
+            enabled: z.boolean().optional(),
+            messages: z
+              .array(
+                z
+                  .object({ role: z.enum(["user", "assistant"]), content: z.string() })
+                  .strict(),
+              )
+              .optional(),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
+
 export const sessionConfigStateSchema = z.object({
   /** Session 接受并持久化的稀疏选择意图；provider/model/thought 仅为 UI effective 投影。 */
   modelSelection: modelSelectionSchema.optional(),
@@ -18,6 +78,13 @@ export const sessionConfigStateSchema = z.object({
   planEnabled: z.boolean().optional(),
   /** 明确审批结果；草稿按 interactionId 消费一次，普通 mode 更新不重置它。 */
   permissionGrant: z.object({ interactionId: z.string().min(1) }).optional(),
+  /** XCode fork：草稿态先行选择的会话身份；createSession 时在首条输入前应用。 */
+  persona: sessionPersonaConfigSchema.optional(),
+  /**
+   * XCode fork：会话级 PreFill 开关。缺省 = 跟随会话物化时继承的全局值；
+   * on/off 由 createSession 或 session/setPrefill 写入。
+   */
+  prefillMode: z.enum(["inherit", "on", "off"]).optional(),
   /** 最近工具转换的关联，供草稿定向同步；不新增可见历史事件。 */
   planTransition: z
     .object({
@@ -27,6 +94,7 @@ export const sessionConfigStateSchema = z.object({
     .optional(),
 });
 export type SessionConfigState = z.infer<typeof sessionConfigStateSchema>;
+export type SessionPersonaConfig = z.infer<typeof sessionPersonaConfigSchema>;
 
 export const sessionModelTransitionSchema = z.object({
   eventId: z.string().min(1),

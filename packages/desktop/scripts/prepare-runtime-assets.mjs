@@ -23,8 +23,9 @@ const shouldPrepareWindowsBrowserImportHelper =
 // 到屏幕底部，仍可用），所以无条件挂在 darwin 上不会让构建变脆。
 const shouldPrepareMacosWindowBounds = target.os === "darwin";
 
-// 本机桌面包内置 agent 的 JS bundle（prepare:agent-bundle），运行时由 app 的 Electron Node runtime 执行。
-// 远端跨平台原生二进制仍由上面的 prepare:remote-assets 提供。
+
+// 本机桌面包不再内置 glm 原生二进制（prepare:glm），改为内置 agent 的 JS bundle（prepare:agent-bundle），
+// 运行时由 app 的 Electron Node runtime 执行。Source Server 资源由独立 stage:remote-assets 入口负责。
 // native-search 归档随仓库分发，准备步骤只做本地解包校验，不需要任何下载源配置。
 const localRuntimeScripts = [
   "prepare:agent-bundle",
@@ -48,7 +49,9 @@ function runTimedPnpmScript(scriptName) {
   }
 }
 
-const shouldSkipRemoteAssets = process.env.XCODE_SKIP_REMOTE_ASSETS === "1";
+
+const shouldSkipRemoteAssets =
+  process.env.XCODE_SKIP_REMOTE_ASSETS === "1" || process.env.ZCODE_SKIP_REMOTE_ASSETS === "1";
 
 if (!shouldSkipRemoteAssets) {
   runTimedPnpmScript("prepare:remote-assets");

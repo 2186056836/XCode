@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { type XCodeConfigOption, type XCodeProvider } from "@zcode/shared";
 import {
   TID_CHAT_THOUGHT_LEVEL_SELECT_ITEM,
   TID_CHAT_THOUGHT_LEVEL_SELECT_TRIGGER,
   testId,
-  type XCodeConfigOption,
-  type XCodeProvider,
-} from "@zcode/shared";
+} from "@zcode/shared/test-ids";
 import { BrainIcon, ChevronDownIcon } from "lucide-react";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { cn } from "@/components/lib/utils.js";
@@ -213,7 +212,7 @@ export function ThoughtLevelCycleControl({
       >
         <span
           className={cn(
-            "absolute bottom-0 left-0 w-full rounded-full bg-success transition-[height] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+            "absolute bottom-0 left-0 w-full rounded-full bg-blue-500 transition-[height] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
             progressPercent > 0 ? "min-h-1" : undefined,
           )}
           style={{ height: `${progressPercent}%` }}

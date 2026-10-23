@@ -59,6 +59,11 @@ import {
   type CodeBuddyAutoCheckinSettings,
 } from "./codebuddyAutoCheckin.js";
 import {
+  listQoderAutoCheckinSettings,
+  updateQoderAutoCheckinSettings,
+  type QoderAutoCheckinSettings,
+} from "./qoderAutoCheckin.js";
+import {
   beginCodeBuddyLogin,
   describeCodeBuddyAccessToken,
   listCodeBuddyAccounts,
@@ -109,6 +114,7 @@ export type {
   CodeBuddyCheckinSummary,
 } from "./codebuddyCheckin.js";
 export type { CodeBuddyAutoCheckinSettings } from "./codebuddyAutoCheckin.js";
+export type { QoderAutoCheckinSettings } from "./qoderAutoCheckin.js";
 
 // XCode fork：额度/配额查看相关类型随服务接口一起导出，UI 直接消费。
 export type {
@@ -331,6 +337,17 @@ export interface IProviderSettingsService {
     accountId: string,
     update: { enabled?: boolean; time?: string },
   ): Promise<CodeBuddyAutoCheckinSettings>;
+
+  /** XCode fork：Qoder 每账号自动签到设置（开关 + HH:MM）。 */
+  qoderListAutoCheckin(region: QoderCheckinRegion): Promise<
+    Array<{ accountId: string; accountName: string } & QoderAutoCheckinSettings>
+  >;
+  /** XCode fork：更新 Qoder 某账号的自动签到设置（局部更新，时间先校验再落盘）。 */
+  qoderUpdateAutoCheckin(
+    region: QoderCheckinRegion,
+    accountId: string,
+    update: { enabled?: boolean; time?: string },
+  ): Promise<QoderAutoCheckinSettings>;
 
   /** XCode fork：CodeBuddy 令牌刷新（对应区域当前激活账号）。 */
   codebuddyRefreshStored(region: "cn" | "intl"): Promise<{
@@ -757,6 +774,14 @@ export function createProviderSettingsService(
     codebuddyUpdateAutoCheckin: async (region, accountId, update) => {
       await ensureReady();
       return updateCodeBuddyAutoCheckinSettings(region, accountId, update);
+    },
+    qoderListAutoCheckin: async (region) => {
+      await ensureReady();
+      return listQoderAutoCheckinSettings(region);
+    },
+    qoderUpdateAutoCheckin: async (region, accountId, update) => {
+      await ensureReady();
+      return updateQoderAutoCheckinSettings(region, accountId, update);
     },
     // XCode fork：额度/配额查看。CN 的 Qoder 额度复用已注入的 COSY 网关查询器
     // （qoderProStatusGatewayFetcher 同时在 PRO 状态与额度两条链路使用）。

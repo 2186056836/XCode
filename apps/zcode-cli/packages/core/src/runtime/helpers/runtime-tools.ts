@@ -72,6 +72,14 @@ function registerRuntimeBuiltInTools(runtime: AgentRuntimeInternal, deps: AgentR
     // 没有灰度 flag——这是设置页里已有的功能，端口在场即代表 host 能应答 proxyPool/*；
     // subagent 子会话与 automation 同规则不暴露（子代理不该改全局代理配置）。
     includeProxyPool: Boolean(deps.proxyPoolPort) && runtime.config.taskType !== "subagent_child",
+    // 模型越狱配置面与代理池同门：host 侧设置服务在场才注入端口；
+    // subagent 子会话不暴露（子代理不该改全局系统提示词）。
+    includeModelJailbreak:
+      Boolean(deps.modelJailbreakPort) && runtime.config.taskType !== "subagent_child",
+    // 账号凭据面与模型越狱同门：host 侧账号服务在场才注入端口；
+    // subagent 子会话不暴露（子代理不该改账号凭据）。
+    includeProviderAccount:
+      Boolean(deps.providerAccountPort) && runtime.config.taskType !== "subagent_child",
     // 动态工作流灰度门：与 off-peak 相反，
     // 这里不能用端口在场做判据——十个工具的端口在任何 CLI 里都装配齐全，灰度是 Host 的决定。
     // 取值收在 tool-allowlist.ts，与分支刷新那个入口共用同一个推导。
@@ -194,6 +202,8 @@ function createRuntimeToolExecutor(
     automationPort: deps.automationPort,
     offPeakPort: deps.offPeakPort,
     proxyPoolPort: deps.proxyPoolPort,
+    modelJailbreakPort: deps.modelJailbreakPort,
+    providerAccountPort: deps.providerAccountPort,
     topicResourcePort: deps.topicResourcePort,
     sessionStore: deps.sessionStore,
     sessionModePort: createRuntimeSessionModePort(runtime),

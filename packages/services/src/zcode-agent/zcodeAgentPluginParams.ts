@@ -13,6 +13,21 @@ export interface XCodeAgentWorkspaceTarget {
   remoteSessionId?: string;
 }
 
+export interface XCodeAgentPluginMutationTarget extends XCodeAgentWorkspaceTarget {
+  /** 仅 Host 观测使用；不会传给 CLI。 */
+  telemetry?: {
+    entry?:
+      | "store_list"
+      | "store_detail"
+      | "side_pane_market"
+      | "recommended_prompt"
+      | "recommended_ui"
+      | "component_settings";
+    client_kind?: "desktop" | "mobile";
+    trigger?: "user" | "automatic" | "dependency" | "restore" | "sync";
+  };
+}
+
 export interface XCodeAgentPluginViewParams extends XCodeAgentWorkspaceTarget {
   configScope?: "user" | "workspace";
 }
@@ -22,22 +37,22 @@ export interface XCodeAgentListMcpServerStatusesParams extends XCodeAgentWorkspa
   mode?: XCodeMcpListMode;
 }
 
-export interface XCodeAgentAddPluginMarketplaceParams extends XCodeAgentWorkspaceTarget {
+export interface XCodeAgentAddPluginMarketplaceParams extends XCodeAgentPluginMutationTarget {
   dryRun?: boolean;
   operationId?: string;
   source: string;
 }
 
-export interface XCodeAgentRemovePluginMarketplaceParams extends XCodeAgentWorkspaceTarget {
+export interface XCodeAgentRemovePluginMarketplaceParams extends XCodeAgentPluginMutationTarget {
   marketplace: string;
 }
 
-export interface XCodeAgentUpdatePluginMarketplaceParams extends XCodeAgentWorkspaceTarget {
+export interface XCodeAgentUpdatePluginMarketplaceParams extends XCodeAgentPluginMutationTarget {
   marketplace?: string;
   operationId?: string;
 }
 
-export interface XCodeAgentInstallPluginParams extends XCodeAgentWorkspaceTarget {
+export interface XCodeAgentInstallPluginParams extends XCodeAgentPluginMutationTarget {
   dryRun?: boolean;
   marketplace: string;
   operationId?: string;
@@ -49,23 +64,23 @@ export interface XCodeAgentCancelPluginOperationParams {
   operationId: string;
 }
 
-export interface XCodeAgentUninstallPluginParams extends XCodeAgentWorkspaceTarget {
+export interface XCodeAgentUninstallPluginParams extends XCodeAgentPluginMutationTarget {
   marketplace?: string;
   pluginId?: string;
   pluginName?: string;
   removeCache?: boolean;
 }
 
-export interface XCodeAgentUpdatePluginParams extends XCodeAgentWorkspaceTarget {
+export interface XCodeAgentUpdatePluginParams extends XCodeAgentPluginMutationTarget {
   pluginId?: string;
   marketplace?: string;
 }
 
-export interface XCodeAgentRestoreBuiltinPluginParams extends XCodeAgentWorkspaceTarget {
+export interface XCodeAgentRestoreBuiltinPluginParams extends XCodeAgentPluginMutationTarget {
   pluginId: string;
 }
 
-export interface XCodeAgentConfigurePluginParams extends XCodeAgentWorkspaceTarget {
+export interface XCodeAgentConfigurePluginParams extends XCodeAgentPluginMutationTarget {
   clearOptionKeys?: string[];
   dryRun?: boolean;
   options: Record<string, unknown>;
@@ -73,7 +88,7 @@ export interface XCodeAgentConfigurePluginParams extends XCodeAgentWorkspaceTarg
   scope?: "user" | "workspace";
 }
 
-export interface XCodeAgentResetPluginConfigParams extends XCodeAgentWorkspaceTarget {
+export interface XCodeAgentResetPluginConfigParams extends XCodeAgentPluginMutationTarget {
   pluginId: string;
   scope?: "user" | "workspace";
 }
@@ -89,7 +104,7 @@ export interface XCodeAgentDescribePluginParams extends XCodeAgentWorkspaceTarge
   pluginName: string;
 }
 
-export interface XCodeAgentSetPluginEnabledParams extends XCodeAgentWorkspaceTarget {
+export interface XCodeAgentSetPluginEnabledParams extends XCodeAgentPluginMutationTarget {
   enabled: boolean;
   operationId?: string;
   pluginId: string;
@@ -185,6 +200,7 @@ export interface XCodeAgentResolveSuggestedPluginReferenceParams extends XCodeAg
 // ---- 定时任务(automation)管理参数 ----
 
 export interface XCodeAgentCreateAutomationParams extends XCodeAgentWorkspaceTarget {
+  projectId?: string | null;
   title: string;
   cronExpr: string;
   relativeDelayMinutes?: number;

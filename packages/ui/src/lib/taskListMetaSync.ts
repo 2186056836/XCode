@@ -1,9 +1,6 @@
-import type { InputId, XCodeProvider, XCodeTaskMeta } from "@zcode/shared";
-import { getTaskMeta, resolveWorkspaceStateKey, useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
-import {
-  mergeTaskMetaCandidates,
-  mergeTaskWithOptimisticMeta,
-} from "@/lib/zcodeTaskMetaMerge.js";
+import type { XCodeTaskMeta } from "@zcode/shared";
+import { getTaskMeta, useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { mergeTaskMetaCandidates } from "@/lib/zcodeTaskMetaMerge.js";
 import {
   applyTaskQueryCacheMutation,
   removeTaskFromTaskQueryCaches,
@@ -19,6 +16,11 @@ const ABSENT_MEMBERSHIP: TaskListMembershipState = {
   archived: true,
 };
 
+/**
+ * 从 query cache 反推 task 当前的列表成员关系。
+ * 远控/其它窗口触发的归档、置顶事件在本窗口没有本地 optimistic mutation，
+ * 只能靠缓存里已有的位置推断旧成员关系，再做增量移动而不是整表失效。
+ */
 function inferTaskMembershipFromQueryCaches(params: {
   workspacePath: string;
   workspaceIdentity?: string;
@@ -104,19 +106,19 @@ export function syncTaskMetaToTaskCaches(params: {
   const store = useXCodeSessionStore.getState();
   const workspaceState = store.getWorkspaceState(params.workspacePath, params.workspaceIdentity);
   const previousTask = getTaskMeta(workspaceState, params.task.taskId);
-  const queryTask = useTaskQueryCacheStore.getState().taskMetaByEntityKey[
-    buildTaskEntityKey({
-      taskId: params.task.taskId,
-      workspacePath: params.workspacePath,
-      workspaceIdentity: params.workspaceIdentity ?? params.task.workspaceIdentity,
-    })
-  ];
+  const queryTask =
+    useTaskQueryCacheStore.getState().taskMetaByEntityKey[
+      buildTaskEntityKey({
+        taskId: params.task.taskId,
+        workspacePath: params.workspacePath,
+        workspaceIdentity: params.workspaceIdentity ?? params.task.workspaceIdentity,
+      })
+    ];
   // Bugfix: session/readSession 快照的 updatedAt 可能落后于首发 prompt 写入的前端乐观时间。
   // 同步快照时必须先和本地已有 task meta 单调合并，否则新建任务会在 sqlite 首屏刷新后跳回下面。
   // Bugfix: 重启恢复时 workspace store 可能还没有当前 task，但 query cache 已经有 sqlite indexed meta。
   // raw session snapshot 不带 titleOverridden，必须一起合并，避免手动重命名标题在 renderer 被还原。
-  const task =
-    mergeTaskMetaCandidates(params.task, previousTask, queryTask) ?? params.task;
+  const task = mergeTaskMetaCandidates(params.task, previousTask, queryTask) ?? params.task;
   const cachedTasks = workspaceState.taskListCache ?? [];
   const hasCachedTask = cachedTasks.some((cachedTask) => cachedTask.taskId === task.taskId);
   const shouldExistInWorkspaceTaskCache =
@@ -160,14 +162,37 @@ export function syncTaskMetaToTaskCaches(params: {
       previousTask: previousTask ?? task,
       nextTask: task,
       previousState:
-        previousTask && !params.forceInsertMembership
-          ? params.membership
-          : ABSENT_MEMBERSHIP,
+        previousTask && !params.forceInsertMembership ? params.membership : ABSENT_MEMBERSHIP,
       nextState: params.membership,
     });
   }
 }
 
+export function insertTaskIntoTaskCaches(params: {
+  workspacePath: string;
+  workspaceIdentity?: string;
+  task: XCodeTaskMeta;
+  membership: TaskListMembershipState;
+}): void {
+  // Bugfix: 新建/fork/远控 shared-host 创建 task 都应走同一条“无 -> 有”成员变更。
+  // syncTaskMetaToTaskCaches 会在 previousTask 缺失时按 ABSENT_MEMBERSHIP 插入 query cache，
+  // 这里不能再二次 apply mutation，否则 total 会被重复加一。
+  syncTaskMetaToTaskCaches({
+    workspacePath: params.workspacePath,
+    workspaceIdentity: params.workspaceIdentity,
+    task: params.task,
+    membership: params.membership,
+    forceInsertMembership: true,
+    ensureInWorkspaceTaskCache:
+      params.membership.pinned === false && params.membership.archived === false,
+  });
+}
+
+/**
+ * 远控/其它窗口触发归档或置顶时，本窗口没有本地 optimistic mutation。
+ * 过去只能失效整表 query cache，导致点击后列表闪烁；
+ * 这里根据当前缓存位置推断旧 membership 后增量移动。
+ */
 export function syncTaskMembershipEventToTaskCaches(params: {
   workspacePath: string;
   workspaceIdentity?: string;
@@ -182,8 +207,6 @@ export function syncTaskMembershipEventToTaskCaches(params: {
     }) ?? ABSENT_MEMBERSHIP;
   const nextMembership = membershipForWorkspaceEventReason(params.reason);
 
-  // Bugfix: 远控/其它窗口触发归档或置顶时，本窗口没有本地 optimistic mutation。
-  // 过去只能失效整表 query cache，导致点击后列表闪烁；这里根据当前缓存位置推断旧 membership 后增量移动。
   syncTaskMetaToTaskCaches({
     workspacePath: params.workspacePath,
     workspaceIdentity: params.workspaceIdentity,
@@ -215,110 +238,4 @@ export function removeTaskFromTaskCaches(params: {
   }
   store.removeTaskState(params.workspacePath, params.taskId, params.workspaceIdentity);
   return removeTaskFromTaskQueryCaches(params);
-}
-
-export function patchTaskMetaInTaskCaches(params: {
-  workspacePath: string;
-  workspaceIdentity?: string;
-  taskId: string;
-  patch: (task: XCodeTaskMeta) => Partial<XCodeTaskMeta>;
-}): XCodeTaskMeta | null {
-  const store = useXCodeSessionStore.getState();
-  const workspaceState = store.getWorkspaceState(params.workspacePath, params.workspaceIdentity);
-  const identityWorkspaceState = params.workspaceIdentity
-    ? store.workspaces[resolveWorkspaceStateKey(params.workspacePath, params.workspaceIdentity)]
-    : undefined;
-  const taskCacheState = identityWorkspaceState ?? workspaceState;
-  const currentTask =
-    getTaskMeta(workspaceState, params.taskId) ??
-    (identityWorkspaceState ? getTaskMeta(identityWorkspaceState, params.taskId) : null);
-  if (!currentTask) {
-    return null;
-  }
-
-  const patch = params.patch(currentTask);
-  const shouldPreserveManualTitle =
-    currentTask.titleOverridden === true &&
-    patch.title !== undefined &&
-    patch.title !== currentTask.title &&
-    patch.titleOverridden !== false;
-  const patchedTask = {
-    ...currentTask,
-    ...patch,
-    // Bugfix: 用户手动重命名后，运行中的 session_info_update 仍可能带回自动标题。
-    // 这些 patch 只该刷新运行态字段，不能把 titleOverridden 的手动标题短暂冲掉。
-    title: shouldPreserveManualTitle ? currentTask.title : patch.title ?? currentTask.title,
-    titleOverridden: patch.titleOverridden ?? currentTask.titleOverridden,
-  };
-  // Bugfix: session_info_update / snapshot patch 可能只是在补运行态，却带回 "New session" 占位标题。
-  // patch 后再和当前 meta 合并一次，保留 status/target/updatedAt 的同时，不让占位标题写进 task/query cache。
-  const nextTask = mergeTaskWithOptimisticMeta(patchedTask, currentTask);
-
-  store.upsertOptimisticTaskListItem(params.workspacePath, nextTask, params.workspaceIdentity);
-  if (taskCacheState.taskListCache) {
-    store.setTaskListCache(
-      params.workspacePath,
-      taskCacheState.taskListCache.map((task) =>
-        task.taskId === params.taskId ? nextTask : task,
-      ),
-      params.workspaceIdentity,
-    );
-  }
-  // Bugfix: 手机端从聊天页返回任务列表时，运行开始只会 patch 当前 task 的 status/updatedAt。
-  // 如果 query cache 只替换 meta 不重排，按更新时间排序的远控首页会继续停在旧顺序。
-  updateTaskQueryCacheTaskMetaPreservingMembership(nextTask);
-
-  return nextTask;
-}
-
-export function insertTaskIntoTaskCaches(params: {
-  workspacePath: string;
-  workspaceIdentity?: string;
-  task: XCodeTaskMeta;
-  membership: TaskListMembershipState;
-}): void {
-  // Bugfix: 新建/fork/远控 shared-host 创建 task 都应走同一条“无 -> 有”成员变更。
-  // syncTaskMetaToTaskCaches 会在 previousTask 缺失时按 ABSENT_MEMBERSHIP 插入 query cache，
-  // 这里不能再二次 apply mutation，否则 total 会被重复加一。
-  syncTaskMetaToTaskCaches({
-    workspacePath: params.workspacePath,
-    workspaceIdentity: params.workspaceIdentity,
-    task: params.task,
-    membership: params.membership,
-    forceInsertMembership: true,
-    ensureInWorkspaceTaskCache:
-      params.membership.pinned === false && params.membership.archived === false,
-  });
-
-}
-
-export function initializeBackgroundTaskInTaskCaches(params: {
-  workspacePath: string;
-  workspaceIdentity?: string;
-  task: XCodeTaskMeta;
-  provider: XCodeProvider;
-  activeInputId: InputId;
-}): void {
-  const store = useXCodeSessionStore.getState();
-  const workspaceState = store.getWorkspaceState(params.workspacePath, params.workspaceIdentity);
-  const previousTask = getTaskMeta(workspaceState, params.task.taskId);
-  const task = previousTask
-    ? mergeTaskWithOptimisticMeta(params.task, previousTask)
-    : params.task;
-
-  store.initializeBackgroundTaskRuntime(params.workspacePath, {
-    workspaceIdentity: params.workspaceIdentity,
-    task,
-    provider: params.provider,
-    activeInputId: params.activeInputId,
-  });
-  upsertTaskQueryCacheTaskMeta(task);
-  // 修复原因：后台首发不再先写 optimistic 再 insert cache；query cache 仍需按“无 -> active”
-  // 插入成员，保证侧栏 total / show more 与普通首发一致。
-  applyTaskQueryCacheMutation({
-    previousTask: previousTask ?? task,
-    nextTask: task,
-    previousState: ABSENT_MEMBERSHIP,
-    nextState: { pinned: false, archived: false },
-  });
 }

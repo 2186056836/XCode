@@ -18,6 +18,13 @@ export interface AccountRequestAuthMaterial {
   accountScope?: string;
   /** 账号轮询：本次选中的连接（账号）id。 */
   connectionId?: string;
+  /** 账号轮询的失败换号策略；缺席 = 不换号（默认）。 */
+  accountFailover?: { enabled: boolean; statusCodes: number[] };
+  /** 本次请求命中的账号显示名；「使用详情」按它区分多账号供应商。 */
+  accountDisplayName?: string;
+  /** 本次请求的出口代理池 id 与显示名；未绑定时缺席（跟随全局）。 */
+  proxyPoolId?: string;
+  proxyDisplayName?: string;
 }
 
 export interface AccountRequestAuthInput {
@@ -34,6 +41,14 @@ export interface AccountRequestAuthInput {
    * 传入时，本服务会改用该账号自己的 OAuth 凭据与身份去解析材料，而不是读激活账号的镜像 key。
    */
   accountRef?: string;
+  /**
+   * 账号族的失败换号策略（由轮询服务随选号下发）。
+   *
+   * 账号族（zai / bigmodel）与 api-key 型供应商走不同分支：调用方这里拿到的是
+   * `accountRef` 而不是完整 selection，所以策略必须显式透传；漏传会让 adapter
+   * 永远收不到 `accountFailover`，UI 上的开关对账号族完全无效。
+   */
+  accountFailover?: { enabled: boolean; statusCodes: number[] };
 }
 
 export interface AccountAccessIdentityInput {
@@ -105,6 +120,7 @@ class AccountProviderRequestAuthService implements AccountRequestAuthResolver {
       return {
         apiKey: requireApiKey(tokenSet?.zcodeJwtToken, providerId),
         ...(accountRef ? { connectionId: accountRef } : {}),
+        ...(input.accountFailover ? { accountFailover: input.accountFailover } : {}),
       };
     }
 
@@ -137,6 +153,7 @@ class AccountProviderRequestAuthService implements AccountRequestAuthResolver {
       apiKeyId: material?.apiKeyId,
       ...(accountScope ? { accountScope } : {}),
       ...(accountRef ? { connectionId: accountRef } : {}),
+      ...(input.accountFailover ? { accountFailover: input.accountFailover } : {}),
     };
   }
 

@@ -458,3 +458,4 @@ re-entering two markers out of order would stamp each other's steps.
 When one item failing should cost one item, catch inside the callback (examples #3) or use
 `Promise.allSettled` and read each outcome; a rejection inside a plain `Promise.all` rejects
 the join and the siblings with it.
+

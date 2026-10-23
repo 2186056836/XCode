@@ -114,10 +114,15 @@ export async function runModelTextRequest(
     // 必须把 recovery 次数带过去，才能把 idle timeout 从首请求窗口逐次递增。
     streamIdleTimeoutRetryNumber: projectedOptions.streamRecovery?.retryNumber,
     streamRecovery: projectedOptions.streamRecovery,
+    // 供应商级轮询在 adapter 的 fetch 层才挑池；把真实命中的节点回报给记账。
+    // host 的 requestAuth 只有候选快照，不能直接当实际出口写进 usage。
+    reportResolvedEgress: (egress: { proxyPoolId?: string; proxyDisplayName?: string }) =>
+      this.setLastResolvedEgress(egress),
   };
   const modelRequest = {
     messages: projectedOptions.messages,
     tools: projectedOptions.tools,
+    toolSearchEnabled: projectedOptions.toolSearchEnabled,
     abortSignal: projectedOptions.abortSignal,
     ...(projectedOptions.maxOutputTokens !== undefined
       ? { options: { maxOutputTokens: projectedOptions.maxOutputTokens } }
@@ -328,6 +333,8 @@ export async function runModelTextRequest(
           break;
         }
 
+        // 原始参数流保留包装结构；目标身份由公共准入产生，再通过工具事件交给展示投影。
+        // 不从参数 delta 推测执行目标，也不为展示身份调整模型流或工具调度时序。
         case "tool_input_start": {
           const toolCallId = event.id as ToolCallId;
           toolInputDeltaBuffers.delete(toolCallId);

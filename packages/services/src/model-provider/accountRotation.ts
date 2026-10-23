@@ -18,8 +18,14 @@
  */
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { resolveModelProviderFamilyIdByProviderId } from "@zcode/shared";
-import type { ModelProviderFamilyId } from "@zcode/shared";
+import {
+  ACCOUNT_ROTATION_FAILOVER_STATUS,
+  resolveModelProviderFamilyIdByProviderId,
+  type AccountRotationFailoverStatus,
+  type ModelProviderFamilyId,
+} from "@zcode/shared";
+
+export { ACCOUNT_ROTATION_FAILOVER_STATUS, type AccountRotationFailoverStatus };
 
 export type AccountRotationStrategy = "fill-first" | "round-robin";
 
@@ -36,11 +42,27 @@ export interface AccountRotationSettings {
   strategy: AccountRotationStrategy;
   /** round-robin 的粘性次数；fill-first 忽略。 */
   stickyLimit: number;
+  /**
+   * 失败时是否换号。默认 false：请求出错（含 429）**不切账号**，直接报错。
+   *
+   * 存在的原因：Qoder / CodeBuddy 的账号是用户自己导入的一批身份，静默换号会让
+   * 「刚才那条 429 是谁的」无从追查，也会在用户只想用某一个号时偷偷消耗别的号。
+   * 打开后只对账号级失败生效（见 `onFailure`）。
+   */
+  failoverOnError: boolean;
+  /**
+   * 打开 failover 后，哪些状态码才换号。默认只有 429（限流），
+   * 401/402/403 默认不换——那三类通常说明凭据/额度本身有问题，换号只是把
+   * 同一个错误在别的账号上重演一遍，还会污染账号池的可用性判断。
+   */
+  failoverStatusCodes: AccountRotationFailoverStatus[];
 }
 
 export const DEFAULT_ACCOUNT_ROTATION_SETTINGS: AccountRotationSettings = {
   strategy: "fill-first",
   stickyLimit: 3,
+  failoverOnError: false,
+  failoverStatusCodes: [429],
 };
 
 const MIN_STICKY_LIMIT = 1;
@@ -65,6 +87,8 @@ export interface AccountRotationSelection {
   requestProfile: AccountRotationProfile;
   /** 是否因本次调用发生了账号切换（诊断/日志用）。 */
   rotated: boolean;
+  /** 失败换号策略，随选号结果下发给 adapter；adapter 据此决定要不要重试。 */
+  failover: { enabled: boolean; statusCodes: number[] };
 }
 
 export interface AccountRotationCandidateSource {
@@ -210,7 +234,12 @@ export function normalizeAccountRotationSettings(
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return { ...DEFAULT_ACCOUNT_ROTATION_SETTINGS };
   }
-  const raw = value as { strategy?: unknown; stickyLimit?: unknown };
+  const raw = value as {
+    strategy?: unknown;
+    stickyLimit?: unknown;
+    failoverOnError?: unknown;
+    failoverStatusCodes?: unknown;
+  };
   const strategy =
     raw.strategy === "round-robin" || raw.strategy === "fill-first"
       ? raw.strategy
@@ -219,9 +248,24 @@ export function normalizeAccountRotationSettings(
     typeof raw.stickyLimit === "number" && Number.isFinite(raw.stickyLimit)
       ? Math.round(raw.stickyLimit)
       : DEFAULT_ACCOUNT_ROTATION_SETTINGS.stickyLimit;
+  const failoverOnError = raw.failoverOnError === true;
+  const parsedCodes = Array.isArray(raw.failoverStatusCodes)
+    ? raw.failoverStatusCodes.filter(
+        (code): code is AccountRotationFailoverStatus =>
+          typeof code === "number" &&
+          (ACCOUNT_ROTATION_FAILOVER_STATUS as readonly number[]).includes(code),
+      )
+    : [];
+  // 空集合回落默认 [429]：打开 failover 却没勾任何状态码，等于静默关闭，
+  // 而用户在 UI 上看到的是「已开启」——这种半开状态必须避免。
+  const failoverStatusCodes = parsedCodes.length
+    ? [...new Set(parsedCodes)].sort((a, b) => a - b)
+    : [...DEFAULT_ACCOUNT_ROTATION_SETTINGS.failoverStatusCodes];
   return {
     strategy,
     stickyLimit: Math.min(MAX_STICKY_LIMIT, Math.max(MIN_STICKY_LIMIT, parsedSticky)),
+    failoverOnError,
+    failoverStatusCodes,
   };
 }
 
@@ -417,6 +461,10 @@ export function createAccountRotationService(
             : {}),
           requestProfile: resolved.requestProfile,
           rotated: picked.rotated,
+          failover: {
+            enabled: settings.failoverOnError,
+            statusCodes: settings.failoverStatusCodes,
+          },
         };
       });
     },

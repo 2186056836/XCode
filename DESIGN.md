@@ -2,6 +2,11 @@
 
 Portable design system for AI-assisted UI work in this repository.
 
+This document is the single source of truth for design rules and token intent.
+Theme values are defined in [styles.css](packages/ui/src/styles.css), including the
+fallback themes and active Zai Light / Zai Dark overrides; do not maintain a separate
+copy of their numeric color values in documentation.
+
 This file is meant for coding agents. When generating or editing UI in this repo, follow this file before inventing new visual rules.
 
 ## Highest-priority UI constraint
@@ -9,6 +14,7 @@ This file is meant for coding agents. When generating or editing UI in this repo
 The dedicated `text-ui-*` scale is a mandatory repository-wide constraint for application interface typography:
 
 - UI components must use `text-ui-xl`, `text-ui-lg`, `text-ui-base`, `text-ui-caption`, `text-ui-sm`, or `text-ui-xs`.
+- The shared Settings section heading may use the dedicated `text-ui-settings-title` / `lg:text-ui-settings-title-lg` role defined below.
 - Do not introduce Tailwind's built-in `text-base`, `text-sm`, or `text-xs` for application UI.
 - Do not introduce arbitrary UI font sizes such as `text-[13px]` or inline `font-size` values.
 - The only content-level exceptions are code, Diff, and terminal rendering that consume their independent numeric font-size settings. Their surrounding controls, labels, headers, and metadata must still use `text-ui-*`.
@@ -41,6 +47,17 @@ Avoid:
 
 ## Theme Modes
 
+### Full-page desktop overlays
+
+Login, Coding Plan upgrade, and Rewards surfaces must keep minimize, maximize/restore,
+and close-window controls reachable at the top right on Windows and Linux. Reuse
+`DesktopWindowControls` and the existing platform CSS variants. Keep the controls
+outside scrolling content and above page decoration, with a non-draggable hit area.
+The embedded website's close-page action remains separate from close-window.
+macOS keeps native traffic lights; ordinary Web and mobile Web hide desktop controls.
+Verify all three surfaces in both themes, including narrow windows, maximize/restore,
+minimize, and close-page versus close-window behavior.
+
 User-facing theme choices are:
 
 - System
@@ -57,6 +74,10 @@ Default light and dark CSS variables still exist as fallback foundations, but ne
   Use for key emphasis, important links, active indicators, and brand-accented actions. Never use as a full-page background.
 - **Icon Blue**: `--color-icon-blue`
   Use for browser-style links and blue icon emphasis that follows the Figma `icon/blue` role. Keep file-type icons on their own descriptor colors.
+- **Icon Purple**: `--color-icon-purple`
+  Use for Highspeed duration emphasis and other UI explicitly mapped to the Figma `icon/purple` role. Do not reuse idle-task or terminal colors directly.
+- **Highspeed Composer Material**: `--color-highspeed-composer-border-idle` with `--color-highspeed-glow-*`
+  Use only for an active Highspeed composer shell. Its stable surface and particle layer are defined by the dedicated Highspeed activation stylesheet and must not leak into ordinary inputs.
 - **Accent Surface**: `--color-accent`
   Use for weak emphasis blocks, selected highlights, and low-intensity branded surfaces.
 - **Background**: `--color-background`
@@ -69,6 +90,8 @@ Default light and dark CSS variables still exist as fallback foundations, but ne
   Low-elevation container surface.
 - **Surface Hover**: `--color-surface-hover`
   Hover state for low-elevation surfaces.
+- **Remote Continuity Panel**: `--color-remote-continuity-panel`, `--color-remote-continuity-panel-surface`, `--color-remote-continuity-panel-foreground`, `--color-remote-continuity-panel-subtle`
+  Reserved for the first-connect local-offline / remote-running comparison. It stays dark in both themes so the handoff remains visually stable; do not reuse it as a generic dark card.
 - **Card**: `--color-card`
   Standard content card background.
 - **Card Selected**: `--color-card-selected`
@@ -97,6 +120,8 @@ Default light and dark CSS variables still exist as fallback foundations, but ne
 
 ### Border colors
 
+- **Desktop Resize Handle**: `--color-resize-handle` uses sky-500 in light themes and sky-400 in dark themes. Use only for desktop workspace resize indicators; retain the existing geometry and interaction states.
+
 - **Border**: `--color-border`
   Default border and separator.
 - **Border Hover**: `--color-border-hover`
@@ -112,6 +137,9 @@ Default light and dark CSS variables still exist as fallback foundations, but ne
 - **Success**: `--color-success` with `--color-success-foreground`
 - **Warning**: `--color-warning` with `--color-warning-foreground`
 - **Destructive**: `--color-destructive` with `--color-destructive-foreground`
+- **Success surface**: `--color-success-surface` with `--color-success-surface-foreground`
+- **Warning surface**: `--color-warning-surface` with `--color-warning-surface-foreground`
+- **Destructive surface**: `--color-destructive-surface` with `--color-destructive-surface-foreground`
 - **Idle-time task**: `--color-idle-task` with `--color-idle-task-surface`
   Use only for idle-time queue and paused tags so they remain visually distinct
   from the green scheduled-task treatment.
@@ -119,11 +147,12 @@ Default light and dark CSS variables still exist as fallback foundations, but ne
 - **Diff Removed**: `--color-diff-removed` with `--color-diff-removed-foreground`
 
 Use semantic colors only for actual semantic states. Do not borrow success, warning, or destructive colors just to make a block feel louder.
+Use `*-surface` for translucent state chips and banners; pair it with the matching `*-surface-foreground` and never add ad-hoc alpha in a component. Surface foreground values must preserve at least 4.5:1 contrast across shipped themes.
 
 ### Blocking interaction colors
 
 - **Ask Interaction**: `--color-interaction-ask-surface`, `--color-interaction-ask-foreground`, `--color-interaction-ask-fill`
-  Legacy compatibility tokens for `AskUserQuestion`; waiting badges no longer use a separate blue treatment.
+  Legacy compatibility surface/foreground tokens for `AskUserQuestion`; waiting badges no longer use a separate blue treatment. The ask fill is reserved for countdown progress.
 - **Confirmation Interaction**: `--color-interaction-confirmation-surface`, `--color-interaction-confirmation-foreground`
   Use for all waiting badges, including `AskUserQuestion`, permission, and `ExitPlanMode`.
 
@@ -131,7 +160,8 @@ Waiting badges use one green confirmation treatment so identical waiting copy do
 
 ### Workflow timeline colors
 
-The dynamic-workflow timeline draws with a feature-scoped token family:
+The dynamic-workflow timeline (spec: `docs/dynamic-workflow/presentation.md`) draws with a
+feature-scoped token family:
 
 - **Rule**: `--color-workflow-rule`
   Sub-hairline for repeated furniture. Weaker than `--color-border`; do not use it as a
@@ -139,16 +169,22 @@ The dynamic-workflow timeline draws with a feature-scoped token family:
 - **Trace / Trace Strong**: `--color-workflow-trace`, `--color-workflow-trace-strong`
   Rail and arc stroke ramp: not yet taken vs control has passed. The marching segment
   overlays `--color-warning` dashes; there is no third stroke colour.
+- **Fill frame**: a filled hole's frame is drawn in `--color-workflow-trace` (1px), and in
+  `--color-warning` (1.5px) only for the two seconds after the fill joins; never a tinted
+  surface (spec: `docs/dynamic-workflow/presentation.md`, "Holes on the timeline").
 - Station lamps and agent pills use the semantic status colours (`--color-success`,
-  `--color-warning` for running, `--color-destructive`); agent avatars use the fixed nine-color HEX palette,
+  `--color-warning` for running, `--color-destructive`); agent avatars use the fixed nine-color HEX palette defined in the workflow spec,
   assigned by instance index (name hash fallback), and never encode status.
 - A compile-feedback row (a script that did not compile, so nothing ran) uses a hollow lamp:
   `--color-warning` while it is the latest draft, `--color-foreground-subtlest` once a newer
-  draft exists. Never `--color-destructive`, which on this feature belongs to a run that errored.
+  draft exists. Never `--color-destructive`, which on this feature belongs to a run that errored
+  (spec: `docs/dynamic-workflow/presentation.md`, "Compiler feedback").
 
 ### Overlay and utility colors
 
 - **Toast**: `--color-toast`
+  The shared toast uses `bg-toast/60` with background blur and a `rounded-2xl` shell.
+  Keep stack positioning in the shared toast component; do not add per-call offsets.
 - **Tooltip**: `--color-tooltip`
 - **Tooltip Text**: `--color-tooltip-foreground`
 - **Tooltip Tag**: `--color-tooltip-tag`
@@ -161,6 +197,39 @@ The dynamic-workflow timeline draws with a feature-scoped token family:
 - **Primary**: `--color-primary`
 - **Primary Foreground**: `--color-primary-foreground`
 - **Secondary**: `--color-secondary`
+
+### Specialized color tokens
+
+| Token | Purpose |
+| --- | --- |
+| `--color-markdown-inline-code` | Markdown 行内代码背景，沿用 tag / label 胶囊层级 |
+| `--color-popover-header` | Popover header |
+| `--color-tab` | Tab 默认背景 |
+| `--color-tab-active` | 当前激活 tab |
+| `--color-tab-border` | Tab 分隔线 |
+| `--color-feedback-privacy-hint` | 反馈截图隐私提醒文字及叹号图标；独立一行，使用辅助说明字号 |
+| `--color-git-none` | Git 无变更状态，沿用普通文件名颜色 |
+| `--color-git-modified` | Git modified，表示已跟踪文件有未提交修改 |
+| `--color-git-added` | Git added，表示新增文件已进入工作树 / 暂存区 |
+| `--color-git-deleted` | Git deleted，表示已跟踪文件被删除 |
+| `--color-git-renamed` | Git renamed，表示已跟踪文件移动或重命名 |
+| `--color-git-untracked` | Git untracked，表示 Git 尚未跟踪的新文件 |
+| `--color-git-ignored` | Git ignored，继承弱化文本层级 |
+| `--color-git-descendant` | Git descendant，表示目录后代包含变更 |
+| `--color-file-node` | 文件 mention node 背景 |
+| `--color-file-node-hover` | 文件 mention node hover 背景 |
+| `--color-file-node-foreground` | 文件 mention node 文字 / 图标 |
+| `--color-skill-node` | Skill mention node 背景 |
+| `--color-skill-node-hover` | Skill mention node hover 背景 |
+| `--color-skill-node-foreground` | Skill mention node 文字 / 图标 |
+| `--color-command-node` | Command mention node 背景 |
+| `--color-command-node-hover` | Command mention node hover 背景 |
+| `--color-command-node-foreground` | Command mention node 文字 / 图标 |
+
+Git file statuses must use `text-git-*` / `bg-git-*`, rather than borrowing diff or warning tokens.
+Mention tokens belong to prompt-editor and UserPrompt mention nodes; their background, hover,
+and foreground roles must stay together. Markdown inline code uses its own background token,
+currently mapped to `--color-tag`.
 
 ## Color Usage Rules
 
@@ -178,6 +247,15 @@ The dynamic-workflow timeline draws with a feature-scoped token family:
 - `DesktopWindowFrame` uses `bg-background-alt` on macOS desktop. Windows, Linux, and Web keep `bg-background-win-alt`; child surface colors remain independent.
 - Linux desktop uses a `16px` outer window-shell radius around the `12px` workspace panels and their `4px` outer inset. Keep the shell radius and compositor clip path equal; maximized windows use `0px`.
 
+### Lucide 前景透明度
+
+- Lucide 的次级、三级前景使用不透明描边绘制完整图标，再整体与背景混合，避免多条路径交点加深。次级为 60%，三级浅色为 40%、深色为 30%。
+- 保留现有 `text-foreground-subtle` / `text-foreground-subtlest` 调用；同时支持颜色类直接位于图标和从父元素继承。文字继续使用原有半透明颜色。
+- 颜色 utility 的 hover、group-hover、focus、disabled 和 data 状态应同步图标层级；子元素显式使用其他颜色时清除继承的弱化层级。已有 `opacity-*` 继续独立叠加，`opacity-0` 仍隐藏图标。
+- 本次适配范围为 Tailwind 颜色 utility；自定义 CSS / inline 的颜色与滤镜不作为层级入口，不全局改写非 Lucide SVG。标准 Lucide 的 `stroke="currentColor"` 是适配入口。
+- 支持普通百分比颜色修饰符（如 `/50`）以及 `fill-current` 的实心图标。不支持相对颜色语法的浏览器保留原始绘制方式。
+- 验收：390px / 1200px、Zai Light / Zai Dark，分别检查页面、面板和彩色背景上的直接/继承颜色、交点与非交点像素一致、文字颜色不变、交互颜色覆盖和额外透明度。
+
 ## Typography
 
 ### Font families
@@ -186,6 +264,8 @@ The dynamic-workflow timeline draws with a feature-scoped token family:
 - **UI Mono**: use `font-mono` for paths, commands, code, identifiers, shortcuts, commit hashes, model IDs, and terminal-like data.
 
 ### UI font tokens
+
+Each `text-ui-*` utility maps to the corresponding `--text-ui-*` CSS token.
 
 All interface typography must use the dedicated `text-ui-*` scale. The Appearance setting controls `--ui-font-size`, whose default is `14px`:
 
@@ -203,6 +283,13 @@ All interface typography must use the dedicated `text-ui-*` scale. The Appearanc
 only for graph **axis furniture** — timebase tick labels, channel codes, and unit
 suffixes in the workflow timeline — never for content, labels, or metadata.
 Treat any other use as a design-system defect.
+
+The shared Settings section heading uses `text-ui-settings-title` with
+`lg:text-ui-settings-title-lg`: `--ui-font-size + 10px` / `+ 16px` (24px / 30px
+at the default setting), with line-height ratios of `4 / 3` / `1.2` (32px / 36px
+by default). These tokens preserve the larger responsive heading while following
+the interface font setting. They are reserved for this page heading; ordinary
+section titles and controls retain the standard scale.
 
 `text-mobile-input-safe` is a fixed 16px platform-compatibility token. It is
 reserved for editable controls on mobile Web surfaces where iOS focus zoom must
@@ -298,6 +385,7 @@ The following explicit exceptions may retain `rounded-2xl`; do not extend them t
 
 - **Main chat input shell**: the actual `ChatPromptEditor` input shell may use `rounded-2xl`. Its drag overlay matches the shell because it covers the same surface, rather than introducing a nested container.
 - **Conversation status floating panel**: the shared shell may retain `rounded-2xl` across collapsed and expanded presentations.
+- **Side Pane full-view floating composer**: in Side Pane full view the main chat input shell floats on its own (no outer frame); the drawer that slides out from behind it and the answer bubble shown above it use `rounded-2xl` to match the shell; the minimized state and the answer bubble's close button are deliberate circles (`rounded-full`).
 - **Toast**: the independent notification shell may retain `rounded-2xl`.
 - **Brand icon backplates**: welcome-screen brand art and plugin-detail icons may retain `rounded-2xl` as part of their icon shape. This is not a general exception for icon buttons or content cards.
 
@@ -356,6 +444,11 @@ Control size and primary/secondary action emphasis do not independently change r
 - Prefer fluid widths for content containers.
 - Fixed widths are acceptable for menus, popovers, dialogs, and stable side panels.
 - Avoid arbitrary `w-[...]` and `h-[...]` for ordinary business UI.
+- Prefer the shared Button `size` variants, including `icon*`, over separate width/height overrides. The current variants are `default(h-7)`, `xs(h-5)`, `sm(h-6)`, and `lg(h-8)`; generic control baselines do not replace those component contracts.
+- Regular inputs prefer `h-9`; compact filters and inline inputs may use `h-7` or `h-8`.
+- Use `w-full`, `w-fit`, `max-w-full`, and `min-w-0` for content widths. Fixed overlays may use `w-52`, `w-64`, `w-80`, or `max-w-sm/md/lg/xl` when a stable width is required.
+- Page roots use `h-full` or `min-h-screen`. Nested scroll and preview containers need `min-h-0` and `min-w-0` as appropriate; `overflow-auto` alone does not establish a shrinkable flex region.
+- Prefer `max-h-*` to a fixed height for scrollable content. Do not combine `size-*` with conflicting `w-*` / `h-*` unless a non-square shape is deliberate.
 
 ## Components
 
@@ -484,7 +577,7 @@ Depth rules:
 
 ## Workspace layout
 
-Desktop and wide Web workspace content uses independent conversation, bottom terminal, and Side Pane frames. The conversation frame contains WorkspaceHeader and conversation; the optional terminal has its own frame below it, and Side Pane owns its tab bar. Frames use their own background and border, with 4px resizable gaps matching the macOS outer inset. Resize handles keep a transparent 4px hit area and show a 2px tertiary foreground (`foreground-subtlest/50`) line on hover, focus or drag. The indicator extends along the panel edge, inset by the panel radius at both ends, with rounded ends and no mask. Layout frames do not count toward content radius levels. Mobile remote control retains its single-column and drawer presentation.
+Desktop and wide Web workspace content uses independent conversation, bottom terminal, and Side Pane frames. The conversation frame contains WorkspaceHeader and conversation; the optional terminal has its own frame below it, and Side Pane owns its tab bar. Frames use their own background and border, with 4px resizable gaps matching the macOS outer inset. Resize handles keep a transparent 4px hit area and show a 2px tertiary foreground (`foreground-subtlest/50`) line on hover, focus or drag. The indicator extends along the panel edge, inset by the panel radius at both ends, with rounded ends and no mask. Layout frames do not count toward content radius levels. Mobile remote control retains its single-column and drawer presentation. See [workspace independent panels](docs/design/workspace-independent-panels.md) for platform chrome and persistence boundaries.
 
 ## Responsive Behavior
 
@@ -498,10 +591,27 @@ Rules:
 - Prefer changing `max-width`, `grid`, `flex`, and visibility over changing component identity.
 - Preserve primary actions at all breakpoints; do not hide core workflows behind desktop-only affordances.
 
+### Breakpoint roles
+
+| Breakpoint | Preferred use |
+| --- | --- |
+| `sm:` | Dialog width, button arrangement, small-screen layout corrections |
+| `md:` | Grid columns and form layout expansion |
+| `lg:` | Desktop toolbar visibility and secondary information density |
+| `xl:` | Chat and complex content arrangements |
+| `2xl:` | Wide-screen reading-width caps, not ordinary page behavior |
+
+Start with the unprefixed layout, then add the fewest breakpoints needed. Prefer changing
+layout, `max-width`, and visibility to repeatedly switching fixed dimensions or semantic
+colors, borders, and radii. Keep essential actions available below desktop breakpoints.
+Dialogs should reuse patterns such as `sm:max-w-*`; grids grow from one column rather
+than starting desktop-wide and being repeatedly reduced. Fix unstable base layout before
+adding breakpoint overrides.
+
 ## Accessibility and Internationalization
 
 - Support keyboard navigation as a first-class interaction path.
-- Preserve visible focus behavior through the repo's established focus styling patterns.
+- Preserve the repo's established component focus styling. Do not add a shared `!important` outline to dialog descendants, remote controls, or settings navigation. Composite inputs use their existing outer border or ring without an additional inner outline. This also applies in forced-colors mode; test IDs are not styling contracts.
 - Ensure contrast remains safe in light, dark, and Zai modes.
 - Write layouts that tolerate longer translations.
 - Avoid icon-only meaning when a text label is practical.
@@ -535,3 +645,11 @@ Rules:
 - use semantic error or success colors for non-semantic decoration
 - create components that only look correct in one theme
 - trade clarity for visual novelty in tool-heavy screens
+
+## Remote connection progress (RDUX-03)
+
+`--color-progress-surface` / `--color-progress-surface-foreground` express work in progress, including connecting, automatic recovery and updating. Use `bg-progress-surface` with `text-progress-surface-foreground`; the foreground can also color progress indicators and borders. Four themes define the pair and all parent backgrounds must retain a 4.5:1 text contrast.
+
+Remote state mapping: connected → success (neutral cloud in project rows); connecting/updating → progress; disconnected → neutral surface/subtle foreground; needs attention → warning; failed → destructive. SSH/WSL/Docker tokens are reserved for connection type labels, never connection status. Always include visible status text outside the connected state; recovery attempts are visible text. See the remote device UX specification for the authoritative mapping and glossary.
+
+远程可读辅助文字：`--color-remote-foreground-muted` / `text-remote-foreground-muted` 用于远程向导、设备卡和日志辅助文字、侧栏设备标签与设置导航；侧栏共享的任务/项目视图切换、分组操作及搜索快捷键也沿用此可读辅助文字等级，浅色 `#595959`、深色 `#b3b3b3`，在 sidebar / popover / surface / card / selected / background 上保持至少 4.5:1。Zai Light SSH 类型标签前景为 `#0867ce`，保持与 `#ebf4ff` 底色至少 4.5:1。

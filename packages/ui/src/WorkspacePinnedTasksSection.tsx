@@ -577,7 +577,7 @@ export function WorkspacePinnedTasksSection({
                   onArchiveTask={handlers.onArchiveTask}
                   onMarkTaskAsUnread={handlers.onMarkTaskAsUnread}
                   onOpenTaskContextMenu={handlers.onOpenTaskContextMenu}
-                  onOpenFileTree={onOpenFileTree ? handlers.onOpenFileTree : undefined}
+                  onOpenFileTree={onOpenFileTree ? () => handlers.onOpenFileTree(item) : undefined}
                   intl={intl}
                 />
               );

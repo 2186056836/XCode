@@ -1,4 +1,7 @@
+import { subagentProfilesFromSnapshot } from "../runtime-subagents/index.js";
+import { CliDefaultSelection } from "./cli-default-selection.js";
 import { isAbsolute, join, resolve } from "node:path";
+import { tmpdir } from "node:os";
 import {
   createInMemorySessionEventStore,
   createNodeToolArtifactStore,
@@ -203,11 +206,19 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       cliStorageRoot,
       resolveXCodeRuntimeEnv(options.env ?? process.env) === "development",
     );
-    const zcodeSubagentProfileOutcome = await loadXCodeAgentProfiles({
-      logger,
-      storageRoot,
-      workingDirectory,
+    // 初始化与父轮必须使用同一 Host 来源，避免 CLI storage.dir 的另一份定义在首轮消失。
+    const hostSubagentSnapshot = await options.readSubagentRuntimeConfig?.({
+      signal: new AbortController().signal,
+      traceContext,
     });
+    const zcodeSubagentProfileOutcome = hostSubagentSnapshot
+      ? subagentProfilesFromSnapshot(hostSubagentSnapshot)
+      : await loadXCodeAgentProfiles({
+          logger,
+          storageRoot,
+          workingDirectory,
+          additionalDirectories: options.additionalDirectories,
+        });
     const zcodeSubagentProfiles = zcodeSubagentProfileOutcome.profiles;
     const pluginOutcome = resolveStartupPlugins({
       cliStorageRoot,
@@ -220,12 +231,16 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
     });
     // 随 CLI 内置的技能包（dynamic-workflows 等）：不属于任何插件，用户无法停用或卸载。
     const bundledSkillRoots = await resolveBundledSkillRoots({ cliStorageRoot, logger });
-    const pluginSubagentProfiles = loadPluginAgentProfiles({
-      logger,
-      plugins: pluginOutcome.plugins,
-      reservedProfileNames: zcodeSubagentProfiles.map((profile) => profile.name),
-      modelSelectionOverrides: zcodeSubagentProfileOutcome.pluginAgentModelSelectionOverrides,
-    }).profiles;
+    const pluginSubagentProfiles =
+      hostSubagentSnapshot?.kind === "built-in-fallback"
+        ? []
+        : loadPluginAgentProfiles({
+            logger,
+            plugins: pluginOutcome.plugins,
+            reservedProfileNames: zcodeSubagentProfiles.map((profile) => profile.name),
+            modelSelectionOverrides:
+              zcodeSubagentProfileOutcome.pluginAgentModelSelectionOverrides,
+          }).profiles;
     const pluginRuntimeFeatures = resolvePluginRuntimeFeatures(pluginOutcome);
     const builtInMcpServers = resolveBuiltInNodeReplMcpServers({
       pluginOutcome,
@@ -294,6 +309,10 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
     const pluginReferenceCatalog = buildPluginReferenceCatalog(pluginOutcome.plugins);
     runtimeConfig.pluginReferenceCatalog = pluginReferenceCatalog;
     let runtime: AgentRuntime | undefined;
+    const cliDefaultSelection =
+      options.modelSelectionMode === "cli-default"
+        ? new CliDefaultSelection(runtimeConfig.modelSelection)
+        : undefined;
     const workspaceHookRuntimeSecurity = createWorkspaceHookRuntimeSecurity({
       appVersion,
       logger,
@@ -399,6 +418,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
           caCertFile: configResult.config.network.caCertFile,
         },
         outputRootDir: join(storageRoot, "cli", "exec"),
+        bashOutputTempDir: tmpdir(),
         processEnv: options.env ?? process.env,
       });
     const ownsExecutionPort = options.executionPort === undefined;
@@ -468,6 +488,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       // 只查模型是否存在会把缺档位/已删除的选择重新绑定进 Runtime，
       // 抵消了未绑定初始化。历史恢复不要求可执行模型，只有完整选择可以绑定。
       getRuntime().setSessionModelSelection(validation?.ok ? selection : undefined);
+      cliDefaultSelection?.set(validation?.ok ? selection : undefined);
       // 恢复结果是保存意图，不是执行绑定。过去在这里置空/删档位，Host 的
       // Selection View 就再也拿不到原意图，账号切换和配置恢复后也无法重新解析。
       return selection;
@@ -748,6 +769,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
         configResult.config.features.skill && configResult.config.skills.enabled
           ? (options.skillPort ??
             createNodeSkillAdapter({
+              additionalDirectories: options.additionalDirectories,
               extraRoots: configResult.config.skills.roots,
               extraResolvedRoots: [...pluginOutcome.skillRoots, ...bundledSkillRoots],
               disabledPaths: [
@@ -762,6 +784,9 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
           : undefined,
       mcpPort,
       eventSink: options.eventSink,
+      onOffPeakLifecycleEvent: options.onOffPeakLifecycleEvent
+        ? (event) => options.onOffPeakLifecycleEvent!({ ...event, sessionId })
+        : undefined,
       modelFactory,
       modelIoDir,
       providerRuntimeHeadersPort: options.providerRuntimeHeadersPort,
@@ -777,6 +802,8 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       automationPort: options.automationPort,
       offPeakPort: options.offPeakPort,
       proxyPoolPort: options.proxyPoolPort,
+      modelJailbreakPort: options.modelJailbreakPort,
+      providerAccountPort: options.providerAccountPort,
       appVersion,
       traceContext,
     });
@@ -792,6 +819,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
     });
     scheduleStartupLogRetentionCleanup(loggerFactory, logger);
     const inputFacade = createInputFacade({
+      cliDefaultSelection,
       artifactStore,
       customCommandPromptResolver: async (text, resolverOptions) => {
         const builtinPrompt = resolveXCodeBuiltinPromptCommand(text, {
@@ -805,6 +833,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
           return builtinPrompt;
         }
         return await resolveXCodeCustomCommandPrompt(text, {
+          additionalDirectories: options.additionalDirectories,
           env: options.env,
           executionPort,
           logger,
@@ -848,6 +877,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       workingDirectory,
     });
     const sessionFacade = createSessionFacade({
+      cliDefaultSelection,
       // App 关闭时停下本会话拥有的 dwf run：
       // 引擎活在本 App 的闭包里，关掉 App 而不停它，journal 行会停在 running 等下一次孤儿收敛。
       ...(dynamicWorkflowRunPort === undefined

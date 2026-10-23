@@ -58,7 +58,6 @@ export interface XCodeSessionResumeParams extends XCodeTaskTarget {
 }
 
 export interface XCodeSessionListParams extends XCodeSessionWorkspaceTarget {
-  includeArchived?: boolean;
   limit?: number;
 }
 

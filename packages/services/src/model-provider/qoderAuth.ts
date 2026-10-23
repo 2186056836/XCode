@@ -170,7 +170,7 @@ export async function beginQoderLogin(region: QoderAuthRegion): Promise<QoderLog
     nonce,
   });
   // 三件套在本会话开始前取一次，与该账号一号一绑。
-  const machine = await fetchMachineIdentity(region).catch(() => null);
+  const machine = await fetchQoderMachineIdentity(region).catch(() => null);
   if (!machine) {
     logger().warn(undefined, "Qoder 登录会话未能预取设备标识三件套", { region });
   }
@@ -677,7 +677,7 @@ async function fetchMachineIdentityFrom(
  * 应当与该供应商的模型请求走同一个出口，否则代理池场景下会出现"登录通了、
  * 拿指纹不通"的半截故障）。
  */
-async function fetchMachineIdentity(region?: QoderAuthRegion): Promise<{
+export async function fetchQoderMachineIdentity(region?: QoderAuthRegion): Promise<{
   machineToken: string;
   machineType: string;
   machineCode: string;
@@ -818,7 +818,7 @@ export async function activateQoderPro(
         machineType: account.machineType || QODER_MACHINE_TYPE,
         machineCode: options.machineCode ?? account.machineCode ?? "",
       }
-    : await fetchMachineIdentity(region);
+    : await fetchQoderMachineIdentity(region);
   if (!machine) {
     return {
       ok: false,

@@ -12,7 +12,8 @@ import type { AiSdkModelTextRequest, ResolvedAiSdkModel } from "./runner-runtime
  * host 在每次 attempt 前通过 `refreshRuntimeHeadersBeforeAttempt` 选一条连接并返回
  * `requestAuth.connectionId`。本类负责：
  * 1. 把**已失败**的连接 id 与失败类型带进下一次回调；
- * 2. 在账号级失败（401/402/403/429）时额外申请一次重试，且不消耗普通重试预算。
+ * 2. 在**用户开启换号**且命中所选状态码时额外申请一次重试，且不消耗普通重试预算。
+ *    默认关闭：请求出错不会静默切到别的账号。
  *
  * 只在 core 给多账号供应商挂上回调时生效：
  * - qoder / codebuddy（api-key 型多账号）：host 从 provider facade 的账号表选；
@@ -23,14 +24,23 @@ import type { AiSdkModelTextRequest, ResolvedAiSdkModel } from "./runner-runtime
  */
 const MAX_ROTATION_ATTEMPTS = 4;
 
-/** 这些状态码说明「这条连接不可用」，换号有实际意义；其余失败换号只会放大消耗。 */
-const ACCOUNT_SCOPED_STATUS = new Set([401, 402, 403, 429]);
+/**
+ * 换号策略来自 host 随本次选号下发的 `requestAuth.accountFailover`：
+ * - 缺席或 `enabled: false` → **永不换号**（默认）。请求出错就报错，不偷偷消耗
+ *   用户导入的其他账号；
+ * - `enabled: true` → 只有 `statusCodes` 里的状态码才换号。默认只有 429（限流）；
+ *   401/402/403 通常说明凭据/额度本身有问题，换号只会把同一个错误在别的账号上
+ *   重演一遍，还会污染账号池的可用性判断。
+ *
+ * 这里不再内置状态码白名单：策略唯一来源是 host，adapter 只做「命中就申请重试」。
+ */
 
 export class AccountRotationRetry {
   #extraAttempts = 0;
   #excluded: string[] = [];
   #lastFailure: { statusCode?: number; providerErrorCode?: string; connectionId?: string } | undefined;
   #currentConnectionId: string | undefined;
+  #failover: { enabled: boolean; statusCodes: readonly number[] } | undefined;
 
   constructor(
     private readonly request: AiSdkModelTextRequest,
@@ -56,6 +66,8 @@ export class AccountRotationRetry {
           ...(this.#lastFailure ? { lastFailure: this.#lastFailure } : {}),
         });
         this.#currentConnectionId = result.requestAuth?.connectionId;
+        // 策略随选号结果下发；每次 attempt 都可能变（用户刚改设置）。
+        this.#failover = result.requestAuth?.accountFailover;
         // 失败信息只投递一次：下一次选择成功后清掉，避免 host 重复写锁。
         this.#lastFailure = undefined;
         return result;
@@ -72,9 +84,14 @@ export class AccountRotationRetry {
     ) {
       return false;
     }
+    const failover = this.#failover;
+    // 默认不换号：策略缺席、显式关闭、或状态码不在用户选定的集合里，都直接失败。
+    if (!failover?.enabled) {
+      return false;
+    }
     const inspection = inspectProviderFailure(unwrapRetryError(error));
     const status = getHttpResponseStatus(unwrapRetryError(error));
-    if (!status || !ACCOUNT_SCOPED_STATUS.has(status)) {
+    if (!status || !failover.statusCodes.includes(status)) {
       return false;
     }
     // 不知道是哪个连接失败就不能换号：否则 host 可能再次选中同一个账号，形成空转。
