@@ -21,7 +21,7 @@ import { ProviderAccountBinding } from "./model-provider-section/ProviderAccount
 import type {
   MarketingCaptchaConfig,
   MarketingClaimPlanResponse,
-  MarketingTouchResponse,
+  MarketingTouchSnapshot,
 } from "@zcode/shared";
 
 /** 与 services OAuthAccountEntry 对齐的展示结构（UI 侧本地声明，避免跨包类型耦合）。 */
@@ -62,7 +62,9 @@ interface CodingPlanClaimCapableService {
 }
 
 interface MarketingTouchQueryCapableService {
-  query(input: { locale: string; accountRef?: string }): Promise<MarketingTouchResponse>;
+  // host 的 query 走 parseMarketingTouchResponse，返回的是新 schema 快照
+  // （deliveries 里动作在 banner/popup.buttons[].action，不是旧的 campaign.actions）。
+  query(input: { locale: string; accountRef?: string }): Promise<MarketingTouchSnapshot>;
 }
 
 export function AccountSettingsSection({

@@ -1,8 +1,8 @@
 import type {
   MarketingCaptchaConfig,
   MarketingClaimPlanResponse,
-  MarketingTouchDelivery,
-  MarketingTouchResponse,
+  MarketingDelivery,
+  MarketingTouchSnapshot,
 } from "@zcode/shared";
 import { logger } from "@/logger.js";
 import { runAliyunCaptcha, shouldRunCaptcha } from "@/hooks/useMarketingTouchCampaign.js";
@@ -31,7 +31,7 @@ export type MarketingClaimSingleDeps = Pick<
 
 export interface MarketingClaimAllDeps {
   listAccounts(): Promise<Array<{ provider: string; identity: string; displayName: string }>>;
-  queryTouch(accountRef: string): Promise<MarketingTouchResponse>;
+  queryTouch(accountRef: string): Promise<MarketingTouchSnapshot>;
   getCaptchaConfig(): Promise<MarketingCaptchaConfig | null>;
   claimManualPlan(input: {
     planId: string;
@@ -63,27 +63,62 @@ function formatPlanEnds(endsAt: number | string | null | undefined): string {
   return `${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function findClaimableDelivery(deliveries: MarketingTouchDelivery[]):
-  | { delivery: MarketingTouchDelivery; planId: string }
+/**
+ * 找本次投放里的领取入口。
+ *
+ * 动作挂在投放自身的按钮上，不在 `delivery.campaign` 里——后者是旧版结构，
+ * 当前 schema（marketingDeliverySchema）只有 `campaign_id` 与 `banner` / `popup`。
+ * 曾经照抄官方那段仍按 `campaign.actions` 读的代码，导致 `campaign` 恒为 undefined、
+ * 每次都判定「无可领取活动」。
+ *
+ * banner 与 popup 都要看：新活动常以弹窗形式下发，只扫 banner 会把它们漏掉。
+ */
+function findClaimableDelivery(deliveries: readonly MarketingDelivery[]):
+  | { delivery: MarketingDelivery; planId: string }
   | null {
   for (const delivery of deliveries) {
-    const actions = delivery.campaign?.actions ?? {};
-    const claimAction = Object.values(actions).find((action) => action?.type === "claim_plan");
-    if (claimAction?.type === "claim_plan" && claimAction.planId) {
-      return { delivery, planId: claimAction.planId };
-    }
+    const planId = claimPlanIdOf(delivery);
+    if (planId) return { delivery, planId };
   }
   return null;
+}
+
+function claimPlanIdOf(delivery: MarketingDelivery): string | null {
+  const buttons =
+    delivery.resource_position === "banner"
+      ? delivery.banner.buttons
+      : delivery.popup.buttons;
+  for (const item of buttons) {
+    const action = item.action;
+    if (action.type === "claim_zcode_plan") return action.args.plan_id;
+  }
+  return null;
+}
+
+/** 测试缝：从一批投放里取第一个可领取的计划 id。 */
+export function findClaimablePlanId(
+  deliveries: readonly MarketingDelivery[],
+): string | null {
+  return findClaimableDelivery(deliveries)?.planId ?? null;
 }
 
 async function claimForAccount(
   deps: MarketingClaimSingleDeps,
   base: { accountRef: string; displayName: string; provider: string },
 ): Promise<MarketingClaimAllAccountResult> {
-  let deliveries: MarketingTouchDelivery[];
+  let deliveries: readonly MarketingDelivery[];
   try {
     const response = await deps.queryTouch(base.accountRef);
     deliveries = response?.deliveries ?? [];
+    // 服务端下发了投放但被 schema 拒绝时，界面表现与「真的没有活动」完全一样。
+    // 这里留一条可查的痕迹，避免下次又要把「无活动」当成事实去猜。
+    if (response?.rejectedCount) {
+      logger.warn("[MarketingClaimAll] 有投放未通过 schema 校验", {
+        accountRef: base.accountRef,
+        rejectedCount: response.rejectedCount,
+        acceptedCount: deliveries.length,
+      });
+    }
   } catch (error) {
     logger.warn("[MarketingClaimAll] 查询营销活动失败", error);
     return {
