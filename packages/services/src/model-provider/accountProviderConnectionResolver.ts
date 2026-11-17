@@ -294,6 +294,29 @@ function resolveAccountUnavailableReason(
 }
 
 /** 组装 Config、账号连接解析与第三层 Account Provider Config Source。 */
+/**
+ * 切号过渡宽限窗口。
+ *
+ * 切号瞬间 providerFamilyDomain 立即翻转到新账号 family；正在进行中的
+ * start-plan/coding-plan 请求在下一次 attempt 刷新凭据时按旧 family 解析，
+ * 会因 `providerFamilyDomain !== accountType` 拿不到 access 而中断——
+ * 表现为「切号瞬间会话中断/模型计划丢失」。
+ *
+ * 翻转时刻被记录下来；宽限窗口内旧 family 的请求仍按旧凭据解析（per-account
+ * 凭据不随切号删除，数据一直在），让它们善终。新请求窗口结束后自然切换。
+ */
+let familyDomainFlippedAt = 0;
+export function markProviderFamilyDomainFlip(now: number = Date.now()): void {
+  familyDomainFlippedAt = now;
+}
+export function isInFamilyDomainFlipGracePeriod(
+  graceMs = FAMILY_DOMAIN_FLIP_GRACE_MS,
+  now: number = Date.now(),
+): boolean {
+  return familyDomainFlippedAt > 0 && now - familyDomainFlippedAt < graceMs;
+}
+export const FAMILY_DOMAIN_FLIP_GRACE_MS = 60_000;
+
 export function createAccountProviderConfigSource(
   options: AccountProviderConfigSourceOptions,
 ): AccountProviderService {
@@ -337,7 +360,11 @@ export async function resolveCurrentAccountAccess(input: {
 }): Promise<XCodeAccountAccess | null> {
   const settings = await input.readSettings();
   const { accountType, mode } = input.access;
-  if (settings.providerFamilyDomain !== accountType) return null;
+  if (settings.providerFamilyDomain !== accountType) {
+    // 切号宽限期内放行旧 family：让进行中的请求用旧账号凭据善终，
+    // 而不是在切号瞬间被打断（模型计划随 family 翻转「丢失」）。
+    if (!isInFamilyDomainFlipGracePeriod()) return null;
+  }
   const identity = async (): Promise<string | null> =>
     input.accountIdentity ?? input.loadAccountIdentity(accountType);
   if (mode === "start-plan") {

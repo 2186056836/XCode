@@ -87,7 +87,7 @@ export function writeOfficialPluginRuntimeManifest(input: OfficialRuntimeManifes
     // 文档插件使用 dist/server.mjs；统一覆盖成 dist/mcp/server.js 会导致启动失败。
     mcpServer.args = [
       ...hostPrefixArgs,
-      ...serverArgs.map((arg) => arg.replaceAll("${ZCODE_PLUGIN_ROOT}", input.rootPath)),
+      ...serverArgs.map((arg) => arg.replaceAll("${XCODE_PLUGIN_ROOT}", input.rootPath)),
     ];
     mcpServer.env = {
       ...mcpServerEnv,

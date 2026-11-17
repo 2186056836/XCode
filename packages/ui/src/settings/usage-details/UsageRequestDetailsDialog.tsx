@@ -29,6 +29,20 @@ function formatCount(value: number | undefined): string {
   return value === undefined ? "--" : new Intl.NumberFormat().format(value);
 }
 
+function formatSpeed(
+  outputTokens: number | undefined,
+  reasoningTokens: number | undefined,
+  durationMs: number | undefined,
+): string {
+  // 生成段 token = 输出 + 推理；输入 token 不计入流速。
+  // reasoningTokens 是独立列（computedTotalTokens 只含 input + output），两者相加不重复。
+  const generatedTokens = (outputTokens ?? 0) + (reasoningTokens ?? 0);
+  if (generatedTokens <= 0 || durationMs === undefined || durationMs <= 0) return "--";
+  // 分母用请求总耗时：实测 timeToFirstTokenMs 常与 durationMs 接近（排队/首 token
+  // 几乎占满整段），用 duration - ttft 会让分母趋近 0，把速度虚高到几百 tok/s。
+  return `${(generatedTokens / (durationMs / 1000)).toFixed(1)} tok/s`;
+}
+
 /**
  * 「使用详情」单条明细弹窗。
  *
@@ -73,6 +87,10 @@ export function UsageRequestDetailsDialog({
     {
       label: intl.formatMessage({ id: "settings.usageDetails.field.ttft" }),
       value: formatDuration(detail.timeToFirstTokenMs),
+    },
+    {
+      label: intl.formatMessage({ id: "settings.usageDetails.field.speed" }),
+      value: formatSpeed(detail.outputTokens, detail.reasoningTokens, detail.durationMs),
     },
     { label: intl.formatMessage({ id: "settings.usageDetails.field.inputTokens" }), value: formatCount(detail.inputTokens) },
     { label: intl.formatMessage({ id: "settings.usageDetails.field.outputTokens" }), value: formatCount(detail.outputTokens) },

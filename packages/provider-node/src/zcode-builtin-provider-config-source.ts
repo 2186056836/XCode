@@ -19,6 +19,14 @@ export interface NodeXCodeBuiltinProviderConfigSourceOptions {
 
 export type ApplyXCodeBuiltinReleaseResult = "updated" | "unchanged" | "stale";
 
+export interface NodeZCodeBuiltinProviderConfigSourceOptions {
+  readonly bundledFilePath: string;
+  readonly activeFilePath?: string;
+  readonly watch?: boolean;
+}
+
+export type ApplyZCodeBuiltinReleaseResult = "updated" | "unchanged" | "stale";
+
 /** Bundled、Active/LKG 与 Remote 共用同一 Release，并最终发布为现有 Config Snapshot。 */
 export class NodeXCodeBuiltinProviderConfigSource implements ProviderSource<ProviderConfigLayerSnapshot> {
   readonly #bundledFilePath: string;
@@ -55,13 +63,16 @@ export class NodeXCodeBuiltinProviderConfigSource implements ProviderSource<Prov
     } catch {
       // Active 只是可丢弃缓存，目录锁、监听或原子物化失败不能阻断
       // Bundled 基线。缓存边界不可用时绕过 Active；Bundled 自身无效仍会在这里抛错。
-      release = selectReleaseCandidate(await readReleaseCandidate(this.#bundledFilePath), null);
+      release = selectReleaseCandidate(
+        await readBundledReleaseCandidate(this.#bundledFilePath),
+        null,
+      );
     }
     this.#observedSignature ??= signatureOf(release);
     return snapshotFromRelease(release, this.#sourceKey);
   }
 
-  async applyRemoteRelease(release: XCodeBuiltinRelease): Promise<ApplyXCodeBuiltinReleaseResult> {
+  async applyRemoteRelease(release: XCodeBuiltinRelease): Promise<ApplyZCodeBuiltinReleaseResult> {
     this.#assertNotDisposed();
     await this.#ensureWatcher();
     const result = await withFileLock(this.#activeFilePath, async () => {
@@ -99,7 +110,7 @@ export class NodeXCodeBuiltinProviderConfigSource implements ProviderSource<Prov
 
   async #readAndMaterializeLocked(): Promise<XCodeBuiltinRelease> {
     const [bundled, active] = await Promise.all([
-      readReleaseCandidate(this.#bundledFilePath),
+      readBundledReleaseCandidate(this.#bundledFilePath),
       this.#activeFilePath === this.#bundledFilePath
         ? Promise.resolve(null)
         : readReleaseCandidate(this.#activeFilePath),
@@ -157,8 +168,8 @@ export class NodeXCodeBuiltinProviderConfigSource implements ProviderSource<Prov
   }
 }
 
-export function createNodeXCodeBuiltinProviderConfigSource(
-  options: NodeXCodeBuiltinProviderConfigSourceOptions,
+export function createNodeZCodeBuiltinProviderConfigSource(
+  options: NodeZCodeBuiltinProviderConfigSourceOptions,
 ): NodeXCodeBuiltinProviderConfigSource {
   return new NodeXCodeBuiltinProviderConfigSource(options);
 }
@@ -168,11 +179,36 @@ interface ReleaseCandidate {
   readonly error?: unknown;
 }
 
-async function readReleaseCandidate(filePath: string): Promise<ReleaseCandidate | null> {
+/**
+ * Bug 原因：远端 Core 只在启动时把构建内嵌的 Bundled 物化到 `runtime/provider/bundled`，
+ * 运行中该目录与 Endpoint Active 一起被删除后，每次读取都拿到两个 ENOENT，Provisioning
+ * 同步持续失败到 Core 重启。Bundled 在进程生命周期内不可变（升级以退出旧进程为前提），
+ * 因此按路径记住本进程最近一次成功解析的 Bundled，仅在文件缺失时作为基线；随后照常由
+ * 选中的候选重建 Active。不回写 Bundled 路径：Desktop 的 Bundled 位于只读安装资源内。
+ * 用模块级缓存而非实例字段，是因为 Endpoint 切换会新建 Source 实例，也要能读到同一基线。
+ * Worker 把 Host 的 Active 当作 Bundled 读取时，这里等价于最近一次成功读取的 LKG。
+ */
+const lastValidBundledReleaseByPath = new Map<string, XCodeBuiltinRelease>();
+
+async function readBundledReleaseCandidate(filePath: string): Promise<ReleaseCandidate> {
+  const key = resolve(filePath);
+  const candidate = await readReleaseCandidate(filePath);
+  if (candidate.release) {
+    lastValidBundledReleaseByPath.set(key, candidate.release);
+    return candidate;
+  }
+  const baseline = isFileNotFound(candidate.error)
+    ? lastValidBundledReleaseByPath.get(key)
+    : undefined;
+  return baseline ? { release: baseline } : candidate;
+}
+
+async function readReleaseCandidate(filePath: string): Promise<ReleaseCandidate> {
   try {
     return { release: decodeXCodeBuiltinRelease(JSON.parse(await readFile(filePath, "utf8"))) };
   } catch (error) {
-    if (isFileNotFound(error)) return null;
+    // Bug 原因：ENOENT 曾直接返回 null，两份文件都缺失时 AggregateError 的错误列表为空，
+    // 日志只剩“均不可用”而没有路径。缺失同样是无效候选，保留原始错误供汇总报告。
     return { error };
   }
 }

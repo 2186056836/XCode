@@ -1,3 +1,8 @@
+import {
+  BROWSER_LOCAL_PREVIEW_PRIVILEGES,
+  installBrowserLocalPreview,
+} from "@desktop/main/browser-local-preview/index.js";
+import { createRemoteConversationTelemetryDispatcher } from "@zcode/shared/conversation-telemetry";
 import { installRequestSecurityDiagnostics } from "./request-security-edition/index.js";
 import { createLocalTtftExporter } from "./localTtftExporter.js";
 /* eslint-disable max-lines */
@@ -22,6 +27,7 @@ import { BrowserGuestManager } from "./browserView/browserGuestManager.js";
 import { createElectronBrowserWebmRecorder } from "./browserView/electronBrowserWebmRecorder.js";
 import { installBrowserRestoreBootstrapProtocol } from "./browserView/browserRestoreBootstrapProtocol.js";
 import {
+  buildLocalMediaPreviewUrl,
   createLocalMediaPreviewPathRegistry,
   installLocalMediaPreviewProtocol,
   registerLocalMediaPreviewScheme,
@@ -53,9 +59,6 @@ import { join, resolve } from "node:path";
 import { homedir, hostname } from "node:os";
 import {
   createCredentialService,
-  createHostApiNetworkTransport,
-  createMarketingTouchService,
-  createNodeApiClient,
   createSettingService,
   createTelemetryCore,
   createTelemetryMarketingParamsLoader,
@@ -63,8 +66,10 @@ import {
   createTelemetryAuthorizationLoader,
   buildRuntimeProcessEnvPatch,
   captureLoginShellEnvSnapshot,
+  getAppConfigDir,
   getConversationWorkspaceDir,
   getDataBaseDir,
+  getExportLogDir,
   getXCodeDataRootDir,
   normalizeRuntimeProcessEnv,
   setDataBaseDir,
@@ -94,7 +99,7 @@ import {
   HostMessageTypes,
   InternalChannels,
 } from "@zcode/shared";
-import { logger, webRemoteControlRelayLogger } from "./logger.js";
+import { logger, webRemoteControlRelayLogger, flushLocalTtftLogs } from "./logger.js";
 import { markMainLaunchAppReady } from "./desktopLaunchMarks.js";
 import { createCuaPipFocusRouter, resolveCuaPipWindowKey } from "./cuaPipFocusRouter.js";
 import { createDesktopTelemetryFetch } from "./desktopTelemetryFetch.js";
@@ -125,6 +130,8 @@ import {
   type AppShutdownKind,
 } from "./appShutdownPolicy.js";
 import { createPrimaryWindowCoordinator } from "./primaryWindowCoordinator.js";
+import { createPetOverlayController } from "./petOverlay.js";
+import { createDshPetOverlayController } from "./dshPetOverlay.js";
 import { createTempTextAttachment } from "./tempTextAttachment.js";
 import { flushMainE2ECoverage } from "./e2eCoverage.js";
 import { resolveStartupWindowBootstrap, type StartupWindowBootstrap } from "./startupWorkspace.js";
@@ -134,7 +141,13 @@ import {
   resolveExplicitStartupWorkspaceBootstrap,
 } from "./startupWorkspaceDeepLinkGate.js";
 import { createWebRemoteControlManager } from "./webRemoteControlManager.js";
-import { createWebRemoteControlDeviceStorage } from "#src/main/web-remote-relay/index.js";
+import {
+  createMobileLogSink,
+  createWebRemoteControlDeviceStorage,
+  pullAndExportMobileLogs,
+  runWebRemoteControlActionInRenderer,
+  type MobileLogSink,
+} from "#src/main/web-remote-relay/index.js";
 import { createWebRemoteControlFeatureGate } from "./webRemoteControlFeatureGate.js";
 import { reconnectWebRemoteControlWorkspaceInRenderer } from "./webRemoteControlRendererReconnect.js";
 import { sendWebRemoteControlStatusChangedToWindow } from "./webRemoteControlStatusEvents.js";
@@ -284,7 +297,10 @@ import {
   installPluginSandboxHost,
 } from "./pluginSandbox/index.js";
 
-registerLocalMediaPreviewScheme(protocol, [PLUGIN_SANDBOX_PRIVILEGED_SCHEME]);
+registerLocalMediaPreviewScheme(protocol, [
+  PLUGIN_SANDBOX_PRIVILEGED_SCHEME,
+  BROWSER_LOCAL_PREVIEW_PRIVILEGES,
+]);
 const localMediaPreviewPathRegistry = createLocalMediaPreviewPathRegistry();
 
 // e2e 由 Chromedriver 管理远程调试端口；如果这里继续固定到 9229，
@@ -499,6 +515,7 @@ async function runBrowserCommandOnView(params: {
   requestId: string;
   browserId?: string;
   browserGeneration?: number;
+  controlScopeId?: string;
   sessionId: string;
   turnId?: string;
   workspaceKey?: string;
@@ -541,6 +558,7 @@ async function runBrowserCommandOnView(params: {
     const result = await browserGuestManager.execute(
       {
         requestId: params.requestId,
+        controlScopeId: params.controlScopeId,
         browserId: params.browserId ?? "legacy-iab",
         browserGeneration: params.browserGeneration ?? 0,
         windowId: params.win.id,
@@ -573,9 +591,7 @@ async function runBrowserCommandOnView(params: {
 let currentDesktopZoomLevel = 0;
 let currentDesktopWindowSize: DesktopWindowSize | undefined;
 const preloadPath = join(import.meta.dirname, "../preload/index.cjs");
-// 设置文件跟随数据基目录：dev 用隔离数据目录时，main 进程不能仍读用户主目录的
-// setting.json——否则任务列表、最近项目全是正式版的数据。
-const settingsFile = join(getDataBaseDir(), ".xcode", "v2", "setting.json");
+const settingsFile = join(homedir(), ".xcode", "v2", "setting.json");
 let activeAppShutdownPolicy = resolveAppShutdownPolicy("normal", process.platform);
 let activeAppShutdownKind: AppShutdownKind | null = null;
 const WINDOWS_AGENT_FORCE_KILL_TIMEOUT_MS = 2_000;
@@ -729,27 +745,6 @@ async function resolveCurrentXCodeEndpointOrigin() {
     overrideOrigin: (await mainSettingService.get()).zcodeEndpointOrigin,
   });
 }
-// 营销投放的账号凭据、Device-Mid 与投放出口都在 desktop 侧；手机 Web 未接 workspace bridge 时
-// 没有投放权威，这里保留一份 main 侧实例，让 Web 通过 platform-request 转发到同一套凭据与出口。
-const marketingTouchCredentialService = createCredentialService();
-// 投放请求必须与 Host 侧出口同口径：跟随设置里的代理/自定义 CA，并按当前环境解析 endpoint。
-const marketingTouchNetworkTransport = createHostApiNetworkTransport(async () => {
-  const settings = await mainSettingService.get();
-  return {
-    httpProxy: settings.httpProxy,
-    noProxy: settings.httpProxyNoProxy,
-    caCertPath: settings.httpProxyCaCertPath,
-  };
-});
-const marketingTouchService = createMarketingTouchService({
-  // 投放出口必须跟随当前环境的 endpoint（含设置里的自定义 origin），
-  // 不能用 shared 的默认解析（它会退回 test 域）。
-  apiClient: createNodeApiClient({
-    fetchImpl: marketingTouchNetworkTransport.fetch,
-    resolveXCodeEndpointOrigin: resolveCurrentXCodeEndpointOrigin,
-  }),
-  credentialService: marketingTouchCredentialService,
-});
 let desktopContextPromptRollout: ReturnType<typeof createDesktopContextPromptRollout> | undefined;
 function resolveDesktopContextPromptEnabledForHost(): boolean {
   const rollout = desktopContextPromptRollout;
@@ -809,6 +804,19 @@ const appTelemetryRuntime = createAppTelemetryRuntime({
   telemetryCore: appTelemetryCore,
   appLaunchCoordinator,
 });
+
+const reportRemoteConversationTelemetry = createRemoteConversationTelemetryDispatcher(
+  async (event) => {
+    const locale = Intl.DateTimeFormat().resolvedOptions();
+    const context = appTelemetryRuntime.getLatestRendererContext() ?? {
+      clientTimezone: locale.timeZone,
+      clientLanguage: locale.locale,
+      screenResolution: "",
+    };
+    await appTelemetryCore.reportEvent({ ...event, context });
+  },
+  appTelemetryCore.trackPendingReport,
+);
 
 function reportRemoteUsageEventForRenderer(rendererId: number, event: TelemetryEventPayload): void {
   const context =
@@ -946,7 +954,19 @@ let startupOpenWorkspaceRequest: ExplicitStartupWorkspaceRequest | null =
       ? { path: startupDeepLinkWorkspacePath, source: "deep-link" }
       : null;
 
+// 手机实时日志落盘目录：放在 logs/ 下，「导出日志」打包时自动带上。
+function getMobileRealtimeLogDir(): string {
+  return join(getAppConfigDir(), "logs", "mobile");
+}
+let mobileLogSink: MobileLogSink | undefined;
+// 首次收到 mobile-log 时再创建：数据目录在启动后才最终确定，不能在模块加载时固化路径。
+function getMobileLogSink(): MobileLogSink {
+  mobileLogSink ??= createMobileLogSink({ rootDir: getMobileRealtimeLogDir(), logger });
+  return mobileLogSink;
+}
+
 const webRemoteControlManager = createWebRemoteControlManager({
+  mobileLogSink: { append: (target, events) => getMobileLogSink().append(target, events) },
   getEndpointUrls: async () => {
     const derived = buildXCodeEndpointUrls(await resolveCurrentXCodeEndpointOrigin(), {
       appVersion: webRemoteControlAppVersion,
@@ -1017,21 +1037,9 @@ const webRemoteControlManager = createWebRemoteControlManager({
       }
     },
     migrateLegacyCommonMcp: (payload) => migrateLegacyCommonMcp(payload),
-    // 手机 Web 的营销投放走 desktop 侧凭据与出口；失败由 respondToPlatformRequest 统一回传错误。
-    marketingTouchQuery: async (payload) => ({
-      snapshot: await marketingTouchService.query({ locale: payload?.locale ?? "en-US" }),
-    }),
-    marketingTouchReport: async (payload) => {
-      await marketingTouchService.report({
-        locale: payload?.locale ?? "en-US",
-        scope: payload?.scope ?? "",
-        campaignId: payload?.campaignId ?? "",
-        actionType: payload?.actionType ?? "cancel",
-      });
-      return { success: true };
-    },
   },
   reconnectWorkspace: reconnectWebRemoteControlWorkspaceInRenderer,
+  runRendererAction: runWebRemoteControlActionInRenderer,
   prepareProjectWorkspace: async (windowId, project, requestId) => {
     const win = BrowserWindow.fromId(windowId);
     if (!win || win.isDestroyed()) throw new Error("项目导航窗口已关闭");
@@ -1060,6 +1068,7 @@ const webRemoteControlManager = createWebRemoteControlManager({
     sendWebRemoteControlStatusChangedToWindow(BrowserWindow.fromId(windowId), status);
   },
   attachWorkspaceHost: webRemoteControlSharedHostAttachments.attachWorkspaceHost,
+  setTerminalOwner: webRemoteControlSharedHostAttachments.setTerminalOwner,
   releaseWorkspaceHostAttachment: webRemoteControlSharedHostAttachments.releaseAttachment,
   disposeWorkspaceHostAttachmentsForWindow: (windowId) =>
     webRemoteControlSharedHostAttachments.disposeWindow(windowId),
@@ -1067,6 +1076,23 @@ const webRemoteControlManager = createWebRemoteControlManager({
     webRemoteControlSharedHostAttachments.disposeRemoteSession(remoteSessionId),
 });
 webRemoteControlManagerRef.current = webRemoteControlManager;
+webRemoteControlManager.startNotifications();
+broadcastHub.onMobilePushRun = (run) => webRemoteControlManager.observeNotificationRun(run);
+// owner 必须在事件到达时同步确认；locale 由 MobilePushConnection 在确认后再异步读取。
+broadcastHub.onMobilePushEvent = (event) =>
+  webRemoteControlManager.sendNotification(event, () =>
+    mainSettingService.get().then(
+      (settings) => (settings.locale?.startsWith("zh") ? "zh-CN" : "en-US"),
+      () => {
+        logger.warn("[mobile-push] notification locale unavailable");
+        throw new Error("locale_unavailable");
+      },
+    ),
+  );
+app
+  .whenReady()
+  .then(() => powerMonitor.on("resume", () => void webRemoteControlManager.refreshNotifications()));
+app.on("will-quit", () => webRemoteControlManager.disposeNotifications());
 
 let forceUpdateMainWindowCreationBlocked = false;
 
@@ -1260,6 +1286,7 @@ async function prepareAppQuit(reason: string, kind: AppShutdownKind = "normal"):
     // 与其它 owner 并行进入既有屏障，最多等待 2 秒，避免 telemetry 串行放大退出预算。
     appTelemetryCore.flushPendingReports({ timeoutMs: 2_000 }),
     localTtftExporter.shutdown(),
+    flushLocalTtftLogs(),
     rendererActionTraceBroker.shutdown().catch((error) => {
       logger.warn(`[app-quit] renderer action trace shutdown failed (${reason}):`, error);
     }),
@@ -1581,6 +1608,23 @@ async function executeDesktopCommandForApp(
     },
     credentialsDir: getCredentialsDir(),
     currentApplicationLocale,
+    pullMobileLogs: (windowId) =>
+      pullAndExportMobileLogs(windowId, {
+        findTarget: (id) => webRemoteControlManager.findMobileLogPullTarget(id),
+        pull: (id, query, onShard) => webRemoteControlManager.pullMobileLogs(id, query, onShard),
+        exportDir: getExportLogDir(),
+        realtimeLogDir: getMobileRealtimeLogDir(),
+        locale: currentApplicationLocale,
+        showMessage: async (options) => {
+          const parent = senderWindow && !senderWindow.isDestroyed() ? senderWindow : undefined;
+          const result = parent
+            ? await dialog.showMessageBox(parent, options)
+            : await dialog.showMessageBox(options);
+          return result.response;
+        },
+        showItemInFolder: (path) => shell.showItemInFolder(path),
+        logger,
+      }),
   });
 }
 
@@ -1886,6 +1930,124 @@ function openUpdateStatusWindow() {
   });
 }
 
+// 桌宠悬浮窗（复刻 Codex Pets）：注册 IPC；设置里开启过则恢复窗口。
+// DSH 桌宠（第二套独立宠物系统）：与 Codex 宠物完全分开的窗口/配置/IPC。
+// 最近一次桌宠生成中继的失败原因（对话失败时透给弹窗，不再吞成「模型未返回文本」）。
+let lastDshGenerateError: string | null = null;
+
+const dshPetOverlayController = createDshPetOverlayController({
+  preloadPath: join(import.meta.dirname, "../preload/dshPetOverlay.cjs"),
+  // 排除两套桌宠窗自身。
+  getMainWindow: (overlayWindow) =>
+    getMainApplicationWindows().find(
+      (win) => win !== overlayWindow && win !== petOverlayController.getWindow(),
+    ) ?? null,
+  logger,
+  // 碎碎念/对话的模型通道：经主窗渲染层的 workspace services 调 workspaceGenerateText
+  // （不传 selection = 跟随当前会话模型；结果 { text }）。
+  getLastGenerateError: () => lastDshGenerateError,
+  // 自制宠物包媒体：登记绝对路径（白名单 + TTL）后换 zcode-media 播放 URL。
+  authorizePackMedia: async (path) => {
+    await localMediaPreviewPathRegistry.authorize(path);
+    return buildLocalMediaPreviewUrl(path);
+  },
+  generateText: async (
+    prompt: string,
+    selection?: { providerId: string; modelId: string } | null,
+    attachment?: { mediaType: string; data: string },
+  ) => {
+    const main = getMainApplicationWindows().find(
+      (win) => win !== petOverlayController.getWindow() && win !== dshPetOverlayController.getWindow(),
+    );
+    if (!main || main.isDestroyed()) return null;
+    const requestId = `dsh-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const result = await new Promise<{ text: string } | null>((resolve) => {
+      const timeout = setTimeout(() => {
+        ipcMain.removeAllListeners(`dsh-pet-generate-result-${requestId}`);
+        lastDshGenerateError = "生成超时";
+        resolve(null);
+      }, 175_000);
+      timeout.unref?.();
+      ipcMain.once(
+        `dsh-pet-generate-result-${requestId}`,
+        (_event, payload: { text?: string; error?: string }) => {
+          clearTimeout(timeout);
+          ipcMain.removeAllListeners(`dsh-pet-generate-result-${requestId}`);
+          if (payload && typeof payload.text === "string") {
+            resolve({ text: payload.text });
+            return;
+          }
+          lastDshGenerateError = typeof payload?.error === "string" ? payload.error : "生成失败";
+          if (payload?.error) logger.warn(`[dsh-pet] generate relay error: ${payload.error}`);
+          resolve(null);
+        },
+      );
+      main.webContents.send("dsh-pet-generate-request", {
+        requestId,
+        prompt,
+        workspacePath: getConversationWorkspaceDir(),
+        ...(selection ? { selection } : {}),
+        // 带图对话：把图片作为 user 消息的一段内容交给模型（上游图片附件语义）。
+        ...(attachment
+          ? {
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    { type: "text", text: prompt },
+                    {
+                      type: "image",
+                      mediaType: attachment.mediaType,
+                      dataUrl: `data:${attachment.mediaType};base64,${attachment.data}`,
+                    },
+                  ],
+                },
+              ],
+            }
+          : {}),
+      });
+    });
+    return result?.text ?? null;
+  },
+});
+
+const petOverlayController = createPetOverlayController({
+  preloadPath: join(import.meta.dirname, "../preload/petOverlay.cjs"),
+  // 排除桌宠窗自身：窗口创建顺序不固定，不能盲取第一个窗口当主窗。
+  getMainWindow: (overlayWindow) =>
+    getMainApplicationWindows().find(
+      (win) => win !== overlayWindow && win !== dshPetOverlayController.getWindow(),
+    ) ?? null,
+  logger,
+  // 会话聚合状态单向旁路给 DSH 桌宠：两套宠物各自渲染，互不影响。
+  onStateBroadcast: (payload) => dshPetOverlayController.pushState(payload),
+});
+
+// PetControl 工具端口：zcodeAgentService（host 侧会话）经此读写宠物行为状态。
+const petControlPortForAgent = () => ({
+  getSnapshot: async () => ({
+    enabled: petOverlayController.isEnabled(),
+    petId: await petOverlayController.getPetId(),
+    behaviorState: petOverlayController.getCurrentBehaviorState(),
+  }),
+  setBehaviorState: async (state: string) => {
+    await petOverlayController.pushBehaviorState(state);
+    return {
+      enabled: petOverlayController.isEnabled(),
+      petId: await petOverlayController.getPetId(),
+      behaviorState: petOverlayController.getCurrentBehaviorState(),
+    };
+  },
+  triggerWave: async () => {
+    await petOverlayController.pushBehaviorState("wave");
+    return {
+      enabled: petOverlayController.isEnabled(),
+      petId: await petOverlayController.getPetId(),
+      behaviorState: petOverlayController.getCurrentBehaviorState(),
+    };
+  },
+});
+
 function createWindowInstance(startupBootstrap: StartupWindowBootstrap = {}) {
   const runtimeProcessEnvPreparation = takeRuntimeProcessEnvPreparation();
   const win = createWindow({
@@ -1926,6 +2088,7 @@ function createWindowInstance(startupBootstrap: StartupWindowBootstrap = {}) {
         label,
         {
           ...initMessage,
+          browserBackendIdentity: browserGuestManager.getBackendIdentity(win.id),
           zcodeBuiltinProviderConfigFilePath: resolveXCodeBuiltinProviderConfigFilePath(),
         },
         {
@@ -1950,6 +2113,9 @@ function createWindowInstance(startupBootstrap: StartupWindowBootstrap = {}) {
           onPluginTelemetry: (message) => {
             void appTelemetryCore.reportEvent(message.event).catch(() => {});
           },
+          onRemoteConversationTelemetry: (message) => {
+            void reportRemoteConversationTelemetry(message.event);
+          },
           onSessionCreateTelemetry: (message) => {
             void appTelemetryCore.reportEvent(message.event).catch(() => {});
           },
@@ -1958,6 +2124,7 @@ function createWindowInstance(startupBootstrap: StartupWindowBootstrap = {}) {
           onCronSchedulerWakeRequested: wakeCronScheduler,
           onOffPeakSchedulerWakeRequested: wakeOffPeakScheduler,
           authorizeLocalMediaPreviewPath: localMediaPreviewPathRegistry.authorize,
+          resolvePetControl: petControlPortForAgent,
           registerPluginSandbox: (input) => {
             const host = getPluginSandboxHost();
             if (!host) throw new Error("Plugin UI sandbox host is not installed.");
@@ -1967,6 +2134,13 @@ function createWindowInstance(startupBootstrap: StartupWindowBootstrap = {}) {
           // browser-use：main 用 WebContentsView+CDP 执行命令（替换 T4 占位）。
           handleBrowserExecuteRequest: ({ win: browserWin, ...request }) =>
             runBrowserCommandOnView({ win: browserWin, ...request }),
+          // 数据同步页「模型提供商」分类：最近结果与重试都以 Main 协调器的 lane 为唯一数据源。
+          providerProvisioningLanes: {
+            getStatus: (sourceServerId, laneOptions) =>
+              remoteSessionManager.getProviderProvisioningLaneStatus(sourceServerId, laneOptions),
+            retry: (sourceServerId) =>
+              remoteSessionManager.retryProviderProvisioning(sourceServerId),
+          },
         },
         {
           taskRealtime: {
@@ -2109,6 +2283,7 @@ app.whenReady().then(async () => {
       ? { registryMaxEntries: Number(process.env.XCODE_E2E_PLUGIN_SANDBOX_MAX_ENTRIES) }
       : {}),
   });
+  installBrowserLocalPreview(session.fromPartition(EMBEDDED_BROWSER_PARTITION));
   installBrowserRestoreBootstrapProtocol(
     session.fromPartition(EMBEDDED_BROWSER_PARTITION).protocol,
   );
@@ -2580,6 +2755,14 @@ app.whenReady().then(async () => {
 
   logger.info("[startup] 创建主窗口");
   await primaryWindowCoordinator.ensurePrimaryWindow("app-ready");
+  // 桌宠恢复必须在主窗创建之后：否则宠物窗会被主窗协调器误认为已存在的主窗。
+  void petOverlayController.initialize().catch((error: unknown) => {
+    logger.warn("[pet-overlay] initialize failed", error);
+  });
+  // DSH 桌宠独立初始化：与 Codex 宠物互不依赖，两套可同时开启。
+  void dshPetOverlayController.initialize().catch((error: unknown) => {
+    logger.warn("[dsh-pet] initialize failed", error);
+  });
 
   const primaryWindow = getApplicationWindowsExcludingCuaIndicator()[0];
   if (primaryWindow) {

@@ -147,14 +147,20 @@ export function getAppConfigDir(): string {
 }
 
 /**
- * GLM（唯一 agent provider）的配置目录：{dataBaseDir}/.xcode/cli。
- * Bugfix：GLM 配置改为直接读写新版 xcode-cli 的全局配置目录，不做 workspace 隔离，
- * 避免同机不同工作区配置漂移。
+ * Agent 侧用户级默认指令（个性化）文件的 home 解析。
+ * 必须与 CLI adapter（apps/zcode-cli/packages/adapters/src/context/index.ts 的
+ * resolveUserHomeDir）保持完全一致：只认 HOME/USERPROFILE。不能改用
+ * XCODE_DATA_BASE_DIR（CLI 读该文件时忽略它）或 XCODE_DESKTOP_HOME_DIR
+ * （agent 子进程不认），否则 App 写的文件和 Agent 读的文件会分叉。
  */
-export function getProviderWorkspaceConfigDir(): string {
-  return XCODE_AGENT_RUNTIME.nativeConfigDir
-    ? join(getDataBaseDir(), XCODE_AGENT_RUNTIME.nativeConfigDir)
-    : join(getDataBaseDir(), ".xcode", "cli");
+export function resolveAgentUserInstructionsHomeDir(env: NodeJS.ProcessEnv = process.env): string {
+  const envHome = env.HOME?.trim() || env.USERPROFILE?.trim();
+  return envHome && envHome.length > 0 ? envHome : homedir();
+}
+
+/** `{home}/.zcode/AGENTS.md`：用户自定义指令（个性化）的唯一事实源文件。 */
+export function getAgentUserInstructionsFilePath(env: NodeJS.ProcessEnv = process.env): string {
+  return join(resolveAgentUserInstructionsHomeDir(env), ".zcode", "AGENTS.md");
 }
 
 function readEnvValue(env: Record<string, string | undefined>, key: string): string | undefined {
@@ -328,7 +334,18 @@ export function getLegacyDeletedTaskSessionSnapshotPath(
 }
 
 /**
- * Copy the .xcode/v2 data directory from one base dir to another.
+ * GLM（唯一 agent provider）的配置目录：~/.zcode/cli。
+ * Bugfix：GLM 配置改为直接读写新版 zcode-cli 的全局配置目录，不做 workspace 隔离，
+ * 避免同机不同工作区配置漂移。
+ */
+export function getProviderWorkspaceConfigDir(): string {
+  return XCODE_AGENT_RUNTIME.nativeConfigDir
+    ? join(getDataBaseDir(), XCODE_AGENT_RUNTIME.nativeConfigDir)
+    : join(getDataBaseDir(), ".zcode", "cli");
+}
+
+/**
+ * Copy the .zcode/v2 data directory from one base dir to another.
  * Excludes setting.json and its transient atomic-write siblings — bootstrap
  * state must only live at the default homedir location.
  */

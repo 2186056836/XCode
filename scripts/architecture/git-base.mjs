@@ -1,8 +1,8 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
-import { selectDefaultBranchRef } from "../affected-unit-test-baseline.mjs";
-import { gitFileNames } from "./git-file-names.mjs";
+import { selectDefaultBranchRef } from "./default-branch.mjs";
+import { gitAddedFilesSince, gitFileNames } from "./git-file-names.mjs";
 import { applyUpstreamAdmission } from "./upstream-admission.mjs";
 
 const execFileAsync = promisify(execFile);
@@ -57,8 +57,8 @@ export async function resolveDiffBase(
   };
   const explicitRef =
     explicit ??
-    env.ZCODE_PRE_PUSH_BASE?.trim() ??
-    env.ZCODE_AFFECTED_TEST_BASE?.trim() ??
+    env.XCODE_PRE_PUSH_BASE?.trim() ??
+    env.XCODE_AFFECTED_TEST_BASE?.trim() ??
     env.ARCHITECTURE_BASE?.trim();
   if (explicitRef) {
     const chosen = await pick(explicitRef, `explicit ${explicitRef}`, true);
@@ -73,7 +73,7 @@ export async function resolveDiffBase(
     const chosen = await pick(env[key], `${key} ${env[key]}`);
     if (chosen) return chosen;
   }
-  const entries = parsePrePushInput(env.ZCODE_PRE_PUSH_STDIN ?? "");
+  const entries = parsePrePushInput(env.XCODE_PRE_PUSH_STDIN ?? "");
   if (entries.length > 0) {
     const head = await gitOut(cwd, ["rev-parse", "HEAD"]);
     const candidate =
@@ -144,17 +144,7 @@ export async function addedFilesFromGit(
   let enforced = added;
   let recent = null;
   if (since) {
-    recent = new Set(
-      await gitFileNames(cwd, [
-        "log",
-        "--diff-filter=A",
-        "--name-only",
-        "-z",
-        "--format=",
-        `--since=${since}`,
-        "HEAD",
-      ]),
-    );
+    recent = new Set(await gitAddedFilesSince(cwd, { since }));
     enforced = added.filter((file) => untrackedSet.has(file) || recent.has(file));
   }
   return applyUpstreamAdmission(cwd, {

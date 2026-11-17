@@ -1,11 +1,8 @@
-import type {
-  BrowserGuestAttachResult,
-  ChromeBrowserDataImportResult,
-  IPlatformService,
-} from "@zcode/shared";
+import type { IPlatformService } from "@zcode/shared";
 
 type DesktopBrowserPlatformBridge = Pick<
   IPlatformService,
+  | "onBrowserViewDownloadStarted"
   | "onBrowserViewReady"
   | "onBrowserViewOperation"
   | "onBrowserViewViewportChanged"
@@ -13,6 +10,7 @@ type DesktopBrowserPlatformBridge = Pick<
   | "onBrowserViewCloseTab"
   | "onBrowserViewSuspend"
   | "onBrowserViewRestore"
+  | "browserViewLoadUrl"
   | "browserViewAttachGuest"
   | "browserViewDetachGuest"
   | "browserViewCloseTab"
@@ -31,12 +29,13 @@ type DesktopBrowserPlatformBridge = Pick<
 // Rebase 集成：browser bridge 若继续内联在 renderer 入口，会让入口越过 max-lines 门禁。
 // 独立对象只做 preload 委托与旧 bridge 兼容兜底，不持有 Browser 业务状态。
 export const desktopBrowserPlatformBridge = {
-  // IPlatformService 面向多端，file 只能收敛为 unknown；Desktop preload 的 webUtils 需要真实 File。
-  getPathForFile: (file) => window.zcode.getPathForFile?.(file as File) ?? null,
+  getPathForFile: (file) => window.zcode.getPathForFile?.(file) ?? null,
   saveFile: (payload) =>
     window.zcode.saveFile?.(payload) ?? Promise.resolve({ success: false, error: "not_supported" }),
   // 条件定义而非兜底返回失败：UI 靠方法是否存在做能力检测，旧 preload 下必须保持 undefined
   printPageToPdf: window.zcode.printPageToPdf ? () => window.zcode.printPageToPdf!() : undefined,
+  onBrowserViewDownloadStarted: (handler) =>
+    window.zcode.onBrowserViewDownloadStarted?.(handler) ?? (() => {}),
   onBrowserViewReady: (handler) => window.zcode.onBrowserViewReady?.(handler) ?? (() => {}),
   onBrowserViewOperation: (handler) => window.zcode.onBrowserViewOperation?.(handler) ?? (() => {}),
   onBrowserViewViewportChanged: (handler) =>
@@ -46,13 +45,10 @@ export const desktopBrowserPlatformBridge = {
   onBrowserViewCloseTab: (handler) => window.zcode.onBrowserViewCloseTab?.(handler) ?? (() => {}),
   onBrowserViewSuspend: (handler) => window.zcode.onBrowserViewSuspend?.(handler) ?? (() => {}),
   onBrowserViewRestore: (handler) => window.zcode.onBrowserViewRestore?.(handler) ?? (() => {}),
+  browserViewLoadUrl: (payload) => window.zcode.browserViewLoadUrl!(payload),
   browserViewAttachGuest: (payload) =>
     window.zcode.browserViewAttachGuest?.(payload) ??
-    Promise.resolve<BrowserGuestAttachResult>({
-      ok: false,
-      reason: "not-found",
-      recoveryRequested: false,
-    }),
+    Promise.resolve({ ok: false, reason: "not-found", recoveryRequested: false }),
   browserViewDetachGuest: (payload) =>
     window.zcode.browserViewDetachGuest?.(payload) ?? Promise.resolve(false),
   browserViewCloseTab: (payload) =>
@@ -69,7 +65,7 @@ export const desktopBrowserPlatformBridge = {
     window.zcode.browserViewUpdateViewport?.(payload) ?? Promise.resolve(),
   importChromeBrowserData: (options) =>
     window.zcode.importChromeBrowserData?.(options) ??
-    Promise.resolve<ChromeBrowserDataImportResult>({
+    Promise.resolve({
       success: false,
       cookies: { imported: 0, skipped: 0, failed: 0 },
       localStorage: {
@@ -78,8 +74,7 @@ export const desktopBrowserPlatformBridge = {
         originsSkipped: 0,
         originsFailed: 0,
       },
-      // 旧 preload 没有导入能力；用契约里的「不支持」错误码，UI 与真实失败路径展示一致。
-      error: "chrome_import_not_supported",
+      error: "unsupported",
     }),
   clearEmbeddedBrowserData: (mode) =>
     window.zcode.clearEmbeddedBrowserData?.(mode) ??

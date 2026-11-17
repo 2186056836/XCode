@@ -12,11 +12,11 @@ const desktop = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const root = resolve(desktop, "../..");
 const output = await mkdtemp(join(tmpdir(), "zcode-mcp-host-e2e-"));
 const fixture = join(desktop, "scripts/mcp-apps-host-fixture");
-const showcaseServer = process.env.ZCODE_SHOWCASE_SERVER;
+const showcaseServer = process.env.XCODE_SHOWCASE_SERVER;
 if (process.argv.includes("--showcase-only")) {
   if (!showcaseServer)
     throw new Error(
-      "Set ZCODE_SHOWCASE_SERVER to the built Showcase dist/server.mjs from zcode-plugins",
+      "Set XCODE_SHOWCASE_SERVER to the built Showcase dist/server.mjs from zcode-plugins",
     );
   await access(showcaseServer);
 }
@@ -168,7 +168,7 @@ await writeFile(
 );
 await writeFile(
   join(output, "managed.html"),
-  '<!doctype html><meta charset="utf-8"><style>.h-full{height:100%}.w-full{width:100%}.flex{display:flex}.flex-col{flex-direction:column}.flex-1{flex:1}.min-h-0{min-height:0}.overflow-y-auto{overflow-y:auto}.relative{position:relative}</style><body><div id="root"></div><script src="managed.js"></script>',
+  '<!doctype html><meta charset="utf-8"><style>.contents{display:contents}.h-full{height:100%}.w-full{width:100%}.flex{display:flex}.flex-col{flex-direction:column}.flex-1{flex:1}.min-h-0{min-height:0}.overflow-y-auto{overflow-y:auto}.relative{position:relative}</style><body><div id="root"></div><script src="managed.js"></script>',
 );
 const electron = require("electron");
 const modes =
@@ -206,9 +206,9 @@ for (const mode of modes) {
   await new Promise((accept, reject) => {
     const env = { ...process.env };
     if (process.argv.includes("--photocraft-background-only")) {
-      if (!env.ZCODE_PHOTOCRAFT_SERVER)
-        throw new Error("Set ZCODE_PHOTOCRAFT_SERVER to the built PhotoCraft dist/server.mjs");
-      env.ZCODE_PHOTOCRAFT_ONLY = "1";
+      if (!env.XCODE_PHOTOCRAFT_SERVER)
+        throw new Error("Set XCODE_PHOTOCRAFT_SERVER to the built PhotoCraft dist/server.mjs");
+      env.XCODE_PHOTOCRAFT_ONLY = "1";
     }
     delete env.ELECTRON_RUN_AS_NODE;
     const child = spawn(
@@ -240,7 +240,7 @@ for (const mode of modes) {
         child.kill("SIGKILL");
         reject(new Error(`Electron fixture timed out (${mode})`));
       },
-      mode === "background" ? (process.env.ZCODE_PHOTOCRAFT_SERVER ? 300_000 : 180_000) : 90_000,
+      mode === "background" ? (process.env.XCODE_PHOTOCRAFT_SERVER ? 300_000 : 180_000) : 90_000,
     );
     child.on("error", reject);
     child.on("exit", (code) => {

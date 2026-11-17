@@ -8,17 +8,23 @@ import {
   createTopicResourcePeers,
 } from "@zcode/services/node";
 import { IXCodeAgentService } from "@zcode/services";
-import { XCODE_VERSION } from "@zcode/shared";
+import { XCODE_APP_VERSION_ENV, XCODE_VERSION } from "@zcode/shared";
 import { createCoreHttpServer } from "./http.js";
 import { createIngressToken } from "./ingressToken.js";
 import { installParentDisconnectHandler } from "./parentDisconnect.js";
 import { resolveCoreServerId } from "./serverIdentity.js";
 import { createTaskActivityTracker } from "./taskActivityTracker.js";
+import { CORE_HEARTBEAT_INTERVAL_MS } from "../contracts.js";
 import { resolveServerLayout } from "../runtime/paths.js";
 
 declare const __XCODE_BUILTIN_PROVIDER_CONFIG_JSON__: string | undefined;
 
 export async function runServerCore(generation: number): Promise<void> {
+  // Bug 原因：Agent 的模型请求头从 XCODE_APP_VERSION 读 App 版本，缺失时回退到 CLI 包版本
+  // （0.17.0）。本地由 Desktop main 注入；远端 Core 由 SSH/WSL/Docker exec → Supervisor fork 拉起，
+  // 整条链都没有这个 env，远端请求于是报 0.17.0（按客户端版本拦截的网关会拒绝）。升级时旧 Supervisor
+  // 会拉起新 release 的 Core，所以只能由 Core 用自身编译期版本写入，Agent spawn 时继承。
+  process.env[XCODE_APP_VERSION_ENV] = XCODE_VERSION;
   let shutdown: ((reason: string) => Promise<void>) | undefined;
   let parentDisconnected = false;
   let disposeParentDisconnectHandler = (): void => undefined;
@@ -26,7 +32,7 @@ export async function runServerCore(generation: number): Promise<void> {
     if (shutdown) void shutdown("parent-disconnected");
     else parentDisconnected = true;
   });
-  const layout = resolveServerLayout(process.env.ZCODE_SERVER_ROOT?.trim());
+  const layout = resolveServerLayout(process.env.XCODE_SERVER_ROOT?.trim());
   const topicResourcePeers = createTopicResourcePeers();
   const explicitXCodeBuiltinProviderConfigFilePath =
     process.env[XCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]?.trim();
@@ -81,8 +87,8 @@ export async function runServerCore(generation: number): Promise<void> {
     host: http.host,
     port: http.port,
     version: XCODE_VERSION,
-    ...(process.env.ZCODE_SERVER_RELEASE_ID?.trim()
-      ? { releaseId: process.env.ZCODE_SERVER_RELEASE_ID.trim() }
+    ...(process.env.XCODE_SERVER_RELEASE_ID?.trim()
+      ? { releaseId: process.env.XCODE_SERVER_RELEASE_ID.trim() }
       : {}),
     generation,
   });
@@ -129,7 +135,7 @@ export async function runServerCore(generation: number): Promise<void> {
       .finally(() => {
         heartbeatInFlight = undefined;
       });
-  }, 10_000);
+  }, CORE_HEARTBEAT_INTERVAL_MS);
   shutdown = async (reason: string): Promise<void> => {
     if (shutdownStarted) return;
     shutdownStarted = true;

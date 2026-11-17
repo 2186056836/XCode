@@ -71,11 +71,12 @@ function getStatusCodeFromError(error: unknown, seen: WeakSet<object>): number |
 }
 
 export function getApiCallResponseBody(error: unknown): unknown {
-  if (!APICallError.isInstance(error)) {
+  const apiError = findApiCallError(error, new WeakSet<object>());
+  if (!apiError) {
     return undefined;
   }
 
-  const { responseBody } = error;
+  const { responseBody } = apiError;
   if (typeof responseBody === "string") {
     try {
       return JSON.parse(responseBody) as unknown;
@@ -88,7 +89,25 @@ export function getApiCallResponseBody(error: unknown): unknown {
 }
 
 export function getApiCallErrorData(error: unknown): unknown {
-  return APICallError.isInstance(error) ? error.data : undefined;
+  return findApiCallError(error, new WeakSet<object>())?.data;
+}
+
+/**
+ * 沿 cause 链找 AI SDK 的 APICallError。流终止错误（TerminalStreamChunkError、
+ * AiSdkModelAdapterError 等包装器）只复制 message，真实响应体与业务码在链底的
+ * APICallError 上；不沿链走的话，SSE 流内业务错误（如额度耗尽 1005）的 providerCode
+ * 会被包装层吞掉，换号/分类/错误码展示全部失明。
+ */
+function findApiCallError(error: unknown, seen: WeakSet<object>): APICallError | undefined {
+  let current: unknown = error;
+  for (let depth = 0; depth < 8; depth += 1) {
+    if (current === null || typeof current !== "object") return undefined;
+    if (APICallError.isInstance(current)) return current;
+    if (seen.has(current)) return undefined;
+    seen.add(current);
+    current = (current as { cause?: unknown }).cause;
+  }
+  return undefined;
 }
 
 export function getResponseHeaders(error: unknown): Record<string, string> | undefined {

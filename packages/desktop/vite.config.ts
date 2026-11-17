@@ -150,7 +150,23 @@ function stripViteRequestQuery(id: string) {
   return id.split("?")[0] ?? id;
 }
 
-export default defineConfig(({ mode }) => {
+function createReactScanDevPlugin(): Plugin {
+  const scriptPath = normalizePathForVite(desktopRequire.resolve("react-scan/dist/auto.global.js"));
+  return {
+    name: "zcode:react-scan",
+    apply: "serve",
+    transformIndexHtml: {
+      order: "post",
+      handler(_html, context) {
+        if (context.path !== "/index.html") return [];
+        // Scan 必须先安装 hook，再加载 React；普通 head script 保证顺序，避免异步导入漏掉首次挂载。
+        return [{ tag: "script", attrs: { src: `/@fs/${scriptPath}` }, injectTo: "head-prepend" }];
+      },
+    },
+  };
+}
+
+export default defineConfig(({ command, mode }) => {
   // `.env*` 只提供链接常量；当前产品环境由启动脚本或 CI 注入 XCODE_ENV。
   const env = loadEnv(mode, "../..", "");
   const repoRoot = resolve(__dirname, "../..");
@@ -175,6 +191,10 @@ export default defineConfig(({ mode }) => {
   const codingPlanWebviewOrigin =
     env.VITE_CODING_PLAN_WEBVIEW_ORIGIN ?? process.env.VITE_CODING_PLAN_WEBVIEW_ORIGIN ?? "";
   const plugins = [
+    // 仅开发服务器装配，所有 build 都不注入；后端 XCODE_ENV 不决定是否开启开发工具。
+    ...(command === "serve" && mode !== "production" && env.XCODE_REACT_SCAN !== "0"
+      ? [createReactScanDevPlugin()]
+      : []),
     ...(e2eCoverageEnabled ? [createE2EUIRendererCoveragePlugin(repoRoot)] : []),
     pdfJsCMapsPlugin(),
     react(),
@@ -202,7 +222,7 @@ export default defineConfig(({ mode }) => {
     server: { port: 5174, strictPort: true },
     define: {
       __XCODE_VERSION__: JSON.stringify(buildMetadata.appVersion),
-      __ZCODE_MIN_COMPATIBLE_VERSION__: JSON.stringify(buildMetadata.minCompatibleVersion),
+      __XCODE_MIN_COMPATIBLE_VERSION__: JSON.stringify(buildMetadata.minCompatibleVersion),
       __XCODE_COMMIT__: JSON.stringify(buildMetadata.buildCommitId),
       __XCODE_BUILD_TIME__: JSON.stringify(buildMetadata.buildTime),
       __XCODE_ENV__: JSON.stringify(zcodeEnv),
@@ -213,7 +233,9 @@ export default defineConfig(({ mode }) => {
       // 兼容旧 renderer 读取名；新代码统一读 VITE_XCODE_BASE_URL。
       "import.meta.env.VITE_XCODE_ENDPOINT_ORIGIN": JSON.stringify(zcodeEndpointOrigin),
       "import.meta.env.VITE_CODING_PLAN_WEBVIEW_ORIGIN": JSON.stringify(codingPlanWebviewOrigin),
-      "import.meta.env.VITE_REWARDS_WEBVIEW_ORIGIN": JSON.stringify(env.VITE_REWARDS_WEBVIEW_ORIGIN ?? process.env.VITE_REWARDS_WEBVIEW_ORIGIN ?? ""),
+      "import.meta.env.VITE_REWARDS_WEBVIEW_ORIGIN": JSON.stringify(
+        env.VITE_REWARDS_WEBVIEW_ORIGIN ?? process.env.VITE_REWARDS_WEBVIEW_ORIGIN ?? "",
+      ),
       // Bugfix: E2E store bridge 只能由 WDIO 专用变量打开，避免把 XCODE_ENV=test 产品环境误当成测试运行态。
       "import.meta.env.VITE_XCODE_E2E_STORE_BRIDGE": JSON.stringify(
         e2eStoreBridgeEnabled ? "1" : "",

@@ -1,3 +1,4 @@
+import { createWorkspaceMcpTrust } from "../workspace-mcp-trust/index.js";
 import { subagentProfilesFromSnapshot } from "../runtime-subagents/index.js";
 import { CliDefaultSelection } from "./cli-default-selection.js";
 import { isAbsolute, join, resolve } from "node:path";
@@ -30,10 +31,12 @@ import {
 import { createModelTelemetry } from "@zcode/telemetry";
 import {
   createRootTraceContext,
+  ModelRequestSessionFeature,
   traceContextToLogContext,
   type TraceContext,
   createSessionId,
   createSessionEvent,
+  SessionEventType,
   type ExecutionShellSelection,
   type MessageId,
 } from "@zcode/contracts";
@@ -73,6 +76,7 @@ import { resolvePluginRuntimeFeatures } from "./plugin-runtime-features.js";
 import { createSessionFacade } from "./session-facade.js";
 import { resolveAppRuntimeConfig, runtimeConfigLogContext } from "./runtime-config.js";
 import { resolveBundledSkillRoots } from "./bundled-skills.js";
+import { resolveMcpNodeFallbackProvider } from "./mcp-node-fallback.js";
 import { collectDynamicWorkflowDisabledSkillPaths } from "./dynamic-workflow-gate.js";
 import { createWorkspaceHookRuntimeSecurity } from "./workspace-hook-trust.js";
 import { createScriptWorkflowBridge } from "./script-workflow-methods.js";
@@ -87,6 +91,11 @@ import { createModelCatalogPort } from "./model-catalog-port.js";
 import { createDynamicWorkflowRunProgressSink } from "./dynamic-workflow-run-progress-sink.js";
 import { createScriptWorkflowAgentRuntime } from "./script-workflow-child-runtime.js";
 import { workflowActorModelPolicy } from "./workflow-actor-model.js";
+import {
+  workflowActorInteractionDescription,
+  workflowActorPermissionPolicy,
+} from "./workflow-actor-permission.js";
+import { startWorkflowQuotaAutoResume } from "./dynamic-workflow-quota-resume.js";
 import { workflowActorToolPolicy } from "./workflow-actor-tools.js";
 import {
   createNodeReplBrowserBroker,
@@ -95,10 +104,13 @@ import {
 } from "./node-repl-browser-broker.js";
 import { resolveBuiltInNodeReplMcpServers } from "./built-in-node-repl.js";
 import { resolveXCodeCustomCommandPrompt } from "../custom-command-prompt.js";
+import { resolveXCodeBuiltinPromptCommandInvocation } from "../builtin-prompt-command.js";
+import { BUILTIN_WORKFLOW_COMMAND_NAME } from "../builtin-workflow-command.js";
 import { resolveXCodeBuiltinPromptCommand } from "../builtin-prompt-command.js";
 import { collectDisabledPaths } from "../skill-command-overrides.js";
 import { loadPluginAgentProfiles, loadXCodeAgentProfiles } from "../subagents.js";
 import { createRuntimeAiSdkModelExecutionConfig } from "../model-config.js";
+import { withOfficialCommandEnv } from "../official-command-endpoint/index.js";
 import { ApiProviderModelRuntime } from "./provider-registry-model-runtime.js";
 import {
   completeAppStartup,
@@ -391,7 +403,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       startupTimer,
       storageRoot,
     });
-    const mcpPort =
+    const rawMcpPort =
       options.mcpPort ??
       (runtimeConfig.mcp?.enabled === false
         ? undefined
@@ -405,10 +417,33 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
               noProxy: configResult.config.network.noProxy,
               caCertFile: configResult.config.network.caCertFile,
             },
+            nodeFallback: resolveMcpNodeFallbackProvider({ cliStorageRoot, logger }),
             workingDirectory,
           })));
+    const mcpPort = rawMcpPort
+      ? createWorkspaceMcpTrust({
+          workingDirectory,
+          workspaceIdentity: options.runtimeConfig?.memory?.workspaceIdentity,
+          userConfigPath: options.userConfigPath,
+          projectConfigPath: options.projectConfigPath,
+          skipUserConfig: options.skipUserConfig,
+          env: options.env,
+          onAdmissionChanged: async (payload) => {
+            if (!runtime) return;
+            await runtime.appendEvent(
+              createSessionEvent(
+                SessionEventType.WorkspaceMcpAdmissionUpdated,
+                sessionId,
+                payload,
+                { traceId: traceContext.traceId },
+              ),
+              traceContext,
+            );
+          },
+        }).guard(rawMcpPort)
+      : undefined;
     const ownsMcpPort = options.mcpPort === undefined && mcpPort !== undefined;
-    const executionPort =
+    const baseExecutionPort =
       options.executionPort ??
       createNodeExecutionAdapter({
         onToolExecResource: options.onToolExecResource,
@@ -421,6 +456,20 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
         bashOutputTempDir: tmpdir(),
         processEnv: options.env ?? process.env,
       });
+    // 本 app 只服务一个 session：它的子进程统一带上这个 session 的官方命令端点 env。
+    const officialCommandEnv = options.officialCommandEnv;
+    const officialCommandIdentity = options.runtimeConfig?.memory?.workspaceIdentity;
+    const officialCommandWorkspace = {
+      workspacePath: workingDirectory,
+      ...(officialCommandIdentity ? { workspaceIdentity: officialCommandIdentity } : {}),
+    };
+    const executionPort = officialCommandEnv
+      ? withOfficialCommandEnv(
+          baseExecutionPort,
+          () => officialCommandEnv(sessionId, officialCommandWorkspace),
+          logger,
+        )
+      : baseExecutionPort;
     const ownsExecutionPort = options.executionPort === undefined;
     const pdfDocumentPort =
       options.pdfDocumentPort ?? createPopplerPdfDocumentAdapter({ executionPort });
@@ -513,6 +562,16 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
           traceContext: resumeTraceContext,
         });
         await runtime.activatePausedTargetAfterResume(resumeTraceContext);
+        // SessionResumed 已清理旧投影；即使声明未变也要重新发布当前准入。
+        try {
+          await mcpPort?.refreshWorkspaceTrustAdmission?.(true);
+        } catch (error) {
+          logger.warn("MCP trust admission publication failed after resume", {
+            event: "mcp.trust.admission.failed",
+            sessionId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
         resumePrepared = true;
         return { ...result, modelSelection };
       } finally {
@@ -750,6 +809,9 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       agentTelemetry: modelTelemetry.agentExecution,
       // 主代理的模型请求过治理器的 observer：立即放行，但让治理器看见它的 429 / 成功。
       modelRequestAdmission: workflowConcurrencyGovernor.observer(),
+      // 主代理的 subagent 不是 observer：和 workflow run 一样排队、看冷却，同一父会话共用一条队列。
+      subagentModelRequestAdmission: (parentSessionId) =>
+        workflowConcurrencyGovernor.sessionSubagents(parentSessionId),
       eventStore: options.eventStore ?? createInMemorySessionEventStore(),
       sessionStore,
       sessionMailboxPort,
@@ -822,15 +884,30 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       cliDefaultSelection,
       artifactStore,
       customCommandPromptResolver: async (text, resolverOptions) => {
-        const builtinPrompt = resolveXCodeBuiltinPromptCommand(text, {
-          // 动态工作流关闭时内置 `/workflow` 不得展开。目录侧已经把它从 `/` 面板
-          // 剔除，但用户仍可手打命令名，两条路径必须给出同一个结论。TUI 缺席时不设门禁；
-          // headless 按 --enable-workflow 显式取值，见 runtimeConfig 字段注释。
+        const builtin = resolveXCodeBuiltinPromptCommandInvocation(text, {
+          // 动态工作流灰度关闭时内置 `/workflow` 不得展开（DWG-03）。目录侧已经把它从 `/` 面板
+          // 剔除，但用户仍可手打命令名，两条路径必须给出同一个结论。独立 CLI 的 TUI 与 headless
+          // 按 --workflow-mode 显式取值；缺席（进程内嵌入方）不设门禁，见 runtimeConfig 字段注释。
           dynamicWorkflowEnabled: runtimeConfig.dynamicWorkflowEnabled,
           workingDirectory,
         });
-        if (builtinPrompt !== undefined) {
-          return builtinPrompt;
+        if (builtin !== undefined) {
+          if (builtin.name === BUILTIN_WORKFLOW_COMMAND_NAME) {
+            // `/workflow` 的展开处就是 onDemand 会话的激活点（launch.md「On demand: activation」）：
+            // 它先于 executeTurn，本轮首个模型请求就带着十个工具。alwaysOn / 已激活会话里是 no-op。
+            // 问的是 runtime 而不是闭包里的 runtimeConfig——构造时 config 被拷贝，闭包看不到翻转。
+            await runtime?.activateDynamicWorkflowTools({
+              source: "command",
+              traceContext: resolverOptions?.traceContext ?? traceContext,
+            });
+            // 同一展开点打会话能力标签（docs/design/v2/model/session-features-header.md）；
+            // 灰度关闭时命令不展开、不进入本分支，所以不打。
+            runtime?.recordSessionFeature({
+              feature: ModelRequestSessionFeature.WorkflowCmd,
+              traceContext: resolverOptions?.traceContext ?? traceContext,
+            });
+          }
+          return builtin.prompt;
         }
         return await resolveXCodeCustomCommandPrompt(text, {
           additionalDirectories: options.additionalDirectories,
@@ -876,13 +953,46 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       traceContext,
       workingDirectory,
     });
+    // 额度停止的 run 到点自动续跑（dynamic-workflow-quota-resume.ts）。续跑与 UI 的「恢复」同一条路
+    // （port.resume → 重臂追踪：终态通知、后台任务条目、常驻护栏），外加统一执行边界：冷启动补做时
+    // 会话可能还没从存储恢复。
+    const quotaAutoResume =
+      dynamicWorkflowRunPort === undefined ||
+      dynamicWorkflowJournal === undefined ||
+      typeof dynamicWorkflowRunPort.resume !== "function"
+        ? undefined
+        : startWorkflowQuotaAutoResume({
+            journal: dynamicWorkflowJournal,
+            logger,
+            parentSessionId: sessionId,
+            resume: async (runId) => {
+              await prepareUserExecutionBoundary({ traceContext });
+              const result = await dynamicWorkflowRunPort.resume!(runId);
+              if (result.ok) {
+                await getRuntime().trackResumedDynamicWorkflowRun({
+                  runId: result.runId,
+                  ...(result.toolCallId === undefined ? {} : { toolCallId: result.toolCallId }),
+                  traceContext,
+                });
+              }
+              return result;
+            },
+            subscribeRunSettled: (listener) => dynamicWorkflowRunPort.subscribeRunSettled(listener),
+          });
     const sessionFacade = createSessionFacade({
+      closeScriptWorkflowRuns: () => scriptWorkflowFacade.closeScriptWorkflowRuns(),
       cliDefaultSelection,
       // App 关闭时停下本会话拥有的 dwf run：
       // 引擎活在本 App 的闭包里，关掉 App 而不停它，journal 行会停在 running 等下一次孤儿收敛。
       ...(dynamicWorkflowRunPort === undefined
         ? {}
-        : { closeDynamicWorkflowRuns: () => dynamicWorkflowRunPort.close() }),
+        : {
+            closeDynamicWorkflowRuns: () => {
+              // 先停自动续跑：关闭中的 service 拒绝 resume，到点的定时器不该再去撞它。
+              quotaAutoResume?.dispose();
+              return dynamicWorkflowRunPort.close();
+            },
+          }),
       configResult,
       configuredMcpServers,
       ...(options.configuredDefaultModelSelection
@@ -1029,6 +1139,8 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       // session 的 coordinator 并重发 admission 状态（详见 types.ts 注释）。
       reloadWorkspaceHookTrust: () =>
         workspaceHookRuntimeSecurity?.reloadTrust() ?? Promise.resolve(),
+      reloadWorkspaceMcpTrust: () =>
+        mcpPort?.refreshWorkspaceTrustAdmission?.() ?? Promise.resolve(),
       setModelIoFullRetentionEnabled: (enabled) =>
         modelAdapter.setModelIoFullRetentionEnabled(enabled),
       readToolResultArtifact: (uri) =>
@@ -1146,7 +1258,15 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
           try {
             providerModelRuntime?.dispose();
           } finally {
-            await modelTelemetry.shutdown();
+            try {
+              await modelTelemetry.shutdown();
+            } catch (error) {
+              // 遥测失败不表示 session 仍占用运行资源，也不能覆盖真正的关闭错误。
+              logger.warn("Session telemetry shutdown failed", {
+                event: "session.telemetry_shutdown.failed",
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
           }
         }
       },

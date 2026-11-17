@@ -1,7 +1,10 @@
 /* eslint-disable max-lines -- Coding Plan provider 需要集中维护 BigModel 支付宝与 Z.ai Stripe/PayPal 接口映射，拆分会让共享鉴权和响应解包更难追踪。 */
 import { buildXCodeSourceHeaders } from "../providers/sourceHeaders.js";
 import { ensureDeviceMidForAccount } from "../device/deviceMid.js";
-import { buildZaiStartPlanBalanceUrl, type ZaiStartPlanBalanceEnvelope } from "../model-provider/zaiStartPlanBilling.js";
+import {
+  buildZaiStartPlanBalanceUrl,
+  type ZaiStartPlanBalanceEnvelope,
+} from "../model-provider/zaiStartPlanBilling.js";
 import type {
   ApiClient,
   ApiRequestInit,
@@ -55,6 +58,7 @@ import type {
   XCodeModelContextBudgetStrategy,
   DynamicWorkflowClientConfig,
   MarketingCaptchaConfig,
+  RequestVerificationConfig,
   MarketingClaimPlanResponse,
   MarketingManualPlanPreview,
   MarketingManualPlanPreviewResponse,
@@ -70,7 +74,7 @@ import {
   resolveBigModelApiOrigin,
   resolveZaiBusinessBaseUrl,
   ZAI_PROVIDER_ID,
-  XCODE_VERSION,
+  getPlatformAppVersion,
   DEFAULT_XCODE_MODEL_CONTEXT_BUDGET_STRATEGY,
   createDynamicWorkflowClientConfig,
   normalizeDynamicWorkflowMode,
@@ -141,6 +145,12 @@ interface BigModelCodingPlanSubscriptionProviderOptions {
   apiClient: ApiClient;
   credentialService: Pick<ICredentialService, "load">;
   resolveOffPeakModelSelectionView?: () => Promise<ModelSelectionView>;
+  /**
+   * 账号级代理出口：按 accountRef（`zai:xxx` / `bigmodel:xxx`）解析该账号绑定的
+   * 代理池并返回对应出口的 ApiClient；未传 accountRef 时解析当前激活账号。
+   * 缺省时全部回落到全局 `apiClient`（只认全局 httpProxy）。
+   */
+  accountApiClient?: (accountRef?: string) => ApiClient;
 }
 
 interface TeamPlanProjectApiKeyPrewarmStatus {
@@ -171,6 +181,7 @@ export class BigModelCodingPlanSubscriptionProvider {
   protected readonly apiClient: ApiClient;
   protected readonly credentialService: Pick<ICredentialService, "load">;
   private readonly resolveOffPeakModelSelectionView?: () => Promise<ModelSelectionView>;
+  private readonly accountApiClient?: (accountRef?: string) => ApiClient;
   private clientConfigSnapshot: XCodeClientConfigEnvelope | null = null;
   private clientConfigSnapshotExpiresAt = 0;
   private clientConfigRequest: Promise<XCodeClientConfigEnvelope> | null = null;
@@ -179,6 +190,16 @@ export class BigModelCodingPlanSubscriptionProvider {
     this.apiClient = options.apiClient;
     this.credentialService = options.credentialService;
     this.resolveOffPeakModelSelectionView = options.resolveOffPeakModelSelectionView;
+    this.accountApiClient = options.accountApiClient;
+  }
+
+  /**
+   * 领取/权益类请求的出口：账号绑定了代理池就走池，否则回落全局 apiClient。
+   * 之前这些请求清一色走全局 apiClient，账号在账号管理里设置的「代理出口」
+   * 对它们完全不生效。
+   */
+  protected clientForAccount(accountRef?: string): ApiClient {
+    return this.accountApiClient?.(accountRef) ?? this.apiClient;
   }
 
   // ─────────── family 维度抽象（供 ZaiCodingPlanSubscriptionProvider 覆盖）───────────
@@ -304,9 +325,13 @@ export class BigModelCodingPlanSubscriptionProvider {
    * 走 ZCode 平台 JWT 鉴权，与 marketing/touch 同一通道身份。
    */
   async getManualClaimPlanPreviews(): Promise<MarketingManualPlanPreview[]> {
+    // 官方 3.17.2 getManualClaimPlanPreviews 同款 query：app_version + platform。
+    const previewUrl = new URL(XCODE_MANUAL_PLAN_PREVIEW_URL);
+    previewUrl.searchParams.set("app_version", getPlatformAppVersion());
+    previewUrl.searchParams.set("platform", resolveClientPlatformKey());
     const payload = await readCodingPlanApiJson<MarketingManualPlanPreviewResponse>(
-      this.apiClient,
-      XCODE_MANUAL_PLAN_PREVIEW_URL,
+      this.clientForAccount(),
+      previewUrl.href,
       {
         method: "GET",
         timeoutMs: REQUEST_TIMEOUT_MS,
@@ -338,32 +363,62 @@ export class BigModelCodingPlanSubscriptionProvider {
       headers["X-Aliyun-Captcha-Verify-Region"] = input.captchaRegion;
     }
     const envelope = await readCodingPlanApiJson<{
-      code: number;
+      code: number | string;
       msg?: string;
-      data?: { message?: string; server_time?: number; [key: string]: unknown };
+      data?: {
+        message?: string;
+        server_time?: number;
+        plan?: { user_plan_id?: string; plan_id?: string; status?: string };
+        [key: string]: unknown;
+      };
       logid?: string;
-    }>(this.apiClient, XCODE_MANUAL_PLAN_CLAIM_URL, {
+    }>(this.clientForAccount(input.accountRef), XCODE_MANUAL_PLAN_CLAIM_URL, {
       method: "POST",
       timeoutMs: REQUEST_TIMEOUT_MS,
       headers,
       body: JSON.stringify({ plan_id: input.planId }),
     });
+    // 官方 3.17.2 claimManualPlan 同口径：code 可能是数字或纯数字字符串；
+    // 成功还要求 data.plan 存在（code=0 但无 plan 视为失败，否则会把「没领到」当成功）。
+    const rawCode = envelope.code;
+    const code =
+      typeof rawCode === "number"
+        ? rawCode
+        : typeof rawCode === "string" && /^\d+$/.test(rawCode)
+          ? Number(rawCode)
+          : -1;
+    const plan = envelope.data?.plan;
+    if (code !== 0 || !plan) {
+      return {
+        success: false,
+        code,
+        message: envelope.data?.message || envelope.msg,
+      };
+    }
     return {
-      success: envelope.code === 0,
-      code: envelope.code,
-      message: envelope.data?.message || envelope.msg,
+      success: true,
+      code,
+      message: envelope.msg?.trim() || undefined,
+      plan: {
+        userPlanId: plan.user_plan_id?.trim() ?? "",
+        planId: plan.plan_id?.trim() || input.planId,
+        status: plan.status?.trim() ?? "",
+      },
     };
   }
 
   /** 按账号查 Start Plan 名下计划（billing/balance，一键领取「已有计划」判定）。 */
-  async getManualClaimPlanPlans(input: {
-    accountRef?: string;
-  }): Promise<{
-    plans: Array<{ planId?: string; name?: string; status?: string; endsAt?: number | string | null }>;
+  async getManualClaimPlanPlans(input: { accountRef?: string }): Promise<{
+    plans: Array<{
+      planId?: string;
+      name?: string;
+      status?: string;
+      endsAt?: number | string | null;
+    }>;
   }> {
     const headers = await this.loadZcodePlatformAuthHeaders(input.accountRef);
     const envelope = await readCodingPlanApiJson<ZaiStartPlanBalanceEnvelope>(
-      this.apiClient,
+      this.clientForAccount(input.accountRef),
       buildZaiStartPlanBalanceUrl(),
       { method: "GET", timeoutMs: REQUEST_TIMEOUT_MS, headers },
     );
@@ -386,6 +441,18 @@ export class BigModelCodingPlanSubscriptionProvider {
     return unwrapClientConfigCaptcha(payload);
   }
 
+  /**
+   * 1103 新增：请求安全校验配置。与 getCaptchaConfig 同源（client/configs 的 captcha 字段），
+   * 但按官方语义做「坏配置即失败」的校验（HTTP 成功不等于配置有效）。
+   */
+  async getRequestVerificationConfig(): Promise<RequestVerificationConfig | null> {
+    const payload = await this.getClientConfigs();
+    if ((payload.code !== undefined && payload.code !== 0) || payload.success === false) {
+      throw new Error("Request verification configuration is invalid");
+    }
+    return (payload.data?.configs?.captcha ?? null) as RequestVerificationConfig | null;
+  }
+
   private async loadZcodePlatformAuthHeaders(accountRef?: string): Promise<Record<string, string>> {
     // 一键领取：source 头（X-Device-Mid/X-ZCode-App-Version 等）跟随目标账号，
     // 否则 apiClient 注入的激活账号 mid 与该账号 JWT 不配对会被服务端拒绝。
@@ -396,9 +463,7 @@ export class BigModelCodingPlanSubscriptionProvider {
     // 一键领取按账号凭据直领：accountRef 给定时读 per-account JWT（zcodejwt:{ref}，
     // 与 oauthCredentialRepo 的 accountZcodeJwtKey 同 key 约定），不读全局镜像、不切激活账号。
     const token = (
-      await this.credentialService.load(
-        accountRef ? `zcodejwt:${accountRef}` : XCODE_JWT_TOKEN_KEY,
-      )
+      await this.credentialService.load(accountRef ? `zcodejwt:${accountRef}` : XCODE_JWT_TOKEN_KEY)
     )?.trim();
     if (!token) {
       throw new Error("zcode_jwt_required");
@@ -739,7 +804,7 @@ export class BigModelCodingPlanSubscriptionProvider {
     // client/configs 和其他 XCode 平台接口必须共享运行时 endpoint；
     // E2E/测试环境会通过 XCODE_BASE_URL 指向本地 mock，硬编码线上域名会让套餐状态不可控。
     const url = resolveCodingPlanClientConfigUrl(process.env);
-    url.searchParams.set("app_version", XCODE_VERSION);
+    url.searchParams.set("app_version", getPlatformAppVersion());
     url.searchParams.set("platform", resolveClientPlatformKey());
     // StartPlanCard 和套餐列表都来自同一个 client/configs。
     // 同屏分别读取 preview/products 时必须合并请求，避免未登录设置页重复打远端配置。
@@ -1382,7 +1447,11 @@ function unwrapClientConfigBillingDiscount(
 
   // 官方语义：至少一个 locale 的 badgeBody 存在才算活跃（active），否则前端隐藏。
   const active = Object.values(discount).some(
-    (text) => text && typeof text === "object" && typeof (text as { badgeBody?: unknown }).badgeBody === "string" && ((text as { badgeBody: string }).badgeBody).trim() !== "",
+    (text) =>
+      text &&
+      typeof text === "object" &&
+      typeof (text as { badgeBody?: unknown }).badgeBody === "string" &&
+      (text as { badgeBody: string }).badgeBody.trim() !== "",
   );
   if (!active) {
     return null;

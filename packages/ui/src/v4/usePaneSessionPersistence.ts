@@ -57,7 +57,12 @@ export function useRemotePaneSessionLookup(
     },
     [resolution.services, workspacePath, workspaceIdentity],
   );
-  return resolution.connectionKind === "remote-ready" ? lookup : undefined;
+  // 本地连接同样提供权威查询：数据根切换/换机后，持久化的 last-session 指向的会话
+  // 在宿主任务索引里可能已不存在，恢复前先查 getTaskMeta，命中不了就回落草稿
+  // （否则订阅必报 fault.subscribe.sessionNotFound，停在错误卡片上无法自愈）。
+  return resolution.connectionKind === "remote-ready" || resolution.connectionKind === "local-ready"
+    ? lookup
+    : undefined;
 }
 
 export interface UsePaneSessionPersistenceParams {

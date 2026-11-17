@@ -55,9 +55,13 @@ export function extractPrebuiltArchive({ archivePath, archiveExt, extractDir, cw
   }
 
   const tarCwd = cwd ?? process.cwd();
+  // `--force-local` 让 GNU tar 把 `D:/...` 当文件路径而不是 `host:path`。
+  // 归档在 D: 盘、解包目录在 %TEMP%（C:）时跨盘符，resolveTarArchiveArg 无法转相对路径，
+  // 只能传绝对路径；少了这个开关 tar 会报 "Cannot connect to D: resolve failed"。
+  // bsdtar（macOS/新版 Windows）也接受该开关，对非 Windows 平台无副作用。
   runCommand(
     "tar",
-    ["-xzf", resolveTarArchiveArg(archivePath, tarCwd), "-C", toTarPosixPath(extractDir)],
+    ["--force-local", "-xzf", resolveTarArchiveArg(archivePath, tarCwd), "-C", toTarPosixPath(extractDir)],
     { cwd: tarCwd },
   );
 }
@@ -78,7 +82,7 @@ export function findPrebuiltBinary(rootDir, binaryName) {
   return undefined;
 }
 
-function assertPrebuiltArchiveSha256(expectedSha256) {
+export function assertPrebuiltArchiveSha256(expectedSha256) {
   const normalizedExpectedSha256 = String(expectedSha256 ?? "")
     .trim()
     .toLowerCase();

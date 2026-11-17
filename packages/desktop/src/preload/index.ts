@@ -31,7 +31,6 @@ contextBridge.exposeInMainWorld("__XCODE_DEVICE_ID__", parseDeviceIdFromArgs());
 import type {
   AppSettings,
   ApplicationIconRequest,
-  BindRemoteWorkspaceSessionContextResult,
   BindRemoteWorkspaceSessionContextIpcResult,
   BrowserViewOperationPayload,
   BrowserGuestAttachResult,
@@ -60,6 +59,7 @@ import type {
   OAuthStateRegistration,
   WebRemoteControlAuthStateChange,
   OpenInEditorOptions,
+  FileApplicationTarget,
   RemoteTarget,
   TaskNotificationPayload,
   TelemetryRendererContext,
@@ -82,6 +82,8 @@ import type {
   WebRemoteControlContext,
   WebRemoteControlReconnectWorkspaceRequest,
   WebRemoteControlReconnectWorkspaceResult,
+  WebRemoteControlRendererActionRequest,
+  WebRemoteControlRendererActionResult,
   WebRemoteControlStatus,
   WebRemoteControlWorkspaceTarget,
   RemoteConnectionRuntimeLog,
@@ -92,8 +94,9 @@ import type {
   OpenCuaPermissionOnboardingOptions,
   ConfigureFinalArmsCustomEventE2ERequest,
   FinalArmsCustomEventE2EEntry,
+  MarketingCaptchaProofRequest,
+  MarketingCaptchaProofResult,
 } from "@zcode/shared";
-import { unwrapRemoteWorkspaceBindResult } from "./remoteWorkspaceBindBridge.js";
 import {
   InternalChannels,
   PlatformChannels,
@@ -262,6 +265,190 @@ window.addEventListener("DOMContentLoaded", updateRendererProcessTitle, {
  * 通过 MessagePort RPC 访问，不再经过此 bridge。
  */
 contextBridge.exposeInMainWorld("zcode", {
+  // DSH 桌宠模型通道回传：按 requestId 定向回 main 的 dshPetOverlayController.generateText。
+  dshPetGenerateResult: (payload: {
+    requestId: string;
+    text?: string;
+    error?: string;
+  }): void => {
+    ipcRenderer.send(`dsh-pet-generate-result-${payload.requestId}`, payload);
+  },
+  // DSH 桌宠（第二套独立宠物系统）：独立窗口/配置/通道，与 petOverlay 并存互不影响。
+  // 设置页读的是整包用户配置（与桌宠窗、主进程同形），之前这里错标成了 {enabled,sizePx}。
+  dshPetOverlay: {
+    getConfig: (): Promise<import("../shared/dshPetConfig.js").DshPetUserConfig> =>
+      ipcRenderer.invoke(PlatformChannels.DshPetGetConfig),
+    setConfig: (
+      patch: Partial<import("../shared/dshPetConfig.js").DshPetUserConfig>,
+    ): Promise<import("../shared/dshPetConfig.js").DshPetUserConfig> =>
+      ipcRenderer.invoke(PlatformChannels.DshPetSetConfig, patch),
+    /** 落盘位置（设置页「存储位置」卡）。 */
+    getMeta: (): Promise<{ userConfig: string; memoryDir: string }> =>
+      ipcRenderer.invoke(PlatformChannels.DshPetGetMeta),
+    /** 自制宠物包：列出 userData/dsh-pet/packs 下的包（设置页选包用）。 */
+    listPacks: (): Promise<Array<{ id: string; name: string }>> =>
+      ipcRenderer.invoke(PlatformChannels.DshPetListPacks),
+    /**
+     * 完整素材包（上游 dsh-pet/assets，约 60 MB，下载到本地）。
+     * 内置只带精简版；这张卡负责引导下载与更新。
+     */
+    assets: {
+      status: (): Promise<{
+        installed: boolean;
+        counts: { webm: number; memes: number; font: boolean };
+        totals: { webm: number; memes: number; font: number };
+        dir: string;
+        lastMirror?: string | null;
+      }> => ipcRenderer.invoke(PlatformChannels.DshPetAssetsStatus),
+      probe: (): Promise<
+        Array<{
+          label: string;
+          template: string;
+          bytesPerSecond: number;
+          latencyMs: number;
+          error?: string;
+        }>
+      > => ipcRenderer.invoke(PlatformChannels.DshPetAssetsProbe),
+      download: (): Promise<{
+        ok: boolean;
+        counts?: { webm: number; memes: number; font: boolean };
+        downloaded?: { webm: number; memes: number };
+        error?: string;
+      }> => ipcRenderer.invoke(PlatformChannels.DshPetAssetsDownload),
+      /** 已缓存的动作名（右键菜单只列这些，避免点了要等下载）。 */
+      cached: (): Promise<string[]> =>
+        ipcRenderer.invoke(PlatformChannels.DshPetAssetsCached),
+      cancel: (): Promise<{ ok: boolean }> =>
+        ipcRenderer.invoke(PlatformChannels.DshPetAssetsCancel),
+      uninstall: (): Promise<{ ok: boolean }> =>
+        ipcRenderer.invoke(PlatformChannels.DshPetAssetsUninstall),
+      onProgress: (
+        callback: (progress: {
+          name: string;
+          loaded: number;
+          total: number;
+          done: number;
+          target: number;
+          mirror?: string;
+        }) => void,
+      ) => {
+        const listener = (_event: unknown, payload: Parameters<typeof callback>[0]) =>
+          callback(payload);
+        ipcRenderer.on(PlatformChannels.DshPetAssetsProgressEvent, listener);
+        return () =>
+          ipcRenderer.removeListener(PlatformChannels.DshPetAssetsProgressEvent, listener);
+      },
+    },
+    onConfig: (
+      callback: (config: import("../shared/dshPetConfig.js").DshPetUserConfig) => void,
+    ) => {
+      const listener = (
+        _event: unknown,
+        payload: import("../shared/dshPetConfig.js").DshPetUserConfig,
+      ) => callback(payload);
+      ipcRenderer.on(PlatformChannels.DshPetConfigEvent, listener);
+      return () => ipcRenderer.removeListener(PlatformChannels.DshPetConfigEvent, listener);
+    },
+  },
+  // 桌宠悬浮窗：设置页读写配置/开关（配置变更经 PetOverlayConfigEvent 广播回两个窗口）。
+  petOverlay: {
+    getConfig: (): Promise<import("@zcode/shared").PetOverlayConfigBridge> =>
+      ipcRenderer.invoke(PlatformChannels.PetOverlayGetConfig),
+    setConfig: (
+      patch: Partial<import("@zcode/shared").PetOverlayConfigBridge>,
+    ): Promise<import("@zcode/shared").PetOverlayConfigBridge> =>
+      ipcRenderer.invoke(PlatformChannels.PetOverlaySetConfig, patch),
+    toggle: (): Promise<import("@zcode/shared").PetOverlayConfigBridge> =>
+      ipcRenderer.invoke(PlatformChannels.PetOverlayToggle),
+    onConfig: (callback: (config: import("@zcode/shared").PetOverlayConfigBridge) => void) => {
+      const listener = (_event: unknown, payload: import("@zcode/shared").PetOverlayConfigBridge) =>
+        callback(payload);
+      ipcRenderer.on(PlatformChannels.PetOverlayConfigEvent, listener);
+      return () => ipcRenderer.removeListener(PlatformChannels.PetOverlayConfigEvent, listener);
+    },
+    /** 主窗把会话行为状态转发给桌宠（带 attention 计数，宠物窗聚合角标）。 */
+    /** 移除某来源的聚合贡献（会话切走/关闭），不影响其它会话。 */
+    clearState: (source: string) =>
+      ipcRenderer.send(PlatformChannels.PetOverlaySetState, { state: "idle", source, clear: true }),
+    setState: (
+      state: string,
+      attentionCount?: number,
+      source?: string,
+      title?: string,
+      waitingKind?: string,
+      actions?: { interactionId: string; options: Array<{ optionId: string; label: string }> },
+    ) =>
+      ipcRenderer.send(PlatformChannels.PetOverlaySetState, {
+        state,
+        badge: attentionCount ?? 0,
+        ...(source ? { source } : {}),
+        ...(title ? { title } : {}),
+        ...(waitingKind ? { waitingKind } : {}),
+        ...(actions ? { actions } : {}),
+      }),
+    /** 宠物窗点审批按钮 → 回主窗执行（主窗 resolveInteraction 的转发）。 */
+    resolvePetAction: (payload: { interactionId: string; optionId: string }) =>
+      ipcRenderer.send(PlatformChannels.PetOverlayResolveAction, payload),
+    /** 主窗监听：宠物窗点击动作经 main 转发到本窗。 */
+    onActionRequest: (callback: (payload: { interactionId: string; optionId: string }) => void) => {
+      const listener = (_event: unknown, payload: { interactionId: string; optionId: string }) =>
+        callback(payload);
+      ipcRenderer.on(PlatformChannels.PetOverlayActionRequest, listener);
+      return () => ipcRenderer.removeListener(PlatformChannels.PetOverlayActionRequest, listener);
+    },
+    /** 主窗监听：宠物窗点了通知托盘某一行，main 转发到本窗后由 App 切到该会话。 */
+    onOpenSessionRequest: (callback: (payload: { sessionId: string }) => void) => {
+      const listener = (_event: unknown, payload: { sessionId: string }) => callback(payload);
+      ipcRenderer.on(PlatformChannels.PetOverlayOpenSessionRequest, listener);
+      return () =>
+        ipcRenderer.removeListener(PlatformChannels.PetOverlayOpenSessionRequest, listener);
+    },
+    listCustomPets: (): Promise<
+      Array<{
+        id: string;
+        displayName: string;
+        description: string;
+        spriteVersionNumber: number;
+      }>
+    > => ipcRenderer.invoke(PlatformChannels.PetOverlayListCustomPets),
+    installCustomPet: (input: {
+      name: string;
+      description?: string;
+      sourceImagePath: string;
+    }): Promise<{ id: string } | { error: string }> =>
+      ipcRenderer.invoke(PlatformChannels.PetOverlayInstallCustomPet, input),
+    deleteCustomPet: (petId: string): Promise<void> =>
+      ipcRenderer.invoke(PlatformChannels.PetOverlayDeleteCustomPet, petId),
+    prepareCustomPetZipImport: (
+      zipPath: string,
+    ): Promise<
+      | {
+          manifest: {
+            displayName: string;
+            description: string;
+            suggestedId: string;
+            declaredRows: number;
+          };
+          spriteBase64: string;
+          spriteMime: string;
+        }
+      | { error: string }
+    > => ipcRenderer.invoke(PlatformChannels.PetOverlayPrepareCustomPetZipImport, zipPath),
+    commitCustomPetImport: (input: {
+      displayName: string;
+      description: string;
+      suggestedId: string;
+      rows: number;
+      pngBase64: string;
+    }): Promise<{ id: string } | { error: string }> =>
+      ipcRenderer.invoke(PlatformChannels.PetOverlayCommitCustomPetImport, input),
+    getCustomSpriteDataUrl: (petId: string): Promise<string | null> =>
+      ipcRenderer.invoke(PlatformChannels.PetOverlayGetCustomSpriteDataUrl, petId),
+    installPetMakerSkill: (): Promise<string> =>
+      ipcRenderer.invoke(PlatformChannels.PetOverlayInstallPetMakerSkill),
+    installHatchPetSkill: (): Promise<string> =>
+      ipcRenderer.invoke(PlatformChannels.PetOverlayInstallHatchPetSkill),
+  },
   connectRemote: (
     options: RemoteTarget,
     requestId?: string,
@@ -290,12 +477,9 @@ contextBridge.exposeInMainWorld("zcode", {
     workspacePath: string;
     workspaceIdentity?: string;
     workspacePurpose?: import("@zcode/shared").WorkspacePurpose;
-  }): Promise<BindRemoteWorkspaceSessionContextResult> =>
-    ipcRenderer
-      .invoke(PlatformChannels.BindRemoteWorkspaceSessionContext, context)
-      .then((result: BindRemoteWorkspaceSessionContextIpcResult) =>
-        unwrapRemoteWorkspaceBindResult(result),
-      ),
+  }): Promise<BindRemoteWorkspaceSessionContextIpcResult> =>
+    // 原样返回结构化结果：在 preload 抛出的 Error 跨 contextBridge 会丢失 code，由 renderer 还原。
+    ipcRenderer.invoke(PlatformChannels.BindRemoteWorkspaceSessionContext, context),
   startWebRemoteControl: (context: WebRemoteControlContext) =>
     ipcRenderer.invoke(PlatformChannels.StartWebRemoteControl, context),
   stopWebRemoteControl: (): Promise<void> =>
@@ -406,6 +590,27 @@ contextBridge.exposeInMainWorld("zcode", {
     return () =>
       ipcRenderer.removeListener(PlatformChannels.WebRemoteControlReconnectWorkspace, handler);
   },
+  onWebRemoteControlRendererAction: (
+    callback: (
+      request: WebRemoteControlRendererActionRequest,
+    ) => Promise<WebRemoteControlRendererActionResult>,
+  ) => {
+    const handler = async (event: Electron.IpcRendererEvent, payload: unknown) => {
+      const request = payload as WebRemoteControlRendererActionRequest;
+      try {
+        event.sender.send(PlatformChannels.WebRemoteControlRendererAction, await callback(request));
+      } catch (error) {
+        event.sender.send(PlatformChannels.WebRemoteControlRendererAction, {
+          requestId: request.requestId,
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        } satisfies WebRemoteControlRendererActionResult);
+      }
+    };
+    ipcRenderer.on(PlatformChannels.WebRemoteControlRendererAction, handler);
+    return () =>
+      ipcRenderer.removeListener(PlatformChannels.WebRemoteControlRendererAction, handler);
+  },
   /** 同步当前窗口的未读 task 数到 main 进程 */
   syncWindowUnreadCount: (count: number) =>
     ipcRenderer.send(PlatformChannels.SyncWindowUnreadCount, count),
@@ -436,6 +641,18 @@ contextBridge.exposeInMainWorld("zcode", {
     const handler = () => callback();
     ipcRenderer.on(PlatformChannels.CloseActiveContextRequest, handler);
     return () => ipcRenderer.removeListener(PlatformChannels.CloseActiveContextRequest, handler);
+  },
+  /** 注册 main 转来的验证码出票请求（Host 自动领取借渲染进程跑无感验证） */
+  onMarketingCaptchaRequest: (
+    callback: (request: MarketingCaptchaProofRequest) => void,
+  ): (() => void) => {
+    const handler = (_event: unknown, request: MarketingCaptchaProofRequest) => callback(request);
+    ipcRenderer.on(PlatformChannels.MarketingCaptchaRequest, handler);
+    return () => ipcRenderer.removeListener(PlatformChannels.MarketingCaptchaRequest, handler);
+  },
+  /** 回传验证码出票结果（票据或失败原因） */
+  reportMarketingCaptchaProof: (result: MarketingCaptchaProofResult): void => {
+    ipcRenderer.send(PlatformChannels.MarketingCaptchaResult, result);
   },
   /** 注册内置 webview 的受控新页面请求，返回 disposer */
   onOpenBrowserUrl: (callback: (request: EmbeddedBrowserOpenUrlRequest) => void): (() => void) => {
@@ -476,6 +693,16 @@ contextBridge.exposeInMainWorld("zcode", {
   ): Promise<EmbeddedBrowserSitePermissionsSnapshot> =>
     ipcRenderer.invoke(PlatformChannels.ResetEmbeddedBrowserSitePermission, request),
   /** 注册 agent 首次 browser 命令建好受控 view 的回调（自动开 browser-use tab），返回 disposer */
+  onBrowserViewDownloadStarted: (
+    callback: (payload: { webContentsId: number; urls: string[] }) => void,
+  ): (() => void) => {
+    const handler = (_event: unknown, payload: { webContentsId: number; urls: string[] }) =>
+      callback(payload);
+    ipcRenderer.on(PlatformChannels.BrowserViewDownloadStarted, handler);
+    return () => {
+      ipcRenderer.removeListener(PlatformChannels.BrowserViewDownloadStarted, handler);
+    };
+  },
   onBrowserViewReady: (
     callback: (payload: {
       workspaceKey: string;
@@ -788,6 +1015,8 @@ contextBridge.exposeInMainWorld("zcode", {
   /** 截取当前窗口，用于错误反馈携带现场画面 */
   captureWindowScreenshot: () => ipcRenderer.invoke(PlatformChannels.CaptureWindowScreenshot),
   // CDP-on-guest pivot：`<webview>` guest dom-ready 后上报 webContentsId 给 main attach。
+  browserViewLoadUrl: (payload: { webContentsId: number; url: string }): Promise<void> =>
+    ipcRenderer.invoke(PlatformChannels.BrowserViewLoadUrl, payload),
   browserViewAttachGuest: (payload: {
     key: string;
     webContentsId: number;
@@ -903,6 +1132,10 @@ contextBridge.exposeInMainWorld("zcode", {
   /** 获取已安装的编辑器/终端列表（含图标） */
   getInstalledEditors: (filePath?: string) =>
     ipcRenderer.invoke(PlatformChannels.GetInstalledEditors, filePath),
+  getFileApplications: (target: FileApplicationTarget) =>
+    ipcRenderer.invoke(PlatformChannels.GetFileApplications, target),
+  openFileWithApplication: (applicationId: string, target: FileApplicationTarget) =>
+    ipcRenderer.invoke(PlatformChannels.OpenFileWithApplication, { applicationId, target }),
   getApplicationIcon: (request: string | ApplicationIconRequest) =>
     ipcRenderer.invoke(PlatformChannels.GetApplicationIcon, request),
   /** 用指定编辑器打开路径 */
@@ -934,6 +1167,14 @@ installPluginSandboxHostBridge();
  * 丢失 addEventListener 等原生方法）。改用 window.postMessage 的 transfer
  * 机制将 MessagePort 原样传递到 renderer 的 window context 中。
  */
+// DSH 桌宠模型通道：main 转来的生成请求交渲染层 workspace services 执行，
+// 完成后经 dsh-pet-generate-result 回传 main（跟随当前会话模型）。
+ipcRenderer.on("dsh-pet-generate-request", (_event, payload: unknown) => {
+  window.postMessage({ type: "dsh-pet-generate-request", payload }, "*");
+});
+ipcRenderer.on("dsh-pet-generate-result", (_event, payload: unknown) => {
+  window.postMessage({ type: "dsh-pet-generate-result", payload }, "*");
+});
 ipcRenderer.on(InternalChannels.ServicePort, (event, payload: unknown) => {
   const [port] = event.ports;
   const parsed = databaseStartupPortPayloadSchema.safeParse(payload);

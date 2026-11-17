@@ -128,9 +128,27 @@ export async function isCurrentOAuthCredentialRequest(options: {
   credentialService: Pick<ICredentialService, "load">;
   env?: NodeJS.ProcessEnv;
 }): Promise<boolean> {
+  return (await classifyCurrentOAuthCredentialRequest(options)) !== null;
+}
+
+/**
+ * 401 请求命中的是哪一份当前凭据。
+ *
+ * 两份 token 的失效含义不同，清理策略也不同：
+ * - `zcodejwt`：模型请求/领取的实际凭据，服务端权威拒绝即登录失效；
+ * - `business`（oauth access_token）：userinfo/balance 等资料请求的辅助凭据，
+ *   失效只影响那些请求，且可能可以用 refresh_token 续期——不该据此清会话。
+ */
+export async function classifyCurrentOAuthCredentialRequest(options: {
+  input: string | URL;
+  headers: Headers;
+  credentialService: Pick<ICredentialService, "load">;
+  env?: NodeJS.ProcessEnv;
+}): Promise<"zcodejwt" | "business" | null> {
   const authorization = options.headers.get("authorization")?.trim() ?? "";
-  if (!authorization) return false;
+  if (!authorization) return null;
   const currentJwt = (await options.credentialService.load("zcodejwttoken"))?.trim() ?? "";
-  if (currentJwt && authorization === `Bearer ${currentJwt}`) return true;
-  return isCurrentBusinessOAuthCredentialRequest(options);
+  if (currentJwt && authorization === `Bearer ${currentJwt}`) return "zcodejwt";
+  if (await isCurrentBusinessOAuthCredentialRequest(options)) return "business";
+  return null;
 }

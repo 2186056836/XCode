@@ -143,7 +143,11 @@ export {
   IWindowProjectChangesService,
   type WindowProjectDirectoryServices,
 } from "#src/window-project-directory/contract.js";
-export { createWindowProjectChangesService } from "#src/window-project-directory/index.js";
+export {
+  createWebRemoteProjectTreeActivityBridge,
+  createWindowProjectChangesService,
+  type WebRemoteProjectTask,
+} from "#src/window-project-directory/index.js";
 export type {
   WindowHostControllerFrame,
   WindowHostControllerMutation,
@@ -183,6 +187,8 @@ export type {
   XCodeAgentRuntimeLifecycleEvent,
   XCodeAgentRuntimePolicy,
   XCodeAgentReadSessionParams,
+  ZCodeAgentRespondProviderRuntimeHeadersParams,
+  ZCodeAgentProviderRuntimeHeadersRequest,
   XCodeAgentResumeSessionParams,
   XCodeAgentRunAutomationNowResult,
   XCodeAgentSavedWorkflowTarget,
@@ -192,10 +198,10 @@ export type {
   XCodeAgentSessionTarget,
   XCodeAgentSetModeParams,
   XCodeAgentSetModelParams,
-  XCodeAgentSetPersonaParams,
-  XCodeAgentSetPrefillParams,
   XCodeAgentSetThoughtLevelParams,
   XCodeAgentWorkspaceTarget,
+  XCodeAgentSetPersonaParams,
+  XCodeAgentSetPrefillParams,
 } from "./zcode-agent/zcodeAgent.js";
 
 // XCode session service — app-facing session facade without XCode Agent naming.
@@ -277,6 +283,9 @@ export type { OffPeakUpdateTaskParams } from "./session/offPeakTask.js";
 // Skills service — ISkillsService is both a type (interface) and value (descriptor)
 export { ISkillsService } from "./skills/skills.js";
 export { ISkillSyncService } from "./skill-sync/skillSync.js";
+export { IDeviceSyncStateService, IUserConfigSyncService } from "./data-sync/index.js";
+export type { IDataSyncCategoryService } from "./data-sync/index.js";
+export { IProviderProvisioningStatusService } from "./provider-provisioning-status/index.js";
 export { IMcpSyncService } from "./mcp-sync/mcpSync.js";
 export { IPluginSyncService } from "./plugin-sync/pluginSync.js";
 export {
@@ -302,6 +311,8 @@ export { IPluginManagementService, withPluginTelemetry } from "./plugins/pluginM
 // Subagents service — ISubagentsService is both a type (interface) and value (descriptor)
 export { ISubagentsService } from "./subagents/subagents.js";
 
+
+// Commands service — ICommandsService is both a type (interface) and value (descriptor)
 // ProxyPool service — IProxyPoolService 同时是类型与描述符。
 // 只导出契约：实现依赖 settingService、provider facade 与 undici，属于 host 侧装配，
 // 从 index 导出会把 node 依赖链拖进 renderer bundle（同 createSettingService 的惯例）。
@@ -325,7 +336,6 @@ export type {
   AccountRotationStrategy,
 } from "./model-provider/accountRotation.js";
 
-// Commands service — ICommandsService is both a type (interface) and value (descriptor)
 export { ICommandsService } from "./commands/commands.js";
 
 export { ISettingsSyncService } from "./settings-sync/settingsSync.js";

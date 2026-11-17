@@ -12,7 +12,6 @@ import { usePlatform } from "@/hooks/usePlatform.js";
 import { useEffectiveShortcutBindings } from "@/shortcuts/useShortcutBindings.js";
 import { matchesShortcutBinding } from "@/shortcuts/bindings.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
-import { DesktopCommandIds } from "@zcode/shared";
 import { Button } from "@/components/ui/button.js";
 import { Checkbox } from "@/components/ui/checkbox.js";
 import { useXCodeStore } from "@/store/StoreProvider.js";
@@ -238,7 +237,7 @@ export function OccupationOnboarding({
       setStep(0);
       setDismissed(true);
       setRequested(false);
-      if (!skip && migration) requestOnboardingDialog("migration");
+      if (!skip && migration) requestOnboardingDialog();
       logger.info("[occupation-onboarding] 偏好保存完成", { interfaceMode: mode });
       if (onboardingRecord) {
         try {

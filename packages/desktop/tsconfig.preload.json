@@ -5,6 +5,11 @@
     "rootDir": "src",
     "lib": ["es2025", "dom"]
   },
-  "include": ["src/preload", "src/shared/armsRumBridgeForward.ts"],
+  "include": [
+    "src/preload",
+    "src/shared/armsRumBridgeForward.ts",
+    "src/shared/dshPetConfig.ts",
+    "src/shared/dshPetCore.ts"
+  ],
   "references": [{ "path": "../shared" }]
 }

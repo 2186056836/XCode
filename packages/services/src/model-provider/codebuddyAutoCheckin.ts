@@ -1,4 +1,5 @@
 import { createServiceLogger } from "../logger/serviceLogger.js";
+import { recordAutoActivity } from "../marketing-touch/autoClaimLog.js";
 import { listCodeBuddyAccounts, type CodeBuddyRegion } from "./codebuddyAuth.js";
 import {
   codebuddyCheckinAccount,
@@ -205,6 +206,27 @@ export async function updateCodeBuddyAutoCheckinSettings(
   return next;
 }
 
+export async function updateCodeBuddyAutoCheckinSettingsBatch(
+  entries: ReadonlyArray<{ region: string; accountId: string }>,
+  update: { enabled?: unknown; time?: unknown },
+): Promise<{ accountRef: string; ok: boolean; error?: string }[]> {
+  const results: { accountRef: string; ok: boolean; error?: string }[] = [];
+  for (const entry of entries) {
+    const accountRef = `${entry.region}:${entry.accountId}`;
+    try {
+      await updateCodeBuddyAutoCheckinSettings(entry.region as Parameters<typeof updateCodeBuddyAutoCheckinSettings>[0], entry.accountId, update);
+      results.push({ accountRef, ok: true });
+    } catch (error) {
+      results.push({
+        accountRef,
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  return results;
+}
+
 // ---------------------------------------------------------------------------
 // 调度器
 // ---------------------------------------------------------------------------
@@ -295,6 +317,7 @@ export const runCodeBuddyAutoCheckinTick = async (
     try {
       const result = await codebuddyCheckinAccount(target.region, target.accountId);
       const succeeded = result.status === "claimed" || result.status === "already";
+      const activityAccountRef = `codebuddy:${target.region}:${target.accountId}`;
       if (!succeeded) {
         logger().warn(undefined, "CodeBuddy 自动签到未成功", {
           region: target.region,
@@ -302,8 +325,19 @@ export const runCodeBuddyAutoCheckinTick = async (
           status: result.status,
           message: result.error ?? result.message,
         });
+        await recordAutoActivity({
+          kind: "auto-checkin",
+          accountRef: activityAccountRef,
+          status: "failed",
+          message: result.error ?? result.message,
+        });
         continue;
       }
+      await recordAutoActivity({
+        kind: "auto-checkin",
+        accountRef: activityAccountRef,
+        status: result.status === "claimed" ? "claimed" : "already",
+      });
       checkedIn.push(`${target.region}:${target.accountId}`);
     } catch (error) {
       // 单账号失败不能拖垮整次扫描，也不能让进程出事。

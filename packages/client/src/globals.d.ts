@@ -35,6 +35,8 @@ import type {
   WebRemoteControlContext,
   WebRemoteControlReconnectWorkspaceRequest,
   WebRemoteControlReconnectWorkspaceResult,
+  WebRemoteControlRendererActionRequest,
+  WebRemoteControlRendererActionResult,
   WebRemoteControlStartOperationResult,
   WebRemoteControlStatus,
   WebRemoteControlWorkspaceTarget,
@@ -57,6 +59,7 @@ import type {
   UpdateCheckResultPayload,
   UpdateStatePayload,
   OpenInEditorOptions,
+  PetOverlayConfigBridge,
 } from "@zcode/shared";
 
 /**
@@ -78,6 +81,65 @@ declare global {
       consumeUserGesture(sandboxId: string): Promise<boolean>;
     };
     zcode: {
+      /** 桌宠悬浮窗（设置页）：配置读写/开关与状态转发。 */
+      petOverlay?: {
+        getConfig(): Promise<PetOverlayConfigBridge>;
+        setConfig(patch: Partial<PetOverlayConfigBridge>): Promise<PetOverlayConfigBridge>;
+        toggle(): Promise<PetOverlayConfigBridge>;
+        onConfig(callback: (config: PetOverlayConfigBridge) => void): () => void;
+        setState(
+          state: string,
+          attentionCount?: number,
+          source?: string,
+          title?: string,
+          waitingKind?: string,
+          actions?: {
+            interactionId: string;
+            options: Array<{ optionId: string; label: string }>;
+          },
+        ): void;
+        resolvePetAction(payload: { interactionId: string; optionId: string }): void;
+        onActionRequest(
+          callback: (payload: { interactionId: string; optionId: string }) => void,
+        ): () => void;
+        clearState(source: string): void;
+        listCustomPets(): Promise<
+          Array<{
+            id: string;
+            displayName: string;
+            description: string;
+            spriteVersionNumber: number;
+          }>
+        >;
+        installCustomPet(input: {
+          name: string;
+          description?: string;
+          sourceImagePath: string;
+        }): Promise<{ id: string } | { error: string }>;
+        deleteCustomPet(petId: string): Promise<void>;
+        prepareCustomPetZipImport(zipPath: string): Promise<
+          | {
+              manifest: {
+                displayName: string;
+                description: string;
+                suggestedId: string;
+                declaredRows: number;
+              };
+              spriteBase64: string;
+              spriteMime: string;
+            }
+          | { error: string }
+        >;
+        commitCustomPetImport(input: {
+          displayName: string;
+          description: string;
+          suggestedId: string;
+          rows: number;
+          pngBase64: string;
+        }): Promise<{ id: string } | { error: string }>;
+        getCustomSpriteDataUrl(petId: string): Promise<string | null>;
+        installHatchPetSkill(): Promise<string>;
+      };
       connectRemote(
         options: RemoteTarget,
         requestId?: string,
@@ -91,12 +153,16 @@ declare global {
       requestSourceSettingsAttachment?(sourceServerId: string): Promise<{ attachmentId: string }>;
       /** 取消当前窗口尚未建立完成的远程连接 */
       cancelPendingRemoteConnection?(requestId?: string): Promise<void>;
-      /** 绑定远程 logical session 的 canonical workspace context */
+      /**
+       * 绑定远程 logical session 的 canonical workspace context。
+       * 失败时不 reject，而是返回 `{ success: false, reasonCode }`：preload 抛出的 Error 跨
+       * contextBridge 会丢失 code/retryable。调用方必须用 `unwrapRemoteWorkspaceBindResult` 还原。
+       */
       bindRemoteWorkspaceSessionContext?(context: {
         remoteSessionId: string;
         workspacePath: string;
         workspaceIdentity?: string;
-      }): Promise<import("@zcode/shared").BindRemoteWorkspaceSessionContextResult>;
+      }): Promise<import("@zcode/shared").BindRemoteWorkspaceSessionContextIpcResult>;
       /** 为当前 workspace 开启 Web 远程控制 */
       startWebRemoteControl(
         context: WebRemoteControlContext,
@@ -178,6 +244,12 @@ declare global {
           request: WebRemoteControlReconnectWorkspaceRequest,
         ) => Promise<WebRemoteControlReconnectWorkspaceResult>,
       ): () => void;
+      /** 注册手机远控动作（置顶/归档/新建本地项目）的回调 */
+      onWebRemoteControlRendererAction?(
+        handler: (
+          request: WebRemoteControlRendererActionRequest,
+        ) => Promise<WebRemoteControlRendererActionResult>,
+      ): () => void;
       /** 同步当前窗口的未读 task 数到 main 进程 */
       syncWindowUnreadCount(count: number): void;
       syncActiveTaskSession(sessionId: string | null): void;
@@ -258,6 +330,12 @@ declare global {
       onNewTask(handler: () => void): () => void;
       /** 注册 main 进程请求关闭当前上下文的回调，返回 disposer */
       onCloseActiveContextRequest?(handler: () => void): () => void;
+      /** 注册 main 转来的验证码出票请求（Host 自动领取借渲染进程跑无感验证） */
+      onMarketingCaptchaRequest?(
+        handler: (request: import("@zcode/shared").MarketingCaptchaProofRequest) => void,
+      ): () => void;
+      /** 回传验证码出票结果（票据或失败原因） */
+      reportMarketingCaptchaProof?(result: import("@zcode/shared").MarketingCaptchaProofResult): void;
       /** 注册 main 进程触发打开工作区的回调，返回 disposer */
       onOpenWorkspace?(handler: () => void): () => void;
       /** 注册 main 进程通过 deep link 直接打开本地工作区目录的回调，返回 disposer */

@@ -157,6 +157,7 @@ export function AppearanceSectionContent({
             <CustomSkinSetting />
           </CardContent>
         </Card>
+
       </div>
 
       <div className="space-y-6">

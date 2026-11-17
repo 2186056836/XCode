@@ -5,7 +5,7 @@ import {
   type FileManagerTarget,
 } from "@/lib/workspaceSidePane.js";
 /* eslint-disable max-lines */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createUuid } from "@zcode/shared";
 import type { EmbeddedBrowserOpenUrlRequest, IPlatformService } from "@zcode/shared";
 import type { CodeViewerSource } from "@/lib/codeViewer.js";
@@ -83,7 +83,7 @@ import {
   type WorkspaceSidePaneState,
   type WorkspaceSidePaneTab,
 } from "@/lib/workspaceSidePane.js";
-import { openPluginUiSidePane } from "@/plugin-ui/index.js";
+import { openPluginUiSidePane, usePluginUiPaneTarget } from "@/plugin-ui/index.js";
 import type { OpenPluginUiSideTabRequest } from "@/plugin-ui/contract.js";
 import { logger } from "@/logger.js";
 import { getPathLeaf, joinFilePath, toFileUrl } from "@/lib/path.js";
@@ -184,6 +184,19 @@ export function useAppPanels(options: {
   } = options;
   const supportsEmbeddedBrowser = explicitSupportsEmbeddedBrowser ?? Boolean(isDesktop);
   const activeWorkspaceKey = workspaceIdentity?.trim() || workspaceAbsPath;
+  const pluginUiTarget = usePluginUiPaneTarget({
+    workspacePath: workspaceAbsPath,
+    workspaceIdentity,
+    remoteSessionId: workspaceRemoteSessionId ?? undefined,
+    sessionId: activeTaskId,
+  });
+  const pluginUiWorkspaceKey =
+    pluginUiTarget.workspaceIdentity?.trim() || pluginUiTarget.workspacePath;
+  const pluginUiScopeRef = useRef({
+    pluginUiSessionId: pluginUiTarget.sessionId,
+    pluginUiWorkspaceKey,
+  });
+  pluginUiScopeRef.current = { pluginUiSessionId: pluginUiTarget.sessionId, pluginUiWorkspaceKey };
   const { zcodeAgentService, zcodeSessionService } = useServices();
   const isOfficeMode = useIsOfficeMode();
   const sidePaneMemoryKey = useMemo(
@@ -235,13 +248,26 @@ export function useAppPanels(options: {
     isSidePaneCollapsed,
   };
 
+  const mountedRef = useRef(true);
+  useLayoutEffect(() => {
+    mountedRef.current = true;
+    // 关闭等异步操作可能晚于 App 重挂；同步撤销旧实例，避免旧快照覆盖新实例的标签和折叠态。
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // 折叠态参与同一批事件的后续决策，统一同步 ref，避免 React 提交前读到旧值。
   const setIsSidePaneCollapsed = useCallback((value: boolean | ((current: boolean) => boolean)) => {
+    if (!mountedRef.current) return;
     const next =
       typeof value === "function"
         ? value(latestSidePaneMemoryRef.current.isSidePaneCollapsed)
         : value;
     latestSidePaneMemoryRef.current.isSidePaneCollapsed = next;
+    saveTaskSidePaneMemoryState(activeSidePaneMemoryKeyRef.current, {
+      isSidePaneCollapsed: next,
+    });
     setIsSidePaneCollapsedState(next);
   }, []);
 
@@ -249,6 +275,7 @@ export function useAppPanels(options: {
     () => ({
       workspaceKey: activeWorkspaceKeyRef.current,
       ownerTaskId: sidePaneOwnerIdRef.current,
+      ...pluginUiScopeRef.current,
     }),
     [],
   );
@@ -264,6 +291,7 @@ export function useAppPanels(options: {
 
   const commitSidePaneState = useCallback(
     (updater: (current: WorkspaceSidePaneState | null) => WorkspaceSidePaneState | null) => {
+      if (!mountedRef.current) return latestSidePaneMemoryRef.current.sidePaneState;
       const next = updater(latestSidePaneMemoryRef.current.sidePaneState);
       // 关闭末标签必须收敛到收起态；在此补建入口会让 Cmd/Ctrl+W 永远关闭不完。
       // 仅显式展开空面板时创建 new-tab，后台关闭也不能重新展开面板。
@@ -277,6 +305,12 @@ export function useAppPanels(options: {
         ...latestSidePaneMemoryRef.current,
         sidePaneState: next,
       };
+      // bridge 换代时，新组件先 render，旧组件后 cleanup；等卸载才保存会让新实例读到旧标签，
+      // 留下仍存活却失去入口的 PTY。状态提交时同步写入既有 memory，使重挂读取同一份已提交状态。
+      saveTaskSidePaneMemoryState(
+        activeSidePaneMemoryKeyRef.current,
+        latestSidePaneMemoryRef.current,
+      );
       setSidePaneState(next);
       return next;
     },
@@ -326,10 +360,8 @@ export function useAppPanels(options: {
       return;
     }
 
-    // side pane 原来是 workspace 组件内的瞬时状态，跨 workspace 切换会被新渲染覆盖。
-    // 这里在 key 变更前先把旧 workspace 的 tabs/折叠态写入内存，再恢复新 workspace，避免不同 workspace 串状态。
+    // tabs/折叠态已在提交时保存，切换只恢复目标 workspace，不再用旧组件快照覆盖 memory。
     // 同一 workspace 内切换 task 不应该影响 side pane，所以 key 已经不再按 task 维度切分。
-    saveTaskSidePaneMemoryState(previousKey, latestSidePaneMemoryRef.current);
     const restored = readTaskSidePaneMemoryState(sidePaneMemoryKey);
     activeSidePaneMemoryKeyRef.current = sidePaneMemoryKey;
     const collapsed =
@@ -338,15 +370,6 @@ export function useAppPanels(options: {
     setIsSidePaneCollapsed(collapsed);
     commitSidePaneState(() => restored.sidePaneState);
   }, [commitSidePaneState, sidePaneMemoryKey]);
-
-  useEffect(() => {
-    return () => {
-      saveTaskSidePaneMemoryState(
-        activeSidePaneMemoryKeyRef.current,
-        latestSidePaneMemoryRef.current,
-      );
-    };
-  }, []);
 
   useEffect(() => {
     commitSidePaneState((current) => {
@@ -360,7 +383,11 @@ export function useAppPanels(options: {
       );
       const resolved = resolveSidePaneScopeState(
         current,
-        { workspaceKey: activeWorkspaceKey, ownerTaskId: sidePaneOwnerId },
+        {
+          workspaceKey: activeWorkspaceKey,
+          ownerTaskId: sidePaneOwnerId,
+          ...pluginUiScopeRef.current,
+        },
         preferredTabId,
         collapsedPreference,
       );
@@ -375,7 +402,14 @@ export function useAppPanels(options: {
       });
       return resolved.sidePaneState;
     });
-  }, [activeTaskId, activeWorkspaceKey, commitSidePaneState, sidePaneOwnerId]);
+  }, [
+    activeTaskId,
+    activeWorkspaceKey,
+    commitSidePaneState,
+    sidePaneOwnerId,
+    pluginUiTarget.sessionId,
+    pluginUiWorkspaceKey,
+  ]);
 
   const pendingFileManagerTarget = useOptionalTabStore((state) => state.pendingFileManagerTarget);
   const requestFileManager = useOptionalTabStore((state) => state.requestFileManager);
@@ -1511,7 +1545,8 @@ export function useAppPanels(options: {
       const closingIds = closingTabs.map((tab) => tab.id);
       // Bug 原因：main 确认关闭期间可能切换对话/工作区或新建 tab。归属与关闭目标在点击时
       // 冻结，完成后写回原 registry；当前可见范围与活动标签则按完成时的 scope 解析。
-      if (scope.workspaceKey !== activeWorkspaceKeyRef.current) {
+      // 原实例卸载后 ref 不再代表当前标签；仍完成关闭，但只在最新 memory 中删除原选定标签。
+      if (!mountedRef.current || scope.workspaceKey !== activeWorkspaceKeyRef.current) {
         const stored = readTaskSidePaneMemoryState(scope.workspaceKey);
         const next = closeSidePaneTabs(stored.sidePaneState, closingIds, scope, preferredTabId);
         saveTaskSidePaneMemoryState(scope.workspaceKey, {

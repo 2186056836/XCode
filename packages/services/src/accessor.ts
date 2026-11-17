@@ -11,12 +11,13 @@ import type { IPluginUiAppToolsService } from "./plugin-ui-bridge/appToolsContra
 import type { IFileService } from "./file/file.js";
 import type { IMediaPreviewService } from "./media-preview/mediaPreview.js";
 import type { ICloudContentService } from "#src/cloud-content/cloudContent.js";
+import type { IProxyPoolService } from "#src/proxy-pool/proxyPool.js";
+import type { IMarketingTouchService } from "#src/marketing-touch/marketingTouch.js";
 import type { IGitService } from "./git/git.js";
 import type { IGitCheckpointService } from "./git/gitCheckpoint.js";
 import type { ISystemService } from "./system/system.js";
 import type { ITerminalService } from "./terminal/terminal.js";
 import type { ISettingService } from "./setting/setting.js";
-import type { IProxyPoolService } from "./proxy-pool/proxyPool.js";
 import type { ICredentialService } from "./credential/credential.js";
 import type { IBroadcastService } from "./broadcast/broadcast.js";
 import type { IXCodeTaskService } from "./session/zcodeTaskService.js";
@@ -34,9 +35,10 @@ import type { IUsageStatsService } from "./usage-stats/usageStats.js";
 import type { ICodingPlanSubscriptionService } from "./coding-plan-subscription/codingPlanSubscription.js";
 import type { IClientConfigService } from "./client-config/clientConfig.js";
 import type { IClientScenesService } from "./client-scenes/clientScenes.js";
-import type { IMarketingTouchService } from "./marketing-touch/marketingTouch.js";
 import type { ISkillsService } from "./skills/skills.js";
 import type { ISkillSyncService } from "./skill-sync/skillSync.js";
+import type { IDeviceSyncStateService, IUserConfigSyncService } from "./data-sync/index.js";
+import type { IProviderProvisioningStatusService } from "./provider-provisioning-status/index.js";
 import type { IMcpSyncService } from "./mcp-sync/mcpSync.js";
 import type { IPluginSyncService } from "./plugin-sync/pluginSync.js";
 import type { IPluginsService } from "./plugins/plugins.js";
@@ -64,16 +66,16 @@ export interface IServiceAccessor {
   readonly fileService: IFileService;
   readonly mediaPreviewService?: IMediaPreviewService;
   readonly cloudContentService?: ICloudContentService;
+  readonly marketingTouchService?: IMarketingTouchService;
+  /**
+   * 可选——旧 host wire 与测试 double 不提供；UI 需自行判断缺失后隐藏入口。
+   */
+  readonly proxyPoolService?: IProxyPoolService;
   readonly gitService: IGitService;
   readonly gitCheckpointService: IGitCheckpointService;
   readonly systemService: ISystemService;
   readonly terminalService: ITerminalService;
   readonly settingService: ISettingService;
-  /**
-   * 代理池：池条目 CRUD / 连通性测试 / 供应商级代理绑定。
-   * 可选——旧 host wire 与测试 double 不提供；UI 需自行判断缺失后隐藏入口。
-   */
-  readonly proxyPoolService?: IProxyPoolService;
   /** Onboarding 完成记录（本地持久化）；旧测试 double / 不支持的 host 可不提供。 */
   readonly onboardingRecordService?: IOnboardingRecordService;
   readonly credentialService: ICredentialService;
@@ -97,12 +99,14 @@ export interface IServiceAccessor {
   readonly sourceServerWorkspaceService: ISourceServerWorkspaceService;
   /** 仅桌面窗口 Host 的 base attachment 注册；远端 / Web 不提供。 */
   readonly sourceServerManagementService?: ISourceServerManagementService;
+  /** 仅桌面本机 Host 注册：数据同步页的设备同步状态。 */
+  readonly deviceSyncStateService?: IDeviceSyncStateService;
+  /** 仅桌面本机 Host 注册：数据同步页模型提供商的 Provisioning lane 状态与重试。 */
+  readonly providerProvisioningStatusService?: IProviderProvisioningStatusService;
   readonly usageStatsService: IUsageStatsService;
   readonly codingPlanSubscriptionService: ICodingPlanSubscriptionService;
   readonly clientConfigService: IClientConfigService;
   readonly clientScenesService: IClientScenesService;
-  /** Marketing Touch 营销活动服务（banner/popup 下发 + 行为上报）。 */
-  readonly marketingTouchService: IMarketingTouchService;
   /** 闲时任务管理（独立服务面）。 */
   readonly offPeakTaskService: IOffPeakTaskService;
   readonly highspeedCardService: IHighspeedCardService;
@@ -117,6 +121,8 @@ export interface IServiceAccessor {
   /** App-Provided Tools；只有桌面本地 agent 时存在。 */
   readonly pluginUiAppToolsService?: IPluginUiAppToolsService;
   readonly pluginSyncService: IPluginSyncService;
+  /** 数据同步：子智能体 / 命令 / 钩子共用的用户配置同步通道（按 category 区分）。 */
+  readonly userConfigSyncService: IUserConfigSyncService;
   readonly pluginsService: IPluginsService;
   /** 设置页插件管理（UI 不再直触 zcodeAgentService 的 plugins/* 面） */
   readonly pluginManagementService: IPluginManagementService;

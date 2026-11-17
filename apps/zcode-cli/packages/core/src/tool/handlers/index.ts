@@ -1,4 +1,4 @@
-import { replyToChannelToolEntry } from "./reply-to-channel.js";
+// import { replyToChannelToolEntry } from "./reply-to-channel.js";
 // ============================================================
 // Built-in Tool Handlers
 // ============================================================
@@ -44,10 +44,12 @@ import {
   cronCreateToolEntry,
   cronDeleteToolEntry,
   cronListToolEntry,
+  cronPauseSelfToolEntry,
   cronUpdateToolEntry,
 } from "./cron.js";
 import { offPeakCreateToolEntry, offPeakListToolEntry } from "./off-peak.js";
 import { proxyPoolToolEntry } from "./proxy-pool.js";
+import { petControlToolEntry } from "./pet-control.js";
 import { modelJailbreakToolEntry } from "./model-jailbreak.js";
 import { providerAccountToolEntry } from "./provider-account.js";
 import {
@@ -98,10 +100,12 @@ export const builtInTools: ToolEntry[] = [
   cronListToolEntry,
   cronUpdateToolEntry,
   cronDeleteToolEntry,
+  cronPauseSelfToolEntry,
   offPeakCreateToolEntry,
   offPeakListToolEntry,
   // 代理池配置面：与 OffPeak 同族，端口在场才注册（见 includeProxyPool）。
   proxyPoolToolEntry,
+  petControlToolEntry,
   // 模型越狱配置面：设置页「模型越狱」四块（身份提示词 / 模板 / prefill / 混淆）。
   modelJailbreakToolEntry,
   // 账号凭据面：Qoder / CodeBuddy / zai / bigmodel 的导入与账号管理。
@@ -120,7 +124,8 @@ export const builtInTools: ToolEntry[] = [
   taskOutputToolEntry,
   taskStopToolEntry,
   readSessionContextToolEntry,
-  replyToChannelToolEntry,
+  // 渠道回复等待插件入口接入；仅注释默认注册，保留完整实现。
+  // replyToChannelToolEntry,
   agentToolEntry,
   taskToolEntry,
   skillToolEntry,
@@ -131,8 +136,10 @@ export const builtInTools: ToolEntry[] = [
   saveWorkflowToolEntry,
   // workflow 创作的实验通道：同步、只读（v1）、完全瞬态。
   evalWorkflowSnippetToolEntry,
-  // run 内省的两个只读工具：always-on、无 gate。它们不进 WORKFLOW_CHILD_DISALLOWED_TOOLS——
-  // 那条禁令的理由是 CreateWorkflow 的 alwaysAsk 在子 runtime 里无窗可弹，只读查询不适用。
+  // run 内省的两个只读工具：主会话 always-on、无 gate。它们不进 WORKFLOW_CHILD_DISALLOWED_TOOLS——
+  // 那条禁令的理由是 CreateWorkflow 的 alwaysAsk 在子 runtime 里无窗可弹，只读查询不适用；但子
+  // runtime 不持有 run 端口，它们在那里必然失败，所以按另一条规则从子 runtime 移除
+  // （runtime/helpers/tool-allowlist.ts 的 RUN_INTROSPECTION_TOOLS）。
   listWorkflowRunsToolEntry,
   getWorkflowRunToolEntry,
   // run 的恢复入口：与上面两个只读内省工具同族（run_id 键、端口探测失败同款），但它是
@@ -207,6 +214,8 @@ interface RegisterBuiltInToolsOptions {
    * 端口在场就代表这个 host 有能力应答 proxyPool/*，子会话仍按 subagent_child 规则不暴露。
    */
   includeProxyPool?: boolean;
+  /** 桌宠控制工具面。桌面主进程宠物控制器在场即注入端口；任何会话可用。 */
+  includePetControl?: boolean;
   /**
    * 模型越狱配置工具面。与 includeProxyPool 同门：host 侧设置服务在场即注入端口。
    * 子会话按 subagent_child 规则不暴露。
@@ -284,7 +293,8 @@ export function registerBuiltInTools(
       (entry.metadata.name === "CronCreate" ||
         entry.metadata.name === "CronList" ||
         entry.metadata.name === "CronUpdate" ||
-        entry.metadata.name === "CronDelete") &&
+        entry.metadata.name === "CronDelete" ||
+        entry.metadata.name === "CronPauseSelf") &&
       options.includeAutomation !== true
     ) {
       continue;
@@ -296,6 +306,9 @@ export function registerBuiltInTools(
       continue;
     }
     if (entry.metadata.name === "ProxyPool" && options.includeProxyPool !== true) {
+      continue;
+    }
+    if (entry.metadata.name === "PetControl" && options.includePetControl !== true) {
       continue;
     }
     if (

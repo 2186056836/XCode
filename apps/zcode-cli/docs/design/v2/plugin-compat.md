@@ -5,10 +5,10 @@
 XCode should load a bounded subset of Claude Code format plugins while keeping
 XCode's runtime boundaries. The plugin ecosystem remains file-compatible with
 Claude Code where possible, but XCode P0 only projects plugin-provided skills,
-custom commands, MCP servers and trusted official hooks into existing XCode
-capability domains. Hook files from non-official third-party Marketplaces can be
-parsed for diagnostics, but are not injected into the runtime until XCode has an
-explicit trust and permission gate.
+custom commands, MCP servers, hooks and agents into existing XCode capability
+domains. Hooks from every enabled plugin, including third-party Marketplace
+plugins, are injected into the runtime. Per-plugin trust is not implemented yet;
+the decision lives in `canRunPluginHooks` of the adapters plugin loader.
 
 This feature started as first-party packaged capabilities such as the iOS
 Simulator and Android Emulator plugins. Claude Code Marketplace compatibility
@@ -181,6 +181,25 @@ official cache path on first startup or when the embedded plugin hash changes.
 The MCP command must point at the seeded cache directory, not the source
 workspace and not a module compiled into the XCode SEA main bundle.
 
+Seeding replaces one plugin version directory only while it holds the seed lock
+for that version. It writes the new tree to a unique `<version>.tmp-*` sibling.
+It moves the old target to a unique `<version>.backup-*` sibling, then renames
+the temporary tree to the target, so a failed promotion can restore the old
+target. A directory rename can return `EXDEV` inside one parent directory when
+the old target is in a lower layer of an overlay filesystem (for example, a
+container image that already contains the plugin cache). In that case, seeding
+deletes the seed marker of the old target first, deletes the old target, and
+then promotes the temporary tree. Because the marker goes first, an interrupted
+deletion cannot leave a partial tree that looks current; the next startup seeds
+it again.
+
+A seed failure that XCode cannot complete degrades only the affected plugin:
+transient errors after the retry budget, a seed lock timeout, `ENOENT` after a
+concurrent writer already promoted a current tree, and `EXDEV`. XCode logs
+`Official plugin cache operation degraded`, keeps a usable older cache when one
+exists, and does not fail session startup or session resume. `EXDEV` is not
+retried, because it does not go away on retry.
+
 For bundled official plugins only, XCode rewrites the seeded
 `.zcode-plugin/plugin.json` MCP server command at seed time. The rewritten
 command launches the current XCode executable through the hidden
@@ -290,13 +309,15 @@ Compatibility levels:
 
 Unsupported or diagnostic-only fields are ignored with diagnostics:
 
-- `hooks` from third-party Marketplace plugins
-- `agents`
 - `outputStyles`
 - `lspServers`
 - `channels`
 - `settings`
 - marketplace-only metadata not needed at runtime
+
+`agents` declarations without a discovered source file, such as object metadata
+or a single-file path, do not produce runtime profiles; directory support is
+defined under [Agents](#agents).
 
 `dependencies` is install-time only for Marketplace-installed plugins. It must
 not be reported through the legacy `plugin_unsupported_component` warning once
@@ -359,10 +380,22 @@ expansion tells the model to load that skill before performing the command.
 
 ### Agents
 
-XCode 会枚举插件根目录约定位置 `agents/*.md`，并把已启用插件中的 profile 以
-`<plugin-name>:<agent-name>` 加载到子代理运行时；名称无冲突时同时提供裸名别名。这个约定目录
-能力与 manifest 的 `agents` 字段不同：P0 仍只诊断 manifest 中声明的自定义 agents 路径，
-不会把任意外部路径投影为运行时组件。
+XCode 枚举默认 `agents/*.md` 与 manifest `agents` 字符串或数组声明的插件根内目录。
+组件名称优先取 frontmatter `name`，缺失时取文件名；发现结果同时保存实际源文件 `path`。
+加载器只读取该路径，不从名称重新拼接文件名，也不为缺少路径的描述性组件猜测文件。
+文件读取失败保留 `agent_read_failed` 诊断，不查找替代文件。
+
+已启用插件中的 profile 以 `<plugin-name>:<agent-name>` 加载到子代理运行时；名称无冲突时
+同时提供裸名别名。组件仍按名称去重：manifest 对象声明先于文件，默认目录先于额外目录，
+重复声明的目录只扫描一次；首次发现的条目保留其来源。对象声明仅提供描述，无源文件路径时
+不加载。目录继续使用插件根内路径校验；组件名称不作为路径输入。源路径只用于 CLI 内部，
+对外组件详情仍只投影名称与描述。
+
+插件 profile 的 frontmatter `permissionMode` 只能收紧子会话权限，官方与第三方插件同一规则：
+子会话取父会话模式与声明模式中更严格的一个（从严到宽为 plan、build、edit、guarded、yolo）。
+`bypassPermissions`、`dontAsk` 因此不会生效；`auto` 尚未实现，不参与比较，按继承处理。
+加载器保留声明值并给 profile 打 `permissionModeRestrictOnly` 标记，派生子会话时由 core 比较。
+规则与威胁边界见 [项目配置信任边界](../../../../../docs/security/deep-link-project-trust-boundary.md)。
 
 ### MCP
 
@@ -380,8 +413,8 @@ MCP config file. It is valid inside `.zcode-plugin/plugin.json`, for example:
   "mcpServers": {
     "ios-simulator": {
       "command": "node",
-      "args": ["${ZCODE_PLUGIN_ROOT}/dist/mcp/server.js"],
-      "cwd": "${ZCODE_PROJECT_DIR}"
+      "args": ["${XCODE_PLUGIN_ROOT}/dist/mcp/server.js"],
+      "cwd": "${XCODE_PROJECT_DIR}"
     }
   }
 }
@@ -404,6 +437,13 @@ A `.mcp.json` file may use Claude's wrapper shape:
 }
 ```
 
+A plugin MCP server runs once per session by default. Official plugins
+(`zcode-plugins-official`) may declare `"isolation": "workspace"` to share one
+process among all sessions of a workspace; such a server must keep its own state
+apart per session using the host's `_meta.session_id` (the document viewer
+plugins do, see `docs/plugins/2026-10-15-office-viewer-builtin-panels-spec.md`
+§8 in the repository root). XCode ignores `isolation` on other plugins.
+
 If a server has `command` but no `type`, XCode infers `type: "stdio"`.
 Server names are normalized for model-visible tool names by replacing
 non-identifier characters with underscores. A server named `ios-simulator`
@@ -419,13 +459,13 @@ Plugin component config may reference:
 ${CLAUDE_PLUGIN_ROOT}
 ${CLAUDE_PLUGIN_DATA}
 ${CLAUDE_PROJECT_DIR}
-${ZCODE_PLUGIN_ROOT}
-${ZCODE_PLUGIN_DATA}
-${ZCODE_PROJECT_DIR}
+${XCODE_PLUGIN_ROOT}
+${XCODE_PLUGIN_DATA}
+${XCODE_PROJECT_DIR}
 ${user_config.KEY}
 ${GITHUB_TOKEN}
 ${TOKEN_PLAN_API_TOKEN}
-${ZCODE_SOME_ENV}
+${XCODE_SOME_ENV}
 ```
 
 Claude and XCode variable names are synonyms. MCP secret sinks (`stdio.env`,
@@ -437,7 +477,7 @@ placeholder.
 
 Arbitrary process environment variables are intentionally not expanded in
 model-visible or process-list-visible fields such as `command`, `args`, `cwd`,
-`url`, OAuth `clientId`, or OAuth `scope`. Existing `ZCODE_*` runtime wiring
+`url`, OAuth `clientId`, or OAuth `scope`. Existing `XCODE_*` runtime wiring
 variables remain available in those fields for backward compatibility.
 
 `userConfig` defaults are used when no explicit plugin option exists. Sensitive
@@ -456,10 +496,9 @@ P0 policy:
 - Only bundled official cache plugins are automatically rewritten to the
   internal XCode/SEA plugin host.
 - Project-discovered plugin dirs are out of scope.
-- Hook files from non-official third-party Marketplace cache plugins are
-  diagnostic-only in P0. XCode official cache plugins, Claude official
-  Marketplace cache plugins and explicit inline plugin dirs keep the existing
-  trusted hook behavior.
+- Hook files from every enabled cache plugin, including non-official
+  third-party Marketplace plugins, are injected into the runtime. Per-plugin
+  trust is not implemented; see `canRunPluginHooks`.
 
 ## CLI Surface
 

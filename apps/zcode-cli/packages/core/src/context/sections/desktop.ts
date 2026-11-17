@@ -1,7 +1,8 @@
 import type { ContextSection } from "../types.js";
 import { estimateTokens } from "../utils.js";
 
-export function buildDesktopContextSection(): ContextSection {
+export function buildDesktopContextSection(genUiOutputDirectory?: string): ContextSection {
+  void genUiOutputDirectory;
   return createDesktopSection("XCode Desktop Context", "desktop_context", buildDesktopContextBody());
 }
 

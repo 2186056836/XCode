@@ -1,0 +1,97 @@
+// dsh-pet 主宠物用户配置（JSONC：允许注释与尾逗号）。
+// 位置：<DSH_HOME>/dsh-pet/main-config.jsonc（如 C:\Users\<你>\.dsh\dsh-pet\main-config.jsonc）
+// 合并语义：顶层字段「整段替换」——写了就整段用自己的，缺的子键不会从默认补回来。
+// pet pack（pet/<名>-config.json）是另一套文件，本文件只管 main 条目。
+{
+  // ======================= 宠物实例 =======================
+  // 每个实例独立：id 唯一；size 宽（高 = size × 9/16）；display 四选一；
+  // position = 角落 + 距角落的偏移；四个功能开关。
+  "pets": [
+    {
+      "name": "我的宠物",
+      "id": "main",
+      "size": 462,
+      "balanceEnabled": true,
+      "whisperEnabled": true,
+      "workStatusEnabled": true,
+      "fixedEnabled": false,
+      "display": "both",
+      "position": { "corner": "top-right", "marginX": 24, "marginY": 100 }
+    }
+  ],
+
+  // ======================= 人设（可选） =======================
+  // 碎碎念/对话的 system 前缀。实例里写了 whisperPrompt 就覆盖这一份。
+  // 实际发给模型 = 这段 + 「你的名字是“<名字>”」+ 当前时间背景。别在这里写名字和日期。
+  "whisperPrompt": "你是主人桌面上的 Q 版小女仆，会时不时碎碎念一句。20 字以内，自然俏皮，不说自己是 AI。",
+
+  // ======================= 全局开关 =======================
+  "notificationsEnabled": true,
+  "clickSoundEnabled": false,
+  "whisperImageEnabled": true,
+  "chatImageEnabled": true,
+  "chatImageLimit": 10,
+  // 多屏：true = 只在自己所在的屏幕内活动（屏缝当墙）
+  "confineToScreen": false,
+  // 桌面模式系统托盘
+  "trayEnabled": true,
+
+  // ======================= 物理（拖拽抛掷） =======================
+  // gravity: px/s²；restitution: 0~1；groundFriction: /s；throwPower > 0；
+  // ceilingBounce: 顶部是否反弹；petCollision: 多宠物互撞。
+  "physics": {
+    "gravity": 1400,
+    "restitution": 0.78,
+    "groundFriction": 2.5,
+    "ceilingBounce": true,
+    "throwPower": 1.0,
+    "petCollision": false
+  },
+
+  // ======================= 字体 =======================
+  // family: candy / yahei / youyuan / kaiti / simsun / comic / system
+  // size: 气泡字号（4~200）；followPet: 字号是否随宠物大小缩放。
+  "font": { "family": "candy", "size": 21, "followPet": true },
+
+  // ======================= 模型与上下文 =======================
+  // provider + model 都留空 = 跟随当前对话的模型；只填一半是配置错误。
+  "whisperModel": { "provider": "", "model": "" },
+  "chatModel": { "provider": "", "model": "" },
+  "chatMemoryRounds": 5,
+
+  // ======================= 动画池 =======================
+  // 素材目录：<DSH_HOME>/dsh-pet/main-animation/webm/*.webm（优先）→ 包内 assets/webm。
+  // 文件名必须与动画名逐字一致（不含扩展名）。素材要放在 webm/ 子目录。
+  "animations": {
+    "idle": ["待机呼吸休闲"],
+    "turn": ["东张西望"],
+    "drag": ["被鼠标拖拽悬空反馈"],
+    "clicks": ["点击回应-开心跃动", "点击回应-害羞惊讶"],
+    "moves": {
+      "default": { "minDist": 60, "maxDist": 240, "margin": 20, "leadSec": 2, "tailSec": 2 },
+      "actions": [{ "name": "螃蟹走路" }, { "name": "原地漂浮踏步" }]
+    },
+    "categories": [
+      { "id": "小动作", "weight": 50, "actions": ["悠闲哼歌", "照镜子", "写代码"] },
+      { "id": "文字", "weight": 30, "noMirror": true, "actions": ["是啊，吃什么", "深度思考碎碎念"] }
+    ],
+    "events": {
+      // 档位索引固定，不可在中间插入：
+      // 0 thinking / 1 working / 2 result / 3 waiting / 4 success / 5 error
+      "workStatus": [
+        "工作状态-思考冒泡",
+        "工作状态-忙碌点按",
+        "工作状态-清点归档",
+        "工作状态-原地踱步张望",
+        "工作状态-雀跃庆祝",
+        "工作状态-垂头叹气冒汗"
+      ]
+    }
+  },
+
+  // idle + turn + move + 各分类 weight 合计 = 100
+  "animationWeights": { "idle": 10, "turn": 5, "move": 5 },
+
+  // 事件刷新周期（秒）：整段替换，缺键按兜底（balance 1800 / whisper 300）
+  "eventsRefreshSec": { "balance": 1800, "whisper": 300 }
+}

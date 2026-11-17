@@ -35,6 +35,18 @@ export type {
 export type { WorkspacePurpose } from "./workspacePurpose.js";
 export { DEFAULT_LOCALE } from "./protocol.js";
 export { XCODE_VERSION, XCODE_COMMIT, XCODE_BUILD_TIME } from "./version.js";
+export {
+  XCODE_PLATFORM_APP_VERSION,
+  PLATFORM_APP_VERSION_TTL_MS,
+  fetchLatestPlatformAppVersion,
+  getPlatformAppVersion,
+  getPlatformAppVersionAgeMs,
+  parseManifestVersion,
+  refreshPlatformAppVersion,
+  resolveReleasePlatformKey,
+  startPlatformAppVersionRefresh,
+  stopPlatformAppVersionRefresh,
+} from "./platformAppVersion.js";
 export type { HelloMessage, HelloAckMessage } from "./handshake.js";
 export type { ArmsRumEnv, XCodeEnv, XCodeProductFlavor } from "./env.js";
 export type { RemoteAssetInstallMode } from "./remoteAssetInstallMode.js";
@@ -83,6 +95,10 @@ export {
 export * from "./errors.js";
 export type { SessionCreateSource } from "./sessionCreateSource.js";
 export { resolveSafeEndpointHostname } from "./endpointHostname.js";
+export {
+  USER_INSTRUCTIONS_MAX_BYTES,
+  USER_INSTRUCTIONS_TOO_LARGE_ERROR_CODE,
+} from "./userInstructions.js";
 export * from "./rendererActionTrace.js";
 export * from "./validation.js";
 export type { CustomPersonaTemplate } from "./validationAppSettings.js";
@@ -99,6 +115,8 @@ export * from "./zcode-api-retry-status.js";
 export * from "./zcode-network-debug-status.js";
 export * from "./zcode-session-visible-content.js";
 export * from "./official-mcp-auth.js";
+// fork：窗口截图（设置页「检测窗口」用）。
+export type { WindowScreenshotResult } from "./platform.js";
 export * from "./official-mcp-tool-error.js";
 export * from "./conversation-message-projection-policy.js";
 export * from "./conversation-share.js";
@@ -148,9 +166,12 @@ export {
   BROWSER_SCREENSHOT_SURFACE_PREPARE_TIMEOUT_MS,
   BROWSER_VIEW_RESTORE_BOOTSTRAP_URL,
   LOCAL_MEDIA_PREVIEW_SCHEME,
+  BROWSER_LOCAL_PREVIEW_SCHEME,
+  browserPreviewSourceUrl,
   DesktopCommandIds,
   buildLocalMediaPreviewUrl,
   createOpenInEditorRemoteTarget,
+  unwrapRemoteWorkspaceBindResult,
 } from "./platform.js";
 export type {
   EmbeddedBrowserPermissionDeviceOption,
@@ -171,12 +192,15 @@ export type {
   RendererTelemetryEventPayload,
   TelemetryEventPayload,
   TelemetryRendererContext,
+  TelemetryUiMode,
 } from "./telemetry.js";
 export {
   PLUGIN_TELEMETRY_EVENTS,
   mobilePluginDiscoveryTelemetrySchema,
   sanitizePluginTelemetryDetail,
   collectTelemetryRendererContext,
+  normalizeTelemetryUiMode,
+  telemetryUiModeSchema,
   resolveSafeTelemetryHostname,
   sanitizeTelemetryErrorMessage,
   sanitizeTelemetrySkillName,
@@ -222,6 +246,8 @@ export type {
   ChromeBrowserDataImportOptions,
   ChromeBrowserDataImportResult,
   ConnectRemoteRequest,
+  FileApplicationInfo,
+  FileApplicationTarget,
   CreateTempTextAttachmentRequest,
   CreateTempTextAttachmentResult,
   MaterializeWorkflowArtifactFileRequest,
@@ -345,7 +371,12 @@ export * from "./execution-state.js";
 
 export { bashOutputDisplaySchema } from "./bash-output-display.js";
 
-export * from "./localTtft.js";
+export * from "./subagent-runtime-config.js";
+
+export * from "./subagent-profile.js";
+export { parseAgentProfileFromMarkdown } from "./subagent-profile-parser.js";
+
+export * from "./local-ttft/contract.js";
 export * from "./pluginStoreOrder.js";
 export * from "./clientConfig.js";
 export * from "./pluginStoreOrdering.js";
@@ -356,6 +387,17 @@ import "./networkCapture.js";
 import "./zcode-session-content-profile.js";
 import "./web-remote-control.js";
 import "./web-remote-control-heartbeat.js";
+// fork：web-remote-relay 受管模块（contract/domain/mobileLog 公开面）。
+// heartbeatTiming 与 legacy web-remote-control-heartbeat 导出同名同值常量，二者只放一份。
+export * from "#src/web-remote-relay/contract.js";
+export * from "#src/web-remote-relay/domain/retry.js";
+export * from "#src/web-remote-relay/domain/webRemoteControlActions.js";
+export * from "#src/web-remote-relay/mobileLog.js";
+export { WebRemoteControlV2Heartbeat } from "#src/web-remote-relay/adapters/heartbeat.js";
+export {
+  collectMobilePushEvents,
+  type MobilePushObservation,
+} from "#src/web-remote-relay/domain/notification.js";
 import "./web-remote-control-rpc-transport.js";
 import "./memory.js";
 import "./output-style.js";
@@ -392,14 +434,16 @@ export * from "./output-style.js";
 export * from "./highspeed.js";
 export * from "./subagent-runtime-config.js";
 export * from "./subagent-profile.js";
-export { parseAgentProfileFromMarkdown } from "./subagent-profile-parser.js";
 export * from "./marketingTouch.js";
 export * from "./rewardsEmbedded.js";
 export * from "./rewardsBridge.js";
 export { API_KEY_USAGE_SCENE, type ApiKeyCreationUsageScene } from "./api-key-usage-scene.js";
 export {
   projectAccessTokenFingerprint,
+  ProjectAccessTokenError,
+  ProjectAccessTokenHttpStatusError,
   ProjectAccessTokenTransientError,
+  type ProjectAccessTokenRequestFailure,
 } from "./project-access-token.js";
 export {
   ProjectAccessTokenClient,
@@ -418,6 +462,8 @@ export * from "./request-security-edition/verification-policy.js";
 export {
   ACCOUNT_ROTATION_FAILOVER_STATUS,
   type AccountRotationFailoverStatus,
+  ACCOUNT_ROTATION_FAILOVER_QUOTA_PROVIDER_CODES,
+  type AccountRotationFailoverProviderCode,
 } from "./account-rotation-failover.js";
 
 export * from "./conversation-share-tool-presentation.js";

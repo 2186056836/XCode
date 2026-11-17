@@ -125,7 +125,9 @@ export function SettingsRow({
         className={cn(
           "grid items-center gap-4",
           controlLayout === "wide"
-            ? "grid-cols-1 sm:grid-cols-[minmax(0,1fr)_280px]"
+            // wide 控件列必须按内容自适应：写死 280px 时，下拉框 + 动作按钮
+            // （如内置身份模板：288px select + 使用按钮）会从右侧溢出并压住说明文案。
+            ? "grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto]"
             : "grid-cols-[minmax(0,1fr)_192px]",
         )}
       >

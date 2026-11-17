@@ -22,6 +22,40 @@ const officeViewerRuntimePaths = ["dist/server.mjs", "dist/ui/assets.json", "dis
 
 export const officialSeaPlugins = [
   {
+    marketplace: "zcode-plugins-official",
+    name: "visualize",
+    packageName: "@zcode/visualize-plugin",
+    requiresRuntime: false,
+    requiredSeedPaths: [
+      "skills/visualize/SKILL.md",
+      "skills/visualize/references/api.md",
+      "skills/visualize/references/styles.md",
+      "skills/visualize/tweak.md",
+      "skills/visualize/LICENSE.md",
+      "skills/visualize/scripts/render.py",
+      "skills/visualize/assets/visualize.css",
+      "skills/visualize/assets/visualize.html",
+      "skills/visualize/assets/calendar.js",
+      "skills/visualize/assets/runtime-manifest.json",
+      "skills/visualize/scripts/vendor.py",
+      "skills/visualize/assets/vendor/manifest.json",
+      "skills/visualize/assets/vendor/floating-ui-core-1.7.3.min.js",
+      "skills/visualize/assets/vendor/floating-ui-core-1.7.3.min.js.LICENSE",
+      "skills/visualize/assets/vendor/floating-ui-dom-1.7.4.min.js",
+      "skills/visualize/assets/vendor/floating-ui-dom-1.7.4.min.js.LICENSE",
+      "skills/visualize/assets/vendor/lucide-1.17.0.js",
+      "skills/visualize/assets/vendor/lucide-1.17.0.js.LICENSE",
+      "skills/visualize/assets/vendor/d3-7.9.0.min.js",
+      "skills/visualize/assets/vendor/d3-7.9.0.min.js.LICENSE",
+      "skills/visualize/widgets/calendar.md",
+      "skills/visualize/examples/calendar.html",
+      "skills/visualize/assets/standalone-host-bridge.js",
+      "skills/visualize/assets/standalone-shell.js",
+    ],
+    rootPath: join("packages", "visualize-plugin"),
+    version: "0.1.1",
+  },
+  {
     // node_repl 宿主：Browser Use 与 Computer Use 共用的运行时产物，自己不是面向用户的插件
     // （无 skill、无市场 listing）。它必须始终随发布物嵌入，否则任一能力启用时都没有宿主可跑。
     marketplace: "zcode-plugins-official",
@@ -30,7 +64,7 @@ export const officialSeaPlugins = [
     requiresRuntime: true,
     requiredRuntimePaths: ["dist/mcp/server.js"],
     rootPath: join("packages", "node-repl-host"),
-    version: "0.6.1",
+    version: "0.7.0",
   },
   {
     marketplace: "zcode-plugins-official",
@@ -55,7 +89,7 @@ export const officialSeaPlugins = [
     ],
     rootPath: join("packages", "documents-plugin"),
     // 修复原因：SEA manifest 必须与 package、plugin manifest 和官方 definition 同步，避免发布产物嵌入旧版本。
-    version: "0.2.0",
+    version: "0.2.1",
   },
   {
     marketplace: "zcode-plugins-official",
@@ -81,7 +115,7 @@ export const officialSeaPlugins = [
     ],
     rootPath: join("packages", "pdf-plugin"),
     // 修复原因：SEA manifest 必须与 package、plugin manifest 和官方 definition 同步，避免发布产物嵌入旧版本。
-    version: "0.2.1",
+    version: "0.2.2",
   },
   {
     marketplace: "zcode-plugins-official",
@@ -97,7 +131,7 @@ export const officialSeaPlugins = [
     ],
     rootPath: join("packages", "presentations-plugin"),
     // 修复原因：SEA manifest 必须与 package、plugin manifest 和官方 definition 同步，避免发布产物嵌入旧版本。
-    version: "0.2.0",
+    version: "0.2.1",
   },
   {
     marketplace: "zcode-plugins-official",
@@ -113,7 +147,7 @@ export const officialSeaPlugins = [
     ],
     rootPath: join("packages", "spreadsheets-plugin"),
     // 修复原因：SEA manifest 必须与 package、plugin manifest 和官方 definition 同步，避免发布产物嵌入旧版本。
-    version: "0.2.0",
+    version: "0.2.1",
   },
   {
     // browser-use 使用真实 node_repl MCP runtime，SEA 必须校验并嵌入 server.js。
@@ -129,6 +163,70 @@ export const officialSeaPlugins = [
     // 导致发布产物不 seed browser-use，进而无法装配宿主 node_repl MCP。
     version: "0.5.1",
   },
+  {
+    marketplace: "zcode-plugins-official",
+    name: "ios-simulator",
+    packageName: "@zcode/ios-simulator-plugin",
+    requiresRuntime: true,
+    requiredRuntimePaths: ["dist/mcp/server.js"],
+    rootPath: join("packages", "ios-simulator-plugin"),
+    version: "0.1.0",
+  },
+  {
+    marketplace: "zcode-plugins-official",
+    name: "restore-legacy-sessions",
+    packageName: "@zcode/restore-legacy-sessions-plugin",
+    requiresRuntime: false,
+    rootPath: join("packages", "restore-legacy-sessions-plugin"),
+    version: "0.1.0",
+  },
+  {
+    marketplace: "zcode-plugins-official",
+    name: "skill-creator",
+    packageName: "@zcode/skill-creator-plugin",
+    requiresRuntime: false,
+    rootPath: join("packages", "skill-creator-plugin"),
+    version: "0.1.0",
+  },
+  {
+    marketplace: "zcode-plugins-official",
+    name: "plugin-creator",
+    packageName: "@zcode/plugin-creator-plugin",
+    requiresRuntime: false,
+    rootPath: join("packages", "plugin-creator-plugin"),
+    version: "0.1.1",
+  },
+  {
+    // 纯内容型（只提供 skills）：requiresRuntime:false，SEA 构建不校验 dist/mcp/server.js。
+    // 版本必须与 package.json / plugin.json / official-plugin-definitions.ts 同步 bump——
+    // runtime 按 (name, version) 精确匹配 SEA 资产，这里落后会让整个插件在 SEA 下不 seed
+    // （browser-use 0.3.1 的既有教训，build-sea.test.mjs:564 钉住四处对齐）。
+    // 0.3.0：`/workflow` 与 dynamic-workflows 技能移出本插件（见 sea-bundled-skill-assets.mjs）。
+    marketplace: "zcode-plugins-official",
+    name: "zcode-guide",
+    packageName: "@zcode/zcode-guide-plugin",
+    requiresRuntime: false,
+    requiredSeedPaths: ["skills/zcode-configuration-guide/SKILL.md"],
+    rootPath: join("packages", "zcode-guide-plugin"),
+    version: "0.3.0",
+  },
+  {
+    // skill + start.sh 模板 + 零依赖的 zcode-site CLI，加上 Sites 面板（dist/ 下的 MCP server 与页面，
+    // 由插件自己的 build 脚本构建）。版本与 package.json / plugin.json / official-plugin-definitions.ts 同步 bump。
+    marketplace: "zcode-plugins-official",
+    name: "zcode-site",
+    packageName: "@zcode/zcode-site-plugin",
+    requiresRuntime: true,
+    requiredRuntimePaths: ["dist/server.mjs", "dist/ui/panel.html"],
+    requiredSeedPaths: [
+      "scripts/zcode-site.mjs",
+      "scripts/stage.mjs",
+      "skills/site-deploy/SKILL.md",
+    ],
+    rootPath: join("packages", "zcode-site-plugin"),
+    version: "0.4.2",
+  },
+  // superpowers 已从内置插件下线，改走 UI 推荐区按需安装；这里不再打入 SEA 资源清单。
 ];
 
 export const collectSeaOfficialPluginAssets = async ({

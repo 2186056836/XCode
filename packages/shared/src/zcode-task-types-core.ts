@@ -328,6 +328,14 @@ export interface XCodeTaskMeta {
   runtimeEpoch?: number;
   /** 创建此 task 时使用的 agent provider，缺省视为 "glm"（旧数据兼容） */
   provider?: XCodeProvider;
+  /**
+   * 历史数据修复版本戳：host 在读取/迁移旧快照时补齐，用来避免重复修复。
+   * UI 的任务元数据比较需要感知它，否则修复前后会被误判为同一条记录。
+   */
+  repairState?: {
+    claudeNativeSnapshotAssistantContentVersion?: number;
+    codexNativeSnapshotSubagentToolsVersion?: number;
+  };
   /** 迁移来源；普通新建任务为空，用于识别 Claude Code 原生历史导入。 */
   migrationSource?: XCodeTaskMigrationSource;
   /**

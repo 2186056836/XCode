@@ -18,7 +18,11 @@ const START_PLAN_BUSY_RETRY_PROVIDER_IDS = new Set([
   "account:bigmodel-start-plan",
   "account:zai-start-plan",
 ]);
-const START_PLAN_BUSY_MAIN_TURN_ADMISSION_RETRY_DELAYS_MS = [1_000, 2_000] as const;
+// 首 token 前被并发限制拒绝（系统繁忙）与断流恢复共用同一个 10 次预算；
+// 退避按该计数取值，前密后疏，总等待 ~2.8 分钟，覆盖并发限制的典型持续窗口。
+const START_PLAN_BUSY_ADMISSION_RETRY_DELAYS_MS = [
+  1_000, 2_000, 5_000, 10_000, 15_000, 20_000, 25_000, 30_000, 30_000, 30_000,
+] as const;
 export const START_PLAN_BUSY_AUTO_RETRY_EXHAUSTED_MESSAGE =
   "Start Plan is busy and automatic model stream recovery reached the maximum retry count.";
 const TRANSIENT_ERROR_CODES = new Set([
@@ -96,7 +100,7 @@ export function beginStartPlanBusyAdmissionRetryAttempt(
   state.streamRecoveryRetryCount += 1;
   return {
     retryNumber: state.streamRecoveryRetryCount,
-    maxRetries: START_PLAN_BUSY_MAIN_TURN_ADMISSION_RETRY_DELAYS_MS.length,
+    maxRetries: STREAM_RECOVERY_MAX_RETRIES,
   };
 }
 
@@ -109,7 +113,12 @@ export function getStartPlanBusyAdmissionRetryDelayMs(input: {
   if (input.turnNumber <= 0) return undefined;
   if (!START_PLAN_BUSY_RETRY_PROVIDER_IDS.has(input.providerId)) return undefined;
   if (!isStartPlanBusyStreamRecoveryFailure(input.error)) return undefined;
-  return START_PLAN_BUSY_MAIN_TURN_ADMISSION_RETRY_DELAYS_MS[input.state.streamRecoveryRetryCount];
+  // 与断流恢复共用 10 次预算：计数被断流恢复消耗过后，这里从对应的退避档继续，
+  // 预算耗尽（≥10）后不再重试，由调用方包装成「自动重试已达最大次数」。
+  if (input.state.streamRecoveryRetryCount >= STREAM_RECOVERY_MAX_RETRIES) return undefined;
+  return START_PLAN_BUSY_ADMISSION_RETRY_DELAYS_MS[
+    Math.min(input.state.streamRecoveryRetryCount, START_PLAN_BUSY_ADMISSION_RETRY_DELAYS_MS.length - 1)
+  ];
 }
 
 export async function emitStreamRecoveryStarted(

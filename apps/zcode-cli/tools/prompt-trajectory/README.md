@@ -1,20 +1,33 @@
 # @zcode/prompt-trajectory
 
-OpenAI protocol trajectory recorder for inspecting zcode-cli prompt assembly.
+Test-only OpenAI protocol trajectory recorder for zcode-cli prompt assembly checks.
 
 This tool lives under `tools/` so it is available in the pnpm workspace but stays out of
 the production CLI and SEA packaging path.
 
 ## Current limitations
 
-Validation on 2026-10-14 found two existing failures: `record:prompt` exits before
-the model request with `createModelAdapter requires executionConfig`, and `model-io`
-rejects the current default CLI log when `request.body.messages` has been pruned.
-The commands below describe the tool interface; these paths need repair and
-validation before use in a training-data pipeline. See the
+Fixture recording was repaired and validated on 2026-10-21: every `fixture.json`
+case with `mockResponses` records offline. Prompt-only cases (`prompt.txt`) and
+`system-reminder-sr9-runtime` have no mock responses and still need a real upstream
+(`--model`, `--upstream-base-url`). `model-io` still rejects the current default CLI
+log when `request.body.messages` has been pruned. See the
 [CLI capture guide](../../docs/usage/13-automation.md) for the verified scope and
 capture boundaries. Do not reconstruct missing provider messages from a different
 message representation merely to make conversion succeed.
+
+Recording rules:
+
+- Each case runs with a temporary home and `XCODE_STORAGE_DIR`. User skills,
+  plugins, `~/.zcode/AGENTS.md` and the user's session database never enter a
+  recording, and the recording leaves no session in the user's database.
+- The recorder registers one Registry provider for the fixture model. Its
+  capabilities come only from the Registry model declaration; use the fixture
+  `modelProperties` field (for example `{ "supportsNativeWebSearch": true }`) to
+  change them.
+- A request that matches no mock gets HTTP 400, so the case fails at once without
+  provider retries. A streaming request receives the chat-completion mock as SSE
+  chunks.
 
 ## Commands
 
@@ -23,11 +36,14 @@ pnpm --filter @zcode/bootstrap^... build
 pnpm --filter @zcode/bootstrap build
 
 pnpm --filter @zcode/prompt-trajectory record -- \
-  --fixture /path/to/recording.json \
+  --fixture fixtures/prompt/basic-live.json \
   --out /tmp/zcode-prompt-trajectory/basic-live
 
 pnpm --filter @zcode/prompt-trajectory record:prompt -- \
   --prompt "Say hello in one short sentence."
+
+pnpm --filter @zcode/prompt-trajectory run:testcases -- \
+  --cases testcases
 
 pnpm --filter @zcode/prompt-trajectory derive -- \
   --out /tmp/zcode-prompt-trajectory/basic-live
@@ -43,18 +59,33 @@ derives complete request-body snapshots under `/out/trajectories`.
 `trajectory.jsonl` is the single source of truth. Streaming deltas are assembled
 into a single assistant message before they are appended to the JSONL file.
 
-`record`, `record-prompt`, and `derive` accept `--reference-request <path>` to copy
-an optional reference request into `<out>/raw/reference-request-body.raw.json`.
-The copy preserves the supplied text and adds a trailing newline when missing;
-it does not alter the derived trajectories. Without this option, no reference
-copy is written. Unrecognized options are rejected before recording or derivation.
-
 When `--model`, `--upstream-base-url`, and API-key flags are omitted, the recorder
 uses the same zcode model config resolution as the CLI. The upstream request is
 still proxied through the recorder; only the model provider `baseURL` is replaced
 with the local proxy URL at runtime.
 
-## Prompt recording output
+## Testcase Runner
+
+`run:testcases` scans the testcase directory one child folder at a time. A case is
+valid when it contains both files:
+
+```text
+testcases/<case-name>/prompt.txt
+testcases/<case-name>/expect.json
+```
+
+Each run writes a timestamped output directory:
+
+```text
+out/testYYYYMMDD-HHMMSS/<case-name>/trajectory.jsonl
+out/testYYYYMMDD-HHMMSS/<case-name>/manifest.json
+out/testYYYYMMDD-HHMMSS/<case-name>/trajectories/*.openai_request_body.json
+out/testYYYYMMDD-HHMMSS/<case-name>/trajectories/*.anthropic_request_body.json
+out/testYYYYMMDD-HHMMSS/<case-name>/expect.json
+```
+
+The runner does not compare `expect.json` yet; it records and derives the
+trajectory so the generated OpenAI request-body JSON can be inspected manually.
 
 Single prompt recording without `--out` writes to:
 
@@ -73,7 +104,7 @@ shape.
 
 ## Model-IO Converter
 
-`model-io` reads a real ZCode `model-io-*.jsonl` file and turns the main
+`model-io` reads a real XCode `model-io-*.jsonl` file and turns the main
 conversation into a reusable Anthropic trajectory:
 
 ```text
@@ -96,13 +127,6 @@ the converter preserves that complete assistant message after verifying its text
 tool calls against the response summary. Appending blocks to the final user message
 also remains in the same trajectory. Rewriting existing content still starts a new
 segment. `non-incremental-change` is not a provider cache-miss indicator.
-## Live recording configuration
-
-Supply an external recording configuration with `--fixture`, or use `record:prompt`
-with `--model`, `--upstream-base-url`, and `--api-key-env`. Supply credentials through
-the named environment variable; do not store them in the recording configuration.
-
-## ToolSearch-only synthesis
 
 For ToolSearch-only synthesis, `model-io` and `derive` accept
 `--ignore-tool-search-changes` (off by default):

@@ -124,11 +124,7 @@ export function CustomPersonaTemplatesSetting() {
           </Button>
         }
       />
-      {templates.length === 0 ? (
-        <div className="px-1 text-ui-sm text-foreground-subtle">
-          {intl.formatMessage({ id: "settings.modelJailbreak.customTemplates.empty" })}
-        </div>
-      ) : (
+      {templates.length === 0 ? null : (
         <ul className="flex flex-col gap-1.5">
           {templates.map((template) => (
             <li

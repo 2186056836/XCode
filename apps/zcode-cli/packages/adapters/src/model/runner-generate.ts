@@ -55,7 +55,10 @@ import type {
 import { AccountRequestRetry } from "./account-request-retry.js";
 import { AccountRotationRetry } from "./account-rotation-retry.js";
 import { resolveModelForAttempt, RuntimeHeadersRefreshError } from "./runner-runtime-headers.js";
-import { retryAllowedByFailurePolicy } from "./workflow-model-failure-policy.js";
+import {
+  nextUnrecognizedCodeStreak,
+  retryAllowedByFailurePolicy,
+} from "./workflow-model-failure-policy.js";
 import { modelFailureStatusFields, providerRequestIdFromHeaders } from "./runner-telemetry.js";
 import { repairReasoningHistoryAfterSignatureRejection } from "./reasoning-history-normalization.js";
 import { admitAttempt, type AttemptAdmission } from "./request-admission.js";
@@ -96,6 +99,8 @@ export async function runGenerateText(input: {
   const authRetry = new AccountRequestRetry(input.request, input.resolved, input.logger);
   const rotationRetry = new AccountRotationRetry(input.request, input.resolved, input.logger);
   let emptyCompletionRetryCount = 0;
+  // 不认识的业务码在本次请求里连续出现的次数：workflow 策略表据此停下，见 workflow-model-failure-policy.ts。
+  let unrecognizedCodeStreak = 0;
 
   for (
     let attempt = 1;
@@ -366,7 +371,7 @@ export async function runGenerateText(input: {
       const classified = classifyModelFailure(error, input.request.abortSignal);
       if (error instanceof RuntimeHeadersRefreshError) {
         classified.message = error.message;
-        classified.retryable = false;
+        classified.retryable = error.retryable;
       }
       // off-peak 特判（仅 idle plan provider，见 offpeak-retry.ts）：排队 429 豁免预算、
       // 3102（兼容旧 3001）以稳定标记落败触发 desktop 侧续跑。
@@ -385,6 +390,12 @@ export async function runGenerateText(input: {
           : offPeak?.kind === "queued"
             ? { ...classified, retryable: true, retryReason: ModelRetryReason.OffpeakQueued }
             : classified;
+      const providerCode = inspectProviderFailure(error).providerErrorCode;
+      unrecognizedCodeStreak = nextUnrecognizedCodeStreak(
+        unrecognizedCodeStreak,
+        failure,
+        providerCode,
+      );
       const responseHeaders = sanitizeModelNetworkHeaders(
         getResponseHeaders(unwrapRetryError(error)),
       );
@@ -409,11 +420,7 @@ export async function runGenerateText(input: {
           ? true
           : retryBudgetAllows(retryBudget, retryBudgetAttempt, input.retry.maxAttempts) &&
             // workflow 流量（无上限预算）读策略表而不是分类器的 retryable；有界预算逐字不变。
-            retryAllowedByFailurePolicy(
-              failure,
-              retryBudget,
-              inspectProviderFailure(error).providerErrorCode,
-            );
+            retryAllowedByFailurePolicy(failure, retryBudget, providerCode, unrecognizedCodeStreak);
       const retryWithAuth = authRetry.claim(error, options === undefined);
       // 账号级失败（401/402/403/429）且 host 支持轮询：换一条连接立即重试。
       // 放在普通预算之外，但与 authRetry 共享「已耗尽」语义（各自有上限）。
@@ -479,6 +486,7 @@ export async function runGenerateText(input: {
         });
         throw toAdapterError(error, failure, statusContext, attempt, {
           errorPhase: requestInvocationCompleted ? "response" : "prepare",
+          unrecognizedCodeStreak,
         });
       }
 

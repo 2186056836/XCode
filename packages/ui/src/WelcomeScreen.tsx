@@ -10,6 +10,7 @@ import { type OAuthProviderMeta, BIGMODEL_PROVIDER_ID, ZAI_PROVIDER_ID } from "@
 import {
   TID_LOGIN_USE_API_KEY_BUTTON,
   TID_OAUTH_CANCEL,
+  TID_OAUTH_COPY_LOGIN_LINK,
   TID_OAUTH_ERROR,
   TID_OAUTH_LOGIN_BUTTON,
   testId,
@@ -24,10 +25,11 @@ import { renderOAuthProviderIcon } from "./lib/oauthProviderIcon.js";
 import { ThemeHeroVisual } from "./openWorkspacePageThemeHero.js";
 import { useXCodeStore } from "./store/StoreProvider.js";
 import { DesktopOverlayWindowControls } from "@/DesktopOverlayWindowControls.js";
+import { toast } from "@/components/ui/toast.js";
 
 interface WelcomeScreenProps {
   onComplete: (reason: LoginCompleteReason) => void | Promise<void>;
-  /** 用户手动点"添加账号"打开；已登录也不自动关闭登录页。 */
+  /** 用户手动点「添加账号」打开；已登录也不自动关闭登录页。 */
   isManualOpen?: boolean;
 }
 
@@ -50,7 +52,7 @@ export function WelcomeScreen({ onComplete, isManualOpen }: WelcomeScreenProps) 
 interface LoginPanelProps {
   active: boolean;
   onComplete: (reason: LoginCompleteReason) => void | Promise<void>;
-  /** 用户手动点"添加账号"打开（manual-login）；此时已登录也不应自动关闭，让用户选 provider 登录新账号。 */
+  /** 用户手动点「添加账号」打开（manual-login）；此时已登录也不应自动关闭，让用户选 provider 登录新账号。 */
   isManualOpen?: boolean;
 }
 
@@ -73,7 +75,7 @@ export function shouldCompleteLoginFromExistingUser(params: {
   return params.hasUser && !params.attempt;
 }
 
-function LoginPanel({ active, onComplete, isManualOpen }: LoginPanelProps) {
+export function LoginPanel({ active, onComplete, isManualOpen }: LoginPanelProps) {
   const { intl } = useXCodeIntl();
   const {
     startLogin,
@@ -84,6 +86,7 @@ function LoginPanel({ active, onComplete, isManualOpen }: LoginPanelProps) {
     providers,
     loadingProviders,
     pendingProvider,
+    authorizeUrl,
     refreshProviders,
   } = useOAuth();
   const user = useXCodeStore((s) => s.user);
@@ -210,7 +213,7 @@ function LoginPanel({ active, onComplete, isManualOpen }: LoginPanelProps) {
       setOAuthError(null);
       void onComplete("oauth");
     }
-  }, [active, finishActiveLoginEntryAttempt, onComplete, reset, setOAuthError, user]);
+  }, [active, isManualOpen, finishActiveLoginEntryAttempt, onComplete, reset, setOAuthError, user]);
 
   useEffect(() => {
     if (!active) {
@@ -252,6 +255,20 @@ function LoginPanel({ active, onComplete, isManualOpen }: LoginPanelProps) {
   const resetApiKeyForm = useCallback(() => {
     setLoginMode("providers");
   }, []);
+
+  const handleCopyLoginLink = useCallback(async () => {
+    if (!authorizeUrl || typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+      toast(intl.formatMessage({ id: "login.oauth.copyLinkFailed" }));
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(authorizeUrl);
+      toast(intl.formatMessage({ id: "login.oauth.copyLinkSuccess" }));
+    } catch {
+      toast(intl.formatMessage({ id: "login.oauth.copyLinkFailed" }));
+    }
+  }, [authorizeUrl, intl]);
 
   useEffect(() => {
     if (active) {
@@ -397,6 +414,19 @@ function LoginPanel({ active, onComplete, isManualOpen }: LoginPanelProps) {
             >
               {intl.formatMessage({ id: "login.oauth.cancel" })}
             </Button>
+            {authorizeUrl ? (
+              <div className="flex items-center justify-center gap-1 text-center text-ui-sm text-foreground-subtle">
+                <span>{intl.formatMessage({ id: "login.oauth.browserNotOpened" })}</span>
+                <button
+                  type="button"
+                  className="font-medium text-brand underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  data-testid={TID_OAUTH_COPY_LOGIN_LINK}
+                  onClick={() => void handleCopyLoginLink()}
+                >
+                  {intl.formatMessage({ id: "login.oauth.copyLoginLink" })}
+                </button>
+              </div>
+            ) : null}
           </div>
         )}
 

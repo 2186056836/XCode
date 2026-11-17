@@ -72,7 +72,34 @@ export interface IOAuthService {
   logoutAll(): Promise<void>;
 
   /** 获取已登录账号列表（多账号）。 */
-  getAccounts(): Promise<OAuthAccountEntry[]>;
+  getAccounts(): Promise<
+    Array<OAuthAccountEntry & { /** 本地 exp 判定：模型凭据是否已过有效期（提示用，服务端可能仍接受）。 */ zcodeJwtExpired?: boolean }>
+  >;
+  /** 更新账号备注（双击编辑保存）；空串清除备注。 */
+  updateAccountRemark(accountRef: string, remark: string): Promise<OAuthAccountEntry | null>;
+  /** 自动领取（营销权益）设置：每账号开关 + HH:MM，host 侧定时调度。 */
+  listAutoClaimSettings(): Promise<
+    Array<{ accountRef: string; enabled: boolean; time: string }>
+  >;
+  updateAutoClaimSettings(
+    accountRef: string,
+    update: { enabled?: boolean; time?: string },
+  ): Promise<{ enabled: boolean; time: string }>;
+  /** 批量更新自动领取设置（批量开启/关闭共用）；逐账号返回结果。 */
+  updateAutoClaimSettingsBatch(
+    accountRefs: string[],
+    update: { enabled?: boolean; time?: string },
+  ): Promise<{ accountRef: string; ok: boolean; error?: string }[]>;
+  /** 自动签到/领取的最近活动日志（新→旧）。 */
+  listAutoActivity(): Promise<
+    Array<{
+      kind: "auto-checkin" | "auto-claim";
+      accountRef: string;
+      status: string;
+      message?: string;
+      at: string;
+    }>
+  >;
 
   /** 获取当前激活账号。 */
   getActiveAccount(): Promise<OAuthAccountEntry | null>;

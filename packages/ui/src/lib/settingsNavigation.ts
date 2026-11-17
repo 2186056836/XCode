@@ -8,22 +8,26 @@ export type SettingsSectionId =
   | "browser"
   | "modelProvider"
   | "remoteDevices"
+  | "dataSync"
+  | "personalization"
   | "memory"
   | "plugin"
   | "mcp"
   | "skill"
   | "plugins"
+  | "projects"
   | "archives"
   | "usage"
-  | "usageDetails"
   | "subagents"
-  | "modelJailbreak"
   | "commands"
   | "hooks"
   | "workspaceFileSearch"
   | "computerUse"
   | "automations"
   | "shortcuts"
+  | "pets"
+  | "usageDetails"
+  | "modelJailbreak"
   | "accounts"
   | "proxyPool";
 
@@ -75,21 +79,26 @@ function isSettingsSectionId(value: string): value is SettingsSectionId {
     value === "browser" ||
     value === "modelProvider" ||
     value === "remoteDevices" ||
+    value === "dataSync" ||
+    value === "personalization" ||
     value === "memory" ||
     value === "plugin" ||
     value === "mcp" ||
     value === "skill" ||
     value === "plugins" ||
+    value === "projects" ||
     value === "archives" ||
     value === "usage" ||
     value === "subagents" ||
-    value === "modelJailbreak" ||
     value === "commands" ||
     value === "hooks" ||
     value === "workspaceFileSearch" ||
     value === "computerUse" ||
     value === "automations" ||
     value === "shortcuts" ||
+    value === "pets" ||
+    value === "usageDetails" ||
+    value === "modelJailbreak" ||
     value === "accounts" ||
     value === "proxyPool"
   );

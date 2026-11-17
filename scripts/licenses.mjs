@@ -14,8 +14,8 @@
 import { generateThirdPartyNotices } from "./generate-third-party-notices.mjs";
 import { readVerifiedNotices } from "./third-party-notices.mjs";
 import {
+  isAllowedLicenseIdentifier,
   isReviewedLegacyLicense,
-  isReviewedBundledFontLicense,
   legacyLicenseIdentifier,
 } from "./license-identifiers.mjs";
 import { readFile } from "node:fs/promises";
@@ -44,6 +44,8 @@ const MANUAL_LICENSE = {
   semaphore: "MIT", // 包内 README License 段
   "css-value": "MIT", // 包内 Readme License 段
   "@fig/autocomplete-helpers": "MIT", // 包内 LICENSE
+  // react-scan 开发依赖链；license 字段缺失，包内 LICENSE 为 Aiden Bai 的标准 MIT。
+  "@react-grab/cli": "MIT",
 };
 function normLicense(value) {
   if (typeof value === "string") return value.trim();
@@ -64,8 +66,6 @@ for (const [key, { pkg }] of scanned) {
   });
 }
 // ---------- 分类 ----------
-const GREEN =
-  /^(MIT|MIT-0|ISC|BSD-2-Clause|BSD-3-Clause|BSD-4-Clause|0BSD|Unlicense|Apache-2\.0|Zlib|WTFPL|Artistic-2\.0|BlueOak-1\.0\.0|CC0-1\.0|CC-BY-4\.0|CC-BY-3\.0|BSD|Python-2\.0)$/i;
 function classify(raw) {
   const s = raw.replace(/[()]/g, " ").trim();
   if (s === "(missing)" || s === "missing" || s === "") return "missing";
@@ -74,12 +74,12 @@ function classify(raw) {
     .split(/\s+OR\s+/i)
     .map((x) => x.trim())
     .filter(Boolean);
-  if (or.length > 1 && or.some((x) => GREEN.test(x))) return "green";
+  if (or.length > 1 && or.some((x) => isAllowedLicenseIdentifier(x))) return "green";
   const and = s
     .split(/\s+AND\s+/i)
     .map((x) => x.trim())
     .filter(Boolean);
-  if (and.length > 1 && and.every((x) => GREEN.test(x))) return "green";
+  if (and.length > 1 && and.every((x) => isAllowedLicenseIdentifier(x))) return "green";
   const t = or[0] || and[0] || s;
   if (/\bAGPL/i.test(t)) return "red-agpl";
   if (/\bLGPL/i.test(t)) return "yellow-lgpl";
@@ -88,14 +88,40 @@ function classify(raw) {
   if (/^(BUSL|BSL|Elastic|SSPL|PolyForm|FSL|CAL-1)/i.test(t)) return "red-semiopen";
   if (/^CC-BY-NC/i.test(t)) return "red-nc";
   if (/^CC-BY-(ND|SA)/i.test(t)) return "yellow-cc";
-  return GREEN.test(t) ? "green" : "review";
+  return isAllowedLicenseIdentifier(t) ? "green" : "review";
 }
 for (const r of installed.values()) r.bucket = classify(r.license);
 
 // ---------- 构建工具许可标识复核（不是二进制发行义务豁免） ----------
-const WEAK_ALLOW = [[/^lightningcss/, "当前仅构建依赖；进入生产图时需重新核对 MPL 源码提供义务"]];
+const WEAK_ALLOW = [
+  [/^lightningcss/, "当前仅构建依赖；进入生产图时需重新核对 MPL 源码提供义务"],
+  // react-scan 开发依赖链。license 字段为 SEE LICENSE IN LICENSE，包内实际为 Modified MIT：
+  // 在 MIT 基础上附加“禁止用作 ML 训练数据”“禁止转卖为付费托管服务”两条用途限制。
+  // 当前仅在本地/CI 作为开发态诊断工具运行，不随产品分发、不落入受限用途；进入生产图时需重新评审。
+  [
+    /react-doctor$/,
+    "仅开发态 react-scan 诊断工具；Modified MIT 的用途限制不影响内部使用，不随产品分发",
+  ],
+];
+// ---------- 生产依赖的逐项复核结论：按包名登记并绑定许可类别，许可变化后重新阻断 ----------
+const PROD_REVIEWED = [
+  [
+    /^@img\/sharp-(libvips-|win32-)/,
+    "yellow-lgpl",
+    "libvips 以独立、可替换的共享库随 sharp 分发，仅真实 Computer Use 截图使用；声明附 LGPL-3.0 原文",
+  ],
+  [
+    /^elkjs$/,
+    "yellow-weak",
+    "仅内部开发文档站 apps/dev-docs 使用，不随产品分发、不部署；按 EPL-2.0 使用",
+  ],
+];
 function weakAllowReason(r) {
-  if (r.isProd) return null;
+  if (r.isProd) {
+    for (const [re, bucket, why] of PROD_REVIEWED)
+      if (re.test(r.name) && r.bucket === bucket) return why;
+    return null;
+  }
   for (const [re, why] of WEAK_ALLOW) if (re.test(r.name)) return why;
   return null;
 }
@@ -103,8 +129,10 @@ function weakAllowReason(r) {
 if (command === "check") {
   const bad = [];
   for (const r of installed.values()) {
-    if (r.bucket === "green" || isReviewedLegacyLicense(r) || isReviewedBundledFontLicense(r))
-      continue;
+    if (r.bucket === "green" || isReviewedLegacyLicense(r)) continue;
+    // 已登记 WEAK_ALLOW 复核结论的构建依赖允许 missing/unresolved 桶：这类包的 license 字段
+    // 常缺失或写成 SEE LICENSE IN <file>，无法自动归入 yellow；人工复核记录本身就是放行结论。
+    if (!r.isProd && weakAllowReason(r)) continue;
     if (r.bucket.startsWith("yellow") && weakAllowReason(r)) continue;
     bad.push(r);
   }
@@ -112,7 +140,9 @@ if (command === "check") {
     console.error(`✗ license 检查失败：${bad.length} 个包超出 allowlist：`);
     for (const r of bad.sort((a, b) => a.name.localeCompare(b.name)))
       console.error(`  [${r.bucket}] ${r.name}@${r.version} → ${r.license}`);
-    console.error("\n处置：替换依赖，或在 scripts/licenses.mjs 的 WEAK_ALLOW 登记人工复核结论。");
+    console.error(
+      "\n处置：替换依赖，或在 scripts/licenses.mjs 的 WEAK_ALLOW（构建依赖）/ PROD_REVIEWED（生产依赖）登记人工复核结论。",
+    );
     process.exit(1);
   }
   await readVerifiedNotices(ROOT, { requireComplete: process.argv.includes("--strict") });

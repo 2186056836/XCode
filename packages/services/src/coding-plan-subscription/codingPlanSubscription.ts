@@ -100,6 +100,8 @@ export interface ICodingPlanSubscriptionService {
   }>;
   /** 阿里云验证码配置（client/configs 的 captcha 字段）；未下发返回 null。 */
   getCaptchaConfig(): Promise<MarketingCaptchaConfig | null>;
+  /** 1103 新增：请求安全校验配置（原 captcha 配置的新名字，含 skipModelRequest）。 */
+  getRequestVerificationConfig(): Promise<RequestVerificationConfig | null>;
   productInfo(request: CodingPlanProductInfoRequest): Promise<CodingPlanProductInfo>;
   preview(request: CodingPlanPreviewRequest): Promise<CodingPlanPreviewResponse>;
   createSign(request: CodingPlanCreateSignRequest): Promise<CodingPlanAgreementResponse>;

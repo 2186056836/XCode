@@ -1,13 +1,23 @@
 import { z } from "zod";
-// fork 的版本常量用 XCode 前缀；编译期宏 __ZCODE_MIN_COMPATIBLE_VERSION__ 保持 Z 形态。
 import { XCODE_VERSION } from "../version.js";
 
-declare const __ZCODE_MIN_COMPATIBLE_VERSION__: string;
+declare const __XCODE_MIN_COMPATIBLE_VERSION__: string;
 
-export const ZCODE_MIN_COMPATIBLE_VERSION =
-  typeof __ZCODE_MIN_COMPATIBLE_VERSION__ !== "undefined"
-    ? __ZCODE_MIN_COMPATIBLE_VERSION__
+export const XCODE_MIN_COMPATIBLE_VERSION =
+  typeof __XCODE_MIN_COMPATIBLE_VERSION__ !== "undefined"
+    ? __XCODE_MIN_COMPATIBLE_VERSION__
     : XCODE_VERSION;
+
+/**
+ * 远端服务支持设备卡停止 / 重启合同（`zcode stop --wait` 等，RDLC-01）的首个版本，桌面端据此做版本门禁。
+ * 取首个包含本合同的正式版 3.17.0。不提升最低兼容版本。
+ *
+ * Bug 原因：曾先后取 3.16.2（根版本占位）和 3.16.3（假设下一次发版包含本合同）。实际 v3.16.3 从 release 分支发布、
+ * 不含本合同，两次都等于已发布、不支持本合同的版本：旧 CLI 把 `stop --wait` 当成 ack 型 stop、把 `restart` 当成只换 Core，
+ * 桌面端收不到最终状态而报失败，但远端已执行停止或换 Core。
+ * 只看版本号区分不开开发中与已发布的同号版本，因此取实际首发版本；根版本升到 3.17.0 前开发构建也会显示禁用。
+ */
+export const SOURCE_SERVER_LIFECYCLE_CONTROL_MIN_VERSION = "3.17.0";
 
 export const compatibilityManifestSchema = z
   .object({
@@ -21,7 +31,7 @@ export type CompatibilityManifest = z.infer<typeof compatibilityManifestSchema>;
 
 export function createCompatibilityManifest(
   productVersion = XCODE_VERSION,
-  minCompatibleVersion = ZCODE_MIN_COMPATIBLE_VERSION,
+  minCompatibleVersion = XCODE_MIN_COMPATIBLE_VERSION,
 ): CompatibilityManifest {
   return compatibilityManifestSchema.parse({
     schemaVersion: 1,
@@ -30,7 +40,7 @@ export function createCompatibilityManifest(
   });
 }
 
-export const ZCODE_COMPATIBILITY_MANIFEST = Object.freeze(createCompatibilityManifest());
+export const XCODE_COMPATIBILITY_MANIFEST = Object.freeze(createCompatibilityManifest());
 
 interface ParsedVersion {
   major: number;

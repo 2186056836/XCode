@@ -56,11 +56,13 @@ import {
 import {
   listCodeBuddyAutoCheckinSettings,
   updateCodeBuddyAutoCheckinSettings,
+  updateCodeBuddyAutoCheckinSettingsBatch,
   type CodeBuddyAutoCheckinSettings,
 } from "./codebuddyAutoCheckin.js";
 import {
   listQoderAutoCheckinSettings,
   updateQoderAutoCheckinSettings,
+  updateQoderAutoCheckinSettingsBatch,
   type QoderAutoCheckinSettings,
 } from "./qoderAutoCheckin.js";
 import {
@@ -348,6 +350,16 @@ export interface IProviderSettingsService {
     accountId: string,
     update: { enabled?: boolean; time?: string },
   ): Promise<QoderAutoCheckinSettings>;
+  /** XCode fork：批量更新 CodeBuddy 自动签到设置（批量开启/关闭共用）。 */
+  codebuddyUpdateAutoCheckinBatch(
+    entries: Array<{ region: CodeBuddyCheckinRegion; accountId: string }>,
+    update: { enabled?: boolean; time?: string },
+  ): Promise<{ accountRef: string; ok: boolean; error?: string }[]>;
+  /** XCode fork：批量更新 Qoder 自动签到设置（批量开启/关闭共用）。 */
+  qoderUpdateAutoCheckinBatch(
+    entries: Array<{ region: QoderCheckinRegion; accountId: string }>,
+    update: { enabled?: boolean; time?: string },
+  ): Promise<{ accountRef: string; ok: boolean; error?: string }[]>;
 
   /** XCode fork：CodeBuddy 令牌刷新（对应区域当前激活账号）。 */
   codebuddyRefreshStored(region: "cn" | "intl"): Promise<{
@@ -782,6 +794,14 @@ export function createProviderSettingsService(
     qoderUpdateAutoCheckin: async (region, accountId, update) => {
       await ensureReady();
       return updateQoderAutoCheckinSettings(region, accountId, update);
+    },
+    codebuddyUpdateAutoCheckinBatch: async (entries, update) => {
+      await ensureReady();
+      return updateCodeBuddyAutoCheckinSettingsBatch(entries, update);
+    },
+    qoderUpdateAutoCheckinBatch: async (entries, update) => {
+      await ensureReady();
+      return updateQoderAutoCheckinSettingsBatch(entries, update);
     },
     // XCode fork：额度/配额查看。CN 的 Qoder 额度复用已注入的 COSY 网关查询器
     // （qoderProStatusGatewayFetcher 同时在 PRO 状态与额度两条链路使用）。

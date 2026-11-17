@@ -68,6 +68,7 @@ export interface RootProps {
   initialTaskDraft?: CreateTaskOptions;
   /** 本客户端连接目标的稳定身份，手机跨设备切换必须隔离草稿和 Recent。 */
   composerClientNamespace?: string;
+  terminalOwnerId?: string;
   /** Electron renderer 传 true，用于启用自绘标题栏 */
   isDesktop?: boolean;
   /** macOS 桌面端需要给红绿灯按钮预留安全区 */
@@ -115,6 +116,7 @@ export interface WorkspaceSettingsLayerProps {
   onOpenRemoteWorkspace?: () => void;
   allowOpenWorkspace?: RootProps["allowOpenWorkspace"];
   onLogin?: () => void;
+  /** 已登录状态下「账号管理 → 添加账号」再登录一个账号（与 onLogin 是两条入口）。 */
   onOpenLogin?: () => void;
   onLogout?: () => void;
   user?: UserInfo | null;

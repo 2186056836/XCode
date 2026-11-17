@@ -38,9 +38,18 @@ async function findRepoRoot(startDir: string): Promise<string> {
   }
 }
 
+/** Windows 上只有包管理器是 .cmd 垫片；node 等真实可执行文件不能开 shell（路径含空格）。 */
+function needsWindowsShell(command: string): boolean {
+  return process.platform === "win32" && /^(?:pnpm|npm|npx|yarn)$/i.test(command);
+}
+
 async function runCommand(command: string, args: readonly string[], cwd: string): Promise<void> {
   await new Promise<void>((resolvePromise, rejectPromise) => {
-    const child = spawn(command, [...args], { cwd, stdio: ["ignore", "inherit", "inherit"] });
+    const child = spawn(command, [...args], {
+      cwd,
+      stdio: ["ignore", "inherit", "inherit"],
+      ...(needsWindowsShell(command) ? { shell: true } : {}),
+    });
     child.once("error", rejectPromise);
     child.once("exit", (code) => {
       if (code === 0) resolvePromise();

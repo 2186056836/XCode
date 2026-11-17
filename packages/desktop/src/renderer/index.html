@@ -170,8 +170,19 @@
         window.setTimeout(markAnimationDone, 1000);
       }
 
+      // 白屏修复：此前 3s 后无条件 markReactReady，会在主入口模块尚未加载/执行时
+      // 就把 #root 置为 opacity:1 —— 而 React 还没 commit，页面露出空白背景，
+      // 表现为启动白屏（dev 首启 vite 预构建期尤其明显）。
+      // 现在：只有真正收到 React commit 事件才标 ready；壳（logo）在慢启动时继续
+      // 显示，视觉上是加载态而非白屏。为避免模块级致命错误导致永久卡壳，30s 后
+      // 兜底放行（此时若仍空白，说明确有加载错误，由 main.tsx 的错误边界处理）。
       if (!isUpdateStatusWindow) {
-        window.setTimeout(markReactReady, 3000);
+        window.setTimeout(() => {
+          if (!reactReady) {
+            document.body.dataset.startupPending = "1";
+            markReactReady();
+          }
+        }, 30000);
       }
     </script>
     <script type="module" src="./src/main.tsx"></script>

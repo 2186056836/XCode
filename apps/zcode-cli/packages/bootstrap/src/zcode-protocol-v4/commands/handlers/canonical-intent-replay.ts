@@ -40,41 +40,37 @@ function buildCanonicalIntent(
   requireQueue: boolean,
   canRetainQueuedHighspeed: boolean,
 ) {
+  // 编辑/重发按「本次主动发送」处理：命令 payload 里携带的配置（输入区此刻的
+  // 模型 / 协作模式 / plan 开关 / godmode 混淆）优先，缺省才回退被 rewind 那轮的
+  // canonical intent —— 否则重发会沿用历史配置，与用户当前选择不一致。
+  const payload = envelope.payload as Partial<
+    CommandPayloadMap["editUserQuery"] & CommandPayloadMap["retryTurn"]
+  >;
   const intent = inputIntentMetadataFromCanonical(
     envelope,
     {
       kind: editTarget.intent.kind,
       conversationQuotes:
         envelope.type === "editUserQuery"
-          ? ((envelope.payload as CommandPayloadMap["editUserQuery"]).conversationQuotes ??
-            editTarget.intent.conversationQuotes)
+          ? (payload.conversationQuotes ?? editTarget.intent.conversationQuotes)
           : editTarget.intent.conversationQuotes,
       text: editTarget.intent.text,
+      genUiContext: editTarget.intent.genUiContext,
       sourceCommandId: editTarget.intent.sourceCommandId,
       clientId: editTarget.intent.clientId,
       queueItemId: editTarget.intent.queueItemId,
       requestedDelivery: editTarget.intent.requestedDelivery,
       admittedDelivery: editTarget.intent.admittedDelivery,
       fallbackReasonCode: editTarget.intent.fallbackReasonCode,
-      modelSelection: editTarget.intent.modelSelection,
-      mode: editTarget.intent.mode,
-      planEnabled: editTarget.intent.planEnabled,
+      modelSelection: payload.modelSelection ?? editTarget.intent.modelSelection,
+      mode: payload.mode ?? editTarget.intent.mode,
+      planEnabled: payload.planEnabled ?? editTarget.intent.planEnabled,
+      obfuscation: payload.obfuscation ?? editTarget.intent.obfuscation,
       attachmentRefs,
       provenance: editTarget.intent.provenance,
     },
     text,
   );
-  // 编辑重发的模型跟随输入区当前选择：editUserQuery 携带的 modelSelection（UI 从
-  // Composer 草稿冻结）是用户此刻选中的模型，有则覆盖 canonical intent 记录的旧
-  // 模型，否则重发永远停留在原消息模型（UI 3082 行的注释承诺了这一语义，但此前
-  // 只有 highspeed 分支消费该字段，普通模型一直走 editTarget.intent 的旧值）。
-  // retryTurn 的 payload 没有 modelSelection（schema 决定），维持「原模型重跑」语义。
-  if (envelope.type === "editUserQuery") {
-    const editSelection = (envelope.payload as CommandPayloadMap["editUserQuery"]).modelSelection;
-    if (editSelection !== undefined) {
-      intent.modelSelection = editSelection;
-    }
-  }
   const appliesHighspeed = highspeed !== undefined && (!requireQueue || canRetainQueuedHighspeed);
   if (appliesHighspeed && highspeed) {
     intent.highspeed = highspeed.card;

@@ -56,6 +56,15 @@ export type OpenPluginUiSideTabRequest = PluginUiOpenTarget & {
   remoteSessionId?: string | null;
 };
 
+/** 主导航先选定 surface，根草稿就绪后补入真实 session。 */
+export type DraftPluginUiOpenRequest = Omit<
+  OpenPluginUiSideTabRequest,
+  "parentSessionId" | "toolCallId" | "surfaceId" | "serverName"
+> & {
+  surfaceId: string;
+  serverName: string;
+};
+
 /**
  * 侧栏 tab；工具卡片 id 为 `plugin-ui:<ws>:<session>:<pluginId>:<toolCallId>`，面板为 `plugin-ui:<ws>:<session>:<pluginId>:surface:<surfaceId>`；
  * 按 parentSessionId 作用域可见。
@@ -222,6 +231,10 @@ export interface PluginUiToolCallViewProps {
   surface?: string;
   preferredDisplayMode: McpAppsDisplayMode;
   sidePaneActive: boolean;
+  inlineAllowed: boolean;
+  pluginId: string;
+  pluginName: string;
+  pluginIcon?: string;
   host: PluginUiSidePaneViewProps["host"];
   prefersBorder: boolean;
   /** 被同一逻辑 UI 的较新成功结果替代；只留普通工具结果，不建沙箱或自动开侧栏。 */
@@ -236,6 +249,7 @@ export interface PluginUiToolCallViewProps {
   retryLabel: string;
   openedLabel: string;
   openLabel: string;
+  openButtonLabel: string;
   onWidthChange(width: number): void;
   onOpenSidePane?: () => void;
 }

@@ -61,10 +61,12 @@ export interface V4WorkspaceChatAreaProps {
   /** Prompt 模板埋点当前仅覆盖 Desktop；Web / 手机远控保留 UI 行为但不触发该事件。 */
   isDesktop?: boolean;
   readOnly?: boolean;
+  readOnlyReason?: string;
   allowEscapeStopOutsidePane?: boolean;
   /** Settings 等覆盖层打开时为 false，隐藏 Pane 不得消费一次性 Composer 请求。 */
   foregroundEnabled?: boolean;
   remoteSessionId?: string;
+  compactForRemoteControl?: boolean;
   /** primary pane 绑定的 CLI session（既有选择态 activeTaskId）；null = draft。 */
   sessionId: string | null;
   activeSelectionSideChatSessionId?: string | null;
@@ -134,9 +136,11 @@ export function V4WorkspaceChatArea({
   workspaceIdentity,
   isDesktop = false,
   readOnly = false,
+  readOnlyReason,
   allowEscapeStopOutsidePane = false,
   foregroundEnabled = true,
   remoteSessionId,
+  compactForRemoteControl = false,
   sessionId,
   activeSelectionSideChatSessionId = null,
   provider,
@@ -192,7 +196,9 @@ export function V4WorkspaceChatArea({
   const setSplitRatioAction = usePaneLayoutStore((state) => state.setSplitRatio);
   const resetPaneLayoutAction = usePaneLayoutStore((state) => state.resetToPrimaryPane);
   const activeGroup = useWorkbenchGroupStore((state) =>
-    state.activeGroupId ? (state.groups[state.activeGroupId] ?? null) : null,
+    compactForRemoteControl || !state.activeGroupId
+      ? null
+      : (state.groups[state.activeGroupId] ?? null),
   );
   const focusGroupPaneAction = useWorkbenchGroupStore((state) => state.focusPane);
   const closeGroupPaneAction = useWorkbenchGroupStore((state) => state.closePane);
@@ -207,12 +213,14 @@ export function V4WorkspaceChatArea({
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const root = activeGroup?.root ?? paneRoot;
-  const panes = activeGroup?.panes ?? paneBindings;
-  const focusedPaneId = activeGroup?.focusedPaneId ?? paneFocusedPaneId;
+  const root = compactForRemoteControl ? PRIMARY_LEAF : (activeGroup?.root ?? paneRoot);
+  const panes = compactForRemoteControl ? {} : (activeGroup?.panes ?? paneBindings);
+  const focusedPaneId = compactForRemoteControl
+    ? V4_PRIMARY_PANE_ID
+    : (activeGroup?.focusedPaneId ?? paneFocusedPaneId);
   const layout = useMemo(() => collectWorkbenchLayout(root), [root]);
   const shellSessionOwnedBySplitPane = useMemo(() => {
-    if (activeGroup || !sessionId) {
+    if (compactForRemoteControl || activeGroup || !sessionId) {
       return false;
     }
     return Object.values(paneBindings).some(
@@ -220,8 +228,8 @@ export function V4WorkspaceChatArea({
         binding.sessionId === sessionId &&
         paneWorkspaceKey(binding.workspaceScope) === shellWorkspaceKey,
     );
-  }, [activeGroup, paneBindings, sessionId, shellWorkspaceKey]);
-  // primary draft 没有自己的 sessionId；拖入 session 时 shell active
+  }, [activeGroup, compactForRemoteControl, paneBindings, sessionId, shellWorkspaceKey]);
+  // 修复原因：primary draft 没有自己的 sessionId；拖入 session 时 shell active
   // 可能已经切到右侧 pane 的 session，不能再把这个 sessionId 下发给 primary。
   const primaryPaneSessionId = shellSessionOwnedBySplitPane ? null : sessionId;
 
@@ -255,7 +263,9 @@ export function V4WorkspaceChatArea({
       ...(workspaceIdentity ? { workspaceIdentity } : {}),
       ...(remoteSessionId ? { remoteSessionId } : {}),
       isDesktop,
+      compactForRemoteControl,
       readOnly,
+      readOnlyReason,
       allowEscapeStopOutsidePane,
       sessionId: primaryPaneSessionId,
       // primaryPaneSessionId 在 active task 被 split pane 接管时会刻意置空，
@@ -304,7 +314,9 @@ export function V4WorkspaceChatArea({
       workspaceIdentity,
       remoteSessionId,
       isDesktop,
+      compactForRemoteControl,
       readOnly,
+      readOnlyReason,
       allowEscapeStopOutsidePane,
       primaryPaneSessionId,
       activeSelectionSideChatSessionId,

@@ -251,6 +251,10 @@ export function MarketingTouchProvider({
             services.codingPlanSubscriptionService,
             signal,
             () => phase("verifying"),
+            {
+              failed: intl.formatMessage({ id: "marketing.captchaFailed" }),
+              loadFailed: intl.formatMessage({ id: "marketing.captchaLoadFailed" }),
+            },
           );
           if (!proof)
             return {
@@ -286,12 +290,16 @@ export function MarketingTouchProvider({
           });
           // 领取结果由 Controller 的结果弹窗承载，避免成功 toast 与弹窗重复提示。
           return { status: "success" };
-        } catch {
+        } catch (error) {
           if (signal.aborted) return { status: "cancelled" };
+          // 「不确定」只适用于请求可能已经落库、但我们没拿到结论的情况：网络中断、
+          // 超时、响应读不出来。服务端明确拒绝的（4xx + 业务 code）说明这一单没有创建，
+          // 报「无法确认 / 为避免重复提交」只会让用户以为权益可能已到账，掩盖真实失败原因。
+          const reachedServer = submitted && !isDefinitiveClaimRejection(error);
           return {
-            status: submitted ? "uncertain" : "failure",
+            status: reachedServer ? "uncertain" : "failure",
             message: intl.formatMessage({
-              id: submitted ? "marketingTouch.uncertain" : "marketingTouch.failed",
+              id: reachedServer ? "marketingTouch.uncertain" : "marketingTouch.failed",
             }),
           };
         }
@@ -354,6 +362,20 @@ export function MarketingTouchProvider({
       {runtime ? <MarketingDialogs controller={runtime.controller} /> : null}
     </Context.Provider>
   );
+}
+
+/**
+ * 领取请求是否被服务端明确拒绝。
+ *
+ * 「明确拒绝」= 服务端给了 HTTP 4xx 并且没有落单。这种情况重试可能成功（验证码错了、
+ * 参数不对），但**不可能已经发过货**，所以不该报「无法确认操作结果，为避免重复提交」。
+ *
+ * 判据只看 ApiError.status：5xx、网络错误、超时、响应体解析失败都属于「不知道结果」。
+ */
+function isDefinitiveClaimRejection(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const status = (error as { status?: unknown }).status;
+  return typeof status === "number" && status >= 400 && status < 500;
 }
 
 export function MarketingBanner() {

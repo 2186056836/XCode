@@ -4,7 +4,6 @@ import { useIsOfficeMode } from "@/hooks/useInterfaceMode.js";
 import { useMemo, useState } from "react";
 import type { PluginStoreOrder, XCodePluginMarketplaceSummary } from "@zcode/shared";
 import { XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID } from "@zcode/shared";
-import { Button } from "@/components/ui/button.js";
 import { cn } from "@/components/lib/utils.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import { PluginStoreAvatar } from "@/settings/PluginStoreAvatar.js";
@@ -189,8 +188,8 @@ export function PluginStoreListView({
 
       {!keyword && uiItems.length > 0 ? (
         <section data-testid="plugin-store-ui-section">
-          <div className="pb-2">
-            <h2 className="text-ui-lg font-semibold">
+          <div className="px-2 pb-2">
+            <h2 className="text-ui-lg font-medium">
               {intl.formatMessage({ id: "settings.plugins.store.ui.title" })}
             </h2>
           </div>
@@ -304,8 +303,8 @@ function StoreSection({
 }) {
   return (
     <section className={className}>
-      <div className="pb-2">
-        <h2 className="text-ui-lg font-semibold text-foreground">{title}</h2>
+      <div className="px-2 pb-2">
+        <h2 className="text-ui-lg font-medium text-foreground">{title}</h2>
       </div>
       <div aria-hidden="true" className="h-px bg-surface" />
       <div className="mt-2">{children}</div>

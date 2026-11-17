@@ -1,7 +1,7 @@
 import { PermissionService, ToolScheduler } from "./deps.js";
+import type { ModelRequestSessionFeature } from "@zcode/contracts";
 import type {
   Logger,
-  ModelRequestAuth,
   ModelSelection,
   EventReducer,
   MessageId,
@@ -65,6 +65,13 @@ import type { WorkspaceHookRuntimeAdmissionPort } from "../hooks/workspace-hook-
 
 export interface AgentRuntimeInternal
   extends AgentRuntimeCoreMethods, AgentRuntimeTurnMethods, AgentRuntimeHookMethods {
+  /** fork：最近一次模型请求的鉴权信息（账号轮换 / 使用详情归因）。 */
+  lastModelRequestAuth?: import("@zcode/contracts").ModelRequestAuth;
+  /** fork：最近一次解析出的出口（账号级代理归因）。 */
+  lastResolvedEgress?: {
+    proxyPoolId?: string;
+    proxyDisplayName?: string;
+  };
   sessionId: SessionId;
   turnNumber: number;
   config: AgentRuntimeConfig;
@@ -89,23 +96,25 @@ export interface AgentRuntimeInternal
   browserControlPort?: AgentRuntimeDeps["browserControlPort"];
   modelRequestAdmission?: AgentRuntimeDeps["modelRequestAdmission"];
   sessionModelSelection: ModelSelection | undefined;
-  /** 最近一次物理模型请求的身份材料（账号 / 出口代理）；写入 usage 明细。 */
-  lastModelRequestAuth: ModelRequestAuth | undefined;
-  /**
-   * 本次调用里 adapter 实际命中的出口（供应商级轮询是 per-request 选择）。
-   *
-   * host 的 requestAuth 只能给候选快照；记账要显示真实节点名，必须用这个覆盖。
-   */
-  lastResolvedEgress: { proxyPoolId?: string; proxyDisplayName?: string } | undefined;
   messageHistory: MessageHistory;
   readFileState: ReadFileStateMap;
   cachedTools: ModelToolContract[] | null;
   /** 工作流工具面是否已注册（launch.md「On demand: activation」）；非 onDemand 会话出生即 true。 */
   dynamicWorkflowToolsActivated: boolean;
   dynamicWorkflowActivationSource?: DynamicWorkflowActivationSource;
+  /** 本会话用过的能力标签（session-features 模块是唯一写入方）；只增不减。 */
+  sessionFeatures: Set<ModelRequestSessionFeature>;
+  /** session-features entry 写入队列的尾部；串行写，避免旧集合覆盖新集合。 */
+  sessionFeaturesWrite: Promise<void>;
   contextBuilder: ContextBuilder | null;
   contextInitialized: boolean;
   contextSourceSnapshot?: ContextSourceSnapshot;
+  // 新会话初始化时刚读过的 Git 尚未用于宣告；第一次判断后清除，恢复的会话不设。
+  sessionStartGitPrefetch?: boolean;
+  // 本 runtime 已确认不是 Git 仓库的目录；同一目录不再检查（目录里 git init 后由新 runtime 发现）。
+  nonGitDirectories?: Set<string>;
+  // 从存储恢复的 runtime 还没有自己读过是否仓库；第一次环境公告读一次后清除。
+  repositoryRecheckPending?: boolean;
   latestContextBuildResult?: ContextBuildResult;
   memoryRoot?: string;
   memoryIndexContent?: string;
@@ -119,6 +128,7 @@ export interface AgentRuntimeInternal
   mcpPort?: McpPort;
   mcpStartupPromise?: Promise<McpConnectionSnapshot>;
   residencyBlockingWorkCount: number;
+  residencyBlockingWork: Set<Promise<unknown>>;
   mcpInitialized: boolean;
   mcpToolsRegistered: boolean;
   /** 初始化 / 上次刷新时注册的 MCP 工具名与集合签名。 */
@@ -159,7 +169,6 @@ export interface AgentRuntimeInternal
   mainTurnCacheHitAggregate: MainTurnCacheHitAggregate;
   currentTurnFileChanges: RuntimeTurnFileChangeMap;
   lastAssistantCompletedAtMs?: number;
-  lastEmittedLocalDate?: string;
   autoCompactConsecutiveFailures: number;
   runtimeCommandQueue: RuntimeCommandQueue;
   runtimeCommandDrainActive: boolean;
@@ -175,6 +184,8 @@ export interface AgentRuntimeInternal
   queueAutoDrain: boolean;
   queueExternalDrainActive: boolean;
   shuttingDown: boolean;
+  readonly shutdownSignal: AbortSignal;
+  workChanged: Set<() => void>;
   backgroundTaskNotificationsSealed: boolean;
   backgroundTaskNotificationSealReason?: BackgroundTaskNotificationSealReason;
   pendingModelChangeTimeline?: PendingModelChangeTimeline;

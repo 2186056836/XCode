@@ -155,6 +155,12 @@ export type OAuthSessionState = "signed-in" | "signed-out";
 /** Host 在检测到 XCode JWT 失效后通知 Renderer 展示确认并重启。 */
 export const XCODE_JWT_INVALID_BROADCAST_CHANNEL = "auth:zcode-jwt-invalid";
 
+/**
+ * Host 侧激活账号变更（含失败换号的自动跟随切换）后通知 Renderer
+ * 刷新根登录态快照（左下角头像/账号名）。手动切号由 UI 自身更新，不依赖它。
+ */
+export const OAUTH_ACTIVE_ACCOUNT_CHANGED_BROADCAST_CHANNEL = "auth:active-account-changed";
+
 export type JwtExpirationResult =
   | { kind: "valid"; expiresAt: number }
   | { kind: "expired"; expiresAt: number }

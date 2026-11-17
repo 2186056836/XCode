@@ -1,3 +1,4 @@
+import type { DraftPluginUiOpenRequest } from "@/plugin-ui/contract.js";
 /* oxlint-disable eslint(max-lines) -- XCode Agent store 类型和默认状态集中导出，避免切片间重复定义共享结构。 */
 /**
  * XCode Session Store 类型定义、接口、常量与默认值工厂
@@ -169,6 +170,10 @@ export interface WorkspaceXCodeUIState {
    * V4 pane 独占预热会话，配置界面只发布失效版本。
    */
   draftRuntimeInvalidationVersion: number;
+  pluginUiOpenVersion: number;
+  pluginUiOpenRequest:
+    | (DraftPluginUiOpenRequest & { requestId: number; invalidationVersion: number })
+    | null;
   composerTextInsertVersion: number;
   composerTextInsertRequest: ComposerTextInsertRequest | null;
   timelineBottomRequestVersion: number;
@@ -231,6 +236,12 @@ export interface XCodeSessionStoreState {
     workspaceIdentity?: string,
   ) => void;
   invalidateDraftRuntime: (workspacePath: string, workspaceIdentity?: string) => void;
+  requestPluginUiOpen: (request: DraftPluginUiOpenRequest) => void;
+  clearPluginUiOpenRequest: (
+    workspacePath: string,
+    requestId: number,
+    workspaceIdentity?: string,
+  ) => void;
   requestComposerTextInsert: (
     workspacePath: string,
     text: string,
@@ -512,6 +523,8 @@ export function createDefaultWorkspaceState(
     workspaceInit: { ...DEFAULT_WORKSPACE_INIT_STATE },
     draftRuntime: { status: "idle", error: null },
     draftRuntimeInvalidationVersion: 0,
+    pluginUiOpenVersion: 0,
+    pluginUiOpenRequest: null,
     composerTextInsertVersion: 0,
     composerTextInsertRequest: null,
     timelineBottomRequestVersion: 0,

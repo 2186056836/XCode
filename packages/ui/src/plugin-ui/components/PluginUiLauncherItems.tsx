@@ -3,7 +3,11 @@ import { useOptionalPlatform } from "@/hooks/usePlatform.js";
 import { toast } from "@/components/ui/toast.js";
 import { isRemoteWorkspaceIdentity } from "@zcode/shared";
 import { useRecommendedUiPlugins } from "@/plugin-ui/adapters/useRecommendedUiPlugins.js";
-import { resolveItemDisplayName, resolveItemDescription } from "@/settings/pluginStoreListing.js";
+import {
+  resolveItemDisplayName,
+  resolveItemDescription,
+  resolvePluginStoreSegment,
+} from "@/settings/pluginStoreListing.js";
 import { useEffect, type ReactNode } from "react";
 import { PluginStoreAvatar } from "@/settings/PluginStoreAvatar.js";
 import { PuzzleIcon, type LucideIcon } from "lucide-react";
@@ -19,8 +23,9 @@ export interface PluginUiLauncherItemsProps {
   workspacePath: string;
   workspaceIdentity?: string;
   remoteSessionId?: string;
-  /** 正式会话 id；草稿态为 null，此时不显示入口（面板是会话级，第一版不支持草稿）。 */
+  /** 所属 pane 的有效 session，包含已就绪的草稿预热。 */
   sessionId: string | null;
+  paneId?: string;
   onOpenPluginUi: (request: OpenPluginUiSideTabRequest) => void;
   /** 菜单复用标准菜单项；空白页与内置应用共用 SidePaneLauncherRow。 */
   variant?: "launcher" | "menu";
@@ -189,6 +194,11 @@ export function PluginUiLauncherItems(props: PluginUiLauncherItemsProps) {
             description={
               surface ? resolveItemDisplayName(item, locale) : resolveItemDescription(item, locale)
             }
+            descriptionTag={
+              resolvePluginStoreSegment(item) === "community"
+                ? intl.formatMessage({ id: "settings.plugins.store.segment.community" })
+                : undefined
+            }
             actionLabel={actionLabel}
             loading={isBusy}
             disabled={isBusy}
@@ -210,6 +220,7 @@ export function SidePaneLauncherRow({
   avatar,
   label,
   description,
+  descriptionTag,
   actionLabel,
   loading,
   disabled,
@@ -220,6 +231,7 @@ export function SidePaneLauncherRow({
   avatar?: ReactNode;
   label: string;
   description?: string;
+  descriptionTag?: string;
   actionLabel?: string;
   loading?: boolean;
   disabled?: boolean;
@@ -243,12 +255,18 @@ export function SidePaneLauncherRow({
       )}
       <span className="min-w-0 flex-1">
         <span className="block truncate text-ui-base font-semibold text-foreground">{label}</span>
-        {description ? (
-          <span
-            className="mt-0.5 block truncate text-ui-sm text-foreground-subtle"
-            title={description}
-          >
-            {description}
+        {description || descriptionTag ? (
+          <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-ui-sm text-foreground-subtle">
+            {descriptionTag ? (
+              <span className="inline-flex h-4 shrink-0 items-center rounded-sm bg-tag px-1 text-ui-xs font-medium">
+                {descriptionTag}
+              </span>
+            ) : null}
+            {description ? (
+              <span className="truncate" title={description}>
+                {description}
+              </span>
+            ) : null}
           </span>
         ) : null}
       </span>

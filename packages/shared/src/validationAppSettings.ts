@@ -143,6 +143,7 @@ const appWorkspaceSessionEntrySchema = z.discriminatedUnion("kind", [
     lastOpenedAt: z.number().int().nonnegative(),
     lastConnectionStatus: z.enum(["connected", "failed"]),
     lastConnectionError: z.string().optional(),
+    lastConnectionErrorCode: z.string().optional(),
   }),
 ]);
 

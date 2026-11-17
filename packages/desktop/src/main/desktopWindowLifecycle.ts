@@ -11,7 +11,6 @@ import type { StartupWorkspaceWarmupTarget } from "./startupWorkspace.js";
 import type { RemoteAssetDirs } from "./desktopRuntimeEnv.js";
 import { handleDarwinWindowCloseRequest } from "./desktopDarwinCloseBehavior.js";
 import { supportsNativeWindowsRoundedCorners } from "./desktopWindowChromeState.js";
-import { applyDesktopTrayUnreadBadge } from "./desktopTray.js";
 import {
   createWindowsTaskbarOverlayApplier,
   maxWindowUnreadCounts,
@@ -19,6 +18,7 @@ import {
   renderTaskbarStatusDotPixels,
   syncUnreadBadgeForPlatform,
 } from "./unreadBadge.js";
+import { applyDesktopTrayUnreadBadge } from "./desktopTray.js";
 import { attachDesktopWindowSizePersistence, type DesktopWindowSize } from "./desktopWindowSize.js";
 import {
   registerMainApplicationWindow,

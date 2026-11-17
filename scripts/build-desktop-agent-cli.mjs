@@ -6,8 +6,7 @@ import { runCommand } from "./spawn-command.mjs";
 
 // adapters tsc 在内存受限机器上会 OOM（exit 134），给整条构建链路提高堆上限。
 process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS ? process.env.NODE_OPTIONS + " " : ""}--max-old-space-size=8192`;
-// 上游 1019 的 stageDevCuaPluginRuntime 未合入：fork 的 packages/zcode-cua 是 fail-closed 占位包，
-// 且 scripts/stage-dev-cua-plugin-runtime.mjs 不在本仓库，故不引入该 staging。
+import { stageDevCuaPluginRuntime } from "./stage-dev-cua-plugin-runtime.mjs";
 import { resolveBuiltinProviderBuildEnvironment } from "./builtin-provider-config.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -21,9 +20,17 @@ const pnpmRunEnv = {
   // 自动 install 无法解析根 workspace 包，导致 dev:desktop:test 和 E2E onPrepare 失败。
   PNPM_CONFIG_VERIFY_DEPS_BEFORE_RUN: "false",
 };
-// 桌面 Agent 构建有普通 pnpm 和 bootstrap:with-remote 直跑 tsc 两条路径。
-// 过去两条路径分别维护依赖顺序，新增 workspace 依赖时只更新了 bootstrap 依赖，
-// 干净 CI 中该依赖的 dist 尚不存在，bootstrap 会因无法解析类型入口而失败。
+// Bug 根因：filesystem plugin seed 若缺少 Sharp closure，会一直到 screenshot/zoom 才报错。
+// 此脚本同时服务本地 Dev、prebuild、server CLI 和 packaged desktop agent；三条构建分支
+// 都必须补齐同一份可复制 runtime。XCODE_CUA_DEV_MODE 只传给 staging helper，不进入最终
+// product/runtime 环境，因此这里描述的是 staging 输入，而不是产品运行模式。
+const cuaPluginRuntimeStagingEnv = {
+  ...process.env,
+  XCODE_CUA_DEV_MODE: "1",
+};
+// 修复原因：桌面 Agent 构建有普通 pnpm 和 bootstrap:with-remote 直跑 tsc 两条路径。
+// 过去两条路径分别维护依赖顺序，新增 @zcode/telemetry 后只更新了 bootstrap 依赖，
+// 干净 CI 中 telemetry/dist 尚不存在，bootstrap 会因无法解析类型入口而失败。
 // 两条路径统一从这一份有序清单派生，避免后续新增 workspace 依赖时再次漂移。
 const cliWorkspaceBuilds = [
   { packageName: "@zcode/shared-types", packageDir: "shared-types" },
@@ -75,6 +82,8 @@ const requiredDevPluginRuntimeBuilds = [
     packageName: `@zcode/${name}-plugin`,
     artifactPath: `${name}-plugin/dist/server.mjs`,
   })),
+  // Sites 面板的 MCP server 由插件自己构建；不构建时面板入口可见但 MCP 启动失败。
+  { packageName: "@zcode/zcode-site-plugin", artifactPath: "zcode-site-plugin/dist/server.mjs" },
 ];
 const defaultBuildFilters = [
   ...cliWorkspaceBuilds.map(({ packageName }) => packageName),
@@ -146,6 +155,7 @@ function runBootstrapWithRemoteBuild() {
 if (useBootstrapWithRemoteBuild) {
   runBootstrapWithRemoteBuild();
   stageDevAgentBundle();
+  stageDevCuaPluginRuntime({ env: cuaPluginRuntimeStagingEnv });
   process.exit(0);
 }
 
@@ -167,6 +177,7 @@ if (!useTurboBuild) {
     stdio: "inherit",
   });
   stageDevAgentBundle();
+  stageDevCuaPluginRuntime({ env: cuaPluginRuntimeStagingEnv });
   process.exit(0);
 }
 
@@ -188,3 +199,4 @@ runCommand(
   },
 );
 stageDevAgentBundle();
+stageDevCuaPluginRuntime({ env: cuaPluginRuntimeStagingEnv });

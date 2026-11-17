@@ -17,6 +17,10 @@ import type {
   WebRemoteControlStatus,
   WebRemoteControlWorkspaceTarget,
 } from "./web-remote-control.js";
+import type {
+  WebRemoteControlRendererActionRequest,
+  WebRemoteControlRendererActionResult,
+} from "#src/web-remote-relay/index.js";
 import type { AppSettings, Locale } from "./protocol.js";
 import type { StorageCleanRequest, StorageCleanResult, StorageUsageSnapshot } from "./storage.js";
 import type {
@@ -55,6 +59,8 @@ import type {
   EmbeddedBrowserSitePermissionResetRequest,
   EmbeddedBrowserSitePermissionsSnapshot,
   EditorInfo,
+  FileApplicationInfo,
+  FileApplicationTarget,
   CreateTempTextAttachmentRequest,
   CreateTempTextAttachmentResult,
   MaterializeWorkflowArtifactFileRequest,
@@ -89,6 +95,8 @@ import type {
 
 /** RPC 服务频道名。与 ServiceDescriptor.channelName 对应。 */
 export const ServiceChannels = {
+  /** 代理池配置服务（fork）。 */
+  ProxyPool: "zcode:proxy-pool",
   File: "file",
   MediaPreview: "media-preview",
   System: "system",
@@ -106,8 +114,9 @@ export const ServiceChannels = {
   CuaPipSession: "cua-pip-session",
   /** 跨窗口广播 */
   Broadcast: "broadcast",
-  /** ZCode task wrapper 服务 */
+  /** XCode task wrapper 服务 */
   XCodeTask: "zcode-task",
+  /** ZCode task wrapper 服务 */
   /** 窗口 Host 聚合 workspace/task 投影与列表写路由 */
   WindowController: "window-controller",
   /** XCode Protocol agent 服务 */
@@ -137,12 +146,16 @@ export const ServiceChannels = {
   SourceServerWorkspace: "source-server-workspace",
   /** 桌面 Host 的 Source Server 目录与连接管理服务 */
   SourceServerManagement: "source-server-management",
+  /** 桌面 Host 的数据同步设备状态（按 sourceServerId 记录上次同步结果，仅本机注册） */
+  DeviceSyncState: "device-sync-state",
+  /** 桌面 Host 的数据同步页模型提供商：读取 / 重试 Main 协调器的 Provisioning lane（仅本机注册） */
+  ProviderProvisioningStatus: "provider-provisioning-status",
   /** 本地 usage 统计服务 */
   UsageStats: "usage-stats",
   /** Coding Plan 订阅购买服务 */
   CodingPlanSubscription: "coding-plan-subscription",
   ClientConfig: "client-config",
-  /** ZCode 客户端场景配置服务 */
+  /** XCode 客户端场景配置服务 */
   ClientScenes: "client-scenes",
   CloudContent: "cloud-content",
   MarketingTouch: "marketing-touch",
@@ -154,6 +167,8 @@ export const ServiceChannels = {
   McpSync: "mcp-sync",
   /** SSH 远程 plugin 同步服务 */
   PluginSync: "plugin-sync",
+  /** 数据同步：子智能体、命令、钩子共用的用户配置同步通道（按 category 区分，不进手机白名单） */
+  UserConfigSync: "user-config-sync",
   /** 插件管理服务 */
   Plugins: "plugins",
   /** 设置页插件管理服务（UI 平台能力面收敛，不再直触 zcodeAgentService） */
@@ -186,8 +201,6 @@ export const ServiceChannels = {
   HighspeedCard: "highspeed-card",
   /** Onboarding 完成记录服务（本地持久化，后续上传服务器） */
   OnboardingRecord: "onboarding-record",
-  /** 代理池：池条目 CRUD / 连通性测试 / 供应商级代理绑定（纯增量，与全局 httpProxy 独立） */
-  ProxyPool: "proxy-pool",
 } as const;
 
 export type ServiceChannelName = (typeof ServiceChannels)[keyof typeof ServiceChannels];
@@ -206,6 +219,79 @@ export const PlatformChannels = {
   PluginSandboxConsumeUserGesture: "zcode:plugin-sandbox-consume-user-gesture",
   /** renderer → main：查询自身 webContents id，作为沙箱登记的 owner */
   PluginSandboxOwnerWebContentsId: "zcode:plugin-sandbox-owner-web-contents-id",
+  /** 桌宠悬浮窗：开关/配置（invoke） */
+  PetOverlayGetConfig: "zcode:pet-overlay-get-config",
+  PetOverlaySetConfig: "zcode:pet-overlay-set-config",
+  PetOverlayToggle: "zcode:pet-overlay-toggle",
+  /** 桌宠窗 → main：拖拽相位（send） */
+  PetOverlayDrag: "zcode:pet-overlay-drag",
+  /** 桌宠窗 → main：抛掷速度（send） */
+  PetOverlayThrow: "zcode:pet-overlay-throw",
+  /** 桌宠窗 → main：尺寸调整（send） */
+  PetOverlayResize: "zcode:pet-overlay-resize",
+  /** 桌宠窗 → main：通知托盘实际渲染高度（0 = 收起），用于让窗口只留必要空间。 */
+  PetOverlayTrayHeight: "zcode:pet-overlay-tray-height",
+  /** 桌宠窗 → main：点击穿透开关（send） */
+  PetOverlaySetIgnoreMouseEvents: "zcode:pet-overlay-set-ignore-mouse-events",
+  /** 桌宠窗 → main：点击宠物聚焦主窗（send） */
+  PetOverlayFocusMain: "zcode:pet-overlay-focus-main",
+  /** 主窗 → main → 桌宠窗：宠物行为状态（send + webContents.send） */
+  PetOverlaySetState: "zcode:pet-overlay-set-state",
+  /** 宠物窗 → main → 主窗：pill 内审批/选项回传。 */
+  PetOverlayResolveAction: "zcode:pet-overlay-resolve-action",
+  /** main → 主窗：转发宠物窗的动作请求。 */
+  PetOverlayActionRequest: "zcode:pet-overlay-action-request",
+  /** 宠物窗 → main → 主窗：点击通知托盘某一行，打开对应会话。 */
+  PetOverlayOpenSession: "zcode:pet-overlay-open-session",
+  /** main → 主窗：打开会话请求（主窗负责切 tab + 选中 task）。 */
+  PetOverlayOpenSessionRequest: "zcode:pet-overlay-open-session-request",
+  /** main → 桌宠窗：配置变更推送（webContents.send） */
+  PetOverlayConfigEvent: "zcode:pet-overlay-config-event",
+  PetOverlayListCustomPets: "zcode:pet-overlay-list-custom-pets",
+  PetOverlayInstallCustomPet: "zcode:pet-overlay-install-custom-pet",
+  PetOverlayDeleteCustomPet: "zcode:pet-overlay-delete-custom-pet",
+  PetOverlayGetCustomSpriteDataUrl: "zcode:pet-overlay-get-custom-sprite-data-url",
+  PetOverlayPrepareCustomPetZipImport: "zcode:pet-overlay-prepare-custom-pet-zip-import",
+  PetOverlayCommitCustomPetImport: "zcode:pet-overlay-commit-custom-pet-import",
+  PetOverlayInstallHatchPetSkill: "zcode:pet-overlay-install-hatch-pet-skill",
+  PetOverlayInstallPetMakerSkill: "zcode:pet-overlay-install-pet-maker-skill",
+  /** DSH 桌宠（第二套独立宠物系统）：与 PetOverlay 完全分开的窗口/配置/IPC。 */
+  DshPetGetConfig: "zcode:dsh-pet-get-config",
+  DshPetSetConfig: "zcode:dsh-pet-set-config",
+  DshPetToggle: "zcode:dsh-pet-toggle",
+  /** main → 桌宠窗/主窗：配置变更推送。 */
+  DshPetConfigEvent: "zcode:dsh-pet-config-event",
+  /** main → DSH 桌宠窗：会话聚合状态（与 PetOverlaySetState 同源，独立通道）。 */
+  DshPetStateEvent: "zcode:dsh-pet-state-event",
+  /** DSH 桌宠窗 → main：拖拽相位 / 抛掷速度 / 尺寸调整（send）。 */
+  DshPetDrag: "zcode:dsh-pet-drag",
+  DshPetThrow: "zcode:dsh-pet-throw",
+  DshPetPetHit: "zcode:dsh-pet-pet-hit",
+  DshPetCaptureScreen: "zcode:dsh-pet-capture-screen",
+  DshPetGetMeta: "zcode:dsh-pet-get-meta",
+  DshPetListPacks: "zcode:dsh-pet-list-packs",
+  DshPetLoadPack: "zcode:dsh-pet-load-pack",
+  /** 完整桌宠素材（上游 dsh-pet/assets）的下载 / 更新 / 卸载。 */
+  DshPetAssetsStatus: "zcode:dsh-pet-assets-status",
+  DshPetAssetsProbe: "zcode:dsh-pet-assets-probe",
+  DshPetAssetsDownload: "zcode:dsh-pet-assets-download",
+  DshPetAssetsCancel: "zcode:dsh-pet-assets-cancel",
+  DshPetAssetsUninstall: "zcode:dsh-pet-assets-uninstall",
+  /** 渲染端取完整素材包的动作媒体 URL（授权后的 zcode-media 链接）。 */
+  DshPetAssetsMedia: "zcode:dsh-pet-assets-media",
+  /** 渲染端取「已缓存的动作名」——右键菜单只列已下载的动作。 */
+  DshPetAssetsCached: "zcode:dsh-pet-assets-cached",
+  /** main → 设置页：下载进度。 */
+  DshPetAssetsProgressEvent: "zcode:dsh-pet-assets-progress",
+  DshPetResize: "zcode:dsh-pet-resize",
+  /** DSH 桌宠窗 → main：点击宠物聚焦主窗。 */
+  /** DSH 桌宠窗 → main：渲染层就绪，请下发显示器几何（did-finish-load 早于监听注册）。 */
+  DshPetReady: "zcode:dsh-pet-ready",
+  DshPetOpenApp: "zcode:dsh-pet-open-app",
+  DshPetWhisper: "zcode:dsh-pet-whisper",
+  DshPetFocusSelf: "zcode:dsh-pet-focus-self",
+  DshPetChat: "zcode:dsh-pet-chat",
+  DshPetReload: "zcode:dsh-pet-reload",
   /** 打开系统目录选择框 */
   SelectDirectory: "zcode:select-directory",
   /** 打开系统多目录选择框 */
@@ -272,6 +358,8 @@ export const PlatformChannels = {
   SyncWebRemoteControlWorkspaces: "zcode:sync-web-remote-control-workspaces",
   /** Main → Renderer：手机端请求重连当前窗口里的远程 workspace */
   WebRemoteControlReconnectWorkspace: "zcode:web-remote-control-reconnect-workspace",
+  /** Main → Renderer：手机请求置顶/归档任务或新建本地项目，Renderer 按侧栏同一路径执行 */
+  WebRemoteControlRendererAction: "zcode:web-remote-control-renderer-action",
   /** Renderer → Main：同步当前窗口的未读 task 数 */
   SyncWindowUnreadCount: "zcode:sync-window-unread-count",
   /** Renderer → Main：当前窗口 active task，只更新 Main 的临时焦点映射。 */
@@ -286,6 +374,16 @@ export const PlatformChannels = {
   NewTab: "zcode:new-tab",
   /** Main → Renderer：菜单或快捷键请求关闭当前上下文 */
   CloseActiveContextRequest: "zcode:close-active-context-request",
+  /**
+   * Main → Renderer：Host 需要一张阿里云验证码票据才能继续领取权益。
+   *
+   * 领取接口强制校验 `X-Aliyun-Captcha-Verify-Param`。手动领取能静默拿到票据，
+   * 是因为渲染进程跑了无感验证（要 DOM + SDK）；Host 是纯 Node 进程跑不了，
+   * 所以由 Host 发起、Main 转发、Renderer 执行后回传。
+   */
+  MarketingCaptchaRequest: "zcode:marketing-captcha-request",
+  /** Renderer → Main：上面那次验证码请求的结果（票据或错误） */
+  MarketingCaptchaResult: "zcode:marketing-captcha-result",
   /** Main → Renderer：内置 webview 请求打开新的浏览器 tab */
   OpenBrowserUrl: "zcode:open-browser-url",
   /** Main → Renderer：内置浏览器网页权限/屏幕共享源/设备选择弹窗请求 */
@@ -359,7 +457,7 @@ export const PlatformChannels = {
   OpenInFileManager: "zcode:open-in-file-manager",
   /** Renderer → Main：使用系统默认应用打开本地文件 */
   OpenExternalFile: "zcode:open-external-file",
-  /** Renderer → Main：打开 ZCode Computer Use 权限引导 */
+  /** Renderer → Main：打开 XCode Computer Use 权限引导 */
   OpenCuaPermissionOnboarding: "zcode:open-cua-permission-onboarding",
   /** Renderer → Main：取消当前 renderer 发起的一次权限引导 participant */
   CancelCuaPermissionOnboarding: "zcode:cancel-cua-permission-onboarding",
@@ -425,7 +523,10 @@ export const PlatformChannels = {
    * main 用 BrowserGuestManager attach 该 guest（fire-and-forget）。CDP-on-guest pivot。
    */
   BrowserViewAttachGuest: "zcode:browser-view-attach-guest",
+  /** 可信宿主发起导航；main 将本地 HTML 转成有目录边界的预览地址。 */
+  BrowserViewLoadUrl: "zcode:browser-view-load-url",
   /** Renderer → Main：重建 `<webview>` 前主动断开旧 guest 的 CDP。 */
+  BrowserViewDownloadStarted: "zcode:browser-view-download-started",
   BrowserViewDetachGuest: "zcode:browser-view-detach-guest",
   /** Renderer → Main：用户显式关闭 Browser tab。 */
   BrowserViewCloseTabFromRenderer: "zcode:browser-view-close-tab-from-renderer",
@@ -495,6 +596,8 @@ export const PlatformChannels = {
   QuitAndInstallUpdate: "zcode:quit-and-install-update",
   /** Renderer → Main：获取系统中已安装的编辑器/终端列表（含图标） */
   GetInstalledEditors: "zcode:get-installed-editors",
+  GetFileApplications: "zcode:get-file-applications",
+  OpenFileWithApplication: "zcode:open-file-with-application",
   /** Renderer → Main：按 bundle id 获取系统应用图标 */
   GetApplicationIcon: "zcode:get-application-icon",
   /** Renderer → Main：用指定编辑器打开路径 */
@@ -620,6 +723,7 @@ export const HostMessageTypes = {
   /** main → window Host：释放一个远程 logical session */
   DisposeRemoteWorkspaceSession: "dispose-remote-workspace-session",
   /** main → host：复用现有服务，对新的 RPC MessagePort 暴露服务 */
+  SetTerminalOwner: "set-terminal-owner",
   AttachServicePort: "attach-service-port",
   /** main → host：精确释放一个 RPC MessagePort attachment */
   DetachServicePort: "detach-service-port",
@@ -653,10 +757,14 @@ export const HostMessageTypes = {
   LocalMediaPreviewPathAuthorizeResult: "local-media-preview-path-authorize-result",
   /** main → host：插件 UI 沙箱登记结果（PluginSandboxRegisterResultPayload） */
   PluginSandboxRegisterResult: "plugin-sandbox-register-result",
-  /** Main → Host：全局前台 ZCode 窗口派生的 producer focus fact。 */
+  /** Main → Host：全局前台 XCode 窗口派生的 producer focus fact。 */
   CuaPipFocusChanged: "cua-pip-focus-changed",
   /** main → host：要求 Host 现读本地 Source，并同步指定 Remote Environment。 */
   ProviderProvisioningExecute: "provider-provisioning-execute",
+  /** main → host：数据同步页读取 / 重试 Provisioning lane 的结果。 */
+  ProviderProvisioningLaneResult: "provider-provisioning-lane-result",
+  /** main → host：Main 已通过渲染进程跑完无感验证，回传阿里云验证码票据。 */
+  MarketingCaptchaResult: "marketing-captcha-result",
   /** main → host：资源管理器请求 Host 采样其后代进程（Agent / MCP / 终端）的 CPU 与内存 */
   ResourceUsageSnapshotRequest: "resource-usage-snapshot-request",
   ResourceUsageSnapshotCancel: "resource-usage-snapshot-cancel",
@@ -705,6 +813,7 @@ export const HostResponseTypes = {
   ToolExecResource: "tool-exec-resource",
   /** 自动化 Host 首次输入 accepted 后报告新建 Session。 */
   SessionCreateTelemetry: "session-create-telemetry",
+  RemoteConversationTelemetry: "remote-conversation-telemetry",
   PluginTelemetry: "plugin-telemetry",
   /** host → main：资源管理器采样结果（按 requestId 关联） */
   ResourceUsageSnapshotResult: "resource-usage-snapshot-result",
@@ -739,7 +848,7 @@ export const HostResponseTypes = {
   TaskOwnerCommandResult: "task-owner-command-result",
   /** host → main：Agent 请求向另一个 session 发送消息 */
   SessionMessageSendRequested: "session-message-send-requested",
-  /** host → main：声明一个 ZCode Agent session 当前归属该 host */
+  /** host → main：声明一个 XCode Agent session 当前归属该 host */
   SessionRouteAnnounce: "session-route-announce",
   /** host → main：目标 host 完成本地 session message 投递 */
   SessionMessageDeliverResult: "session-message-deliver-result",
@@ -765,6 +874,10 @@ export const HostResponseTypes = {
   ProviderProvisioningSourceChanged: "provider-provisioning-source-changed",
   /** host → main：一次 Remote Environment 同步执行完毕。 */
   ProviderProvisioningExecutionResult: "provider-provisioning-execution-result",
+  /** host → main：数据同步页按设备读取或重试 Provisioning lane。 */
+  ProviderProvisioningLaneRequest: "provider-provisioning-lane-request",
+  /** host → main：请求借用渲染进程跑一次阿里云无感验证，换一张领取用票据。 */
+  MarketingCaptchaRequest: "marketing-captcha-request",
 } as const;
 
 // ============================================================================
@@ -919,6 +1032,10 @@ export interface PlatformChannelMap {
     request: WebRemoteControlReconnectWorkspaceRequest;
     response: WebRemoteControlReconnectWorkspaceResult;
   };
+  [PlatformChannels.WebRemoteControlRendererAction]: {
+    request: WebRemoteControlRendererActionRequest;
+    response: WebRemoteControlRendererActionResult;
+  };
   [PlatformChannels.SyncWindowUnreadCount]: {
     request: number;
     response: void;
@@ -986,6 +1103,10 @@ export interface PlatformChannelMap {
   [PlatformChannels.ResetEmbeddedBrowserSitePermission]: {
     request: EmbeddedBrowserSitePermissionResetRequest;
     response: EmbeddedBrowserSitePermissionsSnapshot;
+  };
+  [PlatformChannels.BrowserViewDownloadStarted]: {
+    request: { webContentsId: number; urls: string[] };
+    response: void;
   };
   [PlatformChannels.BrowserViewReady]: {
     request: {
@@ -1316,6 +1437,14 @@ export interface PlatformChannelMap {
     request: string | undefined;
     response: EditorInfo[];
   };
+  [PlatformChannels.GetFileApplications]: {
+    request: FileApplicationTarget;
+    response: FileApplicationInfo[];
+  };
+  [PlatformChannels.OpenFileWithApplication]: {
+    request: { applicationId: string; target: FileApplicationTarget };
+    response: { success: boolean; error?: string };
+  };
   [PlatformChannels.GetApplicationIcon]: {
     request: string | import("./platform.js").ApplicationIconRequest;
     response: import("./platform.js").ApplicationIconInfo | null;
@@ -1342,4 +1471,13 @@ export interface PlatformChannelMap {
     request: DesktopTitleBarTheme;
     response: void;
   };
+}
+
+/** 桌宠悬浮窗配置（主窗设置页 ↔ main ↔ 桌宠窗共用）。 */
+export interface PetOverlayConfigBridge {
+  enabled: boolean;
+  petId: string;
+  sizePx: number;
+  x?: number;
+  y?: number;
 }

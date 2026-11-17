@@ -1,3 +1,4 @@
+import { normalizeGenUiInput } from "@zcode/core";
 import { PERMISSION_FULL_ACCESS_OPTION_ID } from "@zcode/shared/zcode-protocol-v4";
 // ProductProjection —— CLI 权威投影第二 reducer。
 // 输入：CLI 事件日志（SessionEvent，权威事实源）；输出：ConversationDelta[]。
@@ -10,7 +11,6 @@ import { PERMISSION_FULL_ACCESS_OPTION_ID } from "@zcode/shared/zcode-protocol-v
 import type {
   AssistantFeedbackUpdatedPayload,
   AssistantMessageEditedPayload,
-
   HighspeedMetricsUpdatedPayload,
   CompactLifecyclePayload,
   DynamicWorkflowRunProgressPayload,
@@ -51,6 +51,7 @@ import type {
   TurnSteerQueuedPayload,
   UserInputAutoResolutionUpdatedPayload,
   WorkspaceHookAdmissionUpdatedPayload,
+  WorkspaceMcpAdmissionUpdatedPayload,
   WorkspaceHookReviewRequestedPayload,
   WorkspaceHookReviewSettledPayload,
   WorkspaceHookReviewSupersededPayload,
@@ -60,6 +61,7 @@ import {
   AMEND_WORKFLOW_TOOL_NAME,
   CREATE_WORKFLOW_TOOL_NAME,
   CoreErrorType,
+  ModelErrorCode,
   SessionEventType,
   getModelUsageContextTokens,
 } from "@zcode/contracts";
@@ -76,12 +78,13 @@ import {
   XCODE_FILE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS,
   extractPlanStepsFromToolInput,
   extractPlanStepsFromToolOutput,
-  isXCodeModelRetryRecoveryProgressPayload,
-  isXCodeFileStreamingToolInputPreviewTool,
-  parseXCodeBackgroundTaskNotificationText,
-  resolveXCodeBackgroundTaskControlKind,
   isHighspeedProviderId,
+  isXCodeFileStreamingToolInputPreviewTool,
+  isXCodeModelRetryRecoveryProgressPayload,
+  parseZCodeBackgroundTaskNotifications,
+  resolveXCodeBackgroundTaskControlKind,
   zcodeBackgroundTaskNotificationToolUpdateStatus,
+  type ZCodeParsedBackgroundTaskNotification,
 } from "@zcode/shared";
 import { verdictWorkspaceHookReviewRequest } from "@zcode/shared/workspace-hook-review-monotonicity";
 import type {
@@ -320,6 +323,7 @@ export interface ConversationEditTarget {
   coveredByStableCompact: boolean;
   intent: {
     inputOrigin?: "desktop" | "mobile";
+    genUiContext?: import("@zcode/contracts").TurnInputIntentMetadata["genUiContext"];
     conversationQuotes?: import("@zcode/contracts").TurnInputIntentMetadata["conversationQuotes"];
     botGroupSource?: CanonicalUserIntentFact["botGroupSource"];
     kind: "sendText" | "sendGoalCommand";
@@ -336,6 +340,8 @@ export interface ConversationEditTarget {
     modelSelection?: TurnInputIntentMetadata["modelSelection"];
     mode?: TurnInputIntentMetadata["mode"];
     planEnabled?: boolean;
+    /** godmode 输入混淆（turn 级覆盖）；编辑/重发缺省时回退此历史值。 */
+    obfuscation?: TurnInputIntentMetadata["obfuscation"];
     provenance?: CanonicalUserIntentFact["provenance"];
   };
 }
@@ -448,6 +454,8 @@ export class ProductProjection {
   // output-token Continue 是同一 product turn 内的请求级恢复，不应泄漏成新的正文行。
   // 这里只保留上一条满足 length/zero-tool/视觉紧邻条件的 text row，任何真实边界都会清空。
   private outputContinuationTextRowId: number | null = null;
+  // 上一条取出的 guide 之后还没有出现主模型 step：同一次取出的后续 guide 并入它开启的工作段。
+  private guideDrainOpen = false;
   private toolRowIdByCallId = new Map<string, number>();
   private latestListAppsSnapshot = new Map<number, CuaAppIdentity>();
   // snapshot 是权威状态；该 Set 只是 TurnComplete 缺终态兜底的派生索引，避免每轮扫描全表。
@@ -554,7 +562,12 @@ export class ProductProjection {
     return this.normalizationDiagnostics;
   }
 
-  /** 仅供 publisher 的有界增量估算；返回 null 表示必须走候选快照精确校验。 */
+  /**
+   * 是否为对已打开流式行的追加：是则返回用于估算增量的追加文本（文件工具节流期间为空串），否则返回
+   * null。有两个使用方：publisher 的有界增量估算（null 时走候选快照精确校验），以及
+   * applyEventInternal 的 actions 物化准入（docs/v4-refactor/02-projection.md「命令 actions 的物化
+   * 时机」）。放宽这里的判定时，必须同时满足后者的约束。
+   */
   establishedStreamingAppend(event: SessionEvent): string | null {
     if (event.type !== SessionEventType.ModelStreaming || !this.isRunning()) return null;
     const payload = event.payload as ModelStreamingPayload;
@@ -877,7 +890,6 @@ export class ProductProjection {
       }
       return { ok: true, action, row, messageId };
     }
-
     if (action === "setHighspeedMetrics") {
       const messageId = this.messageIdByRowId.get(row.rowId);
       if (row.kind !== "userInput" || !row.highspeed || !messageId) {
@@ -1078,23 +1090,25 @@ export class ProductProjection {
       event.type === SessionEventType.TurnStarted
         ? undefined
         : (this.productTurnIdByRuntimeTurnId.get(runtimeTurnId) ?? runtimeTurnId);
+    // 在归约前取，与 publisher 快路径（ingest）对同一状态判定“是否为已打开流式行的追加”。
+    const streamingAppend = materializeActions && this.establishedStreamingAppend(event) !== null;
     const reduced =
       event.type === SessionEventType.AssistantFeedbackUpdated
         ? this.onAssistantFeedbackUpdated(event)
         : event.type === SessionEventType.AssistantMessageEdited
           ? this.onAssistantMessageEdited(event)
           : event.type === SessionEventType.HighspeedMetricsUpdated
-            ? this.onHighspeedMetricsUpdated(event)
-            : event.type === SessionEventType.TurnExecutionModelFallback
-              ? this.onTurnExecutionModelFallback(event)
+          ? this.onHighspeedMetricsUpdated(event)
+          : event.type === SessionEventType.TurnExecutionModelFallback
+            ? this.onTurnExecutionModelFallback(event)
             : (() => {
-              const fact = normalizeConversationEvent(event, {
-              productTurnId,
-              openAssistantSegments: this.openAssistantSegments(),
-              });
-              this.normalizationDiagnostics.push(...fact.diagnostics);
-              return this.reduce(fact);
-            })();
+                const fact = normalizeConversationEvent(event, {
+                  productTurnId,
+                  openAssistantSegments: this.openAssistantSegments(),
+                });
+                this.normalizationDiagnostics.push(...fact.diagnostics);
+                return this.reduce(fact);
+              })();
     const subagentDeltas = this.shouldMaterializeSubagentProjection(reduced)
       ? this.materializeSubagentProjection(reduced)
       : [];
@@ -1102,9 +1116,11 @@ export class ProductProjection {
     // row、命令 target 与 actions 必须属于同一个 materialization transaction。
     // 旧实现只维护 side-map/最新行判断，UI action 由别处推断，cold/tool-only/failed
     // 轮会出现“入口可见但 target 不可解析”，新目标出现后旧入口也不会撤销。
-    const deltas = materializeActions
-      ? [...reducedWithSubagents, ...this.materializeCommandRowActions(reducedWithSubagents)]
-      : reducedWithSubagents;
+    const deltas =
+      materializeActions &&
+      this.shouldMaterializeCommandRowActions(streamingAppend, reducedWithSubagents)
+        ? [...reducedWithSubagents, ...this.materializeCommandRowActions(reducedWithSubagents)]
+        : reducedWithSubagents;
     const finalDeltas = this.attachRevision(clearSettledOutputPreviews(deltas));
     if (this.hydrationAccumulator) {
       applyConversationDeltasMutable(this.hydrationAccumulator, finalDeltas);
@@ -1154,6 +1170,7 @@ export class ProductProjection {
     clone.streamingTextRowId = this.streamingTextRowId;
     clone.streamingReasoningRowId = this.streamingReasoningRowId;
     clone.outputContinuationTextRowId = this.outputContinuationTextRowId;
+    clone.guideDrainOpen = this.guideDrainOpen;
     clone.toolRowIdByCallId = new Map(this.toolRowIdByCallId);
     // 实时发布逐事件走原子 clone；遗漏该侧表会让成功的 list_apps 快照在提交时丢失。
     clone.latestListAppsSnapshot = new Map(this.latestListAppsSnapshot);
@@ -1223,6 +1240,7 @@ export class ProductProjection {
     this.streamingTextRowId = candidate.streamingTextRowId;
     this.streamingReasoningRowId = candidate.streamingReasoningRowId;
     this.outputContinuationTextRowId = candidate.outputContinuationTextRowId;
+    this.guideDrainOpen = candidate.guideDrainOpen;
     this.toolRowIdByCallId = candidate.toolRowIdByCallId;
     this.latestListAppsSnapshot = candidate.latestListAppsSnapshot;
     this.openForegroundToolCallIds = candidate.openForegroundToolCallIds;
@@ -1257,6 +1275,29 @@ export class ProductProjection {
     this.configModeTouchedByEvent = candidate.configModeTouchedByEvent;
     this.droppedContentStreamEventCount = candidate.droppedContentStreamEventCount;
     this.normalizationDiagnostics = candidate.normalizationDiagnostics;
+  }
+
+  /**
+   * live 事件的 actions 物化准入（docs/v4-refactor/02-projection.md「命令 actions 的物化时机」）。
+   *
+   * 性能问题根因：每个 token 都整窗物化 actions（建全行 Map、倒序扫描、逐行 JSON 比较），长会话
+   * 流式输出时 CLI 每个事件的成本随历史线性增长（8000 行时每个事件超过 1ms）。
+   *
+   * 物化读取：prospective 行的种类、状态、轮次、userInput.origin、rowId 顺序与现有 actions，
+   * turnHeader 的 fileChanges.state，control.activeWorks 与快照顶层的 pendingInteractions，以及
+   * messageIdByRowId / entityIdByRowId / editTargetByEntityId / turnHeaderRowIdByTurnId 侧表；
+   * 输出行 actions 并写 currentEditableEntityId。row.delta 只追加文本字段，流式追加路径也不写这些
+   * 侧表，所以当本事件归约结果全是 row.delta（或为空）时，物化结果必为空、可编辑目标不变。
+   * 流式追加也可能附带其他增量（清除 apiRetry 的 state.updated、subagent 增量），这时照常物化。
+   *
+   * 前提：事件到达前 actions 已与当前状态一致。其他 live 事件都会物化，cold batch 结束时收敛一次；
+   * 新增只产生 row.delta 却改写上述输入的 reducer，或在事件之外改写这些输入的写入方，必须自己物化。
+   */
+  private shouldMaterializeCommandRowActions(
+    streamingAppend: boolean,
+    reduced: readonly ConversationDelta[],
+  ): boolean {
+    return !streamingAppend || reduced.some((delta) => delta.op !== "row.delta");
   }
 
   /**
@@ -1427,6 +1468,7 @@ export class ProductProjection {
         ];
       case SessionEventType.ModelStreaming: {
         if (fact.semanticKind !== "assistantSegment") return [];
+        this.guideDrainOpen = false;
         const shouldClearApiRetry =
           this.acceptsActiveModelEvent(event) &&
           isXCodeModelRetryRecoveryProgressPayload(
@@ -1522,6 +1564,11 @@ export class ProductProjection {
         return this.onWorkspaceHookReviewSuperseded(event);
       case SessionEventType.WorkspaceHookAdmissionUpdated:
         return this.onWorkspaceHookAdmissionUpdated(event);
+      case SessionEventType.WorkspaceMcpAdmissionUpdated: {
+        const payload = event.payload as WorkspaceMcpAdmissionUpdatedPayload;
+        const workspaceMcpAdmission = payload.pendingCount > 0 ? payload : null;
+        return [{ op: "state.updated", patch: { workspaceMcpAdmission } }];
+      }
       case SessionEventType.HookRunStarted:
       case SessionEventType.HookRunProgress:
       case SessionEventType.HookRunCompleted:
@@ -1626,6 +1673,10 @@ export class ProductProjection {
     // epoch 清理时置 null,避免旧 Runtime 的提示条残留到新 Runtime 接管前。
     if (this.snapshot.workspaceHookAdmission !== null) {
       deltas.push({ op: "state.updated", patch: { workspaceHookAdmission: null } });
+    }
+    // 冷恢复的旧提示不是当前授权事实，等新 gate 重读后再显示。
+    if (this.snapshot.workspaceMcpAdmission) {
+      deltas.push({ op: "state.updated", patch: { workspaceMcpAdmission: null } });
     }
     return deltas;
   }
@@ -2063,6 +2114,7 @@ export class ProductProjection {
     this.streamingTextRowId = null;
     this.streamingReasoningRowId = null;
     this.outputContinuationTextRowId = null;
+    this.guideDrainOpen = false;
 
     // background Agent 的 ToolCallResult 只是 launch ACK，先把工具行收口成
     // success；子 Agent 的真实终态随后只作为 model-only task-notification 开新轮。
@@ -2204,6 +2256,7 @@ export class ProductProjection {
               intent: {
                 kind: fact.intentKind,
                 text: fact.intentText,
+                genUiContext: fact.genUiContext,
                 ...(fact.sourceCommandId ? { sourceCommandId: fact.sourceCommandId } : {}),
                 ...(fact.inputOrigin ? { inputOrigin: fact.inputOrigin } : {}),
                 ...(fact.conversationQuotes ? { conversationQuotes: fact.conversationQuotes } : {}),
@@ -2219,6 +2272,7 @@ export class ProductProjection {
                 ...(fact.modelSelection ? { modelSelection: fact.modelSelection } : {}),
                 ...(fact.mode ? { mode: fact.mode } : {}),
                 ...(fact.planEnabled !== undefined ? { planEnabled: fact.planEnabled } : {}),
+                ...(fact.obfuscation ? { obfuscation: fact.obfuscation } : {}),
                 ...(fact.provenance ? { provenance: fact.provenance } : {}),
               },
             }
@@ -2263,8 +2317,17 @@ export class ProductProjection {
   }
 
   private applyBackgroundTaskNotification(fact: CanonicalUserIntentFact): ConversationDelta[] {
-    const parsed = parseXCodeBackgroundTaskNotificationText(fact.input);
-    if (!parsed) return [];
+    // 终态与失败原文优先取本轮 originMeta 的结构化结果，不解析 summary 文本。
+    // 合并轮的每条通知各自更新自己的工具行。
+    return parseZCodeBackgroundTaskNotifications(fact.input, fact.originMeta).flatMap((parsed) =>
+      this.applyBackgroundTaskNotificationBlock(fact, parsed),
+    );
+  }
+
+  private applyBackgroundTaskNotificationBlock(
+    fact: CanonicalUserIntentFact,
+    parsed: ZCodeParsedBackgroundTaskNotification,
+  ): ConversationDelta[] {
     const row = this.findToolRow(parsed.toolUseId);
     if (!row) return [];
 
@@ -2523,7 +2586,10 @@ export class ProductProjection {
           attempt,
           maxAttempts,
           nextRetryAt: this.ms(event) + nonNegativeInteger(payload.delayMs, 0),
-          reasonCode: modelRetryReasonCode(payload.reason),
+          reasonCode:
+            payload.errorCode === ModelErrorCode.ModelRequestVerificationConfigNetwork
+              ? ModelErrorCode.ModelRequestVerificationConfigNetwork
+              : modelRetryReasonCode(payload.reason),
         });
       }
       case "model_request_started":
@@ -2803,15 +2869,15 @@ export class ProductProjection {
     return [{ op: "row.upserted", row: { ...row, feedback: payload.feedback } }];
   }
 
-  /** XCode fork：助手消息原地编辑——按 entityId 找 assistantText 行，整行替换为新文本。 */
+  // XCode fork：助手消息原地编辑——transcript 已改，投影只需把新文本补进同一行。
+  // 行身份用 entityId（= transcript assistant messageId），跨冷恢复稳定。
   private onAssistantMessageEdited(event: SessionEvent): ConversationDelta[] {
     const payload = event.payload as AssistantMessageEditedPayload;
     const row = this.snapshot.rows.window.find(
       (candidate): candidate is AssistantTextRow =>
         candidate.kind === "assistantText" && candidate.entityId === payload.entityId,
     );
-    if (!row) return [];
-    if (row.text === payload.text) return [];
+    if (!row || row.text === payload.text) return [];
     return [{ op: "row.upserted", row: { ...row, text: payload.text } }];
   }
 
@@ -2873,7 +2939,6 @@ export class ProductProjection {
       },
     ];
   }
-
 
   private openReasoningRow(
     event: SessionEvent,
@@ -3731,7 +3796,7 @@ export class ProductProjection {
           : payload.intent?.kind === "sendGoalCommand" || payload.commandKind === "sendGoalCommand"
             ? ("sendGoalCommand" as const)
             : (existing?.kind ?? ("sendText" as const)),
-      text: payload.input,
+      ...normalizeGenUiInput(payload.input, payload.intent?.genUiContext ?? existing?.genUiContext),
       sourceCommandId:
         payload.intent?.sourceCommandId ??
         existing?.sourceCommandId ??
@@ -3747,8 +3812,6 @@ export class ProductProjection {
       modelSelection: payload.intent?.modelSelection ?? existing?.modelSelection,
       mode: payload.intent?.mode ?? existing?.mode,
       planEnabled: payload.intent?.planEnabled ?? existing?.planEnabled,
-      // godmode Parseltongue 输入混淆：turn 级覆盖会话物化时冻结的 systemPromptOverrides.obfuscation。
-      obfuscation: payload.intent?.obfuscation ?? existing?.obfuscation,
       sharedContextRefs: payload.intent?.sharedContextRefs ?? existing?.sharedContextRefs,
       provenance: payload.intent?.provenance ?? existing?.provenance,
       // 排队事件和原地编辑都必须保留可信接入来源，不能在 UI 投影时丢掉发送者。
@@ -3784,13 +3847,13 @@ export class ProductProjection {
               : { state: "notRequested" },
       dispatch: { state: "queued" },
       ...(highspeed ? { highspeed } : {}),
+      automationId: payload.automationId ?? existing?.automationId,
       ...(payload.toolDisallowlist ? { toolDisallowlist: [...payload.toolDisallowlist] } : {}),
       admittedAt: payload.intent?.admittedAt ?? existing?.admittedAt ?? this.ms(event),
     };
     // 投递语义侧表：payload 未带（旧 runtime 事件）时按当前 followupMode 兜底。
     this.deliveryByPendingInputId.set(payload.pendingInputId, admittedDelivery);
-    // 同 id 重入 = editQueueItem 原地更新（保位）；新 id = 追加。旧逻辑 filter+append
-    // 会把编辑项移到队尾，破坏 queueContentIndependence 的位置语义。
+    // 同 id 编辑原地保位；filter+append 会把它移到队尾，破坏 queueContentIndependence。
     const items =
       existingIndex >= 0
         ? this.snapshot.queue.items.map((item, index) =>
@@ -3893,7 +3956,6 @@ export class ProductProjection {
           ...(queueItem.modelSelection ? { modelSelection: queueItem.modelSelection } : {}),
           ...(queueItem.mode ? { mode: queueItem.mode } : {}),
           ...(queueItem.planEnabled !== undefined ? { planEnabled: queueItem.planEnabled } : {}),
-          ...(queueItem.obfuscation ? { obfuscation: queueItem.obfuscation } : {}),
           admissionSeq: queueItem.order.admissionSeq,
           admittedAt: queueItem.admittedAt,
           requestedDelivery: queueItem.delivery.requested,
@@ -3903,6 +3965,7 @@ export class ProductProjection {
             ? { fallbackReasonCode: queueItem.delivery.fallbackReasonCode }
             : {}),
           attachmentRefs: queueItem.attachments,
+          genUiContext: queueItem.genUiContext,
         };
         return [
           {
@@ -3916,7 +3979,12 @@ export class ProductProjection {
       });
 
     const deltas: ConversationDelta[] = [];
+    // 同一次取出的多条 guide（中间没有主模型 step）只由第一条开启工作段，后续并入。
+    // 修复原因：原来每条取出的 guide 都开启一个工作段。runtime 现在在一个边界按 FIFO 取出全部
+    // 已等待的 guide，逐条开段会把一次取出拆成多段。改为按模型 step 判定边界：live 由主模型流事件和
+    // ModelComplete 关闭，cold 由每条 assistant 消息合成的 start 事件关闭，两边得到同一份工作段。
     for (const item of items) {
+      const normalizedInput = normalizeGenUiInput(item.text, item.intent?.genUiContext);
       const delivery =
         item.delivery ?? this.deliveryByPendingInputId.get(item.pendingInputId) ?? "queue";
       // queue 消费 = product turn 边界（每条一轮：收口上一段
@@ -3940,8 +4008,8 @@ export class ProductProjection {
         kind: "userInput" as const,
         text:
           item.intent?.conversationQuotes || item.intent?.botGroupSource
-            ? (item.intent.text ?? item.text)
-            : item.text,
+            ? normalizeGenUiInput(item.intent.text ?? item.text, item.intent.genUiContext).text
+            : normalizedInput.text,
         origin: "realUser" as const,
         ...(delivery === "guide" ? { guided: true as const } : {}),
         ...(item.intent?.sourceCommandId ? { sourceCommandId: item.intent.sourceCommandId } : {}),
@@ -3969,7 +4037,9 @@ export class ProductProjection {
               coveredByStableCompact: false,
               intent: {
                 kind: item.intent?.kind === "sendGoalCommand" ? "sendGoalCommand" : "sendText",
-                text: item.intent?.text ?? item.text,
+                text: normalizeGenUiInput(item.intent?.text ?? item.text, item.intent?.genUiContext)
+                  .text,
+                genUiContext: normalizedInput.genUiContext,
                 ...(item.intent?.sourceCommandId
                   ? { sourceCommandId: item.intent.sourceCommandId }
                   : {}),
@@ -4010,10 +4080,11 @@ export class ProductProjection {
             }
           : undefined,
       );
-      if (delivery === "guide") {
+      if (delivery === "guide" && !this.guideDrainOpen) {
         deltas.push(...this.openGuidedWorkSegment(event, row.entityId ?? item.pendingInputId));
       }
       deltas.push({ op: "row.appended", row });
+      this.guideDrainOpen = delivery === "guide";
       this.deliveryByPendingInputId.delete(item.pendingInputId);
     }
     return [...deltas, ...this.removeQueueItems(payload.pendingInputIds)];
@@ -4891,7 +4962,10 @@ export class ProductProjection {
       payload.querySource !== undefined
         ? payload.querySource === "main_turn"
         : payload.stopReason !== "tool_internal";
-    if (isMainTurn) this.outputContinuationTextRowId = null;
+    if (isMainTurn) {
+      this.outputContinuationTextRowId = null;
+      this.guideDrainOpen = false;
+    }
     if (
       isMainTurn &&
       payload.stopReason?.trim().toLowerCase() === "length" &&

@@ -6,6 +6,7 @@ import type {
   UsageStatus,
 } from "@zcode/contracts";
 import type { SessionId } from "@zcode/contracts";
+import { isAccountScopedProviderId } from "@zcode/shared";
 
 /**
  * 「使用详情」查询：model_usage 表的逐请求视图。
@@ -128,7 +129,7 @@ export async function queryModelUsageDetails(
     ...(row.errorType ? { errorType: String(row.errorType) } : {}),
     ...(row.errorCode ? { errorCode: String(row.errorCode) } : {}),
     ...(row.errorMessage ? { errorMessage: String(row.errorMessage) } : {}),
-    ...egressFields(row.providerMetadata),
+    ...egressFields(String(row.providerId ?? ""), row.providerMetadata),
   }));
 
   // 可选过滤值按同一时间窗内的全量取值，与当前过滤无关——
@@ -183,13 +184,21 @@ function numberOr(value: unknown, fallback: number): number {
  * 字符串一律被当成「没有元数据」，导致库里有 accountDisplayName / proxyDisplayName
  * 时「使用详情」仍显示 `--`。解析失败按缺省处理，不能让一条坏历史记录打挂整页。
  */
-function egressFields(providerMetadata: unknown): Partial<ModelUsageDetailsRow> {
+function egressFields(
+  providerId: string,
+  providerMetadata: unknown,
+): Partial<ModelUsageDetailsRow> {
   const record = parseProviderMetadata(providerMetadata);
   if (!record) return {};
-  const accountId = typeof record.accountId === "string" ? record.accountId : undefined;
+  // 早期自定义 provider 的行可能带着上一次账号族请求残留的账号字段；
+  // 没有账号概念的 provider 一律不返回账号归因，避免「使用详情」显示 zai/bigmodel 账号。
+  const accountScoped = isAccountScopedProviderId(providerId);
+  const accountId = accountScoped && typeof record.accountId === "string" ? record.accountId : undefined;
 
   const accountDisplayName =
-    typeof record.accountDisplayName === "string" ? record.accountDisplayName : undefined;
+    accountScoped && typeof record.accountDisplayName === "string"
+      ? record.accountDisplayName
+      : undefined;
   const proxyPoolId = typeof record.proxyPoolId === "string" ? record.proxyPoolId : undefined;
   const proxyDisplayName =
     typeof record.proxyDisplayName === "string" ? record.proxyDisplayName : undefined;

@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- Desktop renderer bridge 聚合平台、远端 attachment 与启动编排契约。 */
 import { DatabaseStartupAdmission } from "./databaseStartupAdmission.js";
-import { initializeDesktopLocalTtft } from "./localTtftBootstrap.js";
+import { initializeDesktopLocalTtft } from "./local-ttft/contract.js";
 import { createRoot } from "react-dom/client";
 import { useEffect } from "react";
 import {
@@ -23,7 +23,6 @@ import {
   InternalChannels,
   databaseStartupStateSchema,
   type DatabaseStartupControl,
-  collectTelemetryRendererContext,
   parseLaunchMarks,
   LAUNCH_MARKS_QUERY_KEY,
   type LaunchMarks,
@@ -31,7 +30,6 @@ import {
 } from "@zcode/shared";
 import type { Locale } from "@zcode/shared";
 import type { IServiceAccessor } from "@zcode/services";
-import { syncAppTelemetryContext } from "../appTelemetryBridge.js";
 import { createDesktopPlatform } from "./desktopPlatform.js";
 import { startPerformanceTimelineCleanup } from "./performanceTimelineCleanup.js";
 import { initializeDesktopUserActionTrace } from "./userActionTraceBootstrap.js";
@@ -316,22 +314,125 @@ function handleServicePortMessage(event: MessageEvent): void {
   enterAppIfPrepared();
 }
 
+// DSH 桌宠的模型通道（碎碎念/对话）：主窗渲染层持有 workspace services
+// （ServicePort 落地时写入 baseServicesForRemoteSessions）。监听放模块级，
+// 生成请求到达时取当时的首选模型（= 跟随当前会话），结果定向回 main。
+function replyPetGenerate(payload: { requestId: string; text?: string; error?: string }): void {
+  const bridge = (
+    window as unknown as {
+      zcode?: {
+        dshPetGenerateResult?: (p: { requestId: string; text?: string; error?: string }) => void;
+      };
+    }
+  ).zcode;
+  bridge?.dshPetGenerateResult?.(payload);
+}
+
+window.addEventListener("message", (event) => {
+  const data = event.data as { type?: string; payload?: {
+    requestId?: string; prompt?: string; workspacePath?: string;
+    selection?: { providerId?: string; modelId?: string } | null;
+    /** 带图对话：user 消息的完整内容块（text + image）。 */
+    messages?: Array<{
+      role: "user";
+      content: Array<
+        | { type: "text"; text: string }
+        | { type: "image"; mediaType: string; dataUrl: string }
+      >;
+    }>;
+  } } | null;
+  if (!data || data.type !== "dsh-pet-generate-request" || !data.payload) return;
+  const services = baseServicesForRemoteSessions;
+  const {
+    requestId,
+    prompt,
+    workspacePath,
+    selection: requestedSelection,
+    messages,
+  } = data.payload;
+  if (!services || !requestId || !prompt || !workspacePath) {
+    if (requestId) replyPetGenerate({ requestId });
+    return;
+  }
+  void (async () => {
+    // 面板里指定了 whisperModel/chatModel 就用它；留空 = 跟随当前会话模型（preferredSelection）。
+    const view = await services.modelSelectionService.getView();
+    const requested = requestedSelection;
+    const base =
+      requested && requested.providerId && requested.modelId
+        ? { providerId: requested.providerId, modelId: requested.modelId }
+        : view.preferredSelection;
+    let selection = base;
+    // 辅助生成的选项必须整组显式给出（Core 的 validateOptions 对 maxOutputTokens
+    // 是必填校验）：预算对齐 Core 辅助调用的 5,000 且不超过模型规格上限
+    // （auxiliaryModelOptions 同式）；思考档取 disabled（不支持时取最低一档）。
+    const petModel = base
+      ? view.providers.find((item) => item.providerId === base.providerId)?.models.find(
+          (item) => item.modelId === base.modelId,
+        )
+      : undefined;
+    const specs = (
+      petModel?.config as
+        | {
+            optionSpecs?: {
+              reasoningLevel?: { values?: string[] };
+              maxOutputTokens?: { max?: number };
+            };
+          }
+        | undefined
+    )?.optionSpecs;
+    const levels = specs?.reasoningLevel?.values ?? [];
+    const level =
+      levels.length === 0 ? undefined : levels.includes("disabled") ? "disabled" : levels[0];
+    const maxOutputTokens = Math.min(5_000, specs?.maxOutputTokens?.max ?? 5_000);
+    if (base) {
+      // 选择里只带思考档（modelSelection schema 不收 maxOutputTokens，它走
+      // generateWorkspaceText 的顶层参数）。
+      const candidate =
+        level === undefined ? base : { ...base, options: { reasoningLevel: level } };
+      const resolved = await services.modelSelectionService.getView({ selection: candidate });
+      selection = resolved.effectiveSelection ?? candidate;
+      if (resolved.selectionIssue) {
+        console.log("[dsh-pet] selection issue:", resolved.selectionIssue);
+      }
+    }
+    console.log("[dsh-pet] generate request", requestId, "selection:", selection ? `${selection.providerId}/${selection.modelId}` : "null");
+    if (!selection) {
+      replyPetGenerate({ requestId, error: "no-selection" });
+      return;
+    }
+    const result = await services.zcodeAgentService.generateWorkspaceText({
+      workspacePath,
+      selection,
+      prompt,
+      ...(Array.isArray(messages) && messages.length > 0 ? { messages } : {}),
+      querySource: "dsh-pet",
+      // 显式预算（见 petOptions）；requestTimeoutMs 让协议层登记 operationId，
+      // Core 才会用调用方的 signal 而不是自己的 60s 硬超时。
+      maxOutputTokens,
+      requestTimeoutMs: 170_000,
+    });
+    console.log("[dsh-pet] generate ok", requestId, (result.text || "").slice(0, 40));
+    replyPetGenerate({ requestId, text: result.text });
+  })().catch((error: unknown) => {
+    console.warn("[dsh-pet] generate failed", requestId, error instanceof Error ? error.message : String(error));
+    replyPetGenerate({ requestId, error: error instanceof Error ? error.message : String(error) });
+  });
+});
+
+
 function initializeBusinessRoot(port: MessagePort): void {
   appInitialized = true;
   const services = connectViaMessagePort(port, {
     sourceServerManagementService: true,
+    deviceSyncStateService: true,
   });
   baseServicesForRemoteSessions = services;
   registerBaseWorkspaceServices(services);
   flushPendingRemoteWorkspaceServicePorts();
-  const settingService = supportsSettings ? services.settingService : undefined;
+  // DSH 桌宠的碎碎念/对话生成：不传 selection = 跟随当前会话模型；结果定向回 main。
 
-  syncAppTelemetryContext({
-    bridge: {
-      syncTelemetryContext: (context) => window.zcode.syncTelemetryContext(context),
-    },
-    createRendererContext: collectTelemetryRendererContext,
-  });
+  const settingService = supportsSettings ? services.settingService : undefined;
 
   // 初始化稳定的设备 ID，确保所有 hook 在首次渲染前就使用正确的值
   setStreamClientId(desktopPlatform.getDeviceId());

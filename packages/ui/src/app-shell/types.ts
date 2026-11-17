@@ -34,7 +34,6 @@ import type {
   OpenScopedWorkflowArtifactSideTabRequest,
   OpenScopedWorkflowWorkspaceSideTabRequest,
   WorkspaceSidePaneState,
-  TreemappingSidePaneTab,
 } from "@/lib/workspaceSidePane.js";
 import type { WorkspaceXCodeUIState } from "@/store/zcodeSessionStore.js";
 import type { RemoteConnectionLogEntry } from "@/hooks/useRemoteConnectionLogs.js";
@@ -112,8 +111,12 @@ export type DeviceAdditionResult =
 
 /** 仅当前 renderer 内存中的原 owner 引用；不序列化草稿或凭据。 */
 export interface DeviceAdditionReturnTarget {
-  /** 已有设备连接留在原项目页；只有新增设备往返设置。 */
-  kind: "connect-device" | "add-device";
+  /**
+   * 已有设备连接留在原项目页；只有新增设备往返设置。
+   * data-sync：从「设置 → 数据同步」发起（连接已有设备或新增设备），完成后留在数据同步页，
+   * 不跳到「远程设备」页。
+   */
+  kind: "connect-device" | "add-device" | "data-sync";
   isCurrent(): boolean;
   /** 只投递连接层可见性；原 owner 决定自己的提交门禁。 */
   onVisibilityChange?(visible: boolean): void;
@@ -168,7 +171,6 @@ export interface AppProps {
   reconnectingRemoteWorkspaceKeys: string[];
   remoteWorkspaceRecoveryByWorkspaceKey?: Record<string, RemoteWorkspaceRecoveryStatus>;
   remoteWorkspaceErrorByWorkspaceKey: Record<string, string>;
-  reconnectingRemoteWorkspaceLogsByWorkspaceKey?: Record<string, RemoteConnectionLogEntry[]>;
 
   remoteConnectionLogs?: RemoteConnectionLogEntry[];
   onCreateTask: (request?: CreateTaskRequest) => void;
@@ -182,7 +184,6 @@ export interface AppProps {
   onOpenWorkspace: () => void;
   onOpenFolderFromWorkspaceMenu: () => void;
   onOpenRemoteWorkspace?: (preference?: RemoteConnectionOpenPreference) => void | boolean;
-  onCreateScratchWorkspace?: (name: string) => Promise<string | null>;
   remoteConnectionInProgress?: boolean;
   onReturnToWorkspace?: () => void;
   allowOpenWorkspace?: boolean;
@@ -216,20 +217,17 @@ export interface WorkspaceShellLayoutProps extends Omit<AppProps, "baseFeedbackS
   openAutomationId: string | null;
   openAutomationTab: AutomationsNavigationTab | null;
   /** 中枢深链：落到某个已保存工作流的详情页；定位后由 `onOpenWorkflowConsumed` 清空。 */
-  openWorkflow?: SavedWorkflowsOpenTarget | null;
-  onOpenWorkflowConsumed?: () => void;
+  openWorkflow: SavedWorkflowsOpenTarget | null;
+  onOpenWorkflowConsumed: () => void;
   /**
    * 完成卡「已保存」芯片 → 中枢那一页（docs/dynamic-workflow/transcript-and-notifications.md
    * 「Saving the run, and running it again」）：切到自动化主视图的「工作流」标签并设深链。
    */
-  /** 上游的中枢深链入口；fork 侧暂无对应状态，未传时禁用该跳转。 */
-  onOpenSavedWorkflowInHub?: (target: SavedWorkflowHubTarget) => void;
+  onOpenSavedWorkflowInHub: (target: SavedWorkflowHubTarget) => void;
   onWorkspaceMainViewChange: (view: WorkspaceMainView) => void;
   onOpenAutomationConsumed: () => void;
   handleOpenAutomations: OpenAutomationsMain;
   handleOpenPluginStore: () => void;
-  /** fork 保留：插件商店“返回已安装插件”入口；上游改用 shell 内的主视图回退。 */
-  handleManageInstalledPlugins?: () => void;
   workspaceShellXCodeState: WorkspaceShellXCodeState;
   theme: Theme;
   isMacFullscreen: boolean;
@@ -300,8 +298,6 @@ export interface WorkspaceShellLayoutProps extends Omit<AppProps, "baseFeedbackS
   taskSessionFile: ReturnType<
     typeof import("@/hooks/useTaskSessionFilePath.js").useTaskSessionFilePath
   >;
-  /** fork 保留：本地回放/自测用的消息快照；上游移除了该调试通道。 */
-  testMessages?: import("@/lib/taskChatMessageTypes.js").TaskChatMessage[] | null;
   conversationFindActiveIndex: number;
   conversationFindNavigationRequestId: number;
   conversationFindQuery: string;
@@ -342,9 +338,7 @@ export interface WorkspaceShellLayoutProps extends Omit<AppProps, "baseFeedbackS
   handleToggleTerminal: () => void;
   handleToggleBrowser: () => void;
   handleOpenBrowserTab: () => void;
-  handleOpenBrowserPermissionSettings?: (origin: string) => void;
-  /** 上游把「树图」并入文件管理器；fork 未接入该入口，保留为可选。 */
-  handleOpenTreemapping?: (source?: TreemappingSidePaneTab["source"]) => void;
+  handleOpenBrowserPermissionSettings: (origin: string) => void;
   handleOpenWhiteboard: () => void;
   handleOpenDeveloperTools: () => void;
   handleOpenFileManager: (target?: FileManagerTarget) => void;

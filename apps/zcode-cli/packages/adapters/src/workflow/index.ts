@@ -13,11 +13,21 @@ import type {
   WorkflowStorePort,
 } from "@zcode/contracts";
 import {
+
   WorkflowDefinitionSchema,
   WorkflowEventSchema,
   WorkflowGraphRecordSchema,
   WorkflowRunSnapshotSchema,
 } from "@zcode/contracts";
+
+function resolveDataBaseDir(): string {
+  return (
+    process.env.XCODE_DATA_BASE_DIR?.trim() ||
+    process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+    process.env.HOME?.trim() ||
+    homedir()
+  );
+}
 
 export interface NodeWorkflowStoreOptions {
   rootDir?: string;
@@ -32,7 +42,7 @@ interface WorkflowIndexFile {
   runs: WorkflowRunListItem[];
 }
 
-const DEFAULT_WORKFLOW_ROOT = join(homedir(), ".xcode", "cli", "workflows");
+const DEFAULT_WORKFLOW_ROOT = join(resolveDataBaseDir(), ".xcode", "cli", "workflows");
 const WORKFLOW_DEFINITION_FILE_EXTENSION = ".json";
 
 export class NodeWorkflowStore implements WorkflowStorePort {

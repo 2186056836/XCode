@@ -24,15 +24,18 @@ import type { AiSdkModelTextRequest, ResolvedAiSdkModel } from "./runner-runtime
  */
 const MAX_ROTATION_ATTEMPTS = 4;
 
+
 /**
  * 换号策略来自 host 随本次选号下发的 `requestAuth.accountFailover`：
  * - 缺席或 `enabled: false` → **永不换号**（默认）。请求出错就报错，不偷偷消耗
  *   用户导入的其他账号；
- * - `enabled: true` → 只有 `statusCodes` 里的状态码才换号。默认只有 429（限流）；
- *   401/402/403 通常说明凭据/额度本身有问题，换号只会把同一个错误在别的账号上
- *   重演一遍，还会污染账号池的可用性判断。
+ * - `enabled: true` → 状态码命中 `statusCodes` **或** 业务码命中 `providerCodes`
+ *   才换号。api-key 型供应商（Qoder / CodeBuddy）的错误是真实 HTTP 状态码，走
+ *   `statusCodes`；zai / bigmodel 账号族把业务错误包在 HTTP 200 里（providerCode
+ *   在响应体），只有额度耗尽 1005 下发在 `providerCodes` 里——额度按账号隔离，
+ *   换号才有意义，其余错误（并发/鉴权/限流）应走重试而不是切号。
  *
- * 这里不再内置状态码白名单：策略唯一来源是 host，adapter 只做「命中就申请重试」。
+ * 这里不内置任何触发白名单：策略唯一来源是 host，adapter 只做「命中就申请重试」。
  */
 
 export class AccountRotationRetry {
@@ -40,7 +43,11 @@ export class AccountRotationRetry {
   #excluded: string[] = [];
   #lastFailure: { statusCode?: number; providerErrorCode?: string; connectionId?: string } | undefined;
   #currentConnectionId: string | undefined;
-  #failover: { enabled: boolean; statusCodes: readonly number[] } | undefined;
+  #failover: {
+    enabled: boolean;
+    statusCodes: readonly number[];
+    providerCodes?: readonly string[];
+  } | undefined;
 
   constructor(
     private readonly request: AiSdkModelTextRequest,
@@ -85,13 +92,17 @@ export class AccountRotationRetry {
       return false;
     }
     const failover = this.#failover;
-    // 默认不换号：策略缺席、显式关闭、或状态码不在用户选定的集合里，都直接失败。
+    // 默认不换号：策略缺席、显式关闭，或状态码/业务码都没命中，都直接失败。
     if (!failover?.enabled) {
       return false;
     }
     const inspection = inspectProviderFailure(unwrapRetryError(error));
     const status = getHttpResponseStatus(unwrapRetryError(error));
-    if (!status || !failover.statusCodes.includes(status)) {
+    const statusHit = status !== undefined && failover.statusCodes.includes(status);
+    const providerCode = inspection.providerErrorCode;
+    const providerCodeHit =
+      providerCode !== undefined && (failover.providerCodes?.includes(providerCode) ?? false);
+    if (!statusHit && !providerCodeHit) {
       return false;
     }
     // 不知道是哪个连接失败就不能换号：否则 host 可能再次选中同一个账号，形成空转。

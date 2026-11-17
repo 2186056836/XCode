@@ -12,6 +12,39 @@ import type {
 } from "./index.js";
 
 /**
+ * 会话用过的能力标签，adapter 写入归因 header `x-zcode-session-features`
+ * （docs/design/v2/model/session-features-header.md）。
+ * 词表只追加、不改名；废弃的标签保留常量，不复用名字。值必须是小写 snake_case。
+ */
+export const ModelRequestSessionFeature = {
+  /** 模型代码经 node_repl 调用了浏览器运行时，不论成败；旧路径（core 内置 js 工具）不打。 */
+  BrowserUse: "browser_use",
+  /** 模型代码经 node_repl 调用了 Computer Use 运行时，或调用了旧版 computer-use MCP 工具，不论成败。 */
+  ComputerUse: "computer_use",
+  /** 模型调用 ToolSearch（local 模式下名为 LocalToolSearch）且执行成功。 */
+  ToolSearchCalled: "tool_search_called",
+  /** 主循环请求的 ToolSearch 实际生效模式为 local。 */
+  ToolSearchLocal: "tool_search_local",
+  /** 主循环请求的 ToolSearch 实际生效模式为 native。 */
+  ToolSearchNative: "tool_search_native",
+  /** 模型调用 CreateWorkflow 成功启动了后台 run。 */
+  WorkflowAuto: "workflow_auto",
+  /** 用户输入的内置 `/workflow` 命令被展开为工作流模板。 */
+  WorkflowCmd: "workflow_cmd",
+} as const;
+
+export type ModelRequestSessionFeature =
+  (typeof ModelRequestSessionFeature)[keyof typeof ModelRequestSessionFeature];
+
+const MODEL_REQUEST_SESSION_FEATURE_VALUES: ReadonlySet<string> = new Set(
+  Object.values(ModelRequestSessionFeature),
+);
+
+export function isModelRequestSessionFeature(value: unknown): value is ModelRequestSessionFeature {
+  return typeof value === "string" && MODEL_REQUEST_SESSION_FEATURE_VALUES.has(value);
+}
+
+/**
  * Runtime 与 Adapter 之间的调用级执行信息。
  *
  * 它不属于业务 ModelRequest，也不允许普通调用方据此改变 Provider 或模型身份。
@@ -21,6 +54,11 @@ export interface ModelInvocationContext {
   metadata?: Record<string, unknown>;
   modelCall?: ModelApiCallObservation;
   modelRequestSessionType?: ModelRequestSessionType;
+  /**
+   * 本会话已用能力标签；runtime 层在每次调用时读取 owner 的当前集合。Adapter 写入受控归因
+   * header，不允许 provider 静态 headers 覆盖；缺省或空集合时不发送。
+   */
+  modelRequestSessionFeatures?: readonly ModelRequestSessionFeature[];
   /** 重试预算档位；runtime 按 taskType 决定，adapter 据此放宽瞬态失败的放弃条件。 */
   modelRetryBudget?: ModelRetryBudget;
   /** 准入端口；runtime 从 deps 带入，adapter 每次尝试先 acquire。 */
@@ -30,21 +68,10 @@ export interface ModelInvocationContext {
   streamIdleTimeoutRetryNumber?: number;
   streamRecovery?: ModelStreamRecoveryStatus;
   preserveProviderStreamBoundaries?: boolean;
-  /**
-   * adapter 在真正发出请求时回报本次命中的出口节点。
-   *
-   * 供应商级轮询是 per-request 选择，只有 adapter 的 fetch 层知道这一次抽中了哪个池；
-   * host 的 requestAuth 只能给候选快照。记账要显示真实节点名，必须由 adapter 回填。
-   */
-  reportResolvedEgress?: (egress: { proxyPoolId?: string; proxyDisplayName?: string }) => void;
   refreshRuntimeHeadersBeforeAttempt?: (input: {
     accountAccess?: XCodeProviderAccountAccess;
     expectedAccountScope?: string;
     rejectedProjectTokenFingerprint?: string;
-    /** 本次逻辑请求里已经失败、不得再选的连接（账号）id。 */
-    excludedConnectionIds?: readonly string[];
-    /** 上一次失败的类型；host 用于写模型锁 / 判断是否换号。 */
-    lastFailure?: { statusCode?: number; providerErrorCode?: string; connectionId?: string };
     attempt: number;
     reason?: RequestVerificationReason;
     abortSignal?: AbortSignal;
@@ -60,24 +87,22 @@ export interface ModelInvocationContext {
 /** Adapter 为单个物理请求 attempt 使用的动态鉴权材料。 */
 export interface ModelRequestAuth {
   accountScope?: string;
-  /** 账号轮询：本次选中的连接（账号）id。 */
-  connectionId?: string;
-  /** 本次选中的账号显示名；「使用详情」按它区分多账号供应商的具体账号。 */
-  accountDisplayName?: string;
-  /** 本次请求的出口代理池 id 与显示名；未绑定时缺席（跟随全局代理状态）。 */
-  proxyPoolId?: string;
-  proxyDisplayName?: string;
   apiKey?: string;
   apiKeyId?: string;
   headers?: Record<string, string>;
-  /**
-   * 账号轮询的失败换号策略，由 host 随本次选号一起下发。
-   * 缺席 = 不换号（默认）：请求出错直接报错，不偷偷消耗别的账号。
-   */
+  /** fork（账号轮换）：本次请求命中的账号连接 id。 */
+  connectionId?: string;
+  /** fork（账号轮换）：账号展示名（使用详情归因）。 */
+  accountDisplayName?: string;
+  /** fork（账号级代理）：出口代理池 id。 */
+  proxyPoolId?: string;
+  /** fork（账号级代理）：出口代理展示名。 */
+  proxyDisplayName?: string;
+  /** fork（账号轮换）：host 下发的换号策略。 */
   accountFailover?: {
     enabled: boolean;
-    /** 只有这些状态码才换号；host 已按设置收敛过。 */
-    statusCodes: number[];
+    statusCodes: readonly number[];
+    providerCodes?: readonly string[];
   };
 }
 

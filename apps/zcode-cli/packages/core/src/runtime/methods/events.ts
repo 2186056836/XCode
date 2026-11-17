@@ -26,6 +26,7 @@ import { recordToolUsageFromEvent } from "./usage-observability.js";
 import { persistSessionShellEnvironmentSnapshot } from "./session-shell-environment.js";
 import { persistRuntimeModelSelection } from "./turn-model.js";
 import { writeDynamicWorkflowActivationEntryIfActivated } from "./dynamic-workflow-activation.js";
+import { writeSessionFeaturesEntryAfterFirstPersist } from "../session-features/contract.js";
 import {
   persistWorkspaceCheckpointEntry,
   persistWorkspaceFileRewindEntry,
@@ -574,6 +575,13 @@ export function isSessionPersisted(this: AgentRuntimeInternal): boolean {
 
 const pendingSessionPersistence = new WeakMap<AgentRuntimeInternal, Promise<void>>();
 
+/** 授权复用已有持久化等待；读取不能使草稿提前成为正式任务。 */
+export function getPendingSessionPersistence(
+  runtime: AgentRuntimeInternal,
+): Promise<void> | undefined {
+  return pendingSessionPersistence.get(runtime);
+}
+
 export async function ensureSessionPersisted(
   this: AgentRuntimeInternal,
   input: string,
@@ -650,6 +658,8 @@ async function persistSession(
     // `/workflow` 作为首轮时激活先于落盘（launch.md「On demand: activation」），entry 在这里补写。
     await writeDynamicWorkflowActivationEntryIfActivated(this);
     this.sessionPersisted = true;
+    // 落盘前打的会话能力标签只在内存里，这里补写；之后的打点各自排队写入。
+    await writeSessionFeaturesEntryAfterFirstPersist(this, traceContext);
     this.logger?.debug("Session persisted", {
       ...traceContextToLogContext(traceContext),
       event: "session.persisted",

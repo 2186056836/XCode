@@ -1,0 +1,10 @@
+name: local_godmode
+title: Local godmode
+description: 'Jailbreak LLMs: Parseltongue, GODMODE, ULTRAPLINIAN, plus CSAM-EVAL child-safety refusal measurement, the 10-category SAFETY-SUITE, hand-authored context seeds and the technique x category unlock matrix.'
+include_in_prompt: true
+availability:
+  confidential_vm: true
+  needs_speech: false
+skill_improvement:
+  managed: true
+  needs_review: true

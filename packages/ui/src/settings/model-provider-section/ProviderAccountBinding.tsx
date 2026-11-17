@@ -18,9 +18,10 @@ import { Button } from "@/components/ui/button.js";
 import { useServices } from "@/hooks/useServices.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import type { IProxyPoolService, ProxyProviderBindingView } from "@zcode/services";
-import type { AccountRotationStrategy } from "@zcode/services";
+import type { AccountRotationSettings, AccountRotationStrategy } from "@zcode/services";
 import {
   ACCOUNT_ROTATION_FAILOVER_STATUS,
+  ACCOUNT_ROTATION_FAILOVER_QUOTA_PROVIDER_CODES,
   type AccountRotationFailoverStatus,
   type ProviderProxyRotationStrategy,
 } from "@zcode/shared";
@@ -301,12 +302,17 @@ export function ProviderProxyPoolControl({ providerId }: { providerId: string })
 }
 
 /**
- * 账号轮询设置（Qoder / CodeBuddy，≥2 个账号时显示）。
+ * 账号轮询设置（≥2 个账号时显示）。
  *
  * 语义对齐 9router：
  * - 优先当前账号（fill-first，默认）：始终先用用户选中的账号，失败再换下一个；
  * - 轮询（round-robin）：同一账号连续用 sticky 次后切到最久未使用的账号；
- * - 账号级失败（401/402/403/429）时自动换号重试，最多 4 次。
+ * - 换号触发按供应商画像区分：
+ *   - Qoder / CodeBuddy（api-key 型，错误是真实 HTTP 状态码）：出错时换号 +
+ *     401/402/403/429 勾选；
+ *   - zai / bigmodel 账号族（官方套餐，业务错误包在 HTTP 200 里）：单个
+ *     「额度耗尽时自动换号」开关——额度按账号隔离，只有 1005 值得换号，
+ *     其余错误（并发/鉴权/限流）应走重试而不是切号。
  */
 export function ProviderAccountRotationControl({ providerId }: { providerId: string }) {
   const { intl } = useXCodeIntl();
@@ -319,12 +325,15 @@ export function ProviderAccountRotationControl({ providerId }: { providerId: str
     return null;
   }
 
-  const save = (next: {
-    strategy: AccountRotationStrategy;
-    stickyLimit: number;
-    failoverOnError: boolean;
-    failoverStatusCodes: AccountRotationFailoverStatus[];
-  }) => {
+  // 账号管理页传入的是家族 id（zai / bigmodel）；api-key 型供应商页传 provider id。
+  const isOAuthFamily = providerId === "zai" || providerId === "bigmodel";
+  const quotaFailoverOn =
+    settings.failoverOnError === true &&
+    (settings.failoverProviderCodes ?? []).includes(
+      ACCOUNT_ROTATION_FAILOVER_QUOTA_PROVIDER_CODES[0],
+    );
+
+  const save = (next: AccountRotationSettings) => {
     void service
       .saveAccountRotation(providerId, next)
       .then((value) => setView(value))
@@ -374,15 +383,36 @@ export function ProviderAccountRotationControl({ providerId }: { providerId: str
           />
         </label>
       ) : null}
-      <label className="flex items-center gap-1.5 text-foreground-subtle">
-        <input
-          type="checkbox"
-          checked={settings.failoverOnError === true}
-          onChange={(event) => save({ ...settings, failoverOnError: event.target.checked })}
-        />
-        <span>{intl.formatMessage({ id: "settings.accountRotation.failover" })}</span>
-      </label>
-      {settings.failoverOnError ? (
+      {isOAuthFamily ? (
+        // 官方账号族：业务错误包在 HTTP 200 里，状态码勾选对它们无意义；
+        // 唯一值得换号的是额度耗尽（1005），其余错误一律重试不切号。
+        <label className="flex items-center gap-1.5 text-foreground-subtle">
+          <input
+            type="checkbox"
+            checked={quotaFailoverOn}
+            onChange={(event) =>
+              save({
+                ...settings,
+                failoverOnError: event.target.checked,
+                failoverProviderCodes: event.target.checked
+                  ? [...ACCOUNT_ROTATION_FAILOVER_QUOTA_PROVIDER_CODES]
+                  : settings.failoverProviderCodes,
+              })
+            }
+          />
+          <span>{intl.formatMessage({ id: "settings.accountRotation.failoverQuota" })}</span>
+        </label>
+      ) : (
+        <label className="flex items-center gap-1.5 text-foreground-subtle">
+          <input
+            type="checkbox"
+            checked={settings.failoverOnError === true}
+            onChange={(event) => save({ ...settings, failoverOnError: event.target.checked })}
+          />
+          <span>{intl.formatMessage({ id: "settings.accountRotation.failover" })}</span>
+        </label>
+      )}
+      {!isOAuthFamily && settings.failoverOnError ? (
         <span className="flex items-center gap-2">
           <span className="text-foreground-subtle">
             {intl.formatMessage({ id: "settings.accountRotation.hint" })}
@@ -524,9 +554,6 @@ export function ProviderProxyBatchActions({ providerId }: { providerId: string }
       >
         {intl.formatMessage({ id: "settings.proxyPool.batchRotate" })}
       </button>
-      <span className="text-foreground-subtle">
-        {intl.formatMessage({ id: "settings.proxyPool.batchHint" }, { count: accounts.length })}
-      </span>
       {errorMsg ? <span className="text-destructive">{errorMsg}</span> : null}
     </div>
   );

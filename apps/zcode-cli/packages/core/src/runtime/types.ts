@@ -1,5 +1,5 @@
 import type { ToolSearchExecutionContext, ToolSearchMode } from "@zcode/contracts";
-import type { RequestVerificationReason } from "@zcode/shared";
+import type { ExecutionState, RequestVerificationReason } from "@zcode/shared";
 import type { GetAgentDefinitions, LoadAgentDefinitions } from "../subagent/definitions.js";
 import type { RuntimeInputPresentation, TurnExecutionModelFallbackReason } from "@zcode/contracts";
 /* eslint-disable max-lines -- Runtime 类型集中承载 core/runtime 对外结构，拆分需要单独迁移。 */
@@ -22,10 +22,12 @@ import type {
   StableForkTargetMetadata,
   WorkspaceHookBundleSnapshot,
   WorkspaceId,
+  PetControlPort,
 } from "@zcode/contracts";
 import type { XCodeProviderAccountAccess } from "@zcode/shared";
 import type { EffectiveModelSelectionResult } from "@zcode/shared/model-selection";
 import type { RuntimeMessageEntry } from "../agent/message-history.js";
+import type { ProviderToolRound } from "./provider-tool-rounds/contract.js";
 import type {
   CompactPhase,
   CompactReason,
@@ -74,10 +76,10 @@ import type {
   BrowserControlPort,
   ExecutionShellSelection,
   AutomationPort,
-  OffPeakPort,
-  ProxyPoolPort,
   ModelJailbreakPort,
   ProviderAccountPort,
+  ProxyPoolPort,
+  OffPeakPort,
   TopicResourcePort,
   FileSystemPort,
   HttpClientPort,
@@ -115,7 +117,7 @@ import type {
 import type { AgentProfile } from "../subagent/profile.js";
 import type { RuntimeTaskRegistry } from "../runtime-task/registry.js";
 import type { BashTimeoutPolicy } from "../tool/bash-timeout-policy.js";
-import type { PresentationSurface, SystemPromptOverrides } from "../context/types.js";
+import type { PresentationSurface } from "../context/types.js";
 import type { WorkspaceHookRuntimeAdmissionPort } from "../hooks/workspace-hook-runtime-admission.js";
 
 // -----------------------------------------------
@@ -123,6 +125,8 @@ import type { WorkspaceHookRuntimeAdmissionPort } from "../hooks/workspace-hook-
 // -----------------------------------------------
 
 export interface AgentRuntimeConfig {
+  /** fork（godmode）：自定义 system 消息覆盖。 */
+  systemPromptOverrides?: import("../context/types.js").SystemPromptOverrides;
   toolSearch?: { mode?: ToolSearchMode };
   /** shared-host CUA request routing metadata; desktop is the safe default. */
   clientMode?: "desktop-continuous" | "web-remote-replayable";
@@ -233,12 +237,6 @@ export interface AgentRuntimeConfig {
   // Context Builder config
   systemPrompt?: string;
   /**
-   * XCode fork：设置页自定义的 system 消息替换内容（仅第 1 条产品身份消息），
-   * 会话物化时由 Host 下发冻结。与 systemPrompt（workflow child 整段替换语义）
-   * 互不干扰；子代理路径不消费。
-   */
-  systemPromptOverrides?: SystemPromptOverrides;
-  /**
    * 动态工作流子代理的身份输入：在场即让
    * context builder 走「基座 + 工作流子代理契约 + persona 叠加」路径，而不是把 persona 当
    * `systemPrompt` 整段替换。与 `systemPrompt` 互斥（builder 抛错）。
@@ -268,7 +266,11 @@ export interface AgentRuntimeConfig {
   /** 仅用于持久化隔离；文件与命令执行仍使用 workingDirectory。 */
   workspaceIdentity?: WorkspaceId;
   envInfo?: EnvInfo; // Optional, will be auto-detected if not provided
-  currentDate?: string; // YYYY-MM-DD, resolved by adapter when omitted
+  /**
+   * YYYY-MM-DD，缺省由 adapter 解析。只用于 ContextBuilder 日期段的用量统计；
+   * 模型看到的日期公告一律取运行时时钟（固定日期请注入 `now`）。
+   */
+  currentDate?: string;
   userInstructions?: UserInstructionsOptions; // P1: AGENTS.md
   projectContext?: ProjectContext; // P2: auto-detected if not provided
   skillMetadataBudget?: number;
@@ -285,6 +287,11 @@ export interface ResumeSessionOptions {
    * 必须高于历史 session mode；交互式 resume 未指定时保持 undefined，让历史 mode 生效。
    */
   modeOverride?: CollaborationMode;
+  /**
+   * 调用方已算出的完整执行状态（模式与 Plan），覆盖历史 mode 与落盘的执行状态。子会话恢复时传入：
+   * 子会话模式必须按父会话当前状态重算，不能沿用子会话落盘时的模式。
+   */
+  executionStateOverride?: ExecutionState;
 }
 
 export interface MainTurnCacheHitAggregate {
@@ -387,6 +394,12 @@ export interface AgentRuntimeDeps {
    * 包装（受闸门约束），主 runtime 拿治理器的 observer（只喂信号）；缺席即不设闸门。
    */
   modelRequestAdmission?: ModelRequestAdmission;
+  /**
+   * 主代理 subagent（`Agent` 工具）的准入端口工厂：派生 subagent 时以**当前**父 sessionId 调用，
+   * 结果作为子 runtime 的 `modelRequestAdmission`（受闸门约束，同一父会话的 subagent 共用一条队列）。
+   * 缺席时子 runtime 沿用父的 `modelRequestAdmission`。
+   */
+  subagentModelRequestAdmission?: (parentSessionId: string) => ModelRequestAdmission;
   onOffPeakLifecycleEvent?: (
     event: import("./off-peak/lifecycle.js").OffPeakLifecycleEvent,
   ) => void;
@@ -399,12 +412,13 @@ export interface AgentRuntimeDeps {
   runtimeTaskRegistry?: RuntimeTaskRegistry;
   artifactStore?: ToolArtifactStorePort;
   automationPort?: AutomationPort;
-  offPeakPort?: OffPeakPort;
   /** 模型越狱配置端口；在场即注册 ModelJailbreak。 */
   modelJailbreakPort?: ModelJailbreakPort;
   providerAccountPort?: ProviderAccountPort;
   /** 代理池配置端口；在场即注册 ProxyPool，缺席即该能力对小美不可见。 */
   proxyPoolPort?: ProxyPoolPort;
+  petControlPort?: PetControlPort;
+  offPeakPort?: OffPeakPort;
   topicResourcePort?: TopicResourcePort;
   contextSourcePort?: ContextSourcePort;
   eventSink?: SessionEventSink;
@@ -437,9 +451,6 @@ export interface ProviderRuntimeHeadersPort {
     accountAccess?: XCodeProviderAccountAccess;
     expectedAccountScope?: string;
     rejectedProjectTokenFingerprint?: string;
-    /** 账号轮询：本次逻辑请求里已经失败的连接 id。 */
-    excludedConnectionIds?: readonly string[];
-    lastFailure?: { statusCode?: number; providerErrorCode?: string; connectionId?: string };
     abortSignal?: AbortSignal;
     modelId: string;
     providerId: string;
@@ -447,6 +458,14 @@ export interface ProviderRuntimeHeadersPort {
     sessionId: SessionId;
     traceContext: TraceContext;
     turnId?: TurnId;
+    /** fork（账号轮换）：本轮已排除的连接 id。 */
+    excludedConnectionIds?: readonly string[];
+    /** fork（账号轮换）：上一次失败信息。 */
+    lastFailure?: {
+      statusCode?: number;
+      providerErrorCode?: string;
+      connectionId?: string;
+    };
   }): Promise<{
     headersApplied: boolean;
     requestAuth?: ModelRequestAuth;
@@ -781,7 +800,6 @@ export interface ResumeSessionResult extends SessionHistoryHydrationResult {
   /** resume 是否写回了当前 materialization 无法完整反映的 compact 修补事实。 */
   persistedMessagesReloadRequired: boolean;
   readFileStateRestoredCount: number;
-  readFileStateSkippedRangeReadCount: number;
   readFileStateSkippedUnreadableEditCount: number;
   traceId: TraceId;
 }
@@ -796,6 +814,7 @@ export interface PermissionDecisionResult {
 export interface ExecuteToolsOptions {
   toolSearch?: ToolSearchExecutionContext;
   automationTurn?: boolean;
+  automationId?: string;
   offPeakTurn?: boolean;
   signal?: AbortSignal;
   traceContext?: TraceContext;
@@ -903,8 +922,10 @@ export interface RunModelTextRequestOptions {
 }
 
 export interface RuntimeModelStreamSnapshot {
+  /** 当前轮（最后一个服务端内置工具之后）的内容；之前的轮在 providerToolRounds。 */
   reasoning: ModelReasoningContentBlock[];
   text: string;
+  providerToolRounds?: readonly ProviderToolRound[];
 }
 
 export interface StreamedToolExecutionResult {
@@ -922,6 +943,8 @@ export interface RuntimeModelTextResult {
   reasoning?: ModelReasoningContentBlock[];
   text: string;
   toolCalls?: ModelToolCall[];
+  /** 服务端内置工具切出的前序轮次；text/reasoning 只保留最后一轮。 */
+  providerToolRounds?: ProviderToolRound[];
   usage: ModelUsage;
 }
 

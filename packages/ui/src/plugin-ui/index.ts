@@ -1,4 +1,8 @@
 export * from "./contract.js";
+export {
+  registerPluginUiPaneSession,
+  usePluginUiPaneTarget,
+} from "./adapters/pluginUiPaneSession.js";
 export { PluginUiBackgroundHost } from "./adapters/PluginUiBackgroundHost.js";
 export { createPluginUiMessagePortTransport } from "./adapters/messagePortTransport.js";
 export { createPluginUiPagePlane } from "./adapters/pluginUiPagePlane.js";
@@ -12,12 +16,13 @@ export {
   type PluginUiRowPinResolver,
 } from "./domain/pluginUiRowPolicy.js";
 export {
+  createLogicalUiInstancesSelector,
   deriveLogicalUiInstances,
   type PluginUiInstanceDerivation,
 } from "./domain/pluginUiInstancePolicy.js";
 export {
   getPluginUiManualPin,
-  getPluginUiDisclosureVersion,
+  getPluginUiDisclosureSnapshot,
   subscribePluginUiDisclosure,
 } from "./app/pluginUiDisclosureStore.js";
 export { setPluginUiInstanceDerivation } from "./app/pluginUiInstanceStore.js";

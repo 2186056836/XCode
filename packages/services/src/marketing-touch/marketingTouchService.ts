@@ -27,10 +27,21 @@ export function createMarketingTouchService(options: {
   // 上一轮合并曾把这里的凭据层换成外部注入的 getToken/getDeviceMid，但 node.ts 的
   // 注册点始终按 fork 约定传 credentialService，导致 TS2353 且运行时无凭据可用。
   credentialService: ICredentialService;
+  /**
+   * 账号级代理出口：查询/领取权益是平台 API，之前只走全局 apiClient，
+   * 账号在账号管理里绑定的代理池对它们不生效。按 accountRef 解析账号绑定池，
+   * 未传 accountRef 时解析当前激活账号；未提供时回落全局 apiClient。
+   */
+  accountApiClient?: (accountRef?: string) => ApiClient;
   onSnapshot?: (snapshot: ReturnType<typeof parseMarketingTouchResponse>) => void;
 }): IMarketingTouchService {
-  let previousToken: string | undefined;
-  let scope = randomUUID();
+  /**
+   * scope 必须按身份隔离：一键领取会并发/连续用不同账号的 JWT 查投放，而界面的
+   * 后台轮询同时用激活账号在查。之前 scope 是单值 + 单 previousToken，两个身份交错
+   * 就会让先返回的那次请求在复查时读到别人的 token、判定 `marketing_identity_changed`
+   * ——表现正是「一键领取第一个账号直接失败」。
+   */
+  const identities = new Map<string, { token: string; scope: string }>();
   /**
    * 组本次请求的鉴权头。
    *
@@ -40,11 +51,12 @@ export function createMarketingTouchService(options: {
    */
   async function context(locale: "zh-CN" | "en-US", accountRef?: string) {
     const tokenKey = accountRef ? `zcodejwt:${accountRef}` : XCODE_JWT_TOKEN_KEY;
+    const identityKey = accountRef ?? "__active__";
     const token = (await options.credentialService.load(tokenKey))?.trim() || "";
-    if (previousToken !== token) {
-      previousToken = token;
-      scope = randomUUID();
-    }
+    // 身份内 token 变化（重新登录/换绑）才换 scope；不同账号互不影响。
+    const known = identities.get(identityKey);
+    const scope = known?.token === token ? known.scope : randomUUID();
+    identities.set(identityKey, { token, scope });
     // Device-Mid 必须与被查询账号配对：source 头里的 mid 与 JWT 不同源时服务端会拒绝。
     const sourceHeaders = buildXCodeSourceHeaders(accountRef ? { accountRef } : {});
     const headers: Record<string, string> = {
@@ -60,12 +72,16 @@ export function createMarketingTouchService(options: {
       const identity = await context(locale, accountRef);
       const url = new URL(XCODE_MARKETING_TOUCH_URL);
       url.searchParams.set("seq", String(bootRequestSeq++));
-      const response = await readApiJson<unknown>(options.apiClient, url.href, {
-        method: "GET",
-        headers: identity.headers,
-        timeoutMs: 15_000,
-        redirect: "error",
-      });
+      const response = await readApiJson<unknown>(
+        options.accountApiClient?.(accountRef) ?? options.apiClient,
+        url.href,
+        {
+          method: "GET",
+          headers: identity.headers,
+          timeoutMs: 15_000,
+          redirect: "error",
+        },
+      );
       if ((await context(locale, accountRef)).scope !== identity.scope)
         throw new Error("marketing_identity_changed");
       const snapshot = parseMarketingTouchResponse(response);

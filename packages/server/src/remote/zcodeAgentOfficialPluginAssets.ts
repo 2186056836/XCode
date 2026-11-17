@@ -17,6 +17,7 @@ export const REMOTE_AGENT_OFFICIAL_PLUGIN_PACKAGE_NAMES = [
   "plugin-creator-plugin",
   "zcode-guide-plugin",
   "visualize-plugin",
+  "zcode-site-plugin",
 ] as const;
 
 export const REMOTE_AGENT_OFFICIAL_PLUGIN_INCLUDED_TOP_LEVEL_PATHS = [
@@ -43,6 +44,53 @@ export const REMOTE_AGENT_OFFICIAL_PLUGIN_REQUIRED_RELATIVE_PATHS = [
   "bundled-skills/skills/dynamic-workflows/SKILL.md",
   "bundled-skills/skills/dynamic-workflows/patterns.md",
   "bundled-skills/skills/dynamic-workflows/examples.md",
+  // 越狱技能随 CLI 内置：远端主机上缺失 SKILL.md 时，小玉拿不到可调用的越狱技能。
+  "bundled-skills/skills/xcode-godmode/SKILL.md",
+  // fork 测试入口：远端主机没有本机 fork 时脚本会明确报错，而不是静默少一个测试项。
+  "bundled-skills/skills/xcode-godmode/scripts/run_fork_tests.py",
+  // 与 bootstrap/SEA 的必需路径对齐：执行脚本、加载器、矩阵报表与测量纪律三件套。
+  "bundled-skills/skills/xcode-godmode/scripts/parseltongue.py",
+  "bundled-skills/skills/xcode-godmode/scripts/godmode_probe.py",
+  "bundled-skills/skills/xcode-godmode/scripts/godmode_race.py",
+  "bundled-skills/skills/xcode-godmode/scripts/load_godmode.py",
+  "bundled-skills/skills/xcode-godmode/scripts/matrix_report.py",
+  "bundled-skills/skills/xcode-godmode/references/jailbreak-templates.md",
+  "bundled-skills/skills/xcode-godmode/references/refusal-detection.md",
+  "bundled-skills/skills/xcode-godmode/references/combination-attacks.md",
+  "bundled-skills/skills/xcode-godmode/references/running-a-measurement.md",
+  "bundled-skills/skills/xcode-godmode/references/measured-results.md",
+  "bundled-skills/skills/xcode-godmode/templates/prefill.json",
+  "bundled-skills/skills/xcode-godmode/templates/prefill-subtle.json",
+  // 测量面：语料、打分器、运行器。SKILL.md 的 Paths 段逐个点了名，
+  // 少一个就是文档指着不存在的脚本；这些文件不带密钥，纯粹是拒绝判定的基准。
+  "bundled-skills/skills/xcode-godmode/scripts/safety_scoring.py",
+  "bundled-skills/skills/xcode-godmode/scripts/csam_eval.py",
+  "bundled-skills/skills/xcode-godmode/scripts/safety_suite.py",
+  "bundled-skills/skills/xcode-godmode/scripts/safety_suite_runner.py",
+  "bundled-skills/skills/xcode-godmode/scripts/unlock_matrix.py",
+  "bundled-skills/skills/xcode-godmode/scripts/priming_eval.py",
+  "bundled-skills/skills/xcode-godmode/scripts/safety_samples.py",
+  "bundled-skills/skills/xcode-godmode/scripts/seed_library.py",
+  "bundled-skills/skills/xcode-godmode/scripts/seed_library_b.py",
+  "bundled-skills/skills/xcode-godmode/scripts/seed_library_c.py",
+  "bundled-skills/skills/xcode-godmode/scripts/seed_library_cli.py",
+  "bundled-skills/skills/xcode-godmode/scripts/seed_template.py",
+  "bundled-skills/skills/xcode-godmode/scripts/auto_jailbreak.py",
+  // 一次性运行器：各跑一种测量，import 时无副作用，缺了只是少一种跑法。
+  "bundled-skills/skills/xcode-godmode/scripts/csam_focus_run.py",
+  "bundled-skills/skills/xcode-godmode/scripts/csam_combo_run.py",
+  "bundled-skills/skills/xcode-godmode/scripts/csam_continuation_run.py",
+  "bundled-skills/skills/xcode-godmode/scripts/csam_quick_check.py",
+  "bundled-skills/skills/xcode-godmode/scripts/csam_break_verify.py",
+  // 离线回归：不需要 API key，改完打分器必须先跑这两个再花调用钱。
+  "bundled-skills/skills/xcode-godmode/scripts/test_csam_eval.py",
+  "bundled-skills/skills/xcode-godmode/scripts/test_safety_scoring.py",
+  // 测量文档：打分器规则、样本与种子的纯文本版，报告里引 id 时由它们兜底。
+  "bundled-skills/skills/xcode-godmode/references/safety-scorer-rules.md",
+  "bundled-skills/skills/xcode-godmode/references/jailbreak-samples.md",
+  "bundled-skills/skills/xcode-godmode/references/context-attack-seeds.md",
+  // fork 自带的 manifest：XCode 不读它，随包只为和 fork 逐文件对齐。
+  "bundled-skills/skills/xcode-godmode/skill.yaml",
   ...REMOTE_AGENT_OFFICIAL_PLUGIN_PACKAGE_NAMES.map(
     (packageName) => `${packageName}/.zcode-plugin/plugin.json`,
   ),

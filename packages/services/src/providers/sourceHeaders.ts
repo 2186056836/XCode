@@ -6,7 +6,7 @@ import {
   normalizeXCodeSourceHeaderValue,
   XCODE_ENV,
   XCODE_SOURCE_HEADERS,
-  XCODE_VERSION,
+  getPlatformAppVersion,
 } from "@zcode/shared";
 import { getAppConfigDir } from "../paths.js";
 
@@ -79,7 +79,11 @@ export function buildXCodeSourceHeaders(
 ): Record<string, string> {
   const platform = options.platform ?? process.platform;
   const arch = options.arch ?? process.arch;
-  const appVersion = normalizePrintableHeaderValue(options.appVersion ?? XCODE_VERSION);
+  // 平台接口按官方版本判定下发内容（营销投放/领取见 shared platformAppVersion 注释）；
+  // 显式传 appVersion 时以调用方为准（例如上报产物版本）。
+  const appVersion = normalizePrintableHeaderValue(
+    options.appVersion ?? getPlatformAppVersion(),
+  );
   const releaseChannel = normalizePrintableHeaderValue(options.releaseChannel ?? XCODE_ENV);
   const clientLanguage =
     normalizePrintableHeaderValue(options.clientLanguage) ?? resolveClientLanguage();

@@ -5,6 +5,7 @@
 // 复用键加 endpoint 维度——remote shard（web/手机远控/SSH workspace）的 sessions-index
 // 走各自 endpoint 的 agentService proxy，同 workspaceKey 不同 endpoint 不能共用 store。
 import type { IXCodeAgentService } from "@zcode/services";
+import type { SessionSummary } from "@zcode/shared/zcode-protocol-v4";
 import { logger } from "@/logger.js";
 import { remoteAgentServiceGeneration } from "@/lib/remoteAgentServiceGeneration.js";
 import { findRemoteWorkspaceSessionIdForAgentService } from "@/store/remoteWorkspaceSessionStore.js";
@@ -25,14 +26,30 @@ export type SessionsIndexAgentService = Pick<
 
 interface RegistryEntry {
   key: string;
+  workspaceKey: string;
+  workspacePath: string;
+  workspaceIdentity?: string;
+  endpointKey: string;
   agentService: SessionsIndexAgentService;
   agentServiceGeneration: number;
   store: SessionsIndexStore;
   refCount: number;
+  /** 注册表是应用级（桌宠等跨 pane 消费者），需要把每一条 store 变化统一广播出去。 */
+  unsubscribeStore: (() => void) | null;
 }
 
 const registry = new Map<string, RegistryEntry>();
 const entriesByStore = new WeakMap<SessionsIndexStore, RegistryEntry>();
+/**
+ * 应用级订阅者（非 React 消费者，如桌宠状态聚合）。
+ * 注册表成员变化和任何一条 store 的帧更新都会触发一次。
+ */
+const registryListeners = new Set<() => void>();
+
+function notifyRegistryListeners(): void {
+  // Set 迭代器对「回调内取消订阅」是安全的；不复制数组，避免每次帧更新多一次分配。
+  for (const listener of registryListeners) listener();
+}
 /** 已上报过的 endpoint 不一致 scope；同一 scope 反复 acquire（重渲染/多消费者）只落一条日志。 */
 const reportedScopeEndpointMismatches = new Set<string>();
 
@@ -112,6 +129,7 @@ export function acquireSessionsIndex(
   const existing = registry.get(entryKey);
   if (existing?.agentService === agentService) {
     existing.refCount += 1;
+    notifyRegistryListeners();
     return existing.store;
   }
   if (
@@ -133,6 +151,7 @@ export function acquireSessionsIndex(
         logger.warn("[v4-sessions-index] remote transport replacement failed", error);
       });
     }
+    notifyRegistryListeners();
     return existing.store;
   }
   if (existing) {
@@ -140,6 +159,7 @@ export function acquireSessionsIndex(
     // 后续 cleanup 仍按 store 身份精确 release，不能误减新条目的 refCount。
     registry.delete(entryKey);
     if (existing.refCount <= 0) {
+      existing.unsubscribeStore?.();
       existing.store.close();
       entriesByStore.delete(existing.store);
     }
@@ -151,13 +171,19 @@ export function acquireSessionsIndex(
   void store.connect(transport, { forceSnapshot: true });
   const entry: RegistryEntry = {
     key: entryKey,
+    workspaceKey: scope.workspaceKey,
+    workspacePath: scope.workspacePath,
+    ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
+    endpointKey: scope.endpointKey ?? LOCAL_SESSIONS_INDEX_ENDPOINT,
     agentService,
     agentServiceGeneration: incomingServiceGeneration,
     store,
     refCount: 1,
+    unsubscribeStore: store.subscribe(notifyRegistryListeners),
   };
   registry.set(entryKey, entry);
   entriesByStore.set(store, entry);
+  notifyRegistryListeners();
   return store;
 }
 
@@ -171,13 +197,49 @@ export function releaseSessionsIndex(
   if (!entry || entry.key !== entryKey) return;
   entry.refCount -= 1;
   if (entry.refCount <= 0) {
+    entry.unsubscribeStore?.();
     entry.store.close();
     entriesByStore.delete(entry.store);
     if (registry.get(entryKey) === entry) registry.delete(entryKey);
+    notifyRegistryListeners();
   }
 }
 
 /** 仅测试/诊断用：当前注册的 endpoint+workspaceKey 条目数。 */
 export function sessionsIndexRegistrySize(): number {
   return registry.size;
+}
+
+export interface SessionsIndexRegistryEntrySnapshot {
+  key: string;
+  workspaceKey: string;
+  workspacePath: string;
+  workspaceIdentity?: string;
+  endpointKey: string;
+  status: ReturnType<SessionsIndexStore["getStatus"]>;
+  sessions: SessionSummary[];
+}
+
+/**
+ * 应用级快照：把当前所有已注册 sessions-index store 的会话摘要拍平成数组。
+ * 与 React 侧栏无关——侧栏没打开、pane 未挂载时它仍然反映 CLI 推送的实时 phase。
+ */
+export function readSessionsIndexRegistry(): SessionsIndexRegistryEntrySnapshot[] {
+  return [...registry.values()].map((entry) => ({
+    key: entry.key,
+    workspaceKey: entry.workspaceKey,
+    workspacePath: entry.workspacePath,
+    ...(entry.workspaceIdentity ? { workspaceIdentity: entry.workspaceIdentity } : {}),
+    endpointKey: entry.endpointKey,
+    status: entry.store.getStatus(),
+    sessions: [...entry.store.getState().sessions.values()],
+  }));
+}
+
+/** 订阅注册表成员变化 + 任一 store 帧变化；返回取消订阅。 */
+export function subscribeSessionsIndexRegistry(listener: () => void): () => void {
+  registryListeners.add(listener);
+  return () => {
+    registryListeners.delete(listener);
+  };
 }

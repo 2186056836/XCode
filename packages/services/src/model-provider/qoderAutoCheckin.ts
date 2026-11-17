@@ -1,4 +1,5 @@
 import { createServiceLogger } from "../logger/serviceLogger.js";
+import { recordAutoActivity } from "../marketing-touch/autoClaimLog.js";
 import { listQoderAccounts } from "./qoderAuth.js";
 import { qoderCheckinAccount, qoderCheckinStats, type QoderCheckinRegion } from "./qoderCheckin.js";
 
@@ -172,6 +173,27 @@ export async function updateQoderAutoCheckinSettings(
   return next;
 }
 
+export async function updateQoderAutoCheckinSettingsBatch(
+  entries: ReadonlyArray<{ region: string; accountId: string }>,
+  update: { enabled?: unknown; time?: unknown },
+): Promise<{ accountRef: string; ok: boolean; error?: string }[]> {
+  const results: { accountRef: string; ok: boolean; error?: string }[] = [];
+  for (const entry of entries) {
+    const accountRef = `${entry.region}:${entry.accountId}`;
+    try {
+      await updateQoderAutoCheckinSettings(entry.region as Parameters<typeof updateQoderAutoCheckinSettings>[0], entry.accountId, update);
+      results.push({ accountRef, ok: true });
+    } catch (error) {
+      results.push({
+        accountRef,
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  return results;
+}
+
 // ---------------------------------------------------------------------------
 // 调度器
 // ---------------------------------------------------------------------------
@@ -266,6 +288,13 @@ export const runQoderAutoCheckinTick = async (now: Date = new Date()): Promise<s
         result.status === "claimed" ||
         result.status === "already_claimed" ||
         result.status === "no_campaign";
+      const activityAccountRef = `qoder:${target.region}:${target.accountId}`;
+      const activityStatus =
+        result.status === "claimed"
+          ? "claimed"
+          : result.status === "already_claimed"
+            ? "already"
+            : "no-campaign";
       if (!succeeded) {
         logger().warn(undefined, "Qoder 自动签到未成功", {
           region: target.region,
@@ -273,8 +302,19 @@ export const runQoderAutoCheckinTick = async (now: Date = new Date()): Promise<s
           status: result.status,
           message: result.message,
         });
+        await recordAutoActivity({
+          kind: "auto-checkin",
+          accountRef: activityAccountRef,
+          status: "failed",
+          message: result.message,
+        });
         continue;
       }
+      await recordAutoActivity({
+        kind: "auto-checkin",
+        accountRef: activityAccountRef,
+        status: activityStatus,
+      });
       checkedIn.push(`${target.region}:${target.accountId}`);
     } catch (error) {
       logger().warn(undefined, "Qoder 自动签到失败", {

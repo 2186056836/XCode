@@ -20,7 +20,9 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import {
   ACCOUNT_ROTATION_FAILOVER_STATUS,
+  ACCOUNT_ROTATION_FAILOVER_QUOTA_PROVIDER_CODES,
   resolveModelProviderFamilyIdByProviderId,
+  type AccountRotationFailoverProviderCode,
   type AccountRotationFailoverStatus,
   type ModelProviderFamilyId,
 } from "@zcode/shared";
@@ -54,8 +56,17 @@ export interface AccountRotationSettings {
    * 打开 failover 后，哪些状态码才换号。默认只有 429（限流），
    * 401/402/403 默认不换——那三类通常说明凭据/额度本身有问题，换号只是把
    * 同一个错误在别的账号上重演一遍，还会污染账号池的可用性判断。
+   *
+   * 仅对 HTTP 状态码型供应商（Qoder / CodeBuddy）生效；zai / bigmodel 账号族
+   * 上游把业务错误包在 HTTP 200 里，这条白名单对它们天然失明，见 failoverProviderCodes。
    */
   failoverStatusCodes: AccountRotationFailoverStatus[];
+  /**
+   * 打开 failover 后，哪些 provider 业务码才换号。zai / bigmodel 账号族专用：
+   * 上游业务错误（HTTP 200 + providerCode）里只有**额度耗尽 1005** 值得换号——
+   * 额度按账号隔离，别的号还有额度；其余错误（并发/鉴权/限流）换号只是重演，应走重试。
+   */
+  failoverProviderCodes: AccountRotationFailoverProviderCode[];
 }
 
 export const DEFAULT_ACCOUNT_ROTATION_SETTINGS: AccountRotationSettings = {
@@ -63,6 +74,7 @@ export const DEFAULT_ACCOUNT_ROTATION_SETTINGS: AccountRotationSettings = {
   stickyLimit: 3,
   failoverOnError: false,
   failoverStatusCodes: [429],
+  failoverProviderCodes: [],
 };
 
 const MIN_STICKY_LIMIT = 1;
@@ -87,8 +99,10 @@ export interface AccountRotationSelection {
   requestProfile: AccountRotationProfile;
   /** 是否因本次调用发生了账号切换（诊断/日志用）。 */
   rotated: boolean;
+  /** 选中候选是否为用户当前激活账号；失败换号重选到非激活账号时，调用方据此跟随切换登录态。 */
+  active: boolean;
   /** 失败换号策略，随选号结果下发给 adapter；adapter 据此决定要不要重试。 */
-  failover: { enabled: boolean; statusCodes: number[] };
+  failover: { enabled: boolean; statusCodes: number[]; providerCodes: string[] };
 }
 
 export interface AccountRotationCandidateSource {
@@ -215,8 +229,11 @@ function rotationKey(providerId: string): string {
 }
 
 /** 账号级失败后对该账号+模型的冷却；429 短、鉴权/额度类长。 */
-function lockTtlMs(statusCode: number | undefined): number | undefined {
-  switch (statusCode) {
+function lockTtlMs(lastFailure: {
+  statusCode?: number;
+  providerErrorCode?: string;
+}): number | undefined {
+  switch (lastFailure.statusCode) {
     case 429:
       return 60_000;
     case 401:
@@ -224,7 +241,14 @@ function lockTtlMs(statusCode: number | undefined): number | undefined {
     case 403:
       return 10 * 60_000;
     default:
-      return undefined;
+      // 家族账号族的额度耗尽是 HTTP 200 + providerCode=1005，没有状态码可判；
+      // 额度恢复以套餐周期计，锁长一点避免轮询反复撞同一个空额度账号。
+      return lastFailure.providerErrorCode &&
+        ACCOUNT_ROTATION_FAILOVER_QUOTA_PROVIDER_CODES.includes(
+          lastFailure.providerErrorCode as AccountRotationFailoverProviderCode,
+        )
+        ? 10 * 60_000
+        : undefined;
   }
 }
 
@@ -239,6 +263,7 @@ export function normalizeAccountRotationSettings(
     stickyLimit?: unknown;
     failoverOnError?: unknown;
     failoverStatusCodes?: unknown;
+    failoverProviderCodes?: unknown;
   };
   const strategy =
     raw.strategy === "round-robin" || raw.strategy === "fill-first"
@@ -261,11 +286,26 @@ export function normalizeAccountRotationSettings(
   const failoverStatusCodes = parsedCodes.length
     ? [...new Set(parsedCodes)].sort((a, b) => a - b)
     : [...DEFAULT_ACCOUNT_ROTATION_SETTINGS.failoverStatusCodes];
+  // 业务码不回落：家族账号的「额度耗尽换号」是显式开关（UI 勾选时连 failoverOnError
+  // 一起写），空集合就是「未开启业务码换号」，不是半开状态。未知码直接丢弃，避免
+  // 上游改码表后旧设置里的死值参与匹配。
+  const failoverProviderCodes = Array.isArray(raw.failoverProviderCodes)
+    ? [
+        ...new Set(
+          raw.failoverProviderCodes.filter(
+            (code): code is AccountRotationFailoverProviderCode =>
+              typeof code === "string" &&
+              (ACCOUNT_ROTATION_FAILOVER_QUOTA_PROVIDER_CODES as readonly string[]).includes(code),
+          ),
+        ),
+      ]
+    : [...DEFAULT_ACCOUNT_ROTATION_SETTINGS.failoverProviderCodes];
   return {
     strategy,
     stickyLimit: Math.min(MAX_STICKY_LIMIT, Math.max(MIN_STICKY_LIMIT, parsedSticky)),
     failoverOnError,
     failoverStatusCodes,
+    failoverProviderCodes,
   };
 }
 
@@ -409,7 +449,10 @@ export function createAccountRotationService(
         // 先落失败证据（模型锁），再参与选择：同一请求的下一次 attempt 会跳过它。
         const failedId = input.lastFailure?.connectionId;
         if (failedId) {
-          const ttl = lockTtlMs(input.lastFailure?.statusCode);
+          const ttl = lockTtlMs({
+            statusCode: input.lastFailure?.statusCode,
+            providerErrorCode: input.lastFailure?.providerErrorCode,
+          });
           if (ttl !== undefined) {
             state.locks[input.modelId] = {
               ...(state.locks[input.modelId] ?? {}),
@@ -461,9 +504,18 @@ export function createAccountRotationService(
             : {}),
           requestProfile: resolved.requestProfile,
           rotated: picked.rotated,
+          active: picked.candidate.active === true,
           failover: {
             enabled: settings.failoverOnError,
-            statusCodes: settings.failoverStatusCodes,
+            // 家族账号（zai/bigmodel）的上游业务错误包在 HTTP 200 里，状态码白名单
+            // 对它们无意义；且政策是只有额度耗尽才换号、其余错误走重试——所以家族
+            // 画像不下发状态码触发，只下发业务码（额度 1005）。api-key 型供应商
+            // （Qoder / CodeBuddy）的错误是真实 HTTP 状态码，继续走状态码白名单。
+            statusCodes:
+              resolved.requestProfile === "qoder" || resolved.requestProfile === "codebuddy"
+                ? settings.failoverStatusCodes
+                : [],
+            providerCodes: settings.failoverProviderCodes,
           },
         };
       });

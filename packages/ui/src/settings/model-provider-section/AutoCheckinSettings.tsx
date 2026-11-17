@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.js";
 import { Switch } from "@/components/ui/switch.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
@@ -30,6 +31,9 @@ export function AutoCheckinSettings({
   savingAccountId,
   onToggle,
   onChangeTime,
+  headerExtra,
+  onBatchToggle,
+  batchRunning,
 }: {
   /** 例如 "settings.codebuddy" / "settings.qoder"，配套 key 为 `${prefix}.autoCheckinTitle` 等。 */
   intlKeyPrefix: string;
@@ -37,16 +41,42 @@ export function AutoCheckinSettings({
   savingAccountId: string | null;
   onToggle: (accountId: string, enabled: boolean) => void;
   onChangeTime: (accountId: string, time: string) => void;
+  /** summary 行右侧的附加控件（如自动领取面板的 zai/bigmodel Tab 切换）。 */
+  headerExtra?: ReactNode;
+  /** 批量开启/关闭当前面板全部账号；缺省不渲染批量按钮。 */
+  onBatchToggle?: (enabled: boolean) => void;
+  batchRunning?: boolean;
 }) {
   const { intl } = useXCodeIntl();
   if (rows.length === 0) return null;
 
   return (
     <details className="text-ui-sm text-foreground-subtle">
-      <summary className="cursor-pointer select-none">
-        {intl.formatMessage({ id: `${intlKeyPrefix}.autoCheckinTitle` })}
+      <summary className="flex cursor-pointer select-none items-center justify-between gap-2">
+        <span>{intl.formatMessage({ id: `${intlKeyPrefix}.autoCheckinTitle` })}</span>
+        {headerExtra}
       </summary>
       <p className="mt-2">{intl.formatMessage({ id: `${intlKeyPrefix}.autoCheckinHint` })}</p>
+      {onBatchToggle ? (
+        <div className="mt-2 flex items-center gap-2">
+          <button
+            type="button"
+            disabled={batchRunning || savingAccountId !== null || rows.length === 0}
+            className="rounded-md border border-border px-2 py-0.5 text-xs text-foreground transition-colors hover:border-foreground-subtle disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => onBatchToggle(true)}
+          >
+            {intl.formatMessage({ id: `${intlKeyPrefix}.batchEnable` })}
+          </button>
+          <button
+            type="button"
+            disabled={batchRunning || savingAccountId !== null || rows.length === 0}
+            className="rounded-md border border-border px-2 py-0.5 text-xs text-foreground transition-colors hover:border-foreground-subtle disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => onBatchToggle(false)}
+          >
+            {intl.formatMessage({ id: `${intlKeyPrefix}.batchDisable` })}
+          </button>
+        </div>
+      ) : null}
       <div className="mt-2 space-y-1.5">
         {rows.map((row) => (
           <div

@@ -60,7 +60,11 @@ function createDb(): DatabaseSync {
   return db;
 }
 
-function insertUsage(db: DatabaseSync, metadata: string | null): void {
+function insertUsage(
+  db: DatabaseSync,
+  metadata: string | null,
+  providerId = "other:codebuddy-cn",
+): void {
   db.prepare(
     `insert into model_usage
        (id, logical_request_id, session_id, query_source, provider_id, model_id, status, started_at, provider_metadata_json)
@@ -70,7 +74,7 @@ function insertUsage(db: DatabaseSync, metadata: string | null): void {
     "req-1",
     "sess-1",
     "main_turn",
-    "other:codebuddy-cn",
+    providerId,
     "hy3",
     "completed",
     1_000,
@@ -135,4 +139,28 @@ describe("使用详情读取账号与出口代理", () => {
     expect(row?.accountDisplayName).toBeUndefined();
     db.close();
   });
+  it("自定义 provider 不返回残留的 zai / bigmodel 账号", async () => {
+    const db = createDb();
+    // 上一轮账号族请求留下了 requestAuth，被粘性地记到了自定义 provider 行上。
+    insertUsage(
+      db,
+      JSON.stringify({
+        accountId: "zai:6d83a914-3b7e-4566-98b1-8c9115f9e336",
+        accountDisplayName: "旅行者0075",
+        proxyPoolId: "pool-aws2-syd",
+        proxyDisplayName: "AWS2 悉尼",
+      }),
+      "new-provider-custom",
+    );
+
+    const row = await readRow(db);
+
+    expect(row?.providerId).toBe("new-provider-custom");
+    expect(row?.accountId).toBeUndefined();
+    expect(row?.accountDisplayName).toBeUndefined();
+    // 出口代理是 provider 级事实，与账号归属无关，仍然保留。
+    expect(row?.proxyPoolId).toBe("pool-aws2-syd");
+    db.close();
+  });
+
 });

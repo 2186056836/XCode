@@ -23,6 +23,7 @@ import {
 } from "./runner-normalization.js";
 import { stringMetadata } from "./runner-record.js";
 import type {
+
   AiSdkGenerateTextOptions,
   AiSdkGenerateTextResult,
   AiSdkModelTextRequest,
@@ -30,6 +31,15 @@ import type {
   AiSdkStreamTextResult,
   ResolvedAiSdkModel,
 } from "./runner-runtime.js";
+
+function resolveDataBaseDir(): string {
+  return (
+    process.env.XCODE_DATA_BASE_DIR?.trim() ||
+    process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+    process.env.HOME?.trim() ||
+    homedir()
+  );
+}
 
 // 生产环境 rollout 目录最多保留的 model-io 会话文件数。超出删最旧。
 const MAX_ROLLOUT_FILES = 3;
@@ -587,7 +597,7 @@ function sanitizeFileSegment(value?: string): string {
 // storage profile 回滚删除了自定义 CLI 根模块，遗留 import 会让 adapters 无法构建。
 // 这里保持历史语义：开发态写 ~/.xcode/cli/debug，生产态写 ~/.xcode/cli/rollout。
 function getModelIOBaseDir(isDev: boolean): string {
-  return join(homedir(), ".xcode", "cli", isDev ? "debug" : "rollout");
+  return join(resolveDataBaseDir(), ".xcode", "cli", isDev ? "debug" : "rollout");
 }
 
 function stringifyDebugRecord(record: Record<string, unknown>): string {

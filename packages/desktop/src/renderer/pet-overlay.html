@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>XCode Pet</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      #stage {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+      /* 精灵图：background-size 按列/行百分比步进（逆向 Codex 的官方做法）。 */
+      .pet-sprite {
+        position: absolute;
+        background-repeat: no-repeat;
+        image-rendering: pixelated;
+        cursor: grab;
+      }
+      .pet-sprite:active {
+        cursor: grabbing;
+      }
+      /* 右下角 resize 手柄：hover 显现，热区放大到 48px。 */
+      /* 官方通知托盘：345x131 上限，位于宠物区左上（mascot 上方），
+         同一 _Material 通知材质；行内 hover 显示关闭按钮。 */
+      .pet-tray {
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        width: calc(100% - 8px);
+        max-height: 131px;
+        display: flex;
+        flex-direction: column;
+        border-radius: 14px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow:
+          inset 0 1px 1px rgba(255, 255, 255, 0.6),
+          0 3px 16px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(4px);
+        overflow: hidden;
+        z-index: 20;
+        font:
+          500 11px/1.4 system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        color: rgba(0, 0, 0, 0.82);
+      }
+      .pet-tray[hidden] {
+        display: none;
+      }
+      @media (prefers-color-scheme: dark) {
+        .pet-tray {
+          border-color: rgba(255, 255, 255, 0.12);
+          background: rgba(32, 32, 32, 0.9);
+          color: rgba(255, 255, 255, 0.92);
+          box-shadow:
+            inset 0 1px 1px rgba(255, 255, 255, 0.12),
+            0 3px 16px rgba(0, 0, 0, 0.35);
+        }
+      }
+      .pet-tray-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5px 8px;
+        font-weight: 600;
+        opacity: 0.7;
+        flex-shrink: 0;
+      }
+      .pet-tray-close {
+        border: 0;
+        background: transparent;
+        color: inherit;
+        opacity: 0.55;
+        cursor: pointer;
+        font-size: 13px;
+        line-height: 1;
+        padding: 0 2px;
+      }
+      .pet-tray-close:hover {
+        opacity: 1;
+      }
+      .pet-tray-list {
+        overflow-y: auto;
+        padding: 0 4px 4px;
+      }
+      .pet-tray-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 6px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .pet-tray-row:hover {
+        background: rgba(0, 0, 0, 0.06);
+      }
+      .pet-tray-row:focus-visible {
+        outline: 2px solid rgba(59, 130, 246, 0.7);
+        outline-offset: 1px;
+      }
+      @media (prefers-color-scheme: dark) {
+        .pet-tray-row:hover {
+          background: rgba(255, 255, 255, 0.08);
+        }
+      }
+      .pet-tray-row-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .pet-tray-row-text {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .pet-tray-row-kind {
+        flex-shrink: 0;
+        opacity: 0.55;
+        font-size: 10px;
+      }
+
+      /* 官方 _Material（notification 变体）：浅色毛玻璃卡片，圆角 18px。
+         来源 avatar-overlay-pill-dismiss-button.css：白底 #ffffffe6、60% 边框、
+         内高光 + 外投影、blur(4px)；electron-dark 下 #202020e6。 */
+      .pet-pill {
+        position: absolute;
+        left: 50%;
+        bottom: 2px;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        max-width: calc(100% - 10px);
+        padding: 5px 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        background: rgba(255, 255, 255, 0.9);
+        color: rgba(0, 0, 0, 0.82);
+        font:
+          500 11px/1.35 system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        box-shadow:
+          inset 0 1px 1px rgba(255, 255, 255, 0.6),
+          inset 0 -1px 2px rgba(255, 255, 255, 0.2),
+          0 3px 16px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(4px);
+        white-space: nowrap;
+        overflow: hidden;
+        z-index: 10;
+        pointer-events: none;
+      }
+      /* 跟随系统暗色（与官方 electron-dark 材质一致）。 */
+      @media (prefers-color-scheme: dark) {
+        .pet-pill {
+          border-color: rgba(255, 255, 255, 0.12);
+          background: rgba(32, 32, 32, 0.9);
+          color: rgba(255, 255, 255, 0.92);
+          box-shadow:
+            inset 0 1px 1px rgba(255, 255, 255, 0.12),
+            inset 0 -1px 2px rgba(255, 255, 255, 0.06),
+            0 3px 16px rgba(0, 0, 0, 0.35);
+        }
+      }
+      .pet-pill[hidden] {
+        display: none;
+      }
+      .pet-pill-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .pet-pill-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      /* 官方 pill 动作按钮：紧凑胶囊，primary 实心 / danger 红 / secondary 描边。 */
+      .pet-pill-actions {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+        margin-left: 2px;
+      }
+      .pet-pill-action {
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        background: rgba(255, 255, 255, 0.85);
+        color: inherit;
+        border-radius: 6px;
+        padding: 2px 7px;
+        font:
+          600 10px/1.3 system-ui,
+          sans-serif;
+        cursor: pointer;
+        pointer-events: auto;
+      }
+      .pet-pill-action[data-tone="primary"] {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #fff;
+      }
+      .pet-pill-action[data-tone="danger"] {
+        background: #dc2626;
+        border-color: #dc2626;
+        color: #fff;
+      }
+
+      .resize-handle {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-end;
+        cursor: nwse-resize;
+        /* 官方无过渡：悬停瞬时显隐。 */
+        opacity: 0;
+        color: #8f8f8f;
+      }
+      .resize-handle:hover {
+        color: #3d3d3d;
+      }
+      /* 官方 codex-avatar-overlay-force-resize-cursor：缩放期间整窗 nwse 光标。 */
+      body.codex-avatar-overlay-force-resize-cursor,
+      body.codex-avatar-overlay-force-resize-cursor .pet-sprite,
+      body.codex-avatar-overlay-force-resize-cursor .resize-handle {
+        cursor: nwse-resize !important;
+      }
+      /* 只在悬停宠物本体时浮现（官方 group-hover 语义），不再常驻。 */
+      .pet-sprite:hover .resize-handle {
+        opacity: 1;
+      }
+      /* 官方规格：20px 圆角、主题底色、灰描边、大阴影 + 毛玻璃、对角缩放箭头。 */
+      .resize-button {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        border: 1px solid rgba(120, 120, 120, 0.8);
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(4px);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <div class="pet-tray" id="tray" hidden role="list">
+        <div class="pet-tray-header">
+          <span id="trayTitle"></span>
+          <button type="button" class="pet-tray-close" id="trayClose" aria-label="收起">×</button>
+        </div>
+        <div class="pet-tray-list" id="trayList"></div>
+      </div>
+      <div class="pet-pill" id="pill" hidden>
+        <span class="pet-pill-dot" id="pillDot"></span>
+        <span class="pet-pill-text" id="pillText"></span>
+        <span class="pet-pill-actions" id="pillActions"></span>
+      </div>
+      <div class="pet-sprite" id="pet" aria-hidden="true">
+        <div class="resize-handle" id="resize" title="">
+          <div class="resize-button">
+            <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+              <path
+                d="M1.75 5V1.75H5M7 10.25h3.25V7M2 2l8 8"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./petOverlay.ts"></script>
+  </body>
+</html>

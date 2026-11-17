@@ -15,8 +15,11 @@ XCode is an AI coding workspace with desktop, browser, and terminal interfaces. 
 
 ## Updates
 
-- **2026-10-19**: Updated to XCode v3.16.2.
-- **2026-10-16**: Updated to XCode v3.16.1.
+- **2026-11-03**: Updated to XCode v3.17.2.
+- 2026-10-30: Updated to XCode v3.17.1.
+- 2026-10-19: Updated to XCode v3.16.2.
+- 2026-10-16: Updated to XCode v3.16.1.
+- 2026-10-16: Updated to XCode v3.15.4.
 - 2026-10-10: Updated to XCode v3.15.1.
 - 2026-9-23: Updated to XCode v3.14.3.
 
@@ -57,10 +60,10 @@ pnpm dev:desktop:test
 
 `pnpm dev:desktop` defaults to `pnpm dev:desktop:prod` and uses production service configuration. The startup script prepares local runtime assets, builds the desktop Agent, then starts Electron and source watchers.
 
-Set `ZCODE_DATA_BASE_DIR` to use a separate development data directory. For example, on macOS / Linux:
+Set `XCODE_DATA_BASE_DIR` to use a separate development data directory. For example, on macOS / Linux:
 
 ```bash
-ZCODE_DATA_BASE_DIR="$HOME/.zcode-dev-home" pnpm dev:desktop:test
+XCODE_DATA_BASE_DIR="$HOME/.zcode-dev-home" pnpm dev:desktop:test
 ```
 
 ### Web Development
@@ -71,7 +74,7 @@ Use development mode when editing Web or backend source code:
 pnpm dev:web
 
 # Set the backend workspace (macOS / Linux)
-ZCODE_SERVER_WORKSPACE=/path/to/project pnpm dev:web
+XCODE_SERVER_WORKSPACE=/path/to/project pnpm dev:web
 ```
 
 This starts both the Web development server (default: `http://localhost:5173`) and the backend (default: `http://localhost:3030`). Open the Web development server in your browser. `/ws` and general `/api` requests are proxied to the local backend; `/api/v1/oauth/token` is proxied separately to the configured product service.
@@ -99,7 +102,7 @@ zcode --web --help
 
 In Web mode, it uses the current directory as the workspace, listens on `127.0.0.1` without token authentication by default, selects an available port, and opens a browser. Use the URL printed in the terminal and press `Ctrl+C` to stop the service. For LAN access, use `--host 0.0.0.0`; listening on a non-local address generates an access token by default. Use the token-bearing URL printed in the terminal. Set a token with `--token`, or disable token authentication with `--no-token`.
 
-When starting the general Web service's HTTP entry directly, configure API/WebSocket authentication with `ZCODE_SERVER_AUTH_TOKEN`. When creating the service programmatically, use the `authToken` option.
+When starting the general Web service's HTTP entry directly, configure API/WebSocket authentication with `XCODE_SERVER_AUTH_TOKEN`. When creating the service programmatically, use the `authToken` option.
 
 See Packaging below for build instructions. `pnpm build:zcode` only creates the distribution; it does not replace an existing `zcode` on `PATH`. If the command still points to an older installation or another checkout, check it with `command -v zcode` on macOS / Linux or `where.exe zcode` on Windows.
 
@@ -132,10 +135,10 @@ The root [.env.example](.env.example) provides sample service URLs and build con
 
 | Setting                              | Purpose                                                                                 |
 | ------------------------------------ | --------------------------------------------------------------------------------------- |
-| `ZCODE_DATA_BASE_DIR`                | Base directory for application data, stored under its `.zcode/` subdirectory            |
-| `ZCODE_SERVER_WORKSPACE`             | Workspace path for the Web backend                                                      |
-| `ZCODE_BUILTIN_PROVIDER_CONFIG_FILE` | Path to a local provider configuration file; uses the built-in configuration when unset |
-| `ZCODE_DIST_BASE_URL`                | Download base URL used by the CLI distribution installer                                |
+| `XCODE_DATA_BASE_DIR`                | Base directory for application data, stored under its `.zcode/` subdirectory            |
+| `XCODE_SERVER_WORKSPACE`             | Workspace path for the Web backend                                                      |
+| `XCODE_BUILTIN_PROVIDER_CONFIG_FILE` | Path to a local provider configuration file; uses the built-in configuration when unset |
+| `XCODE_DIST_BASE_URL`                | Download base URL used by the CLI distribution installer                                |
 
 Runtime variables can be set explicitly in the environment of the startup command. See [config/README.md](config/README.md) for the default configuration shipped with the client.
 
@@ -160,12 +163,12 @@ The default target is macOS arm64, and the default output directory is `packages
 
 Run `pnpm build:zcode` to build the CLI/TUI, backend, and Web client, collect the TUI native libraries, workers, and runtime dependencies, then assemble the distribution. Running the distribution still requires Node.js; use the version specified in `mise.toml`.
 
-Before packaging, set the download base URL with `ZCODE_DIST_BASE_URL` in `.env`, `.env.local`, or the process environment, or pass it through `--base-url`. The URL below is a placeholder; replace it with your hosting URL when publishing:
+Before packaging, set the download base URL with `XCODE_DIST_BASE_URL` in `.env`, `.env.local`, or the process environment, or pass it through `--base-url`. The URL below is a placeholder; replace it with your hosting URL when publishing:
 
 ```bash
 pnpm build:zcode --base-url https://downloads.example.com/zcode/
 
-# When ZCODE_DIST_BASE_URL is already configured
+# When XCODE_DIST_BASE_URL is already configured
 pnpm build:zcode
 
 # Repackage existing Agent, backend, and Web build outputs
@@ -181,7 +184,7 @@ The version defaults to the root `package.json` version. Output is written to `d
 - `releases/<version>/sha256.txt`: checksum file.
 - `latest.json` and `install.sh`: version index and installer.
 
-Upload the entire directory to the configured download base URL. The installer downloads the runtime package from that URL, installs it to `~/.zcode/runtime` by default, and creates the `zcode` command in `~/.local/bin`. Override these directories with `ZCODE_DIST_HOME` and `ZCODE_DIST_BIN_DIR`, respectively.
+Upload the entire directory to the configured download base URL. The installer downloads the runtime package from that URL, installs it to `~/.zcode/runtime` by default, and creates the `zcode` command in `~/.local/bin`. Override these directories with `XCODE_DIST_HOME` and `XCODE_DIST_BIN_DIR`, respectively.
 
 Existing Lite users should switch to the new build command, environment variables, and installer. Installation does not remove old Lite directories or migrate/delete session data.
 

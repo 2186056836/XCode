@@ -20,13 +20,11 @@ import { recordModelUsageFact } from "./usage-observability.js";
 import { createRuntimeModel } from "./runtime-model.js";
 import { normalizeStreamError } from "../helpers/index.js";
 import { auxiliaryModelOptions } from "../../model/auxiliary-model-options.js";
-import { isOffReasoningLevel } from "@zcode/shared";
+import { INPUT_PREDICTION_QUERY_SOURCE } from "./input-prediction-sidecar.js";
 
 const WORKSPACE_GENERATE_TEXT_TIMEOUT_MS = 60_000;
 const CONNECTIVITY_PROBE_MAX_OUTPUT_TOKENS = 1;
 // 探测请求使用固定最小 prompt，避免多余推理开销；不可改写角色、文本或混入会话历史。
-// 对齐官方 XCode 探测词（官方原版即此串）：start-plan 网关只放行官方探测词与完整官方
-// 上下文，fork 品牌串（XCode）会被判 "unusual activity" 405。探测词不面向用户，保持官方串。
 const CONNECTIVITY_PROBE_SYSTEM = "You are XCode connectivity probe.";
 const CONNECTIVITY_PROBE_USER = "hi";
 const GIT_COMMIT_MESSAGE_QUERY_SOURCE = "git_commit_message";
@@ -60,17 +58,8 @@ export async function testModelConnectivity(
   const baseModel = createRuntimeModel(this, { selection: input.selection, scope: "workspace" });
   // 连接探测不需要生成正文；复用辅助生成的 5,000 预算会等待多余推理和输出。
   // 独立限制为 1 Token，仍使用最低公开档位，不改变其他辅助调用的预算。
-  //
-  // 档位不能无脑取 values[0]：强制推理的模型（如 stepfun/step-5-preview-free）
-  // 的档位列表里含关闭档，而上游对该类端点回 400
-  // "Reasoning is mandatory for this endpoint and cannot be disabled."，
-  // 于是「测试失败但聊天正常」。这里优先挑第一个非关闭档；若列表全是关闭档
-  // （纯非推理模型），退回 values[0] 保持原行为。
-  const reasoningValues = baseModel.optionSpecs.reasoningLevel.values;
-  const probeReasoningLevel =
-    reasoningValues.find((value) => !isOffReasoningLevel(value)) ?? reasoningValues[0]!;
   const model = baseModel.bind({
-    reasoningLevel: probeReasoningLevel,
+    reasoningLevel: baseModel.optionSpecs.reasoningLevel.values[0]!,
     maxOutputTokens: CONNECTIVITY_PROBE_MAX_OUTPUT_TOKENS,
   });
   const traceContext = createChildTraceContext(options?.traceContext ?? this.rootTraceContext, {
@@ -157,8 +146,9 @@ async function generateWorkspaceTextImpl(
   const querySource = input.querySource.trim() || "workspace_generate_text";
   const baseModel = createRuntimeModel(this, { selection: requestedSelection, scope: "workspace" });
   // 辅助请求需要的是最低公开档位，不是扫描 off/nothink 等名称后强制关闭。
+  // 输入预测按键触发、要求低延迟，同样走最低档位。
   const model =
-    querySource === GIT_COMMIT_MESSAGE_QUERY_SOURCE
+    querySource === GIT_COMMIT_MESSAGE_QUERY_SOURCE || querySource === INPUT_PREDICTION_QUERY_SOURCE
       ? baseModel.bind(auxiliaryModelOptions(baseModel))
       : baseModel;
   const baseTraceContext = options?.traceContext ?? this.rootTraceContext;

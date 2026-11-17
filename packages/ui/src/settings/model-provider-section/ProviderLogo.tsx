@@ -8,12 +8,7 @@ import alibabaModelStudioLogo from "@/assets/provider-icons/model-provider-aliba
 import anthropicLogo from "@/assets/provider-icons/model-provider-anthropic.png";
 import bigModelLogo from "@/assets/provider-icons/logo-bigmodel.svg";
 import deepSeekLogo from "@/assets/provider-icons/model-provider-deepseek.png";
-import kiloFreeLogo from "@/assets/provider-icons/model-provider-kilo-free.png";
-import opencodeFreeLogo from "@/assets/provider-icons/model-provider-opencode-free.png";
-import codebuddyLogo from "@/assets/provider-icons/model-provider-codebuddy.png";
-import qoderLogo from "@/assets/provider-icons/model-provider-qoder.png";
 import miniMaxLogo from "@/assets/provider-icons/model-provider-minimax.png";
-import moumingAiLogo from "@/assets/provider-icons/model-provider-mouming-ai.jpg";
 import moonshotKimiLogo from "@/assets/provider-icons/model-provider-moonshot-kimi.png";
 import openAiLogo from "@/assets/provider-icons/model-provider-openai.png";
 import xAiLogo from "@/assets/provider-icons/model-provider-xai.png";
@@ -24,6 +19,16 @@ import openrouterLight from "@/assets/provider-icons/model-provider-openrouter-l
 import openrouterDark from "@/assets/provider-icons/model-provider-openrouter-dark.svg";
 import opencodeLight from "@/assets/provider-icons/model-provider-opencode-light.svg";
 import opencodeDark from "@/assets/provider-icons/model-provider-opencode-dark.svg";
+import volcengineLogo from "@/assets/provider-icons/model-provider-volcengine.png";
+import stepfunLogo from "@/assets/provider-icons/model-provider-stepfun.png";
+import siliconflowLogo from "@/assets/provider-icons/model-provider-siliconflow.png";
+import tencentCloudLogo from "@/assets/provider-icons/model-provider-tencent-cloud.png";
+// XCode fork：免费供应商与其他登录型供应商图标。
+import kiloFreeLogo from "@/assets/provider-icons/model-provider-kilo-free.png";
+import opencodeFreeLogo from "@/assets/provider-icons/model-provider-opencode-free.png";
+import codebuddyLogo from "@/assets/provider-icons/model-provider-codebuddy.png";
+import qoderLogo from "@/assets/provider-icons/model-provider-qoder.png";
+import moumingAiLogo from "@/assets/provider-icons/model-provider-mouming-ai.jpg";
 
 type ProviderLogoRef = NonNullable<ProviderConfigObject["logo"]>;
 
@@ -48,7 +53,11 @@ const BUILTIN_PROVIDER_LOGO_ASSETS: Readonly<Record<string, BuiltinProviderLogoA
   xai: { light: xAiLogo },
   openrouter: { light: openrouterLight, dark: openrouterDark },
   opencode: { light: opencodeLight, dark: opencodeDark },
-  // 免费供应商「冇名AI」。
+  "tencent-cloud": { light: tencentCloudLogo },
+  volcengine: { light: volcengineLogo },
+  stepfun: { light: stepfunLogo },
+  siliconflow: { light: siliconflowLogo },
+  // XCode fork：免费供应商「冇名AI」。
   "mouming-ai": { light: moumingAiLogo },
   // 免费供应商「Kilo Free」（免鉴权网关）。
   "kilo-free": { light: kiloFreeLogo },

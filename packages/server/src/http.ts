@@ -1,7 +1,8 @@
 /* eslint-disable max-lines -- HTTP、WebSocket 与静态资源路由集中注册，保持同一鉴权顺序。 */
 import { randomUUID } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
-import { hostname, userInfo } from "node:os";
+import { hostname } from "node:os";
+import { resolveServerOsUser } from "@zcode/shared/node";
 import * as nodePath from "node:path";
 import { basename, extname, resolve } from "node:path";
 import { Hono, type Context } from "hono";
@@ -32,8 +33,8 @@ import {
   serverRemoteInfoOutputSchema,
   SERVER_REMOTE_PROTOCOL_VERSION,
   XCODE_RPC_HOST_CAPABILITY_HEADER,
+  XCODE_COMPATIBILITY_MANIFEST,
   XCODE_VERSION,
-  ZCODE_COMPATIBILITY_MANIFEST,
   type BotProvider,
   type ServerRemoteInfo,
   type ServerRemoteWorkspaceInfo,
@@ -188,14 +189,15 @@ function createServerInfo(options: HttpServerOptions): ServerRemoteInfo {
     protocolVersion: SERVER_REMOTE_PROTOCOL_VERSION,
     authRequired: options.authRequired ?? Boolean(readTrimmedEnv("XCODE_SERVER_TOKEN")),
     workspaces: resolveServerWorkspaces(options),
-    compatibility: ZCODE_COMPATIBILITY_MANIFEST,
+    compatibility: XCODE_COMPATIBILITY_MANIFEST,
     migration: { failedPathCount: options.migrationFailedPathCount ?? 0 },
-    identity: { osUser: userInfo().username, hostname: hostname() },
+    identity: { osUser: resolveServerOsUser(), hostname: hostname() },
     capabilities: {
       desktopContinuous: true,
       websocketRpc: true,
       ...(options.virtualProjects ? { virtualProjects: true } : {}),
       processResourceTelemetry: true,
+      remoteConversationTelemetry: true,
     },
   });
 }

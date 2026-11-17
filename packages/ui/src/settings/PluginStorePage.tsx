@@ -1,3 +1,4 @@
+import type { DraftPluginUiOpenRequest } from "@/plugin-ui/contract.js";
 import { withPluginTelemetry } from "@zcode/services";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { reportAppTelemetryEvent } from "@/lib/appTelemetry.js";
@@ -66,6 +67,8 @@ interface PluginStorePageProps {
   sessionId?: string | null;
   remoteSessionId?: string | null;
   embedded?: boolean;
+  paneId?: string;
+  onOpenDraftUi?: (request: DraftPluginUiOpenRequest) => void;
   onBack?: () => void;
 }
 
@@ -82,6 +85,8 @@ export function PluginStorePage({
   sessionId,
   remoteSessionId,
   embedded = false,
+  paneId,
+  onOpenDraftUi,
   onBack,
 }: PluginStorePageProps) {
   const platform = usePlatform();
@@ -90,6 +95,8 @@ export function PluginStorePage({
   const { pluginManagementService, skillsService } = useServices();
   const usePluginManagementStore = useScopedPluginManagementStore(pluginManagementService);
   const pluginUi = useMarketPluginUi({
+    paneId,
+    onOpenDraftUi,
     workspacePath,
     workspaceIdentity,
     sessionId,
@@ -176,7 +183,6 @@ export function PluginStorePage({
       official &&
       claimMarketplaceAutoRefresh(XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID, official.lastUpdated)
     ) {
-
       void updateMarketplace(
         XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
         withPluginTelemetry(pluginManagementService, {
@@ -492,16 +498,17 @@ export function PluginStorePage({
   const actions: PluginStoreActions = useMemo(
     () => ({
       onOpenDetail: openDetail,
-      // 打开 UI 只在会话右侧市场（embedded）提供；主导航市场整行进入详情。
-      onOpenUi: embedded
-        ? (item) =>
-            void pluginUi.open(
-              item.id,
-              item.info?.enabled
-                ? undefined
-                : () => setEnabled(item.id, true, operationService, "workspace"),
-            )
-        : undefined,
+      // 主导航交给根草稿，侧栏保留所属 pane 的绑定。
+      onOpenUi:
+        embedded || onOpenDraftUi
+          ? (item) =>
+              void pluginUi.open(
+                item.id,
+                item.info?.enabled
+                  ? undefined
+                  : () => setEnabled(item.id, true, operationService, "workspace"),
+              )
+          : undefined,
       onSetEnabled: (pluginId, enabled) => {
         void setEnabled(pluginId, enabled, operationService, "workspace");
       },
@@ -522,6 +529,7 @@ export function PluginStorePage({
       setEnabled,
       togglingPluginId,
       embedded,
+      onOpenDraftUi,
     ],
   );
 
@@ -554,7 +562,8 @@ export function PluginStorePage({
       ) : null}
       {view === "detail" ? (
         <Button variant="ghost" data-testid="plugin-store-detail-back" onClick={backToStore}>
-          {intl.formatMessage({ id: "settings.plugins.store.browseAll" })}
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          {intl.formatMessage({ id: "settings.plugins.store.back" })}
         </Button>
       ) : null}
       {view === "store" ? (
@@ -634,9 +643,9 @@ export function PluginStorePage({
             />
             <Button
               type="button"
-              variant="secondary"
+              variant="default"
               size="lg"
-              className="font-medium"
+              className="font-normal"
               data-testid="plugin-store-manage-open"
               onClick={() => setView("manage")}
             >
@@ -657,13 +666,20 @@ export function PluginStorePage({
 
       {view === "manage" ? (
         <div data-testid="plugin-store-manage" className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              data-testid="plugin-store-manage-back"
+              aria-label={intl.formatMessage({ id: "project.back" })}
+              onClick={backToStore}
+            >
+              <ArrowLeft className="size-4" aria-hidden="true" />
+            </Button>
             <h1 className="text-ui-xl font-semibold">
               {intl.formatMessage({ id: "settings.plugins.store.manageInstalled" })}
             </h1>
-            <Button variant="outline" data-testid="plugin-store-browse-all" onClick={backToStore}>
-              {intl.formatMessage({ id: "settings.plugins.store.browseAll" })}
-            </Button>
           </div>
           <PluginsSection
             mode="market"
@@ -681,7 +697,7 @@ export function PluginStorePage({
               if (intent === "add-marketplace") setAddSourceOpen(true);
             }}
             onOpenUi={
-              embedded
+              embedded || onOpenDraftUi
                 ? (item, target, enable) => {
                     if (
                       (target?.workspaceIdentity?.trim() || target?.workspacePath) !==

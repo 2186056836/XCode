@@ -20,6 +20,7 @@ export * from "./todo.js";
 export * from "./automation.js";
 export * from "./off-peak.js";
 export * from "./proxy-pool.js";
+export * from "./pet-control.js";
 export * from "./model-jailbreak.js";
 export * from "./provider-account.js";
 export * from "./target.js";

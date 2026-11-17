@@ -20,13 +20,15 @@ const outDir = join(packageRoot, "src", "godmode-templates");
 const TEMPLATE_ORDER = ["xiaomei-ctf", "xiaoyu-security", "xiaohong-creation", "meimei"];
 
 function parseFrontmatter(source, file) {
-  if (!source.startsWith("---\n")) {
+  // Windows 检出（core.autocrlf）会把 md 落成 CRLF；先归一化，否则 startsWith("\n") 判空。
+  const normalized = source.replace(/\r\n/g, "\n");
+  if (!normalized.startsWith("---\n")) {
     throw new Error(`${file}: 缺少 frontmatter`);
   }
-  const end = source.indexOf("\n---\n", 4);
+  const end = normalized.indexOf("\n---\n", 4);
   if (end < 0) throw new Error(`${file}: frontmatter 未闭合`);
-  const header = source.slice(4, end);
-  const body = source.slice(end + 5).replace(/^\n+/, "").replace(/\s+$/, "");
+  const header = normalized.slice(4, end);
+  const body = normalized.slice(end + 5).replace(/^\n+/, "").replace(/\s+$/, "");
   const fields = {};
   for (const line of header.split("\n")) {
     if (!line.trim()) continue;

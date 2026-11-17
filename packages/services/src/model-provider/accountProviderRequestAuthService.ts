@@ -19,7 +19,7 @@ export interface AccountRequestAuthMaterial {
   /** 账号轮询：本次选中的连接（账号）id。 */
   connectionId?: string;
   /** 账号轮询的失败换号策略；缺席 = 不换号（默认）。 */
-  accountFailover?: { enabled: boolean; statusCodes: number[] };
+  accountFailover?: { enabled: boolean; statusCodes: number[]; providerCodes?: string[] };
   /** 本次请求命中的账号显示名；「使用详情」按它区分多账号供应商。 */
   accountDisplayName?: string;
   /** 本次请求的出口代理池 id 与显示名；未绑定时缺席（跟随全局）。 */
@@ -48,7 +48,7 @@ export interface AccountRequestAuthInput {
    * `accountRef` 而不是完整 selection，所以策略必须显式透传；漏传会让 adapter
    * 永远收不到 `accountFailover`，UI 上的开关对账号族完全无效。
    */
-  accountFailover?: { enabled: boolean; statusCodes: number[] };
+  accountFailover?: { enabled: boolean; statusCodes: number[]; providerCodes?: string[] };
 }
 
 export interface AccountAccessIdentityInput {
@@ -81,6 +81,8 @@ interface AccountProviderRequestAuthServiceOptions {
     accessToken?: string | null;
     zcodeJwtToken?: string | null;
   } | null>;
+  /** 账号显示名（user_info.displayName）；「使用详情」按它区分具体账号。缺省不填显示名。 */
+  loadAccountDisplayName?(accountRef: string): Promise<string | null>;
   loadIndividualPlanMaterial(
     providerId: string,
     family: ProviderFamilyDomain,
@@ -112,6 +114,16 @@ class AccountProviderRequestAuthService implements AccountRequestAuthResolver {
     const access = await this.#resolveAccess(input.accountAccess, accountIdentity);
     if (!access) throw new AccountRequestCredentialUnavailableError(providerId);
 
+    // 「使用详情」要显示账号名而不是 accountRef；显示名读 per-account user_info，
+    // 与凭据同源，读取失败不阻断鉴权（缺席时 UI 回退显示 accountRef）。
+    const accountDisplayName = await (async () => {
+      try {
+        return (await this.#options.loadAccountDisplayName?.(accountRef ?? "")) || undefined;
+      } catch {
+        return undefined;
+      }
+    })();
+
     if (access.planKind === "start-plan") {
       const tokenSet = await this.#options.loadOAuthTokenSet(
         resolveOAuthProviderId(access.family),
@@ -120,6 +132,7 @@ class AccountProviderRequestAuthService implements AccountRequestAuthResolver {
       return {
         apiKey: requireApiKey(tokenSet?.zcodeJwtToken, providerId),
         ...(accountRef ? { connectionId: accountRef } : {}),
+        ...(accountDisplayName ? { accountDisplayName } : {}),
         ...(input.accountFailover ? { accountFailover: input.accountFailover } : {}),
       };
     }
@@ -153,6 +166,7 @@ class AccountProviderRequestAuthService implements AccountRequestAuthResolver {
       apiKeyId: material?.apiKeyId,
       ...(accountScope ? { accountScope } : {}),
       ...(accountRef ? { connectionId: accountRef } : {}),
+      ...(accountDisplayName ? { accountDisplayName } : {}),
       ...(input.accountFailover ? { accountFailover: input.accountFailover } : {}),
     };
   }

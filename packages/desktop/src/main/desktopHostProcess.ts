@@ -1,3 +1,4 @@
+import type { HostRemoteConversationTelemetryResponse } from "@zcode/shared";
 import { ingestToolExecResource } from "./desktopResourceTelemetry.js";
 import { ingestMcpResourceSamples } from "./processResourceMcpTelemetrySource.js";
 /* eslint-disable max-lines -- host process 统一处理 main↔host 生命周期、日志、XCode Agent，拆分前先保持跨进程消息收口。 */
@@ -11,6 +12,7 @@ import {
   type HostMcpTelemetryResponse,
   type HostSessionCreateTelemetryResponse,
   type HostPluginTelemetryResponse,
+  type ProviderProvisioningLaneStatus,
   type RemoteTarget,
   type TaskRealtimeHostDeliveryKind,
   type WorkspacePurpose,
@@ -52,6 +54,7 @@ import { buildHostE2ECoverageEnv } from "./e2eCoverage.js";
 import { createFeedbackLogArchiveFromExportLogs } from "./exportLogs.js";
 import { createHostLogRelay } from "./hostLogRelay.js";
 import { ingestCliResourceSample } from "./processResourceCliSource.js";
+import { requestMarketingCaptchaProof } from "./marketingCaptchaRelay.js";
 import { ingestHostSelfResourceSample } from "./processResourceSelfHeapSource.js";
 import { resolveHostResourceUsageResult } from "./resourceManagerHostSampling.js";
 import {
@@ -74,6 +77,7 @@ export interface WindowBootstrapOptions {
 }
 
 export interface HostInitMessage {
+  browserBackendIdentity?: { id: string; generation: number };
   type: typeof HostMessageTypes.InitLocal;
   hostId?: string;
   databaseStartupId?: string;
@@ -188,6 +192,7 @@ export function spawnHostProcess(
     onAgentProcessSpawned?: (event: HostAgentProcessSpawnedResponse) => void;
     onMcpTelemetry?: (event: HostMcpTelemetryResponse) => void;
     onPluginTelemetry?: (event: HostPluginTelemetryResponse) => void;
+    onRemoteConversationTelemetry?: (event: HostRemoteConversationTelemetryResponse) => void;
     onSessionCreateTelemetry?: (event: HostSessionCreateTelemetryResponse) => void;
     onCuaOperationStateChanged?: (
       source: ElectronUtilityProcess,
@@ -223,6 +228,7 @@ export function spawnHostProcess(
       requestId: string;
       browserId?: string;
       browserGeneration?: number;
+      controlScopeId?: string;
       sessionId: string;
       turnId?: string;
       workspaceKey?: string;
@@ -239,6 +245,14 @@ export function spawnHostProcess(
     registerPluginSandbox?: (
       input: PluginSandboxRegisterRequestPayload,
     ) => PluginSandboxHandle | Promise<PluginSandboxHandle>;
+    /** 数据同步页经本机 Host 读取 / 重试 Main 协调器的 Provisioning lane（按 sourceServerId）。 */
+    providerProvisioningLanes?: {
+      getStatus(
+        sourceServerId: string,
+        options: { waitForIdle: boolean },
+      ): Promise<ProviderProvisioningLaneStatus>;
+      retry(sourceServerId: string): Promise<ProviderProvisioningLaneStatus>;
+    };
   },
   options?: SpawnHostProcessOptions,
 ): ElectronUtilityProcess {
@@ -256,8 +270,8 @@ export function spawnHostProcess(
       ...buildHostE2ECoverageEnv(),
       XCODE_PROCESS_LABEL: label,
       // macOS-only: the Computer Use Helper launcher runs inside this forked host utilityProcess, whose
-      // code-signing identity is a nested Electron helper (NOT dev.xcode.app). Publish THIS (main
-      // Electron) process's pid — which IS dev.xcode.app — so helperLauncher passes it as
+      // code-signing identity is a nested Electron helper (NOT dev.zcode.app). Publish THIS (main
+      // Electron) process's pid — which IS dev.zcode.app — so helperLauncher passes it as
       // `--launcher-pid` and the Helper's signature/peer verification succeeds instead of
       // health-timing out. Env-name mirror of services' LAUNCHER_PID_ENV. Not set on
       // Windows/Linux (CUA is macOS-only; nothing reads it there) to keep the host env pristine.
@@ -365,6 +379,10 @@ export function spawnHostProcess(
       return;
     }
 
+    if (result.data.type === HostResponseTypes.RemoteConversationTelemetry) {
+      dependencies.onRemoteConversationTelemetry?.(result.data);
+      return;
+    }
     if (result.data.type === HostResponseTypes.SessionCreateTelemetry) {
       dependencies.onSessionCreateTelemetry?.(result.data);
       return;
@@ -434,6 +452,55 @@ export function spawnHostProcess(
       return;
     }
 
+    if (result.data.type === HostResponseTypes.ProviderProvisioningLaneRequest) {
+      const request = result.data;
+      const lanes = dependencies.providerProvisioningLanes;
+      const reply = (status: ProviderProvisioningLaneStatus) =>
+        child.postMessage({
+          type: HostMessageTypes.ProviderProvisioningLaneResult,
+          requestId: request.requestId,
+          status,
+        });
+      // 没有协调器（例如未接线的测试宿主）时回「无 lane」：Host 请求总有应答，不靠超时收尾。
+      if (!lanes) {
+        reply({ lane: "none" });
+        return;
+      }
+      void (
+        request.action === "retry"
+          ? lanes.retry(request.sourceServerId)
+          : lanes.getStatus(request.sourceServerId, { waitForIdle: request.action === "wait" })
+      ).then(reply, (error: unknown) => {
+        // 协调器的查询与重试不会抛出；万一抛出也要应答，避免 Renderer 一直停在「同步中」。
+        dependencies.logger.warn("[provider-provisioning] lane request failed", {
+          action: request.action,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        reply({ lane: "none" });
+      });
+      return;
+    }
+
+    if (result.data.type === HostResponseTypes.MarketingCaptchaRequest) {
+      const request = result.data;
+      // Host 没有 DOM，跑不了阿里云无感验证；转给本窗口的渲染进程出票后回包。
+      // relay 永远 resolve，拿不到票据时带回 error，Host 按「本轮跳过」处理。
+      void requestMarketingCaptchaProof(win, request).then((proof) => {
+        // 子进程可能已在等待期间退出：postMessage 会抛，这里不该让整个
+        // message 处理器崩掉（渲染进程那头的结果也没人等了）。
+        try {
+          child.postMessage({
+            type: HostMessageTypes.MarketingCaptchaResult,
+            requestId: request.requestId,
+            ...proof,
+          });
+        } catch {
+          // Host 已退出，票据自然作废。
+        }
+      });
+      return;
+    }
+
     if (result.data.type === HostResponseTypes.FeedbackLogArchiveRequest) {
       const request = result.data;
       void createFeedbackLogArchiveFromExportLogs(request.sourceDir)
@@ -475,6 +542,7 @@ export function spawnHostProcess(
           ? handler({
               win,
               requestId,
+              controlScopeId: result.data.controlScopeId,
               browserId: result.data.browserId,
               browserGeneration: result.data.browserGeneration,
               sessionId: result.data.sessionId,

@@ -9,6 +9,8 @@ interface CodingPlanSubscriptionServiceDependencies {
   apiClient: ApiClient;
   credentialService: Pick<ICredentialService, "load">;
   resolveOffPeakModelSelectionView?: () => Promise<ModelSelectionView>;
+  /** 账号级代理出口：领取/权益类平台 API 按账号绑定的代理池走（缺省回落全局 apiClient）。 */
+  accountApiClient?: (accountRef?: string) => ApiClient;
   /**
    * 用户在设置里选的动态工作流模式（launch.md「The user's choice」）。只有拥有设置权威的装配
    * （desktop 本地 Host、web/standalone server）注入；缺省时快照只含服务端的「提供」。
@@ -63,6 +65,8 @@ export function createCodingPlanSubscriptionService(
     claimManualPlan: (input) => bigmodelProvider.claimManualPlan(input),
     getManualClaimPlanPlans: (input) => bigmodelProvider.getManualClaimPlanPlans(input),
     getCaptchaConfig: () => bigmodelProvider.getCaptchaConfig(),
+    // 1103 新增：请求安全校验配置（与 getCaptchaConfig 同源的新名字）。
+    getRequestVerificationConfig: () => bigmodelProvider.getRequestVerificationConfig(),
     productInfo: (request) => bigmodelProvider.productInfo(request),
     preview: (request) => bigmodelProvider.preview(request),
     createSign: (request) => bigmodelProvider.createSign(request),

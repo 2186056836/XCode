@@ -24,9 +24,6 @@ import type {
   ModelMessageContent,
   ModelToolSideEffectScope,
   OffPeakPort,
-  ProxyPoolPort,
-  ModelJailbreakPort,
-  ProviderAccountPort,
   TopicResourcePort,
   PdfDocumentPort,
   PermissionBrokerReasonSource,
@@ -61,6 +58,7 @@ import type {
   WorkflowSubmitPort,
 } from "@zcode/contracts";
 import type { RuntimeTaskRegistry } from "../runtime-task/registry.js";
+import type { SystemReminderSource } from "../system-reminder/source.js";
 import type {
   PersistedReadFileStateMetadata,
   PersistedReadFileStateTool,
@@ -149,6 +147,8 @@ export interface ToolExecutionContext {
   telemetry?: ToolExecutionSpanWriter;
   /** 当前工具调用是否属于 automation 派发轮；写工具 handler 用它做最终权限校验。 */
   automationTurn?: boolean;
+  /** Host 准入注入的本轮 automationId；CronPauseSelf 唯一的暂停目标，不来自模型输入。 */
+  automationId?: string;
   /** 当前工具调用是否属于闲时任务派发轮；OffPeakCreate handler 用它做最终拒绝。 */
   offPeakTurn?: boolean;
   traceContext?: TraceContext;
@@ -171,6 +171,14 @@ export interface ToolExecutionContext {
   /** Core Server 对前台 child 的 Selection override。 */
   subagentModelOverride?: SubagentRunOptions["modelOverride"];
   skillPort?: SkillPort;
+  /** fork（godmode）：模型越狱设置端口。 */
+  modelJailbreakPort?: import("@zcode/contracts").ModelJailbreakPort;
+  /** fork（桌宠）：宠物控制端口。 */
+  petControlPort?: import("@zcode/contracts").PetControlPort;
+  /** fork（代理池）：代理池配置端口。 */
+  proxyPoolPort?: import("@zcode/contracts").ProxyPoolPort;
+  /** fork（账号管理）：提供商账号端口。 */
+  providerAccountPort?: import("@zcode/contracts").ProviderAccountPort;
   subagentPort?: SubagentPort;
   coordinatorResponsePort?: CoordinatorResponsePort;
   /** 工作流 actor 提交终态结果并等待引擎裁决的端口；仅在 workflow actor 会话注入。 */
@@ -180,11 +188,6 @@ export interface ToolExecutionContext {
   artifactStore?: ToolArtifactStorePort;
   automationPort?: AutomationPort;
   offPeakPort?: OffPeakPort;
-  /** 代理池配置端口；在场则为该会话注册 ProxyPool（设置页同款配置面）。 */
-  proxyPoolPort?: ProxyPoolPort;
-  /** 模型越狱配置端口；在场则为该会话注册 ModelJailbreak（设置页同款配置面）。 */
-  modelJailbreakPort?: ModelJailbreakPort;
-  providerAccountPort?: ProviderAccountPort;
   topicResourcePort?: TopicResourcePort;
   sessionStore?: SessionStorePort;
   sessionModePort?: SessionModePort;
@@ -235,11 +238,21 @@ export interface ReadFileStateEntry {
   isPartialView: boolean;
   readAt: Date;
   sourceTool?: PersistedReadFileStateTool;
+  /**
+   * 工具输入里 `file_path` 的原始写法，和 path 不同时才有。读权限规则按原始字符串匹配，
+   * compaction 补回用它和 path 各判定一次 deny（见 rewind-compact.md 的文件恢复）。
+   */
+  requestedPath?: string;
   revisionId?: string;
   mtimeMs?: number;
   sizeBytes?: number;
+  /** 会话开始由 context 写入（MEMORY.md 索引）；只在进程内使用，不进 tool part metadata。 */
+  seededFromContext?: true;
+  /** 冷恢复从 tool part 快照写入；只在进程内使用。compaction 选择补回文件时按读取时间排序。 */
+  restoredFromSession?: true;
 }
 
+/** 键是 `createReadFileStatePathKey(path)`：每个文件一条。 */
 export type ReadFileStateMap = Map<string, ReadFileStateEntry>;
 
 // -----------------------------------------------
@@ -375,6 +388,13 @@ export interface ToolEntry extends ToolContractDeclaration {
     context: ToolInputResolutionContext,
   ) => ToolInputAdjustmentResult;
   formatModelContent?: (output: unknown) => ModelMessageContent;
+  /**
+   * formatModelContent 已对该输出自行限长时返回 true（例如 Bash 失败结果按字符保留头尾）；
+   * serializer 对这类输出不再按 resultBudget 落盘或截断。
+   */
+  isModelContentBounded?: (output: unknown) => boolean;
+  /** 工具批次结算后紧跟在这批结果之后的提示，不进 tool_result（例如 Read 部分视图的截断说明）。 */
+  formatBatchNotice?: (output: unknown) => ToolBatchNotice | undefined;
   formatPersistedModelContent?: (
     input: ToolPersistedModelContentInput,
   ) => ModelMessageContent | undefined;
@@ -455,6 +475,11 @@ export interface ToolExecutionModelContext {
 // Execution Results
 // -----------------------------------------------
 
+export interface ToolBatchNotice {
+  source: SystemReminderSource;
+  content: string;
+}
+
 export interface ToolExecutionResult {
   toolCallId: string;
   toolName: string;
@@ -464,6 +489,11 @@ export interface ToolExecutionResult {
   followUpUserInput?: ToolExecutionFollowUpUserInput;
   display?: ToolResultDisplayPayload;
   modelContent?: ModelMessageContent;
+  /**
+   * 工具 Hook 给模型的附加上下文，每条已写成 `<Event>:<ToolName> hook additional context: …`。
+   * 不进 tool result；结算把每条写成这批 tool result 之后的 `tool_hook_context` 附件。
+   */
+  hookAdditionalContexts?: string[];
   readFileStateMetadata?: PersistedReadFileStateMetadata;
   serialization?: ToolResultSerialization;
   /** Executor 汇总后的内部性能事实；不进入模型可见 Tool Output。 */

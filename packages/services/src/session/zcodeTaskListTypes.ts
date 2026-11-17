@@ -10,8 +10,9 @@ export interface XCodeTaskListWorkspaceScope {
 }
 
 export interface XCodeTaskListQuery {
-  kind: XCodeTaskListKind;
-  workspaceScopes: XCodeTaskListWorkspaceScope[];
+  kind: XCodeTaskListKind | "all";
+  /** host 由存储 owner 确定全部范围，不接受 UI 已打开工作区作为历史目录。 */
+  workspaceScopes: XCodeTaskListWorkspaceScope[] | "host";
   sortBy: XCodeTaskListSortBy;
   search?: string;
   limit?: number;

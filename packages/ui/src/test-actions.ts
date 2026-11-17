@@ -1,6 +1,6 @@
 import type { TaskChatMessage as ChatMessage } from "@/lib/taskChatMessageTypes.js";
 import { shouldExposeE2EStoreBridge } from "@/lib/e2eStoreBridge.js";
-import type { IXCodeAgentService } from "@zcode/services";
+import type { IBotsService, IXCodeAgentService, IXCodeTaskService } from "@zcode/services";
 import type { TaskListE2EActions } from "@/lib/taskListE2EActions.js";
 import { useEffect } from "react";
 
@@ -40,6 +40,10 @@ export interface TestActions extends TaskListE2EActions {
   listPlugins: IXCodeAgentService["listPlugins"];
   /** E2E 通过真实 zcodeAgentService 查询 Workspace/Session Plugin catalog */
   getPluginReferenceCatalog: IXCodeAgentService["getPluginReferenceCatalog"];
+  /** E2E 注入一条 bots 入站消息走真实分发链路 */
+  sendBotMessage: IBotsService["handleInboundMessage"];
+  /** E2E 提交 bot group 输入（真实 task service 准入） */
+  submitBotGroupInput: NonNullable<IXCodeTaskService["submitBotGroupInput"]>;
 }
 
 declare global {

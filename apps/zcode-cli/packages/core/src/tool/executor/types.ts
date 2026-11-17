@@ -19,6 +19,7 @@ import type {
   Model,
   ModelCatalogPort,
   OffPeakPort,
+  PetControlPort,
   ProxyPoolPort,
   ModelJailbreakPort,
   ProviderAccountPort,
@@ -84,6 +85,8 @@ export interface ToolExecutorOptions {
   permissionService: PermissionService;
   permissionBroker?: PermissionBrokerPort;
   emitEvent: (event: SessionEvent) => Promise<void>;
+  /** 后台跟踪的真实完成链（含终态写入）属于 runtime，不能随工具返回丢失。 */
+  registerResidencyBlockingWork?: (work: Promise<void>) => void;
   enqueueBackgroundTaskNotification?: EnqueueBackgroundTaskNotification;
   shouldEnqueueBackgroundTaskNotification?: ShouldEnqueueBackgroundTaskNotification;
   sessionId: SessionId;
@@ -113,6 +116,7 @@ export interface ToolExecutorOptions {
   offPeakPort?: OffPeakPort;
   /** 代理池配置端口；缺席则 ProxyPool 报能力缺席。 */
   proxyPoolPort?: ProxyPoolPort;
+  petControlPort?: PetControlPort;
   /** 模型越狱配置端口；缺席则 ModelJailbreak 报能力缺席。 */
   modelJailbreakPort?: ModelJailbreakPort;
   providerAccountPort?: ProviderAccountPort;
@@ -158,6 +162,15 @@ export interface ToolExecutor {
     options?: ToolExecuteOptions,
   ): Promise<unknown>;
 
+  /**
+   * 不跑 hook、不弹确认、不发事件：按当前模式与权限规则逐个判定 Read 是否被拒绝（Read 未注册时全部算拒绝）。
+   * 和 Read 工具调用共用同一套静态判定，规则只加载一次；compaction 补回文件用它跳过读权限 deny 的文件。
+   */
+  areReadsDeniedWithoutPrompt(
+    filePaths: readonly string[],
+    traceContext: TraceContext,
+  ): Promise<boolean[]>;
+
   execute(toolCall: ExecutableToolCall, options?: ToolExecuteOptions): Promise<ToolExecutionResult>;
   executeBatch(
     toolCalls: ExecutableToolCall[],
@@ -186,6 +199,7 @@ export interface ToolExecutor {
 export interface ToolExecuteOptions {
   toolSearch?: ToolSearchExecutionContext;
   automationTurn?: boolean;
+  automationId?: string;
   offPeakTurn?: boolean;
   signal?: AbortSignal;
   traceContext?: TraceContext;
@@ -204,6 +218,8 @@ export interface ToolExecutorDeps {
   permissionService: PermissionService;
   permissionBroker: PermissionBrokerPort;
   emitEvent: (event: SessionEvent) => Promise<void>;
+  /** 后台跟踪的真实完成链（含终态写入）属于 runtime，不能随工具返回丢失。 */
+  registerResidencyBlockingWork?: (work: Promise<void>) => void;
   enqueueBackgroundTaskNotification?: EnqueueBackgroundTaskNotification;
   shouldEnqueueBackgroundTaskNotification?: ShouldEnqueueBackgroundTaskNotification;
   sessionId: SessionId;
@@ -233,6 +249,7 @@ export interface ToolExecutorDeps {
   offPeakPort?: OffPeakPort;
   /** 代理池配置端口；缺席则 ProxyPool 报能力缺席。 */
   proxyPoolPort?: ProxyPoolPort;
+  petControlPort?: PetControlPort;
   /** 模型越狱配置端口；缺席则 ModelJailbreak 报能力缺席。 */
   modelJailbreakPort?: ModelJailbreakPort;
   providerAccountPort?: ProviderAccountPort;
@@ -247,6 +264,8 @@ export interface ToolExecutorDeps {
   modelCatalogPort?: ModelCatalogPort;
   runtimeTaskRegistry?: RuntimeTaskRegistry;
   readFileState: ReadFileStateMap;
+  /** 文件读取快照的下一个序号；执行器持有计数器，只增不减。 */
+  nextReadFileStateSnapshotIndex: () => number;
   hasLoadedSkill?: (skillName: string) => boolean;
   subagentBackgroundBashMaxMs?: number;
   bashShellSelection?: ExecutionShellSelection;

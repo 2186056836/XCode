@@ -177,6 +177,13 @@ export interface OAuthAccountEntry {
   username: string;
   displayName: string;
   avatarUrl?: string;
+  /** 用户自定义备注；空/缺席显示 username。 */
+  remark?: string;
+  /**
+   * 服务端最近一次拒绝该账号凭据（401）的时刻。zcodejwt 无本地 exp 时
+   * 「已过期」的唯一事实来源；重新登录写新凭据时清除。
+   */
+  jwtInvalidatedAt?: number;
 }
 
 /** OAuth 凭据仓储：统一 provider 命名空间 */
@@ -339,6 +346,8 @@ export class OAuthCredentialRepo {
   }
 
   async saveTokenSetForAccount(accountRef: string, tokenSet: OAuthTokenSet): Promise<void> {
+    // 新凭据写入即视为登录态刷新：清除服务端 401 的失效标记（过期徽标数据源）。
+    await this.clearAccountJwtInvalidated(accountRef);
     await this.credentialService.save(accountAccessTokenKey(accountRef), tokenSet.accessToken);
     if (tokenSet.refreshToken) {
       await this.credentialService.save(accountRefreshTokenKey(accountRef), tokenSet.refreshToken);
@@ -395,6 +404,51 @@ export class OAuthCredentialRepo {
   async activateAccount(accountRef: string): Promise<void> {
     await this.saveActiveAccountRef(accountRef);
     await this.mirrorActiveAccount(accountRef);
+  }
+
+  /**
+   * 标记账号凭据被服务端拒绝（401）。zcodejwt 无本地 exp 时，
+   * 这是「已过期」徽标的唯一事实来源；重新登录写新凭据时清除。
+   * 账号不存在时静默忽略（列表可能与凭据短暂不同步）。
+   */
+  async markAccountJwtInvalidated(accountRef: string, invalidatedAt: number): Promise<void> {
+    const accounts = await this.listAccounts();
+    let changed = false;
+    const next = accounts.map((entry) => {
+      if (accountRefFromParts(entry.provider, entry.identity) !== accountRef) return entry;
+      changed = true;
+      return { ...entry, jwtInvalidatedAt: invalidatedAt };
+    });
+    if (changed) await this.saveAccounts(next);
+  }
+
+  /** 重新登录/换号成功后清除失效标记。 */
+  async clearAccountJwtInvalidated(accountRef: string): Promise<void> {
+    const accounts = await this.listAccounts();
+    if (!accounts.some((entry) => entry.jwtInvalidatedAt !== undefined)) return;
+    const next = accounts.map((entry) =>
+      accountRefFromParts(entry.provider, entry.identity) === accountRef
+        ? { ...entry, jwtInvalidatedAt: undefined }
+        : entry,
+    );
+    await this.saveAccounts(next);
+  }
+
+  /** 更新账号备注；空串清除备注。账号不存在时返回 null。 */
+  async updateAccountRemark(accountRef: string, remark: string): Promise<OAuthAccountEntry | null> {
+    const accounts = await this.listAccounts();
+    const target = accounts.find(
+      (entry) => accountRefFromParts(entry.provider, entry.identity) === accountRef,
+    );
+    if (!target) return null;
+    const trimmed = remark.trim();
+    const next = accounts.map((entry) =>
+      accountRefFromParts(entry.provider, entry.identity) === accountRef
+        ? { ...entry, ...(trimmed ? { remark: trimmed } : { remark: undefined }) }
+        : entry,
+    );
+    await this.saveAccounts(next);
+    return { ...target, ...(trimmed ? { remark: trimmed } : { remark: undefined }) };
   }
 
   private async safeLoad(key: string): Promise<string | null> {

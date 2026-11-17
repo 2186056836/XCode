@@ -7,6 +7,7 @@ import type {
   UserInfo,
 } from "@zcode/shared";
 import {
+  OAUTH_ACTIVE_ACCOUNT_CHANGED_BROADCAST_CHANNEL,
   resolveProviderFamilyDomainFromOAuthProvider,
   XCODE_JWT_INVALID_BROADCAST_CHANNEL,
 } from "@zcode/shared";
@@ -249,6 +250,44 @@ export function useRootOAuthEffects({
       disposable.dispose();
     };
   }, [intl, onReauthenticationRequired, requestAlert, services.broadcastService, setUser]);
+
+  useEffect(() => {
+    let disposed = false;
+    const disposable = services.broadcastService.onMessage((message) => {
+      if (message.channel !== OAUTH_ACTIVE_ACCOUNT_CHANGED_BROADCAST_CHANNEL || disposed) {
+        return;
+      }
+      // host 侧激活账号变更（失败换号的自动跟随切换）：刷新根登录态快照，
+      // 否则左下角头像/账号名停留在旧账号上（手动切号由 UI 自身更新，不走这里）。
+      void (async () => {
+        try {
+          const result = await services.oauthService.restoreCachedSessionState();
+          if (disposed) return;
+          await applyCachedOAuthSessionRestoreResult({
+            result,
+            setUser,
+            requestAlert,
+            onReauthenticationRequired: () => {
+              if (!disposed) onReauthenticationRequired();
+            },
+            shouldReauthenticate: async () =>
+              !disposed && (await services.oauthService.getActiveProvider()) === null,
+            copy: {
+              title: intl.formatMessage({ id: "login.expired.title" }),
+              description: intl.formatMessage({ id: "login.expired.description" }),
+              actionLabel: intl.formatMessage({ id: "login.expired.action" }),
+            },
+          });
+        } catch (error) {
+          logger.error("[Root] 激活账号变更后刷新登录态失败:", error);
+        }
+      })();
+    });
+    return () => {
+      disposed = true;
+      disposable.dispose();
+    };
+  }, [intl, onReauthenticationRequired, requestAlert, services.broadcastService, services.oauthService, setUser]);
 
   useEffect(() => {
     if (!oauthPollingActive) {

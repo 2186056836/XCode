@@ -1,19 +1,21 @@
+import type { AgentRuntimeInternal } from "../internal.js";
+import { sampleModel } from "./sample-model.js";
 import { grantPermissionFullAccess } from "../permission-full-access.js";
 import {
   getSessionShellSelection,
   initializeSessionShellEnvironmentIfNeeded,
   updateConfig,
-  getSystemPromptOverrides,
   setExecutionState,
 } from "./config.js";
 import { getMode, getPlanEnabled } from "./config.js";
-import { getSessionModelSelection, setSessionModelSelection } from "./config.js";
 import {
   getLastModelRequestAuth,
   getLastResolvedEgress,
+  getSystemPromptOverrides,
   setLastModelRequestAuth,
   setLastResolvedEgress,
 } from "./config.js";
+import { getSessionModelSelection, setSessionModelSelection } from "./config.js";
 import { getProjectId } from "./config.js";
 import { setWorkingDirectory } from "./config.js";
 import { ensureSessionPersistedForExternalActivity } from "./config.js";
@@ -31,6 +33,8 @@ import { getPendingPermissionRequests } from "./config.js";
 import { recordUserInputAutoResolutionUpdate } from "./interaction-auto-resolution.js";
 import { recordDynamicWorkflowRunProgress } from "./dynamic-workflow-run-progress.js";
 import { trackResumedDynamicWorkflowRun } from "./dynamic-workflow-run-track.js";
+import { activateDynamicWorkflowTools } from "./dynamic-workflow-activation.js";
+import { recordSessionFeature } from "../session-features/contract.js";
 import { startSavedWorkflowRun } from "./dynamic-workflow-run-start.js";
 import { amendWorkflowRunSettings } from "./dynamic-workflow-run-settings.js";
 import { getProjection } from "./config.js";
@@ -88,7 +92,6 @@ import { logMemorySkipped } from "./context.js";
 import { injectPluginReferenceReminderFromTurn } from "./plugin-reference.js";
 import { initializeMcp, refreshMcpToolsIfChanged } from "./mcp.js";
 import { startMcpStartup } from "./mcp.js";
-import { activateDynamicWorkflowTools } from "./dynamic-workflow-activation.js";
 import { discoverSkillsForContext } from "./context.js";
 import { createConfigOnlyContextSnapshot } from "./context.js";
 import { initializeMessageHistoryFromContext } from "./context.js";
@@ -144,8 +147,8 @@ import { executeRewindCommand } from "./rewind.js";
 import { formatRewindStatus } from "./rewind.js";
 import { rewindWorkspaceToCheckpoint } from "./rewind.js";
 import { finishUnavailableRewind } from "./rewind.js";
-import { rewindConversationToMessage } from "./rewind-message.js";
 import { editAssistantMessageText } from "./edit-assistant-message.js";
+import { rewindConversationToMessage } from "./rewind-message.js";
 import { rewindCascadeToMessage } from "./rewind-message.js";
 import { rewindToMessage } from "./rewind-message.js";
 import { rewindWorkspaceToMessage } from "./rewind-message.js";
@@ -195,7 +198,6 @@ import { recordPendingModelChange } from "./timeline-persistence.js";
 import { persistPendingModelChangeTimeline } from "./timeline-persistence.js";
 import { persistAssistantTimelinePartForSession } from "./timeline-persistence.js";
 import { generateWorkspaceText, testModelConnectivity } from "./workspace-generate-text.js";
-import { sampleModel } from "./sample-model.js";
 import { maybeStartGoalSummaryTitleGeneration } from "./goal-summary-title.js";
 import { maybeStartSessionTitleGenerationFromExternalInput } from "./session-title.js";
 import { setCustomSessionTitle } from "./session-title.js";
@@ -210,6 +212,10 @@ export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void 
   const proto = ctor.prototype as Record<string, unknown>;
   proto.updateConfig = updateConfig;
   proto.getSystemPromptOverrides = getSystemPromptOverrides;
+  proto.getLastModelRequestAuth = getLastModelRequestAuth;
+  proto.setLastModelRequestAuth = setLastModelRequestAuth;
+  proto.getLastResolvedEgress = getLastResolvedEgress;
+  proto.setLastResolvedEgress = setLastResolvedEgress;
   proto.setExecutionState = setExecutionState;
   proto.grantPermissionFullAccess = grantPermissionFullAccess;
   proto.initializeSessionShellEnvironmentIfNeeded = initializeSessionShellEnvironmentIfNeeded;
@@ -218,10 +224,6 @@ export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void 
   proto.getPlanEnabled = getPlanEnabled;
   proto.getSessionModelSelection = getSessionModelSelection;
   proto.setSessionModelSelection = setSessionModelSelection;
-  proto.getLastModelRequestAuth = getLastModelRequestAuth;
-  proto.setLastModelRequestAuth = setLastModelRequestAuth;
-  proto.getLastResolvedEgress = getLastResolvedEgress;
-  proto.setLastResolvedEgress = setLastResolvedEgress;
   proto.getProjectId = getProjectId;
   proto.setWorkingDirectory = setWorkingDirectory;
   proto.ensureSessionPersistedForExternalActivity = ensureSessionPersistedForExternalActivity;
@@ -245,6 +247,8 @@ export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void 
   proto.recordUserInputAutoResolutionUpdate = recordUserInputAutoResolutionUpdate;
   proto.recordDynamicWorkflowRunProgress = recordDynamicWorkflowRunProgress;
   proto.trackResumedDynamicWorkflowRun = trackResumedDynamicWorkflowRun;
+  proto.activateDynamicWorkflowTools = activateDynamicWorkflowTools;
+  proto.recordSessionFeature = recordSessionFeature;
   proto.startSavedWorkflowRun = startSavedWorkflowRun;
   proto.amendWorkflowRunSettings = amendWorkflowRunSettings;
   proto.getProjection = getProjection;
@@ -299,7 +303,6 @@ export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void 
   proto.initializeMcp = initializeMcp;
   proto.refreshMcpToolsIfChanged = refreshMcpToolsIfChanged;
   proto.startMcpStartup = startMcpStartup;
-  proto.activateDynamicWorkflowTools = activateDynamicWorkflowTools;
   proto.discoverSkillsForContext = discoverSkillsForContext;
   proto.createConfigOnlyContextSnapshot = createConfigOnlyContextSnapshot;
   proto.initializeMessageHistoryFromContext = initializeMessageHistoryFromContext;
@@ -345,7 +348,12 @@ export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void 
   proto.shouldContinueAfterStopHooks = shouldContinueAfterStopHooks;
   proto.executeTurn = executeTurn;
   proto.admitPrompt = admitPrompt;
-  proto.executeTurnCommand = executeTurnCommand;
+  proto.executeTurnCommand = function (
+    this: AgentRuntimeInternal,
+    ...args: Parameters<typeof executeTurnCommand>
+  ) {
+    return this.trackResidencyBlockingWork(executeTurnCommand.apply(this, args));
+  };
   proto.executeManualCompact = executeManualCompact;
   proto.autoCompactIfNeeded = autoCompactIfNeeded;
   proto.microcompactIfNeeded = microcompactIfNeeded;

@@ -75,6 +75,20 @@ export function resolveModelProviderFamilyIdByProviderId(
   return MODEL_PROVIDER_FAMILY_ID_BY_PROVIDER_ID.get(providerId as BuiltinModelProviderId) ?? null;
 }
 
+/**
+ * 账号归因只对「有账号概念」的 provider 成立。
+ *
+ * 自定义 API provider（new-provider / UUID / 任意 third-party）没有账号表；
+ * 若把上一次账号族请求残留的 requestAuth 记到它们头上，「使用详情」会错误显示
+ * zai / bigmodel 账号。判定覆盖：账号族 account:zai-... / account:bigmodel-... 与
+ * Qoder / CodeBuddy（api-key 型多账号，providerId 含 qoder 或 codebuddy）。
+ */
+export function isAccountScopedProviderId(providerId: string): boolean {
+  if (resolveModelProviderFamilyIdByProviderId(providerId)) return true;
+  const normalized = providerId.toLowerCase();
+  return normalized.includes("qoder") || normalized.includes("codebuddy");
+}
+
 export function resolveModelProviderFamilyIdByBaseURL(
   baseURL: string | null | undefined,
 ): ModelProviderFamilyId | null {

@@ -1,6 +1,6 @@
 {
   "name": "presentations",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "PPTX presentation production skills and a PowerPoint viewer panel, published as an official XCode plugin.",
   "description_i18n": {
     "en": "Presentation production skills for PPTX, with a visual acceptance reviewer agent. View decks in a side panel: reference slides in chat, and the agent can read, search, point at and capture them.",
@@ -16,11 +16,12 @@
     "presentations": {
       "type": "stdio",
       "command": "node",
-      "args": ["${ZCODE_PLUGIN_ROOT}/dist/server.mjs"],
-      "cwd": "${ZCODE_PROJECT_DIR}",
+      "args": ["${XCODE_PLUGIN_ROOT}/dist/server.mjs"],
+      "cwd": "${XCODE_PROJECT_DIR}",
       "env": {
-        "ZCODE_WORKSPACE_ROOT": "${ZCODE_PROJECT_DIR}"
-      }
+        "XCODE_WORKSPACE_ROOT": "${XCODE_PROJECT_DIR}"
+      },
+      "isolation": "workspace"
     }
   },
   "ui": {

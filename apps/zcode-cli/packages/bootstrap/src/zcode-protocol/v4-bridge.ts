@@ -1,6 +1,7 @@
+import { SessionLifecycleError } from "../session-lifecycle/index.js";
+import { closeSessionRuntime, getSessionLifecycle } from "./session-residency.js";
 import { isReadonlyAgentSessionKind } from "@zcode/shared";
 import { readBackgroundBashOutputFromOwner } from "./background-work-owner.js";
-import { persistSessionPromptOverrides } from "./session-prompt-overrides-snapshot.js";
 // v4 网关 binder。
 // 定位：ConversationV4Gateway 是域无关的通道运行时，本文件把它绑到协议服务器上下文：
 // - 帧出口 = context.notify（stdio NDJSON notification，与旧 session/event 同一条管道并存）；
@@ -18,13 +19,14 @@ import {
   type XCodeSessionContextUsage,
   type XCodeWorkspaceRef,
 } from "@zcode/shared";
-import { createExternalTurnFaultError } from "@zcode/core";
+import { createExternalTurnFaultError, normalizeGenUiInput } from "@zcode/core";
 import {
   V4_NOTIFICATIONS,
   conversationInputIntentSchema,
   type AttachmentRef,
   type CommandEnvelope,
   type ConversationInputIntent,
+  type ConversationSnapshot,
   type V4ConversationFileChangesResult,
   type V4ConversationFileRewindPreviewResult,
   type SessionSummary,
@@ -56,6 +58,10 @@ import { shouldAutoDrainV4QueueHead } from "../zcode-protocol-v4/queue-auto-drai
 import { persistAssistantFeedback } from "../zcode-protocol-v4/assistant-feedback-persistence.js";
 import { persistAssistantMessageEdit } from "../zcode-protocol-v4/assistant-message-edit-persistence.js";
 import {
+  persistHighspeedMetrics,
+  persistHighspeedTiming,
+} from "../zcode-protocol-v4/highspeed-metrics-persistence.js";
+import {
   TASK_LIST_SESSION_TYPES,
   isTaskListSessionType,
 } from "../zcode-protocol-v4/task-list-session-membership.js";
@@ -80,16 +86,18 @@ import type {
   ForkCommitBundle,
   GoalStatus,
   MessageId,
-  ModelSelection,
   MessageWithParts,
   SessionEvent,
+  SessionEventStorePort,
   SessionId,
+  SessionStorePort,
   StableForkGoalBoundaryMetadata,
   TraceId,
   TurnId,
   WorkspaceId,
 } from "@zcode/contracts";
 import { HYDRATION_TRACE_ID } from "../zcode-protocol-v4/projection-state.js";
+import { cloneModelSelection, derivedSessionModelSelection } from "./fork-model-selection.js";
 import { resolveWorkspaceRefFromId } from "./mapper.js";
 import { buildLiveWorkspaceConfigStateV4 } from "./v4-workspace-config.js";
 import {
@@ -98,7 +106,7 @@ import {
 } from "./workspace-model-runtime.js";
 import {
   afterStateMutation,
-  activateSessionForResume,
+  activateSessionRuntime,
   discardFailedSessionResume,
   createSessionRecordForV4,
   ensureSessionModelAvailableForNextTurn,
@@ -138,7 +146,6 @@ function sessionUsageSeedFromRuntimeContextUsage(
   };
 }
 
-// 1010 新增 guarded 到稳定 fork 模式集
 const STABLE_FORK_MODES = new Set<CollaborationMode>([
   "plan",
   "build",
@@ -152,37 +159,6 @@ function stableForkMode(value: string, fallback: CollaborationMode): Collaborati
   return STABLE_FORK_MODES.has(value as CollaborationMode)
     ? (value as CollaborationMode)
     : fallback;
-}
-
-function modelSelectionWithOptionFallback(
-  selection: ModelSelection | undefined,
-  fallback: ModelSelection | undefined,
-): ModelSelection | undefined {
-  if (!selection) return fallback && cloneModelSelection(fallback);
-  // 兼容旧 fork 消息可能缺少 reasoning；输出预算属于单次请求，不属于 Selection。
-  const reasoningLevel = selection.options?.reasoningLevel ?? fallback?.options?.reasoningLevel;
-  return {
-    providerId: selection.providerId,
-    modelId: selection.modelId,
-    ...(reasoningLevel !== undefined
-      ? {
-          options: {
-            ...(reasoningLevel !== undefined ? { reasoningLevel } : {}),
-          },
-        }
-      : {}),
-  };
-}
-
-function cloneModelSelection(
-  selection: ReturnType<XCodeProtocolSessionRecord["app"]["runtime"]["getSessionModelSelection"]>,
-): ModelSelection | undefined {
-  if (!selection) return undefined;
-  return {
-    providerId: selection.providerId,
-    modelId: selection.modelId,
-    ...(selection.options ? { options: { ...selection.options } } : {}),
-  };
 }
 
 async function readConversationFileChanges(
@@ -278,13 +254,18 @@ async function previewConversationFileRewind(
 }
 
 interface InputCommandForAdmission {
+  inputOrigin?: "desktop" | "mobile";
+  conversationQuotes?: import("@zcode/contracts").TurnInputIntentMetadata["conversationQuotes"];
+  botGroupSource?: ConversationInputIntent["botGroupSource"];
   kind: ConversationInputIntent["kind"];
   text: string;
   attachments: readonly AttachmentRef[];
+  genUiContext?: ConversationInputIntent["genUiContext"];
   sharedContextRefs?: ConversationInputIntent["sharedContextRefs"];
   requestedDelivery?: ConversationInputIntent["delivery"]["requested"];
   admittedDelivery?: ConversationInputIntent["delivery"]["admitted"];
   fallbackReasonCode?: string;
+  highspeed?: ConversationInputIntent["highspeed"];
   provenance?: ConversationInputIntent["provenance"];
 }
 
@@ -304,11 +285,9 @@ function admissionAttachmentRefs(
       attachment.ref
         ? [
             {
+              // 重试／编辑必须保留与原 row 相同的附件来源，不能重新枚举字段丢失文本材料标记。
+              ...attachment,
               ref: attachment.ref,
-              fileName: attachment.fileName,
-              mime: attachment.mime,
-              bytes: attachment.bytes,
-              ...(attachment.previewRef ? { previewRef: attachment.previewRef } : {}),
             },
           ]
         : [],
@@ -320,7 +299,7 @@ function admissionAttachmentRefs(
  * admission 只持久化真正会产生输入的命令。edit/retry 不能从 payload 猜 intent；
  * 必须复用 projection 的 canonical target，并把旧来源折叠进 provenance。
  */
-function resolveInputCommandForAdmission(
+export function resolveInputCommandForAdmission(
   envelope: CommandEnvelope,
   admissionSessionId: string,
   resolveRowTarget: ResolveAdmissionRowTarget,
@@ -358,12 +337,23 @@ function resolveInputCommandForAdmission(
       text: string;
       attachments?: AttachmentRef[];
       context_refs?: ConversationInputIntent["sharedContextRefs"];
+      genUiContext?: ConversationInputIntent["genUiContext"];
+      highspeedMeta?: ConversationInputIntent["highspeed"];
+      inputOrigin?: "desktop" | "mobile";
+      conversationQuotes?: import("@zcode/contracts").TurnInputIntentMetadata["conversationQuotes"];
+      botGroupSource?: ConversationInputIntent["botGroupSource"];
     };
     return {
       kind: envelope.type,
-      text: payload.text,
+      ...(envelope.type === "sendText"
+        ? normalizeGenUiInput(payload.text, payload.genUiContext)
+        : { text: payload.text }),
       attachments: payload.attachments ?? [],
       ...(payload.context_refs ? { sharedContextRefs: payload.context_refs } : {}),
+      ...(payload.highspeedMeta ? { highspeed: payload.highspeedMeta } : {}),
+      ...(payload.inputOrigin ? { inputOrigin: payload.inputOrigin } : {}),
+      ...(payload.conversationQuotes ? { conversationQuotes: payload.conversationQuotes } : {}),
+      ...(payload.botGroupSource ? { botGroupSource: payload.botGroupSource } : {}),
     };
   }
   if (envelope.type === "compact") {
@@ -374,6 +364,7 @@ function resolveInputCommandForAdmission(
   const payload = envelope.payload as {
     target: { rowId: number; entityId: string };
     newText?: string;
+    conversationQuotes?: ConversationInputIntent["conversationQuotes"];
     attachments?: AttachmentRef[];
   };
   const resolution = resolveRowTarget(envelope.sessionId, payload.target, envelope.type);
@@ -385,6 +376,14 @@ function resolveInputCommandForAdmission(
     canonical.intent.provenance?.sourceCommandId ?? canonical.intent.sourceCommandId;
   return {
     kind: canonical.intent.kind,
+    ...(canonical.intent.genUiContext !== undefined
+      ? { genUiContext: canonical.intent.genUiContext }
+      : {}),
+    ...(canonical.intent.inputOrigin ? { inputOrigin: canonical.intent.inputOrigin } : {}),
+    ...((payload.conversationQuotes ?? canonical.intent.conversationQuotes)
+      ? { conversationQuotes: payload.conversationQuotes ?? canonical.intent.conversationQuotes }
+      : {}),
+    ...(canonical.intent.botGroupSource ? { botGroupSource: canonical.intent.botGroupSource } : {}),
     text:
       envelope.type === "editUserQuery"
         ? (payload.newText ?? canonical.intent.text)
@@ -414,7 +413,7 @@ function resolveInputCommandForAdmission(
   };
 }
 
-function isConversationInputAdmissionCommand(type: CommandEnvelope["type"]): boolean {
+export function isConversationInputAdmissionCommand(type: CommandEnvelope["type"]): boolean {
   return (
     type === "sendText" ||
     type === "sendGoalCommand" ||
@@ -440,7 +439,11 @@ function buildForkInitialInput(
     queueItemId: admission.queueItemId,
     clientId: envelope.clientId || "cli",
     kind: input.kind,
+    ...(input.inputOrigin ? { inputOrigin: input.inputOrigin } : {}),
+    ...(input.conversationQuotes ? { conversationQuotes: input.conversationQuotes } : {}),
+    ...(input.botGroupSource ? { botGroupSource: input.botGroupSource } : {}),
     text: input.text,
+    ...(input.genUiContext !== undefined ? { genUiContext: input.genUiContext } : {}),
     attachments: input.attachments,
     delivery: {
       requested,
@@ -453,6 +456,7 @@ function buildForkInitialInput(
       : { state: "notRequested" },
     dispatch: { state: "admitted" },
     admittedAt: admission.admittedAt,
+    ...(input.highspeed ? { highspeed: input.highspeed } : {}),
     ...(input.provenance ? { provenance: input.provenance } : {}),
   });
   return {
@@ -554,7 +558,7 @@ async function recordForkStartFailureBestEffort(
  * Fork bundle commit 是命令 PONR；后续 catalog/model/resume/snapshot 仅恢复 runtime 可达性。
  * 该阶段失败必须留下可重试事实与 warning，但不能把 durable accepted child 反转成 failed。
  */
-async function registerCommittedForkBestEffort(
+export async function registerCommittedForkBestEffort(
   context: XCodeProtocolAgentServerContext,
   record: XCodeProtocolSessionRecord,
   fork: Parameters<typeof registerForkedSession>[2],
@@ -583,6 +587,86 @@ async function registerCommittedForkBestEffort(
       // logger 自身异常过去会越过 PONR 冒泡，让 gateway 错误 settle 为 failed。
     }
   }
+}
+
+/** turn 终态耗时持久化所需的窄化上下文；结构化类型保证与完整 server context 兼容。 */
+export interface HighspeedTurnTerminalPersistenceContext {
+  sessions: Map<
+    string,
+    { eventStore: SessionEventStorePort; traceContext: { traceId: string | number } }
+  >;
+  deps: { sessionStore?: SessionStorePort };
+  v4Gateway?: { ingest(sessionId: string, event: SessionEvent): unknown };
+  logger?: { warn(message: string, data?: Record<string, unknown>): void };
+}
+
+/**
+ * turn 终态钩子：把投影累计的真实耗时拆分落到 transcript 的 metadata.highspeed。
+ * Bug 根因（2026-08-31 审计 #1）：该钩子由 gateway 对所有 TurnComplete/TurnError 触发，
+ * 且投影对普通 turn 也写入 modelDurationMs/toolDurationMs，原“双 undefined 才返回”的
+ * 守卫永不生效——每个普通 turn 终态都会先做一次全量 sessionStore.messages() 扫描，
+ * 最后才因 metadata.highspeed 缺失返回，长会话热路径白白承担 O(N) I/O。
+ * userInput row 自带持久化的 highspeed 身份，进入扫描前先按它短路。
+ */
+export function persistHighspeedTimingOnTurnTerminal(
+  context: HighspeedTurnTerminalPersistenceContext,
+  sessionId: string,
+  event: SessionEvent,
+  snapshot: ConversationSnapshot,
+): void {
+  const record = context.sessions.get(sessionId);
+  const sessionStore = context.deps.sessionStore;
+  const payload = event.payload as { inputId?: unknown; duration?: unknown };
+  const inputId = typeof payload.inputId === "string" ? payload.inputId : undefined;
+  const header = snapshot.rows.window
+    .filter(
+      (row): row is Extract<(typeof snapshot.rows.window)[number], { kind: "turnHeader" }> =>
+        row.kind === "turnHeader" &&
+        (inputId === undefined
+          ? row.turnId === String(event.turnId)
+          : row.sourceCommandId === inputId),
+    )
+    .at(-1);
+  if (!record || !sessionStore || !header?.sourceCommandId) return;
+  const user = snapshot.rows.window.find(
+    (row) => row.kind === "userInput" && row.sourceCommandId === header.sourceCommandId,
+  );
+  if (!user || user.kind !== "userInput") return;
+  if (!user.highspeed) return;
+  if (header.modelDurationMs === undefined && header.toolDurationMs === undefined) {
+    return;
+  }
+  void persistHighspeedTiming({
+    sessionStore,
+    eventStore: record.eventStore,
+    sessionId,
+    sourceCommandId: header.sourceCommandId,
+    timing: {
+      modelDurationMs: header.modelDurationMs ?? 0,
+      toolDurationMs: header.toolDurationMs ?? 0,
+      otherDurationMs: header.otherDurationMs ?? 0,
+    },
+    ...(header.outputTokens !== undefined ? { outputTokens: header.outputTokens } : {}),
+    ...(header.activeMs !== undefined ? { durationMs: header.activeMs } : {}),
+    // fallbackAt 只存在于 live 投影：终态一并写入 transcript，HighspeedMetricsUpdated 与 cold
+    // hydration 才不会丢掉它（spec §5）。
+    ...(user.highspeed.fallbackAt !== undefined ? { fallbackAt: user.highspeed.fallbackAt } : {}),
+    ...(user.highspeed.fallbackReason !== undefined
+      ? { fallbackReason: user.highspeed.fallbackReason }
+      : {}),
+    traceId: String(record.traceContext.traceId),
+    onPersistedEvent: (persisted) => context.v4Gateway?.ingest(sessionId, persisted),
+    onLiveProjectionError: (error) =>
+      context.logger?.warn("v4 highspeed timing live projection failed", {
+        error: error instanceof Error ? error.message : String(error),
+        sessionId,
+      }),
+  }).catch((error) => {
+    context.logger?.warn("v4 highspeed timing persistence failed", {
+      error: error instanceof Error ? error.message : String(error),
+      sessionId,
+    });
+  });
 }
 
 export function createConversationV4Gateway(
@@ -716,13 +800,6 @@ export function createConversationV4Gateway(
       info: (message, fields) => context.logger?.info(message, fields),
       warn: (message, fields) => context.logger?.warn(message, fields),
     },
-    persistPromptOverrides: (record) =>
-      persistSessionPromptOverrides({
-        logger: context.logger,
-        record,
-        sessionId: record.app.sessionId,
-        sessionStore: context.deps.sessionStore,
-      }),
     // v4 原生能力（非过渡钩子）：sendQueuedNow 必须读取 v4 投影里的完整 intent。
     // 命令执行时 context.v4Gateway 已由 server 注入（createConversationV4Gateway
     // 返回值回填），这里惰性取用避免构造期自引用。
@@ -801,11 +878,15 @@ export function createConversationV4Gateway(
             ? "startNow"
             : requestedDelivery);
       const conversationInputIntent = conversationInputIntentSchema.parse({
+        ...(input.inputOrigin ? { inputOrigin: input.inputOrigin } : {}),
+        ...(input.conversationQuotes ? { conversationQuotes: input.conversationQuotes } : {}),
+        ...(input.botGroupSource ? { botGroupSource: input.botGroupSource } : {}),
         sourceCommandId: envelope.commandId,
         queueItemId: admission.queueItemId,
         clientId: envelope.clientId || "cli",
         kind,
         text: input.text ?? "",
+        ...(input.genUiContext !== undefined ? { genUiContext: input.genUiContext } : {}),
         attachments: attachmentRefs,
         ...(input.sharedContextRefs ? { sharedContextRefs: input.sharedContextRefs } : {}),
         delivery: {
@@ -821,6 +902,7 @@ export function createConversationV4Gateway(
             : { state: "notRequested" },
         dispatch: { state: "admitted" },
         admittedAt: admission.admittedAt,
+        ...(input.highspeed ? { highspeed: input.highspeed } : {}),
         ...(input.provenance ? { provenance: input.provenance } : {}),
       });
       await context.deps.sessionStore.saveSessionInput({
@@ -841,6 +923,9 @@ export function createConversationV4Gateway(
             admittedDelivery: conversationInputIntent.delivery.admitted,
             ...(fallbackReasonCode ? { fallbackReasonCode } : {}),
             attachmentRefs,
+            ...(conversationInputIntent.genUiContext !== undefined
+              ? { genUiContext: conversationInputIntent.genUiContext }
+              : {}),
             ...(conversationInputIntent.sharedContextRefs
               ? { sharedContextRefs: conversationInputIntent.sharedContextRefs }
               : {}),
@@ -1130,7 +1215,27 @@ export function createConversationV4Gateway(
           }),
       });
     },
-    // ── 过渡钩子──────────────────────────────
+    setHighspeedMetrics: async (sessionId, input) => {
+      const record = context.sessions.get(sessionId);
+      const sessionStore = context.deps.sessionStore;
+      if (!record || !sessionStore) throw new Error("proto.sessionNotFound");
+      await persistHighspeedMetrics({
+        sessionStore,
+        eventStore: record.eventStore,
+        sessionId,
+        messageId: input.messageId,
+        entityId: input.entityId,
+        metrics: input.metrics,
+        traceId: String(record.traceContext.traceId),
+        onPersistedEvent: (persisted) => context.v4Gateway?.ingest(sessionId, persisted),
+        onLiveProjectionError: (error) =>
+          context.logger?.warn("v4 highspeed metrics live projection failed", {
+            error: error instanceof Error ? error.message : String(error),
+            sessionId,
+          }),
+      });
+    },
+    // ── 过渡钩子（死期 = M5 波次 2）──────────────────────────────
     ensureModelReady: (record) =>
       ensureSessionModelAvailableForNextTurn(context, record as XCodeProtocolSessionRecord),
     // 切模型前确认目标 Provider 已存在于当前 Environment Registry。普通模型命令只提交
@@ -1158,16 +1263,8 @@ export function createConversationV4Gateway(
         // handler 已校验存在性；此处只兜并发竞态（重复删除幂等成功）。
         return;
       }
-      record.unsubscribe?.();
-      await record.app.close?.();
-      // v4 通道：会话关闭同时清 publisher / 订阅调度；重开会话走 snapshot 冷启动。
-      // disposeSession 必须在注册表删除之前调用——
-      // gateway 靠 getSessionWorkspaceId（读 context.sessions）定位 workspace 才能把
-      // session.removed 推给 sessions-index 订阅者；先 delete 再 dispose 时 workspaceId
-      // 恒为 null，删除会话后侧栏列表项永不消失（e2e conversation-session-v4-sidebar 抓出）。
-      context.v4Gateway?.disposeSession(sessionId, { deleted: true });
+      await closeSessionRuntime(context, sessionId, true);
       queuedTurnExecutions.delete(sessionId);
-      context.sessions.delete(sessionId);
     },
     // createSession 的执行面：record 建立/事件接线/catalog 同步/失败自清理全在旧
     // createSession op 内（半初始化 record 的回收顺序修过 bug，不重复实现）。
@@ -1179,7 +1276,11 @@ export function createConversationV4Gateway(
       mcpServers,
       offPeakToolEnabled,
       dynamicWorkflowEnabled,
+      dynamicWorkflowMode,
+      permissionScope,
     }) => {
+      if (permissionScope && !context.deps.sessionStore)
+        throw new Error("Group task permission scope requires persistence");
       // workspaceId 双形态（Workspace Identity 约束）：
       // - 本地工作区 = workspacePath（identity 缺省时的 fallback）；
       // - 远程 pane（跨 workspace 分屏）= 远程 identity
@@ -1193,7 +1294,8 @@ export function createConversationV4Gateway(
         sessionId,
         additionalDirectories,
         workspace: resolveWorkspaceRefFromId(workspaceId),
-        // 一律 deferred（draft 不进 sqlite）；提升时机归原生 prompt-turn。
+        // 群任务已经由首条真实需求触发，先落盘隔离授权，再开放任务与配置。
+        // 普通 Desktop draft 仍保持 deferred。
         persistence: "deferred",
         // MCP 是 runtime 创建期配置；v4 createSession 必须与 legacy
         // session/create 等价透传，否则创建的 session 永远不会启动这些工具。
@@ -1204,7 +1306,23 @@ export function createConversationV4Gateway(
         // v4 createSession 必须与 legacy session/create 等价透传，否则无界面创建的会话
         // 会绕过 Host 的灰度判定，只剩进程级缺省。
         ...(dynamicWorkflowEnabled === true ? { dynamicWorkflowEnabled: true } : {}),
+        ...(dynamicWorkflowEnabled === true && dynamicWorkflowMode !== undefined
+          ? { dynamicWorkflowMode }
+          : {}),
       });
+      if (permissionScope) {
+        const record = context.sessions.get(created.sessionId);
+        if (!record) throw new Error("Group task runtime is unavailable");
+        await record.app.runtime.ensureSessionPersistedForExternalActivity("", {
+          traceContext: record.traceContext,
+        });
+        await context.deps.sessionStore!.updateSession({
+          id: created.sessionId as SessionId,
+          permission: { version: 1, scope: "session", mode: "build" },
+        });
+        await record.app.runtime.setExecutionState({ mode: "build" }, record.traceContext);
+        record.persistence = "immediate";
+      }
       return { sessionId: created.sessionId };
     },
     createSelectionSideSession: async (sessionId, options) => {
@@ -1248,7 +1366,8 @@ export function createConversationV4Gateway(
       if (boundary?.info.role !== "assistant") {
         throw new Error("guard.forkTargetAmbiguous");
       }
-      const modelSelection = modelSelectionWithOptionFallback(
+      // 分叉继承分叉点的会话选型；加速轮消息记录的是单轮执行 Selection，必须跳过后退回父会话常驻选型。
+      const modelSelection = derivedSessionModelSelection(
         boundary.info.providerId && boundary.info.modelId
           ? {
               providerId: boundary.info.providerId,
@@ -1258,7 +1377,7 @@ export function createConversationV4Gateway(
                 : {}),
             }
           : undefined,
-        cloneModelSelection(record.app.runtime.getSessionModelSelection()),
+        record.app.runtime.getSessionModelSelection(),
       );
       const fork = await record.app.runtime.forkStableConversationAtMessage({
         modelSelection,
@@ -1296,9 +1415,9 @@ export function createConversationV4Gateway(
       if (targetMessage?.info.role !== "user") {
         throw new Error("guard.latestQueryEditOnly");
       }
-      const modelSelection = modelSelectionWithOptionFallback(
-        cloneModelSelection(targetMessage.info.modelSelection),
-        cloneModelSelection(record.app.runtime.getSessionModelSelection()),
+      const modelSelection = derivedSessionModelSelection(
+        targetMessage.info.modelSelection,
+        record.app.runtime.getSessionModelSelection(),
       );
       const events = await record.eventStore.getEvents(sessionId as SessionId);
       const targetStarted = events.find(
@@ -1507,7 +1626,9 @@ export function createConversationV4Gateway(
   };
   return new ConversationV4Gateway({
     cliVersion: context.deps.version,
-    sessionExists: (sessionId) => context.sessions.has(sessionId),
+    isSessionStopping: (sessionId) => context.sessionLifecycle?.isStopping(sessionId) ?? false,
+    sessionExists: (sessionId) =>
+      context.sessions.has(sessionId) && (context.sessionLifecycle?.isReady(sessionId) ?? true),
     reconcileSessions: async ({ workspaceId, sessionIds }) => {
       const store = context.deps.sessionStore;
       if (!store) throw new Error("Session store is unavailable");
@@ -1553,6 +1674,9 @@ export function createConversationV4Gateway(
           });
         });
     },
+    onHighspeedTurnTerminal: (sessionId, event, snapshot) => {
+      persistHighspeedTimingOnTurnTerminal(context, sessionId, event, snapshot);
+    },
     // Gateway 的单一 READY promise 负责并发与水位；binder 只恢复 runtime 并返回 M0/M1。
     retainSessionRuntime: async (sessionId) =>
       (await context.sessionResidentPool?.acquireOperation(sessionId)) ?? (() => undefined),
@@ -1569,8 +1693,35 @@ export function createConversationV4Gateway(
       additionalDirectories?: string[],
       persistedMessages?: MessageWithParts[],
     ) => {
-      const persisted = await context.deps.sessionStore?.getSession(sessionId as SessionId);
-      if (!persisted || persisted.time.deleted !== undefined) {
+      const existingRecord = context.sessions.get(sessionId);
+      let activated: Awaited<ReturnType<typeof activateSessionRuntime>> | undefined;
+      try {
+        // 必须先登记生命周期，再读取启动信息。否则 restart 会等待旧 opening，
+        // 迟到的旧读取又加入 restart，双方永久等待。
+        await getSessionLifecycle(context).initialize(
+          sessionId,
+          async () => {
+            const persisted = await context.deps.sessionStore?.getSession(sessionId as SessionId);
+            if (!persisted || persisted.time.deleted !== undefined) {
+              throw new SessionLifecycleError("sessionNotFound", `Session not found: ${sessionId}`);
+            }
+            activated = await activateSessionRuntime(
+              context,
+              {
+                sessionId,
+                // attachment 的 workspace 身份与附加目录仍由原恢复入口传递。
+                ...(workspace ? { workspace } : {}),
+                ...(additionalDirectories !== undefined ? { additionalDirectories } : {}),
+                ...(resumeThoughtLevel ? { thoughtLevel: resumeThoughtLevel } : {}),
+              },
+              { reusePersistedMessages: true, persistedMessages },
+            );
+          },
+          workspace,
+        );
+      } catch (error) {
+        if (!(error instanceof SessionLifecycleError) || error.code !== "sessionNotFound")
+          throw error;
         context.logger?.warn("XCode Protocol v4 cold resume has no persisted session", {
           activeSessionCount: context.sessions.size,
           event: "zcode_protocol.v4.resume_persisted_missing",
@@ -1579,27 +1730,13 @@ export function createConversationV4Gateway(
         });
         return { status: "notFound" };
       }
-      const existingRecord = context.sessions.get(sessionId);
-      const activated = await activateSessionForResume(
-        context,
-        {
-          sessionId,
-          // session.path 可能是规范化后的执行 cwd，不能覆盖当前 attachment
-          // 已知的 workspace 身份。旧 session 没有 attachment 上下文时仍走原有持久化回退。
-          ...(workspace ? { workspace } : {}),
-          ...(additionalDirectories !== undefined ? { additionalDirectories } : {}),
-          ...(resumeThoughtLevel ? { thoughtLevel: resumeThoughtLevel } : {}),
-        },
-        { reusePersistedMessages: true, persistedMessages },
-      );
+      const record = activated?.record ?? context.sessions.get(sessionId);
+      if (!record) throw new Error("Session runtime unavailable after initialization");
       return {
         status: "resumed",
-        persistedMessages: activated.persistedMessages,
+        persistedMessages: activated?.persistedMessages,
         ...(!existingRecord
-          ? {
-              disposeOnFailure: () =>
-                discardFailedSessionResume(context, sessionId, activated.record),
-            }
+          ? { disposeOnFailure: () => discardFailedSessionResume(context, sessionId, record) }
           : {}),
       };
     },

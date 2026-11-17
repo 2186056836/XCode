@@ -13,7 +13,12 @@ const clientConfigSchema = z
               .url()
               .refine((value) => {
                 const url = new URL(value);
-                return url.protocol === "https:" && !url.username && !url.password;
+                // 内网和测试部署也会提供 HTTP 配置地址；协议准入不按产品环境区分。
+                return (
+                  (url.protocol === "https:" || url.protocol === "http:") &&
+                  !url.username &&
+                  !url.password
+                );
               })
               .optional(),
           })
@@ -31,9 +36,17 @@ export interface XCodeBuiltinDownloadOptions {
   readonly signal?: AbortSignal;
 }
 
+export interface ZCodeBuiltinDownloadOptions {
+  readonly endpointOrigin: string;
+  readonly appVersion: string;
+  readonly platform: string;
+  readonly request: (url: string | URL, init: RequestInit) => Promise<Response>;
+  readonly signal?: AbortSignal;
+}
+
 /** App/CLI 共用下载边界。总预算包含两次请求正文，不依赖 ApiClient 的响应头超时。 */
 export async function downloadXCodeBuiltinRelease(
-  options: XCodeBuiltinDownloadOptions,
+  options: ZCodeBuiltinDownloadOptions,
 ): Promise<XCodeBuiltinRelease | null> {
   const controller = new AbortController();
   let timedOut = false;

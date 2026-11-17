@@ -1,3 +1,6 @@
+import type { DraftPluginUiOpenRequest } from "@/plugin-ui/contract.js";
+import { usePaneLayoutStore } from "@/v4/paneLayoutStore.js";
+import { useWorkbenchGroupStore } from "@/v4/workbenchGroupStore.js";
 /* eslint-disable max-lines -- workspace shell 当前集中编排 sidebar、chat、terminal 和 browser pane 的布局联动，先保持单文件收口，避免为满足行数限制打散关键布局状态。*/
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type {
@@ -434,6 +437,28 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
   const isOfficeMode = useIsOfficeMode();
   const baseServices = useBaseWorkspaceServices();
   const tabStoreApi = useTabStoreApi();
+  useLayoutEffect(
+    () =>
+      tabStoreApi.subscribe((next, previous) => {
+        if (
+          next.activeTabId === previous.activeTabId &&
+          next.activeWorkspacePath === previous.activeWorkspacePath &&
+          next.activeWorkspaceIdentity === previous.activeWorkspaceIdentity
+        )
+          return;
+        // 切工作区不会触发原工作区的 startDraft；在导航提交时取消请求，避免返回后误开新草稿。
+        if (!previous.activeWorkspacePath) return;
+        const store = useXCodeSessionStore.getState();
+        const identity = previous.activeWorkspaceIdentity ?? undefined;
+        const request = store.getWorkspaceState(
+          previous.activeWorkspacePath,
+          identity,
+        ).pluginUiOpenRequest;
+        if (request)
+          store.clearPluginUiOpenRequest(previous.activeWorkspacePath, request.requestId, identity);
+      }),
+    [tabStoreApi],
+  );
   const isLinuxDesktop = Boolean(isDesktop && !isMacDesktop && !isWindowsDesktop);
   const isWebRemoteControlShell = Boolean(webRemoteControlWorkspaceSwitcher);
   // Windows/Linux 原先遗漏外层留白，导致独立面板贴住窗口边缘；桌面统一使用 4px 间距。
@@ -526,6 +551,203 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
     onSessionMissing: () => handleStartDraftInWorkspace(workspaceAbsPath, workspaceIdentity),
   });
   const workspaceShellRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const shell = workspaceShellRef.current;
+    if (!shell) return;
+    const scope =
+      "[data-project-sidebar-panel], [data-workspace-conversation-frame], [data-workspace-side-frame]";
+    const timers = new Map<HTMLElement, number>();
+    let hovered: HTMLElement | null = null;
+    let dragging = false;
+    const animations = new Map<HTMLElement, Animation>();
+    const setVisible = (element: HTMLElement, visible: boolean) => {
+      if (element.hasAttribute("data-scrollbar-active") === visible) return;
+      const current = getComputedStyle(element).getPropertyValue("--zcode-scrollbar-thumb");
+      animations.get(element)?.cancel();
+      element.toggleAttribute("data-scrollbar-active", visible);
+      const target = visible
+        ? getComputedStyle(element).getPropertyValue("--color-border")
+        : "transparent";
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        const animation = element.animate(
+          [{ "--zcode-scrollbar-thumb": current }, { "--zcode-scrollbar-thumb": target }],
+          { duration: 200, easing: "ease" },
+        );
+        animations.set(element, animation);
+        animation.onfinish = () => {
+          animations.delete(element);
+        };
+      }
+    };
+    const hideLater = (element: HTMLElement) => {
+      window.clearTimeout(timers.get(element));
+      timers.set(
+        element,
+        window.setTimeout(() => {
+          timers.delete(element);
+          if (element === hovered || dragging) return;
+          setVisible(element, false);
+        }, 1000),
+      );
+    };
+    const reveal = (element: HTMLElement) => {
+      setVisible(element, true);
+      hideLater(element);
+    };
+    const onScroll = (event: Event) => {
+      const element = event.target;
+      if (element instanceof HTMLElement && element.closest(scope)) {
+        element.setAttribute("data-scrollbar-container", "");
+        reveal(element);
+      }
+    };
+    let thumbHovered: HTMLElement | null = null;
+    const setThumbHovered = (element: HTMLElement | null) => {
+      if (thumbHovered === element) return;
+      thumbHovered?.removeAttribute("data-scrollbar-hover");
+      thumbHovered = element;
+      element?.setAttribute("data-scrollbar-hover", "");
+    };
+    let pointerFrame = 0;
+    let pendingPointer: MouseEvent | null = null;
+    const updatePointer = (event: MouseEvent) => {
+      let element = event.target instanceof HTMLElement ? event.target : null;
+      let next: HTMLElement | null = null;
+      if (!element || !element.closest(scope)) {
+        setThumbHovered(null);
+        if (hovered) hideLater(hovered);
+        hovered = null;
+        return;
+      }
+      while (element && shell.contains(element)) {
+        if (
+          element.scrollHeight <= element.clientHeight &&
+          element.scrollWidth <= element.clientWidth
+        ) {
+          element = element.parentElement;
+          continue;
+        }
+        const rect = element.getBoundingClientRect();
+        const vertical =
+          element.scrollHeight > element.clientHeight &&
+          element.offsetWidth > element.clientWidth &&
+          event.clientX >= rect.right - 10 &&
+          event.clientX <= rect.right;
+        const horizontal =
+          element.scrollWidth > element.clientWidth &&
+          element.offsetHeight > element.clientHeight &&
+          event.clientY >= rect.bottom - 10 &&
+          event.clientY <= rect.bottom;
+        if (vertical || horizontal) {
+          next = element;
+          break;
+        }
+        element = element.parentElement;
+      }
+      if (!next) {
+        // Query mounted nodes instead of retaining removed session/panel DOM in a Set.
+        for (const candidate of shell.querySelectorAll<HTMLElement>("[data-scrollbar-container]")) {
+          const rect = candidate.getBoundingClientRect();
+          if (
+            event.clientX >= rect.right - 14 &&
+            event.clientX <= rect.right &&
+            event.clientY >= rect.top &&
+            event.clientY <= rect.bottom &&
+            candidate.scrollHeight > candidate.clientHeight
+          ) {
+            next = candidate;
+            break;
+          }
+        }
+      }
+      const previous = hovered;
+      hovered = next;
+      if (previous && previous !== next) hideLater(previous);
+      let hitThumb = false;
+      if (next) {
+        reveal(next);
+        const rect = next.getBoundingClientRect();
+        const vertical = event.clientX >= rect.right - 14 && next.scrollHeight > next.clientHeight;
+        const track = vertical ? next.clientHeight : next.clientWidth;
+        const extent = vertical ? next.scrollHeight : next.scrollWidth;
+        const offset = vertical ? next.scrollTop : next.scrollLeft;
+        const length = Math.min(track, Math.max(32, (track * track) / extent));
+        const start = extent > track ? (offset / (extent - track)) * (track - length) : 0;
+        const position = vertical
+          ? event.clientY - rect.top - next.clientTop
+          : event.clientX - rect.left - next.clientLeft;
+        hitThumb = position >= start && position <= start + length;
+      }
+      setThumbHovered(hitThumb ? next : null);
+    };
+    const onPointerMove = (event: MouseEvent) => {
+      pendingPointer = event;
+      if (pointerFrame) return;
+      pointerFrame = requestAnimationFrame(() => {
+        pointerFrame = 0;
+        if (pendingPointer) updatePointer(pendingPointer);
+        pendingPointer = null;
+      });
+    };
+    const onPointerDown = () => {
+      dragging = thumbHovered !== null;
+      if (dragging) thumbHovered?.setAttribute("data-scrollbar-dragging", "");
+    };
+    const onPointerUp = () => {
+      dragging = false;
+      shell
+        .querySelectorAll("[data-scrollbar-dragging]")
+        .forEach((element) => element.removeAttribute("data-scrollbar-dragging"));
+      shell.querySelectorAll<HTMLElement>("[data-scrollbar-active]").forEach(hideLater);
+    };
+    const onPointerLeave = () => {
+      cancelAnimationFrame(pointerFrame);
+      pointerFrame = 0;
+      pendingPointer = null;
+      setThumbHovered(null);
+      const previous = hovered;
+      hovered = null;
+      if (previous) hideLater(previous);
+    };
+    const onBlur = () => {
+      setThumbHovered(null);
+      hovered = null;
+      onPointerUp();
+    };
+    // 捕获真实滚动，不切换 overflow/宽度；每个滚动容器独立计时，避免内容抖动。
+    shell.addEventListener("scroll", onScroll, true);
+    shell.addEventListener("mousemove", onPointerMove, true);
+    shell.addEventListener("mousedown", onPointerDown, true);
+    shell.addEventListener("pointerleave", onPointerLeave);
+    window.addEventListener("mouseup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      shell.removeEventListener("scroll", onScroll, true);
+      shell.removeEventListener("mousemove", onPointerMove, true);
+      shell.removeEventListener("mousedown", onPointerDown, true);
+      shell.removeEventListener("pointerleave", onPointerLeave);
+      window.removeEventListener("mouseup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("blur", onBlur);
+      setThumbHovered(null);
+      shell
+        .querySelectorAll("[data-scrollbar-dragging]")
+        .forEach((element) => element.removeAttribute("data-scrollbar-dragging"));
+      cancelAnimationFrame(pointerFrame);
+      timers.forEach(window.clearTimeout);
+      timers.clear();
+      shell
+        .querySelectorAll("[data-scrollbar-container]")
+        .forEach((element) => element.removeAttribute("data-scrollbar-container"));
+      animations.forEach((animation) => animation.cancel());
+      animations.clear();
+      shell
+        .querySelectorAll("[data-scrollbar-active]")
+        .forEach((element) => element.removeAttribute("data-scrollbar-active"));
+    };
+  }, []);
+
   const workspaceSidebarPanelElementRef = useRef<HTMLDivElement | null>(null);
   const conversationPanelElementRef = useRef<HTMLDivElement | null>(null);
   const conversationAutoCollapseStateRef = useRef({
@@ -1198,6 +1420,31 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
   const showChatMainView = useCallback(() => {
     onWorkspaceMainViewChange("chat");
   }, [onWorkspaceMainViewChange]);
+  const handleOpenDraftPluginUi = useCallback(
+    (request: DraftPluginUiOpenRequest) => {
+      if (!isDesktop || workspaceReadOnlyReason || workspaceRemoteSessionId) return;
+      const store = useXCodeSessionStore.getState();
+      const draft = store.getWorkspaceState(workspaceAbsPath, workspaceIdentity);
+      useWorkbenchGroupStore.getState().deactivateActiveGroup();
+      usePaneLayoutStore.getState().resetToPrimaryPane();
+      // 返回已有根草稿，保留项目和输入；不能将当前正式会话当作插件目标。
+      if (draft.activeTaskId !== null)
+        store.startDraft(workspaceAbsPath, undefined, workspaceIdentity, {
+          projectId: draft.draftProjectId,
+          taskGroupId: draft.draftTaskGroupId,
+        });
+      store.requestPluginUiOpen(request);
+      showChatMainView();
+    },
+    [
+      isDesktop,
+      workspaceReadOnlyReason,
+      workspaceRemoteSessionId,
+      workspaceAbsPath,
+      workspaceIdentity,
+      showChatMainView,
+    ],
+  );
   const primaryNavigationBack =
     workspaceMainView === "plugin-store" ? showChatMainView : handleTaskNavBack;
   const canPrimaryNavigationBack = workspaceMainView === "plugin-store" || canTaskNavBack;
@@ -1323,7 +1570,7 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
   // 「已保存」芯片的落点：交给 App 切主视图并设深链（与「自动化」入口同一条导航历史）。
   const handleOpenSavedWorkflowInHub = useCallback(
     (target: SavedWorkflowHubTarget) => {
-      onOpenSavedWorkflowInHub?.(target);
+      onOpenSavedWorkflowInHub(target);
     },
     [onOpenSavedWorkflowInHub],
   );
@@ -2159,6 +2406,7 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                       // Bug 根因：独立插件页曾绕过切回聊天页的包装回调，任务虽被创建，
                       // 视图仍停在插件详情，用户看到“立即试用”与示例 Prompt 点击无反应。
                       onCreateTask={handleCreateTaskInChat}
+                      onOpenDraftUi={handleOpenDraftPluginUi}
                       sessionId={activeTaskId}
                       remoteSessionId={workspaceRemoteSessionId}
                     />
@@ -2185,6 +2433,7 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                     isWorkspaceVisible && !isSidePaneOpen && !isSidePaneVisible
                   }
                   readOnly={Boolean(workspaceReadOnlyReason)}
+                  readOnlyReason={workspaceReadOnlyReason}
                   workspacePath={workspaceAbsPath}
                   workspaceIdentity={workspaceIdentity}
                   isDesktop={isDesktop === true}
@@ -2420,6 +2669,8 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                                 desktopWindowChromeState?.supportsNativeRoundedCorners ?? null,
                             }),
                         isTerminalVisible && "rounded-b-[var(--workspace-panel-radius)] border-b",
+                        "border-[0.5px]",
+                        !isFullView && "shadow-xs",
                         isWebRemoteControlShell &&
                           "max-md:rounded-none max-md:border-x-0 max-md:border-b-0",
                         // 完整视图由面板外框或浮窗外框承担边框与圆角，对话 frame 不再叠一层。
@@ -2602,6 +2853,7 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                                     workspacePath={workspaceAbsPath}
                                     workspaceIdentity={workspaceIdentity}
                                     onCreateTask={handleCreateTaskInChat}
+                                    onOpenDraftUi={handleOpenDraftPluginUi}
                                     sessionId={activeTaskId}
                                     remoteSessionId={workspaceRemoteSessionId}
                                   />
@@ -2622,18 +2874,20 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                                   不能用 meta 派生的 activeSessionId——v4 createSession 刚建的会话
                                   不在 taskListCache/optimistic 缓存里，meta 解析为 null 会让 pane
                                   永远停在 draft。v4 语义下 sessionId ≡ taskId，meta 只服务 Header 显示。
-                                  桌面主区升级为分屏宿主（Layout/Focus 两层）；primary pane
+                                  M5⑤：桌面主区升级为分屏宿主（Layout/Focus 两层）；primary pane
                                   绑定语义与 testid 契约（paneId=workspace-main）不变。 */}
                               <V4WorkspaceChatArea
                                 allowEscapeStopOutsidePane={
                                   isWorkspaceVisible && !isSidePaneOpen && !isSidePaneVisible
                                 }
                                 readOnly={Boolean(workspaceReadOnlyReason)}
+                                readOnlyReason={workspaceReadOnlyReason}
                                 foregroundEnabled={isWorkspaceVisible}
                                 workspacePath={workspaceAbsPath}
                                 workspaceIdentity={workspaceIdentity}
                                 isDesktop={isDesktop === true}
                                 remoteSessionId={workspaceRemoteSessionId}
+                                compactForRemoteControl={isWebRemoteControlShell}
                                 sessionId={activeTaskId}
                                 activeSelectionSideChatSessionId={activeSelectionSideChatSessionId}
                                 provider={activeTaskProvider ?? undefined}

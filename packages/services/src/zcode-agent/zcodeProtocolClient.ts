@@ -1,3 +1,12 @@
+import {
+  zcodeProtocolMethods,
+  sessionLifecycleParamsSchema,
+  sessionLifecycleActivationParamsSchema,
+  zcodeRuntimeCapabilitiesSchema,
+  type XCodeWorkspaceRef,
+  sessionLifecycleSnapshotSchema,
+  sessionLifecycleResultSchema,
+} from "@zcode/shared";
 import { XCodeStorageStartupGate } from "#src/zcode-agent/zcodeStorageStartupGate.js";
 import { Emitter } from "@zcode/rpc";
 import type { IDisposable } from "@zcode/rpc";
@@ -40,6 +49,8 @@ interface PendingRequest<T> {
 }
 
 interface XCodeProtocolClientRequestOptions {
+  /** 单 session 操作超时不能擅自回收整个 workspace；后端仍持有操作，可另行查询。 */
+  invalidateConnectionOnTimeout?: boolean;
   /** 观测不得参与 runtime 健康判定或业务空闲续期；默认保持业务请求语义。 */
   lifecycle?: "operation" | "observation";
   signal?: AbortSignal;
@@ -72,6 +83,64 @@ export class XCodeProtocolRequestTimeoutError extends Error {
 }
 
 export class XCodeProtocolClient implements IDisposable {
+  /** 与已连接 workspace 的 CLI 生命周期 owner 通信；此入口不拉起或重启整个进程。 */
+  readonly sessionLifecycle = {
+    getState: (sessionId: string) =>
+      this.request(
+        zcodeProtocolMethods.sessionLifecycleGetState,
+        sessionLifecycleParamsSchema.parse({ sessionId }),
+        sessionLifecycleSnapshotSchema,
+        { lifecycle: "observation" },
+      ),
+    ensureReady: (sessionId: string, workspace?: XCodeWorkspaceRef) =>
+      this.requestSessionActivation(
+        zcodeProtocolMethods.sessionLifecycleEnsureReady,
+        sessionId,
+        workspace,
+      ),
+    stop: async (sessionId: string): Promise<void> => {
+      await this.request(
+        zcodeProtocolMethods.sessionLifecycleStop,
+        sessionLifecycleParamsSchema.parse({ sessionId }),
+        sessionLifecycleResultSchema,
+        { invalidateConnectionOnTimeout: false },
+      );
+    },
+    restart: (sessionId: string, workspace?: XCodeWorkspaceRef) =>
+      this.requestSessionActivation(
+        zcodeProtocolMethods.sessionLifecycleRestart,
+        sessionId,
+        workspace,
+      ),
+  };
+
+  private async requestSessionActivation(
+    method:
+      | typeof zcodeProtocolMethods.sessionLifecycleEnsureReady
+      | typeof zcodeProtocolMethods.sessionLifecycleRestart,
+    sessionId: string,
+    workspace?: XCodeWorkspaceRef,
+  ) {
+    if (workspace) {
+      // 旧 CLI 的严格参数不接受 workspace；不能退回会丢失归属的重启，也不能重启整个进程。
+      const capabilities = await this.request(
+        zcodeProtocolMethods.runtimeCapabilities,
+        {},
+        zcodeRuntimeCapabilitiesSchema,
+        // 能力查询是观察请求，等待超时不能淘汰共享 CLI 连接。
+        { lifecycle: "observation" },
+      );
+      if (!capabilities.sessionLifecycleWorkspace)
+        throw new Error("fault.sessionLifecycle.unsupported");
+    }
+    return this.request(
+      method,
+      sessionLifecycleActivationParamsSchema.parse({ sessionId, workspace }),
+      sessionLifecycleResultSchema,
+      { invalidateConnectionOnTimeout: false },
+    );
+  }
+
   readonly storageStartup: XCodeStorageStartupGate;
   private readonly pending = new Map<string, PendingRequest<unknown>>();
   private readonly notificationEmitter = new Emitter<XCodeProtocolNotification>();
@@ -178,7 +247,7 @@ export class XCodeProtocolClient implements IDisposable {
         // process manager 仍复用这个 stale client，导致后续 plugins/list 等请求连续卡在超时窗口。
         // 超时事件把“连接已不可信”的事实上抛给 owner，由 owner 负责淘汰进程。
         // 资源查询的短超时只表示本轮无数据，不能被升级成整个 Agent 的故障回收。
-        if (!observation) {
+        if (!observation && options?.invalidateConnectionOnTimeout !== false) {
           this.requestTimeoutEmitter.fire({ method, requestId: id, timeoutMs: requestTimeoutMs });
         }
         reject(error);

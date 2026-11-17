@@ -21,9 +21,18 @@ import {
 } from "@zcode/shared";
 import type { ICredentialService } from "../credential/credential.js";
 import { createServiceLogger } from "../logger/serviceLogger.js";
+import {
+  listAutoClaimSettings,
+  updateAutoClaimSettings,
+  updateAutoClaimSettingsBatch,
+} from "../marketing-touch/autoClaim.js";
+import { listAutoActivity } from "../marketing-touch/autoClaimLog.js";
 import { readApiJson } from "../providers/api/apiJson.js";
 import type { IOAuthService } from "./oauth.js";
-import { isCurrentOAuthCredentialRequest } from "#src/oauth/oauthUnauthorizedRequest.js";
+import {
+  classifyCurrentOAuthCredentialRequest,
+  isCurrentOAuthCredentialRequest,
+} from "#src/oauth/oauthUnauthorizedRequest.js";
 import { hasOAuthAuthorizationCode, parseOAuthLoginAttribution } from "./callbackAttribution.js";
 import {
   refreshLegacyBigModelCachedProfile,
@@ -184,14 +193,76 @@ export class OAuthService implements IOAuthService {
     return this.repo.getActiveProvider();
   }
 
-  async getAccounts(): Promise<OAuthAccountEntry[]> {
-    return this.repo.listAccounts();
+  async getAccounts(): Promise<
+    Array<OAuthAccountEntry & { zcodeJwtExpired?: boolean }>
+  > {
+    const accounts = await this.repo.listAccounts();
+    // 过期徽标的数据源：按 per-account zcodejwt 的本地 exp 判定（与账号列表
+    // 的「登录已过期」提示一致）。本地 exp 过期 ≠ 服务端拒绝，只作展示，
+    // 不参与会话清理；凭据加密读取失败按未知处理，不显示徽标。
+    return Promise.all(
+      accounts.map(async (account) => {
+        try {
+          const accountRef = `${account.provider}:${account.identity}`;
+          // 两种失效来源任一即显示徽标：
+          // - 本地 exp 过期（token 带 exp 时）；
+          // - 服务端 401 拒绝记录（token 无本地 exp 时的唯一失效事实，见 markAccountJwtInvalidated）。
+          // 无 exp 且未被服务端拒绝的 token（如 BigModel 刚登录）无法本地证明失效，不显示。
+          const jwt = (await this.credentialService.load(`zcodejwt:${accountRef}`))?.trim();
+          const locallyExpired =
+            jwt && resolveJwtExpiration(jwt, this.now()).kind === "expired";
+          if (!locallyExpired && account.jwtInvalidatedAt === undefined) return account;
+          return { ...account, zcodeJwtExpired: true };
+        } catch {
+          return account;
+        }
+      }),
+    );
   }
 
   async getActiveAccount(): Promise<OAuthAccountEntry | null> {
     const accountRef = await this.repo.loadActiveAccountRef();
     if (!accountRef) return null;
     return this.repo.loadAccountEntry(accountRef);
+  }
+
+  async updateAccountRemark(accountRef: string, remark: string): Promise<OAuthAccountEntry | null> {
+    return this.repo.updateAccountRemark(accountRef, remark);
+  }
+
+  async listAutoClaimSettings(): Promise<
+    Array<{ accountRef: string; enabled: boolean; time: string }>
+  > {
+    const accounts = await this.repo.listAccounts();
+    return listAutoClaimSettings(
+      accounts.map((entry) => `${entry.provider}:${entry.identity}`),
+    );
+  }
+
+  async updateAutoClaimSettings(
+    accountRef: string,
+    update: { enabled?: boolean; time?: string },
+  ): Promise<{ enabled: boolean; time: string }> {
+    return updateAutoClaimSettings(accountRef, update);
+  }
+
+  async updateAutoClaimSettingsBatch(
+    accountRefs: string[],
+    update: { enabled?: boolean; time?: string },
+  ): Promise<{ accountRef: string; ok: boolean; error?: string }[]> {
+    return updateAutoClaimSettingsBatch(accountRefs, update);
+  }
+
+  async listAutoActivity(): Promise<
+    Array<{
+      kind: "auto-checkin" | "auto-claim";
+      accountRef: string;
+      status: string;
+      message?: string;
+      at: string;
+    }>
+  > {
+    return listAutoActivity();
   }
 
   async switchAccount(accountRef: string): Promise<OAuthAccountEntry | null> {
@@ -281,27 +352,20 @@ export class OAuthService implements IOAuthService {
       });
       return cleared ? { status: "signed-out" } : this.restoreCachedSessionState();
     }
+    // 本地 exp 判定只做提示，不再清会话：实测服务端对本地已过期的 zcodejwt
+    // 仍接受（领取/模型请求都成功），exp 过期 ≠ 登录失效。真正的失效以
+    // 服务端 401 为准，由 logoutIfCurrentCredentialRequest 按命中的凭据分类处理；
+    // 账号列表的过期徽标（按本地 exp 展示）继续提醒用户重新登录。
     const expired = tokens.find(
       ({ value }) => value && resolveJwtExpiration(value, this.now()).kind === "expired",
     );
-    const zcodeJwtToken = tokens[0]?.value ?? "";
     if (expired) {
-      serviceLog.info("cached session invalidated because login JWT expired", {
+      serviceLog.info("cached token past local exp; session kept pending server verdict", {
         provider: activeProvider,
         credentialKey: expired.key,
       });
-      const invalidated = await this.invalidateExpiredCachedSession(
-        restoreGeneration,
-        activeProvider,
-        profile,
-        expired.value,
-        expired.key,
-      );
-      if (!invalidated) {
-        return this.restoreCachedSessionState();
-      }
-      return { status: "reauthentication-required", reason: "jwt-expired" };
     }
+    const zcodeJwtToken = tokens[0]?.value ?? "";
 
     if (activeProvider === BIGMODEL_PROVIDER_ID) {
       const migrationGeneration = this.oauthSessionGeneration;
@@ -344,53 +408,6 @@ export class OAuthService implements IOAuthService {
 
     log("restoreCachedSession restored:", activeProvider, profile.id);
     return { status: "authenticated", userInfo: toUserInfo(profile) };
-  }
-
-  private async invalidateExpiredCachedSession(
-    expectedGeneration: number,
-    expectedProvider: OAuthProviderId,
-    expectedProfile: OAuthUserProfile,
-    expectedJwt: string,
-    credentialKey = XCODE_JWT_TOKEN_KEY,
-  ): Promise<boolean> {
-    const invalidated = await this.runSessionMutation(async () => {
-      const currentProvider = await this.repo.getActiveProvider();
-      const currentProfile = await this.repo.loadUserProfile(expectedProvider);
-
-      const currentJwt = (await this.credentialService.load(credentialKey))?.trim() ?? "";
-      if (
-        this.oauthSessionGeneration !== expectedGeneration ||
-        currentProvider !== expectedProvider ||
-        !currentProfile ||
-        !isSameOAuthProfile(currentProfile, expectedProfile) ||
-        currentJwt !== expectedJwt
-      ) {
-        // 启动恢复读取过期凭据后，新登录或 provider 切换可能已经完成；
-        // 旧恢复任务只能清理仍与其快照完全一致的会话，不能误删刚写入的新认证状态。
-        serviceLog.info("skipped stale expired JWT session invalidation", {
-          provider: expectedProvider,
-        });
-        return false;
-      }
-      this.oauthSessionGeneration += 1;
-      await this.repo.clearActiveSession();
-      this.sessionChanges.fire("signed-out");
-      return true;
-    });
-    if (!invalidated) {
-      return false;
-    }
-    await this.cancelPending(expectedProvider);
-    try {
-      await this.notifyProviderLogout(expectedProvider, expectedProfile.id);
-    } catch (error) {
-      // JWT 已过期时主认证事实必须先失效；派生 provider 清理失败不能把 UI 留在伪登录态。
-      serviceLog.warn("expired JWT derived provider cleanup failed", {
-        provider: expectedProvider,
-        error,
-      });
-    }
-    return true;
   }
 
   private async loadBigModelCachedProfileMigrationTokenSet(
@@ -1098,16 +1115,78 @@ export class OAuthService implements IOAuthService {
     });
   }
 
-  /** Host 本地 401 提交入口，不扩展 IOAuthService 的跨端契约。 */
-  logoutIfCurrentCredentialRequest(input: string | URL, headers: Headers): Promise<boolean> {
-    return this.logoutActiveSession(() =>
+  /** 401 触发的自动续期去重窗口：refresh 换来的 token 若仍 401，窗口内不再重复续期。 */
+  private lastAutoRefreshAtByProvider = new Map<string, number>();
+  private static AUTO_REFRESH_DEDUPE_MS = 60_000;
+
+  /**
+   * Host 本地 401 提交入口，不扩展 IOAuthService 的跨端契约。
+   *
+   * 清会话之前先尝试用 refresh_token 续期：OAuth access_token 生命周期短于
+   * per-account zcodejwt（模型请求/领取用的那份），切换到该账号时随切号刷新
+   * 触发的 userinfo/balance 请求会带着过期的 access_token 打出 401。直接清会话
+   * 会把激活账号回滚——表现为「点切换 → 弹登录已过期 → 切换失败」，而领取和
+   * 模型请求实际都能用。续期失败（无 refresh_token / 上游拒绝）才走原有清理。
+   */
+  async logoutIfCurrentCredentialRequest(input: string | URL, headers: Headers): Promise<boolean> {
+    const isCurrent = () =>
       isCurrentOAuthCredentialRequest({
         input,
         headers,
         credentialService: this.credentialService,
         env: this.env,
-      }),
-    );
+      });
+    if (await isCurrent()) {
+      const activeProvider = await this.repo.getActiveProvider();
+      if (!activeProvider) return this.logoutActiveSession(isCurrent);
+      const activeAccountRef = await this.repo.loadActiveAccountRef();
+      const kind = await classifyCurrentOAuthCredentialRequest({
+        input,
+        headers,
+        credentialService: this.credentialService,
+        env: this.env,
+      });
+      if (kind === "business") {
+        // 资料类辅助凭据失效：先尝试 refresh；BigModel 等暂无 refresh 接口的
+        // provider 保留会话，让 userinfo/balance 请求自行失败——清会话会把
+        // 激活账号回滚（「点切换 → 弹过期 → 切换失败」的根因），而模型请求
+        // 和领取用的 zcodejwttoken 实测仍被服务端接受。
+        const lastAt = this.lastAutoRefreshAtByProvider.get(activeProvider) ?? 0;
+        if (this.now() - lastAt > OAuthService.AUTO_REFRESH_DEDUPE_MS) {
+          this.lastAutoRefreshAtByProvider.set(activeProvider, this.now());
+          try {
+            await this.refreshToken(activeProvider);
+            serviceLog.info("401 recovered by token refresh; session kept", {
+              provider: activeProvider,
+            });
+            return false;
+          } catch (error) {
+            serviceLog.info("business token 401 without refresh; session kept", {
+              provider: activeProvider,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        }
+        // refresh 不可用/失败：access_token 已被服务端拒绝，标记账号供过期徽标展示
+        //（重新登录写新凭据时清除）。会话保留，仅资料类请求自行失败。
+        if (activeAccountRef) {
+          await this.repo.markAccountJwtInvalidated(activeAccountRef, this.now());
+        }
+        return false;
+      }
+      if (kind === "zcodejwt") {
+        // 模型请求凭据被服务端权威拒绝：这才是真正的登录失效。
+        serviceLog.info("cached session cleared: zcodejwt rejected by server", {
+          provider: activeProvider,
+        });
+        // 无本地 exp 的 token（BigModel 的 Project Token）从服务端反馈获得失效事实，
+        // 供账号列表的「登录已过期」徽标使用；重新登录写新凭据时清除。
+        if (activeAccountRef) {
+          await this.repo.markAccountJwtInvalidated(activeAccountRef, this.now());
+        }
+      }
+    }
+    return this.logoutActiveSession(isCurrent);
   }
 
   private async logoutActiveSession(isCurrent?: () => Promise<boolean>): Promise<boolean> {

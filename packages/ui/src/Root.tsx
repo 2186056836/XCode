@@ -1,3 +1,4 @@
+import { useInterfaceModeTelemetry } from "@/lib/appTelemetry.js";
 import { ProjectDirectoryProvider } from "@/project-sidebar/ProjectDirectoryProvider.js";
 import { RemoteProjectPicker } from "@/project-sidebar/RemoteProjectPicker.js";
 import {
@@ -10,9 +11,13 @@ import { useRemoteWorkspaceSessionStore } from "@/store/remoteWorkspaceSessionSt
 import { RemoteConnectionProgressProvider } from "@/remote-connection-flow/ui/RemoteConnectionProgress.js";
 /* eslint-disable max-lines -- Root 当前集中编排启动、workspace shell wiring 和 Web 远控同步，先保持入口收口避免跨层状态拆散。 */
 import { RemoteProjectPresentationProvider } from "@/hooks/RemoteProjectPresentationContext.js";
+import {
+  RequestSecurityHost,
+  RequestSecurityWorkspaceBridge,
+  setRequestSecurityReporter,
+} from "@/request-security-edition/index.js";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LucideProvider, RefreshCw } from "lucide-react";
-import { applyCustomSkin } from "@/useTheme.js";
 import {
   APP_RUNTIME_PREFERENCES_CHANGED_BROADCAST_CHANNEL,
   DesktopCommandIds,
@@ -27,10 +32,18 @@ import {
   readV4ComposerDraft,
   V4_DRAFT_SCOPE_ROOT,
 } from "@/v4/composer/composerDraftStore.js";
-import { useDynamicWorkflowAvailabilityLoader } from "@/hooks/useDynamicWorkflowAvailability.js";
+import {
+  useDynamicWorkflowAvailabilityLoader,
+  useDynamicWorkflowUserModeSync,
+} from "@/hooks/useDynamicWorkflowAvailability.js";
 import { DirectoryBrowser } from "@/DirectoryBrowser.js";
-import { attachRemoteProjectWorkspace, resolveEntryProject } from "@/project-sidebar/index.js";
+import {
+  attachRemoteProjectWorkspace,
+  resolveEntryProject,
+  useWebRemoteControlRendererActions,
+} from "@/project-sidebar/index.js";
 import { useTabPersistence, type WorkspacePersistenceGate } from "@/hooks/useTabPersistence.js";
+import { runAliyunCaptcha } from "@/hooks/useMarketingTouchCampaign.js";
 import { useTokenRefresh } from "@/hooks/useTokenRefresh.js";
 import { useWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
@@ -38,7 +51,7 @@ import { SSHDialog } from "@/SSHDialog.js";
 import { SettingsPage } from "@/SettingsPage.js";
 import { setPendingSettingsSectionIntent } from "@/lib/settingsNavigation.js";
 import { CodingPlanUpgradeDialogProvider } from "@/settings/CodingPlanUpgradeDialogProvider.js";
-import { MarketingTouchProvider } from "@/marketing/MarketingTouchProvider.js";
+import { RewardsProvider } from "@/rewards/RewardsProvider.js";
 import { WelcomeScreen, type LoginCompleteReason } from "@/WelcomeScreen.js";
 import { setDefaultFileDisplayBasePath } from "@/lib/fileDisplay.js";
 import { readRendererLaunchTimings, shouldReportLaunchToInput } from "@/lib/launchToInputReport.js";
@@ -80,7 +93,12 @@ import { registerBaseWorkspaceServices } from "@/store/remoteWorkspaceSessionSto
 import type { RootProps } from "@/root/types.js";
 import { DiffsWorkerPoolProvider } from "@/root/DiffsWorkerPoolProvider.js";
 import { ScopedErrorBoundary } from "@/ErrorBoundary.js";
+import {
+  WebRemoteControlFeatureProvider,
+  useWebRemoteControlFeatureEnabled,
+} from "@/WebRemoteControlFeatureProvider.js";
 import { useRemoteConnectionLogs } from "@/hooks/useRemoteConnectionLogs.js";
+import { useWebRemoteControlStatus } from "@/hooks/useWebRemoteControlStatus.js";
 import {
   CODE_COMMENT_REMOVE_BROADCAST_CHANNEL,
   CODE_COMMENT_PREVIEW_RESTORE_BROADCAST_CHANNEL,
@@ -89,6 +107,7 @@ import {
   markCodeCommentRemoved,
 } from "@/lib/codeCommentContext.js";
 import { useCodeCommentPreviewStore } from "@/store/codeCommentPreviewStore.js";
+import { MarketingTouchProvider } from "@/components/marketing-touch/MarketingTouchProvider.js";
 import { setUiPerfArmsReporter } from "@/lib/uiPerfArmsTelemetry.js";
 import { setSessionOpenArmsReporter } from "@/lib/sessionOpenArmsTelemetry.js";
 import { setSendFunnelArmsReporter } from "@/lib/sendFunnelArmsTelemetry.js";
@@ -103,6 +122,7 @@ import {
   disposeConversationTelemetrySupervisors,
   reconcileConversationTelemetryWorkspaceScopes,
 } from "@/v4/telemetry/ConversationTelemetryAttachment.js";
+import { installConversationTelemetryParityE2EBridge } from "@/v4/telemetry/conversationTelemetryParityE2E.js";
 import { useSourceServerUpdateNotifications } from "@/root/sourceServerUpdateNotifications.js";
 import type {
   DeviceAdditionResult,
@@ -140,6 +160,7 @@ export function Root(props: RootProps) {
         <ServiceProvider
           services={props.services}
           composerClientNamespace={props.composerClientNamespace}
+          terminalOwnerId={props.terminalOwnerId}
         >
           <PlatformProvider platform={props.platform}>
             <StoreProvider
@@ -149,17 +170,22 @@ export function Root(props: RootProps) {
               <TabStoreProvider>
                 <ProjectDirectoryProvider isDesktop={props.isDesktop}>
                   <DiffsWorkerPoolProvider>
-                    <AssistantCodeCommentFeatureProvider
-                      enabled={props.assistantCodeCommentCardsEnabled}
-                    >
-                      <CodingPlanUpgradeDialogProvider>
-                        <MarketingTouchProvider>
-                          <RemoteConnectionProgressProvider>
-                            <RootInner {...props} />
-                          </RemoteConnectionProgressProvider>
-                        </MarketingTouchProvider>
-                      </CodingPlanUpgradeDialogProvider>
-                    </AssistantCodeCommentFeatureProvider>
+                    <WebRemoteControlFeatureProvider enabled={props.webRemoteControlFeatureEnabled}>
+                      <AssistantCodeCommentFeatureProvider
+                        enabled={props.assistantCodeCommentCardsEnabled}
+                      >
+                        <CodingPlanUpgradeDialogProvider>
+                          <RewardsProvider desktop={props.isDesktop === true}>
+                            <RequestSecurityHost />
+                            <MarketingTouchProvider desktop={props.isDesktop === true}>
+                              <RemoteConnectionProgressProvider>
+                                <RootInner {...props} />
+                              </RemoteConnectionProgressProvider>
+                            </MarketingTouchProvider>
+                          </RewardsProvider>
+                        </CodingPlanUpgradeDialogProvider>
+                      </AssistantCodeCommentFeatureProvider>
+                    </WebRemoteControlFeatureProvider>
                   </DiffsWorkerPoolProvider>
                 </ProjectDirectoryProvider>
               </TabStoreProvider>
@@ -195,7 +221,9 @@ function RootInner({
   webRemoteControlTerminalTransportState,
   initialWorkspaceLoadingFallback,
 }: RootProps) {
+  useInterfaceModeTelemetry(platform, isDesktop === true);
   useEffect(() => {
+    setRequestSecurityReporter(platform);
     setMcpStorePlatform(platform);
     // 对话 UI perf 只属于 desktop-continuous；Web/mobile 即使能看到权威状态也不装 reporter。
     setUiPerfArmsReporter(isDesktop ? platform : null);
@@ -203,12 +231,22 @@ function RootInner({
     // 发送漏斗同理：只在 Electron 桌面端上报，Web/mobile 的 reportArmsCustomEvent 是空实现。
     setSendFunnelArmsReporter(isDesktop ? platform : null);
     return () => {
+      setRequestSecurityReporter(null);
       setMcpStorePlatform(null);
       setUiPerfArmsReporter(null);
       setSessionOpenArmsReporter(null);
       setSendFunnelArmsReporter(null);
     };
   }, [isDesktop, platform]);
+
+  useEffect(
+    () =>
+      installConversationTelemetryParityE2EBridge({
+        platform,
+        isDesktop: isDesktop === true,
+      }),
+    [isDesktop, platform],
+  );
 
   useEffect(
     () => () => {
@@ -242,6 +280,14 @@ function RootInner({
     refresh: refreshAppSettings,
     update: updateAppSettings,
   } = useSettings();
+  // docs/dynamic-workflow/launch.md「The user's choice」：设置里的动态工作流选择变化后，通知本窗口
+  // 的 Host 重发 CLI 策略（并转发给远程 Host），再重读灰度快照。
+  useDynamicWorkflowUserModeSync({
+    settingsLoaded: Boolean(appSettings),
+    userMode: appSettings?.dynamicWorkflowMode,
+    zcodeAgentService: services.zcodeAgentService,
+    codingPlanSubscriptionService: services.codingPlanSubscriptionService,
+  });
   const [welcomeScreenOpenReason, setWelcomeScreenOpenReason] =
     useState<WelcomeScreenOpenReason | null>(() =>
       consumeXcodeJwtInvalidRestartMarker() ? "session-expired" : null,
@@ -349,13 +395,6 @@ function RootInner({
     services.broadcastService,
     services.zcodeAgentService,
   ]);
-
-  // 皮肤全局应用——必须在 Root 层（挂全程）而非设置卡片（进外观页才挂载、
-  // 离开即卸载导致皮肤丢失）。appSettings 变化（保存/跨窗口广播/冷启动加载）都重算。
-  // 背景图统一铺满整窗（html 固定附着 + 侧栏磨砂），无需等图片解码后重入。
-  useEffect(() => {
-    applyCustomSkin(appSettings?.customSkin ?? null);
-  }, [appSettings?.customSkin]);
 
   useEffect(() => {
     if (!appSettings) {
@@ -494,6 +533,14 @@ function RootInner({
     },
     [tabStoreApi],
   );
+  const webRemoteControlFeatureEnabled = useWebRemoteControlFeatureEnabled();
+  // Bugfix: WebRemoteControlDialog 只是可开关的展示入口，不能由它的本地 state 决定全局远控状态。
+  // Root 直接轮询 main 进程状态，让远控会话 running/active 成为唯一真值来源。
+  const webRemoteControlStatus = useWebRemoteControlStatus({
+    enabled: Boolean(webRemoteControlFeatureEnabled && isDesktop),
+  });
+  const webRemoteControlSessionActive =
+    webRemoteControlStatus.status === "running" || webRemoteControlStatus.status === "active";
   const refreshProviderState = useRootProviderStateRefresh(services);
   useRootProviderSettingsSnapshot(services);
   useEffect(() => {
@@ -537,9 +584,7 @@ function RootInner({
     modelSelectionViewHydrated:
       rootProviderAvailability.hydrated || rootModelSelectionRead.state.status === "error",
   });
-  // fork 未接入 Web 远控（RootProps 无 webRemoteControlWorkspaceSwitcher），
-  // 这里恒为 false，行为与 0924 的门禁完全一致，同时满足 1010 的新签名。
-  const isWebRemoteControlRoot = false;
+  const isWebRemoteControlRoot = Boolean(webRemoteControlWorkspaceSwitcher);
   const providerAvailabilityLoginEntryGuardEnabled =
     shouldEnableProviderAvailabilityLoginEntryGuard({
       isWebRemoteControlRoot,
@@ -663,6 +708,7 @@ function RootInner({
     activeWorkspacePath,
     activeWorkspaceIdentity,
     supportsSettings,
+    isDesktop,
     allowOpenWorkspace,
     preferDirectoryBrowser: shouldPreferDirectoryBrowser,
     openDirectoryBrowser: handleOpenDirectoryBrowser,
@@ -793,7 +839,36 @@ function RootInner({
   );
 
   useEffect(() => {
-    // fileDisplay 默认不传 basePath 时需要落到“当前激活 workspace”。
+    if (!platform.onWebRemoteControlReconnectWorkspace) {
+      return;
+    }
+
+    return platform.onWebRemoteControlReconnectWorkspace(async (request) => {
+      try {
+        await handleReconnectRemoteWorkspace(request.workspaceKey, {
+          activateWorkspaceAfterReconnect: false,
+          showErrorToast: false,
+          throwOnFailure: true,
+        });
+        return {
+          requestId: request.requestId,
+          workspaceKey: request.workspaceKey,
+          success: true,
+        };
+      } catch (error) {
+        return {
+          requestId: request.requestId,
+          workspaceKey: request.workspaceKey,
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    });
+  }, [handleReconnectRemoteWorkspace, platform]);
+  useWebRemoteControlRendererActions(platform);
+
+  useEffect(() => {
+    // Bugfix: fileDisplay 默认不传 basePath 时需要落到“当前激活 workspace”。
     // 之前纯工具层拿不到窗口内的 workspace 上下文，只能退回绝对路径，导致 mention / 文件展示在输入框里不够简洁。
     // 这里由 Root 在 workspace 切换时同步一份当前上下文，既保留工具层复用性，也不把 Zustand 依赖硬塞进工具函数。
     setDefaultFileDisplayBasePath(activeWorkspacePath);
@@ -885,6 +960,14 @@ function RootInner({
     );
   }, [hasCompletedFullRestore, isDesktop, windowWorkspaceTabs]);
 
+  // Bug 原因（2026-08-16 web 远控卡死）：官方版本请求安全校验应答方曾只随桌面正在展示的
+  // session pane 挂载，web 远控新建会话时桌面没有对应 pane、web 端无应答方，
+  // headers 请求永远滞留 pending，任务永久「工作中」。应答方必须常驻桌面窗口、
+  // 覆盖每个打开的 workspace tab，与展示状态解耦；Web 端保持零订阅，桌面仍是唯一权威。
+  const requestSecurityBridgeNode = isDesktop ? (
+    <RequestSecurityWorkspaceBridge workspaceTabs={windowWorkspaceTabs} />
+  ) : null;
+
   const { tryRefresh, clearCredentials } = useTokenRefresh();
   void tryRefresh;
   void clearCredentials;
@@ -942,9 +1025,7 @@ function RootInner({
     startDraftInWorkspace,
     startNewTaskFromActiveWorkspace,
     openWorkspace: handleOpenWorkspace,
-    openWorkspacePath: (path) => {
-      void handleSelectProject(path);
-    },
+    openWorkspacePath: handleSelectProject,
     setWorkspaceActionError,
     allowOpenWorkspace,
     isDesktop,
@@ -954,6 +1035,7 @@ function RootInner({
     activeWorkspaceIdentity,
     reconnectingRemoteWorkspaceKeys,
     remoteWorkspaceErrorByWorkspaceKey,
+    webRemoteControlFeatureEnabled,
     hasCompletedFullTabRestore: hasCompletedFullRestore,
     intl,
     isRestoringOAuthSession: isResolvingStartupAuthState || providerStartupSyncPending,
@@ -978,6 +1060,43 @@ function RootInner({
       void platform.executeDesktopCommand(DesktopCommandIds.CloseWindow);
     });
   }, [platform]);
+
+  // 自动领取的验证码出票：Host 是纯 Node 进程，跑不了阿里云无感验证（要 DOM + SDK），
+  // 但领取接口每次都校验票据。主进程把请求转到本窗口，这里出票后回传——手动领取走
+  // 的是同一个 SDK，所以出票口径与服务端契约完全一致。
+  useEffect(() => {
+    if (!platform.onMarketingCaptchaRequest) {
+      return;
+    }
+
+    return platform.onMarketingCaptchaRequest((request) => {
+      const report = platform.reportMarketingCaptchaProof;
+      if (!report) {
+        return;
+      }
+      void runAliyunCaptcha(request.config, {
+        failed: intl.formatMessage({ id: "marketing.captchaFailed" }),
+        loadFailed: intl.formatMessage({ id: "marketing.captchaLoadFailed" }),
+      })
+        .then((result) => {
+          if (!result?.verifyParam) {
+            report({ requestId: request.requestId, error: "captcha_verify_failed" });
+            return;
+          }
+          report({
+            requestId: request.requestId,
+            verifyParam: result.verifyParam,
+            ...(result.region ? { region: result.region } : {}),
+          });
+        })
+        .catch((error: unknown) => {
+          report({
+            requestId: request.requestId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
+    });
+  }, [intl, platform]);
 
   useRootOAuthEffects({
     accountIntentKey: JSON.stringify([
@@ -1395,10 +1514,27 @@ function RootInner({
     previousRemoteConnectionInProgressRef.current = remoteConnectionInProgress;
   }, [remoteConnectionInProgress, resetRemoteConnectionLogs]);
 
+  // 修复原因：没有打开的项目时 Root 只渲染独立设置页，迁移向导没有挂载，数据同步页「迁移」点了没有反应。
+  // 两个分支共用同一个迁移向导节点；没有项目时 workspacePath 为空，用户级的项照常导入（见 useSettingsSync）。
+  const onboardingDialog = (
+    <ScopedErrorBoundary
+      scope="onboarding-dialog"
+      resetKeys={[workspaceShellIdentity?.trim() || workspaceShellPath]}
+      variant="silent"
+    >
+      <OnboardingDialog
+        workspacePath={workspaceShellPath || undefined}
+        workspaceIdentity={workspaceShellIdentity}
+        isDesktop={isDesktop}
+      />
+    </ScopedErrorBoundary>
+  );
+
   const settingsLayerProps = {
     isDesktop,
     isMacDesktop,
     isWindowsDesktop,
+    isWebRemoteControl: Boolean(webRemoteControlWorkspaceSwitcher),
     captionWorkspacePath: activeWorkspacePath,
     onBack: activeWorkspacePath ? handleBackFromSettings : undefined,
     onCreateTask: handleCreateTask,
@@ -1406,8 +1542,7 @@ function RootInner({
     allowOpenWorkspace,
     onLogin: !user ? handleOpenLoginEntry : undefined,
     // 「账号管理 → 添加账号」是已登录状态下再加一个账号，与未登录时的 onLogin
-    // 是两条入口。之前这里没传 onOpenLogin，AccountSettingsSection 的按钮拿到的是
-    // undefined，点下去毫无反应（没有任何报错，只是没弹窗）。
+    // 是两条入口。漏传 onOpenLogin 时按钮拿到 undefined，点下去毫无反应。
     onOpenLogin: handleOpenLoginEntry,
     onLogout: user ? handleLogout : undefined,
     user,
@@ -1418,9 +1553,10 @@ function RootInner({
     return (
       <RootShell>
         {rootModelSelectionErrorNode}
+        {requestSecurityBridgeNode}
         {remoteConnectionDialog}
         {directoryBrowserDialog}
-        {/* HTML 启动壳已经展示 XCode SVG，但 React 接管 root 后旧壳会被整棵替换。
+        {/* 修复原因：HTML 启动壳已经展示 XCode SVG，但 React 接管 root 后旧壳会被整棵替换。
             之前阻塞恢复 tab / 初始 workspace 注入时重新渲染纯文字“加载中...”，所以启动被拆成两套 loading。
             这里复用同一套 SVG 启动画面，只把文案保留到 aria-label，保证视觉始终连续且不牺牲可访问性。 */}
         <RootStartupLoading label={loadingLabel} />
@@ -1432,6 +1568,7 @@ function RootInner({
     return (
       <RootShell>
         {rootModelSelectionErrorNode}
+        {requestSecurityBridgeNode}
         {remoteConnectionDialog}
         {directoryBrowserDialog}
         <WelcomeScreen
@@ -1456,6 +1593,7 @@ function RootInner({
         >
           <SettingsPage {...settingsLayerProps} />
         </ScopedErrorBoundary>
+        {onboardingDialog}
       </RootShell>
     );
   }
@@ -1471,6 +1609,7 @@ function RootInner({
     return (
       <RootShell>
         {rootModelSelectionErrorNode}
+        {requestSecurityBridgeNode}
         {initialWorkspaceLoadingFallback}
         {directoryBrowserDialog}
       </RootShell>
@@ -1490,6 +1629,7 @@ function RootInner({
   return (
     <RootShell>
       {rootModelSelectionErrorNode}
+      {requestSecurityBridgeNode}
       {remoteConnectionDialog}
       {directoryBrowserDialog}
       <OccupationOnboarding
@@ -1547,9 +1687,8 @@ function RootInner({
                 handleBackFromSettings={handleBackFromSettings}
                 handleLogout={user ? handleLogout : undefined}
                 onLogin={!user ? handleOpenLoginEntry : undefined}
-                // 工作区内打开设置页走的是 RootWorkspaceContent → WorkspaceSettingsLayer，
-                // 与直接渲染 SettingsPage 是两条路径；漏传这一项会让
-                // 「账号管理 → 添加账号」在已登录时点了毫无反应。
+                // 工作区内打开设置页走 RootWorkspaceContent → WorkspaceSettingsLayer，
+                // 与直接渲染 SettingsPage 是两条路径；漏传这一项会让添加账号按钮静默失效。
                 onOpenLogin={handleOpenLoginEntry}
                 user={user}
                 reconnectingRemoteWorkspaceKeys={reconnectingRemoteWorkspaceKeys}
@@ -1571,17 +1710,7 @@ function RootInner({
             </RemoteProjectPresentationProvider>
           </RemoteWorkspaceControllerProvider>
         )}
-        <ScopedErrorBoundary
-          scope="onboarding-dialog"
-          resetKeys={[workspaceShellIdentity?.trim() || workspaceShellPath]}
-          variant="silent"
-        >
-          <OnboardingDialog
-            workspacePath={workspaceShellPath || undefined}
-            workspaceIdentity={workspaceShellIdentity}
-            isDesktop={isDesktop}
-          />
-        </ScopedErrorBoundary>
+        {onboardingDialog}
       </OccupationOnboarding>
     </RootShell>
   );

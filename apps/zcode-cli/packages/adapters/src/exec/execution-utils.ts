@@ -2,6 +2,15 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ExecutionRequest } from "@zcode/contracts";
 
+function resolveDataBaseDir(): string {
+  return (
+    process.env.XCODE_DATA_BASE_DIR?.trim() ||
+    process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+    process.env.HOME?.trim() ||
+    homedir()
+  );
+}
+
 export const DEFAULT_TIMEOUT_MS = 300_000;
 const MS_PER_SECOND = 1_000;
 const MS_PER_MINUTE = 60 * MS_PER_SECOND;
@@ -16,7 +25,7 @@ export const DEFAULT_PROGRESS_INTERVAL_MS = 1_000;
 export const DEFAULT_PROGRESS_TAIL_BYTES = 4 * 1024;
 
 export function resolveDefaultOutputRootDir(processEnv: NodeJS.ProcessEnv = process.env): string {
-  const storageRoot = processEnv.XCODE_STORAGE_DIR?.trim() || join(homedir(), ".xcode");
+  const storageRoot = processEnv.XCODE_STORAGE_DIR?.trim() || join(resolveDataBaseDir(), ".xcode");
   return join(storageRoot, "cli", "exec");
 }
 

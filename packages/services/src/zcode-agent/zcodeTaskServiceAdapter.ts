@@ -34,12 +34,13 @@ import {
   collectXCodeBackgroundTaskNotificationsByToolUseId,
   mergeXCodeBackgroundTaskControlItems,
   parseXCodeBackgroundTaskControlItems,
-  parseXCodeBackgroundTaskNotificationText,
+  parseZCodeBackgroundTaskNotifications,
   parseModelPickerValue as parseSharedModelSelection,
   resolveWorkspaceKey,
   resolveXCodeVisibleSessionTitle,
   textFromXCodeMessageParts,
   XCODE_AGENT_PROVIDER,
+  zcodeBackgroundTaskNotificationFailureText,
   zcodeBackgroundTaskNotificationToolUpdateStatus,
   appendXCodeStreamingToolInputDelta,
   buildXCodeStreamingToolInputPreview,
@@ -1213,7 +1214,7 @@ export function createXCodeTaskServiceAdapter(
       const indexedMeta = await taskIndexRepo.getTaskMeta(params).catch(() => null);
       const legacyMeta: XCodeTaskMeta = {
         ...legacyFile.meta,
-        // Bugfix: 旧 ACP task 只落在 ~/.zcode/v2/sessions/*.json，没有写入
+        // Bugfix: 旧 ACP task 只落在 ~/.xcode/v2/sessions/*.json，没有写入
         // zcode-cli 的 sqlite session 表。新协议 resume 会把 taskId 当 sessionId
         // 直接报 Session not found；这里按旧快照恢复只读历史内容，并用 task index
         // 补齐用户改名、归档状态和终态 status，避免把旧 task 误当成可订阅的新 session。
@@ -1742,9 +1743,10 @@ export function createXCodeTaskServiceAdapter(
     },
 
     async releaseWorkspacePreparation(params): Promise<void> {
-      // 关闭 workspace UI 只会释放 RPC 使用方，不会自动终止已预热的 Agent。
-      // WSL Host 共享后 Host 会继续存活，因此必须按 workspaceKey 显式回收对应 runtime。
-      await options.zcodeAgentService.disposeWorkspace(normalizeWorkspaceParams(params));
+      await options.zcodeAgentService.disposeWorkspace({
+        ...normalizeWorkspaceParams(params),
+        releasePreparation: true,
+      });
     },
 
     async checkCodexConnectivity(): Promise<XCodeCodexConnectivityCheckResult> {
@@ -3548,35 +3550,37 @@ function toXCodeDeliveryKind(
   return deliveryKind === "replayable" ? "web-remote-replayable" : "desktop-continuous";
 }
 
-function backgroundTaskNotificationToolUpdateFromInput(params: {
+function backgroundTaskNotificationToolUpdatesFromInput(params: {
   input: string | undefined;
   inputId: InputId | undefined;
+  originMeta: unknown;
   taskId: string;
   traceId: TraceId;
-}): Extract<XCodeStreamEvent, { type: "tool_call_update" }> | null {
-  const parsed = parseXCodeBackgroundTaskNotificationText(params.input);
-  if (!parsed) {
-    return null;
-  }
-  const status = zcodeBackgroundTaskNotificationToolUpdateStatus(parsed.notification.status);
-  return {
-    type: "tool_call_update",
-    taskId: params.taskId,
-    traceId: params.traceId,
-    ...(params.inputId ? { inputId: params.inputId } : {}),
-    toolId: parsed.toolUseId,
-    status,
-    content: parsed.notification.result ?? parsed.notification.summary,
-    // replayable 动态事件也必须把 notification error 放到标准 tool error，
-    // 否则手机远控与桌面 continuous 的失败详情会产生分叉。
-    ...(status === "failed" && parsed.notification.error
-      ? { error: parsed.notification.error }
-      : {}),
-    raw: attachXCodeBackgroundTaskNotificationToRaw(
-      { toolCallId: parsed.toolUseId },
-      parsed.notification,
-    ),
-  };
+}): Extract<XCodeStreamEvent, { type: "tool_call_update" }>[] {
+  // 终态与失败原文优先取本轮 originMeta 的结构化结果，不解析 summary 文本。
+  // 合并轮的每条通知各自更新自己的工具。
+  return parseZCodeBackgroundTaskNotifications(params.input, params.originMeta).map((parsed) => {
+    const status = zcodeBackgroundTaskNotificationToolUpdateStatus(parsed.notification.status);
+    return {
+      type: "tool_call_update",
+      taskId: params.taskId,
+      traceId: params.traceId,
+      ...(params.inputId ? { inputId: params.inputId } : {}),
+      toolId: parsed.toolUseId,
+      status,
+      content: parsed.notification.result ?? parsed.notification.summary,
+      // replayable 动态事件也必须把 notification error 放到标准 tool error，
+      // 否则手机远控与桌面 continuous 的失败详情会产生分叉。
+      // 修复原因：合并轮没有结构化结果，通知里也没有 <error>，失败详情原来是空的。
+      ...(status === "failed"
+        ? { error: zcodeBackgroundTaskNotificationFailureText(parsed.notification) }
+        : {}),
+      raw: attachXCodeBackgroundTaskNotificationToRaw(
+        { toolCallId: parsed.toolUseId },
+        parsed.notification,
+      ),
+    };
+  });
 }
 
 function mapMessage(
@@ -3835,7 +3839,9 @@ function mapToolPart(
       status: notificationFailed ? "failed" : "completed",
       input: state.input,
       output: state.output,
-      ...(notificationFailed && taskNotification?.error ? { error: taskNotification.error } : {}),
+      ...(notificationFailed && taskNotification
+        ? { error: zcodeBackgroundTaskNotificationFailureText(taskNotification) }
+        : {}),
       raw,
     };
   }
@@ -4044,14 +4050,15 @@ function mapSessionEvent(
       ...(event.turnId ? { turnId: event.turnId } : {}),
       startedAt: event.timestamp,
     };
-    const taskNotificationToolUpdate = backgroundTaskNotificationToolUpdateFromInput({
+    const taskNotificationToolUpdates = backgroundTaskNotificationToolUpdatesFromInput({
       input: stringValue(payload.input),
+      originMeta: payload.originMeta,
       taskId: params.taskId,
       traceId,
       inputId: eventInputId,
     });
-    if (taskNotificationToolUpdate) {
-      return [runStartedEvent, taskNotificationToolUpdate];
+    if (taskNotificationToolUpdates.length > 0) {
+      return [runStartedEvent, ...taskNotificationToolUpdates];
     }
     if (
       stringValue(payload.inputSource) === "goal-continuation" &&

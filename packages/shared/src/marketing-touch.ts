@@ -242,3 +242,37 @@ export interface MarketingCaptchaConfig {
   language?: string;
   [key: string]: unknown;
 }
+
+/**
+ * 验证码是否真的开启（官方 `p3` 门槛）。
+ *
+ * 三处必须同口径：渲染进程手动领取、Host 自动领取、以及这里被两边共用。
+ * 缺任一必填字段就当作关闭——拿半份配置去初始化 SDK 只会得到一个必然失败的
+ * 票据，不如直接按「服务端没开验证码」处理。
+ */
+export function isMarketingCaptchaEnabled(
+  config: MarketingCaptchaConfig | null | undefined,
+): config is MarketingCaptchaConfig & { region: string; prefix: string; sceneId: string } {
+  return Boolean(
+    config && config.enabled !== false && config.region && config.prefix && config.sceneId,
+  );
+}
+
+/**
+ * Host → Main → Renderer 的验证码票据请求（借渲染进程的无感验证出票）。
+ *
+ * Host 没有 DOM 跑不了阿里云 SDK，但领取接口每次都要票据，所以只能借渲染进程
+ * 这一趟。`requestId` 用来把异步回包对回发起方。
+ */
+export interface MarketingCaptchaProofRequest {
+  requestId: string;
+  config: MarketingCaptchaConfig;
+}
+
+/** 渲染进程回传的票据；失败时 `error` 是可直接进日志的文案。 */
+export interface MarketingCaptchaProofResult {
+  requestId: string;
+  verifyParam?: string;
+  region?: string;
+  error?: string;
+}

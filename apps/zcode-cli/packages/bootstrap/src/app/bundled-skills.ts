@@ -36,6 +36,10 @@ export { DYNAMIC_WORKFLOW_SKILL_NAME };
 /** 代理池配置技能：教模型用 ProxyPool 工具改 XCode 的代理池与账号绑定。 */
 const PROXY_POOL_SKILL_NAME = "xcode-proxy-pool";
 
+/** 越狱研究技能：GODMODE / Parseltongue / ULTRAPLINIAN，供小玉等越狱人设调用。
+ * 目录名带 xcode- 前缀：用户可能自行装了同名 godmode 技能，同名会让加载顺序压过内置版。 */
+const GODMODE_SKILL_NAME = "xcode-godmode";
+
 /** 技能包里每个文件都是必需资产：丢任何一个都拒绝整包，而不是装出一个引用文件缺失的技能。 */
 export const BUNDLED_SKILL_PACK_REQUIRED_PATHS = [
   `skills/${DYNAMIC_WORKFLOW_SKILL_NAME}/SKILL.md`,
@@ -44,6 +48,56 @@ export const BUNDLED_SKILL_PACK_REQUIRED_PATHS = [
   // 代理池配置面（ProxyPool 工具）的说明书，同样必须随 CLI 一起发出去：
   // 工具在场而说明书缺失时，模型只能靠工具描述猜 providerId / accountId 的取值来源。
   `skills/${PROXY_POOL_SKILL_NAME}/SKILL.md`,
+  // 越狱技能的入口与可执行脚本：SKILL.md 在而脚本缺失时，模型会照文档调用却拿到 ENOENT。
+  `skills/${GODMODE_SKILL_NAME}/SKILL.md`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/parseltongue.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/godmode_probe.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/godmode_race.py`,
+  // exec 加载器与矩阵报表：前者把上面所有函数塞进 execute_code 作用域，
+  // 后者读 fork 的 unlock matrix JSONL；缺了它们 SKILL.md 的对应段落就是空话。
+  `skills/${GODMODE_SKILL_NAME}/scripts/load_godmode.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/matrix_report.py`,
+  // fork 的测试入口本身不带语料，但缺了它模型就跑不了 fork 的离线回归。
+  `skills/${GODMODE_SKILL_NAME}/scripts/run_fork_tests.py`,
+  `skills/${GODMODE_SKILL_NAME}/references/jailbreak-templates.md`,
+  `skills/${GODMODE_SKILL_NAME}/references/refusal-detection.md`,
+  // 测量纪律三件套：跑大样本前的规程、组合攻击的三个轴、一次完整 run 的读数。
+  `skills/${GODMODE_SKILL_NAME}/references/combination-attacks.md`,
+  `skills/${GODMODE_SKILL_NAME}/references/running-a-measurement.md`,
+  `skills/${GODMODE_SKILL_NAME}/references/measured-results.md`,
+  // prefill 模板：SKILL.md 的 Paths 段把它们列为可读资产，缺了就是文档指向空文件。
+  `skills/${GODMODE_SKILL_NAME}/templates/prefill.json`,
+  `skills/${GODMODE_SKILL_NAME}/templates/prefill-subtle.json`,
+  // 测量面：语料、打分器、运行器。SKILL.md 的 Paths 段逐个点了名，
+  // 少一个就是文档指着不存在的脚本；这些文件不带密钥，纯粹是拒绝判定的基准。
+  `skills/${GODMODE_SKILL_NAME}/scripts/safety_scoring.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/csam_eval.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/safety_suite.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/safety_suite_runner.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/unlock_matrix.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/priming_eval.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/safety_samples.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/seed_library.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/seed_library_b.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/seed_library_c.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/seed_library_cli.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/seed_template.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/auto_jailbreak.py`,
+  // 一次性运行器：各跑一种测量，import 时无副作用，缺了只是少一种跑法。
+  `skills/${GODMODE_SKILL_NAME}/scripts/csam_focus_run.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/csam_combo_run.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/csam_continuation_run.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/csam_quick_check.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/csam_break_verify.py`,
+  // 离线回归：不需要 API key，改完打分器必须先跑这两个再花调用钱。
+  `skills/${GODMODE_SKILL_NAME}/scripts/test_csam_eval.py`,
+  `skills/${GODMODE_SKILL_NAME}/scripts/test_safety_scoring.py`,
+  // 测量文档：打分器规则、样本与种子的纯文本版，报告里引 id 时由它们兜底。
+  `skills/${GODMODE_SKILL_NAME}/references/safety-scorer-rules.md`,
+  `skills/${GODMODE_SKILL_NAME}/references/jailbreak-samples.md`,
+  `skills/${GODMODE_SKILL_NAME}/references/context-attack-seeds.md`,
+  // fork 自带的 manifest：XCode 不读它，随包只为和 fork 逐文件对齐。
+  `skills/${GODMODE_SKILL_NAME}/skill.yaml`,
 ] as const;
 
 /** 与 official-plugin-definitions 的 rootCandidates 同形，覆盖 monorepo src/dist、cli/dist 与桌面 resources/glm 布局。 */

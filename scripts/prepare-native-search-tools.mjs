@@ -8,7 +8,11 @@ import {
   isNativeSearchBundleCurrent,
   writeNativeSearchBundleMeta,
 } from "./native-search-tools-bundle-meta.mjs";
-import { resolveNativeSearchPrebuiltPlan } from "./native-search-tools-config.mjs";
+import { downloadNativeSearchTools } from "./download-native-search-tools.mjs";
+import {
+  resolveNativeSearchArtifactSource,
+  resolveNativeSearchPrebuiltPlan,
+} from "./native-search-tools-config.mjs";
 import { verifyNativeSearchBinaryTarget } from "./native-search-tools-verify.mjs";
 import { extractPrebuiltBinary, verifyPrebuiltArchiveSha256 } from "./prebuilt-binary-extract.mjs";
 import { stageNativeSearchNotices } from "./third-party-notices.mjs";
@@ -23,15 +27,48 @@ function ensureCachedBinaryExecutable(binaryPath, targetPlatform) {
   chmodSync(binaryPath, 0o755);
 }
 
+/**
+ * native search 预编译工具的唯一准备入口（desktop prepare:native-search、SEA、server-cli、remote 共用）。
+ *
+ * 来源由 resolveNativeSearchArtifactSource 判定：内网依赖源已配置时原样走既有
+ * downloadNativeSearchTools（同一 release plan、SHA-256 校验与 bundle meta 缓存语义）；
+ * 未配置时才解包仓库内置归档。两条路径都在返回前刷新工具目录旁的许可声明。
+ */
 export async function prepareNativeSearchTools({
   platform = process.env.XCODE_TARGET_OS || process.platform,
   arch = process.env.XCODE_TARGET_ARCH || process.arch,
   outputDir,
   dependenciesDir,
+  env = process.env,
+  source = resolveNativeSearchArtifactSource(env),
   prebuiltPlan,
 } = {}) {
+  if (source === "intranet") {
+    const downloadedPlan = await downloadNativeSearchTools({
+      platform,
+      arch,
+      outputDir,
+      env,
+      prebuiltPlan,
+    });
+    await stageNativeSearchNotices(downloadedPlan, repoRoot, { origin: "intranet-mirror" });
+    return downloadedPlan;
+  }
+  if (source !== "repository") {
+    throw new Error(`Unsupported native search artifact source: ${String(source)}`);
+  }
+
+  // 来源已判定为 repository，生成 plan 时必须固定同一来源：否则默认内网地址可解析的环境会
+  // 重新推断为 intranet，返回的 plan 带上 downloadUrl，与实际字节来源不一致。
   const plan =
-    prebuiltPlan ?? resolveNativeSearchPrebuiltPlan({ platform, arch, outputDir, dependenciesDir });
+    prebuiltPlan ??
+    resolveNativeSearchPrebuiltPlan({
+      platform,
+      arch,
+      outputDir,
+      dependenciesDir,
+      env: { ...env, NATIVE_SEARCH_TOOLS_ARTIFACT_SOURCE: "repository" },
+    });
 
   console.log("==> Preparing native search tools from repository archives");
   console.log(`    platform: ${plan.platformKey}`);

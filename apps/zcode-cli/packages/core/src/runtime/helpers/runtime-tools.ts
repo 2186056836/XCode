@@ -72,6 +72,8 @@ function registerRuntimeBuiltInTools(runtime: AgentRuntimeInternal, deps: AgentR
     // 没有灰度 flag——这是设置页里已有的功能，端口在场即代表 host 能应答 proxyPool/*；
     // subagent 子会话与 automation 同规则不暴露（子代理不该改全局代理配置）。
     includeProxyPool: Boolean(deps.proxyPoolPort) && runtime.config.taskType !== "subagent_child",
+    // 桌宠控制：宠物是全局 UI，任何会话（含子代理）都可以让宠物做动作。
+    includePetControl: Boolean(deps.petControlPort),
     // 模型越狱配置面与代理池同门：host 侧设置服务在场才注入端口；
     // subagent 子会话不暴露（子代理不该改全局系统提示词）。
     includeModelJailbreak:
@@ -202,6 +204,7 @@ function createRuntimeToolExecutor(
     automationPort: deps.automationPort,
     offPeakPort: deps.offPeakPort,
     proxyPoolPort: deps.proxyPoolPort,
+    petControlPort: deps.petControlPort,
     modelJailbreakPort: deps.modelJailbreakPort,
     providerAccountPort: deps.providerAccountPort,
     topicResourcePort: deps.topicResourcePort,
@@ -212,6 +215,9 @@ function createRuntimeToolExecutor(
     dynamicWorkflowSnippetPort: deps.dynamicWorkflowSnippetPort,
     modelCatalogPort: deps.modelCatalogPort,
     runtimeTaskRegistry: runtime.runtimeTaskRegistry,
+    registerResidencyBlockingWork: (work) => {
+      void runtime.trackResidencyBlockingWork(work).catch(() => undefined);
+    },
     readFileState: runtime.readFileState,
     // 工作流创作工具的技能门（tool/handlers/workflow-skill-gate.ts）：按模型此刻看得见的历史回答
     // 「读过技能没有」。只在会话真有 Skill 工具时给探针——没有 skillPort 的会话装不上那个技能，

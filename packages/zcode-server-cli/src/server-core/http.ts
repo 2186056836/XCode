@@ -1,6 +1,7 @@
 import { scopeConversationShareServiceForAttachment } from "@zcode/services/node";
 import { randomUUID, timingSafeEqual } from "node:crypto";
-import { hostname, userInfo } from "node:os";
+import { hostname } from "node:os";
+import { resolveServerOsUser } from "@zcode/shared/node";
 import { serve } from "@hono/node-server";
 import { createNodeWebSocket } from "@hono/node-ws";
 import { Hono } from "hono";
@@ -35,7 +36,7 @@ import {
   SERVER_REMOTE_PROTOCOL_VERSION,
   TOPIC_RESOURCE_RELAY_CHANNEL,
   serverRemoteInfoOutputSchema,
-  ZCODE_COMPATIBILITY_MANIFEST,
+  XCODE_COMPATIBILITY_MANIFEST,
   XCODE_RPC_HOST_CAPABILITY_HEADER,
   XCODE_VERSION,
   type ServerRemoteInfo,
@@ -223,14 +224,15 @@ export async function createCoreHttpServer(
     protocolVersion: SERVER_REMOTE_PROTOCOL_VERSION,
     authRequired: Boolean(ingressToken),
     workspaces: [],
-    compatibility: ZCODE_COMPATIBILITY_MANIFEST,
+    compatibility: XCODE_COMPATIBILITY_MANIFEST,
     migration: { failedPathCount: options.migrationFailedPathCount ?? 0 },
-    identity: { osUser: userInfo().username, hostname: hostname() },
+    identity: { osUser: resolveServerOsUser(), hostname: hostname() },
     capabilities: {
       desktopContinuous: true,
       websocketRpc: true,
       virtualProjects: true,
       processResourceTelemetry: true,
+      remoteConversationTelemetry: true,
     },
   });
   // 裸 Set 无法落实 expiresAt，未消费的 capability 会一直有效并持续累积。

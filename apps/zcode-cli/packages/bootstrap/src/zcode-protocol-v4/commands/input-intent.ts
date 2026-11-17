@@ -1,19 +1,26 @@
 import type { TurnInputIntentMetadata } from "@zcode/contracts";
-import type { ModelSelection, TurnObfuscationSettings } from "@zcode/shared/zcode-protocol-v4";
-import type { AttachmentRef, CommandEnvelope, QueueItem } from "@zcode/shared/zcode-protocol-v4";
-import type { SubmissionMode } from "@zcode/shared/zcode-protocol-v4";
+import type { ModelSelection } from "@zcode/shared";
+import type {
+  AttachmentRef,
+  CommandEnvelope,
+  CommandPayloadMap,
+  QueueItem,
+  SubmissionMode,
+  TurnObfuscationSettings,
+} from "@zcode/shared/zcode-protocol-v4";
 import { commandAdmissionOf } from "./executor.js";
 
 export interface CanonicalCommandIntent {
   inputOrigin?: "desktop" | "mobile";
-  conversationQuotes?: TurnInputIntentMetadata["conversationQuotes"];
+  conversationQuotes?: import("@zcode/contracts").TurnInputIntentMetadata["conversationQuotes"];
+  /** godmode 输入混淆（turn 级覆盖）。 */
+  obfuscation?: TurnObfuscationSettings;
   botGroupSource?: TurnInputIntentMetadata["botGroupSource"];
   kind: "sendText" | "sendGoalCommand";
   text: string;
   modelSelection?: ModelSelection;
   mode?: SubmissionMode;
   planEnabled?: boolean;
-  obfuscation?: TurnObfuscationSettings;
   sourceCommandId?: string;
   clientId?: string;
   queueItemId?: string;
@@ -21,6 +28,7 @@ export interface CanonicalCommandIntent {
   admittedDelivery?: TurnInputIntentMetadata["admittedDelivery"];
   fallbackReasonCode?: string;
   attachmentRefs?: readonly AttachmentRef[];
+  genUiContext?: TurnInputIntentMetadata["genUiContext"];
   sharedContextRefs?: TurnInputIntentMetadata["sharedContextRefs"];
   provenance?: TurnInputIntentMetadata["provenance"];
   source?: TurnInputIntentMetadata["source"];
@@ -31,7 +39,9 @@ export function inputIntentMetadata(
   options: {
     text: string;
     inputOrigin?: "desktop" | "mobile";
-    conversationQuotes?: TurnInputIntentMetadata["conversationQuotes"];
+    conversationQuotes?: import("@zcode/contracts").TurnInputIntentMetadata["conversationQuotes"];
+  /** godmode 输入混淆（turn 级覆盖）。 */
+  obfuscation?: TurnObfuscationSettings;
     botGroupSource?: TurnInputIntentMetadata["botGroupSource"];
     requestedDelivery: TurnInputIntentMetadata["requestedDelivery"];
     admittedDelivery?: TurnInputIntentMetadata["admittedDelivery"];
@@ -40,14 +50,20 @@ export function inputIntentMetadata(
     modelSelection?: ModelSelection;
     mode?: SubmissionMode;
     planEnabled?: boolean;
-    obfuscation?: TurnObfuscationSettings;
+    genUiContext?: TurnInputIntentMetadata["genUiContext"];
     sharedContextRefs?: TurnInputIntentMetadata["sharedContextRefs"];
     source?: TurnInputIntentMetadata["source"];
   },
 ): TurnInputIntentMetadata {
   const admission = commandAdmissionOf(envelope);
+  const highspeed =
+    envelope.type === "sendText"
+      ? (envelope.payload as CommandPayloadMap["sendText"]).highspeedMeta
+      : undefined;
   return {
-    ...(options.inputOrigin ? { inputOrigin: options.inputOrigin } : {}),
+    ...((envelope.inputOrigin ?? options.inputOrigin)
+      ? { inputOrigin: envelope.inputOrigin ?? options.inputOrigin }
+      : {}),
     ...(options.conversationQuotes ? { conversationQuotes: options.conversationQuotes } : {}),
     ...(options.botGroupSource ? { botGroupSource: options.botGroupSource } : {}),
     sourceCommandId: envelope.commandId,
@@ -65,7 +81,6 @@ export function inputIntentMetadata(
     ...(options.modelSelection ? { modelSelection: options.modelSelection } : {}),
     ...(options.mode ? { mode: options.mode } : {}),
     ...(options.planEnabled !== undefined ? { planEnabled: options.planEnabled } : {}),
-    ...(options.obfuscation ? { obfuscation: options.obfuscation } : {}),
     admissionSeq: admission.admissionSeq,
     admittedAt: admission.admittedAt,
     requestedDelivery: options.requestedDelivery,
@@ -78,7 +93,9 @@ export function inputIntentMetadata(
           : "startNow"),
     ...(options.fallbackReasonCode ? { fallbackReasonCode: options.fallbackReasonCode } : {}),
     ...(options.attachmentRefs ? { attachmentRefs: [...options.attachmentRefs] } : {}),
+    ...(options.genUiContext !== undefined ? { genUiContext: options.genUiContext } : {}),
     ...(options.sharedContextRefs ? { sharedContextRefs: [...options.sharedContextRefs] } : {}),
+    ...(highspeed ? { highspeed } : {}),
     ...(options.source ? { source: options.source } : {}),
   };
 }
@@ -93,10 +110,10 @@ export function inputIntentMetadataFromCanonical(
   const originalSourceCommandId =
     canonical.provenance?.sourceCommandId ?? canonical.sourceCommandId;
   return {
-    ...(canonical.inputOrigin ? { inputOrigin: canonical.inputOrigin } : {}),
-    ...(canonical.conversationQuotes
-      ? { conversationQuotes: canonical.conversationQuotes }
+    ...((envelope.inputOrigin ?? canonical.inputOrigin)
+      ? { inputOrigin: envelope.inputOrigin ?? canonical.inputOrigin }
       : {}),
+    ...(canonical.conversationQuotes ? { conversationQuotes: canonical.conversationQuotes } : {}),
     ...(canonical.botGroupSource ? { botGroupSource: canonical.botGroupSource } : {}),
     sourceCommandId: envelope.commandId,
     queueItemId: admission.queueItemId,
@@ -113,6 +130,7 @@ export function inputIntentMetadataFromCanonical(
     admittedDelivery: canonical.admittedDelivery ?? "startNow",
     ...(canonical.fallbackReasonCode ? { fallbackReasonCode: canonical.fallbackReasonCode } : {}),
     ...(canonical.attachmentRefs ? { attachmentRefs: [...canonical.attachmentRefs] } : {}),
+    ...(canonical.genUiContext !== undefined ? { genUiContext: canonical.genUiContext } : {}),
     ...(canonical.sharedContextRefs ? { sharedContextRefs: [...canonical.sharedContextRefs] } : {}),
     ...(canonical.source ? { source: canonical.source } : {}),
     ...(originalSourceCommandId
@@ -133,6 +151,9 @@ export function inputIntentMetadataFromQueueItem(
   canonicalText: string,
 ): TurnInputIntentMetadata {
   return {
+    ...(item.inputOrigin ? { inputOrigin: item.inputOrigin } : {}),
+    ...(item.conversationQuotes ? { conversationQuotes: item.conversationQuotes } : {}),
+    ...(item.botGroupSource ? { botGroupSource: item.botGroupSource } : {}),
     sourceCommandId: item.sourceCommandId,
     queueItemId: item.queueItemId,
     clientId: item.clientId,
@@ -141,7 +162,6 @@ export function inputIntentMetadataFromQueueItem(
     ...(item.modelSelection ? { modelSelection: item.modelSelection } : {}),
     ...(item.mode ? { mode: item.mode } : {}),
     ...(item.planEnabled !== undefined ? { planEnabled: item.planEnabled } : {}),
-    ...(item.obfuscation ? { obfuscation: item.obfuscation } : {}),
     admissionSeq: item.order.admissionSeq,
     admittedAt: item.admittedAt,
     requestedDelivery: item.delivery.requested,
@@ -151,7 +171,10 @@ export function inputIntentMetadataFromQueueItem(
       ? { fallbackReasonCode: item.delivery.fallbackReasonCode }
       : {}),
     attachmentRefs: item.attachments,
+    ...(item.genUiContext !== undefined ? { genUiContext: item.genUiContext } : {}),
     ...(item.sharedContextRefs ? { sharedContextRefs: [...item.sharedContextRefs] } : {}),
+    ...(item.highspeed ? { highspeed: item.highspeed } : {}),
+    ...(item.source ? { source: item.source } : {}),
     // 提升只改变调度状态；重试／编辑原始输入的来源关联不能在此丢失。
     ...(item.provenance ? { provenance: { ...item.provenance } } : {}),
   };

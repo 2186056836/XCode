@@ -38,6 +38,7 @@ import type {
   ModelUsage,
   OffPeakPort,
   ProxyPoolPort,
+  PetControlPort,
   ModelJailbreakPort,
   ProviderAccountPort,
   TopicResourcePort,
@@ -180,6 +181,15 @@ export interface XCodeAppOptions {
   officialPluginRoots?: string[];
   pluginStorageRoot?: string;
   executionPort?: ExecutionPort;
+  /**
+   * 官方命令端点（技术方案 5.8）：返回本 session 的 Bash/tool 子进程要带的端点地址与 token。
+   * workspace 是本 session 的工作区，端点取身份头时据此让 host 路由。
+   * 由协议宿主注入；缺省时官方插件的 CLI 拿不到身份。
+   */
+  officialCommandEnv?: (
+    sessionId: string,
+    workspace: { workspacePath: string; workspaceIdentity?: string },
+  ) => Promise<Record<string, string>>;
   /** 资源遥测旁路；由协议宿主注入，主任务和 workflow 的执行适配器共用。 */
   onToolExecResource?: (sample: XCodeToolExecResource) => void;
   /** browser-use 控制端口；注入后 node_repl 的 agent.browsers.* 可用。缺省则不可用。 */
@@ -213,6 +223,7 @@ export interface XCodeAppOptions {
   offPeakPort?: OffPeakPort;
   /** 代理池配置端口；host 侧 IProxyPoolService 在场即注入。 */
   proxyPoolPort?: ProxyPoolPort;
+  petControlPort?: PetControlPort;
   modelJailbreakPort?: ModelJailbreakPort;
   providerAccountPort?: ProviderAccountPort;
   topicResourcePort?: TopicResourcePort;
@@ -270,8 +281,6 @@ export interface SteerTurnOptions {
 
 export type SendInputOptions = SubmitPromptOptions & {
   inputId?: string;
-  /** 可信消费入口确定的呈现标记；不改变原始用户内容或调度语义。 */
-  inputPresentation?: ExecuteTurnOptions["inputPresentation"];
   delivery?: InputDelivery;
   /** sendText 的产品 guide/queue 意图；是否 busy 仍由 Core admission 判断。 */
   queueDelivery?: "guide" | "queue";
@@ -350,6 +359,8 @@ export interface XCodeApp {
    * coordinator 并重发 admission 状态，否则已信任 Hook 继续被拒、banner 不刷新。
    */
   reloadWorkspaceHookTrust(): Promise<void>;
+  /** 设置授权落盘后更新同工作区会话的提示；不自动连接。 */
+  reloadWorkspaceMcpTrust?(): Promise<void>;
   close?(): Promise<void>;
   getMode(): CollaborationMode;
   getModel(): string;

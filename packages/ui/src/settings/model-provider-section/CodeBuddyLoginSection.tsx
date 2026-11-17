@@ -93,6 +93,7 @@ export function CodeBuddyLoginSection({
   /** 每账号自动签到设置（随账号列表刷新）。 */
   const [autoCheckinRows, setAutoCheckinRows] = useState<readonly AutoCheckinSettingRow[]>([]);
   const [autoCheckinSavingId, setAutoCheckinSavingId] = useState<string | null>(null);
+  const [autoCheckinBatchRunning, setAutoCheckinBatchRunning] = useState(false);
   /** 账号详情弹窗（令牌有效期等低频信息）。 */
   const [detailAccount, setDetailAccount] = useState<AccountRow | null>(null);
   /** 本区账号额度（剩余/总额），按 accountId 索引；账号行内联展示。 */
@@ -251,6 +252,28 @@ export function CodeBuddyLoginSection({
       setSwitchingId(null);
     },
     [providerSettingsService, refreshAccounts, writeAccessToken],
+  );
+
+  /** 批量开启/关闭当前区域全部账号的自动签到。 */
+  const batchToggleAutoCheckin = useCallback(
+    async (enabled: boolean) => {
+      if (autoCheckinRows.length === 0) return;
+      setAutoCheckinBatchRunning(true);
+      setAutoCheckinRows((prev) => prev.map((row) => ({ ...row, enabled })));
+      try {
+        await providerSettingsService.codebuddyUpdateAutoCheckinBatch(
+          autoCheckinRows.map((row) => ({
+            region,
+            accountId: row.accountId,
+          })),
+          { enabled },
+        );
+      } catch {
+        // 批量整体失败由 refresh 收敛。
+      }
+      setAutoCheckinBatchRunning(false);
+    },
+    [autoCheckinRows, providerSettingsService, region],
   );
 
   const saveApiKey = useCallback(async () => {
@@ -583,6 +606,8 @@ export function CodeBuddyLoginSection({
         savingAccountId={autoCheckinSavingId}
         onToggle={(accountId, enabled) => void toggleAutoCheckin(accountId, enabled)}
         onChangeTime={(accountId, time) => void changeAutoCheckinTime(accountId, time)}
+        onBatchToggle={(enabled) => void batchToggleAutoCheckin(enabled)}
+        batchRunning={autoCheckinBatchRunning}
       />
 
       <div className="flex items-center gap-2">

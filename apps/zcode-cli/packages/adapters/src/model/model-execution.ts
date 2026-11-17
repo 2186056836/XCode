@@ -13,7 +13,7 @@ import {
   mintSessionId,
   OPENCODE_FREE_USER_AGENT,
 } from "./opencode-build-agent.js";
-import type { createModelRequestSecurityState } from "./request-security-edition/index.js";
+import { createModelRequestSecurityState } from "./request-security-edition/index.js";
 import type { ModelRequestSecurityPort } from "./request-security.js";
 import { appendFileSync } from "node:fs";
 import { join } from "node:path";
@@ -29,6 +29,7 @@ import {
   type ModelId,
   type ModelProviderId,
   type ModelRequestAuth,
+  type ProviderEndpointRoutingPort,
 } from "@zcode/contracts";
 import type { RegistryProviderConfig } from "@zcode/provider";
 import { isOffReasoningLevel, mapReasoningEffortForOpenCode, withOpenRouterAttributionHeaders } from "@zcode/shared";
@@ -36,18 +37,20 @@ import { createAnthropicCompatFetch } from "./anthropic-stream-compat.js";
 import { createOpenAIResponsesJsonCompatFetch } from "./openai-responses-json-compat.js";
 import { createModelOptionMapFetch, type RawRequestBodyCapture } from "./model-option-map-fetch.js";
 import { createNetworkProxyFetch, type NetworkProxyFetchOptions } from "../network/proxy-fetch.js";
-import {
-  createProviderProxyFetch,
-  resolveProviderProxyAccountId,
-} from "../network/provider-proxy-fetch.js";
+import { createProviderEndpointRoutingFetch } from "./provider-endpoint-routing-fetch.js";
+import { normalizeModelTlsFailure } from "./failure-tls.js";
+import { createProviderProxyFetch } from "../network/provider-proxy-fetch.js";
 import {
   buildSignedQoderRequest,
   unwrapQoderSseStream,
   type QoderRequestIdentity,
 } from "./qoderProtocol.js";
 import { createOfficialCodingPlanGatewayFetch } from "./official-coding-plan-gateway.js";
-import { normalizeModelTlsFailure } from "./failure-tls.js";
-import { mergeModelRequestHeaders } from "./model-request-headers.js";
+import {
+  mergeModelRequestHeaders,
+  withoutModelAuthHeaders,
+  withoutContextOwnedModelHeaders,
+} from "./model-request-headers.js";
 
 export type AiSdkProviderKind = "openai" | "anthropic" | "openai-compatible";
 
@@ -81,6 +84,7 @@ interface AiSdkProviderConfig {
 export interface AiSdkModelExecutionConfig {
   /** 执行环境提供的默认来源信息，不属于 Provider 持久化配置。 */
   defaultHeaders?: Readonly<Record<string, string>>;
+  endpointRoutingPort?: ProviderEndpointRoutingPort;
   env?: EnvRecord;
   network?: AiSdkNetworkConfig;
 }
@@ -92,6 +96,8 @@ export interface AiSdkModelExecutionOptions {
   requestSecurityState?: ReturnType<typeof createModelRequestSecurityState>;
   logger?: Logger;
   transport?: ProviderFetch;
+  /** 在代理和 CA 解析之后旁路观测，不替换产品网络策略。 */
+  observeTransport?: (transport: ProviderFetch) => ProviderFetch;
 }
 
 export interface AiSdkNetworkConfig {
@@ -110,6 +116,8 @@ export interface AiSdkResolvedModel {
   providerOptions?: Record<string, unknown>;
   rawRequestBodyCapture?: RawRequestBodyCapture;
   requestObservations?: ModelRequestSecurityPort;
+  /** 每次 resolveRequest 独立持有，不能跨并发请求或重试共享。 */
+  streamTiming?: { firstContentAt?: number };
 }
 
 export interface AiSdkBoundModelResolution {
@@ -129,6 +137,7 @@ export interface ProviderBusinessErrorFetchOptions {
   env?: EnvRecord;
   providerId: string;
   providerKind: AiSdkProviderKind;
+  streamTiming?: { firstContentAt?: number };
   fetch?: ProviderFetch;
   httpProxy?: string;
   noProxy?: string;
@@ -196,16 +205,24 @@ export class AiSdkModelExecution {
   private readonly env: EnvRecord;
   private readonly defaultHeaders: Record<string, string>;
   private readonly network: AiSdkNetworkConfig;
+  private readonly endpointRoutingPort?: ProviderEndpointRoutingPort;
   private readonly logger?: Logger;
   private readonly baseTransport?: ProviderFetch;
+  private readonly observeTransport?: AiSdkModelExecutionOptions["observeTransport"];
   private readonly providerTransports = new Map<string, ProviderFetch>();
+  private readonly requestSecurity: ModelRequestSecurityPort;
 
   constructor(config: AiSdkModelExecutionConfig = {}, options: AiSdkModelExecutionOptions = {}) {
     this.env = config.env ?? process.env;
     this.defaultHeaders = { ...config.defaultHeaders };
     this.network = { ...config.network };
+    this.endpointRoutingPort = config.endpointRoutingPort;
     this.logger = options.logger;
     this.baseTransport = options.transport;
+    this.observeTransport = options.observeTransport;
+    this.requestSecurity = (
+      options.requestSecurityState ?? createModelRequestSecurityState()
+    ).createExecution({ logger: options.logger });
   }
 
   /**
@@ -279,14 +296,17 @@ export class AiSdkModelExecution {
     // Model 创建时的 Provider 事实必须被冻结在当前 binding 中。若按 providerId 缓存
     // factory，配置更新后创建的新 Model 会错误复用旧 Endpoint / Header / API Key。
     const rawRequestBodyCapture: RawRequestBodyCapture = {};
+    const streamTiming: NonNullable<AiSdkResolvedModel["streamTiming"]> = {};
     const factory = this.createFactory(
       snapshot.providerId,
       providerConfig,
       optionMaps,
       optionValues,
       rawRequestBodyCapture,
+      streamTiming,
       snapshot.supportsJsonSchemaOutput,
       snapshot.reasoningLevelValues,
+      snapshot.providerConfig.access?.type === "zhipu-account" ? requestAuth?.apiKeyId : undefined,
     );
     return {
       baseURL: providerConfig.baseURL,
@@ -297,6 +317,8 @@ export class AiSdkModelExecution {
       providerKind: providerConfig.kind,
       providerOptions: providerConfig.providerOptions,
       rawRequestBodyCapture,
+      requestObservations: this.requestSecurity,
+      streamTiming,
     };
   }
 
@@ -306,39 +328,32 @@ export class AiSdkModelExecution {
     optionMaps: CompiledModelOptionMaps | undefined,
     optionValues: ModelOptionValues | undefined,
     rawRequestBodyCapture: RawRequestBodyCapture,
+    streamTiming: NonNullable<AiSdkResolvedModel["streamTiming"]>,
     supportsJsonSchemaOutput: boolean,
     /** XCode fork：该模型宣告的思考档位全集，OpenCode 画像按它钳制。 */
     reasoningLevelValues: readonly string[] | undefined,
+    apiKeyId?: string,
   ): LanguageModelFactory {
     const apiKey = this.resolveApiKey(providerConfig);
-    const headers = providerConfig.headers;
-    // 供应商级代理：包在 transport 之外、requestProfile 之内侧——
-    // 代理只负责「这一跳走哪个出口」，不应看到 qoder 签名/opencode 指纹改写后的请求。
-    const providerTransport = createProviderProxyFetch({
-      binding: providerConfig.proxy ?? undefined,
+    // SDK 会合并 factory 默认 header；必须在这里去掉静态来源，才能保证缺失时真正省略。
+    const headers = withoutContextOwnedModelHeaders(providerConfig.headers);
+    const networkTransport = observeProviderFetch(
+      this.resolveProviderTransport(providerId),
+      this.logger,
       providerId,
-      // 账号身份在 factory 创建时解析：per-account 的 requestAuth 已在此前合入
-      // providerConfig（applyModelRequestAuth），此处拿到的就是该账号的准确值。
-      // headers/apiKey 反解不到的供应商（zhipu-account）用宿主下发的 accountId 兜底。
-      accountId:
-        resolveProviderProxyAccountId({
-          headers: providerConfig.headers,
-          apiKey:
-            providerConfig.access.type !== "zhipu-account"
-              ? providerConfig.access.apiKey ?? undefined
-              : undefined,
-        }) ?? providerConfig.accountId,
-      fetch: this.resolveProviderTransport(providerId),
-      caCertFile: this.network.caCertFile,
-      env: this.env,
-      // 轮询在 fetch 时才挑池；把真实命中的节点回报给调用级上下文，
-      // 记账层据此写具体池名，而不是候选数量。
-      onResolvedPool: (entry) => {
-        getCurrentModelInvocationContext()?.reportResolvedEgress?.({
-          proxyPoolId: entry.id,
-          ...(entry.name ? { proxyDisplayName: entry.name } : {}),
-        });
-      },
+    );
+    // ID 属于当前 attempt，不能放入按 Provider 缓存的 transport，避免切换账号后串用。
+    const providerTransport = this.endpointRoutingPort
+      ? createProviderEndpointRoutingFetch({
+          fetch: networkTransport,
+          routingPort: this.endpointRoutingPort,
+          apiKeyId,
+        })
+      : networkTransport;
+    const requestTransport = this.requestSecurity.protectTransport({
+      providerId,
+      providerConfig,
+      transport: providerTransport,
     });
     const profiledTransport = createUpstreamRequestProfileFetch({
       profile: providerConfig.requestProfile ?? undefined,
@@ -356,6 +371,7 @@ export class AiSdkModelExecution {
       fetch: profiledTransport,
       providerId,
       providerKind: providerConfig.kind,
+      streamTiming,
     });
     const optionFetch =
       optionMaps && optionValues
@@ -424,8 +440,10 @@ export class AiSdkModelExecution {
       httpProxy: this.network.httpProxy,
       noProxy: this.network.noProxy,
     });
-    this.providerTransports.set(providerId, transport);
-    return transport;
+    // 观测若放在底层 fetch 注入点，配置代理或 CA 时会被网络适配器绕过。
+    const observedTransport = this.observeTransport?.(transport) ?? transport;
+    this.providerTransports.set(providerId, observedTransport);
+    return observedTransport;
   }
 }
 
@@ -1484,6 +1502,55 @@ export function createProviderBusinessErrorFetch(
   };
 }
 
+/** 位于请求安全处理以内的网络边界；只读关联头，不记录 URL 或消费响应 body。 */
+export function observeProviderFetch(
+  fetch: ProviderFetch,
+  logger: Logger | undefined,
+  providerId: string,
+): ProviderFetch {
+  if (!logger) return fetch;
+  return async (input, init) => {
+    const headers = new Headers(
+      init?.headers ?? (input instanceof Request ? input.headers : undefined),
+    );
+    const requestId = headers.get("x-request-id");
+    const querySource = headers.get("x-zcode-query-source");
+    if (!requestId || (querySource !== "main_turn" && querySource !== "compact"))
+      return fetch(input, init);
+    const start = performance.timeOrigin + performance.now();
+    const log = (name: string, statusCode?: number) => {
+      const at = performance.timeOrigin + performance.now();
+      try {
+        logger.info("Model transport diagnostic", {
+          event: `ttft.model.${name}`,
+          requestId,
+          querySource,
+          providerId,
+          queryId: headers.get("x-query-id") ?? undefined,
+          sessionId: headers.get("x-session-id") ?? undefined,
+          traceId: (headers.get("x-zcode-trace-id") ?? undefined) as
+            | import("@zcode/contracts").TraceId
+            | undefined,
+          at,
+          durationMs: at - start,
+          statusCode,
+        });
+      } catch {
+        /* 日志异常不能改变网络返回值。 */
+      }
+    };
+    log("fetch_started");
+    try {
+      const response = await fetch(input, init);
+      log("response_headers", response.status);
+      return response;
+    } catch (error) {
+      log("fetch_failed");
+      throw error;
+    }
+  };
+}
+
 async function consumeBusinessErrorResponseBodyBestEffort(response: Response): Promise<void> {
   const body = response.body;
   if (!body) return;
@@ -1836,8 +1903,73 @@ function emitProviderBusinessSseFrame(
     return false;
   }
 
+  // 工具参数和部分文本会在后续兼容层/重试层暂存；释放时再计时会把接收耗时压成几毫秒。
+  // 复用接口层已有分帧，在任何内容缓冲前记录首个有效输出，不改变重试提交边界。
+  if (
+    options.streamTiming &&
+    options.streamTiming.firstContentAt === undefined &&
+    providerSseFrameHasContent(frame, options.providerKind)
+  ) {
+    options.streamTiming.firstContentAt = Date.now();
+  }
   controller.enqueue(encoder.encode(`${frame}${separator}`));
   return true;
+}
+
+function providerSseFrameHasContent(frame: string, kind: AiSdkProviderKind): boolean {
+  const data = readSseFrame(frame).data;
+  const body = data ? safeParseRecord(data) : undefined;
+  if (!body) return false;
+  const nonEmpty = (value: unknown): boolean => typeof value === "string" && value.length > 0;
+  if (kind === "anthropic") {
+    if (body.type === "content_block_delta") {
+      const delta = asRecord(body.delta);
+      switch (delta?.type) {
+        case "text_delta":
+          return nonEmpty(delta.text);
+        case "thinking_delta":
+          return nonEmpty(delta.thinking);
+        case "input_json_delta":
+          return nonEmpty(delta.partial_json);
+        default:
+          return false;
+      }
+    }
+    if (body.type === "content_block_start") {
+      const block = asRecord(body.content_block);
+      if (block?.type === "text") return nonEmpty(block.text);
+      if (block?.type === "thinking") return nonEmpty(block.thinking);
+      if (block?.type === "tool_use" || block?.type === "server_tool_use") {
+        const input = asRecord(block.input);
+        return input !== undefined && Object.keys(input).length > 0;
+      }
+    }
+    return false;
+  }
+  if (kind === "openai") {
+    return (
+      (body.type === "response.output_text.delta" ||
+        body.type === "response.reasoning_text.delta" ||
+        body.type === "response.reasoning_summary_text.delta" ||
+        body.type === "response.function_call_arguments.delta") &&
+      nonEmpty(body.delta)
+    );
+  }
+  return (
+    Array.isArray(body.choices) &&
+    body.choices.some((choice) => {
+      const delta = asRecord(asRecord(choice)?.delta);
+      if (!delta) return false;
+      return (
+        nonEmpty(delta.content) ||
+        nonEmpty(delta.reasoning_content) ||
+        nonEmpty(delta.reasoning) ||
+        nonEmpty(asRecord(delta.function_call)?.arguments) ||
+        (Array.isArray(delta.tool_calls) &&
+          delta.tool_calls.some((call) => nonEmpty(asRecord(asRecord(call)?.function)?.arguments)))
+      );
+    })
+  );
 }
 
 function detectProviderBusinessSseFrameFailure(frame: string):

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>XCode DSH Pet</title>
+    <style>
+      @font-face{font-family:"ShangshouSoftCandy";src:url("pets-dsh/font/上首软糖体.ttf") format("truetype");font-display:swap;font-weight:400}
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      /* 舞台：宠物包围盒（视频盒），外层 padding 由渲染层按窗口余量设置。 */
+      #stage {
+        position: relative;
+        transform-origin: 50% 100%;
+        will-change: transform;
+      }
+      /* 命中区容器：只有身体命中区可交互（实际穿透由主进程光标轮询翻转）。 */
+      #pet {
+        position: relative;
+        cursor: grab;
+      }
+      #pet:active {
+        cursor: grabbing;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <div id="pet" aria-hidden="true"></div>
+    </div>
+    <script type="module" src="./dshPetOverlay.ts"></script>
+  </body>
+</html>

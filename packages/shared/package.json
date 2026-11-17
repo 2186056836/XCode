@@ -17,27 +17,29 @@
     "./account-provider-state": "./src/account-provider-state.ts",
     "./model-config": "./src/model-config.ts",
     "./config-schema": "./src/config-schema.ts",
-    "./proxy-pool": "./src/proxy-pool.ts",
     "./node": "./src/node.ts",
     "./sqlite-migrations": "./src/sqlite-migrations/index.ts",
     "./zcodeEndpoint": "./src/zcodeEndpoint.ts",
     "./workspaceFileSearch": "./src/workspaceFileSearch.ts",
     "./workspaceFileEntriesCodec": "./src/workspaceFileEntriesCodec.ts",
     "./zcode-protocol-v4": "./src/zcode-protocol-v4/index.ts",
+    "./mcp-apps": "./src/mcp-apps/index.ts",
     "./workspace-hook-discovery": "./src/workspace-hook-discovery.ts",
     "./workspace-hook-mutation": "./src/workspace-hook-mutation.ts",
     "./workspace-hook-review-monotonicity": "./src/workspace-hook-review-monotonicity.ts",
     "./workspace-hook-trust-store-file": "./src/workspace-hook-trust-store-file.ts",
-    "./mcp-apps": "./src/mcp-apps/index.ts",
     "./gen-ui": "./src/gen-ui/index.ts",
     "./testing/fake-relay-v2": "./test/fixtures/fake-relay-v2.ts",
     "./request-security": "./src/request-security-edition/index.ts",
-    "./web-remote-relay": "./src/web-remote-relay/index.ts"
+    "./web-remote-relay": "./src/web-remote-relay/index.ts",
+    "./conversation-telemetry": "./src/conversation-telemetry/index.ts",
+    "./conversation-telemetry/messageTelemetry": "./src/conversation-telemetry/messageTelemetry.ts",
+    "./conversation-telemetry/providerTelemetryIdentity": "./src/conversation-telemetry/providerTelemetryIdentity.ts",
+    "./proxy-pool": "./src/proxy-pool.ts"
   },
   "scripts": {
     "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "generate:prompts": "node scripts/generate-godmode-templates.mjs"
+    "lint:fix": "oxlint --fix"
   },
   "dependencies": {
     "@zcode/model-option-map": "workspace:*",

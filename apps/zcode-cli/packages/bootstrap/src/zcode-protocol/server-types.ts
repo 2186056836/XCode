@@ -11,6 +11,7 @@ import {
   type TraceContext,
 } from "@zcode/contracts";
 import type { McpTelemetryTracker } from "@zcode/adapters";
+import type { SessionDataFilesPort } from "@zcode/adapters/storage";
 import type { WorkspaceHookPolicyProvider } from "@zcode/core";
 import type { AccountProviderConfigSnapshot } from "@zcode/provider";
 
@@ -20,7 +21,6 @@ import {
   type XCodeAutomationBotDeliveryTarget,
   type XCodeDeliveryKind,
   type ModelSelection,
-  type DynamicWorkflowMode,
   type XCodeModelContextBudgetStrategy,
   type XCodeProtocolMessage,
   type XCodeProtocolMethod,
@@ -32,6 +32,7 @@ import {
   type XCodeSessionPersistence,
   type XCodeWorkspaceRef,
 } from "@zcode/shared";
+import type { DynamicWorkflowMode } from "@zcode/shared";
 import type { XCodeApp, XCodeAppOptions } from "../app/types.js";
 import type { V4InteractionRegistry } from "../zcode-protocol-v4/interaction-registry.js";
 import type { ConversationV4Gateway } from "../zcode-protocol-v4/v4-gateway.js";
@@ -60,6 +61,8 @@ export interface XCodeProtocolAgentDependencies {
   /** 兼容旧测试/嵌入调用；新代码应通过 sessionResidentPoolOptions 设置 low-water。 */
   sessionResidentTargetCount?: number;
   sessionStore?: SessionStorePort;
+  /** 会话与目录在 CLI 存储根下的文件；只用于「删除项目数据」的测量与删除。 */
+  sessionDataFiles?: SessionDataFilesPort;
   version?: string;
   /** 受信 Host 管理的 Hook policy；workspace/project 配置不得覆盖。 */
   workspaceHookPolicyProvider?: WorkspaceHookPolicyProvider;
@@ -84,9 +87,8 @@ export interface XCodeProtocolToolInputTransmissionState {
 }
 
 /**
- * XCode fork：第 1 条 system 消息（产品身份行）的自定义替换内容 + godmode 越狱配置
- * （与 zcodeSessionRuntimePreferencesResultSchema 的 customSystemMessages 字段同形）。
- * cliPrefix 空串或缺省表示使用内置身份行；prefill 为 priming 对话轮；obfuscation 为输入混淆。
+ * fork（godmode）：会话级自定义 system 消息覆盖。cliPrefix 空串或缺省表示使用内置身份行；
+ * prefill 为 priming 对话轮；obfuscation 为输入混淆。
  */
 export interface SessionJailbreakPrefillMessage {
   role: "user" | "assistant";
@@ -126,11 +128,9 @@ export interface XCodeProtocolSessionRecord {
    * 只用于区分「跟随全局」与「会话覆盖」，生效内容仍是 customSystemMessages。
    */
   personaOverride?: string | null;
-  /**
-   * 会话级 PreFill 开关：undefined = 跟随全局（默认）；true = 强制开启；false = 强制关闭。
-   * prefillInheritedEnabled 暂存覆盖前的 enabled，供「跟随全局」恢复。
-   */
+  /** 会话级 PreFill 开关：undefined = 跟随全局（默认）；true = 强制开启；false = 强制关闭。 */
   prefillOverride?: boolean;
+  /** PreFill 继承态落盘（会话在 inherit 模式下曾按全局值固定过）。 */
   prefillInheritedEnabled?: boolean;
   createdAt: number;
   deliveryKind?: XCodeDeliveryKind;
@@ -173,6 +173,9 @@ export interface XCodeProtocolClientRequestOptions {
 }
 
 export interface XCodeProtocolAgentServerContext {
+  /** 本 stdio Host 已确认能接收目录来源字段；随进程关闭失效，不存目录缓存。 */
+  sessionDirectorySourceEnabled?: boolean;
+  sessionWorkspaceRoutingEnabled?: boolean;
   /** 进程退出期间，迟到的异步物化不能重新登记 session。 */
   assertServing?: () => void;
   deps: XCodeProtocolAgentResolvedDependencies;
@@ -200,6 +203,7 @@ export interface XCodeProtocolAgentServerContext {
   // 单 CLI resident session 池。冷恢复入口经 waitForDeactivation 等待旧 app.close 收尾，
   // 协议请求则持有 operation lease，禁止异步 handler 与容量回收交错。
   sessionResidentPool?: SessionResidentPool;
+  sessionLifecycle?: import("../session-lifecycle/index.js").SessionLifecycleController;
   sessions: Map<string, XCodeProtocolSessionRecord>;
   /** 仅覆盖异步创建窗口，结束即释放；输入命令仍由 CommandInbox 排队。 */
   sessionCreationIds?: Set<string>;
@@ -330,7 +334,7 @@ export function toProtocolError(error: unknown): {
   };
 }
 
-function createProtocolTraceId(_sessionId: SessionId): TraceContext["traceId"] {
+export function createProtocolTraceId(_sessionId: SessionId): TraceContext["traceId"] {
   // traceId 是 session 之上的观测链路，不应由 sessionId 拼出来。
   // 这里复用 agent/contracts 的 UUID 算法，保证 app 和 agent 两端 trace 格式一致。
   return createTraceId();
@@ -369,6 +373,13 @@ export function requireSession(
   sessionId: string,
   options: { deliveryKind?: XCodeDeliveryKind; operation?: string } = {},
 ): XCodeProtocolSessionRecord {
+  if (context.sessionLifecycle && !context.sessionLifecycle.isReady(sessionId)) {
+    throw new ProtocolRequestError(
+      zcodeProtocolErrorCodes.sessionUnavailable,
+      "Session runtime is not ready",
+      { code: "runtimeNotReady" },
+    );
+  }
   const record = context.sessions.get(sessionId);
   if (!record) {
     // 诊断：readSession 只读取活跃 runtime；记录缺失时要区分“冷会话尚未恢复”和“ID 已失效”，

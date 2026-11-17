@@ -101,6 +101,14 @@ export function ensurePendingTaskDraft(scope: ComposerScope): PendingTaskDraft {
   writePendingTaskDraft(scope, next);
   return next;
 }
+/**
+ * 丢弃一条待发草稿（仅当登记的仍是这个 draftId）。用途：持久化的草稿目录被
+ * 外部移走后 prepareSession 会报 project.directory-required，调用方重置后
+ * 用 ensurePendingTaskDraft 重新分配即可自愈，不能让一个陈旧 id 永久卡死新建入口。
+ */
+export function resetPendingTaskDraft(scope: ComposerScope, draftId: string): void {
+  if (readPendingTaskDraft(scope)?.draftId === draftId) writePendingTaskDraft(scope, null);
+}
 export function bindPendingTaskDraft(
   scope: ComposerScope,
   draftId: string,
@@ -317,9 +325,7 @@ function readDraft(value: unknown): V4ComposerDraft | null {
       ? { lastPlanTransitionId: value.lastPlanTransitionId }
       : {}),
     ...(persona.success ? { persona: persona.data } : {}),
-    ...(value.prefillMode === "inherit" ||
-    value.prefillMode === "on" ||
-    value.prefillMode === "off"
+    ...(value.prefillMode === "inherit" || value.prefillMode === "on" || value.prefillMode === "off"
       ? { prefillMode: value.prefillMode }
       : {}),
     updatedAt:

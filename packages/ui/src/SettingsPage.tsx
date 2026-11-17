@@ -1,9 +1,13 @@
-import { SettingsMachinesProvider } from "@/settings/SettingsMachine.js";
+import { DataSyncSection } from "@/data-sync/index.js";
 import { getWorkspaceSourceServerId } from "@/conversation-workspace-target/sourceIdentity.js";
-import { RemoteConnectionNavigationDot } from "@/remote-connection/RemoteConnectionNavigationDot.js";
-import { resolveRemoteConnectionNavigationPresentation } from "@/lib/remoteConnectionPresentation.js";
 /* oxlint-disable eslint(max-lines) */
-import { ArrowLeft, Rocket, type LucideIcon } from "lucide-react";
+import { ArrowLeft, type LucideIcon } from "lucide-react";
+import { useStore } from "zustand";
+import {
+  marketingNavigation,
+  finishMarketingNavigation,
+  marketingSettingsSections,
+} from "@/lib/marketingNavigation.js";
 import {
   useCallback,
   useEffect,
@@ -14,6 +18,7 @@ import {
 } from "react";
 import type {
   AppSettings,
+  DesktopCloseToTrayCapability,
   IntegratedTerminalShellOption,
   IntegratedTerminalShellSelection,
   Locale,
@@ -62,28 +67,34 @@ import {
   resolveEntitledAccountProviderAccessFingerprint,
 } from "@/lib/accountProviderAccess.js";
 import { buildUsageEntitlementCacheKey } from "@/lib/usageEntitlementCache.js";
-import { ArchiveManagement, useOptionalProjectDirectory } from "@/project-sidebar/index.js";
+import {
+  ArchiveManagement,
+  ProjectManagement,
+  useOptionalProjectDirectory,
+} from "@/project-sidebar/index.js";
 import { resolveRecentRemoteProjectPreference } from "@/project-sidebar/remote-project-connection.js";
 import { ModelProviderSection } from "@/settings/ModelProviderSection.js";
-import { AccountSettingsSection } from "@/settings/AccountSettingsSection.js";
-import { ProxyPoolSettingsSection } from "@/settings/ProxyPoolSettingsSection.js";
 import { useCodingPlanUpgradeDialog } from "@/settings/CodingPlanUpgradeDialogProvider.js";
 import { useEnterpriseCodingPlanProducts } from "@/settings/model-provider-section/useEnterpriseCodingPlanProducts.js";
 import { UsageStatsSection, type UsageStatsSectionTab } from "@/settings/UsageStatsSection.js";
-import { UsageRequestDetailsPanel } from "@/settings/usage-details/UsageRequestDetailsPanel.js";
 import {
   buildCodingPlanUsageSources,
   type CodingPlanUsageSource,
 } from "@/settings/usage-stats/CodingPlanUsagePanel.js";
+import { AccountSettingsSection } from "@/settings/AccountSettingsSection.js";
+import { ProxyPoolSettingsSection } from "@/settings/ProxyPoolSettingsSection.js";
+import { ModelJailbreakSection } from "@/settings/ModelJailbreakSection.js";
+import { UsageRequestDetailsPanel } from "@/settings/usage-details/UsageRequestDetailsPanel.js";
+import { PetsSettingsSection } from "./settings/PetsSettingsSection.js";
 import { buildPersonalCodingPlanUsageSource } from "@/lib/codingPlanUsageSources.js";
 import { SubagentsSection } from "@/settings/SubagentsSection.js";
-import { ModelJailbreakSection } from "@/settings/ModelJailbreakSection.js";
 import { AutomationsSection } from "@/settings/AutomationsSection.js";
 import { SegmentPill } from "@/settings/PluginStoreListView.js";
 import { PluginsSection } from "@/settings/PluginsSection.js";
 import { HooksSection } from "@/settings/HooksSection.js";
 import { WorkspaceFileSearchSection } from "@/settings/WorkspaceFileSearchSection.js";
 import { MemorySettingsSection } from "@/settings/MemorySettingsSection.js";
+import { PersonalizationSection } from "@/settings/PersonalizationSection.js";
 import { BrowserSettingsSection } from "@/settings/BrowserSettingsSection.js";
 import { ComputerUseSection } from "@/settings/ComputerUseSection.js";
 import { ShortcutSettingsSection } from "@/settings/ShortcutSettingsSection.js";
@@ -317,6 +328,7 @@ export function SettingsPage({
   /** 远程设备卡「新任务」：激活该设备已打开的 tab 并开新草稿（Root 注入）。 */
   allowOpenWorkspace?: boolean;
   onLogin?: () => void;
+  /** 已登录状态下「账号管理 → 添加账号」再登录一个账号（与 onLogin 是两条入口）。 */
   onOpenLogin?: () => void;
   onLogout?: () => void;
   user?: UserInfo | null;
@@ -353,6 +365,49 @@ export function SettingsPage({
     consumePendingSettingsSourceServerDetails,
   );
   const [pluginTab, setPluginTab] = useState(() => consumePendingSettingsPluginTab());
+  // Linux 关闭驻留托盘能力查询（spec：docs/desktop/linux-close-to-tray.md）：打开设置页时
+  // 经 platform IPC 触发 main 侧探测（带 stale 缓存），用户装完 AppIndicator 扩展重开
+  // 设置页即可解除置灰；Web/远控无桥不查询。
+  const [linuxCloseToTrayCapability, setLinuxCloseToTrayCapability] =
+    useState<DesktopCloseToTrayCapability | null>(null);
+  useEffect(() => {
+    if (!isLinuxDesktop) {
+      return;
+    }
+    let cancelled = false;
+    platform
+      .getCloseToTrayCapability?.()
+      .then((capability) => {
+        if (!cancelled) {
+          setLinuxCloseToTrayCapability(capability);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isLinuxDesktop, platform]);
+  const linuxCloseToTray = isLinuxDesktop
+    ? {
+        // 探测中按不可用锁定，防止查询完成前误开导致关窗失联
+        disabled: linuxCloseToTrayCapability === null || !linuxCloseToTrayCapability.supported,
+        unavailable: linuxCloseToTrayCapability?.supported === false,
+        gnomeLikeHint:
+          linuxCloseToTrayCapability?.supported === false &&
+          linuxCloseToTrayCapability.gnomeLikeWithoutTray,
+      }
+    : undefined;
+  const marketingRequest = useStore(marketingNavigation, (state) => state.request);
+  useEffect(() => {
+    if (marketingRequest?.target.page !== "settings") return;
+    const target = marketingRequest.target;
+    const section = target.section ? marketingSettingsSections[target.section] : activeSection;
+    if (!settingsSections.some((item) => item.id === section)) {
+      finishMarketingNavigation(marketingRequest.id, new Error("marketing_navigation_unavailable"));
+    } else if (activeSection === section && !target.provider_id) {
+      finishMarketingNavigation(marketingRequest.id);
+    }
+  }, [activeSection, marketingRequest, settingsSections]);
   const [pluginNavigationOrigin, setPluginNavigationOrigin] = useState(() =>
     consumePendingSettingsPluginOrigin(),
   );
@@ -377,6 +432,8 @@ export function SettingsPage({
   const setCodePreviewSettings = useXCodeStore((state) => state.setCodePreviewSettings);
   const uiFontSizePx = useXCodeStore((state) => state.uiFontSizePx);
   const setUiFontSizePx = useXCodeStore((state) => state.setUiFontSizePx);
+  const hideProjectDeviceNames = useXCodeStore((state) => state.hideProjectDeviceNames);
+  const setHideProjectDeviceNames = useXCodeStore((state) => state.setHideProjectDeviceNames);
   const notificationEnabled = useXCodeStore((state) => state.notificationEnabled);
   const setNotificationEnabled = useXCodeStore((state) => state.setNotificationEnabled);
   const notificationSoundEnabled = useXCodeStore((state) => state.notificationSoundEnabled);
@@ -624,7 +681,9 @@ export function SettingsPage({
     );
   }, [selectedUsageCodingPlanSource, usageActiveTab, usageCodingPlanSources]);
   const setNewUserOnboardingOpen = useXCodeStore((state) => state.setNewUserOnboardingOpen);
-  const requestOnboardingDialog = () => setNewUserOnboardingOpen(true);
+  // 「通用」页「打开引导」打开职业引导；迁移向导只从数据同步页「迁移」进入。
+  const openOccupationOnboarding = () => setNewUserOnboardingOpen(true);
+  const requestMigrationDialog = useXCodeStore((state) => state.requestOnboardingDialog);
   const setActiveSettingsSection = useCallback(
     (section: SettingsSectionId, fallbackSection: SettingsSectionId = activeSection) => {
       const resolvedSection = resolveSettingsSection(section, fallbackSection);
@@ -634,7 +693,7 @@ export function SettingsPage({
     [activeSection],
   );
   useEffect(() => {
-    if (!isDesktop && activeSection === "remoteDevices") {
+    if (!isSettingsSectionAvailable(activeSection, Boolean(isDesktop))) {
       setActiveSettingsSection("general");
     }
   }, [activeSection, isDesktop, setActiveSettingsSection]);
@@ -720,10 +779,6 @@ export function SettingsPage({
         }),
     },
   );
-  const remoteDevicesPresentation = useMemo(
-    () => resolveRemoteConnectionNavigationPresentation(sourceManagementSnapshot),
-    [sourceManagementSnapshot],
-  );
   const memoryWorkspaceDisplayNames = useMemo(() => {
     const names = new Set<string>();
     // Memory Scope 的项目顺序以 settings.json recentProjects 为准；打开中的
@@ -759,7 +814,7 @@ export function SettingsPage({
     useState(false);
   const [taskAutoArchiveEnabled, setTaskAutoArchiveEnabled] = useState(false);
   const [taskAutoArchiveOlderThanDays, setTaskAutoArchiveOlderThanDays] = useState(30);
-  const [closeToTrayOnWindows, setCloseToTrayOnWindows] = useState(true);
+  const [closeToTrayOnWindows, setCloseToTrayOnWindows] = useState(Boolean(isWindowsDesktop));
   const [
     desktopChromiumHardwareAccelerationEnabled,
     setDesktopChromiumHardwareAccelerationEnabled,
@@ -816,10 +871,11 @@ export function SettingsPage({
         if (section === "usage" && detail?.usageTab) {
           setUsageActiveTab(detail.usageTab);
         }
+        // MCP 独立分区也接收工作区意图，否则会话内审核会误落到用户配置。
+        setPluginScopeKey(detail?.pluginScopeKey);
         if (resolveSettingsSection(section) === "plugin" && detail?.pluginTab) {
           setPluginTab(detail.pluginTab);
           setPluginNavigationOrigin(detail.pluginOrigin);
-          setPluginScopeKey(detail.pluginScopeKey);
         } else if (resolveSettingsSection(section) !== "plugin") {
           setPluginNavigationOrigin(undefined);
         }
@@ -848,7 +904,7 @@ export function SettingsPage({
         setEmbeddedBrowserAllowInsecureCertificates(
           settings.embeddedBrowserAllowInsecureCertificates ?? false,
         );
-        setCloseToTrayOnWindows(settings.closeToTrayOnWindows ?? true);
+        setCloseToTrayOnWindows(settings.closeToTrayOnWindows ?? Boolean(isWindowsDesktop));
         setDesktopChromiumHardwareAccelerationEnabled(
           settings.desktopChromiumHardwareAccelerationEnabled ?? true,
         );
@@ -1487,9 +1543,7 @@ export function SettingsPage({
               <DesktopWindowControls />
             </div>
           ) : null}
-          {/* 皮肤挂点：背景图模式下外壳让位给底图，导航列需要自己的遮罩，
-              与右侧 data-settings-panel-frame 的 bg-background 保持同一密度。 */}
-          <aside data-settings-nav-frame="true" className="min-w-0">
+          <aside className="min-w-0">
             <div className="flex h-full flex-col">
               <div className="h-12 [app-region:drag]"></div>
               <div className="px-2 pb-3 pt-3">
@@ -1603,11 +1657,6 @@ export function SettingsPage({
                                   <span className="truncate text-ui-base text-foreground">
                                     {label}
                                   </span>
-                                  {id === "remoteDevices" ? (
-                                    <RemoteConnectionNavigationDot
-                                      presentation={remoteDevicesPresentation}
-                                    />
-                                  ) : null}
                                 </span>
                               </SettingsSidebarButton>
                             );
@@ -1616,28 +1665,6 @@ export function SettingsPage({
                     );
                   })}
                 </div>
-
-                <SettingsSidebarButton
-                  icon={Rocket}
-                  label={intl.formatMessage({ id: "settings.onboarding" })}
-                  className="mt-4 border border-dashed border-border hover:border-border-hover"
-                  onClick={() => {
-                    runUserAction({
-                      input: {
-                        featureId: "settings.navigation",
-                        action: "open_onboarding",
-                        trigger: "button",
-                      },
-                      operation: requestOnboardingDialog,
-                      completed: { resultSource: "local_commit" },
-                      failureStage: "dialog_open",
-                    });
-                  }}
-                >
-                  <span className="text-ui-base text-foreground">
-                    {intl.formatMessage({ id: "settings.onboarding" })}
-                  </span>
-                </SettingsSidebarButton>
               </nav>
 
               <div className="max-lg:hidden">
@@ -1729,7 +1756,7 @@ export function SettingsPage({
                       />
                     </div>
                   </div>
-                  <SettingsMachinesProvider servers={sourceManagementSnapshot?.servers ?? []}>
+                  <>
                     <main className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
                       <div
                         className={cn(
@@ -1739,35 +1766,42 @@ export function SettingsPage({
                           // isWindowsDesktop && "pt-12",
                         )}
                       >
-                        {/* 归档设置迁入后也需要公共页头，不能再因列表自带标题而隐藏页面标题。 */}
-                        <div>
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div className="flex min-w-0 flex-wrap items-center gap-3">
-                              {showActiveSectionTitle ? (
-                                <h2 className="text-ui-settings-title font-semibold tracking-tight text-foreground lg:text-ui-settings-title-lg">
-                                  {activeSectionLabel}
-                                </h2>
-                              ) : null}
-                              {!hasVisibleSettingsBreadcrumb && activeSectionMeta.titleBadgeId ? (
-                                <span className="inline-flex h-6 items-center rounded-md border border-border px-2 text-ui-xs font-semibold tracking-normal text-foreground">
-                                  {intl.formatMessage({
-                                    id: activeSectionMeta.titleBadgeId,
-                                  })}
-                                </span>
-                              ) : null}
-                              {activeSection === "usage" ? (
-                                <SettingsUsageProviderTabs
-                                  activeTab={usageActiveTab}
-                                  codingPlanSources={usageCodingPlanSources}
-                                  onTabChange={handleUsageTabSelect}
-                                />
-                              ) : null}
+                        {/* 数据同步自带标题与迁移入口，避免公共页头重复显示标题和间距。 */}
+                        {activeSection !== "dataSync" ? (
+                          <div>
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <div className="flex min-w-0 flex-wrap items-center gap-3">
+                                {showActiveSectionTitle ? (
+                                  <h2 className="text-ui-settings-title font-semibold tracking-tight text-foreground lg:text-ui-settings-title-lg">
+                                    {activeSectionLabel}
+                                  </h2>
+                                ) : null}
+                                {!hasVisibleSettingsBreadcrumb && activeSectionMeta.titleBadgeId ? (
+                                  <span className="inline-flex h-6 items-center rounded-md border border-border px-2 text-ui-xs font-semibold tracking-normal text-foreground">
+                                    {intl.formatMessage({
+                                      id: activeSectionMeta.titleBadgeId,
+                                    })}
+                                  </span>
+                                ) : null}
+                                {activeSection === "usage" ? (
+                                  <SettingsUsageProviderTabs
+                                    activeTab={usageActiveTab}
+                                    codingPlanSources={usageCodingPlanSources}
+                                    onTabChange={handleUsageTabSelect}
+                                  />
+                                ) : null}
+                              </div>
                             </div>
+                            {activeSection === "general" ? (
+                              <GeneralSectionHeader localePreference={localePreference} />
+                            ) : null}
+                            {activeSection === "projects" ? (
+                              <p className="mt-2 max-w-2xl text-ui-base text-foreground-subtle">
+                                {intl.formatMessage({ id: "projectManagement.intro" })}
+                              </p>
+                            ) : null}
                           </div>
-                          {activeSection === "general" ? (
-                            <GeneralSectionHeader localePreference={localePreference} />
-                          ) : null}
-                        </div>
+                        ) : null}
                         <div className="space-y-8">
                           {activeSection === "general" ? (
                             <GeneralSectionContent
@@ -1776,6 +1810,8 @@ export function SettingsPage({
                               setInterfaceMode={setInterfaceMode}
                               isDesktop={isDesktop}
                               isWindowsDesktop={isWindowsDesktop}
+                              isLinuxDesktop={isLinuxDesktop}
+                              linuxCloseToTray={linuxCloseToTray}
                               platform={platform}
                               notificationEnabled={notificationEnabled}
                               notificationSoundEnabled={notificationSoundEnabled}
@@ -1891,12 +1927,25 @@ export function SettingsPage({
                                     action: "open_onboarding",
                                     trigger: "button",
                                   },
-                                  operation: requestOnboardingDialog,
+                                  operation: openOccupationOnboarding,
                                   completed: { resultSource: "local_commit" },
                                   failureStage: "dialog_open",
                                 })
                               }
                             />
+                          ) : activeSection === "dataSync" ? (
+                            isDesktop ? (
+                              <DataSyncSection
+                                snapshot={sourceManagementSnapshot}
+                                sourceServices={localHostServices}
+                                deviceSyncStateService={localHostServices.deviceSyncStateService}
+                                requestSourceSettingsAttachment={
+                                  platform?.requestSourceSettingsAttachment
+                                }
+                                onOpenRemoteConnection={onOpenRemoteWorkspace}
+                                onOpenMigration={requestMigrationDialog}
+                              />
+                            ) : null
                           ) : activeSection === "remoteDevices" ? (
                             sharedSettings && isDesktop && sourceManagement ? (
                               <SourceServerManagementPanel
@@ -2004,6 +2053,8 @@ export function SettingsPage({
                                 }}
                                 settings={sharedSettings}
                                 onUpdateSettings={updateSharedSettings}
+                                hideProjectDeviceNames={hideProjectDeviceNames}
+                                onHideProjectDeviceNamesChange={setHideProjectDeviceNames}
                               />
                             ) : (
                               <p className="text-ui-sm text-remote-foreground-muted">
@@ -2035,6 +2086,8 @@ export function SettingsPage({
                                 })
                               }
                             />
+                          ) : activeSection === "pets" ? (
+                            <PetsSettingsSection onCreateTask={onCreateTask} />
                           ) : activeSection === "shortcuts" ? (
                             <ShortcutSettingsSection isDesktop={Boolean(isDesktop)} />
                           ) : activeSection === "modelProvider" ? (
@@ -2066,6 +2119,15 @@ export function SettingsPage({
                             </ServiceProvider>
                           ) : activeSection === "modelJailbreak" ? (
                             <ModelJailbreakSection />
+                          ) : activeSection === "personalization" ? (
+                            // 个性化指令编辑的是本机 ~/.zcode/AGENTS.md（Agent 实际读取的文件）。
+                            // 仅桌面本地入口可编辑：手机远控的 base services 可能归属远程
+                            // Source（remoteWorkspaceServiceCollection 注册的是远端 settingService），
+                            // 编辑会写错机器；Web 端只显示本地桌面端指引。
+                            <PersonalizationSection
+                              settingService={localHostServices.settingService}
+                              isDesktop={Boolean(isDesktop)}
+                            />
                           ) : activeSection === "memory" ? (
                             <ServiceProvider services={localHostServices}>
                               {/* Memory catalog 始终使用本地 Host，避免远程 workspace 误读本机数据。 */}
@@ -2100,6 +2162,7 @@ export function SettingsPage({
                             <PluginsSection
                               key={`mcp:${settingsSectionNavigationVersion}`}
                               mode="mcp"
+                              initialScopeKey={pluginScopeKey}
                               isWebRemoteControl={isWebRemoteControl}
                               workspacePath={activeWorkspacePath}
                               workspaceIdentity={activeWorkspaceIdentity}
@@ -2130,6 +2193,8 @@ export function SettingsPage({
                               workspaceIdentity={activeWorkspaceIdentity}
                               isDesktop={isDesktop}
                             />
+                          ) : activeSection === "projects" ? (
+                            <ProjectManagement />
                           ) : activeSection === "archives" ? (
                             <div className="min-w-0 space-y-6">
                               <TaskAutoArchiveSettings
@@ -2214,7 +2279,7 @@ export function SettingsPage({
                         </div>
                       </div>
                     </main>
-                  </SettingsMachinesProvider>
+                  </>
                 </div>
               </SettingsBreadcrumbProvider>
             </div>

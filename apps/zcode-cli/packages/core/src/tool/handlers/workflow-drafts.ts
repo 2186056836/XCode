@@ -52,7 +52,7 @@ const WORKFLOW_DRAFT_FALLBACK_SLUG = "workflow";
  */
 const WORKFLOW_DRAFT_MAX_ATTEMPTS = 1_000;
 
-interface WriteWorkflowDraftInput {
+export interface WriteWorkflowDraftInput {
   /**
    * 会话工作目录；草稿落在它的 `.xcode/workflow-drafts/` 下。缺席即宿主没有工作目录概念
    * （端口 stub / 无会话上下文），此时无处可写，与写失败同义。

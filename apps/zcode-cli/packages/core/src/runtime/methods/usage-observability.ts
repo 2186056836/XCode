@@ -18,6 +18,7 @@ import type {
 } from "@zcode/contracts";
 import type { RuntimeModelTextResult } from "../types.js";
 import type { AgentRuntimeInternal } from "../internal.js";
+import { isAccountScopedProviderId } from "@zcode/shared";
 import { isModelContextExceededError } from "../helpers/index.js";
 
 type ModelUsageQuerySource =
@@ -69,7 +70,13 @@ export async function recordModelUsageFact(
   );
   const usage = input.result?.usage ?? failedNetworkEvent?.usage;
   // 本次请求实际用到的账号与出口代理（host 选号时下发）。
-  const requestAuth = runtime.getLastModelRequestAuth?.();
+  // lastModelRequestAuth 是 runtime 上的粘性字段：自定义 provider 不绑定请求级鉴权，
+  // 不会刷新它，直接取会把上一次账号族请求（zai/bigmodel/Qoder/CodeBuddy）的账号
+  // 串到本条 usage 上。只在 provider 本身有账号概念时才认这份材料。
+  const rawRequestAuth = runtime.getLastModelRequestAuth?.();
+  const requestAuth = isAccountScopedProviderId(String(input.model.providerId))
+    ? rawRequestAuth
+    : undefined;
   // 供应商级轮询是 per-request 选择：host 只能给候选快照，真实命中的节点由 adapter
   // 在 fetch 层回报。有它就覆盖，否则保留 host 的出口信息（连接级绑定 / 跟随全局）。
   const resolvedEgress = runtime.getLastResolvedEgress?.();
@@ -414,6 +421,10 @@ function errorInfoFor(
   }
   if (error instanceof Error) {
     return {
+      // AiSdkModelAdapterError / streaming-recovery 的错误都带 string code 但没有
+      // type 属性，isCoreError 判否——错误码在旧实现这里被丢掉，使用详情只能显示
+      // error_type（网络事件 reason），错误码永远是「--」。
+      code: readErrorCodeProperty(error),
       message: error.message,
       retryable: failedNetworkEvent?.retryable,
       type: failedNetworkEvent?.reason ?? error.name,
@@ -427,6 +438,13 @@ function errorInfoFor(
     };
   }
   return {};
+}
+
+/** 读错误对象自身的 string code（CoreError 与 Adapter 错误共用此形状）。 */
+function readErrorCodeProperty(error: unknown): string | undefined {
+  if (!error || typeof error !== "object") return undefined;
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" && code.length > 0 ? code : undefined;
 }
 
 function stringValue(value: unknown): string | undefined {

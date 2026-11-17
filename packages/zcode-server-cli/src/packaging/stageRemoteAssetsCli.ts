@@ -15,7 +15,16 @@ async function run(
   env: NodeJS.ProcessEnv,
 ): Promise<void> {
   await new Promise<void>((resolvePromise, rejectPromise) => {
-    const child = spawn(command, [...args], { cwd, env, stdio: "inherit" });
+    // Bug 原因：Windows 上 pnpm 只以 .cmd/.ps1 shim 存在，Node 不经 shell 无法解析，
+    // spawn("pnpm") 直接 ENOENT；e2e onPrepare 自动 prepare:remote-assets 时因此 fatal。
+    // 与 wdio.conf.ts runPnpmWorkspaceCommand 一致，仅 Windows 交给 shell 解析 shim；
+    // 当前参数均无空格，无需额外转义。
+    const child = spawn(command, [...args], {
+      cwd,
+      env,
+      stdio: "inherit",
+      shell: process.platform === "win32",
+    });
     child.once("error", rejectPromise);
     child.once("exit", (code) => {
       if (code === 0) resolvePromise();
@@ -33,11 +42,11 @@ async function main(): Promise<void> {
   if (linuxOnly) {
     // Linux 开发入口与 dev:desktop 共用 production 默认值，避免远端模型配置退回 test。
     // 原全平台入口继续沿用通用构建器的环境选择规则。
-    const zcodeEnv = env.ZCODE_ENV?.trim().toLowerCase() || "production";
+    const zcodeEnv = env.XCODE_ENV?.trim().toLowerCase() || "production";
     if (zcodeEnv !== "test" && zcodeEnv !== "production") {
-      throw new Error(`Invalid ZCODE_ENV for prepare:remote-assets:linux: ${zcodeEnv}`);
+      throw new Error(`Invalid XCODE_ENV for prepare:remote-assets:linux: ${zcodeEnv}`);
     }
-    env.ZCODE_ENV = zcodeEnv;
+    env.XCODE_ENV = zcodeEnv;
   }
   const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
   const repoRoot = resolve(packageRoot, "../..");

@@ -1193,7 +1193,6 @@ export const WorkspaceSidebarItem = memo(function WorkspaceSidebarItem({
         onPluginsSynced={async () => {
           await refreshWorkspacePluginCapabilitiesAfterRemoteSync({
             commandsService: services.commandsService,
-            mcpSyncService: services.mcpSyncService,
             reason: "sidebar-remote-plugin-sync",
             skillsService: services.skillsService,
             workspaceIdentity: tab.workspaceIdentity,

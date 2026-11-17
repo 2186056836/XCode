@@ -1,11 +1,9 @@
 # Troubleshooting
 
-- `module-dependency`: use a public contract or declare the dependency in both the local manifest and policy after confirming its owner.
-- `deep-import`: use the target module's declared public entrypoint.
-- `cycle`: move shared types into a contract or invert the dependency through a port.
-- `missing-module-artifact`: add the managed module's manifest, contract, example or contract document reported by the check.
-- `expired-exception`: resolve the underlying violation and remove the expired exception; do not silently extend it.
-- Changed-file scope: `pnpm architecture:check --changed` selects differences from `HEAD` plus untracked files. Run `pnpm architecture:check` for a full scan; committed changes are no longer a dirty-worktree diff.
-- Baseline mismatch: inspect the failures first. Use `pnpm architecture:baseline:update` only for an explicitly reviewed baseline change.
-
-The check currently resolves relative imports. Inspect workspace aliases and package imports separately; a passing result does not prove that every dependency was analyzed.
+- `module-dependency`: import the target module's public contract, or add the dependency to `module.ts` and policy after confirming the integration owner.
+- `deep-import`: replace an internal path with the target module's declared public entrypoint.
+- `cycle`: move the shared type into a contract or create an application/integration owner; do not silence the cycle.
+- `unmanaged-new-file`: the file is new relative to the diff base and sits in a legacy root. Either move it into an existing managed module or register its directory with `pnpm architecture:adopt <id> --root <dir> --layer <domain|app|adapters|ui>`; adopt scaffolds the four artifacts and infers `requires` from real imports.
+- `manifest-policy-mismatch`: edit `module.ts` and `architecture-policy.yaml` together; unknown ids usually mean the dependency has not been registered yet.
+- unexpected base: run `pnpm architecture:check -- --changed --base <sha>` to pin the comparison; the report prints the chosen base.
+- baseline mismatch: run the check without changing baseline, then use `architecture:baseline:update` only in a reviewed migration PR.

@@ -1,5 +1,6 @@
 /* oxlint-disable max-lines -- 营销活动拉取/持久化/展示生命周期集中，拆分让活动状态流转分散。 */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { isMarketingCaptchaEnabled } from "@zcode/shared";
 import type {
   MarketingCampaign,
   MarketingCampaignAction,
@@ -429,15 +430,14 @@ export interface AliyunCaptchaResult {
   region?: string;
 }
 
-/** 官方 `p3` 门槛：验证码是否开启。 */
+/**
+ * 官方 `p3` 门槛：验证码是否开启。
+ *
+ * 判定收在 `@zcode/shared`：自动领取（host）也必须用同一口径，否则会出现
+ * 「手动不弹验证码、自动却带票据」这类只在一边发生的错位。
+ */
 export function shouldRunCaptcha(config: MarketingCaptchaConfig | null): boolean {
-  return Boolean(
-    config &&
-      config.enabled !== false &&
-      config.region &&
-      config.prefix &&
-      config.sceneId,
-  );
+  return isMarketingCaptchaEnabled(config);
 }
 
 /**
@@ -469,8 +469,9 @@ export async function runAliyunCaptcha(
   container.innerHTML = `<div id="${elementId}"></div><button id="${buttonId}" type="button"></button>`;
   document.body.appendChild(container);
 
-  // 官方在 init 前设置 window.AliyunCaptchaConfig，aliyun SDK 依赖它读取 region/prefix；
-  // 缺少会导致验证不产生有效的 verifyCode，服务器返回 captcha verify failed。
+  // 官方 ZCode 3.17.2（styles-*.js COt）：region/prefix 既写 window.AliyunCaptchaConfig，
+  // **也必须作为 initAliyunCaptcha 的选项传入**——只设全局变量时 SDK 按默认区域签发
+  // verifyCode，服务端校验失败返回 3007 captcha verify failed（实测）。
   (window as unknown as { AliyunCaptchaConfig?: { region: string; prefix: string } }).AliyunCaptchaConfig =
     { region: config.region!, prefix: config.prefix! };
 
@@ -509,6 +510,9 @@ export async function runAliyunCaptcha(
     try {
       initFn({
         SceneId: config.sceneId,
+        // 官方同款：区域与前缀必须随 init 下发（缺省会让 verifyCode 绑错区域）。
+        region: config.region,
+        prefix: config.prefix,
         mode: "popup",
         language: config.language === "en-US" ? "en" : "cn",
         showErrorTip: false,

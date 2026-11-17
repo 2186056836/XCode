@@ -55,15 +55,17 @@ export function buildCliXCodeSourceHeaders(
   const appVersion = resolveAppVersionForHeaders(env, options);
   const locale = normalizePrintableHeaderValue(Intl.DateTimeFormat().resolvedOptions().locale);
   const timezone = normalizePrintableHeaderValue(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  // 线上 wire 头名必须保持官方 X-ZCode-*/ZCode 品牌（服务器风控按官方指纹校验，
+  // 换肤头名/UA 会被判 unusual activity 拒单）；fork 只换符号名，不改线上头名。
   return {
     "HTTP-Referer": resolveRuntimeXCodeEndpointOrigin(env),
-    "User-Agent": `XCode/${appVersion ?? "unknown"}`,
-    ...(appVersion ? { "X-XCode-App-Version": appVersion } : {}),
+    "User-Agent": `ZCode/${appVersion ?? "unknown"}`,
+    ...(appVersion ? { "X-ZCode-App-Version": appVersion } : {}),
     "X-Title": `Z Code@${sourceTitle}`,
     "X-Release-Channel": resolveRuntimeXCodeEnv(env),
     "X-Client-Language": locale ?? "unknown",
     "X-Client-Timezone": timezone ?? "unknown",
-    "X-XCode-Agent": "glm",
+    "X-ZCode-Agent": "glm",
     ...createRuntimePlatformHeaders(),
   };
 }

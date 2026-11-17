@@ -49,7 +49,7 @@ export function createProviderRuntimeHeadersPort(
               ? { rejectedProjectTokenFingerprint: input.rejectedProjectTokenFingerprint }
               : {}),
             ...(input.excludedConnectionIds && input.excludedConnectionIds.length > 0
-              ? { excludedConnectionIds: [...input.excludedConnectionIds] }
+              ? { excludedConnectionIds: [...input.excludedConnectionIds] as string[] }
               : {}),
             ...(input.lastFailure ? { lastFailure: input.lastFailure } : {}),
             reason: input.reason,
@@ -98,7 +98,7 @@ export function createProviderRuntimeHeadersPort(
               ? { rejectedProjectTokenFingerprint: input.rejectedProjectTokenFingerprint }
               : {}),
             ...(input.excludedConnectionIds && input.excludedConnectionIds.length > 0
-              ? { excludedConnectionIds: [...input.excludedConnectionIds] }
+              ? { excludedConnectionIds: [...input.excludedConnectionIds] as string[] }
               : {}),
             ...(input.lastFailure ? { lastFailure: input.lastFailure } : {}),
             reason: input.reason,

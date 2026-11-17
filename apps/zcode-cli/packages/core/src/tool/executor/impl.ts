@@ -12,7 +12,7 @@ import { BackgroundTaskTracker } from "./background-tasks.js";
 import { executeToolBatch, executeToolSchedule } from "./batch-runner.js";
 import { executeToolCall } from "./call-runner.js";
 import { runPreToolUseHooks } from "./hook-flow.js";
-import { resolveToolPermission } from "./permission-flow.js";
+import { areReadsDeniedWithoutPrompt, resolveToolPermission } from "./permission-flow.js";
 import type {
   ToolBatchExecuteOptions,
   ToolExecuteOptions,
@@ -25,6 +25,8 @@ import { validateInput } from "./validation.js";
 export class ToolExecutorImpl implements ToolExecutor {
   private readonly deps: ToolExecutorDeps;
   private readonly backgroundTasks: BackgroundTaskTracker;
+  /** 一个 runtime 一个执行器，序号在同一 assistant 内可比；删除、清空读取状态不影响它。 */
+  private readFileStateSnapshotCount = 0;
 
   constructor(options: ToolExecutorOptions) {
     this.deps = {
@@ -36,6 +38,7 @@ export class ToolExecutorImpl implements ToolExecutor {
       emitEvent: options.emitEvent,
       enqueueBackgroundTaskNotification: options.enqueueBackgroundTaskNotification,
       shouldEnqueueBackgroundTaskNotification: options.shouldEnqueueBackgroundTaskNotification,
+      registerResidencyBlockingWork: options.registerResidencyBlockingWork,
       sessionId: options.sessionId,
       turnId: options.turnId,
       defaultTimeoutMs: options.defaultTimeoutMs ?? 300000,
@@ -60,7 +63,10 @@ export class ToolExecutorImpl implements ToolExecutor {
       artifactStore: options.artifactStore,
       automationPort: options.automationPort,
       offPeakPort: options.offPeakPort,
+      // fork 四族工具端口（代理池/桌宠/越狱/账号）必须在执行器 deps 上可见，
+      // 否则 registry 会按 Boolean(port) 判定不可用而隐藏工具。
       proxyPoolPort: options.proxyPoolPort,
+      petControlPort: options.petControlPort,
       modelJailbreakPort: options.modelJailbreakPort,
       providerAccountPort: options.providerAccountPort,
       topicResourcePort: options.topicResourcePort,
@@ -72,6 +78,7 @@ export class ToolExecutorImpl implements ToolExecutor {
       modelCatalogPort: options.modelCatalogPort,
       runtimeTaskRegistry: options.runtimeTaskRegistry,
       readFileState: options.readFileState ?? new Map(),
+      nextReadFileStateSnapshotIndex: () => this.readFileStateSnapshotCount++,
       hasLoadedSkill: options.hasLoadedSkill,
       subagentBackgroundBashMaxMs: options.subagentBackgroundBashMaxMs,
       bashShellSelection: options.bashShellSelection,
@@ -140,6 +147,13 @@ export class ToolExecutorImpl implements ToolExecutor {
     if (!decision.allowed)
       throw new Error(decision.result.error?.message ?? "Tool denied by host policy");
     return decision.executionInput;
+  }
+
+  areReadsDeniedWithoutPrompt(
+    filePaths: readonly string[],
+    traceContext: TraceContext,
+  ): Promise<boolean[]> {
+    return areReadsDeniedWithoutPrompt(this.deps, filePaths, traceContext);
   }
 
   execute(
