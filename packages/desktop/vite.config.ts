@@ -265,6 +265,10 @@ export default defineConfig(({ command, mode }) => {
           "cua-permission-panel": resolve(__dirname, "src/renderer/cua-permission-panel.html"),
           // 插件 UI 沙箱的受信 shell，经 zcode-sandbox:// 提供
           "plugin-sandbox": resolve(__dirname, "src/renderer/plugin-sandbox.html"),
+          // 桌宠悬浮窗（独立 BrowserWindow）：dev 下 vite 按需服务看不出缺失，
+          // 生产构建只产出这里登记的入口——漏登记 = 安装包里宠物窗 404 白屏。
+          "pet-overlay": resolve(__dirname, "src/renderer/pet-overlay.html"),
+          "dsh-pet-overlay": resolve(__dirname, "src/renderer/dsh-pet-overlay.html"),
         },
       },
     },

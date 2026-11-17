@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <title>XCode DSH Pet</title>
     <style>
-      @font-face{font-family:"ShangshouSoftCandy";src:url("pets-dsh/font/上首软糖体.ttf") format("truetype");font-display:swap;font-weight:400}
+      /* 上首软糖体不再随安装包内置（素材在线化）：装了完整素材包由 applyAssetFont 动态注入
+         --dsh-pet-font-family，没装则回落系统字体栈，所以这里不能再引用内置字体文件。 */
       html,
       body {
         margin: 0;
