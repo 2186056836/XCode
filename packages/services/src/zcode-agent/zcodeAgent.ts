@@ -1,4 +1,20 @@
+import type {
+  V4SessionDeletionParams,
+  V4SessionDeletionExecuteParams,
+  V4SessionDeletionPreview,
+  V4SessionDeletionResult,
+} from "@zcode/shared/zcode-protocol-v4";
 import type { PluginUiToolResultNotification } from "@zcode/shared/mcp-apps";
+import type {
+  ContextComposition,
+  ContextCompositionChangedEvent,
+  ModelRequestMetricsFact,
+} from "@zcode/shared/zcode-protocol-v4";
+import type { XCodeAgentContextCompositionParams } from "#src/zcode-agent/contextCompositionClient.js";
+import type {
+  XCodeAgentPluginMentionItemsParams,
+  XCodeAgentPluginMentionItemsResult,
+} from "#src/zcode-agent/pluginHostQueriesClient.js";
 import type {
   BackgroundBashOutputResult,
   SessionDebugSnapshot,
@@ -142,6 +158,11 @@ import { createServiceDescriptor } from "../descriptors.js";
 
 export * from "./zcodeAgentPluginParams.js";
 export * from "./zcodeAgentWorkflowParams.js";
+export type { XCodeAgentContextCompositionParams } from "#src/zcode-agent/contextCompositionClient.js";
+export type {
+  XCodeAgentPluginMentionItemsParams,
+  XCodeAgentPluginMentionItemsResult,
+} from "#src/zcode-agent/pluginHostQueriesClient.js";
 import type {
   XCodeAgentAddPluginMarketplaceParams,
   XCodeAgentAutomationIdParams,
@@ -235,6 +256,20 @@ export interface XCodeAgentRuntimeLifecycleEvent extends XCodeAgentWorkspaceTarg
   state: "available" | "unavailable";
 }
 
+/**
+ * runtime 进程意外退出（晚于同一进程的 unavailable，退出码已知）。只用于向用户说明原因；
+ * 回合、子代理的收口由 CLI 投影在重连后给出，界面不据此改写会话状态。
+ */
+export interface XCodeAgentRuntimeExitedEvent extends XCodeAgentWorkspaceTarget {
+  workspaceKey: string;
+  runtimeIdentity: XCodeAgentWorkspaceRuntimeIdentity;
+  exitCode: number | null;
+  signal: string | null;
+  /** `native_out_of_memory`：Windows 0xE0000008，系统可提交内存耗尽。 */
+  cause?: "native_out_of_memory";
+  exitedAt: number;
+}
+
 export type XCodeAgentCuaPermissionObservation = CuaPermissionObservation &
   XCodeAgentWorkspaceTarget;
 
@@ -301,11 +336,14 @@ export interface XCodeAgentReadSessionParams extends XCodeAgentSessionTarget {
 export interface XCodeAgentReadSessionMessagesParams extends XCodeAgentSessionTarget {
   afterMessageId?: string;
   limit?: number;
+  direction?: "forward" | "backward";
 }
 
 export interface XCodeAgentReadSessionEventsParams extends XCodeAgentSessionTarget {
   afterSeq?: number;
   limit?: number;
+  /** App 后台状态读取只观察现有 CLI，不因 runtime 消失重启。 */
+  runtimePolicy?: XCodeAgentRuntimePolicy;
 }
 
 export type XCodeAgentReadWorkspacePresentationParams = XCodeAgentWorkspaceTarget;
@@ -317,6 +355,7 @@ export interface XCodeAgentGrantWorkspaceHookTrustParams extends XCodeAgentWorks
 
 export interface XCodeAgentSendPromptParamsBase extends XCodeAgentSessionTarget {
   modelSelection?: ModelSelection;
+  modelSelectionBasis?: ModelSelection;
   modelExecution?: import("@zcode/shared/zcode-protocol-v4").CommandPayloadMap["sendText"]["modelExecution"];
   inputId?: string;
   queryId?: string;
@@ -563,10 +602,18 @@ export interface XCodeAgentConversationFileRewindPreviewParams extends XCodeAgen
   baseLogEpoch: string;
 }
 
+/**
+ * Host 进程内的受管 worktree 服务发送命令时设置的标记。只有带此标记的命令可以携带
+ * createSession.cwd / worktreeCreation 与 forkAssistant.targetCwd；Symbol 键无法经 RPC 序列化伪造。
+ */
+export const HOST_WORKTREE_COMMAND: unique symbol = Symbol("zcode.hostWorktreeCommand");
+
 export interface XCodeAgentConversationCommandParams extends XCodeAgentWorkspaceTarget {
   /** 仅 Host 消费；显式 NULL 表示全局任务，不向 CLI 发送项目概念。 */
   projectId?: string | null;
   envelope: CommandEnvelope;
+  /** 只有 Host 进程内的受管 worktree 服务设置（见 HOST_WORKTREE_COMMAND）。 */
+  [HOST_WORKTREE_COMMAND]?: true;
   /** 仅 host 内部用于 Browser Use runtime 边界，不进入 v4 wire envelope。 */
   clientMode?: XCodeTaskClientMode;
 }
@@ -675,6 +722,7 @@ export type XCodeAgentServiceEvent =
 export interface XCodeAgentAppRuntimePreferences {
   askUserQuestionAutoResolutionEnabled: boolean;
   modelIoFullRetentionEnabled?: boolean;
+  pluginAutoRecommendationEnabled?: boolean;
 }
 
 export interface XCodeAgentLocalRuntimeChildProcesses {
@@ -708,6 +756,7 @@ export interface IXCodeAgentService {
    * 动态工作流用户选择变化的信号（docs/dynamic-workflow/launch.md「The user's choice」）：Host 重新计算
    * 生效模式并串行重发 workspace/updateDynamicWorkflowPolicy。有本机设置权威的 Host 以设置文件为准；
    * desktop-attached remote Host 以传入值为准（缺席 = 跟随服务端）。不得为此启动空闲 Agent。
+   * Host 记下选择即返回，不等 CLI 应答；返回后重读的可用性快照已是新模式。
    */
   syncDynamicWorkflowUserMode(params: { mode?: DynamicWorkflowMode }): Promise<void>;
   getWorkspaceRuntimeIdentity(
@@ -724,6 +773,8 @@ export interface IXCodeAgentService {
   getUsageRequestDetails(
     params: XCodeAgentUsageRequestDetailsParams,
   ): Promise<XCodeUsageRequestDetailsResult>;
+  previewSessionDeletion?(params: V4SessionDeletionParams): Promise<V4SessionDeletionPreview>;
+  executeSessionDeletion?(params: V4SessionDeletionExecuteParams): Promise<V4SessionDeletionResult>;
   /** 项目数据删除前的测量：只读，用本机已有 runtime 或管理面进程，不为某个项目拉起 Agent。 */
   measureSessionData?(params: V4SessionDataParams): Promise<V4SessionDataMeasureResult>;
   /**
@@ -733,6 +784,19 @@ export interface IXCodeAgentService {
   purgeSessionData?(
     params: V4SessionDataParams & { workspace: XCodeAgentWorkspaceTarget },
   ): Promise<V4SessionDataPurgeResult>;
+  /** 该 workspace 的 CLI 是否在 runtime/capabilities 中声明 worktreeCwd（只供 Host 进程内调用）。 */
+  supportsWorktreeCwd?(target: XCodeAgentWorkspaceTarget): Promise<boolean>;
+  /**
+   * 该 workspace 的 CLI 是否在 runtime/capabilities 中声明 extensionInputSource（只供 Host 进程内调用）。
+   * 代扩展发消息前必须确认；false 时调用方报 unavailable，不去掉来源后发送
+   * （apps/zcode-cli/docs/design/v2/conversation-input-source.md §7）。
+   */
+  supportsExtensionInputSource?(target: XCodeAgentWorkspaceTarget): Promise<boolean>;
+  /**
+   * 该 workspace 的 CLI 是否在 runtime/capabilities 中声明 conversationQuoteComment。
+   * renderer 据此决定是否提供选区“批注”入口；未实现（旧 Host / 远端）按不支持处理。
+   */
+  supportsConversationQuoteComment?(target: XCodeAgentWorkspaceTarget): Promise<boolean>;
   getTaskTokenUsage(params: XCodeAgentTaskTokenUsageParams): Promise<XCodeTaskTokenUsageResult>;
   readSession(params: XCodeAgentReadSessionParams): Promise<XCodeSessionStateSnapshot>;
   readSessionMessages(
@@ -912,6 +976,20 @@ export interface IXCodeAgentService {
   closeSession(
     params: XCodeAgentSessionTarget & { expectedPersistence?: "deferred" | "immediate" },
   ): Promise<boolean>;
+  /**
+   * 卸载 cwd 位于 directory 内的全部驻留会话（session/releaseUnderDirectory，docs/git/worktree.md §8.3）。
+   * 会话选择与忙闲由 CLI 判断，任一会话忙时全部不卸载。只使用已存在的进程；没有进程时没有驻留会话。
+   */
+  releaseSessionsUnderDirectory?(
+    params: XCodeAgentWorkspaceTarget & { directory: string },
+  ): Promise<{ released: string[]; busy: string[] }>;
+  /**
+   * 按 commandId 查询 CLI 对一条命令的裁决（commands/query）；Host 内部用于确认失败的会话命令
+   * 是否实际执行（docs/git/worktree.md §3.5）。CLI 没有记录时返回 "unknown"。
+   */
+  queryCommandResult?(
+    params: XCodeAgentWorkspaceTarget & { key: CommandKey },
+  ): Promise<CommandAck | "unknown">;
   setModel(params: XCodeAgentSetModelParams): Promise<XCodeSessionStateSnapshot>;
   setThoughtLevel(params: XCodeAgentSetThoughtLevelParams): Promise<XCodeSessionStateSnapshot>;
   setPersona(params: XCodeAgentSetPersonaParams): Promise<XCodeSessionStateSnapshot>;
@@ -952,6 +1030,8 @@ export interface IXCodeAgentService {
    * 该事件不属于 session/conversation continuous 或 replayable 状态。
    */
   onDynamicProcessResourceSample(): Event<AgentLaneResourceSample>;
+  /** 插件启动超时的工作区提示；订阅时补投当前进程的降级事实。 */
+  onDynamicPluginStartupDegraded(params: XCodeAgentWorkspaceTarget): Event<void>;
   /** MCP 进程生命周期与低频内存事件，仅供可信 Host relay 上报 ARMS。 */
   /** 仅 trusted Host relay 订阅；手机统计不依赖 renderer 生命周期。 */
   onDynamicRemoteConversationTelemetry(): Event<RemoteConversationTelemetryEvent>;
@@ -1071,6 +1151,34 @@ export interface IXCodeAgentService {
   onDynamicConversationTelemetryFact(
     params: XCodeAgentWorkspaceTarget,
   ): Event<ConversationTelemetryFact>;
+  /**
+   * context 组成（apps/zcode-cli/docs/design/v2/model/context-composition.md §3.6）。
+   * existing-only：工作区没有运行中的 CLI、会话不在内存、旧 CLI（method-not-found）都返回 null，不启动 CLI。
+   */
+  getContextComposition?(
+    params: XCodeAgentContextCompositionParams,
+  ): Promise<ContextComposition | null>;
+  // 注意：读本插件 user 层设置（含敏感值）的 readPluginUserOptions 故意不在本接口上。本服务整个
+  // XCodeAgent 频道经 RPC 暴露（桌面 Renderer；手机远控 allowlist 也含它），挂在这里就会被任意客户端调到。
+  // Window Host 经 node.ts 的 getPluginUserOptionsReader(services) 在进程内取得（见 pluginHostQueriesClient.ts）。
+  /**
+   * 输入框 `@` 面板 `tool` target 的候选项（docs/plugins/extension-host.md §16.6）。existing-only：
+   * 没有运行中的 CLI 抛 runtime-unavailable；会话不在 CLI 内存抛 -32004；其他失败的 `data.code` 是
+   * `plugin_mention_*`。工具调用走会话的 MCP App 授权链，首次可能在会话里等待用户审批。
+   * 旧 CLI（method-not-found）→ `{ supported: false }`。不设计取消，调用方只采用最新一次结果。
+   */
+  getPluginMentionItems?(
+    params: XCodeAgentPluginMentionItemsParams,
+  ): Promise<XCodeAgentPluginMentionItemsResult>;
+  /** context 组成变更：只带修订号，live-only；收到后按需调 getContextComposition。 */
+  onDynamicContextCompositionChanged?(
+    target: XCodeAgentWorkspaceTarget,
+  ): Event<ContextCompositionChangedEvent>;
+  /**
+   * 模型请求指标（docs/monitoring/conversation-telemetry-v4.md「模型请求指标」）：每个完成的请求一条，
+   * 带 usage 与首内容时间；按 querySource 区分主轮与旁路。旧 CLI 不发。
+   */
+  onDynamicModelRequestMetrics?(target: XCodeAgentWorkspaceTarget): Event<ModelRequestMetricsFact>;
   /** Host 消费驻留 CLI 的闲时生命周期；不参与聊天快照恢复。 */
   onDynamicOffPeakLifecycle(
     params: XCodeAgentWorkspaceTarget,
@@ -1125,6 +1233,8 @@ export interface IXCodeAgentService {
   onAgentRuntimeLifecycle?: (
     listener: (event: XCodeAgentRuntimeLifecycleEvent) => void,
   ) => IDisposable;
+  /** 当前 runtime 进程意外退出；界面据此提示原因并提供重新连接。 */
+  onAgentRuntimeExited?: (listener: (event: XCodeAgentRuntimeExitedEvent) => void) => IDisposable;
   /** 当前 desktop-local CUA turn 是否仍在执行，用于 Helper recovery 避免中途回收 Agent。 */
   hasActiveCuaOperationTurn(): boolean;
   disposeWorkspace(

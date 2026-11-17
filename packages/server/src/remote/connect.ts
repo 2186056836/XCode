@@ -405,5 +405,5 @@ function buildRemoteServerCommand(
       );
     }
   }
-  return `${envParts.join(" ")} ~/.xcode/server/node ~/.xcode/server/zcode-server.cjs`;
+  return `${envParts.join(" ")} ~/.xcode/server/node ~/.xcode/server/zcode-server.cjs --prepare-credentials`;
 }

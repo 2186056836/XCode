@@ -14,6 +14,17 @@
   !define XCODE_INSTALLER_IS_ELEVATED_INNER `${UAC_IsInnerInstance}`
 !endif
 
+!ifndef XCODE_INSTALLER_PROCESS_HELPER
+  ; CR-01 修复原因：普通 NSIS 只有 APP_64/APP_ARM64（压缩包路径），没有 APP_DIR_*；
+  ; 正式构建由 afterPack 落盘按架构的 helper define 文件（见 electron-builder.config.js），
+  ; 编译时按目标架构 include；缺失不在此报错，宏内在真正使用处明确失败。
+  !ifdef APP_ARM64
+    !include /NONFATAL "${__FILEDIR__}\generated\zcode-process-helper-arm64.nsh"
+  !else
+    !include /NONFATAL "${__FILEDIR__}\generated\zcode-process-helper-x64.nsh"
+  !endif
+!endif
+
 !ifndef XCODE_INSTALL_MANIFEST_NAME
   !define XCODE_INSTALL_MANIFEST_NAME ".zcode-install-manifest"
 !endif
@@ -97,6 +108,8 @@
       StrCpy $R2 $R1 2
       StrCmp $R2 ".." zcodeManifestRead
       StrCmp $R1 "${UNINSTALL_FILENAME}" zcodeManifestRead
+      ; 清单是当前打开的元数据，自引用条目不能当作普通载荷删除。
+      StrCmp $R1 "${XCODE_INSTALL_MANIFEST_NAME}" zcodeManifestRead
       GetFullPathName $R2 "$INSTDIR\$R1"
       StrCmp $R2 "$INSTDIR\$R1" 0 zcodeManifestRead
 
@@ -110,11 +123,12 @@
       Goto zcodeManifestRead
 
     zcodeManifestDeleteFailed:
+      System::Call 'kernel32::GetLastError() i.R2'
       FileClose $R0
       !ifdef BUILD_UNINSTALLER
-        !insertmacro ZCodeReportUninstallerStage "cleanup-failed reason=permission-or-disk-space"
+          !insertmacro ZCodeReportUninstallerStage "cleanup-failed reason=delete-failed path=$R1 win32-error=$R2"
       !endif
-      Abort "无法删除旧版本文件：$INSTDIR\$R1"
+      Abort "无法删除旧版本文件：$INSTDIR\$R1（Win32 错误 $R2）"
 
     zcodeManifestClose:
       FileClose $R0
@@ -289,7 +303,250 @@
     zcodePreviousUninstallerCapabilityDone:
   FunctionEnd
 
+  !macro XCodeCleanupErrorMessage CHINESE ENGLISH
+    ${If} $LANGUAGE == 2052
+      MessageBox MB_OK|MB_ICONSTOP "${CHINESE}" /SD IDOK
+    ${Else}
+      MessageBox MB_OK|MB_ICONSTOP "${ENGLISH}" /SD IDOK
+    ${EndIf}
+  !macroend
+
+  Var XCodeCleanupSource
+  Var XCodeCleanupBackup
+  Var XCodeCleanupMode
+  Var XCodeCleanupFailed
+  Var XCodeCleanupManifest
+  Var XCodeCleanupManifestHasSelf
+
+  ; 修复原因：PowerShell 或 Add-Type 被禁用时不能阻断已退出应用的更新；随包 helper 按路径验证句柄。
+  !macro XCodeStopPreviousInstallProcesses
+    InitPluginsDir
+    SetOutPath "$PLUGINSDIR"
+    ; CR-01 修复原因：普通 NSIS 只有 APP_64/APP_ARM64（压缩包路径），没有 APP_DIR_*；
+    ; helper 来源由文件顶层的生成 define 提供，缺失在此明确失败，不得回退压缩包宏。
+    !ifndef XCODE_INSTALLER_PROCESS_HELPER
+      !error "Installer process helper requires XCODE_INSTALLER_PROCESS_HELPER or generated define"
+    !endif
+    File /oname=zcode-installer-process-helper.exe "${XCODE_INSTALLER_PROCESS_HELPER}"
+    nsExec::ExecToStack /TIMEOUT=30000 `"$PLUGINSDIR\zcode-installer-process-helper.exe" "$installationDir\${APP_EXECUTABLE_FILENAME}"`
+    Pop $R1
+    Pop $R2
+    StrCmp $R1 "0" zcodePreviousProcessesStopped
+    !insertmacro ZCodeReportInstallerStage "process-cleanup-failed exit-code=$R1 install-dir=$installationDir details=$R2"
+    !insertmacro XCodeCleanupErrorMessage "无法验证或关闭旧版本进程，安装已停止。请关闭 XCode 后重试。进程信息：$R2" "Cannot verify or close previous-version processes. Setup stopped. Close XCode and retry. Process details: $R2"
+    SetErrorLevel 2
+    Quit
+    zcodePreviousProcessesStopped:
+      !insertmacro ZCodeReportInstallerStage "process-cleanup-completed install-dir=$installationDir details=$R2"
+  !macroend
+
+  ; 旧卸载器已删除的文件不会自行恢复。新安装器在调用旧代码前尽力保存受管文件，
+  ; 只有完整备份才能用于清理失败后的恢复；备份失败不阻断安装。
+  ; 自定义 include 先于 common.nsh；延迟展开，确保卸载器名称已定义，避免正式打包 warning 6000。
+  !macro XCodeDefineCleanupSnapshot
+  Function XCodeCleanupSnapshot
+    Push $R0
+    Push $R1
+    Push $R2
+    Push $R3
+    Push $R4
+    Push $R5
+    StrCpy $R5 ""
+    StrCpy $XCodeCleanupFailed "0"
+    StrCmp $XCodeCleanupMode "restore" zcodeSnapshotRead
+    StrCpy $XCodeCleanupBackup ""
+    StrCpy $XCodeCleanupManifestHasSelf "0"
+    IfFileExists "$XCodeCleanupSource\${XCODE_INSTALL_MANIFEST_NAME}" 0 zcodeSnapshotDone
+    ${GetParent} $XCodeCleanupSource $R0
+    ClearErrors
+    GetTempFileName $XCodeCleanupBackup $R0
+    IfErrors zcodeSnapshotFailed
+    Delete "$XCodeCleanupBackup"
+    CreateDirectory "$XCodeCleanupBackup"
+    IfErrors zcodeSnapshotFailed
+    System::Call 'kernel32::CopyFileW(w "$XCodeCleanupSource\${XCODE_INSTALL_MANIFEST_NAME}", w "$XCodeCleanupBackup\${XCODE_INSTALL_MANIFEST_NAME}", i 1) i.R3 ?e'
+    Pop $R4
+    StrCmp $R3 "0" zcodeSnapshotFailed
+    GetTempFileName $XCodeCleanupManifest "$XCodeCleanupBackup"
+    IfErrors zcodeSnapshotFailed
+    FileOpen $R5 "$XCodeCleanupManifest" w
+    IfErrors zcodeSnapshotFailed
+
+    zcodeSnapshotRead:
+      StrCmp $XCodeCleanupBackup "" zcodeSnapshotDone
+      ClearErrors
+      FileOpen $R0 "$XCodeCleanupBackup\${XCODE_INSTALL_MANIFEST_NAME}" r
+      IfErrors zcodeSnapshotFailed
+    zcodeSnapshotNext:
+      ClearErrors
+      FileRead $R0 $R1
+      IfErrors zcodeSnapshotClose
+      StrCpy $R1 $R1 -2
+      StrCmp $R1 "" zcodeSnapshotNext
+      StrCmp $XCodeCleanupMode "restore" zcodeSnapshotValidateEntry
+      StrCmp $R1 "${XCODE_INSTALL_MANIFEST_NAME}" zcodeSnapshotSelfEntry
+      FileWrite $R5 "$R1$\r$\n"
+      IfErrors zcodeSnapshotFailedClose
+      Goto zcodeSnapshotValidateEntry
+    zcodeSnapshotSelfEntry:
+      StrCpy $XCodeCleanupManifestHasSelf "1"
+      Goto zcodeSnapshotNext
+    zcodeSnapshotFailedClose:
+      StrCpy $XCodeCleanupFailed "1"
+      Goto zcodeSnapshotClose
+    zcodeSnapshotValidateEntry:
+      ; 只接受清单中规范的相对路径，拒绝越界、通配符和卸载器自身。
+      StrCpy $R2 $R1 1
+      StrCmp $R2 "\" zcodeSnapshotNext
+      StrCmp $R2 "/" zcodeSnapshotNext
+      StrCpy $R2 $R1 2
+      StrCmp $R2 ".." zcodeSnapshotNext
+      StrCmp $R1 "${UNINSTALL_FILENAME}" zcodeSnapshotNext
+      ; 清单已在循环前单独备份；自引用时再次排他复制会因目标存在而中止更新。
+      StrCmp $R1 "${XCODE_INSTALL_MANIFEST_NAME}" zcodeSnapshotNext
+      ; Windows NSIS 对已删除的目标返回空路径；恢复时校验仍存在的备份，不能跳过待补回文件。
+      StrCpy $R3 "$XCodeCleanupSource"
+      StrCmp $XCodeCleanupMode "restore" 0 +2
+        StrCpy $R3 "$XCodeCleanupBackup"
+      GetFullPathName $R2 "$R3\$R1"
+      StrCmp $R2 "$R3\$R1" 0 zcodeSnapshotNext
+      StrCpy $R2 0
+    zcodeSnapshotValidate:
+      StrCpy $R3 $R1 1 $R2
+      StrCmp $R3 "" zcodeSnapshotCopy
+      StrCmp $R3 "*" zcodeSnapshotInvalidPath
+      StrCmp $R3 "?" zcodeSnapshotInvalidPath
+      StrCmp $R3 ":" zcodeSnapshotInvalidPath
+      IntOp $R2 $R2 + 1
+      Goto zcodeSnapshotValidate
+    zcodeSnapshotInvalidPath:
+      StrCpy $XCodeCleanupFailed "1"
+      Goto zcodeSnapshotClose
+    zcodeSnapshotCopy:
+      StrCmp $XCodeCleanupMode "restore" zcodeSnapshotRestore
+      IfFileExists "$XCodeCleanupSource\$R1" 0 zcodeSnapshotNext
+      ${GetParent} "$XCodeCleanupBackup\$R1" $R2
+      CreateDirectory "$R2"
+      System::Call 'kernel32::CopyFileW(w "$XCodeCleanupSource\$R1", w "$XCodeCleanupBackup\$R1", i 1) i.R3 ?e'
+      Pop $R4
+      Goto zcodeSnapshotCopyResult
+    zcodeSnapshotRestore:
+      IfFileExists "$XCodeCleanupBackup\$R1" 0 zcodeSnapshotNext
+      IfFileExists "$XCodeCleanupSource\$R1" 0 zcodeSnapshotRestoreMissing
+      ; 同名目录不能充当恢复后的文件，否则会误报已恢复主程序。
+      System::Call 'kernel32::GetFileAttributesW(w "$XCodeCleanupSource\$R1") i.R3'
+      IntOp $R3 $R3 & 0x10
+      StrCmp $R3 0 zcodeSnapshotNext
+      StrCpy $XCodeCleanupFailed "1"
+      Goto zcodeSnapshotNext
+    zcodeSnapshotRestoreMissing:
+      ${GetParent} "$XCodeCleanupSource\$R1" $R2
+      CreateDirectory "$R2"
+      System::Call 'kernel32::CopyFileW(w "$XCodeCleanupBackup\$R1", w "$XCodeCleanupSource\$R1", i 1) i.R3 ?e'
+      Pop $R4
+    zcodeSnapshotCopyResult:
+      ; System 的 ?e 在 CopyFileW 返回时保存 Win32 错误，避免插件后续调用覆盖 GetLastError。
+      StrCmp $R3 "0" 0 zcodeSnapshotNext
+      !insertmacro ZCodeReportInstallerStage "cleanup-$XCodeCleanupMode-file-failed path=$R1 win32-error=$R4"
+      StrCpy $XCodeCleanupFailed "1"
+      StrCmp $XCodeCleanupMode "restore" zcodeSnapshotNext
+    zcodeSnapshotClose:
+      FileClose $R0
+      StrCmp $XCodeCleanupMode "restore" zcodeSnapshotRestoreManifest
+      FileClose $R5
+      StrCpy $R5 ""
+      StrCmp $XCodeCleanupFailed "1" zcodeSnapshotDone
+      StrCmp $XCodeCleanupManifestHasSelf "1" 0 zcodeSnapshotDone
+      ; 旧卸载器也会删除打开中的清单。完整备份后，仅原子移除自引用项供旧代码读取。
+      System::Call 'kernel32::MoveFileExW(w "$XCodeCleanupManifest", w "$XCodeCleanupSource\${XCODE_INSTALL_MANIFEST_NAME}", i 9) i.R3 ?e'
+      Pop $R4
+      StrCmp $R3 "0" zcodeSnapshotFailed zcodeSnapshotDone
+    zcodeSnapshotRestoreManifest:
+      ; 旧清单可能仍存在但已去掉自引用；失败回滚须恢复原始字节，而非仅补不存在的文件。
+      System::Call 'kernel32::CopyFileW(w "$XCodeCleanupBackup\${XCODE_INSTALL_MANIFEST_NAME}", w "$XCodeCleanupSource\${XCODE_INSTALL_MANIFEST_NAME}", i 0) i.R3 ?e'
+      Pop $R4
+      StrCmp $R3 "0" zcodeSnapshotFailed zcodeSnapshotDone
+    zcodeSnapshotFailed:
+      StrCpy $XCodeCleanupFailed "1"
+    zcodeSnapshotDone:
+      StrCmp $R5 "" +2
+        FileClose $R5
+      !insertmacro ZCodeReportInstallerStage "cleanup-$XCodeCleanupMode-completed failed=$XCodeCleanupFailed backup=$XCodeCleanupBackup"
+      Pop $R5
+      Pop $R4
+      Pop $R3
+      Pop $R2
+      Pop $R1
+      Pop $R0
+  FunctionEnd
+  !macroend
+
+  !macro customOldUninstallPrepare
+    StrCpy $XCodeCleanupSource "$installationDir"
+    !insertmacro XCodeStopPreviousInstallProcesses
+    StrCpy $XCodeCleanupMode "backup"
+    Call XCodeCleanupSnapshot
+    ${If} $XCodeCleanupFailed == "1"
+      ; 修复原因：备份是可选保护；失败时弃用半份备份，避免旧卸载失败后误用它恢复。
+      !insertmacro ZCodeReportInstallerStage "cleanup-backup-skipped path=$XCodeCleanupBackup"
+      StrCmp $XCodeCleanupBackup "" zcodePreviousBackupCleanupDone
+      ClearErrors
+      RMDir /r "$XCodeCleanupBackup"
+      IfErrors zcodePreviousBackupCleanupFailed
+      Goto zcodePreviousBackupCleanupDone
+      zcodePreviousBackupCleanupFailed:
+        !insertmacro ZCodeReportInstallerStage "cleanup-backup-delete-failed path=$XCodeCleanupBackup"
+      zcodePreviousBackupCleanupDone:
+      StrCpy $XCodeCleanupBackup ""
+    ${EndIf}
+  !macroend
+
+  !macro customOldUninstallRetryFailed
+    ; 上游把任意卸载非零都显示成应用未关闭；实际进程检查仍由 CHECK_APP_RUNNING 负责。
+    ; 备份失败被弃用后没有可恢复的完整备份；提示必须与能否恢复一致，不能在无备份时承诺恢复。
+    StrCmp $XCodeCleanupBackup "" zcodeRetryExhaustedNoBackup
+    !insertmacro ZCodeReportInstallerStage "cleanup-retries-exhausted exit-code=$R0 recoverable=1"
+    ${If} $LANGUAGE == 2052
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "旧版本清理失败（错误码 $R0）。请排除文件占用或权限问题后重试，或取消以恢复旧版本。日志：$XCodeInstallerLogPath" /SD IDCANCEL IDRETRY OneMoreAttempt
+    ${Else}
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Previous version cleanup failed (exit code $R0). Resolve file locks or permissions and retry, or cancel to restore the previous version. Log: $XCodeInstallerLogPath" /SD IDCANCEL IDRETRY OneMoreAttempt
+    ${EndIf}
+    Goto zcodeRetryExhaustedDone
+    zcodeRetryExhaustedNoBackup:
+    !insertmacro ZCodeReportInstallerStage "cleanup-retries-exhausted exit-code=$R0 recoverable=0"
+    ${If} $LANGUAGE == 2052
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "旧版本清理失败（错误码 $R0）。本次更新没有完整备份：排除占用后可重试，取消将退出安装且无法自动恢复旧版本文件。日志：$XCodeInstallerLogPath" /SD IDCANCEL IDRETRY OneMoreAttempt
+    ${Else}
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Previous version cleanup failed (exit code $R0). No complete backup exists for this update: retry after resolving file locks, or cancel to exit setup without automatic restore. Log: $XCodeInstallerLogPath" /SD IDCANCEL IDRETRY OneMoreAttempt
+    ${EndIf}
+    zcodeRetryExhaustedDone:
+  !macroend
+
+  Function XCodeFinishOldUninstall
+    ${If} $R0 != 0
+      ; 修复原因：没有完整备份时不能用半份文件恢复，旧卸载失败仍由原流程报告。
+      StrCmp $XCodeCleanupBackup "" zcodeFinishOldUninstallDone
+      StrCpy $XCodeCleanupMode "restore"
+      Call XCodeCleanupSnapshot
+      ${If} $XCodeCleanupFailed == "1"
+        !insertmacro XCodeCleanupErrorMessage "旧版本文件恢复失败，备份已保留：$XCodeCleanupBackup。详细日志：$XCodeInstallerLogPath" "Cannot restore the previous version. Backup retained: $XCodeCleanupBackup. Log: $XCodeInstallerLogPath"
+        Return
+      ${EndIf}
+    ${EndIf}
+    StrCmp $XCodeCleanupBackup "" zcodeFinishOldUninstallDone
+    ClearErrors
+    RMDir /r "$XCodeCleanupBackup"
+    IfErrors zcodeFinishOldUninstallBackupDeleteFailed
+    StrCpy $XCodeCleanupBackup ""
+    Goto zcodeFinishOldUninstallDone
+    zcodeFinishOldUninstallBackupDeleteFailed:
+      ; 修复原因：备份清理故障不影响旧卸载结果及后续新版本安装，只保留路径供排查。
+      !insertmacro ZCodeReportInstallerStage "cleanup-backup-delete-failed path=$XCodeCleanupBackup"
+    zcodeFinishOldUninstallDone:
+  FunctionEnd
+
   !macro customUnInstallCheck
+    Call XCodeFinishOldUninstall
     ; handleUninstallResult 会把旧卸载器的退出码放在 $R0；失败时显示清理诊断，
     ; 不再复用 appCannotBeClosed（该文案只适用于进程占用）。
     ${if} $R0 != 0
@@ -297,8 +554,9 @@
       ; 使明确的退出码无法返回 electron-updater。静默时自动采用 IDOK，交互时仍显示提示。
       SetDetailsPrint listonly
       DetailPrint "XCode: cleanup-failed exit-code=$R0"
-      Call ZCodeShowUninstallerCleanupDetails
-      MessageBox MB_OK|MB_ICONSTOP "旧版本清理失败（错误码 $R0）。可能是文件被占用、权限不足或磁盘空间不足。详细日志：${XCODE_UNINSTALLER_LOG_PATH}" /SD IDOK
+        Call ZCodeShowUninstallerCleanupDetails
+        ; 最终错误也沿用安装器语言，避免英文 Retry/Cancel 之后固定切回中文。
+        !insertmacro XCodeCleanupErrorMessage "旧版本清理失败（错误码 $R0）。可能是文件被占用、权限不足或磁盘空间不足。详细日志：${XCODE_UNINSTALLER_LOG_PATH}" "Previous version cleanup failed (exit code $R0). Files may be in use, permissions may be insufficient, or disk space may be low. Log: ${XCODE_UNINSTALLER_LOG_PATH}"
       SetErrorLevel 2
       Quit
     ${endif}
@@ -315,7 +573,8 @@
 
 !macro customHeader
   !ifndef BUILD_UNINSTALLER
-    ; 异步生成的 header 可能先 include 本文件，再注册 UAC 插件目录。
+    !insertmacro XCodeDefineCleanupSnapshot
+    ; 修复原因：异步生成的 header 可能先 include 本文件，再注册 UAC 插件目录。
     ; 在 customHeader 展开函数，确保插件已注册；preInit 仍调用同一函数和真实 UAC 判据。
     Function ZCodeInitializeInstallerLog
       Push $R0
@@ -430,6 +689,12 @@
   ; 手动覆盖没有 --updated，继承旧快捷方式时仍需检查目标；首次安装没有旧项，
   ; 不应额外启动 PowerShell。用户已删除的快捷方式也不会重建。
   ; assisted installer 完成页始终直接运行本次安装落盘的 exe。
+  ; 修复原因：安装信息键的 InstallLocation 用于旧卸载器路径解析；卸载注册表键也写入相同值，
+  ; 避免 Windows 应用列表中的卸载项长期为空，并为后续迁移提供确定目录。
+  WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" InstallLocation "$INSTDIR"
+  !ifdef UNINSTALL_REGISTRY_KEY_2
+    WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY_2}" InstallLocation "$INSTDIR"
+  !endif
   StrCpy $launchLink "$appExe"
   !ifndef BUILD_UNINSTALLER
     !insertmacro ZCodeReportInstallerStage "install-completed"

@@ -15,8 +15,12 @@ XCode is an AI coding workspace with desktop, browser, and terminal interfaces. 
 
 ## Updates
 
-- **2026-11-03**: Updated to XCode v3.17.2.
+- **2026-11-12**: Updated to XCode v3.18.2.
+- 2026-11-12: Updated to XCode v3.18.1.
+- 2026-11-11: Updated to XCode v3.18.0.
+- 2026-11-03: Updated to XCode v3.17.2.
 - 2026-10-30: Updated to XCode v3.17.1.
+- 2026-10-29: Updated to XCode v3.17.0.
 - 2026-10-19: Updated to XCode v3.16.2.
 - 2026-10-16: Updated to XCode v3.16.1.
 - 2026-10-16: Updated to XCode v3.15.4.

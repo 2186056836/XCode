@@ -89,6 +89,9 @@ export function createRemoteConnectionServiceCollection(params: {
         createCodingPlanSubscriptionService({
           apiClient: params.apiClient,
           credentialService: params.credentialService,
+          // 远端 Host 没有本机 oauth repo；1112 的材料读取在此降级为 null，
+          // Start Plan/套餐可用性走 provider 的 fallback 路径。
+          loadOAuthAccountMaterial: async () => null,
         }),
       )
       .register(IClientScenesService, createClientScenesService({ apiClient: params.apiClient }))

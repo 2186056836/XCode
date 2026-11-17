@@ -1,6 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { parseMarketingTouchResponse, type ApiClient } from "@zcode/shared";
+import {
+  parseMarketingTouchResponse,
+  SUPPORTED_LOCALES,
+  type ApiClient,
+  type Locale,
+} from "@zcode/shared";
 import { readApiJson } from "#src/providers/api/apiJson.js";
 import {
   XCODE_MARKETING_TOUCH_REPORT_URL,
@@ -11,7 +16,8 @@ import type { ICredentialService } from "#src/credential/credential.js";
 import type { IMarketingTouchService } from "#src/marketing-touch/marketingTouch.js";
 
 const XCODE_JWT_TOKEN_KEY = "zcodejwttoken";
-const localeSchema = z.enum(["zh-CN", "en-US"]);
+// X-Client-Language 必须是真实界面语言（含 ja-JP/ru-RU/ko-KR），不能先降级成中英。
+const localeSchema = z.enum(SUPPORTED_LOCALES);
 // 序号属于本次服务进程启动，不能随组件、账号或服务实例重建而归零。
 let bootRequestSeq = 0;
 const reportSchema = z.object({
@@ -49,7 +55,7 @@ export function createMarketingTouchService(options: {
    * 而不是全局镜像。一键领取要对每个账号「用谁的凭据查投放」——用激活账号的凭据去查，
    * 拿到的就是激活账号的投放，再拿别的账号的凭据去领，服务端自然判无活动。
    */
-  async function context(locale: "zh-CN" | "en-US", accountRef?: string) {
+  async function context(locale: Locale, accountRef?: string) {
     const tokenKey = accountRef ? `zcodejwt:${accountRef}` : XCODE_JWT_TOKEN_KEY;
     const identityKey = accountRef ?? "__active__";
     const token = (await options.credentialService.load(tokenKey))?.trim() || "";
@@ -63,6 +69,7 @@ export function createMarketingTouchService(options: {
       ...sourceHeaders,
       "X-Client-Language": localeSchema.parse(locale),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+
     };
     z.string().uuid().parse(headers["X-Device-Mid"]);
     return { scope, headers };

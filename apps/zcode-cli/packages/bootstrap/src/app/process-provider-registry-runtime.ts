@@ -78,6 +78,7 @@ export async function startProcessProviderRegistryRuntime(
                 appVersion: XCODE_VERSION,
                 platform: resolveXCodeBuiltinClientPlatform(),
                 request: options.standalone?.request ?? globalThis.fetch,
+                resolveXcodeJwtToken: () => credentialStore?.load("zcodejwttoken"),
               }),
             onRefreshResult: options.standalone?.onBuiltinRefreshResult,
           },

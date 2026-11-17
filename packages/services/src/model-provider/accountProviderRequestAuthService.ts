@@ -80,9 +80,14 @@ interface AccountProviderRequestAuthServiceOptions {
   ): Promise<{
     accessToken?: string | null;
     zcodeJwtToken?: string | null;
+    sessionRevision?: string | null;
+    accountIdentity?: string;
+    zcodeUserId?: string;
   } | null>;
   /** 账号显示名（user_info.displayName）；「使用详情」按它区分具体账号。缺省不填显示名。 */
   loadAccountDisplayName?(accountRef: string): Promise<string | null>;
+  /** Start 只用共享 XCode JWT；不经过付费套餐的家族 token set。 */
+  loadStartPlanXcodeJwt(family: ProviderFamilyDomain): Promise<string | null>;
   loadIndividualPlanMaterial(
     providerId: string,
     family: ProviderFamilyDomain,
@@ -188,6 +193,9 @@ class AccountProviderRequestAuthService implements AccountRequestAuthResolver {
             : null,
           login.accessToken.trim(),
           login.zcodeJwtToken?.trim() ?? null,
+          login.sessionRevision ?? null,
+          login.accountIdentity ?? null,
+          login.zcodeUserId ?? null,
         ]),
       )
       .digest("hex");

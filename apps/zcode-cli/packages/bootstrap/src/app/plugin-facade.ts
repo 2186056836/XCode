@@ -13,12 +13,13 @@ import type {
   XCodePluginUninstallResult,
 } from "./types.js";
 
-type PluginFacade = Pick<
-  XCodeApp,
-  "listPlugins" | "setPluginEnabled" | "uninstallPlugin"
->;
+type PluginFacade = Pick<XCodeApp, "listPlugins" | "setPluginEnabled" | "uninstallPlugin">;
 
 interface CreatePluginFacadeOptions {
+  workspaceIdentity?: string;
+  remoteSessionId?: string;
+  pluginPreparation?: XCodeAppOptions["pluginPreparation"];
+  pluginDiscovery?: XCodeAppOptions["pluginDiscovery"];
   configResult: ConfigResult;
   env?: NodeJS.ProcessEnv;
   officialPluginRoots?: string[];
@@ -36,15 +37,16 @@ function createPluginFacade(options: CreatePluginFacadeOptions): PluginFacade {
     env: options.env,
     officialPluginRoots: options.officialPluginRoots,
     pluginStorageRoot: options.pluginStorageRoot,
+    pluginPreparation: options.pluginPreparation,
+    pluginDiscovery: options.pluginDiscovery,
+    workspaceIdentity: options.workspaceIdentity,
+    remoteSessionId: options.remoteSessionId,
     workingDirectory: options.workingDirectory,
   });
 
   return {
     listPlugins: async (): Promise<PluginLoadOutcome> => listXCodePlugins(commonOptions()),
-    setPluginEnabled: async (
-      plugin: string,
-      enabled: boolean,
-    ): Promise<XCodePluginSetResult> => {
+    setPluginEnabled: async (plugin: string, enabled: boolean): Promise<XCodePluginSetResult> => {
       const result = await setXCodePluginEnabled({
         ...commonOptions(),
         enabled,
@@ -89,6 +91,10 @@ export function createPluginFacadeForApp(input: {
     env: input.options.env,
     officialPluginRoots: input.options.officialPluginRoots,
     pluginStorageRoot: input.options.pluginStorageRoot,
+    pluginPreparation: input.options.pluginPreparation,
+    pluginDiscovery: input.options.pluginDiscovery,
+    workspaceIdentity: input.options.runtimeConfig?.memory?.workspaceIdentity,
+    remoteSessionId: input.options.runtimeConfig?.remoteSessionId,
     workingDirectory: input.workingDirectory,
   });
 }

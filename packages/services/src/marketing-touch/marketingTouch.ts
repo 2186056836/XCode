@@ -1,4 +1,4 @@
-import { ServiceChannels, type MarketingTouchSnapshot } from "@zcode/shared";
+import { ServiceChannels, type Locale, type MarketingTouchSnapshot } from "@zcode/shared";
 import { createServiceDescriptor } from "#src/descriptors.js";
 
 export interface IMarketingTouchService {
@@ -10,11 +10,11 @@ export interface IMarketingTouchService {
    * 当成目标账号的。
    */
   query(input: {
-    locale: "zh-CN" | "en-US";
+    locale: Locale;
     accountRef?: string;
   }): Promise<MarketingTouchSnapshot & { scope: string }>;
   report(input: {
-    locale: "zh-CN" | "en-US";
+    locale: Locale;
     scope: string;
     campaignId: string;
     actionType: "confirm" | "cancel";

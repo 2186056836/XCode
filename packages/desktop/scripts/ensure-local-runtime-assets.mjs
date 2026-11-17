@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { isRuntimeHostReady } from "../../../scripts/build-windows-runtime-host.mjs";
 
 import { existsSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -70,6 +71,15 @@ function isNativeSearchReady() {
 }
 
 const REQUIRED_LOCAL_RUNTIME_ASSETS = [
+  ...(target.os === "win32"
+    ? [
+        {
+          label: "Windows runtime host",
+          script: "prepare:windows-runtime-host",
+          isReady: () => isRuntimeHostReady(join(bundledToolsRoot, "runtime-host"), target.arch),
+        },
+      ]
+    : []),
   ...(nativeSearchReleasePlan.enabled
     ? [
         {
@@ -103,8 +113,15 @@ const REQUIRED_LOCAL_RUNTIME_ASSETS = [
     : []),
 ];
 
+// 本机未装 VS2022/CMake 时允许显式跳过 runtime-host 的本地构建（开发态自检用，
+// 与 XCODE_SKIP_REMOTE_ASSETS 同一先例）；发布构建仍必须提供该 helper。
+const skipRuntimeHost = process.env.XCODE_SKIP_RUNTIME_HOST === "1";
 const missingAssets = [];
 for (const asset of REQUIRED_LOCAL_RUNTIME_ASSETS) {
+  if (skipRuntimeHost && asset.script === "prepare:windows-runtime-host") {
+    console.log("[ensure-local-runtime-assets] skip runtime host per XCODE_SKIP_RUNTIME_HOST=1");
+    continue;
+  }
   if (!(await asset.isReady())) {
     missingAssets.push(asset);
   }

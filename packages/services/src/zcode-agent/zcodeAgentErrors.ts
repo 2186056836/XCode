@@ -18,3 +18,26 @@ export function isXCodeAgentMcpStatusModeUnsupportedError(error: unknown): boole
   }
   return (error as { code?: unknown }).code === XCODE_AGENT_MCP_STATUS_MODE_UNSUPPORTED_ERROR_CODE;
 }
+
+export const XCODE_AGENT_MODEL_SELECTION_BASIS_UNSUPPORTED_ERROR_CODE =
+  "XCODE_AGENT_MODEL_SELECTION_BASIS_UNSUPPORTED";
+
+/** 旧 CLI 不支持接纳时的选择校验；不能通过剥离依据恢复发送。 */
+export class XCodeAgentModelSelectionBasisUnsupportedError extends Error {
+  readonly code = XCODE_AGENT_MODEL_SELECTION_BASIS_UNSUPPORTED_ERROR_CODE;
+
+  constructor(cause?: unknown) {
+    super("The target CLI cannot safely accept this input. Upgrade the target CLI and retry.", {
+      cause,
+    });
+    this.name = "ModelSelectionBasisUnsupportedError";
+  }
+}
+
+export function isXCodeAgentModelSelectionBasisUnsupportedError(error: unknown): boolean {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    (error as { code?: unknown }).code === XCODE_AGENT_MODEL_SELECTION_BASIS_UNSUPPORTED_ERROR_CODE
+  );
+}

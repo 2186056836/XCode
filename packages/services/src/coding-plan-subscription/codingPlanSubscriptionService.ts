@@ -1,3 +1,4 @@
+import type { OAuthAccountMaterial } from "#src/oauth/repo/oauthCredentialRepo.js";
 import { applyDynamicWorkflowUserMode, type ApiClient } from "@zcode/shared";
 import type { ICredentialService } from "../credential/credential.js";
 import type { ICodingPlanSubscriptionService } from "./codingPlanSubscription.js";
@@ -7,6 +8,7 @@ import { ZaiCodingPlanSubscriptionProvider } from "./zaiCodingPlanSubscriptionPr
 
 interface CodingPlanSubscriptionServiceDependencies {
   apiClient: ApiClient;
+  loadOAuthAccountMaterial: (family: "zai" | "bigmodel") => Promise<OAuthAccountMaterial | null>;
   credentialService: Pick<ICredentialService, "load">;
   resolveOffPeakModelSelectionView?: () => Promise<ModelSelectionView>;
   /** 账号级代理出口：领取/权益类平台 API 按账号绑定的代理池走（缺省回落全局 apiClient）。 */

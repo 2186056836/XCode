@@ -12,6 +12,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit"
   },
   "dependencies": {
+    "@zcode/shared": "workspace:*",
     "@hono/node-server": "^1.14.4",
     "hono": "^4.10.7",
     "http-mitm-proxy": "^1.1.0",

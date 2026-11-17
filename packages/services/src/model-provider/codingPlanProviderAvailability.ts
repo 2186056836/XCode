@@ -10,6 +10,10 @@ import {
   type ProviderFamilyDomain,
   type ProviderFamilyConnectionSelectionSettings,
 } from "@zcode/shared";
+import type {
+  OAuthAccountMaterial,
+  OAuthStartPlanMaterial,
+} from "#src/oauth/repo/oauthCredentialRepo.js";
 import { type BigModelTeamPlanBizContext } from "#src/bigmodel/teamPlanApiKey.js";
 import {
   fetchPersonalCodingPlanEntitlement,
@@ -53,6 +57,9 @@ interface CodingPlanAvailabilityCredentialService {
 
 interface CodingPlanAvailabilityContext {
   apiClient?: ApiClient;
+  accountMaterial?: OAuthAccountMaterial | null;
+  /** Start 只用共享 XCode JWT；与付费套餐材料分开，无关联的国内账号也能解析。 */
+  startPlanMaterial?: OAuthStartPlanMaterial | null;
   credentialService?: CodingPlanAvailabilityCredentialService;
   providerFamilyConnectionSelections?: ProviderFamilyConnectionSelectionSettings;
 }
@@ -232,13 +239,17 @@ async function validateSelectedTeamPlanAvailability(
   }
   const { projectId } = selectedTeamContext;
   const oauthProvider = family === "zai" ? ZAI_PROVIDER_ID : BIGMODEL_PROVIDER_ID;
-  const token = (
-    await context.credentialService?.load(`oauth:${oauthProvider}:access_token`)
-  )?.trim();
+  const token =
+    context.accountMaterial !== undefined
+      ? context.accountMaterial?.accessToken
+      : (await context.credentialService?.load(`oauth:${oauthProvider}:access_token`))?.trim();
   if (!token) {
     return { kind: "unavailable", reason: "coding_plan_not_connected" };
   }
-  const zcodeJwtToken = (await context.credentialService?.load(XCODE_JWT_TOKEN_KEY))?.trim();
+  const zcodeJwtToken =
+    context.accountMaterial !== undefined
+      ? context.accountMaterial?.zcodeJwtToken
+      : (await context.credentialService?.load(XCODE_JWT_TOKEN_KEY))?.trim();
   // BigModel 旧版本可能把 zcodejwttoken 误写进 oauth access token；
   // 但 Z.ai 的 business JWT 本身就是合法 Bearer token，不能套用这个 stale-token 防御。
   if (family === "bigmodel" && zcodeJwtToken && token === zcodeJwtToken) {
@@ -371,7 +382,10 @@ async function validateSubscriptionListAvailability(
   url: string,
 ): Promise<CodingPlanAvailabilityResult> {
   // 账号凭据已是三段 PAT；旧手工 Key 归一化会按 id.secret 截掉签名。
-  const authorization = (provider.apiKey ?? "").trim().replace(/^Bearer\s+/i, "").trim();
+  const authorization = (provider.apiKey ?? "")
+    .trim()
+    .replace(/^Bearer\s+/i, "")
+    .trim();
   // 请求期 Token 尚未准备好只能表示权益未知；不能用凭据缺失证明未订阅。
   if (!authorization) return { kind: "unknown" };
   try {
@@ -441,6 +455,10 @@ async function resolveStartPlanAuthorization(
   provider: CodingPlanAvailabilityProvider,
   context: CodingPlanAvailabilityContext,
 ): Promise<StartPlanAuthorization> {
+  if (context.startPlanMaterial !== undefined) {
+    const jwt = context.startPlanMaterial?.zcodeJwtToken;
+    return { value: jwt ? `Bearer ${jwt}` : "", missingReason: "coding_plan_not_authenticated" };
+  }
   if (provider.family === "bigmodel") {
     const zcodeJwtToken = await resolveBigModelStartPlanXcodeJwt({
       credentialService: context.credentialService,
@@ -453,7 +471,10 @@ async function resolveStartPlanAuthorization(
   }
 
   const credentialJwt = await loadZaiProviderConnectionXcodeJwtToken(context);
-  const providerJwt = (provider.apiKey ?? "").trim().replace(/^Bearer\s+/i, "").trim();
+  const providerJwt = (provider.apiKey ?? "")
+    .trim()
+    .replace(/^Bearer\s+/i, "")
+    .trim();
   return {
     value: credentialJwt || providerJwt ? `Bearer ${credentialJwt || providerJwt}` : "",
     missingReason: "coding_plan_not_authenticated",

@@ -38,6 +38,8 @@ import {
   resolveCodingPlanEntitlementState,
 } from "@/settings/model-provider-section/providerFamilyConnectionVisibility.js";
 
+const NO_FAMILIES: readonly ProviderFamilyDomain[] = [];
+
 interface PresetProviderWithConfig extends PresetProviderSpec {
   provider: ProviderSettingsFormProvider | null;
 }
@@ -53,6 +55,9 @@ interface UseModelProviderNavigationOptions {
   displayOrder?: ProviderOrderView;
   codingPlanEntitlements?: Partial<Record<string, CodingPlanEntitlementState>>;
   providerFamilyDomain?: ProviderFamilyDomain | null;
+  /** Start 所属家族；国内登录未关联时 providerFamilyDomain 为空，仍由登录渠道确定唯一 Start。 */
+  startPlanFamilyDomain?: ProviderFamilyDomain | null;
+  availableFamilies?: readonly ProviderFamilyDomain[];
   connectionSelections?: ProviderFamilyConnectionSelectionSettings;
   pendingConnectionSelections?: ProviderFamilyConnectionSelectionSettings;
   familyConnectionSettingsLoading?: boolean;
@@ -72,6 +77,8 @@ export function useModelProviderNavigation({
   displayOrder,
   codingPlanEntitlements = {},
   providerFamilyDomain = null,
+  startPlanFamilyDomain = providerFamilyDomain,
+  availableFamilies = NO_FAMILIES,
   connectionSelections = {},
   pendingConnectionSelections = {},
   familyConnectionSettingsLoading = false,
@@ -105,7 +112,12 @@ export function useModelProviderNavigation({
   const codingPlanItems = useMemo(
     () =>
       CODING_PLAN_PROVIDER_SPECS.filter((spec) =>
-        shouldShowCodingPlanForProviderFamilyDomain(spec.oauthProviderId, providerFamilyDomain),
+        shouldShowCodingPlanForProviderFamilyDomain(
+          spec.oauthProviderId,
+          // Bug 原因：国内无关联账号家族为空，Start 走“全部显示”分支，出现两个 Start 入口。
+          isStartPlanModelProviderId(spec.id) ? startPlanFamilyDomain : providerFamilyDomain,
+          availableFamilies,
+        ),
       ).map((spec) => {
         const provider = modelProviders.find((item) => item.providerId === spec.id) ?? null;
         const accountEntitled = entitledAccountProviderIds.has(spec.id);
@@ -161,6 +173,8 @@ export function useModelProviderNavigation({
       modelProviders,
       modelProvidersLoading,
       providerFamilyDomain,
+      startPlanFamilyDomain,
+      availableFamilies,
     ],
   );
   const connectionModeCodingPlanItems = useMemo(
@@ -368,11 +382,13 @@ export function useModelProviderNavigation({
 function shouldShowCodingPlanForProviderFamilyDomain(
   oauthProviderId: OAuthProviderId,
   providerFamilyDomain: ProviderFamilyDomain | null,
+  availableFamilies: readonly ProviderFamilyDomain[],
 ): boolean {
   if (!providerFamilyDomain) {
     return true;
   }
-  return resolveProviderFamilyDomainFromOAuthProvider(oauthProviderId) === providerFamilyDomain;
+  const family = resolveProviderFamilyDomainFromOAuthProvider(oauthProviderId);
+  return family === providerFamilyDomain || (family !== null && availableFamilies.includes(family));
 }
 
 function resolvePresetFamilyStatusProvider({

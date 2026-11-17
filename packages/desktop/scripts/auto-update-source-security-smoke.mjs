@@ -32,6 +32,7 @@ await build({
 import { app, ipcMain } from 'electron';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { writeFile } from 'node:fs/promises';
 import pkg from 'electron-updater';
@@ -52,6 +53,10 @@ const requests = [];
 async function listen(label) {
   const server = createServer((req, res) => {
     requests.push({ label, url: req.url, headers: req.headers });
+    if (req.url === '/package.bin') {
+      res.end('update-auth-download-fixture');
+      return;
+    }
     res.writeHead(200, { 'Content-Type': 'text/yaml' });
     res.end('version: 0.0.1\\nfiles: []\\n');
   });
@@ -81,8 +86,28 @@ async function listen(label) {
   const originalHandle = ipcMain.handle.bind(ipcMain);
   ipcMain.handle = (channel, handler) => { handlers.set(channel, handler); originalHandle(channel, handler); };
   const installOrder = [];
-  await initAutoUpdater({ onBeforeQuitAndInstall: async () => { installOrder.push('prepare'); }, updateFeedSource, deviceMid: '00000000-0000-4000-8000-000000000000', resolveEndpointOrigin: () => scenario.input === "backend" ? override.url : trusted.url });
+  let loginToken = null;
+  let failCredentialRead = false;
+  await initAutoUpdater({ onBeforeQuitAndInstall: async () => { installOrder.push('prepare'); }, updateFeedSource, deviceMid: '00000000-0000-4000-8000-000000000000', resolveXcodeJwtToken: async () => {
+    if (failCredentialRead) throw new Error('sensitive-fixture-credential-error');
+    return loginToken;
+  }, resolveEndpointOrigin: () => scenario.input === "backend" ? override.url : trusted.url });
   await completed;
+  // 等待启动检查的 Promise 收口，再在同一更新器上验证登录、换账号和退出。
+  await autoUpdater.checkForUpdates();
+  for (const token of [' fixture-account-a ', 'fixture-account-b', '   ', 'bad' + String.fromCharCode(10) + 'token', '非ascii', null, 'fixture-recovered']) {
+    loginToken = token;
+    failCredentialRead = token === null;
+    await autoUpdater.checkForUpdates();
+    if (token?.trim() === 'fixture-account-a') {
+      const provider = await autoUpdater.clientPromise;
+      await autoUpdater.httpExecutor.download(new URL('/package.bin', trusted.url), resolve(root, 'package.bin'), {
+        cancellationToken: new pkg.CancellationToken(),
+        headers: autoUpdater.computeRequestHeaders(provider),
+        sha512: createHash('sha512').update('update-auth-download-fixture').digest('base64'),
+      });
+    }
+  }
   const signatureChecks = [];
   const cachedInstallChecks = [];
   if (autoUpdater instanceof pkg.NsisUpdater) {
@@ -91,7 +116,13 @@ async function listen(label) {
     let signature = {status: 0, subject: 'CN=New Publisher, O=New Company, C=GB'};
     childProcess.execFile = (...args) => {
       installOrder.push('verify');
-      args.at(-1)(null, JSON.stringify(signature), '');
+      const command = Buffer.from(args[1].at(-1), 'base64').toString('utf16le');
+      const output = command.match(/\\$zcodeSignatureOutput='((?:[^'‘’‚‛]|(['‘’‚‛])\\2)*)';/)?.[1]?.replace(/(['‘’‚‛])\\1/g, '$1');
+      if (!output) throw new Error('signature output path missing');
+      void writeFile(output, '\\uFEFF' + JSON.stringify(signature), 'utf8').then(
+        () => args.at(-1)(null, '', ''),
+        error => args.at(-1)(error, '', ''),
+      );
       return {};
     };
     try {
@@ -135,7 +166,6 @@ async function listen(label) {
   platform: "node",
   format: "cjs",
   external: ["electron", "electron-updater", "semver"],
-  alias: { "@zcode/shared": resolve(repoRoot, "packages/shared/src/index.ts") },
   plugins: [
     {
       name: "security-smoke-official-origin",
@@ -185,7 +215,7 @@ async function listen(label) {
       name: "isolated-logger",
       setup(api) {
         api.onResolve({ filter: /^\.\/logger\.js$/ }, (args) =>
-          args.importer.endsWith("/autoUpdater.ts")
+          args.importer.replaceAll("\\", "/").endsWith("/autoUpdater.ts")
             ? { path: "logger", namespace: "smoke" }
             : undefined,
         );
@@ -231,9 +261,37 @@ for (const scenario of cases) {
     results.push(result);
     await writeFile(resolve(artifactDir, "results.json"), JSON.stringify(results, null, 2));
     assert.deepEqual(
-      result.requests.map((item) => item.label),
-      [scenario.expected],
+      result.requests.filter((item) => item.url !== "/package.bin").map((item) => item.label),
+      Array(8).fill(scenario.expected),
       scenario.name,
+    );
+    assert.deepEqual(
+      result.requests
+        .filter((item) => item.url !== "/package.bin")
+        .map((item) => item.headers.authorization ?? null),
+      [
+        null,
+        "Bearer fixture-account-a",
+        "Bearer fixture-account-b",
+        null,
+        null,
+        null,
+        null,
+        "Bearer fixture-recovered",
+      ],
+      `${scenario.name}: current login token must be read for each manifest request`,
+    );
+    assert.match(output, /credential read failed; checking manifest without authorization/);
+    assert.ok(
+      !output.includes("sensitive-fixture-credential-error"),
+      "credential errors must not leak into logs",
+    );
+    const downloadRequests = result.requests.filter((item) => item.url === "/package.bin");
+    assert.equal(downloadRequests.length, 1);
+    assert.equal(
+      downloadRequests[0].headers.authorization,
+      undefined,
+      "download must not receive login token",
     );
     if (useAppImageUpdater) assert.equal(result.updaterType, "AppImageUpdater");
     if (useNsisUpdater) {

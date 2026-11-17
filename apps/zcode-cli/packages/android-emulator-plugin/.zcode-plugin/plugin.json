@@ -1,7 +1,7 @@
 {
   "name": "android-emulator",
-  "version": "0.1.0",
-  "description": "Provides Android development workflows and emulator automation for XCode.",
+    "version": "0.1.1",
+    "description": "Provides Android development workflows and emulator automation for XCode.",
   "author": { "name": "Z.ai" },
   "license": "MIT",
   "skills": "skills",

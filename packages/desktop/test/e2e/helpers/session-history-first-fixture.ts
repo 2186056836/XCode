@@ -14,8 +14,11 @@ export async function seedSessionHistoryFirstFixture(options: {
   providerId: string;
   modelId: string;
   thoughtLevel?: string;
+  legacyTitleHandoff?: boolean;
 }) {
-  for (const sessionId of [HISTORY_FIRST_SESSION, HISTORY_FIRST_FAILED_SESSION]) {
+  for (const sessionId of options.legacyTitleHandoff
+    ? [HISTORY_FIRST_SESSION]
+    : [HISTORY_FIRST_SESSION, HISTORY_FIRST_FAILED_SESSION]) {
     await seedProviderReadinessHistoryFixture({
       ...options,
       history: {
@@ -76,11 +79,13 @@ import { writeFile, appendFile, access } from 'node:fs/promises';
 const [entered, release] = process.argv.slice(2);
 await appendFile(${JSON.stringify(join(root, "attempts"))}, 'resume\\n');
 await new Promise((resolve, reject) => {
-  const watcher = watch(${JSON.stringify(root)}, async () => {
+  const checkReleased = async () => {
     try { await access(release); watcher.close(); resolve(); } catch {}
-  });
+  };
+  const watcher = watch(${JSON.stringify(root)}, checkReleased);
   watcher.on('error', reject);
-  writeFile(entered, 'entered').catch(reject);
+  // 重启时 release 可能早已存在；先订阅再读条件，不能只依赖下一次目录事件。
+  writeFile(entered, 'entered').then(checkReleased, reject);
 });
 process.stdout.write('{}');
 `,

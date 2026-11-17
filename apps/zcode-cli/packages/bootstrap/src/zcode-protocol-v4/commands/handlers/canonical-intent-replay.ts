@@ -46,6 +46,13 @@ function buildCanonicalIntent(
   const payload = envelope.payload as Partial<
     CommandPayloadMap["editUserQuery"] & CommandPayloadMap["retryTurn"]
   >;
+
+  // composer 编辑态复用普通发送的工具栏：edit 携带的模型/模式/Plan 是本次重跑的提交配置，
+  // 与 sendText 同语义；缺省（旧客户端、retry）沿用原 canonical intent。
+  const editPayload =
+    envelope.type === "editUserQuery"
+      ? (envelope.payload as CommandPayloadMap["editUserQuery"])
+      : undefined;
   const intent = inputIntentMetadataFromCanonical(
     envelope,
     {
@@ -62,9 +69,9 @@ function buildCanonicalIntent(
       requestedDelivery: editTarget.intent.requestedDelivery,
       admittedDelivery: editTarget.intent.admittedDelivery,
       fallbackReasonCode: editTarget.intent.fallbackReasonCode,
-      modelSelection: payload.modelSelection ?? editTarget.intent.modelSelection,
-      mode: payload.mode ?? editTarget.intent.mode,
-      planEnabled: payload.planEnabled ?? editTarget.intent.planEnabled,
+      modelSelection: editPayload?.modelSelection ?? editTarget.intent.modelSelection,
+      mode: editPayload?.mode ?? editTarget.intent.mode,
+      planEnabled: editPayload?.planEnabled ?? editTarget.intent.planEnabled,
       obfuscation: payload.obfuscation ?? editTarget.intent.obfuscation,
       attachmentRefs,
       provenance: editTarget.intent.provenance,

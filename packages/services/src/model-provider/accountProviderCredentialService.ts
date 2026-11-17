@@ -1,18 +1,15 @@
 import type { ProviderFamilyDomain, ProjectAccessTokenMaterial } from "@zcode/shared";
+import {
+  isSameOAuthAccountMaterial,
+  type OAuthAccountMaterial,
+} from "#src/oauth/repo/oauthCredentialRepo.js";
 import { createServiceLogger } from "../logger/serviceLogger.js";
 
 const log = createServiceLogger("account-project-token");
 interface AccountProviderCredentialServiceOptions {
-  /**
-   * 读取某 family 的 OAuth access token。
-   *
-   * 传入 accountRef（`${provider}:${identity}`）时读**该账号**的凭据；缺省读当前激活账号。
-   * 账号轮询换到非激活账号后，此处必须能按账号取，否则会拿错登录态去换项目 Token。
-   */
-  readonly loadOAuthAccessToken: (
+  readonly loadOAuthAccountMaterial: (
     family: ProviderFamilyDomain,
-    accountRef?: string,
-  ) => Promise<string | null>;
+  ) => Promise<OAuthAccountMaterial | null>;
   readonly resolveProviderMaterial: (
     family: ProviderFamilyDomain,
     accessToken: string,
@@ -46,26 +43,21 @@ export function createAccountProviderCredentialService(
       return (await this.loadCodingPlanMaterial(input))?.token ?? null;
     },
     async loadCodingPlanMaterial(input) {
-      const loginToken = (await options.loadOAuthAccessToken(input.family, input.accountRef))?.trim();
-      if (!loginToken) return null;
+      const account = await options.loadOAuthAccountMaterial(input.family);
+      if (!account || account.accountIdentity !== input.accountIdentity) return null;
       // Map 仅存进程内并发状态；登录态变化不能加入旧账号请求。
-      const key = JSON.stringify([
-        input.family,
-        input.accountIdentity,
-        loginToken,
-        input.rejectedProjectTokenFingerprint,
-      ]);
+      const key = JSON.stringify([input.family, account, input.rejectedProjectTokenFingerprint]);
       const existing = pending.get(key);
       if (existing) return existing;
       const operation = (async () => {
         const token = await options.resolveProviderMaterial(
           input.family,
-          loginToken,
-          input.accountIdentity,
+          account.accessToken,
+          account.accountIdentity,
           input.rejectedProjectTokenFingerprint,
         );
         if (
-          (await options.loadOAuthAccessToken(input.family, input.accountRef))?.trim() !== loginToken
+          !isSameOAuthAccountMaterial(account, await options.loadOAuthAccountMaterial(input.family))
         ) {
           log.warn(undefined, "项目 Token 签发期间登录态变化，丢弃结果", {
             family: input.family,

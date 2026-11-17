@@ -1,6 +1,6 @@
 import { ComposerSubmissionPendingContext } from "@/project-sidebar/ComposerSubmissionPendingContext.js";
 import { ChatRemoteFolderSelection } from "@/project-sidebar/ChatRemoteFolderSelection.js";
-import { RemoteIdentityHoverCard } from "@/project-sidebar/RemoteIdentityHoverCard.js";
+import { ProjectIdentityHoverCard } from "@/project-sidebar/ProjectIdentityHoverCard.js";
 import { remoteHostLabel } from "@/project-sidebar/RemoteHostSection.js";
 import type { ReactNode } from "react";
 import { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -362,7 +362,8 @@ export function ProjectComposerMenu({
         data-testid="composer-project-menu"
         align="start"
         side="top"
-        className="flex w-72 max-w-[calc(100vw-2rem)] flex-col p-0"
+        // 菜单向上展开会覆盖标题栏；原生拖拽区会吞掉点击，需将整个菜单排除拖拽命中。
+        className="flex w-72 max-w-[calc(100vw-2rem)] flex-col p-0 [app-region:no-drag]"
       >
         <div
           data-slot="command-input-wrapper"
@@ -401,15 +402,14 @@ export function ProjectComposerMenu({
                 deviceNames?.get(projectSourceServerId(project) ?? "") ||
                 (remoteHost ? remoteHostLabel(remoteHost) : undefined);
               return (
-                <RemoteIdentityHoverCard
+                <ProjectIdentityHoverCard
                   key={projectKey(project)}
                   host={remoteHost}
                   title={project.name}
-                  projectName={project.name}
                   deviceName={deviceName}
                   paths={project.roots.map((root) => root.rootPath)}
                   anchorToMenu
-                  contentClassName="z-[60] max-w-(--radix-hover-card-content-available-width)"
+                  contentClassName="z-[60]"
                 >
                   <span className="block min-w-0">
                     <DropdownMenuCheckboxItem
@@ -471,7 +471,7 @@ export function ProjectComposerMenu({
                       ) : null}
                     </DropdownMenuCheckboxItem>
                   </span>
-                </RemoteIdentityHoverCard>
+                </ProjectIdentityHoverCard>
               );
             })}
             {visibleProjects.length === 0 && !error ? (

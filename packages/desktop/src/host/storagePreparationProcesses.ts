@@ -1,3 +1,4 @@
+import { HostResponseTypes } from "@zcode/shared";
 import { realpath } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 import { Worker } from "node:worker_threads";
@@ -75,6 +76,7 @@ export function prepareHostStorage(
       void worker.terminate();
     }, 30_000);
     const abort = () => {
+      process.parentPort?.postMessage({ type: HostResponseTypes.Log, level: "warn", source: "host", message: "[smoke] abort 触发（dispose/signal）" });
       failure = statusError("transport_closed");
       void worker.terminate();
     };
@@ -82,6 +84,7 @@ export function prepareHostStorage(
     worker.on("message", (raw: unknown) => {
       const result = workerMessageSchema.safeParse(raw);
       if (!result.success) {
+        process.parentPort?.postMessage({ type: HostResponseTypes.Log, level: "warn", source: "host", message: "[smoke] schema解析失败 raw=" + JSON.stringify(raw).slice(0, 300) + " issues=" + JSON.stringify(result.error.issues).slice(0, 200) });
         failure = statusError("transport_closed");
         void worker.terminate();
         return;
@@ -94,6 +97,7 @@ export function prepareHostStorage(
       else failure = statusError(message.errorCode, message, "tasks-index");
     });
     worker.once("error", (error) => {
+      process.parentPort?.postMessage({ type: HostResponseTypes.Log, level: "warn", source: "host", message: "[smoke] worker error 事件: " + String(error).slice(0, 400) });
       failure = error;
     });
     worker.once("exit", (code) => {

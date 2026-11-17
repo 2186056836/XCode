@@ -1,6 +1,6 @@
 import type { AgentRuntimeInternal } from "../internal.js";
 import { sampleModel } from "./sample-model.js";
-import { grantPermissionFullAccess } from "../permission-full-access.js";
+import { grantPermissionMode } from "../permission-full-access.js";
 import {
   getSessionShellSelection,
   initializeSessionShellEnvironmentIfNeeded,
@@ -25,6 +25,11 @@ import { invalidateToolCache } from "./config.js";
 import { getToolRegistry } from "./config.js";
 import { getToolExecutor } from "./config.js";
 import { subscribeEvents } from "./config.js";
+import {
+  markContextCompositionChanged,
+  subscribeContextCompositionChanged,
+} from "../context-composition/state.js";
+import { getContextComposition } from "../context-composition/query.js";
 import { getSessionEventStore } from "./config.js";
 import { notifyExternalChildSessionEvent } from "./config.js";
 import { createChildClientPorts } from "./config.js";
@@ -74,6 +79,9 @@ import {
   discardPendingInput,
   editPendingInputById,
   emitModeChanged,
+  getPendingInputEditLock,
+  lockPendingInputEdit,
+  releasePendingInputEdit,
   emitModelSelected,
   markPendingInputPromoting,
   releasePendingInputReservation,
@@ -130,7 +138,6 @@ import { finishTargetTurnAccounting } from "./target.js";
 import { pauseActiveTargetForCancellation } from "./target.js";
 import { activatePausedTargetAfterResume } from "./target.js";
 import {
-  injectHookAdditionalContextIntoMessageHistory,
   runSessionStartHooks,
   runStopHooks,
   runUserPromptSubmitHooks,
@@ -194,7 +201,11 @@ import { persistAssistantMessage } from "./message-persistence.js";
 import { persistMessage } from "./message-persistence.js";
 import { persistPart } from "./message-persistence.js";
 import { rebuildProjection } from "./message-persistence.js";
-import { recordPendingModelChange } from "./timeline-persistence.js";
+import {
+  persistPendingWorktreeCreationTimeline,
+  recordPendingModelChange,
+  recordPendingWorktreeCreation,
+} from "./timeline-persistence.js";
 import { persistPendingModelChangeTimeline } from "./timeline-persistence.js";
 import { persistAssistantTimelinePartForSession } from "./timeline-persistence.js";
 import { generateWorkspaceText, testModelConnectivity } from "./workspace-generate-text.js";
@@ -217,7 +228,7 @@ export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void 
   proto.getLastResolvedEgress = getLastResolvedEgress;
   proto.setLastResolvedEgress = setLastResolvedEgress;
   proto.setExecutionState = setExecutionState;
-  proto.grantPermissionFullAccess = grantPermissionFullAccess;
+  proto.grantPermissionMode = grantPermissionMode;
   proto.initializeSessionShellEnvironmentIfNeeded = initializeSessionShellEnvironmentIfNeeded;
   proto.getSessionShellSelection = getSessionShellSelection;
   proto.getMode = getMode;
@@ -239,6 +250,9 @@ export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void 
   proto.getToolRegistry = getToolRegistry;
   proto.getToolExecutor = getToolExecutor;
   proto.subscribeEvents = subscribeEvents;
+  proto.getContextComposition = getContextComposition;
+  proto.subscribeContextCompositionChanged = subscribeContextCompositionChanged;
+  proto.markContextCompositionChanged = markContextCompositionChanged;
   proto.getSessionEventStore = getSessionEventStore;
   proto.notifyExternalChildSessionEvent = notifyExternalChildSessionEvent;
   proto.createChildClientPorts = createChildClientPorts;
@@ -284,6 +298,9 @@ export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void 
   proto.markPendingInputPromoting = markPendingInputPromoting;
   proto.releasePendingInputReservation = releasePendingInputReservation;
   proto.editPendingInputById = editPendingInputById;
+  proto.lockPendingInputEdit = lockPendingInputEdit;
+  proto.releasePendingInputEdit = releasePendingInputEdit;
+  proto.getPendingInputEditLock = getPendingInputEditLock;
   proto.reorderPendingInput = reorderPendingInput;
   proto.setQueueAutoDrain = setQueueAutoDrain;
   proto.completeExternalQueueDrain = completeExternalQueueDrain;
@@ -343,8 +360,6 @@ export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void 
   proto.runSessionStartHooks = runSessionStartHooks;
   proto.runUserPromptSubmitHooks = runUserPromptSubmitHooks;
   proto.runStopHooks = runStopHooks;
-  proto.injectHookAdditionalContextIntoMessageHistory =
-    injectHookAdditionalContextIntoMessageHistory;
   proto.shouldContinueAfterStopHooks = shouldContinueAfterStopHooks;
   proto.executeTurn = executeTurn;
   proto.admitPrompt = admitPrompt;
@@ -402,6 +417,8 @@ export function installAgentRuntimeMethods(ctor: AgentRuntimeConstructor): void 
   proto.persistCompactSummary = persistCompactSummary;
   proto.persistUserPrompt = persistUserPrompt;
   proto.recordPendingModelChange = recordPendingModelChange;
+  proto.recordPendingWorktreeCreation = recordPendingWorktreeCreation;
+  proto.persistPendingWorktreeCreationTimeline = persistPendingWorktreeCreationTimeline;
   proto.persistPendingModelChangeTimeline = persistPendingModelChangeTimeline;
   proto.persistSyntheticUserNotice = persistSyntheticUserNotice;
   proto.persistSyntheticUserNoticeForSession = persistSyntheticUserNoticeForSession;

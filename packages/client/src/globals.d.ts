@@ -15,6 +15,7 @@ import type {
   BrowserViewViewportChangedPayload,
   BrowserViewCloseTabNotification,
   BrowserViewCloseTabRequest,
+  BrowserViewPromoteDraftTabsRequest,
   BrowserViewResidencyReportPayload,
   BrowserViewResidencyTransitionPayload,
   BrowserViewRestoredTabShell,
@@ -213,6 +214,10 @@ declare global {
       ): Promise<import("@zcode/shared").SaveFileResult>;
       /** 将当前页面的 print 媒体版面导出为 PDF（Chromium 打印引擎，矢量文本） */
       printPageToPdf?(): Promise<import("@zcode/shared").PrintPageToPdfResult>;
+      /** 在 main 截取内置浏览器 guest 当前视口为 PNG（renderer 侧 <webview>.capturePage 会崩溃） */
+      captureBrowserGuestPage?(
+        payload: import("@zcode/shared").CaptureBrowserGuestPageRequest,
+      ): Promise<import("@zcode/shared").CaptureBrowserGuestPageResult>;
       /** 从系统拖拽/文件输入得到的 Web File 解析真实本地路径 */
       getPathForFile?(file: File): string | null;
       /** 长文本粘贴落盘为真正的本地附件 */
@@ -330,6 +335,38 @@ declare global {
       onNewTask(handler: () => void): () => void;
       /** 注册 main 进程请求关闭当前上下文的回调，返回 disposer */
       onCloseActiveContextRequest?(handler: () => void): () => void;
+
+      /** 语音输入：查询/请求本 App 的麦克风授权（macOS） */
+      ensureMicrophoneAccess?(): Promise<import("@zcode/shared").MicrophoneAccessResult>;
+      /** 语音输入：macOS 重置本 App 的麦克风授权记录并重新请求 */
+      resetMicrophoneAccess?(): Promise<import("@zcode/shared").MicrophoneAccessResetResult>;
+      /** 语音输入：打开系统麦克风权限 / 声音输入设置页 */
+      openMicrophoneSettings?(target: import("@zcode/shared").MicrophoneSettingsTarget): Promise<boolean>;
+      /** 内置浏览器下载开始（main → renderer 通知），返回 disposer */
+      onBrowserViewDownloadStarted?(
+        handler: (payload: { webContentsId: number; urls: string[] }) => void,
+      ): () => void;
+      /** 扩展通知点击（main → renderer 通知），返回 disposer */
+      onExtensionNotificationClick?(handler: (click: import("@zcode/shared").ExtensionNotificationClick) => void): () => void;
+      /** App Control 导航消息（main → renderer 订阅），返回 disposer */
+      onAppControlNavigationMessage?(handler: (message: import("@zcode/shared").AppNavigationRendererMessage) => void): () => void;
+      /** App Control 导航回传（renderer → main） */
+      sendAppControlNavigation?(payload: unknown): void;
+      /** 用指定 URL 加载内置浏览器 view */
+      browserViewLoadUrl?(payload: { webContentsId: number; url: string }): Promise<void>;
+      /** 查询可用「打开方式」应用列表 */
+      getFileApplications?(target: import("@zcode/shared").FileApplicationTarget): Promise<import("@zcode/shared").ApplicationInfo[]>;
+      /** 用指定应用打开文件 */
+      openFileWithApplication?(
+        applicationId: string,
+        target: import("@zcode/shared").FileApplicationTarget,
+      ): Promise<{ success: boolean; error?: string }>;
+      /** 设备 ID（desktop 注入的稳定标识） */
+      getDeviceId?(): string;
+      /** 扩展的系统通知（§18.1 H8） */
+      showExtensionNotification(
+        payload: import("@zcode/shared").ExtensionNotificationPayload,
+      ): Promise<import("@zcode/shared").NotificationsShowResult>;
       /** 注册 main 转来的验证码出票请求（Host 自动领取借渲染进程跑无感验证） */
       onMarketingCaptchaRequest?(
         handler: (request: import("@zcode/shared").MarketingCaptchaProofRequest) => void,
@@ -434,6 +471,7 @@ declare global {
       browserViewDetachGuest?(payload: { key: string; webContentsId: number }): Promise<boolean>;
       browserViewCloseTab?(payload: BrowserViewCloseTabRequest): Promise<void>;
       browserViewReportResidency?(payload: BrowserViewResidencyReportPayload): Promise<void>;
+      browserViewPromoteDraftTabs?(payload: BrowserViewPromoteDraftTabsRequest): Promise<string[]>;
       browserViewSuspendReady?(payload: { tabId: string; generation: number }): Promise<void>;
       browserViewEnsureResident?(payload: BrowserViewCloseTabRequest): Promise<void>;
       browserViewRestoreTabs?(

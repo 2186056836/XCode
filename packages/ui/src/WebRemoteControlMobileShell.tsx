@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, LoaderIcon } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useState, type ReactNode } from "react";
+import { ArrowLeft, LoaderCircle } from "lucide-react";
 import { type WebRemoteControlMobileNavigationIntent } from "@zcode/shared";
 import { Button } from "@/components/ui/button.js";
 import { WebRemoteControlThemeMenu } from "@/WebRemoteControlThemeMenu.js";
@@ -11,30 +11,33 @@ import { useWebRemoteControlTerminalTransportState } from "@/webRemoteControlTer
 
 type WebRemoteControlMobilePage = "home" | "chat";
 
-interface WebRemoteControlMobileHistoryState {
-  zcodeMobilePage?: WebRemoteControlMobilePage;
-}
-
-export function isWebRemoteControlMobileChatHistoryState(
+function hasMobileHistoryPage(
   state: unknown,
-): state is WebRemoteControlMobileHistoryState {
+  page: WebRemoteControlMobilePage,
+): state is { zcodeMobilePage: WebRemoteControlMobilePage } {
   return (
     typeof state === "object" &&
     state !== null &&
-    (state as WebRemoteControlMobileHistoryState).zcodeMobilePage === "chat"
+    "zcodeMobilePage" in state &&
+    state.zcodeMobilePage === page
   );
 }
 
-function pushWebRemoteControlMobileChatHistory() {
+function recordMobileChatHistory() {
   if (typeof window === "undefined") {
     return;
   }
 
-  if (isWebRemoteControlMobileChatHistoryState(window.history.state)) {
+  const state: unknown = window.history.state;
+  if (hasMobileHistoryPage(state, "chat")) {
     return;
   }
 
-  window.history.pushState({ zcodeMobilePage: "chat" }, "");
+  if (hasMobileHistoryPage(state, "home")) {
+    window.history.replaceState({ ...state, zcodeMobilePage: "chat" }, "");
+  } else {
+    window.history.pushState({ zcodeMobilePage: "chat" }, "");
+  }
 }
 
 function resolveInitialWebRemoteControlMobilePage(
@@ -46,10 +49,7 @@ function resolveInitialWebRemoteControlMobilePage(
 
   // Bugfix: 手机端在聊天页刷新时，React 内存状态会丢失，但浏览器会保留当前 history.state。
   // 这里复用点击进入聊天页时写入的 history state，避免刷新后只恢复 task 选中态却回到任务首页。
-  if (
-    typeof window !== "undefined" &&
-    isWebRemoteControlMobileChatHistoryState(window.history.state)
-  ) {
+  if (typeof window !== "undefined" && hasMobileHistoryPage(window.history.state, "chat")) {
     return "chat";
   }
 
@@ -106,19 +106,15 @@ export function WebRemoteControlMobileShell({
 
   const navigateToChat = useCallback(() => {
     setCurrentPage("chat");
-    pushWebRemoteControlMobileChatHistory();
   }, []);
 
   const navigateHome = useCallback(() => {
-    if (
-      typeof window !== "undefined" &&
-      isWebRemoteControlMobileChatHistoryState(window.history.state)
-    ) {
-      window.history.back();
-      return;
-    }
-
+    // 聊天可能是历史首项，浏览器无法后退。箭头直接回列表，并同步历史供刷新恢复。
     setCurrentPage("home");
+    const state: unknown = window.history.state;
+    if (hasMobileHistoryPage(state, "chat")) {
+      window.history.replaceState({ ...state, zcodeMobilePage: "home" }, "");
+    }
   }, []);
 
   useEffect(() => {
@@ -126,8 +122,8 @@ export function WebRemoteControlMobileShell({
     if (initialNavigationIntent === "chat") setCurrentPage("chat");
   }, [initialNavigationIntent]);
 
-  useEffect(() => {
-    if (isMobileViewport && currentPage === "chat") pushWebRemoteControlMobileChatHistory();
+  useLayoutEffect(() => {
+    if (isMobileViewport && currentPage === "chat") recordMobileChatHistory();
   }, [isMobileViewport, currentPage]);
 
   useEffect(() => {
@@ -136,7 +132,7 @@ export function WebRemoteControlMobileShell({
     }
 
     const handlePopState = (event: PopStateEvent) => {
-      const nextPage = isWebRemoteControlMobileChatHistoryState(event.state) ? "chat" : "home";
+      const nextPage = hasMobileHistoryPage(event.state, "chat") ? "chat" : "home";
       setCurrentPage(nextPage);
     };
 
@@ -253,7 +249,7 @@ export function WebRemoteControlMobileShell({
               aria-busy="true"
             >
               <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-ui-base text-foreground-subtle shadow-sm">
-                <LoaderIcon className="size-4 animate-spin" />
+                <LoaderCircle className="size-4 animate-spin" />
                 {intl.formatMessage({ id: "common.loading" })}
               </div>
             </div>
@@ -266,7 +262,7 @@ export function WebRemoteControlMobileShell({
               data-web-remote-control-reconnect-notice="true"
             >
               <div className="flex max-w-[calc(100vw-1.5rem)] items-center gap-2 rounded-lg border border-border bg-toast px-3 py-2 text-ui-base text-foreground shadow-lg">
-                <LoaderIcon className="size-4 shrink-0 animate-spin text-foreground-subtle" />
+                <LoaderCircle className="size-4 shrink-0 animate-spin text-foreground-subtle" />
                 <span className="min-w-0 whitespace-nowrap">
                   {intl.formatMessage({ id: "webRemoteControl.mobileShell.reconnecting" })}
                 </span>

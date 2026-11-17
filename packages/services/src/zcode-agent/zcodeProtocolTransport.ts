@@ -14,5 +14,5 @@ export interface XCodeProtocolTransport extends IDisposable {
   readonly onMessage: Event<XCodeProtocolMessage>;
   readonly onClose: Event<XCodeProtocolTransportClosedEvent>;
   send(message: XCodeProtocolMessage): Promise<void>;
-  disposeAndWait?(): Promise<void>;
+  disposeAndWait?(options?: { deadlineAtMs?: number }): Promise<void>;
 }

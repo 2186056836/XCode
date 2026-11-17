@@ -72,7 +72,9 @@ export function prepareHostStorage(
       clearTimeout(firstStateTimer);
       signal.removeEventListener("abort", abort);
       if (done && code === 0 && !failure && firstState) resolve();
-      else reject(failure ?? statusError("transport_closed"));
+      else {
+        reject(failure ?? statusError("transport_closed"));
+      }
     });
     if (signal.aborted) abort();
   });

@@ -306,9 +306,9 @@ export function useXCodeTaskService(
   workspaceIdentity?: string | null,
 ): IXCodeTaskService {
   // XCode task 服务按 workspace 身份解析，保证所有 task RPC 都落到对应的 host。
-  const services = workspacePath
-    ? useWorkspaceServices(workspacePath, preferredRemoteSessionId, workspaceIdentity)
-    : useServices();
+  // useWorkspaceServices 内部自带 unscoped 回退（workspacePath 为空时等价 useServices），
+  // 无条件调用以满足 rules-of-hooks（1112 起 react/rules-of-hooks 升级为 error）。
+  const services = useWorkspaceServices(workspacePath, preferredRemoteSessionId, workspaceIdentity);
   const rawService = services.zcodeTaskService;
   if (!rawService || typeof rawService !== "object") {
     return rawService;
