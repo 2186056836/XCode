@@ -58,20 +58,25 @@ const GATE_TOOL_NAMES: readonly string[] = [
  * 9 个 + big-pickle），再由 zcode-builtin.json 的 upstreamModelIdFilter 过滤。
  * 本常量无代码引用，保留仅为记录当次实测可用集与排除理由（正则里写不了注释）。
  *
- * 排除：jev-1.13-free → 400 ModelProtocolUnsupported（systemone 端点族）。
+ * 排除：jev-1.13-free 已从目录下架（filter 里的排除正则保留作防御）。
  * 区域受限但保留（换 IP 即可用）：beam-free → 403 RegionError（随出口 IP 漂移）。
- * 已从线上目录下架的历史模型（cat-jam-free / ll-alpha-free / muse-spark-*）不再列出。
+ * 模型限时轮换：以动态目录为准（`/inference/v1/models` + upstreamModelIdFilter），
+ * 本快照仅记录最近一次实测（2026-11-18），已下架历史模型不再列出
+ * （space-bunny-free / longcat-2.5-preview-free / jev-1.13-free / cat-jam-free 等）。
  */
 export const OPENCODE_FREE_MODELS: readonly string[] = [
   "big-pickle",
   "beam-free",
   "deepseek-v4.1-flash-free",
+  "flint-40b-free",
   "glm-5.3-flash-free",
-  "longcat-2.5-preview-free",
+  "hy4-flash-free",
+  "iceman-free",
+  "inkling-2-small-free",
+  "longcat-2.5-free",
   "mimo-v2.6-flash-free",
   "nemotron-3.5-lightning-free",
   "nemotron-3.5-super-vl-free",
-  "space-bunny-free",
 ];
 
 /**

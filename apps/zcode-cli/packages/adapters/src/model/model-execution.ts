@@ -784,7 +784,22 @@ function ensureCodeBuddyFingerprintHeaders(
   return { ...init, headers };
 }
 
-const OPENCODE_FINGERPRINT_TOOLS = ["bash", "glob", "grep", "read"] as const;
+// 1112 参考实现（纯协议抓包）：闸门③的官方工具名集是全部 11 个（不是旧判定的
+// bash/glob/grep/read 四个）。大小写变体（Bash→bash）必须全量就地改名，否则
+// PascalCase 原生工具与小写占位并存，上游按重复成员处理（详见 opencode-build-agent.ts）。
+const OPENCODE_FINGERPRINT_TOOLS = [
+  "bash",
+  "edit",
+  "glob",
+  "grep",
+  "read",
+  "skill",
+  "task",
+  "todowrite",
+  "webfetch",
+  "websearch",
+  "write",
+] as const;
 
 function fingerprintToolDescription(): string {
   return "This tool is currently unavailable and must not be used.";
@@ -1374,6 +1389,22 @@ export function createUpstreamRequestProfileFetch(input: {
           }
         } catch {
           // 读错误体失败时不阻断，按原响应上抛。
+        }
+      }
+      // 429 FreeUsageLimitError = IP 级免费额度耗尽（匿名桶）。参考实现（纯协议抓包）
+      // 明确说「429 即当前 IP 被限——立刻停手，继续打会延长封禁」。AI SDK 上层的
+      // 重试不看 retry-after 头，盲目退避会踩这个坑。这里读 retry-after 并注入到
+      // 响应头透传给上层，让上层展示「等待 N 秒」而不是无限重试延长封禁。
+      if (response.status === 429 && url.includes("opencode.ai")) {
+        const retryAfter = response.headers.get("retry-after");
+        if (retryAfter) {
+          const headers = new Headers(response.headers);
+          headers.set("x-xcode-opencode-retry-after", retryAfter);
+          response = new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers,
+          });
         }
       }
     } catch (error) {
