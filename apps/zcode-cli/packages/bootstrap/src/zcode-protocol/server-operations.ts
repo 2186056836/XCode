@@ -1608,6 +1608,19 @@ export async function activateSessionRuntime(
   if (options.reusePersistedMessages && resumeResult.persistedMessagesReloadRequired) {
     persistedMessages = await readPersistedSessionMessages(context, params.sessionId);
   }
+  // 修复原因（老问题「切走再切回，会话身份 / PreFill 就退回跟随全局」）：
+  // 这两个覆盖只活在内存 record 上，而 resume 会按 setting.json 的全局偏好重建 record。
+  // session_entry 里的快照早就落盘了，但读回函数一直没被调用，于是冷恢复后
+  // 来源标记和正文一起丢失。必须放在 app.resume() 之后再写回 runtime，
+  // 否则会被 resume 的物化覆盖。
+  const persistedOverrides = await readPersistedSessionPromptOverrides({
+    logger: context.logger,
+    sessionId: params.sessionId as SessionId,
+    sessionStore: context.deps.sessionStore,
+  });
+  if (persistedOverrides) {
+    applyPersistedPromptOverrides(record, persistedOverrides);
+  }
   context.logger?.info("XCode Protocol session resume completed", {
     activeSessionCount: context.sessions.size,
     durationMs: Math.max(0, Date.now() - resumeStartedAt),
@@ -4295,6 +4308,13 @@ async function snapshotWithDiagnostics(
     lastError: record.restoreWarning,
     messages: limitMessages(messages, options.messageLimit),
     modelAvailability: options.modelAvailability,
+    // 修复原因（老问题「改会话身份 / PreFill 没反应」）：这里漏传会话级覆盖，
+    // buildSessionSnapshot → mapSessionSettings 于是永远回报 persona.source="inherit"、
+    // prefill.mode="inherit"。写入其实是成功的（session_entry 的 runtime/system_prompt_overrides
+    // 里有值），但每次 setPersona/setPrefill 的回包都把 UI 打回「跟随全局」，
+    // 用户看到的就是「第一条会话选的什么就是什么，后面怎么改都不生效」。
+    personaOverride: record.personaOverride,
+    prefillOverride: record.prefillOverride,
     persistedContextUsageBreakdownEvents,
     persistedGoalVerificationEvents,
     session,
