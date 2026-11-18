@@ -584,10 +584,18 @@ function V4ComposerModelControlsImpl({
       setPersonaId(null);
       setPersonaCustom(false);
       setPrefillMode("inherit");
+      setObfuscationMode("inherit");
       return;
     }
     let cancelled = false;
-    // 切会话时先回到「跟随全局」，避免上一条会话的档位在新会话首次读回前闪一下。
+    // 切会话先把三项清回「跟随全局」再读取。
+    // 修复原因：快照读失败（例如协议客户端刚好 disposed）时，原来会一直保留上一条会话的
+    // 身份/PreFill 回显，用户看到的是「A 会话的设置挂在 B 会话上」——正是「页面显示的和
+    // 实际生效的不是一回事」。读不到就显示默认，绝不残留别的会话的值。
+    setPersonaSource("inherit");
+    setPersonaId(null);
+    setPersonaCustom(false);
+    setPrefillMode("inherit");
     setObfuscationMode("inherit");
     // 冷会话（运行时常驻池已回收）读不到快照：先激活 runtime 再读，否则选择器会一直显示
     // 「跟随全局」，而磁盘上其实存着用户当初选的模板——这正是「页面看着变了、值却没生效」。
@@ -607,8 +615,12 @@ function V4ComposerModelControlsImpl({
     // 超时后会把整个协议客户端销毁（写入随之变成 "client disposed"）。
     void readSnapshot()
       .catch(async (error: unknown) => {
-        if (!isSessionRuntimeNotReady(error)) throw error;
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // 一次重试：runtime 未就绪、协议客户端刚重建（disposed）都是瞬态。
+        // 刻意不调 ensureSessionReady——它在健康会话上也可能卡在 runtime/capabilities，
+        // 超时后会把整个协议客户端销毁。
+        await new Promise((resolve) =>
+          setTimeout(resolve, isSessionRuntimeNotReady(error) ? 500 : 1200),
+        );
         return readSnapshot();
       })
       .then((snapshot) => {
