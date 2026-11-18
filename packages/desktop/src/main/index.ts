@@ -1171,7 +1171,7 @@ function resolveExternalWorkspaceConfirmationCopy() {
 }
 
 function focusForceUpdateGateWindow() {
-  const gateWindow = getApplicationWindowsExcludingCuaIndicator()[0];
+  const gateWindow = getRevealableApplicationWindows()[0];
   if (!gateWindow) {
     return;
   }
@@ -1186,7 +1186,8 @@ function focusForceUpdateGateWindow() {
 }
 
 const primaryWindowCoordinator = createPrimaryWindowCoordinator({
-  listWindows: getApplicationWindowsExcludingCuaIndicator,
+  // 只用主界面窗口：桌宠浮层等辅助窗不能顶替主窗口，否则关窗后唤起会「成功」但什么都不显示。
+  listWindows: getRevealableApplicationWindows,
   resolveStartupWindowBootstrap: () => {
     if (startupOpenWorkspaceRequest) {
       const request = startupOpenWorkspaceRequest;
@@ -1683,7 +1684,7 @@ function confirmAppQuit(originWindow?: BrowserWindow | null) {
     originWindow && !originWindow.isDestroyed()
       ? originWindow
       : (BrowserWindow.getFocusedWindow() ??
-        getApplicationWindowsExcludingCuaIndicator()[0] ??
+        getRevealableApplicationWindows()[0] ??
         null);
   const dialogOptions = {
     type: "question" as const,
@@ -1831,6 +1832,23 @@ function resolveFocusedDesktopZoomLevel(): number {
 function getApplicationWindowsExcludingCuaIndicator(): BrowserWindow[] {
   return BrowserWindow.getAllWindows().filter(
     (win) => !win.isDestroyed() && !windowsCuaOperationIndicator.ownsWindow(win),
+  );
+}
+
+/**
+ * 「打开 XCode / 唤起主界面」类入口可用的窗口：只保留真正的主界面窗口。
+ *
+ * 修复原因（「关掉窗口后点任务栏/托盘图标没反应，只能彻底退出」）：桌宠浮层、CUA 指示器、
+ * 更新状态窗都是普通 BrowserWindow，主窗口关闭后它们仍在列表里。唤起逻辑抓到的第一个
+ * 「窗口」其实是桌宠浮层，show/focus 它当然什么都不会发生，也因此永远不会补建主窗口。
+ */
+function getRevealableApplicationWindows(): BrowserWindow[] {
+  return getApplicationWindowsExcludingCuaIndicator().filter(
+    (win) =>
+      win !== updateStatusWindow &&
+      !closingUpdateStatusWindows.has(win) &&
+      win !== petOverlayController.getWindow() &&
+      win !== dshPetOverlayController.getWindow(),
   );
 }
 
@@ -2329,7 +2347,7 @@ app.on("open-url", (event, url) => {
   }
   handleDeepLink(url, logger, {
     confirmationCopy: resolveExternalWorkspaceConfirmationCopy(),
-    resolveApplicationWindow: () => getApplicationWindowsExcludingCuaIndicator()[0] ?? null,
+    resolveApplicationWindow: () => getRevealableApplicationWindows()[0] ?? null,
   });
 });
 const gotTheLock = app.requestSingleInstanceLock(createDeepLinkSingleInstanceData(process.argv));
@@ -2350,9 +2368,9 @@ app.on("second-instance", (_event, argv, _workingDirectory, additionalData) => {
           ...options,
           resolveApplicationWindow:
             options?.resolveApplicationWindow ??
-            (() => getApplicationWindowsExcludingCuaIndicator()[0] ?? null),
+            (() => getRevealableApplicationWindows()[0] ?? null),
         }),
-      resolveApplicationWindow: () => getApplicationWindowsExcludingCuaIndicator()[0] ?? null,
+      resolveApplicationWindow: () => getRevealableApplicationWindows()[0] ?? null,
       logger,
       workspaceConfirmationCopy: resolveExternalWorkspaceConfirmationCopy(),
     })
@@ -2360,16 +2378,12 @@ app.on("second-instance", (_event, argv, _workingDirectory, additionalData) => {
     return;
   }
 
-  const win = getApplicationWindowsExcludingCuaIndicator()[0];
-  if (win) {
-    if (win.isMinimized()) {
-      win.restore();
-    }
-    if (!win.isVisible()) {
-      win.show();
-    }
-    win.focus();
-  }
+  // 统一交给 coordinator：有窗口就强制 show（Windows 上「被遮挡 / 隐藏但 isVisible() 仍为
+  // true」的窗口原来只走 focus，用户点了没反应），没有窗口就补建。两个分支此前各自实现，
+  // 补建分支还漏掉了——窗口已销毁时第二次启动什么都不做，只能彻底退出再开。
+  void primaryWindowCoordinator
+    .ensurePrimaryWindow("second-instance")
+    .catch((error: unknown) => logger.warn("[second-instance] ensure primary window failed", error));
 });
 
 app.whenReady().then(async () => {
@@ -2885,7 +2899,7 @@ app.whenReady().then(async () => {
     logger.warn("[dsh-pet] initialize failed", error);
   });
 
-  const primaryWindow = getApplicationWindowsExcludingCuaIndicator()[0];
+  const primaryWindow = getRevealableApplicationWindows()[0];
   if (primaryWindow) {
     scheduleReportPerfAppStartAfterMainViewReady(primaryWindow.webContents, logger);
   }
@@ -2895,7 +2909,7 @@ app.whenReady().then(async () => {
   void maybeWarnArchitectureMismatch({
     locale: currentApplicationLocale,
     logger,
-    parentWindow: getApplicationWindowsExcludingCuaIndicator()[0] ?? null,
+    parentWindow: getRevealableApplicationWindows()[0] ?? null,
     icon: nativeImage.createFromPath(iconPath),
   }).catch((error) => {
     logger.warn("[architecture] 架构检测弹框失败:", error);
@@ -2905,7 +2919,7 @@ app.whenReady().then(async () => {
   if (protocolUrl && startupDeepLinkConsumptionGate.shouldHandleReadyProtocolUrl(protocolUrl)) {
     handleDeepLink(protocolUrl, logger, {
       confirmationCopy: resolveExternalWorkspaceConfirmationCopy(),
-      resolveApplicationWindow: () => getApplicationWindowsExcludingCuaIndicator()[0] ?? null,
+      resolveApplicationWindow: () => getRevealableApplicationWindows()[0] ?? null,
     });
   }
 });

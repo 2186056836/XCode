@@ -47,9 +47,10 @@ export function createPrimaryWindowCoordinator(deps: PrimaryWindowCoordinatorDep
       if (existingWindow.isMinimized?.()) {
         existingWindow.restore?.();
       }
-      if (!existingWindow.isVisible()) {
-        existingWindow.show();
-      }
+      // 无条件 show()：Windows 上「已经隐藏、但 isVisible() 仍报 true」的窗口原来只走
+      // focus，用户看到的就是点了托盘 / 任务栏图标毫无反应（只能彻底退出重开）。
+      // show() 对可见窗口是幂等的，同时会把窗口带到前台。
+      existingWindow.show();
       existingWindow.focus?.();
       return true;
     }
