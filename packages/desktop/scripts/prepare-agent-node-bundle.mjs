@@ -598,19 +598,20 @@ await stageBundledNpmRuntime();
 stageKoffiForCuaPlugin();
 stageSharpForNodeReplPlugin();
 
-// XCode fork：从本机已安装的官方 ZCode 包移植 Computer Use 真实实现。
-// 上面的 buildCliBundle/buildOfficialPluginRuntimes 会用占位 @zcode/zcode-cua 重新
-// 生成 node-repl-host/dist/mcp/server.js，必须在这之后再把真实 producer / Helper /
-// 插件原生依赖覆盖回去。官方包不存在时（纯开源 CI）静默跳过，保持 fail-closed。
+// XCode fork：安装 Computer Use 真实实现（producer + Windows Helper + 插件 sharp 运行时依赖）。
+// 上面的 buildCliBundle/buildOfficialPluginRuntimes 会用占位 @zcode/zcode-cua 重新生成
+// node-repl-host/dist/mcp/server.js，必须在这之后再把真实产物覆盖回去。
+// 产物跟踪在仓库 vendor/cua/<platform>（约 49MB，无法从开源代码重建），因此纯克隆 /
+// CI 也能装上；官方 ZCode 安装只在 vendor 缺失或要更新版本时才需要。
 try {
   const { runCommand } = await import("../../../scripts/spawn-command.mjs");
-  runCommand(process.execPath, [resolve(repoRoot, "scripts/port-official-cua.mjs")], {
+  runCommand(process.execPath, [resolve(repoRoot, "scripts/cua-vendor.mjs")], {
     cwd: repoRoot,
     env: process.env,
   });
 } catch (error) {
   console.warn(
-    "[prepare:agent-bundle] 官方 Computer Use 产物移植跳过:",
+    "[prepare:agent-bundle] Computer Use 产物装配跳过:",
     error instanceof Error ? error.message : String(error),
   );
 }

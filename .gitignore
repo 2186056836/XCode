@@ -79,3 +79,10 @@ __pycache__/
 
 # CR-01：afterPack 生成的 NSIS helper define，按架构命名，不得入库
 packages/desktop/build/generated/
+
+# vendor/cua 内是必须跟踪的官方闭源产物（Helper 引擎 + express/sharp 闭包），
+# 不能被上面通用的构建输出目录规则静默漏掉。
+!vendor/cua/**/node_modules/
+!vendor/cua/**/dist/
+!vendor/cua/**/build/
+!vendor/cua/**/build/Release/*.node
