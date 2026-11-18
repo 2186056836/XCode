@@ -1,4 +1,4 @@
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { usePluginReferenceIconProjection } from "@/v4/pluginReferenceIconContext.js";
 import {
   buildTaskSidePaneMemoryKey,
@@ -49,7 +49,7 @@ const INLINE_ONLY: readonly McpAppsDisplayMode[] = ["inline"];
 export function usePluginUiToolCallModel(
   context: ToolCallBlockRenderContext,
 ): Omit<PluginUiToolCallViewProps, "fallback"> {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const presentation = useMemo(
     () => readPluginUiPresentation(context.toolCallNode.toolCall.raw),
     [context.toolCallNode.toolCall.raw],

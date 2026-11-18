@@ -4,7 +4,7 @@ import { Copy, ExternalLink, Gift, Info, Loader2Icon, LogIn, RefreshCw, Trash2, 
 import { Button } from "@/components/ui/button.js";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.js";
 import { Input } from "@/components/ui/input.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
 import { useServices } from "@/hooks/useServices.js";
@@ -71,7 +71,7 @@ export function CodeBuddyLoginSection({
   /** 供应商显示名（CN 带 CN 后缀，Intl 不带），登录区文案按其插值。 */
   name: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   // 设置页不在 PlatformProvider 内时回退 window.open（Electron 下开新窗口）。
   const platform = useOptionalPlatform();
   const { providerSettingsService } = useServices();

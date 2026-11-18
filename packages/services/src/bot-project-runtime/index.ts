@@ -5,7 +5,7 @@ import type {
   BotRemoteRuntimeService,
   BotRemoteTarget,
   BotRuntimeSubscription,
-  IXCodeTaskService,
+  IZCodeTaskService,
 } from "#src/bot-project-runtime/contract.js";
 export type {
   BotRemoteRuntimeService,
@@ -57,8 +57,8 @@ export function createBotProjectRuntime(port: BotProjectRuntimePort): BotRemoteR
   function subscribe(
     target: BotRemoteTarget,
     initial: Lease,
-    params: Parameters<IXCodeTaskService["onDynamicTaskEvent"]>[0],
-    receive: Parameters<ReturnType<IXCodeTaskService["onDynamicTaskEvent"]>>[0],
+    params: Parameters<IZCodeTaskService["onDynamicTaskEvent"]>[0],
+    receive: Parameters<ReturnType<IZCodeTaskService["onDynamicTaskEvent"]>>[0],
   ): BotRuntimeSubscription {
     if (
       params.workspacePath !== target.workspacePath ||
@@ -130,7 +130,7 @@ export function createBotProjectRuntime(port: BotProjectRuntimePort): BotRemoteR
         return { ok: false, message: error instanceof Error ? error.message : String(error) };
       }
     },
-    async getXCodeTaskService(target) {
+    async getZCodeTaskService(target) {
       const lease = await admit(target);
       await lease.connection.agentService.syncAppRuntimePreferences(
         await port.readRuntimePreferences(),
@@ -139,8 +139,8 @@ export function createBotProjectRuntime(port: BotProjectRuntimePort): BotRemoteR
       return new Proxy(lease.connection.taskService, {
         get(base, property, receiver) {
           if (property === "onDynamicTaskEvent")
-            return (params: Parameters<IXCodeTaskService["onDynamicTaskEvent"]>[0]) =>
-              (receive: Parameters<ReturnType<IXCodeTaskService["onDynamicTaskEvent"]>>[0]) =>
+            return (params: Parameters<IZCodeTaskService["onDynamicTaskEvent"]>[0]) =>
+              (receive: Parameters<ReturnType<IZCodeTaskService["onDynamicTaskEvent"]>>[0]) =>
                 subscribe(target, lease, params, receive);
           const value: unknown = Reflect.get(base, property, receiver);
           if (typeof value !== "function") return value;

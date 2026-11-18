@@ -211,8 +211,8 @@ export function createDesktopPlatform(options: {
     getDesktopSessionActivity: () =>
       window.zcode.getDesktopSessionActivity?.() ??
       Promise.resolve({ runningAgentSessionCount: 0 }),
-    getXCodeStdioTapDevState: () =>
-      window.zcode.getXCodeStdioTapDevState?.() ??
+    getZCodeStdioTapDevState: () =>
+      window.zcode.getZCodeStdioTapDevState?.() ??
       Promise.resolve({ enabled: false, visible: false, logDir: "", statePath: "" }),
     onSettingsChanged: (callback) => window.zcode.onSettingsChanged?.(callback) ?? (() => {}),
     onApplicationLocaleChanged: (callback) =>

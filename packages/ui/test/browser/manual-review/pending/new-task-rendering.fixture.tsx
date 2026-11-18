@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { Event, ProxyChannel } from "@zcode/rpc";
 import { useRemoteWorkspaceHistory } from "@/root/useRemoteWorkspaceHistory.js";
 import { createRoot } from "react-dom/client";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { ChatLoading } from "@/components/ai-elements/chat-loading.js";
 import { Spinner } from "@/components/ui/spinner.js";
 import { ServiceProvider } from "@/hooks/useServices.js";
@@ -17,7 +17,7 @@ import {
   ProjectComposerMenu,
 } from "@/project-sidebar/index.js";
 import { useRootWorkspaceActions } from "@/root/useRootWorkspaceActions.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import type { ProjectTree, ProjectSidebarProps } from "@/project-sidebar/contract.js";
 import type { IServiceAccessor } from "@zcode/services";
 import { attachTaskListRowActivity } from "@/v4/taskListRowActivity.js";
@@ -188,7 +188,7 @@ const services = {
   },
 } as unknown as IServiceAccessor;
 Object.assign(window, { __renderFixture: { services, tabStore, activityStore } });
-useXCodeSessionStore.getState().setActiveTaskId("/example", sessionSwitch ? null : "old-session");
+useZCodeSessionStore.getState().setActiveTaskId("/example", sessionSwitch ? null : "old-session");
 const common = {
   workspacePath: "/example",
   theme,
@@ -197,7 +197,7 @@ const common = {
   onSelectTask: (...args: unknown[]) => {
     Object.assign(window, { __selectedTask: args });
     if (sessionSwitch)
-      useXCodeSessionStore.getState().setActiveTaskId(args[0] as string, args[1] as string);
+      useZCodeSessionStore.getState().setActiveTaskId(args[0] as string, args[1] as string);
   },
   onStartDraftInWorkspace: noop,
   onOpenFolderFromWorkspaceMenu: noop,
@@ -233,7 +233,7 @@ const actions = {
     : ("desktop-continuous" as const),
   // 手机 bridge 只模拟导航完成；Renderer 仍走实际 replayable 分支。
   openMobileProjectDraft: async () => {
-    useXCodeSessionStore.getState().startDraft("/example");
+    useZCodeSessionStore.getState().startDraft("/example");
   },
 };
 function Controls() {
@@ -253,7 +253,7 @@ function Controls() {
           <button
             data-testid="activate-task"
             onClick={() =>
-              useXCodeSessionStore.getState().setActiveTaskId("/example", "running-task")
+              useZCodeSessionStore.getState().setActiveTaskId("/example", "running-task")
             }
           >
             Activate task
@@ -327,7 +327,7 @@ function Fixture() {
   const [navigationPage, setNavigationPage] = useState("chat");
   const openAutomations = useCallback(() => setNavigationPage("automations"), []);
   const openPlugins = useCallback(() => setNavigationPage("plugins"), []);
-  const task = useXCodeSessionStore((state) => state.workspaces["/example"]?.activeTaskId);
+  const task = useZCodeSessionStore((state) => state.workspaces["/example"]?.activeTaskId);
   // 模拟 Root 每轮装配导航实现；执行和侧栏均使用真实生产 hook/组件。
   const remote = useRemoteWorkspaceHistory({
     intl: actions.intl,
@@ -440,7 +440,7 @@ function Fixture() {
   );
 }
 createRoot(document.getElementById("root")!).render(
-  <XCodeIntlProvider initialLocale={params.get("locale") === "zh-CN" ? "zh-CN" : "en-US"}>
+  <ZCodeIntlProvider initialLocale={params.get("locale") === "zh-CN" ? "zh-CN" : "en-US"}>
     <TooltipProvider>
       {params.get("spinner") === "1" ? (
         <Spinner className="size-5 text-foreground-subtle" />
@@ -451,5 +451,5 @@ createRoot(document.getElementById("root")!).render(
         </ServiceProvider>
       )}
     </TooltipProvider>
-  </XCodeIntlProvider>,
+  </ZCodeIntlProvider>,
 );

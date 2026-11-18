@@ -1,4 +1,4 @@
-import type { PublicXCodeErrorCode } from "@zcode/shared";
+import type { PublicZCodeErrorCode } from "@zcode/shared";
 import type { RemoteEnvironment } from "@zcode/server/remote/backend.js";
 
 export const WINDOWS_NATIVE_REMOTE_UNSUPPORTED_MESSAGE =
@@ -10,7 +10,7 @@ export const WINDOWS_NATIVE_REMOTE_UNSUPPORTED_MESSAGE =
  */
 export function createUnsupportedRemotePlatformError(message: string): Error {
   return Object.assign(new Error(message), {
-    code: "remote-platform-unsupported" satisfies PublicXCodeErrorCode,
+    code: "remote-platform-unsupported" satisfies PublicZCodeErrorCode,
   });
 }
 

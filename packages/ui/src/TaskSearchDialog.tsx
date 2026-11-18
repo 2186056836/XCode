@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 import { Button } from "@/components/ui/button.js";
 import {
   Command,
@@ -13,7 +13,7 @@ import {
   CommandShortcut,
 } from "@/components/ui/command.js";
 import { useGlobalTaskList } from "@/hooks/useGlobalTaskList.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { formatCommandShortcutLabel, matchesPrimaryShortcut } from "@/lib/keyboardShortcuts.js";
 import { formatTaskRelativeTime } from "@/lib/taskListItemPresentation.js";
@@ -32,7 +32,7 @@ import type { WorkspaceTabState } from "@/store/tabStore.js";
 const TASK_SEARCH_RESULT_LIMIT = 9;
 const TASK_SEARCH_GROUP_COLLAPSED_SNIPPET_LIMIT = 3;
 
-type TaskSearchResultItem = XCodeTaskMeta & {
+type TaskSearchResultItem = ZCodeTaskMeta & {
   searchSnippet?: string;
   searchSnippets?: string[];
 };
@@ -46,7 +46,7 @@ type TaskSearchResultRow = {
   showTaskHeader: boolean;
 };
 
-function getTaskTitle(task: XCodeTaskMeta, untitledLabel: string): string {
+function getTaskTitle(task: ZCodeTaskMeta, untitledLabel: string): string {
   return task.title.trim() || untitledLabel;
 }
 
@@ -98,7 +98,7 @@ export function TaskSearchDialog({
   ) => void;
   openRequestId?: number;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [expandedTaskKeys, setExpandedTaskKeys] = useState<Set<string>>(() => new Set());

@@ -26,7 +26,7 @@ export interface ProviderConfigSnapshot {
 
 export interface AccountProviderConfigSnapshot {
   readonly revision: string;
-  readonly basedOnXCodeBuiltinRevision: string;
+  readonly basedOnZCodeBuiltinRevision: string;
   readonly providers: ProviderConfigMap;
   readonly states?: AccountProviderStates;
 }
@@ -53,13 +53,13 @@ export function createFailClosedAccountProviderConfigSnapshot(
 }
 
 export function createAccountProviderConfigSnapshot(
-  basedOnXCodeBuiltinRevision: string,
+  basedOnZCodeBuiltinRevision: string,
   providers: ProviderConfigMap,
   states?: AccountProviderStates,
 ): AccountProviderConfigSnapshot {
   return Object.freeze({
-    revision: `account:${JSON.stringify([basedOnXCodeBuiltinRevision, providers.toJSON(), states])}`,
-    basedOnXCodeBuiltinRevision,
+    revision: `account:${JSON.stringify([basedOnZCodeBuiltinRevision, providers.toJSON(), states])}`,
+    basedOnZCodeBuiltinRevision,
     providers,
     ...(states ? { states } : {}),
   });
@@ -67,7 +67,7 @@ export function createAccountProviderConfigSnapshot(
 
 const EMPTY_ACCOUNT_PROVIDER_CONFIG_SNAPSHOT: AccountProviderConfigSnapshot = Object.freeze({
   revision: "empty-account-config-v1",
-  basedOnXCodeBuiltinRevision: "uninitialized",
+  basedOnZCodeBuiltinRevision: "uninitialized",
   providers: ProviderConfigMap.empty(),
 });
 
@@ -103,7 +103,7 @@ function freezeAccountProviderConfigSnapshot(
 ): AccountProviderConfigSnapshot {
   return Object.freeze({
     revision: snapshot.revision,
-    basedOnXCodeBuiltinRevision: snapshot.basedOnXCodeBuiltinRevision,
+    basedOnZCodeBuiltinRevision: snapshot.basedOnZCodeBuiltinRevision,
     providers: snapshot.providers,
     ...(snapshot.states ? { states: snapshot.states } : {}),
   });

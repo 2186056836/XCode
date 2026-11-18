@@ -10,7 +10,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog.js";
 import { Checkbox } from "@/components/ui/checkbox.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export function WindowsChromeImportConsentDialog({
   checked,
@@ -27,7 +27,7 @@ export function WindowsChromeImportConsentDialog({
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>

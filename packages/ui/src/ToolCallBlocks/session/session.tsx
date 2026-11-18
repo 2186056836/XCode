@@ -4,7 +4,7 @@ import { ToolLayout } from "@/ToolCallBlocks/ToolLayout.js";
 import { ToolDetailSection } from "@/ToolCallBlocks/session/ToolDetailSection.js";
 import { ToolSnapshotFieldNotice } from "@/ToolCallBlocks/ToolSnapshotFieldNotice.js";
 import type { ToolCallBlockRenderContext } from "@/ToolCallBlocks/shared.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 const SESSION_TOOLS = ["ListSessions", "ReadSession", "SendToSession", "WaitSessions"] as const;
 export function isSessionToolName(name: string): boolean {
@@ -51,7 +51,7 @@ const STATUS_KEYS: Record<string, string> = {
 };
 
 export function SessionToolCallBlock(context: ToolCallBlockRenderContext) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { toolCall } = context.toolCallNode;
   const name = toolCall.toolName ?? toolCall.kind;
   const t = (key: string, values?: Record<string, string | number>) =>

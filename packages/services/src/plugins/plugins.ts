@@ -1,7 +1,7 @@
 import type {
   PluginScope,
   PluginsOverviewResult,
-  XCodePluginsMarketplaceMutationResult,
+  ZCodePluginsMarketplaceMutationResult,
 } from "@zcode/shared";
 import { ServiceChannels } from "@zcode/shared";
 import { createServiceDescriptor } from "../descriptors.js";
@@ -25,7 +25,7 @@ export interface IPluginsService {
     workspacePath: string;
     workspaceIdentity?: string;
     marketplace?: string;
-  }): Promise<XCodePluginsMarketplaceMutationResult | void>;
+  }): Promise<ZCodePluginsMarketplaceMutationResult | void>;
   installPlugin(params: {
     workspacePath: string;
     workspaceIdentity?: string;

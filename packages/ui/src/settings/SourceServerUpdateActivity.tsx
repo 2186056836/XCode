@@ -3,7 +3,7 @@ import { ChevronRight, LoaderCircle } from "lucide-react";
 import type { SourceServerOperationLog } from "@zcode/shared";
 import { cn } from "@/components/lib/utils.js";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 function resolveUpdatePhaseMessageId(phase: string): string {
   if (phase === "probe" || phase === "preflight") {
@@ -40,7 +40,7 @@ export function SourceServerUpdateActivity({
   recent?: boolean;
   logs: readonly SourceServerOperationLog[];
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const [expanded, setExpanded] = useState(active);
   const latest = logs.at(-1);
   const progressPercent = resolveSourceServerUpdatePercent(logs);
@@ -114,7 +114,7 @@ export function SourceServerUpdateActivity({
 
 /** 最近日志列表；设备卡页脚与更新进度共用，展开状态由调用方持有。 */
 export function SourceServerLogList({ logs }: { logs: readonly SourceServerOperationLog[] }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   return (
     <div
       data-source-server-log

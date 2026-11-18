@@ -4,7 +4,7 @@ import type {
   IntegratedTerminalShellOption,
   IntegratedTerminalShellSelection,
   LocalePreference,
-  XCodeInteractionBehavior,
+  ZCodeInteractionBehavior,
 } from "@zcode/shared";
 import {
   appToolSearchModeSchema,
@@ -37,7 +37,7 @@ import { Input } from "@/components/ui/input.js";
 import { Button } from "@/components/ui/button.js";
 import { SettingsGroupCard, SettingsRow } from "@/settings/SettingsPageParts.js";
 import { DataBaseDirControl } from "@/settings/DataBaseDirControl.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useOptionalServices } from "@/hooks/useServices.js";
 import { ProactiveSuggestionsSetting } from "@/settings/ProactiveSuggestionsSetting.js";
 import { PluginAutoRecommendationSetting } from "@/settings/PluginAutoRecommendationSetting.js";
@@ -59,7 +59,7 @@ export { SETTINGS_SECTION_GROUPS, SETTINGS_SECTIONS };
 export { isSettingsSectionAvailable };
 
 const TASK_AUTO_ARCHIVE_DAY_OPTIONS = [3, 7, 14, 30] as const;
-const ZCODE_INTERACTION_BEHAVIOR_OPTIONS: readonly XCodeInteractionBehavior[] = ["queue", "guide"];
+const ZCODE_INTERACTION_BEHAVIOR_OPTIONS: readonly ZCodeInteractionBehavior[] = ["queue", "guide"];
 
 /**
  * 归档偏好与归档列表集中展示，设置值和保存动作继续由 SettingsPage 持有。
@@ -76,7 +76,7 @@ export function TaskAutoArchiveSettings({
   onTaskAutoArchiveEnabledChange: (enabled: boolean) => Promise<void>;
   onTaskAutoArchiveOlderThanDaysChange: (days: number) => Promise<void>;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <SettingsGroupCard>
       <SettingsRow
@@ -235,7 +235,7 @@ export function GeneralSectionContent({
   onAutoDownloadAndInstallUpdatesChange: (enabled: boolean) => Promise<void>;
   onOpenOnboardingDialog: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const hasServices = Boolean(useOptionalServices());
   // 部分 SSR 单测会用精简 props 直接渲染本组件，新增终端设置项后旧 helper 未必同步传值。
   // 这里把运行时缺省值兜到“继承系统 profile”，避免 undefined.trim() 把无关测试打断。
@@ -801,7 +801,7 @@ export function AgentBehaviorSectionContent({
   onNativeSearchEnhancementsEnabledChange,
   onMessageStreamShowReasoningChange,
   onMessageStreamShowTodosChange,
-  onXCodeInteractionBehaviorChange,
+  onZCodeInteractionBehaviorChange,
   onAskUserQuestionAutoResolutionEnabledChange = async () => {},
   onModelIoFullRetentionEnabledChange = async () => {},
 }: {
@@ -810,17 +810,17 @@ export function AgentBehaviorSectionContent({
   nativeSearchEnhancementsEnabled: boolean;
   messageStreamShowReasoning: boolean;
   messageStreamShowTodos: boolean;
-  zcodeInteractionBehavior: XCodeInteractionBehavior;
+  zcodeInteractionBehavior: ZCodeInteractionBehavior;
   askUserQuestionAutoResolutionEnabled?: boolean;
   modelIoFullRetentionEnabled?: boolean;
   onNativeSearchEnhancementsEnabledChange: (enabled: boolean) => Promise<void>;
   onMessageStreamShowReasoningChange: (enabled: boolean) => Promise<void>;
   onMessageStreamShowTodosChange: (enabled: boolean) => Promise<void>;
-  onXCodeInteractionBehaviorChange: (behavior: XCodeInteractionBehavior) => Promise<void>;
+  onZCodeInteractionBehaviorChange: (behavior: ZCodeInteractionBehavior) => Promise<void>;
   onAskUserQuestionAutoResolutionEnabledChange?: (enabled: boolean) => Promise<void>;
   onModelIoFullRetentionEnabledChange?: (enabled: boolean) => Promise<void>;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const hasServices = Boolean(useOptionalServices());
 
   return (
@@ -897,7 +897,7 @@ export function AgentBehaviorSectionContent({
             <Select
               value={zcodeInteractionBehavior}
               onValueChange={(value) => {
-                void onXCodeInteractionBehaviorChange(value as XCodeInteractionBehavior);
+                void onZCodeInteractionBehaviorChange(value as ZCodeInteractionBehavior);
               }}
             >
               <SelectTrigger size="lg" className="w-[260px] min-w-0 justify-between">

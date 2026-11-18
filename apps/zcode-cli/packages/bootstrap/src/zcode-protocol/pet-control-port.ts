@@ -8,15 +8,15 @@ import type { PetControlPort, PetControlState } from "@zcode/contracts";
 import {
   zcodePetControlResultSchema,
   zcodeProtocolMethods,
-  type XCodeProtocolMethod,
+  type ZCodeProtocolMethod,
 } from "@zcode/shared";
-import type { XCodeProtocolAgentServerContext } from "./server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "./server-types.js";
 
-export function createProtocolPetControlPort(context: XCodeProtocolAgentServerContext): PetControlPort {
-  const request = (method: XCodeProtocolMethod, params: unknown) =>
+export function createProtocolPetControlPort(context: ZCodeProtocolAgentServerContext): PetControlPort {
+  const request = (method: ZCodeProtocolMethod, params: unknown) =>
     context.requestClient(method, params, zcodePetControlResultSchema);
 
-  const toSnapshot = () => async (method: XCodeProtocolMethod, params: unknown) => {
+  const toSnapshot = () => async (method: ZCodeProtocolMethod, params: unknown) => {
     const result = await request(method, params);
     if (!result.ok) {
       throw new Error(`${method} reported the pet overlay is unavailable`);

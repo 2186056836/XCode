@@ -4,7 +4,7 @@ import type { CodingPlanResetType } from "@zcode/shared";
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { getContextQuotaMeterGridClass } from "@/chat-input-toolbar/contextQuotaMeterGrid.js";
 import { burstCodingPlanQuotaResetConfetti } from "@/lib/codingPlanQuotaResetConfetti.js";
 
@@ -119,7 +119,7 @@ export function CodingPlanQuotaResetDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const [now, setNow] = useState(() => Date.now());
   // Bugfix：核销不可撤回，曾经点一下「重置」就直接 /use，用户误触白白消耗机会（周重置卡尤甚）。
   // 现在点「重置」先切到确认页，展示将用掉哪次机会与额度变化，再点「重置」才核销；

@@ -9,7 +9,7 @@ import type {
   ConversationTelemetryFact,
   ModelRequestMetricsFact,
 } from "@zcode/shared/zcode-protocol-v4";
-import type { IXCodeAgentService } from "#src/zcode-agent/zcodeAgent.js";
+import type { IZCodeAgentService } from "#src/zcode-agent/zcodeAgent.js";
 import type { ServiceLogger } from "#src/logger/serviceLogger.js";
 import {
   createWorkspaceSubscriptions,
@@ -42,7 +42,7 @@ export interface GenerationPump {
 
 export function createGenerationPump(deps: {
   agent: Pick<
-    IXCodeAgentService,
+    IZCodeAgentService,
     "onDynamicConversationTelemetryFact" | "onDynamicModelRequestMetrics"
   >;
   workbench: WorkbenchState;

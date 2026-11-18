@@ -3,7 +3,7 @@ import { TID_WORKFLOW_ARTIFACT_PANE } from "@zcode/shared";
 import type { WorkflowRunArtifactSummary } from "@zcode/shared/zcode-protocol-v4";
 import { ChevronLeftIcon, ChevronRightIcon, CopyIcon, FolderOpenIcon } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   ArtifactKindIcon,
   artifactDisplayTitle,
@@ -28,7 +28,7 @@ import {
 } from "@/hooks/useWorkflowRunArtifacts.js";
 import { joinFilePath } from "@/lib/path.js";
 import type { WorkflowArtifactSidePaneTab } from "@/lib/workspaceSidePane.js";
-import { useXCodeStoreWithDefault } from "@/store/StoreProvider.js";
+import { useZCodeStoreWithDefault } from "@/store/StoreProvider.js";
 import { resolveTheme, type Theme } from "@/useTheme.js";
 import type { PaneWorkspaceScope } from "@/v4/paneLayoutStore.js";
 import type { SessionLease } from "@/v4/sessionDataLayer.js";
@@ -50,10 +50,10 @@ const WorkflowArtifactContent = memo(function WorkflowArtifactContent({
   onOpenBrowserUrl?: (url: string) => void;
   onRevealFileInTree?: (path: string) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { layer } = useV4Conversation();
   const [lease, setLease] = useState<SessionLease | null>(null);
-  const theme = useXCodeStoreWithDefault((state) => state.theme, "system");
+  const theme = useZCodeStoreWithDefault((state) => state.theme, "system");
 
   // 订阅**父会话**的投影（照 PlanDetail / WorkflowRun 详情页）：产物的新鲜元数据是父会话
   // 投影的一部分，不是这个面板的本地缓存。
@@ -144,7 +144,7 @@ function WorkflowArtifactView({
   onOpenBrowserUrl?: (url: string) => void;
   onRevealFileInTree?: (path: string) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const preset = isArtifactPresetKind(artifact.kind);
 
   // 版本步进器的落点。tab 上的 `version` 只是**打开时**的初始值（chip 从不带版本号，
@@ -350,7 +350,7 @@ function ArtifactVersionStepper({
   versionIndex: number;
   onSelect: (version: number) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (availableVersions.length <= 1) {
     return (
       <span

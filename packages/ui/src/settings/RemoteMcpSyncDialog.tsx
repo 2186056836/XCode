@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { formatRemoteSkillSyncTarget } from "@/settings/RemoteSkillSyncDialog.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import {
@@ -99,7 +99,7 @@ function resolveMcpTypeLabel(config: McpServerConfig): string {
 }
 
 export function RemoteMcpSyncTitle() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [warningTooltipOpen, setWarningTooltipOpen] = useState(false);
   const warningTitle = intl.formatMessage({
     id: "settings.mcp.remoteSync.warningTitle",
@@ -140,7 +140,7 @@ export function RemoteMcpSyncExistingFilterCheckbox({
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <label className="inline-flex h-6 cursor-pointer items-center gap-2 rounded-md px-1 text-ui-base text-foreground-subtle hover:text-foreground">
@@ -166,7 +166,7 @@ export function RemoteMcpSyncTargetRow({
   showExistingFilter: boolean;
   onShowExistingRemoteMcpChange: (checked: boolean) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -199,7 +199,7 @@ export function RemoteMcpSyncBulkSelectionCheckbox({
   onSelectAll: () => void;
   onClearAll: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const inputRef = useRef<HTMLInputElement>(null);
   const disabled = totalSelectable === 0;
   const checked = totalSelectable > 0 && selectedCount >= totalSelectable;
@@ -249,7 +249,7 @@ export function RemoteMcpSyncSelectionList({
   emptyMessageId?: string;
   onToggle: (id: string, checked: boolean) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   if (rows.length === 0) {
     return (
@@ -326,7 +326,7 @@ function RemoteMcpSyncResultList({
 }: {
   result: McpSyncImportResult | null;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const items = result?.results ?? [];
 
   if (items.length === 0) {
@@ -370,7 +370,7 @@ function RemoteMcpSyncResultList({
 }
 
 export function RemoteMcpSyncDialog(props: RemoteMcpSyncDialogProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const {
     localMcpSyncService,
     localWorkspacePath,

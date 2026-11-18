@@ -33,7 +33,7 @@ export function parseProviderConfigMap(input: unknown): ProviderConfigMap {
   return createProviderRules(z.array(providerConfigRuleSchema).parse(input));
 }
 
-export function parseXCodeBuiltinProviderConfigMap(input: unknown): ProviderConfigMap {
+export function parseZCodeBuiltinProviderConfigMap(input: unknown): ProviderConfigMap {
   return createProviderRules(z.array(builtinProviderConfigRuleSchema).parse(input));
 }
 
@@ -41,7 +41,7 @@ export function parseProviderTemplateMap(input: unknown): ProviderTemplateMap {
   return createTemplateRules(z.array(providerTemplateConfigRuleSchema).parse(input));
 }
 
-export function parseXCodeBuiltinProviderConfigRules(input: unknown): {
+export function parseZCodeBuiltinProviderConfigRules(input: unknown): {
   providers: ProviderConfigMap;
   providerTemplates: ProviderTemplateMap;
 } {
@@ -75,7 +75,7 @@ export function parseModelConfig(input: unknown): ModelConfig {
   return createModelConfig(modelConfigDataSchema.parse(input));
 }
 
-export function parseXCodeBuiltinModelConfigRules(input: unknown): ModelConfigRules {
+export function parseZCodeBuiltinModelConfigRules(input: unknown): ModelConfigRules {
   const parsed = builtinModelConfigRulesSchema.parse(input);
   return new ModelConfigRules([
     ...parsed.modelRules.map((rule) => ({

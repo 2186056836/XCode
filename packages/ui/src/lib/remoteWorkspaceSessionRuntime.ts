@@ -1,6 +1,6 @@
-import type { XCodeTaskRuntimeStatus } from "@zcode/shared";
+import type { ZCodeTaskRuntimeStatus } from "@zcode/shared";
 import { getWorkspaceDisplayedTaskState } from "@/store/zcodeSessionStore.js";
-import type { XCodeSessionStoreState, WorkspaceXCodeUIState } from "@/store/zcodeSessionStore.js";
+import type { ZCodeSessionStoreState, WorkspaceZCodeUIState } from "@/store/zcodeSessionStore.js";
 
 interface RemoteWorkspaceRuntimeTab {
   workspacePath: string;
@@ -9,17 +9,17 @@ interface RemoteWorkspaceRuntimeTab {
 
 interface MarkRemoteWorkspaceRunningTasksFailedParams {
   tabs: RemoteWorkspaceRuntimeTab[];
-  getWorkspaceState: XCodeSessionStoreState["getWorkspaceState"];
-  setTaskRuntimeState: XCodeSessionStoreState["setTaskRuntimeState"];
+  getWorkspaceState: ZCodeSessionStoreState["getWorkspaceState"];
+  setTaskRuntimeState: ZCodeSessionStoreState["setTaskRuntimeState"];
   reason: string;
 }
 
-function isRunningRuntimeStatus(status: XCodeTaskRuntimeStatus): boolean {
+function isRunningRuntimeStatus(status: ZCodeTaskRuntimeStatus): boolean {
   return status === "creating" || status === "restoring" || status === "streaming";
 }
 
 function shouldTreatPersistedRunningTaskAsRunning(
-  workspaceState: WorkspaceXCodeUIState,
+  workspaceState: WorkspaceZCodeUIState,
   taskId: string,
 ): boolean {
   const runtimeState = workspaceState.taskRuntimeByTaskId[taskId];
@@ -32,7 +32,7 @@ function shouldTreatPersistedRunningTaskAsRunning(
   return isRunningRuntimeStatus(runtimeState.status);
 }
 
-function collectRemoteWorkspaceRunningTaskIds(workspaceState: WorkspaceXCodeUIState): string[] {
+function collectRemoteWorkspaceRunningTaskIds(workspaceState: WorkspaceZCodeUIState): string[] {
   const taskIds = new Set<string>();
 
   if (

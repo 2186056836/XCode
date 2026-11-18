@@ -1,6 +1,6 @@
 import { cn } from "@/components/lib/utils.js";
 
-import { XCodeStartupLogoBadge } from "@/root/RootStartupLoading.js";
+import { ZCodeStartupLogoBadge } from "@/root/RootStartupLoading.js";
 
 export function WindowsTopLeftLogo({
   className,
@@ -27,7 +27,7 @@ export function WindowsTopLeftLogo({
           imageClassName,
         )}
       >
-        <XCodeStartupLogoBadge size="titlebar" animated={false} />
+        <ZCodeStartupLogoBadge size="titlebar" animated={false} />
       </span>
     </div>
   );

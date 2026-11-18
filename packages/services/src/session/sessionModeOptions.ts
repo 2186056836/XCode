@@ -1,6 +1,6 @@
-import type { XCodeConfigOption, XCodeProvider, XCodeTaskMode } from "@zcode/shared";
+import type { ZCodeConfigOption, ZCodeProvider, ZCodeTaskMode } from "@zcode/shared";
 
-const CANONICAL_SESSION_MODES = new Set<XCodeTaskMode>([
+const CANONICAL_SESSION_MODES = new Set<ZCodeTaskMode>([
   "default",
   "yolo",
   "guarded",
@@ -23,21 +23,21 @@ function readTrimmedString(value: unknown): string | undefined {
   return normalized.length > 0 ? normalized : undefined;
 }
 
-function getModeConfigOption(options: readonly XCodeConfigOption[]): XCodeConfigOption | undefined {
+function getModeConfigOption(options: readonly ZCodeConfigOption[]): ZCodeConfigOption | undefined {
   return options.find((option) => option.category === "mode" && option.type === "select");
 }
 
 function normalizePersistedSessionMode(
   modeId: string | null | undefined,
-  _provider?: XCodeProvider,
-): XCodeTaskMode | undefined {
+  _provider?: ZCodeProvider,
+): ZCodeTaskMode | undefined {
   const trimmedModeId = readTrimmedString(modeId);
   if (!trimmedModeId) {
     return undefined;
   }
 
-  if (CANONICAL_SESSION_MODES.has(trimmedModeId as XCodeTaskMode)) {
-    return trimmedModeId as XCodeTaskMode;
+  if (CANONICAL_SESSION_MODES.has(trimmedModeId as ZCodeTaskMode)) {
+    return trimmedModeId as ZCodeTaskMode;
   }
 
   switch (trimmedModeId) {
@@ -69,9 +69,9 @@ function normalizePersistedSessionMode(
 }
 
 export function resolveProviderModeIdFromConfigOptions(params: {
-  configOptions: readonly XCodeConfigOption[];
+  configOptions: readonly ZCodeConfigOption[];
   modeId: string | null | undefined;
-  provider?: XCodeProvider;
+  provider?: ZCodeProvider;
 }): string | undefined {
   const requestedMode = readTrimmedString(params.modeId);
   if (!requestedMode) {

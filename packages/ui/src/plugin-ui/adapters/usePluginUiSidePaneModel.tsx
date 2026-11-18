@@ -1,4 +1,4 @@
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { createPluginUiInteractions } from "@/plugin-ui/adapters/pluginUiInteractions.js";
 import { usePluginUiResourceDeltaFeed } from "@/plugin-ui/adapters/pluginUiResourceDeltaFeed.js";
 import { usePluginUiHost } from "@/plugin-ui/adapters/usePluginUiHost.js";
@@ -28,7 +28,7 @@ import {
   reducePluginUiSurfaceFeed,
 } from "@/plugin-ui/domain/pluginUiToolFeed.js";
 import { readPluginUiPresentation } from "@/plugin-ui/domain/readPluginUiPresentation.js";
-import { useXCodeStoreWithDefault } from "@/store/StoreProvider.js";
+import { useZCodeStoreWithDefault } from "@/store/StoreProvider.js";
 import { resolveTheme } from "@/useTheme.js";
 import type { PaneWorkspaceScope } from "@/v4/paneLayoutStore.js";
 import type { SessionLease } from "@/v4/sessionDataLayer.js";
@@ -55,10 +55,10 @@ export function usePluginUiSidePaneModel({
   onOpenBrowserUrl?: (url: string) => void;
   onCloseTab?: (tabId: string) => void;
 }): PluginUiSidePaneViewProps {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const { layer } = useV4Conversation();
   const [lease, setLease] = useState<SessionLease | null>(null);
-  const theme = useXCodeStoreWithDefault((state) => state.theme, "system");
+  const theme = useZCodeStoreWithDefault((state) => state.theme, "system");
 
   useEffect(() => {
     const nextLease = layer.acquire(tab.parentSessionId);

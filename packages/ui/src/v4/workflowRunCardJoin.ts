@@ -2,7 +2,7 @@ import { workflowRunStepCounts, type WorkflowRunState } from "@zcode/shared/zcod
 import type { ConversationRow, ConversationRowsPartition } from "@zcode/shared/zcode-protocol-v4";
 import {
   ZCODE_WORKFLOWS_FOR_RUN_MAX_CANDIDATES,
-  type XCodeWorkflowsForRunCandidate,
+  type ZCodeWorkflowsForRunCandidate,
 } from "@zcode/shared";
 import type { WorkflowCausalityGraphData } from "@/components/workflow-graph/types.js";
 import type { WorkflowRunCardSummary } from "@/ToolCallBlocks/shared.js";
@@ -273,7 +273,7 @@ export function resolveWorkflowRunGraph(
  *
  * 与其他联接同一条纪律：纯函数、一遍行窗口、身份只认入参通道（display 上没有这件事）。
  */
-export type WorkflowSaveCandidate = XCodeWorkflowsForRunCandidate;
+export type WorkflowSaveCandidate = ZCodeWorkflowsForRunCandidate;
 
 function readWorkflowSaveCandidate(
   row: ConversationRow,

@@ -8,7 +8,7 @@ import {
   type PluginOptionSyncValue,
   type IPlatformService,
   type RemoteTarget,
-  type XCodePluginsInstallResult,
+  type ZCodePluginsInstallResult,
 } from "@zcode/shared";
 import {
   withPluginTelemetry,
@@ -137,7 +137,7 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function formatInstallError(result: XCodePluginsInstallResult, pluginId: string): string | null {
+function formatInstallError(result: ZCodePluginsInstallResult, pluginId: string): string | null {
   const errors = result.diagnostics.filter((diagnostic) => diagnostic.severity !== "warning");
   if (errors.length === 0) return null;
   return errors

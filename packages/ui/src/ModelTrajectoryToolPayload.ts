@@ -1,18 +1,18 @@
-import type { XCodeModelTrajectoryMessage } from "@zcode/services";
+import type { ZCodeModelTrajectoryMessage } from "@zcode/services";
 
-export function trajectoryToolOutputs(message: XCodeModelTrajectoryMessage): string[] {
+export function trajectoryToolOutputs(message: ZCodeModelTrajectoryMessage): string[] {
   return message.parts.flatMap((part) =>
     part.kind === "tool-result" ? [formatTrajectoryToolPayload(part.output)] : [],
   );
 }
 
-export function trajectoryToolCallInputs(message: XCodeModelTrajectoryMessage): string[] {
+export function trajectoryToolCallInputs(message: ZCodeModelTrajectoryMessage): string[] {
   return message.parts.flatMap((part) =>
     part.kind === "tool-call" ? [formatTrajectoryToolPayload(part.input)] : [],
   );
 }
 
-export function trajectoryToolHasError(message: XCodeModelTrajectoryMessage): boolean {
+export function trajectoryToolHasError(message: ZCodeModelTrajectoryMessage): boolean {
   return message.parts.some(
     (part) =>
       (part.kind === "tool-result" && isErrorTextObject(part.output)) ||
@@ -20,7 +20,7 @@ export function trajectoryToolHasError(message: XCodeModelTrajectoryMessage): bo
   );
 }
 
-export function trajectoryToolMetadata(message: XCodeModelTrajectoryMessage): {
+export function trajectoryToolMetadata(message: ZCodeModelTrajectoryMessage): {
   names: string;
   ids: string;
 } {

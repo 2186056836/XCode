@@ -12,7 +12,7 @@ import { zcodeProtocolErrorCodes } from "@zcode/shared";
 import type { ServiceLogger } from "#src/logger/serviceLogger.js";
 import {
   ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE,
-  type IXCodeAgentService,
+  type IZCodeAgentService,
 } from "#src/zcode-agent/zcodeAgent.js";
 
 // composer.mention 的候选项路由（docs/plugins/extension-host.md §16.6）：
@@ -26,7 +26,7 @@ export interface MentionItemsRouterDeps {
   staticTable(): ExtensionStaticTable;
   /** 当前代际的扩展进程连接；没有时为 null。 */
   connection(): { gen: number; host: IExtensionHostChannel } | null;
-  agent: Pick<IXCodeAgentService, "getPluginMentionItems">;
+  agent: Pick<IZCodeAgentService, "getPluginMentionItems">;
   logger: Pick<ServiceLogger, "debug" | "warn">;
 }
 

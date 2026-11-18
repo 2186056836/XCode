@@ -5,18 +5,18 @@ import type {
   CliOAuthInitData,
   CliOAuthPollData,
   CliOAuthUser,
-  SharedXCodeCredentialStore,
+  SharedZCodeCredentialStore,
 } from "@zcode/adapters";
 import type { EnvRecord } from "@zcode/adapters/model";
 
 export type CodingPlanProviderId = "bigmodel" | "zai";
 
-export interface LoginXCodeCliOptions {
+export interface LoginZCodeCliOptions {
   providerId?: CodingPlanProviderId;
   abortSignal?: AbortSignal;
   apiKeyResolver?: ReturnType<typeof createCodingPlanApiKeyResolver>;
   baseUrl?: string;
-  credentialStore?: SharedXCodeCredentialStore;
+  credentialStore?: SharedZCodeCredentialStore;
   env?: EnvRecord;
   httpClient?: Parameters<typeof createCliOAuthClient>[0]["httpClient"];
   noBrowser?: boolean;
@@ -31,7 +31,7 @@ export interface LoginXCodeCliOptions {
   personalProviderConfigPath?: string;
 }
 
-export interface LoginXCodeCliResult {
+export interface LoginZCodeCliResult {
   browser?: BrowserOpenResult;
   configPath: string;
   credentialsPath: string;
@@ -41,12 +41,12 @@ export interface LoginXCodeCliResult {
 }
 
 // BigModel 与 Z.ai 共用服务端轮询登录，只是 providerId 固定为 bigmodel。
-export type LoginBigmodelCodingPlanOptions = Omit<LoginXCodeCliOptions, "providerId">;
-export type LoginBigmodelCodingPlanResult = LoginXCodeCliResult & { providerId: "bigmodel" };
+export type LoginBigmodelCodingPlanOptions = Omit<LoginZCodeCliOptions, "providerId">;
+export type LoginBigmodelCodingPlanResult = LoginZCodeCliResult & { providerId: "bigmodel" };
 
 export interface ConfigureCodingPlanApiKeyOptions {
   apiKey: string;
-  credentialStore?: SharedXCodeCredentialStore;
+  credentialStore?: SharedZCodeCredentialStore;
   env?: EnvRecord;
   personalProviderConfigPath?: string;
   providerId: CodingPlanProviderId;
@@ -58,16 +58,16 @@ export interface ConfigureCodingPlanApiKeyResult {
   providerId: CodingPlanProviderId;
 }
 
-export interface LogoutXCodeCliOptions {
-  credentialStore?: SharedXCodeCredentialStore;
+export interface LogoutZCodeCliOptions {
+  credentialStore?: SharedZCodeCredentialStore;
   env?: EnvRecord;
 }
 
-export interface LogoutXCodeCliResult {
+export interface LogoutZCodeCliResult {
   credentialsPath: string;
 }
 
-export class XCodeCliLoginError extends Error {
+export class ZCodeCliLoginError extends Error {
   readonly code:
     | "auth_failed"
     | "auth_timeout"
@@ -75,12 +75,12 @@ export class XCodeCliLoginError extends Error {
     | "credential_write_failed";
 
   constructor(
-    code: XCodeCliLoginError["code"],
+    code: ZCodeCliLoginError["code"],
     message: string,
     options: { cause?: unknown } = {},
   ) {
     super(message, options);
-    this.name = "XCodeCliLoginError";
+    this.name = "ZCodeCliLoginError";
     this.code = code;
   }
 }

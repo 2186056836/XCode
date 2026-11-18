@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { MessageWithParts } from "@zcode/contracts";
 import type { InputPredictionModelCall } from "@zcode/core";
 import { V4_METHODS } from "@zcode/shared/zcode-protocol-v4";
-import { XCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
+import { ZCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
 import {
   ConversationInputPredictionHandler,
   collectInputPredictionTurns,
@@ -237,9 +237,9 @@ describe("collectInputPredictionTurns", () => {
 
 describe("server 分发 v4/conversation/inputPrediction", () => {
   it("会话不在本进程时回 suppress_no_context 并回显 requestId；非法参数回协议错误", async () => {
-    const server = new XCodeProtocolAgentServer({
+    const server = new ZCodeProtocolAgentServer({
       cwd: process.cwd(),
-      createXCodeApp: async () => {
+      createZCodeApp: async () => {
         throw new Error("不应为预测创建 app");
       },
     });

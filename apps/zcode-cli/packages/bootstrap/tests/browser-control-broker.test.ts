@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { zcodeProtocolMethods } from "@zcode/shared";
 import { createProtocolBrowserControlBroker } from "../src/zcode-protocol/browser-control-broker.js";
-import type { XCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
 
 const IAB_DESCRIPTOR = {
   id: "iab-runtime-1",
@@ -24,7 +24,7 @@ function createContext(
     workspaceKey?: string;
     workspacePath?: string;
   } = {},
-): XCodeProtocolAgentServerContext {
+): ZCodeProtocolAgentServerContext {
   const sessionId = options.sessionId ?? "sess-1";
   const workspacePath = options.workspacePath ?? "/repo";
   return {
@@ -43,7 +43,7 @@ function createContext(
         },
       ],
     ]),
-  } as unknown as XCodeProtocolAgentServerContext;
+  } as unknown as ZCodeProtocolAgentServerContext;
 }
 
 describe("createProtocolBrowserControlBroker", () => {
@@ -155,7 +155,7 @@ describe("createProtocolBrowserControlBroker", () => {
     const context = {
       requestClient,
       sessions: new Map(),
-    } as unknown as XCodeProtocolAgentServerContext;
+    } as unknown as ZCodeProtocolAgentServerContext;
     const broker = createProtocolBrowserControlBroker(context);
 
     await expect(broker.list({ sessionId: "missing-session" })).rejects.toThrow(

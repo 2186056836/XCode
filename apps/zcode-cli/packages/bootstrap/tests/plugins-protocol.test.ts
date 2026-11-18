@@ -39,7 +39,7 @@ import {
   zcodePluginsValidateResultSchema,
 } from "@zcode/shared";
 import { getCliStorageRoot, getPluginStorageRoot } from "../src/app/paths.js";
-import { installXCodeMarketplacePlugin } from "../src/plugins.js";
+import { installZCodeMarketplacePlugin } from "../src/plugins.js";
 import { createOfficialPluginPreparation } from "../src/app/bundled-plugins.js";
 import {
   addPluginMarketplace,
@@ -52,7 +52,7 @@ import {
   updatePlugin,
 } from "../src/zcode-protocol/plugins.js";
 import { withPluginStorageLock } from "../src/lib/plugin-storage-lock.js";
-import type { XCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
 
 afterAll(async () => {
   await rm(FAKE_HOME, { force: true, recursive: true });
@@ -61,7 +61,7 @@ afterAll(async () => {
 const NODE_REPL_HOST_PLUGIN_ID = "node-repl-host@zcode-plugins-official";
 
 // 协议契约层面的回归: 确保 plugins/list 与 plugins/setEnabled 已注册且 schema 可用。
-// 端到端发现逻辑由 bootstrap/tests/plugins.test.ts (resolveXCodePlugins) 覆盖。
+// 端到端发现逻辑由 bootstrap/tests/plugins.test.ts (resolveZCodePlugins) 覆盖。
 describe("plugins protocol contracts", () => {
   it.each([true, false])(
     "normalizes external userConfig before strict list validation (enabled=%s)",
@@ -92,7 +92,7 @@ describe("plugins protocol contracts", () => {
             },
           }),
         );
-        const result = await listPlugins({} as XCodeProtocolAgentServerContext, {
+        const result = await listPlugins({} as ZCodeProtocolAgentServerContext, {
           workspace: { workspacePath: root, workspaceKey: root },
         });
         const parsed = zcodePluginsListResultSchema.parse(result);
@@ -139,7 +139,7 @@ describe("plugins protocol contracts", () => {
         JSON.stringify({ plugins: { dirs: [join(root, "invalid"), join(root, "healthy")] } }),
       );
       const result = zcodePluginsListResultSchema.parse(
-        await listPlugins({} as XCodeProtocolAgentServerContext, {
+        await listPlugins({} as ZCodeProtocolAgentServerContext, {
           workspace: { workspacePath: root, workspaceKey: root },
         }),
       );
@@ -179,7 +179,7 @@ describe("plugins protocol contracts", () => {
 
     try {
       await lockEntered;
-      const mutation = addPluginMarketplace({} as XCodeProtocolAgentServerContext, {
+      const mutation = addPluginMarketplace({} as ZCodeProtocolAgentServerContext, {
         workspace: { workspacePath: root, workspaceKey: root },
         source: "unsupported-marketplace-source",
       }).then(
@@ -234,7 +234,7 @@ describe("plugins protocol contracts", () => {
     try {
       await entered.promise;
       const result = await Promise.race([
-        describePlugin({} as XCodeProtocolAgentServerContext, {
+        describePlugin({} as ZCodeProtocolAgentServerContext, {
           workspace: { workspacePath: root, workspaceKey: root },
           marketplace: "e2e-describe",
           pluginName: "local",
@@ -267,7 +267,7 @@ describe("plugins protocol contracts", () => {
     });
     try {
       await entered.promise;
-      const describe = describePlugin({} as XCodeProtocolAgentServerContext, {
+      const describe = describePlugin({} as ZCodeProtocolAgentServerContext, {
         workspace: { workspacePath: root, workspaceKey: root },
         marketplace: "missing-marketplace",
         pluginName: "missing",
@@ -383,7 +383,7 @@ describe("plugins protocol contracts", () => {
         }),
       );
 
-      const result = await listPlugins({} as XCodeProtocolAgentServerContext, {
+      const result = await listPlugins({} as ZCodeProtocolAgentServerContext, {
         workspace: { workspacePath: root, workspaceKey: root },
       });
 
@@ -418,7 +418,7 @@ describe("plugins protocol contracts", () => {
         JSON.stringify({ name: "data-demo", version: "1.0.0" }),
       );
 
-      const result = await listPlugins({} as XCodeProtocolAgentServerContext, {
+      const result = await listPlugins({} as ZCodeProtocolAgentServerContext, {
         workspace: { workspacePath: root, workspaceKey: root },
         configScope: "user",
       });
@@ -452,14 +452,14 @@ describe("plugins protocol contracts", () => {
       );
 
       const userResult = await listPlugins(
-        {} as XCodeProtocolAgentServerContext,
+        {} as ZCodeProtocolAgentServerContext,
         {
           workspace: { workspacePath: root, workspaceKey: root },
           configScope: "user",
         },
       );
       const workspaceResult = await listPlugins(
-        {} as XCodeProtocolAgentServerContext,
+        {} as ZCodeProtocolAgentServerContext,
         {
           workspace: { workspacePath: root, workspaceKey: root },
           configScope: "workspace",
@@ -509,7 +509,7 @@ describe("plugins protocol contracts", () => {
         }),
       );
 
-      const result = await listPlugins({} as XCodeProtocolAgentServerContext, {
+      const result = await listPlugins({} as ZCodeProtocolAgentServerContext, {
         workspace: { workspacePath: root, workspaceKey: root },
         configScope: "workspace",
       });
@@ -552,7 +552,7 @@ describe("plugins protocol contracts", () => {
           workspace: { workspacePath: root, workspaceKey: root },
           configScope: "workspace",
         };
-        const baseline = await listPlugins({} as XCodeProtocolAgentServerContext, params);
+        const baseline = await listPlugins({} as ZCodeProtocolAgentServerContext, params);
         const installed = baseline.plugins.find((p) => p.id === pluginId)!;
         expect(installed.rootPath).toBeTruthy();
         expect(installed.packageStatus).not.toBe("missing");
@@ -568,7 +568,7 @@ describe("plugins protocol contracts", () => {
         }
         const context = {
           deps: { pluginPreparation: preparation, pluginDiscovery: { discoverPlugins } },
-        } as XCodeProtocolAgentServerContext;
+        } as ZCodeProtocolAgentServerContext;
         const result = query(context, params).then(
           (value) => ({ value }),
           (error) => ({ error }),
@@ -610,7 +610,7 @@ describe("plugins protocol contracts", () => {
       );
 
       const result = await listPlugins(
-        {} as XCodeProtocolAgentServerContext,
+        {} as ZCodeProtocolAgentServerContext,
         {
           workspace: { workspacePath: root, workspaceKey: root },
           configScope: "workspace",
@@ -637,13 +637,13 @@ describe("plugins protocol contracts", () => {
     process.env.ZCODE_STORAGE_DIR = join(root, "cli");
 
     try {
-      const result = await listPlugins({} as XCodeProtocolAgentServerContext, {
+      const result = await listPlugins({} as ZCodeProtocolAgentServerContext, {
         workspace: { workspacePath: root, workspaceKey: root },
       });
       expect(result.plugins.some((plugin) => plugin.hostMcpServerNames !== undefined)).toBe(false);
       expect(result.plugins.map((plugin) => plugin.id)).not.toContain(NODE_REPL_HOST_PLUGIN_ID);
 
-      const overview = await getPluginsOverview({} as XCodeProtocolAgentServerContext, {
+      const overview = await getPluginsOverview({} as ZCodeProtocolAgentServerContext, {
         workspace: { workspacePath: root, workspaceKey: root },
       });
       expect(
@@ -778,7 +778,7 @@ async function writeKnownMarketplaces(
 // 因此用 ZCODE_STORAGE_DIR 把存储根锚定到临时目录（storage.dir 以 "cli" 结尾时
 // getCliStorageRoot 原样返回，故 pluginStorageRoot = <storageDir>/plugins）。
 describe("updatePlugin handler diagnostics", () => {
-  const noopContext = {} as unknown as XCodeProtocolAgentServerContext;
+  const noopContext = {} as unknown as ZCodeProtocolAgentServerContext;
   let previousStorageDir: string | undefined;
 
   beforeEach(() => {
@@ -823,7 +823,7 @@ describe("updatePlugin handler diagnostics", () => {
       );
       await writeTestFile(join(pluginRoot, "skills", "demo", "SKILL.md"), "# demo");
 
-      const installResult = await installXCodeMarketplacePlugin({
+      const installResult = await installZCodeMarketplacePlugin({
         marketplace: "lazy-market",
         pluginName: "demo",
         pluginStorageRoot,
@@ -835,7 +835,7 @@ describe("updatePlugin handler diagnostics", () => {
       // Make reinstall fail: drop the persisted marketplace manifest dir AND the
       // source directory. ensureMarketplaceManifestAvailable then falls back to the
       // known record and re-fetches from the (now missing) directory source, which
-      // throws -> installXCodeMarketplacePlugin returns an error diagnostic.
+      // throws -> installZCodeMarketplacePlugin returns an error diagnostic.
       await rm(join(pluginStorageRoot, "marketplaces", "lazy-market"), {
         force: true,
         recursive: true,
@@ -859,7 +859,7 @@ describe("updatePlugin handler diagnostics", () => {
 // services 可能比 CLI 旧。CLI 只在参数带 includeExtensionSummary 时才写 listing.extensionSummary；
 // 安装等其他结果一律不带。componentTypes 的 "extension" 是开放字符串，照常透传。
 describe("plugins/overview extension summary", () => {
-  const noopContext = {} as unknown as XCodeProtocolAgentServerContext;
+  const noopContext = {} as unknown as ZCodeProtocolAgentServerContext;
   let previousStorageDir: string | undefined;
 
   beforeEach(() => {
@@ -957,7 +957,7 @@ describe("plugins/overview extension summary", () => {
 // <storageDir>/plugins）；suppressedBuiltins 必须写到 handler 实际解析的 user config，即
 // ~/.xcode/cli/config.json（文件头部已把 homedir 重定向到 FAKE_HOME，故落在隔离目录）。
 describe("restoreBuiltinPlugin handler", () => {
-  const noopContext = {} as unknown as XCodeProtocolAgentServerContext;
+  const noopContext = {} as unknown as ZCodeProtocolAgentServerContext;
   const builtinId = "skill-creator@zcode-plugins-official";
   const userConfigPath = join(FAKE_HOME, ".xcode", "cli", "config.json");
   let previousStorageDir: string | undefined;

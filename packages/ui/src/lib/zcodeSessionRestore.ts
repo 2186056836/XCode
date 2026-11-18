@@ -1,27 +1,27 @@
-import type { IXCodeSessionService, IXCodeTaskService } from "@zcode/services";
+import type { IZCodeSessionService, IZCodeTaskService } from "@zcode/services";
 import type {
-  XCodeConfigOption,
+  ZCodeConfigOption,
   ModelSelection,
-  XCodeSessionStateSnapshot,
-  XCodeTaskSnapshot,
+  ZCodeSessionStateSnapshot,
+  ZCodeTaskSnapshot,
 } from "@zcode/shared";
 import {
   zcodeSessionSettingsToConfigOptions,
   zcodeSessionSnapshotToZCodeTaskSnapshot,
 } from "@/lib/zcodeSessionProjection.js";
-import { normalizeXCodeUiError, type XCodeUiError } from "@/lib/zcodeUiError.js";
+import { normalizeZCodeUiError, type ZCodeUiError } from "@/lib/zcodeUiError.js";
 import { logger } from "@/logger.js";
 
 export type ZCodeSessionRestoreService = Pick<
-  IXCodeSessionService,
+  IZCodeSessionService,
   "readSession" | "resumeSession"
 >;
-export type ZCodeLegacyTaskSnapshotRestoreService = Pick<IXCodeTaskService, "getTaskSnapshot">;
+export type ZCodeLegacyTaskSnapshotRestoreService = Pick<IZCodeTaskService, "getTaskSnapshot">;
 
 export interface DesktopContinuousSessionRestoreSnapshot {
-  snapshot: XCodeTaskSnapshot;
-  restoreWarning?: XCodeUiError;
-  resumedSessionSnapshot?: XCodeSessionStateSnapshot;
+  snapshot: ZCodeTaskSnapshot;
+  restoreWarning?: ZCodeUiError;
+  resumedSessionSnapshot?: ZCodeSessionStateSnapshot;
   usedLegacySnapshot?: boolean;
 }
 
@@ -61,7 +61,7 @@ function getRuntimeModelUnavailableDiagnostics(error: unknown): Record<string, u
   };
 }
 
-function getSessionSnapshotDiagnostics(snapshot: XCodeSessionStateSnapshot) {
+function getSessionSnapshotDiagnostics(snapshot: ZCodeSessionStateSnapshot) {
   return {
     activeTurnId: snapshot.runtime.activeTurnId ?? null,
     eventSeq: snapshot.runtime.eventSeq,
@@ -85,7 +85,7 @@ export async function readDesktopContinuousSessionRestoreSnapshot(params: {
   // Bugfix: session/read 只能读取 runtime 里的活跃 session。
   // 历史 task 首次打开时必须先 resume 激活，再按 desktop continuous 读取限流快照。
   const startedAt = Date.now();
-  let resumedSessionSnapshot: XCodeSessionStateSnapshot;
+  let resumedSessionSnapshot: ZCodeSessionStateSnapshot;
   try {
     const resumeStartedAt = Date.now();
     resumedSessionSnapshot = await params.zcodeSessionService.resumeSession({
@@ -156,7 +156,7 @@ export async function readDesktopContinuousSessionRestoreSnapshot(params: {
       snapshot: legacySnapshot,
       ...(runtimeModelUnavailable
         ? {
-            restoreWarning: normalizeXCodeUiError(error, {
+            restoreWarning: normalizeZCodeUiError(error, {
               fallbackCode: "ZCODE_RUNTIME_MODEL_UNAVAILABLE",
               taskId: params.sessionId,
             }),
@@ -203,7 +203,7 @@ export async function readWebRemoteReplayableSessionConfigOptions(params: {
   sessionId: string;
   model?: ModelSelection;
   thoughtLevel?: string;
-}): Promise<XCodeConfigOption[] | null> {
+}): Promise<ZCodeConfigOption[] | null> {
   const startedAt = Date.now();
   try {
     if (params.model) {

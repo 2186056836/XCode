@@ -353,7 +353,7 @@ async function createRemoteHistoryTask(target: {
 }): Promise<string> {
   const created = await callRemoteFixture<{ session: { sessionId: string } }>(
     target.workspaceIdentity,
-    ServiceChannels.XCodeAgent,
+    ServiceChannels.ZCodeAgent,
     "createSession",
     [
       {
@@ -371,7 +371,7 @@ async function createRemoteHistoryTask(target: {
     ],
   );
   const taskId = created.session.sessionId;
-  await callRemoteFixture(target.workspaceIdentity, ServiceChannels.XCodeTask, "resumeTask", [
+  await callRemoteFixture(target.workspaceIdentity, ServiceChannels.ZCodeTask, "resumeTask", [
     { taskId, workspacePath: target.workspacePath, workspaceIdentity: target.workspaceIdentity },
   ]);
   return taskId;

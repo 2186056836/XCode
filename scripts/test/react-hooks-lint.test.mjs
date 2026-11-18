@@ -56,7 +56,7 @@ export function Example({ enabled }: { enabled: boolean }) {
   const regular = await lint(source);
   assert.equal(regular.code, 1);
   assert.equal(regular.diagnostics.find((item) => item.code === hooksRule)?.severity, "error");
-  const legacy = await lint(source, "packages/ui/src/hooks/useXCodeAgentService.ts");
+  const legacy = await lint(source, "packages/ui/src/hooks/useZCodeAgentService.ts");
   assert.equal(legacy.code, 0);
   assert.equal(legacy.diagnostics.find((item) => item.code === hooksRule)?.severity, "warning");
 });

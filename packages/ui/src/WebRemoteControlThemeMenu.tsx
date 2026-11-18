@@ -7,8 +7,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import type { Theme } from "@/useTheme.js";
 
 const MOBILE_THEME_OPTIONS: Theme[] = [
@@ -18,9 +18,9 @@ const MOBILE_THEME_OPTIONS: Theme[] = [
 ];
 
 export function WebRemoteControlThemeMenu() {
-  const { intl } = useXCodeIntl();
-  const theme = useXCodeStore((state) => state.theme);
-  const setTheme = useXCodeStore((state) => state.setTheme);
+  const { intl } = useZCodeIntl();
+  const theme = useZCodeStore((state) => state.theme);
+  const setTheme = useZCodeStore((state) => state.setTheme);
 
   return (
     <DropdownMenu>

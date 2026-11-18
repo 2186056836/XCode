@@ -4,8 +4,8 @@ import type { SqliteSessionStore } from "@zcode/adapters/storage";
 import { shutdownPreparedModelTelemetry } from "@zcode/telemetry";
 import { closeSessionStore } from "../app/session-store.js";
 import type { NodeReplBrowserBroker } from "../app/node-repl-browser-broker.js";
-import type { XCodeProcessResourceSampler } from "../process-resource-sampler.js";
-import type { XCodeProtocolAgentServer } from "./server.js";
+import type { ZCodeProcessResourceSampler } from "../process-resource-sampler.js";
+import type { ZCodeProtocolAgentServer } from "./server.js";
 
 const DEFAULT_CLEANUP_BUDGET_MS = 1_200;
 const CLEANUP_STEP_BUDGET_MS = 400;
@@ -13,8 +13,8 @@ const CLEANUP_STEP_BUDGET_MS = 400;
 export async function cleanupProtocolRuntime(options: {
   logger: Logger;
   deadlineAt?: number;
-  server?: Pick<XCodeProtocolAgentServer, "shutdown" | "disposeProjections">;
-  processResourceSampler?: Pick<XCodeProcessResourceSampler, "stop">;
+  server?: Pick<ZCodeProtocolAgentServer, "shutdown" | "disposeProjections">;
+  processResourceSampler?: Pick<ZCodeProcessResourceSampler, "stop">;
   mcpTelemetryTracker?: Pick<McpTelemetryTracker, "stop">;
   nodeReplBrowserBroker?: Pick<NodeReplBrowserBroker, "close">;
   mcpPort?: Pick<McpPort, "close">;

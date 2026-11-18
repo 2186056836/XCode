@@ -6,10 +6,10 @@ import {
   OFF_PEAK_CREATE_FROM_OFF_PEAK_RUN_ERROR,
   OFF_PEAK_CREATE_IN_BOUND_SESSION_ERROR,
 } from "../src/zcode-protocol/offpeak-port.js";
-import type { XCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
-import { XCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
+import type { ZCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
+import { ZCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
 import { createSessionRecordForV4, closeSession } from "../src/zcode-protocol/server-operations.js";
-import type { XCodeAppOptions } from "../src/app/types.js";
+import type { ZCodeAppOptions } from "../src/app/types.js";
 import { createFakeApp } from "./helpers/fake-zcode-app.js";
 
 it.each([
@@ -17,14 +17,14 @@ it.each([
   { enabled: false, preference: true, expected: true },
   { enabled: false, preference: false, expected: false },
 ])("协议工厂保留闲时能力装配门禁：%j", async ({ enabled, preference, expected }) => {
-  let appOptions: XCodeAppOptions | undefined;
-  const server = new XCodeProtocolAgentServer({
-    createXCodeApp: (options) => {
+  let appOptions: ZCodeAppOptions | undefined;
+  const server = new ZCodeProtocolAgentServer({
+    createZCodeApp: (options) => {
       appOptions = options;
       return createFakeApp(options);
     },
   });
-  const context = (server as unknown as { context: XCodeProtocolAgentServerContext }).context;
+  const context = (server as unknown as { context: ZCodeProtocolAgentServerContext }).context;
   context.appRuntimePreferences.offPeakToolEnabled = preference;
   const result = await createSessionRecordForV4(context, {
     workspace: { workspacePath: "/fixture", workspaceKey: "/fixture" },
@@ -59,11 +59,11 @@ const protocolTask = {
 function contextOf(params: {
   requestClient: ReturnType<typeof vi.fn>;
   session?: Record<string, unknown>;
-}): XCodeProtocolAgentServerContext {
+}): ZCodeProtocolAgentServerContext {
   return {
     requestClient: params.requestClient,
     sessions: new Map(params.session ? [["session-1", params.session]] : []),
-  } as unknown as XCodeProtocolAgentServerContext;
+  } as unknown as ZCodeProtocolAgentServerContext;
 }
 
 /** 绑定守卫先走 offPeak/list；缺省返回空列表，让 create 路径直通。 */
@@ -250,9 +250,9 @@ it.each([false, true])("闲时任务列表按协商能力携带自身工作区�
     {
       requestClient,
       sessionWorkspaceRoutingEnabled: enabled,
-    } as unknown as XCodeProtocolAgentServerContext,
+    } as unknown as ZCodeProtocolAgentServerContext,
     () =>
-      ({ workspace }) as import("../src/zcode-protocol/server-types.js").XCodeProtocolSessionRecord,
+      ({ workspace }) as import("../src/zcode-protocol/server-types.js").ZCodeProtocolSessionRecord,
   );
   await port.list({ sessionId: "session-b" });
   expect(requestClient).toHaveBeenCalledWith(

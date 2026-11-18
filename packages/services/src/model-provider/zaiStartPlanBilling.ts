@@ -1,13 +1,13 @@
 import type { ApiClient } from "@zcode/shared";
 import {
-  buildRuntimeXCodeEndpointUrls,
+  buildRuntimeZCodeEndpointUrls,
   normalizeOfficialGlmModelId,
   getPlatformAppVersion,
 } from "@zcode/shared";
 import { readApiJson } from "../providers/api/apiJson.js";
 
 const REQUEST_TIMEOUT_MS = 15_000;
-const ZAI_START_PLAN_BALANCE_URL = buildRuntimeXCodeEndpointUrls(
+const ZAI_START_PLAN_BALANCE_URL = buildRuntimeZCodeEndpointUrls(
   process.env,
 ).zcodePlanBillingBalanceUrl;
 

@@ -1,10 +1,10 @@
-import { ZCODE_VERSION, type XCodeEnv } from "@zcode/shared";
+import { ZCODE_VERSION, type ZCodeEnv } from "@zcode/shared";
 
 declare const __ZCODE_CDN_BASE_URL__: string | undefined;
 const DEFAULT_CDN_BASE_URL = "https://cdn-zcode.z.ai";
 
 export interface ResolveRemoteCdnOptions {
-  env?: XCodeEnv;
+  env?: ZCodeEnv;
   locale?: string;
   timeZone?: string;
   overrideBaseUrl?: string;

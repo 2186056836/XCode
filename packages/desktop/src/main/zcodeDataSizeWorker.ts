@@ -1,14 +1,14 @@
 import { isMainThread, parentPort, workerData } from "node:worker_threads";
 
-import { scanXCodeDataDirectory, type XCodeDataSizeScanRequest } from "./zcodeDataSizeScanner.js";
+import { scanZCodeDataDirectory, type ZCodeDataSizeScanRequest } from "./zcodeDataSizeScanner.js";
 
 type WorkerResponse =
-  | { ok: true; result: Awaited<ReturnType<typeof scanXCodeDataDirectory>> }
+  | { ok: true; result: Awaited<ReturnType<typeof scanZCodeDataDirectory>> }
   | { ok: false; error: string };
 
 const workerParentPort = parentPort;
 if (!isMainThread && workerParentPort) {
-  void scanXCodeDataDirectory(workerData as XCodeDataSizeScanRequest)
+  void scanZCodeDataDirectory(workerData as ZCodeDataSizeScanRequest)
     .then((result) => {
       workerParentPort.postMessage({ ok: true, result } satisfies WorkerResponse);
     })

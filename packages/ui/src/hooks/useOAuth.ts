@@ -8,9 +8,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { OAuthProviderId, OAuthProviderMeta } from "@zcode/shared";
 import { isBuiltinOAuthProvider, resolveSafeTelemetryHostname } from "@zcode/shared";
 import { reportAppTelemetryEvent } from "@/lib/appTelemetry.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { LoginEntryPurpose } from "@/store/index.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { logger } from "@/logger.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useServices } from "@/hooks/useServices.js";
@@ -20,7 +20,7 @@ type OAuthStatus = "idle" | "waiting" | "error";
 export function useOAuth() {
   const { oauthService } = useServices();
   const platform = usePlatform();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [status, setStatus] = useState<OAuthStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [providers, setProviders] = useState<OAuthProviderMeta[]>([]);
@@ -30,7 +30,7 @@ export function useOAuth() {
   const [authorizeUrl, setAuthorizeUrl] = useState<string | null>(null);
   const loginAttemptRef = useRef(0);
   const providerRefreshRef = useRef(0);
-  const setOAuthPollingActive = useXCodeStore((state) => state.setOAuthPollingActive);
+  const setOAuthPollingActive = useZCodeStore((state) => state.setOAuthPollingActive);
 
   const refreshProviders = useCallback(async () => {
     const refresh = ++providerRefreshRef.current;

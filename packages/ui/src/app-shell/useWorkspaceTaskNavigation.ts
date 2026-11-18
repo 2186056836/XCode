@@ -13,7 +13,7 @@ import {
 import { shouldBlockTaskSelectionDuringModelRestart } from "@/lib/taskSwitchGuard.js";
 import { logger } from "@/logger.js";
 import { toast } from "@/components/ui/toast.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import { buildTaskEntityKey, buildTaskWorkspaceKey } from "@/lib/taskQueryCache.js";
 import {
   markTaskQueryCacheScopesStale,
@@ -64,10 +64,10 @@ export function useWorkspaceTaskNavigation({
   // 发起，再由 Host Controller 路由，不能把本地路径送进旧 remote scope。
   const baseServices = useBaseWorkspaceServices();
   const tabStoreApi = useTabStoreApi();
-  const setActiveTaskId = useXCodeSessionStore((s) => s.setActiveTaskId);
-  const taskNavHistory = useXCodeSessionStore((s) => s.taskNavHistory);
-  const taskNavPushAutomations = useXCodeSessionStore((s) => s.taskNavPushAutomations);
-  const taskNavPushPluginStore = useXCodeSessionStore((s) => s.taskNavPushPluginStore);
+  const setActiveTaskId = useZCodeSessionStore((s) => s.setActiveTaskId);
+  const taskNavHistory = useZCodeSessionStore((s) => s.taskNavHistory);
+  const taskNavPushAutomations = useZCodeSessionStore((s) => s.taskNavPushAutomations);
+  const taskNavPushPluginStore = useZCodeSessionStore((s) => s.taskNavPushPluginStore);
   const navigationVersion = useRef(0);
   useEffect(() => {
     const subscription = onTaskNavigationCommitted(() => {
@@ -86,7 +86,7 @@ export function useWorkspaceTaskNavigation({
       targetWorkspaceIdentityHint?: string,
       selectedRowUnreadAt?: number,
     ) => {
-      const targetWorkspaceState = useXCodeSessionStore
+      const targetWorkspaceState = useZCodeSessionStore
         .getState()
         .getWorkspaceState(targetWorkspacePath, targetWorkspaceIdentityHint);
       if (
@@ -249,7 +249,7 @@ export function useWorkspaceTaskNavigation({
 
   const navigateHistory = useCallback(
     async (direction: "back" | "forward") => {
-      const sessionStore = useXCodeSessionStore.getState();
+      const sessionStore = useZCodeSessionStore.getState();
       const origin = sessionStore.getWorkspaceState(workspaceAbsPath, workspaceIdentity);
       if (
         shouldBlockTaskSelectionDuringModelRestart(
@@ -264,7 +264,7 @@ export function useWorkspaceTaskNavigation({
       const originalHistory = sessionStore.taskNavHistory;
       const originalTabId = tabStoreApi.getState().activeTabId;
       const isCurrent = () => {
-        const state = useXCodeSessionStore.getState();
+        const state = useZCodeSessionStore.getState();
         const current = state.getWorkspaceState(workspaceAbsPath, workspaceIdentity);
         return (
           request === navigationVersion.current &&
@@ -281,7 +281,7 @@ export function useWorkspaceTaskNavigation({
           const { entry } = next;
           if (isAutomationsNavEntry(entry) || isPluginStoreNavEntry(entry)) {
             if (!isCurrent()) return;
-            useXCodeSessionStore.setState({ taskNavHistory: next.history });
+            useZCodeSessionStore.setState({ taskNavHistory: next.history });
             activateTabByPath(entry.workspacePath, { workspaceIdentity: entry.workspaceIdentity });
             if (isAutomationsNavEntry(entry)) onNavigateToAutomations?.(entry);
             else onNavigateToPluginStore?.(entry);
@@ -327,7 +327,7 @@ export function useWorkspaceTaskNavigation({
             };
             continue;
           }
-          const targetState = useXCodeSessionStore
+          const targetState = useZCodeSessionStore
             .getState()
             .getWorkspaceState(entry.workspacePath, entry.workspaceIdentity);
           if (
@@ -364,7 +364,7 @@ export function useWorkspaceTaskNavigation({
                 sessionId: entry.taskId,
               },
             );
-          useXCodeSessionStore.setState({ taskNavHistory: next.history });
+          useZCodeSessionStore.setState({ taskNavHistory: next.history });
           handleSelectTask(
             entry.workspacePath,
             entry.taskId,
@@ -374,7 +374,7 @@ export function useWorkspaceTaskNavigation({
           return;
         }
         if (isCurrent()) {
-          useXCodeSessionStore.setState({ taskNavHistory: history });
+          useZCodeSessionStore.setState({ taskNavHistory: history });
           toast(
             intl.formatMessage({
               id: direction === "back" ? "taskNav.noMoreBack" : "taskNav.noMoreForward",
@@ -425,7 +425,7 @@ export function useWorkspaceTaskNavigation({
     return () => subscription.dispose();
   }, []);
 
-  const currentWorkspaceState = useXCodeSessionStore.getState().getWorkspaceState(workspaceAbsPath);
+  const currentWorkspaceState = useZCodeSessionStore.getState().getWorkspaceState(workspaceAbsPath);
   const isTaskSwitchLockedByModelRestart = shouldBlockTaskSelectionDuringModelRestart(
     currentWorkspaceState.modelSwitchPending,
     currentWorkspaceState.modelSwitchStage,

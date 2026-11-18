@@ -10,7 +10,7 @@ import {
   type ContextCompositionChangedEvent,
 } from "@zcode/shared/zcode-protocol-v4";
 import type { AgentRuntime } from "@zcode/core";
-import type { XCodeProtocolAgentServerContext } from "../server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "../server-types.js";
 
 export class ContextCompositionRevisionTracker {
   private readonly revisions = new Map<string, number>();
@@ -41,7 +41,7 @@ export class ContextCompositionRevisionTracker {
 
 /** 每个协议 server 一份 tracker，挂在 context 上，跨会话 record 的重建存活。 */
 export function getContextCompositionTracker(
-  context: Pick<XCodeProtocolAgentServerContext, "contextCompositionTracker" | "notify">,
+  context: Pick<ZCodeProtocolAgentServerContext, "contextCompositionTracker" | "notify">,
 ): ContextCompositionRevisionTracker {
   context.contextCompositionTracker ??= new ContextCompositionRevisionTracker((params) =>
     context.notify({ method: V4_NOTIFICATIONS.conversationContextCompositionChanged, params }),
@@ -51,7 +51,7 @@ export function getContextCompositionTracker(
 
 /** 会话 record 建立时接线：runtime 的组成变更 → tracker。返回取消订阅函数。 */
 export function subscribeSessionContextComposition(
-  context: Pick<XCodeProtocolAgentServerContext, "contextCompositionTracker" | "notify">,
+  context: Pick<ZCodeProtocolAgentServerContext, "contextCompositionTracker" | "notify">,
   sessionId: string,
   runtime: Partial<Pick<AgentRuntime, "subscribeContextCompositionChanged">> | undefined,
 ): () => void {

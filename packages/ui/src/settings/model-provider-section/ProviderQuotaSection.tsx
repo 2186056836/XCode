@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2Icon } from "lucide-react";
 import { Progress } from "@/components/ui/progress.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useServices } from "@/hooks/useServices.js";
 import type { AccountQuotaSnapshot, QuotaBatchResult } from "@zcode/services";
 import { formatQuotaResetTime } from "@/lib/codingPlanQuotaPresentation.js";
@@ -98,7 +98,7 @@ export function AccountQuotaInline({
 }: {
   snapshot: AccountQuotaSnapshot | undefined;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   if (!snapshot) return null;
 
   const formatNumber = (value: number) =>
@@ -167,7 +167,7 @@ export function AccountQuotaSummaryLine({
   summary: QuotaBatchResult["summary"] | null;
   loading: boolean;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   if (loading && !summary) {
     return (
       <span className="inline-flex items-center gap-1.5 text-ui-sm text-foreground-subtle">
@@ -216,7 +216,7 @@ function formatResetLabel(value: string | null, locale: string | undefined): str
 function resolveQuotaDetail(
   snapshot: AccountQuotaSnapshot,
   formatNumber: (value: number) => string,
-  intl: ReturnType<typeof useXCodeIntl>["intl"],
+  intl: ReturnType<typeof useZCodeIntl>["intl"],
 ): string {
   if (snapshot.status === "no_token") {
     return intl.formatMessage({ id: "settings.quota.accountNoToken" });

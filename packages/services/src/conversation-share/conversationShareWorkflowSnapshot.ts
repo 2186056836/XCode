@@ -15,11 +15,11 @@ import {
   type WorkflowRunsState,
   type ToolCallCreateWorkflowCausalityGraph,
 } from "@zcode/shared/zcode-protocol-v4";
-import type { IXCodeAgentService } from "../zcode-agent/zcodeAgent.js";
+import type { IZCodeAgentService } from "../zcode-agent/zcodeAgent.js";
 import type { PublishTextConversationInput } from "./conversationShare.js";
 
 export type ShareWorkflowReader = Pick<
-  IXCodeAgentService,
+  IZCodeAgentService,
   | "conversationWorkflowRunsV4"
   | "conversationWorkflowRunEventsV4"
   | "conversationWorkflowRunArtifactsV4"

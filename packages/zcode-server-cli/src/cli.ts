@@ -4,7 +4,7 @@ import { access, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs
 import { fileURLToPath } from "node:url";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import type { Readable, Writable } from "node:stream";
-import { isPublicXCodeErrorCode, ZCODE_VERSION } from "@zcode/shared";
+import { isPublicZCodeErrorCode, ZCODE_VERSION } from "@zcode/shared";
 import { prepareServerCredentialStorage } from "@zcode/shared/credential-security";
 import { SourceServerWorkspaceAliasRepo } from "@zcode/services/node";
 import {
@@ -250,7 +250,7 @@ export async function runServerCli(
         error && typeof error === "object"
           ? (error as { code?: unknown; retryable?: unknown })
           : null;
-      const publicCode = isPublicXCodeErrorCode(structured?.code) ? structured.code : undefined;
+      const publicCode = isPublicZCodeErrorCode(structured?.code) ? structured.code : undefined;
       stdout(io, {
         ok: false,
         ...(publicCode ? { code: publicCode } : {}),

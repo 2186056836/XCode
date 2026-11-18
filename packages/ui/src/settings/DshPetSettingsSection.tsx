@@ -27,7 +27,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useServices } from "@/hooks/useServices.js";
 
 /** 与 desktop `shared/dshPetConfig.ts` 保持同形（ui 包不依赖 desktop 源码）。 */
@@ -445,7 +445,7 @@ function DshPetModelPicker(props: {
   failed: boolean;
   onChange: (next: DshPetModelSelection) => void;
 }): React.JSX.Element {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const t = useCallback((id: string): string => intl.formatMessage({ id }), [intl]);
   const [open, setOpen] = useState(false);
   const providerName =
@@ -507,7 +507,7 @@ function DshPetModelPicker(props: {
 }
 
 export function DshPetSettingsSection(): React.JSX.Element {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const t = useCallback((id: string): string => intl.formatMessage({ id }), [intl]);
   // 模型目录来自宿主的模型选择视图（与「跟随当前对话」同一份来源）：分组 = 服务商。
   const services = useServices();

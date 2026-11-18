@@ -9,8 +9,8 @@ import { useWebRemoteControlStatus } from "@/hooks/useWebRemoteControlStatus.js"
 import { ServiceProvider } from "@/hooks/useServices.js";
 import { StoreContext } from "@/store/StoreProvider.js";
 import { TabStoreProvider } from "@/store/TabStoreProvider.js";
-import { createXCodeStore } from "@/store/index.js";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { createZCodeStore } from "@/store/index.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { TooltipProvider } from "@/components/ui/tooltip.js";
 import "@/styles.css";
 
@@ -19,7 +19,7 @@ document.documentElement.className = params.get("theme") ?? "light";
 const noop = () => {};
 const dispose = () => ({ dispose: noop });
 const broadcast = { send: async () => {}, onMessage: dispose } as unknown as IBroadcastService;
-const store = createXCodeStore(broadcast);
+const store = createZCodeStore(broadcast);
 const services = {
   broadcastService: broadcast,
   settingService: { get: async () => ({}), update: async () => {} },
@@ -203,13 +203,13 @@ function Fixture() {
 createRoot(document.getElementById("root")!).render(
   <ServiceProvider services={services}>
     <StoreContext.Provider value={store}>
-      <XCodeIntlProvider initialLocale={params.get("locale") === "zh-CN" ? "zh-CN" : "en-US"}>
+      <ZCodeIntlProvider initialLocale={params.get("locale") === "zh-CN" ? "zh-CN" : "en-US"}>
         <TabStoreProvider>
           <TooltipProvider>
             <Fixture />
           </TooltipProvider>
         </TabStoreProvider>
-      </XCodeIntlProvider>
+      </ZCodeIntlProvider>
     </StoreContext.Provider>
   </ServiceProvider>,
 );

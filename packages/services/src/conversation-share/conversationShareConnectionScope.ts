@@ -1,15 +1,15 @@
 import { Event as RpcEvent } from "@zcode/rpc";
 import type { IConversationShareService } from "#src/conversation-share/conversationShare.js";
-import type { IXCodeAgentService } from "#src/zcode-agent/zcodeAgent.js";
+import type { IZCodeAgentService } from "#src/zcode-agent/zcodeAgent.js";
 import {
-  readTrustedXCodeAgentV4Connection,
-  withTrustedXCodeAgentV4Connection,
-  type XCodeAgentV4ConnectionContext,
+  readTrustedZCodeAgentV4Connection,
+  withTrustedZCodeAgentV4Connection,
+  type ZCodeAgentV4ConnectionContext,
 } from "#src/zcode-agent/zcodeAgentConnectionScope.js";
 import { conversationShareConnectionScopeFactory } from "#src/conversation-share/conversationShareService.js";
 
 type ConversationShareAgentService = Pick<
-  IXCodeAgentService,
+  IZCodeAgentService,
   | "conversationRowsRangeV4"
   | "conversationFileChangesV4"
   | "conversationAttachmentReadV4"
@@ -50,14 +50,14 @@ export function scopeConversationShareServiceForAttachment(
   service: IConversationShareService,
   clientMode: "desktop-continuous" | "web-remote-replayable",
   agentService?: ConversationShareAgentService,
-  connection?: XCodeAgentV4ConnectionContext,
+  connection?: ZCodeAgentV4ConnectionContext,
 ): IConversationShareService {
   if (clientMode === "desktop-continuous") {
     // R3 Share 运行在 Source：沿同一受信 transport 传递 Desktop attachment 身份，
     // 不读取控制端 JWT，也不为 Share 另建 hello/connection/subscription。
     if (connection?.role === "trusted-host-relay") {
       const forInput = (input: unknown) => {
-        const downstream = readTrustedXCodeAgentV4Connection(input);
+        const downstream = readTrustedZCodeAgentV4Connection(input);
         if (
           !downstream ||
           downstream.clientMode !== "desktop-continuous" ||
@@ -71,19 +71,19 @@ export function scopeConversationShareServiceForAttachment(
         const scopedAgent: ConversationShareAgentService = {
           conversationRowsRangeV4: (params) =>
             agentService.conversationRowsRangeV4(
-              withTrustedXCodeAgentV4Connection(params, downstream),
+              withTrustedZCodeAgentV4Connection(params, downstream),
             ),
           conversationFileChangesV4: (params) =>
             agentService.conversationFileChangesV4(
-              withTrustedXCodeAgentV4Connection(params, downstream),
+              withTrustedZCodeAgentV4Connection(params, downstream),
             ),
           conversationAttachmentReadV4: (params) =>
             agentService.conversationAttachmentReadV4(
-              withTrustedXCodeAgentV4Connection(params, downstream),
+              withTrustedZCodeAgentV4Connection(params, downstream),
             ),
           conversationAttachmentStatV4: (params) =>
             agentService.conversationAttachmentStatV4(
-              withTrustedXCodeAgentV4Connection(params, downstream),
+              withTrustedZCodeAgentV4Connection(params, downstream),
             ),
         };
         return service[conversationShareConnectionScopeFactory](scopedAgent);
@@ -106,17 +106,17 @@ export function scopeConversationShareServiceForAttachment(
       return {
         getCapabilities: () => service.getCapabilities(),
         preflight: (input) =>
-          service.preflight(withTrustedXCodeAgentV4Connection(input, connection)),
+          service.preflight(withTrustedZCodeAgentV4Connection(input, connection)),
         publish: (input, id) =>
-          service.publish(withTrustedXCodeAgentV4Connection(input, connection), id),
+          service.publish(withTrustedZCodeAgentV4Connection(input, connection), id),
         onDynamicPublishProgress: (id) => service.onDynamicPublishProgress(id),
         importShare: (input, id) =>
-          service.importShare(withTrustedXCodeAgentV4Connection(input, connection), id),
+          service.importShare(withTrustedZCodeAgentV4Connection(input, connection), id),
         onDynamicImportProgress: (id) => service.onDynamicImportProgress(id),
         getImportedConversation: (input) => service.getImportedConversation(input),
         getPreview: (code) => service.getPreview(code),
         getContinuation: (input) =>
-          service.getContinuation(withTrustedXCodeAgentV4Connection(input, connection)),
+          service.getContinuation(withTrustedZCodeAgentV4Connection(input, connection)),
         ...managedShareMethods(service),
       };
     }

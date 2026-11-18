@@ -7,35 +7,35 @@ import {
   type TraceContext,
 } from "@zcode/contracts";
 import {
-  loadXCodeCustomCommand,
-  type ListXCodeCustomCommandsOptions,
+  loadZCodeCustomCommand,
+  type ListZCodeCustomCommandsOptions,
 } from "./custom-commands.js";
 import { expandCustomCommandShellSyntax } from "./custom-command-shell-expansion.js";
-import { isReservedXCodeSlashCommandName } from "./slash-command-surface.js";
+import { isReservedZCodeSlashCommandName } from "./slash-command-surface.js";
 
 const CUSTOM_COMMAND_NOT_FOUND_PATTERN = /not found/i;
 const PROMPT_CUSTOM_COMMAND_PATTERN = /^\/([^\s]+)(?:\s+([\s\S]*))?$/;
 
-export interface ResolveXCodeCustomCommandPromptOptions extends ListXCodeCustomCommandsOptions {
+export interface ResolveZCodeCustomCommandPromptOptions extends ListZCodeCustomCommandsOptions {
   executionPort?: ExecutionPort;
   sessionId?: SessionId;
   signal?: AbortSignal;
   traceContext?: TraceContext;
 }
 
-export async function resolveXCodeCustomCommandPrompt(
+export async function resolveZCodeCustomCommandPrompt(
   input: string,
-  options: ResolveXCodeCustomCommandPromptOptions = {},
+  options: ResolveZCodeCustomCommandPromptOptions = {},
 ): Promise<string | undefined> {
   const invocation = parsePromptCustomCommandInvocation(input);
   // 保留名（含内置 `workflow`）在这里直接返回 undefined，与「命令不存在」同形：内置命令由
   // builtin-prompt-command.ts 先行展开，这里拒绝的是借同名自定义命令绕过内置语义（或灰度门）的路径。
-  if (!invocation || isReservedXCodeSlashCommandName(invocation.name)) {
+  if (!invocation || isReservedZCodeSlashCommandName(invocation.name)) {
     return undefined;
   }
 
   try {
-    const command = await loadXCodeCustomCommand({
+    const command = await loadZCodeCustomCommand({
       ...options,
       name: invocation.name,
     });

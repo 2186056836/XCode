@@ -1,5 +1,5 @@
 import type { WindowHostAttachmentScope } from "@zcode/shared";
-import type { XCodeAgentV4ClientMode } from "@zcode/services";
+import type { ZCodeAgentV4ClientMode } from "@zcode/services";
 
 export interface WindowHostAttachmentPort {
   once(event: "close", listener: () => void): unknown;
@@ -18,7 +18,7 @@ export interface WindowHostResolvedAttachmentScope<TServices, TCapabilities = ne
 export interface WindowHostExposeAttachmentParams<TServices, TPort, TCapabilities = never> {
   requestId: string;
   attachmentId: string;
-  clientMode: XCodeAgentV4ClientMode;
+  clientMode: ZCodeAgentV4ClientMode;
   terminalOwnerId?: string;
   scope: WindowHostAttachmentScope;
   services: TServices;
@@ -58,7 +58,7 @@ export function createWindowHostAttachmentRegistry<
   function attach(params: {
     requestId: string;
     attachmentId: string;
-    clientMode: XCodeAgentV4ClientMode;
+    clientMode: ZCodeAgentV4ClientMode;
     terminalOwnerId?: string;
     scope: WindowHostAttachmentScope;
     port: TPort;

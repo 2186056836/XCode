@@ -22,7 +22,7 @@ import {
 } from "@/lib/sidebarPurposeSectionPreferences.js";
 import { Button } from "@/components/ui/button.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 // 原因：横向拖动会撑宽 overflow-y:auto 的侧栏并触发水平自动滚动；在碰撞计算前固定纵轴。
 const sectionDragModifiers: Modifier[] = [({ transform }) => ({ ...transform, x: 0 })];
@@ -45,7 +45,7 @@ export function PurposeSections({
   canToggleProjects: boolean;
   onToggleProjects(): void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const msg = (id: string) => intl.formatMessage({ id: `project.${id}` });
   const [preferences, setPreferences] = useState(readSidebarPurposeSectionPreferences);
   const update = (next: typeof preferences) => {

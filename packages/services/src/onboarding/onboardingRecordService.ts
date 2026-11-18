@@ -17,7 +17,7 @@ import {
   findZcodeDataDir,
   getAppConfigDir,
   getDataBaseDir,
-  getXCodeDataRootDir,
+  getZCodeDataRootDir,
   getZcodeHomeRoots,
 } from "../paths.js";
 import { createServiceLogger } from "../logger/serviceLogger.js";
@@ -293,7 +293,7 @@ export function createOnboardingRecordService(
         });
         return { jobId: `migration_${Date.now()}` };
       }
-      const destDir = getXCodeDataRootDir();
+      const destDir = getZCodeDataRootDir();
       // 运行在后台任务注册表里（host 重启后仍有最后完成的结果）
       void runBackgroundJob("zcode-data-migration", async (report) => {
         const skipped: string[] = [];

@@ -11,7 +11,7 @@ import {
   ZCODE_MARKETING_TOUCH_REPORT_URL,
   ZCODE_MARKETING_TOUCH_URL,
 } from "#src/providers/api/apiEndpoints.js";
-import { buildXCodeSourceHeaders } from "#src/providers/sourceHeaders.js";
+import { buildZCodeSourceHeaders } from "#src/providers/sourceHeaders.js";
 import type { ICredentialService } from "#src/credential/credential.js";
 import type { IMarketingTouchService } from "#src/marketing-touch/marketingTouch.js";
 
@@ -64,7 +64,7 @@ export function createMarketingTouchService(options: {
     const scope = known?.token === token ? known.scope : randomUUID();
     identities.set(identityKey, { token, scope });
     // Device-Mid 必须与被查询账号配对：source 头里的 mid 与 JWT 不同源时服务端会拒绝。
-    const sourceHeaders = buildXCodeSourceHeaders(accountRef ? { accountRef } : {});
+    const sourceHeaders = buildZCodeSourceHeaders(accountRef ? { accountRef } : {});
     const headers: Record<string, string> = {
       ...sourceHeaders,
       "X-Client-Language": localeSchema.parse(locale),

@@ -10,7 +10,7 @@ import {
   appControlProtocol,
 } from "@zcode/shared";
 import type { AppControlAction } from "@zcode/shared";
-import type { XCodeProtocolTrace } from "@zcode/shared";
+import type { ZCodeProtocolTrace } from "@zcode/shared";
 import type { AppSessionControlBinding, AppSessionControlBindingOptions } from "./contract.js";
 export type { AppSessionControlBinding, AppSessionControlBindingOptions } from "./contract.js";
 
@@ -59,7 +59,7 @@ export function createAppSessionControlBinding(
       ...(trusted.turnId ? { turnId: trusted.turnId } : {}),
       input,
     });
-    const trace: XCodeProtocolTrace | undefined = trusted.traceId
+    const trace: ZCodeProtocolTrace | undefined = trusted.traceId
       ? { traceId: trusted.traceId }
       : undefined;
     const cancel = () => {

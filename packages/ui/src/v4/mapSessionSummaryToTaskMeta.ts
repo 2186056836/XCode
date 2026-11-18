@@ -1,8 +1,8 @@
-// sessions-index 的 SessionSummary → 侧栏实时 detail XCodeTaskMeta 映射。
+// sessions-index 的 SessionSummary → 侧栏实时 detail ZCodeTaskMeta 映射。
 // 这些对象不独立决定列表行存在性；后续以 tasks-index.sqlite 持久行为左表 join。
 // 注意：summary.sessionEnded 是「成功轮收口」语义（completedSuccess 即 true），不是删除；
 // session.removed 只会移除实时 detail，持久行删除仍由 tasks-index row/tombstone 决定。
-import type { TraceId, XCodeProvider, XCodeTaskMeta } from "@zcode/shared";
+import type { TraceId, ZCodeProvider, ZCodeTaskMeta } from "@zcode/shared";
 import type { SessionSummary } from "@zcode/shared/zcode-protocol-v4";
 import {
   attachTaskListRowActivity,
@@ -10,7 +10,7 @@ import {
 } from "@/v4/taskListRowActivity.js";
 
 /** phase → 侧栏持久化状态（running/completed/error）；draft 无结果状态。 */
-function phaseToStatus(phase: SessionSummary["phase"]): XCodeTaskMeta["status"] {
+function phaseToStatus(phase: SessionSummary["phase"]): ZCodeTaskMeta["status"] {
   switch (phase) {
     case "running":
     case "prewarming":
@@ -29,11 +29,11 @@ export interface MapSessionSummaryOptions {
   workspacePath: string;
   workspaceIdentity?: string;
   /** 本地已有 meta（保留手动标题/provider 等旧值，避免被列表刷新冲掉）。 */
-  previous?: XCodeTaskMeta;
+  previous?: ZCodeTaskMeta;
 }
 
 /**
- * SessionSummary → 实时 detail XCodeTaskMeta。sessions-index 不携带的字段
+ * SessionSummary → 实时 detail ZCodeTaskMeta。sessions-index 不携带的字段
  * （traceId/mode/provider）取合理默认或沿用 previous；真实持久字段以 join 时的 task 行为准。
  */
 export function mapSessionSummaryToTaskMeta(
@@ -72,7 +72,7 @@ export function mapSessionSummaryToTaskMeta(
         ? { forkedFromTaskId: summary.parentSessionId }
         : {}),
       ...(previous?.provider
-        ? { provider: previous.provider as XCodeProvider }
+        ? { provider: previous.provider as ZCodeProvider }
         : {}),
       ...(status ? { status } : {}),
       ...(summary.pendingInteraction

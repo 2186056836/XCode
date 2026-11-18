@@ -1,7 +1,7 @@
 import {
   decodeCustomModelValue,
   ZCODE_MODEL_REASONING_SEPARATOR,
-  type XCodeConfigOption,
+  type ZCodeConfigOption,
 } from "@zcode/shared";
 
 function normalizeModelIdentity(value: string | null | undefined): string | null {
@@ -30,7 +30,7 @@ function normalizeModelIdentity(value: string | null | undefined): string | null
 }
 
 export function readModelCurrentValueForModelStateGuard(
-  configOptions: readonly XCodeConfigOption[],
+  configOptions: readonly ZCodeConfigOption[],
 ): string | null {
   const modelOption = configOptions.find(
     (option) => option.category === "model" && option.type === "select",

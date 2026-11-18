@@ -299,7 +299,7 @@ describe(`${CASE_MARKER}: ${variant}，卸载重装与独立环境替换`, () =>
     expect(replaced.code).toBe(0);
     facts.originalDataArchived = true;
     // 同一线路安装到空环境，检测到不同身份后必须等待确认；取消不改绑原连接。
-    await openWorkspaceDraftFromSidebar(resolve(getE2EAppDataPaths().homeDir, "XCodeProject"));
+    await openWorkspaceDraftFromSidebar(resolve(getE2EAppDataPaths().homeDir, "ZCodeProject"));
     await openSSHRemoteDialog(CASE_MARKER);
     await fillSSHPasswordSettings(config);
     await clickLastEnabledSSHDialogButton(CASE_MARKER);

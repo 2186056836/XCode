@@ -5,7 +5,7 @@ import {
   sessionLifecycleActivationParamsSchema,
   sessionLifecycleParamsSchema,
   sessionLifecycleSnapshotSchema,
-  type XCodeWorkspaceRef,
+  type ZCodeWorkspaceRef,
 } from "@zcode/shared";
 import { querySessionDebug } from "./session-debug.js";
 import { offPeakControlParamsSchema, offPeakControlResultSchema } from "@zcode/shared";
@@ -35,13 +35,13 @@ import {
   parseWorkspaceConfigTopic,
 } from "@zcode/shared/zcode-protocol-v4";
 import type {
-  XCodeProtocolError,
-  XCodeProtocolMessage,
-  XCodeProtocolMethod,
-  XCodeProtocolNotification,
-  XCodeProtocolRequest,
-  XCodeProtocolRequestId,
-  XCodeProtocolResponse,
+  ZCodeProtocolError,
+  ZCodeProtocolMessage,
+  ZCodeProtocolMethod,
+  ZCodeProtocolNotification,
+  ZCodeProtocolRequest,
+  ZCodeProtocolRequestId,
+  ZCodeProtocolResponse,
 } from "@zcode/shared";
 import {
   cancelBackgroundTask,
@@ -169,14 +169,14 @@ import {
   type ParamsSchema,
   parseParams,
   toProtocolError,
-  type XCodeProtocolClientRequestOptions,
-  type XCodeProtocolAgentDependencies,
-  type XCodeProtocolAgentServerContext,
-  type XCodeProtocolSessionRecord,
+  type ZCodeProtocolClientRequestOptions,
+  type ZCodeProtocolAgentDependencies,
+  type ZCodeProtocolAgentServerContext,
+  type ZCodeProtocolSessionRecord,
 } from "./server-types.js";
 import { createInMemorySessionEventStore } from "@zcode/contracts";
 
-export type { XCodeProtocolAgentDependencies, XCodeProtocolSessionRecord };
+export type { ZCodeProtocolAgentDependencies, ZCodeProtocolSessionRecord };
 
 import { closeMcpUiInstance, openMcpUiInstance, validateMcpUiInstance } from "./mcp-ui/index.js";
 const PLUGIN_PREPARATION_MUTATION_METHODS = new Set<string>([
@@ -193,7 +193,7 @@ const PLUGIN_PREPARATION_MUTATION_METHODS = new Set<string>([
 
 const MAX_CLIENT_REQUEST_REANNOUNCE_INTERVAL_MS = 10_000;
 
-type XCodeProtocolOutboundMessage = XCodeProtocolNotification | XCodeProtocolRequest;
+type ZCodeProtocolOutboundMessage = ZCodeProtocolNotification | ZCodeProtocolRequest;
 
 /**
  * Trust store 落盘后各 session 的 coordinator
@@ -202,13 +202,13 @@ type XCodeProtocolOutboundMessage = XCodeProtocolNotification | XCodeProtocolReq
  * 独立导出为纯调度函数（不触网、不发事件），便于回归测试直接构造 sessions Map。
  */
 export async function notifyWorkspaceHookTrustGrantSessions(input: {
-  grantedWorkspace?: XCodeWorkspaceRef;
-  sessions: Map<string, XCodeProtocolSessionRecord>;
+  grantedWorkspace?: ZCodeWorkspaceRef;
+  sessions: Map<string, ZCodeProtocolSessionRecord>;
 }): Promise<void> {
   if (!input.grantedWorkspace) return;
   // Trust record 按 Trust identity 共享（D23）：源仓库授予后，同进程内它的受管 worktree
   // session 也必须重载；按 workspaceKey 过滤会漏掉 worktree。跨进程的通知由 Host 负责。
-  const trustIdentityOf = (workspace: XCodeWorkspaceRef) =>
+  const trustIdentityOf = (workspace: ZCodeWorkspaceRef) =>
     resolveWorkspaceHookTrustIdentityForWorkspace({
       workspacePath: resolve(workspace.workspacePath),
       ...(workspace.workspaceIdentity?.trim()
@@ -268,8 +268,8 @@ function getOperationId(params: unknown): string | undefined {
     : undefined;
 }
 
-export interface XCodeProtocolPostResponseBatch {
-  readonly messages: readonly XCodeProtocolOutboundMessage[];
+export interface ZCodeProtocolPostResponseBatch {
+  readonly messages: readonly ZCodeProtocolOutboundMessage[];
   commit(): boolean;
 }
 
@@ -285,7 +285,7 @@ interface PendingClientRequest<T> {
   abortHandler?: () => void;
 }
 
-export class XCodeProtocolAgentServer {
+export class ZCodeProtocolAgentServer {
   private readonly networkCapture = createNodeNetworkCapture("cli", (batch) => {
     this.messageSink?.({
       method: zcodeProtocolNotifications.processNetworkRequests,
@@ -313,13 +313,13 @@ export class XCodeProtocolAgentServer {
     routeMcpServerNotification(this.context, notification);
   }
 
-  get officialMcpAuthRequestContext(): Pick<XCodeProtocolAgentServerContext, "requestClient"> {
+  get officialMcpAuthRequestContext(): Pick<ZCodeProtocolAgentServerContext, "requestClient"> {
     return this.context;
   }
 
-  private messageSink?: (message: XCodeProtocolOutboundMessage) => void;
+  private messageSink?: (message: ZCodeProtocolOutboundMessage) => void;
   private clientDisconnectError?: Error;
-  private readonly context: XCodeProtocolAgentServerContext;
+  private readonly context: ZCodeProtocolAgentServerContext;
   private readonly logger;
   private readonly pendingClientRequests = new Map<string, PendingClientRequest<unknown>>();
   private readonly pluginOperationControllers = new Map<string, AbortController>();
@@ -330,14 +330,14 @@ export class XCodeProtocolAgentServer {
    * 再写 response line，最后按数组顺序写 notification，不能靠 microtask 猜时序。
    */
   private readonly postResponseOutbox = new Map<
-    XCodeProtocolRequestId,
-    XCodeProtocolPostResponseBatch
+    ZCodeProtocolRequestId,
+    ZCodeProtocolPostResponseBatch
   >();
   private nextClientRequestId = 1;
 
-  constructor(deps: XCodeProtocolAgentDependencies) {
+  constructor(deps: ZCodeProtocolAgentDependencies) {
     this.runtimeResources = new ProtocolRuntimeResources((options) =>
-      deps.createXCodeApp({
+      deps.createZCodeApp({
         ...options,
         ...(deps.pluginPreparation ? { pluginPreparation: deps.pluginPreparation } : {}),
         ...(deps.pluginDiscovery ? { pluginDiscovery: deps.pluginDiscovery } : {}),
@@ -345,7 +345,7 @@ export class XCodeProtocolAgentServer {
     );
     const resolvedDeps = {
       ...deps,
-      createXCodeApp: this.runtimeResources.create,
+      createZCodeApp: this.runtimeResources.create,
       // 默认 turn 窗口保留策略。
       createSessionEventStore:
         deps.createSessionEventStore ?? (() => createInMemorySessionEventStore()),
@@ -368,7 +368,7 @@ export class XCodeProtocolAgentServer {
       notify: (notification) => this.messageSink?.(notification),
       requestClient: (method, params, resultSchema, options) =>
         this.requestClient(method, params, resultSchema, options),
-      sessions: new Map<string, XCodeProtocolSessionRecord>(),
+      sessions: new Map<string, ZCodeProtocolSessionRecord>(),
       // 交互应答登记表（broker 反向请求 × v4 resolveInteraction 命令的汇合点）。
       v4Interactions: new V4InteractionRegistry(
         resolveV4InteractionRegistryOptionsFromEnv(deps.env ?? process.env),
@@ -454,7 +454,7 @@ export class XCodeProtocolAgentServer {
     return counters;
   }
 
-  setNotificationSink(sink: (message: XCodeProtocolOutboundMessage) => void): void {
+  setNotificationSink(sink: (message: ZCodeProtocolOutboundMessage) => void): void {
     this.runtimeResources.assertServing();
     this.clientDisconnectError = undefined;
     this.messageSink = sink;
@@ -546,14 +546,14 @@ export class XCodeProtocolAgentServer {
   }
 
   /** 一次性取走某 request 的 post-response messages；重复 take 返回空数组。 */
-  takePostResponseMessages(requestId: XCodeProtocolRequestId): XCodeProtocolOutboundMessage[] {
+  takePostResponseMessages(requestId: ZCodeProtocolRequestId): ZCodeProtocolOutboundMessage[] {
     const batch = this.takePostResponseBatch(requestId);
     batch?.commit();
     return [...(batch?.messages ?? [])];
   }
 
   /** production NDJSON 取完整 batch；只有全部 write 成功后才调 commit。 */
-  takePostResponseBatch(requestId: XCodeProtocolRequestId): XCodeProtocolPostResponseBatch | null {
+  takePostResponseBatch(requestId: ZCodeProtocolRequestId): ZCodeProtocolPostResponseBatch | null {
     const batch = this.postResponseOutbox.get(requestId) ?? null;
     this.postResponseOutbox.delete(requestId);
     return batch;
@@ -565,8 +565,8 @@ export class XCodeProtocolAgentServer {
   }
 
   async handleMessage(
-    message: XCodeProtocolMessage,
-  ): Promise<XCodeProtocolError | XCodeProtocolResponse | undefined> {
+    message: ZCodeProtocolMessage,
+  ): Promise<ZCodeProtocolError | ZCodeProtocolResponse | undefined> {
     this.runtimeResources.assertServing();
     if (isResponse(message)) {
       this.resolveClientRequest(message.id, message.result);
@@ -598,8 +598,8 @@ export class XCodeProtocolAgentServer {
   }
 
   private async handleRequest(
-    request: XCodeProtocolRequest,
-  ): Promise<XCodeProtocolError | XCodeProtocolResponse> {
+    request: ZCodeProtocolRequest,
+  ): Promise<ZCodeProtocolError | ZCodeProtocolResponse> {
     // request id 可在前一请求完成后复用；新请求不能继承未消费的旧 outbox。
     this.postResponseOutbox.delete(request.id);
     let releaseResidencyOperation: (() => void) | undefined;
@@ -658,7 +658,7 @@ export class XCodeProtocolAgentServer {
     }
   }
 
-  private async dispatchRequest(request: XCodeProtocolRequest) {
+  private async dispatchRequest(request: ZCodeProtocolRequest) {
     switch (request.method) {
       // ── v4 conversation 通道（竖切，与旧 session/* 并存）──
       case V4_METHODS.connectionFlow: {
@@ -1059,7 +1059,7 @@ export class XCodeProtocolAgentServer {
   }
 
   private async withPluginOperationSignal<T>(
-    request: XCodeProtocolRequest,
+    request: ZCodeProtocolRequest,
     run: (signal?: AbortSignal) => Promise<T>,
   ): Promise<T> {
     const operationId = getPluginOperationId(request.params);
@@ -1087,7 +1087,7 @@ export class XCodeProtocolAgentServer {
   }
 
   private async withWorkspaceGenerateTextSignal<T>(
-    request: XCodeProtocolRequest,
+    request: ZCodeProtocolRequest,
     run: (signal?: AbortSignal) => Promise<T>,
   ): Promise<T> {
     const operationId = getOperationId(request.params);
@@ -1122,24 +1122,24 @@ export class XCodeProtocolAgentServer {
     return { operationId: params.operationId, cancelled: true };
   }
 
-  private ok(id: XCodeProtocolRequestId, result: unknown): XCodeProtocolResponse {
+  private ok(id: ZCodeProtocolRequestId, result: unknown): ZCodeProtocolResponse {
     return { id, result };
   }
 
   private fail(
-    id: XCodeProtocolRequestId,
+    id: ZCodeProtocolRequestId,
     code: number,
     message: string,
     data?: unknown,
-  ): XCodeProtocolError {
+  ): ZCodeProtocolError {
     return { error: { code, data, message }, id };
   }
 
   private requestClient<T>(
-    method: XCodeProtocolMethod,
+    method: ZCodeProtocolMethod,
     params: unknown,
     resultSchema: ParamsSchema<T>,
-    options?: XCodeProtocolClientRequestOptions,
+    options?: ZCodeProtocolClientRequestOptions,
   ): Promise<T> {
     if (this.clientDisconnectError) {
       throw this.clientDisconnectError;
@@ -1235,7 +1235,7 @@ export class XCodeProtocolAgentServer {
     });
   }
 
-  private resolveClientRequest(id: XCodeProtocolRequestId, result: unknown): void {
+  private resolveClientRequest(id: ZCodeProtocolRequestId, result: unknown): void {
     const key = String(id);
     const pending = this.pendingClientRequests.get(key);
     if (!pending) {
@@ -1251,7 +1251,7 @@ export class XCodeProtocolAgentServer {
     }
   }
 
-  private rejectClientRequest(id: XCodeProtocolRequestId, error: Error): void {
+  private rejectClientRequest(id: ZCodeProtocolRequestId, error: Error): void {
     const key = String(id);
     const pending = this.pendingClientRequests.get(key);
     if (!pending) {

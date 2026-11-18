@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog.js";
 import { Button } from "@/components/ui/button.js";
 import { MarketingHeroTicket } from "@/marketing/MarketingHeroTicket.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { MarketingTouchPhase } from "@/hooks/useMarketingTouchCampaign.js";
 
 /**
@@ -49,7 +49,7 @@ export function MarketingCampaignDialog({
   onClose: () => void;
   onButton: (delivery: MarketingTouchDelivery, button: MarketingCampaignButton) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [copiedActionId, setCopiedActionId] = useState<string | null>(null);
   const actions = delivery.campaign?.actions ?? {};
   const isClaimed = phase === "success";

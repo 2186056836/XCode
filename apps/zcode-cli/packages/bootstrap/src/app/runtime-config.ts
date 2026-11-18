@@ -14,7 +14,7 @@ import {
 import { omitMcpServers, resolveTrustedOfficialCuaServerNames } from "../mcp-config.js";
 import { resolveDefaultEmbeddedSearchBackend } from "./embedded-search-backend.js";
 import { getProjectMemoryRoot } from "./paths.js";
-import type { XCodeAppOptions } from "./types.js";
+import type { ZCodeAppOptions } from "./types.js";
 import {
   resolveRegistryOwnedModelSelection,
   resolveRegistryModelSelection,
@@ -34,7 +34,7 @@ interface ResolvedInitialRegistrySelection extends ResolvedRegistrySelection {
 export function resolveAppRuntimeConfig(input: {
   cliStorageRoot: string;
   configResult: ConfigResult;
-  options: XCodeAppOptions;
+  options: ZCodeAppOptions;
   persistedMode?: CollaborationMode;
   builtInMcpServers?: Record<string, McpServerConfig>;
   builtInSubagentModelSelectionOverrides?: BuiltInSubagentModelSelectionOverrides;
@@ -225,7 +225,7 @@ function withHookConfigSource(
 }
 
 function resolveInitialRegistrySelection(
-  options: XCodeAppOptions,
+  options: ZCodeAppOptions,
 ): ResolvedInitialRegistrySelection | undefined {
   const registry = options.providerRegistry;
   if (!registry) return undefined;

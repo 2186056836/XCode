@@ -1,19 +1,19 @@
 import type {
   ModelSelection,
-  XCodeAgentMcpServer,
-  XCodeAutomationScheduleRule,
-  XCodeMcpListMode,
+  ZCodeAgentMcpServer,
+  ZCodeAutomationScheduleRule,
+  ZCodeMcpListMode,
 } from "@zcode/shared";
 import type { McpAppsAppToolCallResult, McpAppsAppToolDescriptor } from "@zcode/shared/mcp-apps";
 
-export interface XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentWorkspaceTarget {
   workspacePath: string;
   workspaceIdentity?: string;
   /** 远程 workspace 的运行时会话身份；只用于隔离/路由，不能替代 workspacePath。 */
   remoteSessionId?: string;
 }
 
-export interface XCodeAgentPluginMutationTarget extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentPluginMutationTarget extends ZCodeAgentWorkspaceTarget {
   /** 仅 Host 观测使用；不会传给 CLI。 */
   telemetry?: {
     entry?:
@@ -28,31 +28,31 @@ export interface XCodeAgentPluginMutationTarget extends XCodeAgentWorkspaceTarge
   };
 }
 
-export interface XCodeAgentPluginViewParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentPluginViewParams extends ZCodeAgentWorkspaceTarget {
   configScope?: "user" | "workspace";
 }
 
-export interface XCodeAgentListMcpServerStatusesParams extends XCodeAgentWorkspaceTarget {
-  mcpServers?: XCodeAgentMcpServer[];
-  mode?: XCodeMcpListMode;
+export interface ZCodeAgentListMcpServerStatusesParams extends ZCodeAgentWorkspaceTarget {
+  mcpServers?: ZCodeAgentMcpServer[];
+  mode?: ZCodeMcpListMode;
 }
 
-export interface XCodeAgentAddPluginMarketplaceParams extends XCodeAgentPluginMutationTarget {
+export interface ZCodeAgentAddPluginMarketplaceParams extends ZCodeAgentPluginMutationTarget {
   dryRun?: boolean;
   operationId?: string;
   source: string;
 }
 
-export interface XCodeAgentRemovePluginMarketplaceParams extends XCodeAgentPluginMutationTarget {
+export interface ZCodeAgentRemovePluginMarketplaceParams extends ZCodeAgentPluginMutationTarget {
   marketplace: string;
 }
 
-export interface XCodeAgentUpdatePluginMarketplaceParams extends XCodeAgentPluginMutationTarget {
+export interface ZCodeAgentUpdatePluginMarketplaceParams extends ZCodeAgentPluginMutationTarget {
   marketplace?: string;
   operationId?: string;
 }
 
-export interface XCodeAgentInstallPluginParams extends XCodeAgentPluginMutationTarget {
+export interface ZCodeAgentInstallPluginParams extends ZCodeAgentPluginMutationTarget {
   dryRun?: boolean;
   marketplace: string;
   operationId?: string;
@@ -60,27 +60,27 @@ export interface XCodeAgentInstallPluginParams extends XCodeAgentPluginMutationT
   scope?: "user" | "workspace";
 }
 
-export interface XCodeAgentCancelPluginOperationParams {
+export interface ZCodeAgentCancelPluginOperationParams {
   operationId: string;
 }
 
-export interface XCodeAgentUninstallPluginParams extends XCodeAgentPluginMutationTarget {
+export interface ZCodeAgentUninstallPluginParams extends ZCodeAgentPluginMutationTarget {
   marketplace?: string;
   pluginId?: string;
   pluginName?: string;
   removeCache?: boolean;
 }
 
-export interface XCodeAgentUpdatePluginParams extends XCodeAgentPluginMutationTarget {
+export interface ZCodeAgentUpdatePluginParams extends ZCodeAgentPluginMutationTarget {
   pluginId?: string;
   marketplace?: string;
 }
 
-export interface XCodeAgentRestoreBuiltinPluginParams extends XCodeAgentPluginMutationTarget {
+export interface ZCodeAgentRestoreBuiltinPluginParams extends ZCodeAgentPluginMutationTarget {
   pluginId: string;
 }
 
-export interface XCodeAgentConfigurePluginParams extends XCodeAgentPluginMutationTarget {
+export interface ZCodeAgentConfigurePluginParams extends ZCodeAgentPluginMutationTarget {
   clearOptionKeys?: string[];
   dryRun?: boolean;
   options: Record<string, unknown>;
@@ -88,23 +88,23 @@ export interface XCodeAgentConfigurePluginParams extends XCodeAgentPluginMutatio
   scope?: "user" | "workspace";
 }
 
-export interface XCodeAgentResetPluginConfigParams extends XCodeAgentPluginMutationTarget {
+export interface ZCodeAgentResetPluginConfigParams extends ZCodeAgentPluginMutationTarget {
   pluginId: string;
   scope?: "user" | "workspace";
 }
 
-export interface XCodeAgentValidatePluginParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentValidatePluginParams extends ZCodeAgentWorkspaceTarget {
   marketplace?: string;
   pluginName?: string;
   source?: string;
 }
 
-export interface XCodeAgentDescribePluginParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentDescribePluginParams extends ZCodeAgentWorkspaceTarget {
   marketplace: string;
   pluginName: string;
 }
 
-export interface XCodeAgentSetPluginEnabledParams extends XCodeAgentPluginMutationTarget {
+export interface ZCodeAgentSetPluginEnabledParams extends ZCodeAgentPluginMutationTarget {
   enabled: boolean;
   operationId?: string;
   pluginId: string;
@@ -114,18 +114,18 @@ export interface XCodeAgentSetPluginEnabledParams extends XCodeAgentPluginMutati
 // Plugin 对话引用 catalog：
 // 带 sessionId → session-owned 冻结 catalog（必须路由到持有该 session 的 workspace client）；
 // 不带 → workspace 当前 catalog（新建草稿 Picker）。
-export interface XCodeAgentPluginReferenceCatalogParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentPluginReferenceCatalogParams extends ZCodeAgentWorkspaceTarget {
   sessionId?: string;
 }
 
 // Composer Skill catalog：与 Plugin 引用相同，以 sessionId 区分 workspace 当前目录和
 // resident Session runtime 快照；不参与 Settings 管理目录。
-export interface XCodeAgentSkillReferenceCatalogParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentSkillReferenceCatalogParams extends ZCodeAgentWorkspaceTarget {
   sessionId?: string;
 }
 
 /** 插件 UI：UI 发起的 `ui://` 资源读取。 */
-export interface XCodeAgentReadMcpResourceParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentReadMcpResourceParams extends ZCodeAgentWorkspaceTarget {
   instance: import("@zcode/shared/mcp-apps").McpAppInstance;
   sessionId: string;
   pluginId: string;
@@ -134,10 +134,10 @@ export interface XCodeAgentReadMcpResourceParams extends XCodeAgentWorkspaceTarg
 }
 
 /** 插件 UI 页面发起的 `resources/read`；参数与 readMcpResource 同形，结果受 8 MiB 与 mimeType 白名单约束。 */
-export type XCodeAgentReadMcpResourceForUiParams = XCodeAgentReadMcpResourceParams;
+export type ZCodeAgentReadMcpResourceForUiParams = ZCodeAgentReadMcpResourceParams;
 
 /** 插件 UI：UI 回调本插件工具；不进审批流，归属由 agent 侧 catalog fail closed。 */
-export interface XCodeAgentCallMcpToolForUiParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentCallMcpToolForUiParams extends ZCodeAgentWorkspaceTarget {
   instance: import("@zcode/shared/mcp-apps").McpAppInstance;
   sessionId: string;
   pluginId: string;
@@ -148,7 +148,7 @@ export interface XCodeAgentCallMcpToolForUiParams extends XCodeAgentWorkspaceTar
   callId: string;
 }
 /** 插件 UI 页面发起的 resources/list、resources/templates/list、subscribe、unsubscribe。 */
-export interface XCodeAgentListMcpResourcesForUiParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentListMcpResourcesForUiParams extends ZCodeAgentWorkspaceTarget {
   instance: import("@zcode/shared/mcp-apps").McpAppInstance;
   sessionId: string;
   pluginId: string;
@@ -156,7 +156,7 @@ export interface XCodeAgentListMcpResourcesForUiParams extends XCodeAgentWorkspa
   cursor?: string;
 }
 /** App-Provided Tools：实例身份 = 会话 + 沙箱作用域 + 代际。 */
-export interface XCodeAgentAppToolInstanceForUiParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentAppToolInstanceForUiParams extends ZCodeAgentWorkspaceTarget {
   instance: import("@zcode/shared/mcp-apps").McpAppInstance;
   sessionId: string;
   pluginId: string;
@@ -164,17 +164,17 @@ export interface XCodeAgentAppToolInstanceForUiParams extends XCodeAgentWorkspac
   scopeId: string;
   generation: number;
 }
-export interface XCodeAgentRegisterAppToolsForUiParams extends XCodeAgentAppToolInstanceForUiParams {
+export interface ZCodeAgentRegisterAppToolsForUiParams extends ZCodeAgentAppToolInstanceForUiParams {
   tools: McpAppsAppToolDescriptor[];
 }
-export interface XCodeAgentAppToolCallForUiParams extends XCodeAgentAppToolInstanceForUiParams {
+export interface ZCodeAgentAppToolCallForUiParams extends ZCodeAgentAppToolInstanceForUiParams {
   callId: string;
 }
-export interface XCodeAgentResolveAppToolCallForUiParams extends XCodeAgentAppToolCallForUiParams {
+export interface ZCodeAgentResolveAppToolCallForUiParams extends ZCodeAgentAppToolCallForUiParams {
   result?: McpAppsAppToolCallResult;
   error?: { message: string };
 }
-export interface XCodeAgentMcpResourceSubscriptionForUiParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentMcpResourceSubscriptionForUiParams extends ZCodeAgentWorkspaceTarget {
   instance: import("@zcode/shared/mcp-apps").McpAppInstance;
   sessionId: string;
   pluginId: string;
@@ -183,14 +183,14 @@ export interface XCodeAgentMcpResourceSubscriptionForUiParams extends XCodeAgent
   generation: number;
   uri: string;
 }
-export interface XCodeAgentCancelMcpToolCallForUiParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentCancelMcpToolCallForUiParams extends ZCodeAgentWorkspaceTarget {
   instance: import("@zcode/shared/mcp-apps").McpAppInstance;
   sessionId: string;
   pluginId: string;
   serverName: string;
   callId: string;
 }
-export interface XCodeAgentResolveSuggestedPluginReferenceParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentResolveSuggestedPluginReferenceParams extends ZCodeAgentWorkspaceTarget {
   stableId: string;
   operationId: string;
   clientMode: "desktop-continuous" | "web-remote-replayable";
@@ -199,7 +199,7 @@ export interface XCodeAgentResolveSuggestedPluginReferenceParams extends XCodeAg
 
 // ---- 定时任务(automation)管理参数 ----
 
-export interface XCodeAgentCreateAutomationParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentCreateAutomationParams extends ZCodeAgentWorkspaceTarget {
   projectId?: string | null;
   title: string;
   cronExpr: string;
@@ -210,10 +210,10 @@ export interface XCodeAgentCreateAutomationParams extends XCodeAgentWorkspaceTar
   recurring?: boolean;
   maxRuns?: number;
   endAt?: number;
-  scheduleRule?: XCodeAutomationScheduleRule;
+  scheduleRule?: ZCodeAutomationScheduleRule;
 }
 
-export interface XCodeAgentUpdateAutomationParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentUpdateAutomationParams extends ZCodeAgentWorkspaceTarget {
   automationId: string;
   title?: string;
   cronExpr?: string;
@@ -223,19 +223,19 @@ export interface XCodeAgentUpdateAutomationParams extends XCodeAgentWorkspaceTar
   recurring?: boolean;
   maxRuns?: number | null;
   endAt?: number | null;
-  scheduleRule?: XCodeAutomationScheduleRule | null;
+  scheduleRule?: ZCodeAutomationScheduleRule | null;
   scheduleEditedByUser?: boolean;
 }
 
-export interface XCodeAgentAutomationIdParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentAutomationIdParams extends ZCodeAgentWorkspaceTarget {
   automationId: string;
 }
 
-export interface XCodeAgentSetAutomationEnabledParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentSetAutomationEnabledParams extends ZCodeAgentWorkspaceTarget {
   automationId: string;
   enabled: boolean;
 }
 
-export interface XCodeAgentDeleteAutomationRunParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentDeleteAutomationRunParams extends ZCodeAgentWorkspaceTarget {
   runId: string;
 }

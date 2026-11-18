@@ -1,4 +1,4 @@
-import { isNonRetryableWorkspacePrepareError, type XCodeProvider } from "@zcode/shared";
+import { isNonRetryableWorkspacePrepareError, type ZCodeProvider } from "@zcode/shared";
 
 export function shouldAutoRetryWorkspacePrepare(errorMessage: string) {
   // Bugfix: 远端 XCode Agent 在 Docker 里经常会因为资源不匹配、可选依赖缺失或进程启动即退出而失败。
@@ -13,7 +13,7 @@ export function shouldAutoRetryWorkspacePrepare(errorMessage: string) {
 }
 
 export function shouldRestartWorkspaceProcessBeforePrepareRetry(_params: {
-  provider: XCodeProvider;
+  provider: ZCodeProvider;
   errorMessage: string;
 }): boolean {
   // 仅剩 glm provider：不再需要针对三方 CLI 崩溃文案的重启重试策略。

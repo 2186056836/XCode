@@ -7,7 +7,7 @@ import {
 } from "@zcode/provider";
 import {
   isBuiltinModelProviderId,
-  resolveRuntimeXCodeEndpointOrigin,
+  resolveRuntimeZCodeEndpointOrigin,
   ZCODE_VERSION,
 } from "@zcode/shared";
 import { dirname, join } from "node:path";
@@ -15,14 +15,14 @@ import {
   NodeModelSelectionConfigRepository,
   NodeProviderRegistryRuntime,
   resolveNodeProviderRuntimePaths,
-  downloadXCodeBuiltinRelease,
-  resolveXCodeBuiltinClientPlatform,
+  downloadZCodeBuiltinRelease,
+  resolveZCodeBuiltinClientPlatform,
   ZCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV,
-  type XCodeBuiltinRefreshEvent,
+  type ZCodeBuiltinRefreshEvent,
 } from "@zcode/provider-node";
 import {
-  createSharedXCodeCredentialStore,
-  type SharedXCodeCredentialStore,
+  createSharedZCodeCredentialStore,
+  type SharedZCodeCredentialStore,
 } from "@zcode/adapters/auth";
 import { readLegacyCliPersonalProviderConfig } from "./legacy-cli-personal-provider-config-importer.js";
 import {
@@ -33,12 +33,12 @@ import {
 export interface ProcessProviderRegistryRuntimeOptions {
   /** Standalone Prompt CLI / TUI 自己拥有账号凭据与旧配置的一次性导入。 */
   readonly standalone?: {
-    readonly credentialStore?: SharedXCodeCredentialStore;
+    readonly credentialStore?: SharedZCodeCredentialStore;
     readonly legacyCliUserConfigFilePath?: string;
     readonly onAccountInitializationError?: (error: unknown) => void;
     readonly request?: typeof fetch;
     readonly onBuiltinRefreshError?: (error: unknown) => void;
-    readonly onBuiltinRefreshResult?: (event: XCodeBuiltinRefreshEvent) => void;
+    readonly onBuiltinRefreshResult?: (event: ZCodeBuiltinRefreshEvent) => void;
   };
 }
 
@@ -53,7 +53,7 @@ export async function startProcessProviderRegistryRuntime(
 
   const accountSource = new MutableAccountProviderConfigSource();
   const credentialStore = options.standalone
-    ? (options.standalone.credentialStore ?? createSharedXCodeCredentialStore({ env: { ...env } }))
+    ? (options.standalone.credentialStore ?? createSharedZCodeCredentialStore({ env: { ...env } }))
     : undefined;
   let standaloneAccount: AccountProviderService | undefined;
   const bundledFile = options.standalone
@@ -70,13 +70,13 @@ export async function startProcessProviderRegistryRuntime(
               dirname(paths.zcodeBuiltinFilePath),
               "zcode-builtin-refresh.json",
             ),
-            resolveEndpointKey: () => resolveRuntimeXCodeEndpointOrigin(env),
+            resolveEndpointKey: () => resolveRuntimeZCodeEndpointOrigin(env),
             fetchRelease: (endpointOrigin, signal) =>
-              downloadXCodeBuiltinRelease({
+              downloadZCodeBuiltinRelease({
                 endpointOrigin,
                 signal,
                 appVersion: ZCODE_VERSION,
-                platform: resolveXCodeBuiltinClientPlatform(),
+                platform: resolveZCodeBuiltinClientPlatform(),
                 request: options.standalone?.request ?? globalThis.fetch,
                 resolveXcodeJwtToken: () => credentialStore?.load("zcodejwttoken"),
               }),
@@ -84,7 +84,7 @@ export async function startProcessProviderRegistryRuntime(
           },
         }
       : {}),
-    onXCodeBuiltinRefreshError: options.standalone?.onBuiltinRefreshError,
+    onZCodeBuiltinRefreshError: options.standalone?.onBuiltinRefreshError,
     accountSource,
     ...(credentialStore
       ? {
@@ -130,12 +130,12 @@ export async function startProcessProviderRegistryRuntime(
       : {}),
   });
   const disposeRecovery = standaloneAccount
-    ? runtime.onDidCheckXCodeBuiltin(async () => {
+    ? runtime.onDidCheckZCodeBuiltin(async () => {
         const [config, account] = await Promise.all([
           runtime.configService.read(),
           standaloneAccount!.read(),
         ]);
-        if (config.zcodeBuiltinRevision !== account.basedOnXCodeBuiltinRevision)
+        if (config.zcodeBuiltinRevision !== account.basedOnZCodeBuiltinRevision)
           await standaloneAccount!.refresh("builtin-account-recovery");
       })
     : undefined;
@@ -202,14 +202,14 @@ export async function startProcessProviderRegistryRuntime(
 /** 把协议信封解析为进程 Registry 使用的第三层 Account Config Overlay。 */
 export function parseProcessAccountProviderConfigSnapshot(input: {
   readonly revision: string;
-  readonly basedOnXCodeBuiltinRevision: string;
+  readonly basedOnZCodeBuiltinRevision: string;
   readonly providers: unknown;
   readonly states?: AccountProviderStates;
 }): AccountProviderConfigSnapshot {
   const revision = input.revision.trim();
   if (!revision) throw new Error("Account Config revision 不能为空");
-  const basedOnXCodeBuiltinRevision = input.basedOnXCodeBuiltinRevision.trim();
-  if (!basedOnXCodeBuiltinRevision) {
+  const basedOnZCodeBuiltinRevision = input.basedOnZCodeBuiltinRevision.trim();
+  if (!basedOnZCodeBuiltinRevision) {
     throw new Error("Account Config Built-in revision 不能为空");
   }
   const providers = parseAccountProviderConfigMap(input.providers);
@@ -226,7 +226,7 @@ export function parseProcessAccountProviderConfigSnapshot(input: {
   }
   return Object.freeze({
     revision,
-    basedOnXCodeBuiltinRevision,
+    basedOnZCodeBuiltinRevision,
     providers,
     // 与 Overlay 属于同一快照；不能只更新 revision 却丢掉当前连接事实。
     ...(input.states ? { states: input.states } : {}),

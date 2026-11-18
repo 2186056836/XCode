@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { decodeXCodeBuiltinRelease, type XCodeBuiltinRelease } from "./zcode-builtin-release.js";
-import { resolveOptionalXCodeAuthorization, type XCodeJwtTokenResolver } from "@zcode/shared";
+import { decodeZCodeBuiltinRelease, type ZCodeBuiltinRelease } from "./zcode-builtin-release.js";
+import { resolveOptionalZCodeAuthorization, type ZCodeJwtTokenResolver } from "@zcode/shared";
 
 const clientConfigSchema = z
   .object({
@@ -29,7 +29,7 @@ const clientConfigSchema = z
   })
   .passthrough();
 
-export interface XCodeBuiltinDownloadOptions {
+export interface ZCodeBuiltinDownloadOptions {
   readonly endpointOrigin: string;
   readonly appVersion: string;
   readonly platform: string;
@@ -43,13 +43,13 @@ export interface ZCodeBuiltinDownloadOptions {
   readonly platform: string;
   readonly request: (url: string | URL, init: RequestInit) => Promise<Response>;
   readonly signal?: AbortSignal;
-  readonly resolveXcodeJwtToken?: XCodeJwtTokenResolver;
+  readonly resolveXcodeJwtToken?: ZCodeJwtTokenResolver;
 }
 
 /** App/CLI 共用下载边界。总预算包含两次请求正文，不依赖 ApiClient 的响应头超时。 */
-export async function downloadXCodeBuiltinRelease(
+export async function downloadZCodeBuiltinRelease(
   options: ZCodeBuiltinDownloadOptions,
-): Promise<XCodeBuiltinRelease | null> {
+): Promise<ZCodeBuiltinRelease | null> {
   const controller = new AbortController();
   let timedOut = false;
   const timer = setTimeout(() => {
@@ -65,12 +65,12 @@ export async function downloadXCodeBuiltinRelease(
     const url = new URL("/api/v1/client/configs", options.endpointOrigin);
     url.searchParams.set("app_version", options.appVersion);
     url.searchParams.set("platform", options.platform);
-    const authorization = await resolveOptionalXCodeAuthorization(options.resolveXcodeJwtToken);
+    const authorization = await resolveOptionalZCodeAuthorization(options.resolveXcodeJwtToken);
     const payload = clientConfigSchema.parse(await readJson(url, authorization));
     const downloadUrl = payload.data.configs.builtin_provider_config_json;
     if (downloadUrl === undefined) return null;
     stage = "cdn";
-    return decodeXCodeBuiltinRelease(await readJson(new URL(downloadUrl)));
+    return decodeZCodeBuiltinRelease(await readJson(new URL(downloadUrl)));
   } catch (error) {
     // 不能把带 query 的 URL、响应正文或 Schema 输入（可能含凭据）交给上层日志。
     const reason = signal.aborted

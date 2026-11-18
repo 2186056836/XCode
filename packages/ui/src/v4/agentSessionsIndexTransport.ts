@@ -1,6 +1,6 @@
-// sessions-index 传输面（desktop/host 实现）：桥到 IXCodeAgentService 的 v4 sessions-index 转发面
+// sessions-index 传输面（desktop/host 实现）：桥到 IZCodeAgentService 的 v4 sessions-index 转发面
 // （与 agentConversationTransport 同构；web 直连 relay 时换实现即可）。
-import type { IXCodeAgentService } from "@zcode/services";
+import type { IZCodeAgentService } from "@zcode/services";
 import {
   sessionsIndexTopicFrameSchema,
   TopicWireFrameAssembler,
@@ -49,7 +49,7 @@ export interface AgentSessionsIndexTransportTarget {
 }
 
 type SessionsIndexV4AgentService = Pick<
-  IXCodeAgentService,
+  IZCodeAgentService,
   | "subscribeSessionsIndexV4"
   | "resyncSessionsIndexV4"
   | "unsubscribeSessionsIndexV4"
@@ -58,7 +58,7 @@ type SessionsIndexV4AgentService = Pick<
 > &
   Partial<
     Pick<
-      IXCodeAgentService,
+      IZCodeAgentService,
       "helloConversationV4" | "initializeConversationV4" | "onAgentRuntimeLifecycle"
     >
   >;
@@ -77,7 +77,7 @@ export function createAgentSessionsIndexTransport(
       return Promise.reject(new Error("fault.connection.handshakeUnavailable"));
     }
     return ensureAgentV4ConnectionHandshake(
-      agentService as Pick<IXCodeAgentService, "helloConversationV4" | "initializeConversationV4">,
+      agentService as Pick<IZCodeAgentService, "helloConversationV4" | "initializeConversationV4">,
     );
   };
   const topic = sessionsIndexTopic(target.workspaceIdentity?.trim() || target.workspacePath);

@@ -315,7 +315,7 @@ describe("Todo99 Worker 有效选择真实执行", () => {
           modelSelection: effective,
         }),
       ).rejects.toMatchObject({
-        name: "XCodeV4CommandRejectedError",
+        name: "ZCodeV4CommandRejectedError",
         ack: { status: "failed", reasonCode: "modelUnavailable" },
       });
       const afterRejected = await host.agent.readSession(target);

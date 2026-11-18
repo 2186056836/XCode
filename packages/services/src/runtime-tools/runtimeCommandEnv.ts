@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { delimiter } from "node:path";
-import { buildXCodeToolEnvPassthroughEnv, sanitizeXCodeRuntimeEnvInPlace } from "@zcode/shared";
+import { buildZCodeToolEnvPassthroughEnv, sanitizeZCodeRuntimeEnvInPlace } from "@zcode/shared";
 import { appendPathEntries, buildRuntimeToolEnvPatch } from "./runtimeToolResolver.js";
 import {
   buildShellBootstrapPath,
@@ -121,7 +121,7 @@ export function buildLoginShellEnvPatch(
 
   return {
     ...patch,
-    ...buildXCodeToolEnvPassthroughEnv(snapshot),
+    ...buildZCodeToolEnvPassthroughEnv(snapshot),
   };
 }
 
@@ -164,7 +164,7 @@ export function buildRuntimeProcessEnvPatch(
   const normalizedBaseEnv = normalizeRuntimeProcessEnv(baseEnv, platform);
   const loginShellPath = loginShellSnapshot?.PATH?.trim() || null;
   const loginShellEnvPatch = loginShellSnapshot ? buildLoginShellEnvPatch(loginShellSnapshot) : {};
-  const toolEnvPassthroughPatch = buildXCodeToolEnvPassthroughEnv({
+  const toolEnvPassthroughPatch = buildZCodeToolEnvPassthroughEnv({
     ...normalizedBaseEnv,
     ...loginShellEnvPatch,
   });
@@ -262,6 +262,6 @@ export function initializeRuntimeProcessEnv(
     preparedRuntimeProcessEnvPatch ?? buildRuntimeProcessEnvPatch(normalizedProcessEnv);
   // host/agent 运行时不能直接继承用户 shell 里的 NODE_ENV、http_proxy 或证书变量。
   // 网络变量会先封存为 ZCODE_TOOL_ENV_PASSTHROUGH_JSON，只有 Bash/tool 子进程边界才恢复原名。
-  sanitizeXCodeRuntimeEnvInPlace(process.env);
+  sanitizeZCodeRuntimeEnvInPlace(process.env);
   Object.assign(process.env, runtimeProcessEnvPatch);
 }

@@ -9,7 +9,7 @@ import { DatabaseSync } from "node:sqlite";
 // 两层覆盖：
 // - gateway 单元（stub host）：单飞幂等 / 完整事件日志 hydration 路径 /
 //   notFound vs resumeFailed 错误分型 / 宿主未实现钩子的退化行为。
-// - 集成（真 sqlite sessionStore + XCodeProtocolAgentServer + binder）：
+// - 集成（真 sqlite sessionStore + ZCodeProtocolAgentServer + binder）：
 //   写 transcript → 关库重开（模拟 CLI 重启，context.sessions 为空）→
 //   v4 subscribe → snapshot 含历史行（transcript 合成路径）→ sendText 再发一轮成功；
 //   restoreWarning 语义保真（workspace 无可用模型时 sendText 被拒）；
@@ -23,7 +23,7 @@ import { createSqliteSessionStore } from "@zcode/adapters/storage";
 import {
   zcodeProtocolMethods,
   zcodeSessionStateSnapshotSchema,
-  type XCodeProtocolMessage,
+  type ZCodeProtocolMessage,
 } from "@zcode/shared";
 import {
   V4_METHODS,
@@ -75,10 +75,10 @@ import {
 } from "../src/zcode-protocol-v4/index.js";
 import { resolveSessionContextUsage } from "../src/zcode-protocol/session-mapper.js";
 import { getRegistryBackedModel } from "../src/app/provider-registry-selection.js";
-import { XCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
-import { XCodeProtocolNdjsonConnection } from "../src/zcode-protocol/transport.js";
+import { ZCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
+import { ZCodeProtocolNdjsonConnection } from "../src/zcode-protocol/transport.js";
 import type { SessionUsageSeed } from "../src/zcode-protocol-v4/product-projection.js";
-import type { XCodeApp, XCodeAppOptions } from "../src/app/types.js";
+import type { ZCodeApp, ZCodeAppOptions } from "../src/app/types.js";
 import { createApiKeyProviderConfig } from "./provider-config-fixtures.js";
 import { createRegistryBackedTestApp } from "./helpers/registry-backed-test-app.js";
 import {
@@ -796,7 +796,7 @@ describe("v4 冷恢复（gateway 单元）", () => {
   });
 });
 
-// ── 集成层（真 sqlite store + XCodeProtocolAgentServer + binder）─────────────
+// ── 集成层（真 sqlite store + ZCodeProtocolAgentServer + binder）─────────────
 
 const WORKSPACE_PATH = "/workspace/cold-resume";
 const workspace = { workspacePath: WORKSPACE_PATH, workspaceKey: WORKSPACE_PATH };
@@ -809,7 +809,7 @@ const remoteWorkspace = {
 };
 type TestSessionStore = Awaited<ReturnType<typeof createSqliteSessionStore>>;
 
-async function requestResult(server: XCodeProtocolAgentServer, message: XCodeProtocolMessage) {
+async function requestResult(server: ZCodeProtocolAgentServer, message: ZCodeProtocolMessage) {
   const response = await server.handleMessage(message);
   if (!response || !("result" in response)) {
     throw new Error(`Expected protocol success response: ${JSON.stringify(response)}`);
@@ -818,7 +818,7 @@ async function requestResult(server: XCodeProtocolAgentServer, message: XCodePro
 }
 
 function takeInitialFrameParams(
-  server: XCodeProtocolAgentServer,
+  server: ZCodeProtocolAgentServer,
   requestId: string | number,
 ): unknown {
   const messages = server.takePostResponseMessages(requestId);
@@ -906,10 +906,10 @@ interface ColdFakeAppProbe {
 }
 
 function createColdFakeApp(
-  options: XCodeAppOptions | undefined,
+  options: ZCodeAppOptions | undefined,
   sentInputs: Array<{ text: string }>,
   probe?: ColdFakeAppProbe,
-): XCodeApp {
+): ZCodeApp {
   const sessionId = options?.sessionId ?? ("sess_cold" as SessionId);
   const traceId = options?.traceContext?.traceId ?? ("trace_cold" as never);
   let runtimeSink: { onSessionEvent(event: SessionEvent): Promise<void> | void } | undefined;
@@ -1130,7 +1130,7 @@ function createColdFakeApp(
     },
     traceId,
     updateTargetStatus: async () => null,
-  } as XCodeApp;
+  } as ZCodeApp;
 }
 
 const SESSION_ID = "sess_cold_resume" as SessionId;
@@ -1312,12 +1312,12 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
     dbPath: string,
     sentInputs: Array<{ text: string }>,
     probe?: ColdFakeAppProbe,
-    createdAppOptions: XCodeAppOptions[] = [],
+    createdAppOptions: ZCodeAppOptions[] = [],
   ) {
     const store = await createSqliteSessionStore({ dbPath });
     const providerRegistry = createColdProviderRegistry();
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         const effectiveOptions = { ...options, providerRegistry };
         createdAppOptions.push(effectiveOptions);
         return createColdFakeApp(effectiveOptions, sentInputs, probe);
@@ -1333,7 +1333,7 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
     async (operation) => {
       const dbPath = join(tempRoot, `opening-${operation}.db`);
       await seedPersistedSession(dbPath);
-      const created: XCodeAppOptions[] = [];
+      const created: ZCodeAppOptions[] = [];
       const probe = { closeCalls: 0 };
       const { server, store } = await bootRestartedServer(dbPath, [], probe, created);
       const entered = deferred();
@@ -1404,7 +1404,7 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
   it("已有历史首帧尚未提交时 ensureReady 复用历史并完成实例启动", async () => {
     const dbPath = join(tempRoot, "history-before-activation.db");
     await seedPersistedSession(dbPath);
-    const created: XCodeAppOptions[] = [];
+    const created: ZCodeAppOptions[] = [];
     const { server, store } = await bootRestartedServer(dbPath, [], undefined, created);
     let completed = false;
     try {
@@ -1449,11 +1449,11 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
 
   async function bootRealRestartedServer(dbPath: string, registry = createColdProviderRegistry()) {
     const store = await createSqliteSessionStore({ dbPath });
-    const apps: XCodeApp[] = [];
-    const server = new XCodeProtocolAgentServer({
+    const apps: ZCodeApp[] = [];
+    const server = new ZCodeProtocolAgentServer({
       cwd: process.cwd(),
       sessionStore: store,
-      createXCodeApp: async (options) => {
+      createZCodeApp: async (options) => {
         const app = await createRegistryBackedTestApp({
           ...options,
           env: {},
@@ -1714,14 +1714,14 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
   it("rowsRange-first 与 subscribe 并发时只按 Host 当前设置冷恢复一次", async () => {
     const dbPath = join(tempRoot, "sessions.db");
     await seedPersistedSession(dbPath);
-    const createdAppOptions: XCodeAppOptions[] = [];
+    const createdAppOptions: ZCodeAppOptions[] = [];
     const { server, store } = await bootRestartedServer(dbPath, [], undefined, createdAppOptions);
     let pendingPreferenceRequestId: string | number | undefined;
     let markPreferenceRequested: (() => void) | undefined;
     const preferenceRequested = new Promise<void>((resolve) => {
       markPreferenceRequested = resolve;
     });
-    const preferenceRequests: XCodeProtocolMessage[] = [];
+    const preferenceRequests: ZCodeProtocolMessage[] = [];
     server.setNotificationSink((message) => {
       if (
         "id" in message &&
@@ -1786,10 +1786,10 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
       const legacy = shape === "direct" ? identity : `${path}/${identity}`;
       const store = await createSqliteSessionStore({ dbPath: join(tempRoot, "wsl.db") });
       const apps: string[] = [];
-      const server = new XCodeProtocolAgentServer({
+      const server = new ZCodeProtocolAgentServer({
         cwd: path,
         sessionStore: store,
-        createXCodeApp: (options) => {
+        createZCodeApp: (options) => {
           apps.push(options?.runtimeConfig?.workingDirectory ?? "");
           return createColdFakeApp(options, []);
         },
@@ -1862,10 +1862,10 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
       const entered = Promise.withResolvers<void>();
       const gate = Promise.withResolvers<void>();
       let activated = 0;
-      const server = new XCodeProtocolAgentServer({
+      const server = new ZCodeProtocolAgentServer({
         cwd: WORKSPACE_PATH,
         sessionStore: store,
-        createXCodeApp: async (options) => {
+        createZCodeApp: async (options) => {
           activated++;
           entered.resolve();
           await gate.promise;
@@ -1952,8 +1952,8 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
 
     const store = await createSqliteSessionStore({ dbPath });
     const resumedWorkingDirectories: string[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         resumedWorkingDirectories.push(options?.runtimeConfig?.workingDirectory ?? "");
         return createColdFakeApp(options, []);
       },
@@ -2012,8 +2012,8 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
 
     const store = await createSqliteSessionStore({ dbPath });
     const resumedWorkingDirectories: string[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         resumedWorkingDirectories.push(options?.runtimeConfig?.workingDirectory ?? "");
         return createColdFakeApp(options, []);
       },
@@ -2060,8 +2060,8 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
     });
     store.repairLegacyRemoteSessionWorkspace = vi.fn(async () => false);
     const resumedWorkingDirectories: string[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         resumedWorkingDirectories.push(options?.runtimeConfig?.workingDirectory ?? "");
         return createColdFakeApp(options, []);
       },
@@ -2115,8 +2115,8 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
       return false;
     });
     const resumedWorkingDirectories: string[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         resumedWorkingDirectories.push(options?.runtimeConfig?.workingDirectory ?? "");
         return createColdFakeApp(options, []);
       },
@@ -2435,7 +2435,7 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
           const dbPath = join(tempRoot, "sessions.db");
           await seedPersistedSession(dbPath, undefined, childKind);
           const sentInputs: Array<{ text: string }> = [];
-          const options: XCodeAppOptions[] = [];
+          const options: ZCodeAppOptions[] = [];
           const { server, store } = await bootRestartedServer(
             dbPath,
             sentInputs,
@@ -2664,7 +2664,7 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
   it("SAT29: 显式 session/list 按 workspace 查询隐藏身份，不激活 child；普通列表保留 fork", async () => {
     const dbPath = join(tempRoot, "sessions.db");
     await seedPersistedSession(dbPath, undefined, "subagent_child");
-    const options: XCodeAppOptions[] = [];
+    const options: ZCodeAppOptions[] = [];
     const { server, store } = await bootRestartedServer(dbPath, [], undefined, options);
     try {
       await store.createSession({
@@ -2732,20 +2732,20 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
           .run(`${WORKSPACE_PATH}/src`, `${WORKSPACE_PATH}/src`, SESSION_ID);
         legacy.close();
         for (let lifetime = 0; lifetime < 2; lifetime += 1) {
-          const apps: XCodeAppOptions[] = [];
+          const apps: ZCodeAppOptions[] = [];
           const { server, store } = await bootRestartedServer(dbPath, [], undefined, apps);
           const preferences: unknown[] = [];
           const input = new PassThrough();
           const output = new PassThrough();
           const subscribed = Promise.withResolvers<void>();
-          const connection = new XCodeProtocolNdjsonConnection({
+          const connection = new ZCodeProtocolNdjsonConnection({
             input,
             output,
             handleMessage: (message) => server.handleMessage(message),
           });
           // 经过真实 NDJSON 串行队列：反向请求必须直接应答，不能再向 CLI 查询父链。
           output.on("data", (chunk: Buffer) => {
-            const message = JSON.parse(chunk.toString()) as XCodeProtocolMessage;
+            const message = JSON.parse(chunk.toString()) as ZCodeProtocolMessage;
             if (!("id" in message)) return;
             if (
               "method" in message &&
@@ -2860,7 +2860,7 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
             : undefined,
           childKind,
         );
-        const options: XCodeAppOptions[] = [];
+        const options: ZCodeAppOptions[] = [];
         const { server, store } = await bootRestartedServer(dbPath, [], undefined, options);
         try {
           if (scenario !== "missing-parent") {
@@ -3148,7 +3148,7 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
     const dbPath = join(tempRoot, "sessions.db");
     await seedPersistedSession(dbPath);
     const sentInputs: Array<{ text: string }> = [];
-    const createdAppOptions: XCodeAppOptions[] = [];
+    const createdAppOptions: ZCodeAppOptions[] = [];
     const { server, store } = await bootRestartedServer(
       dbPath,
       sentInputs,
@@ -3209,7 +3209,7 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
       resumeGate: gate.promise,
       failResume: true,
     };
-    const apps: XCodeAppOptions[] = [];
+    const apps: ZCodeAppOptions[] = [];
     // 存储迁移已异步化；新增历史用例必须等待夹具就绪，不能解构尚未完成的 Promise。
     const { server, store } = await bootRestartedServer(dbPath, [], probe, apps);
     const originalTime = (await store.getSession(SESSION_ID))?.time;
@@ -3868,7 +3868,7 @@ describe("v4 冷恢复（集成：真 sqlite + server + binder）", () => {
           connectionId: "conn-desktop",
           clientMode: "desktop-continuous",
         },
-      } as XCodeProtocolMessage);
+      } as ZCodeProtocolMessage);
       if (!response || !("error" in response)) {
         throw new Error(`Expected protocol error response: ${JSON.stringify(response)}`);
       }

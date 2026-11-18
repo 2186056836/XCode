@@ -139,7 +139,7 @@ async function probeOnce(
       method: "GET",
       dispatcher,
       signal: controller.signal,
-      headers: { "User-Agent": "XCode" },
+      headers: { "User-Agent": "ZCode" },
     });
     const body = await response.text().catch(() => "");
     return {

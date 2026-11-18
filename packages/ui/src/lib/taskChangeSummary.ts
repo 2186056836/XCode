@@ -1,8 +1,8 @@
 import type {
-  XCodePersistedFileChange,
-  XCodeTaskChangeSummary,
-  XCodeTaskChangedFileSummary,
-  XCodeTaskMeta,
+  ZCodePersistedFileChange,
+  ZCodeTaskChangeSummary,
+  ZCodeTaskChangedFileSummary,
+  ZCodeTaskMeta,
 } from "@zcode/shared";
 import { computeLineChangeStat } from "@zcode/shared";
 import { getPathLeaf } from "@/lib/path.js";
@@ -29,8 +29,8 @@ function trimTrailingSeparators(path: string): string {
 }
 
 export function getTaskChangeSummary(
-  task: Pick<XCodeTaskMeta, "changeSummary"> | null | undefined,
-): XCodeTaskChangeSummary | null {
+  task: Pick<ZCodeTaskMeta, "changeSummary"> | null | undefined,
+): ZCodeTaskChangeSummary | null {
   if (!task?.changeSummary || task.changeSummary.files.length === 0) {
     return null;
   }
@@ -39,7 +39,7 @@ export function getTaskChangeSummary(
 }
 
 function formatTaskChangeStats(
-  summary: XCodeTaskChangeSummary,
+  summary: ZCodeTaskChangeSummary,
   intl: TaskChangeSummaryIntl,
 ): string {
   return intl.formatMessage(
@@ -53,7 +53,7 @@ function formatTaskChangeStats(
 
 export function formatTaskTitleWithChanges(
   title: string,
-  summary: XCodeTaskChangeSummary | null,
+  summary: ZCodeTaskChangeSummary | null,
   intl: TaskChangeSummaryIntl,
 ): string {
   if (!summary) {
@@ -92,7 +92,7 @@ export function toWorkspaceRelativePath(
 
 export function formatTaskChangedFileLabel(
   workspacePath: string,
-  file: XCodeTaskChangedFileSummary,
+  file: ZCodeTaskChangedFileSummary,
 ): string {
   const relativePath = toWorkspaceRelativePath(workspacePath, file.path);
   const statParts: string[] = [];
@@ -109,9 +109,9 @@ export function formatTaskChangedFileLabel(
 }
 
 export function buildPerTurnFileChangeMap(
-  fileChanges: readonly XCodePersistedFileChange[] | undefined,
-): Map<number, XCodePersistedFileChange> {
-  const result = new Map<number, XCodePersistedFileChange>();
+  fileChanges: readonly ZCodePersistedFileChange[] | undefined,
+): Map<number, ZCodePersistedFileChange> {
+  const result = new Map<number, ZCodePersistedFileChange>();
   if (!fileChanges || fileChanges.length === 0) {
     return result;
   }
@@ -128,8 +128,8 @@ export function buildPerTurnFileChangeMap(
 }
 
 export function buildTaskChangeSummary(
-  fileChanges: readonly XCodePersistedFileChange[] | undefined,
-): XCodeTaskChangeSummary | null {
+  fileChanges: readonly ZCodePersistedFileChange[] | undefined,
+): ZCodeTaskChangeSummary | null {
   if (!fileChanges || fileChanges.length === 0) {
     return null;
   }
@@ -162,7 +162,7 @@ export function buildTaskChangeSummary(
 
   let added = 0;
   let removed = 0;
-  const files: XCodeTaskChangedFileSummary[] = Array.from(changedFileMap.values())
+  const files: ZCodeTaskChangedFileSummary[] = Array.from(changedFileMap.values())
     .map((file) => {
       const fileStat = computeLineChangeStat(
         file.originalContent,
@@ -228,13 +228,13 @@ export function buildToolCallChangeSummary(
   turnIndex: number,
 ): {
   patchesByPath?: ReadonlyMap<string, string>;
-  summary: XCodeTaskChangeSummary | null;
+  summary: ZCodeTaskChangeSummary | null;
 } {
   if (message.role !== "assistant" || !message.toolCalls?.length) {
     return { summary: null };
   }
 
-  const filesByPath = new Map<string, XCodeTaskChangedFileSummary>();
+  const filesByPath = new Map<string, ZCodeTaskChangedFileSummary>();
   const patchesByPath = new Map<string, string>();
   for (const toolCall of message.toolCalls) {
     if (hasUnsuccessfulToolStatus(toolCall)) {
@@ -291,12 +291,12 @@ export function buildToolCallChangeSummary(
 
 export function buildTaskChangeSummaryFromToolCalls(
   messages: readonly TaskChatMessage[] | undefined,
-): XCodeTaskChangeSummary | null {
+): ZCodeTaskChangeSummary | null {
   if (!messages || messages.length === 0) {
     return null;
   }
 
-  const filesByPath = new Map<string, XCodeTaskChangedFileSummary>();
+  const filesByPath = new Map<string, ZCodeTaskChangedFileSummary>();
   for (let messageIndex = 0; messageIndex < messages.length; messageIndex++) {
     const message = messages[messageIndex]!;
     const turnIndex =
@@ -348,8 +348,8 @@ export function buildTaskChangeSummaryFromToolCalls(
 }
 
 export function buildTurnChangeSummary(
-  turn: XCodePersistedFileChange | null | undefined,
-): XCodeTaskChangeSummary | null {
+  turn: ZCodePersistedFileChange | null | undefined,
+): ZCodeTaskChangeSummary | null {
   if (!turn || turn.snapshots.length === 0) {
     return null;
   }
@@ -383,7 +383,7 @@ export function buildTurnChangeSummary(
 
   let added = 0;
   let removed = 0;
-  const files: XCodeTaskChangedFileSummary[] = Array.from(filesByPath.entries())
+  const files: ZCodeTaskChangedFileSummary[] = Array.from(filesByPath.entries())
     .map(([path, snapshot]) => {
       const fileStat = computeLineChangeStat(
         snapshot.beforeContent,
@@ -414,9 +414,9 @@ export function buildTurnChangeSummary(
  * 用于在每条 assistant 消息下方显示该轮的文件改动。
  */
 export function buildPerTurnChangeSummaries(
-  fileChanges: readonly XCodePersistedFileChange[] | undefined,
-): Map<number, XCodeTaskChangeSummary> {
-  const result = new Map<number, XCodeTaskChangeSummary>();
+  fileChanges: readonly ZCodePersistedFileChange[] | undefined,
+): Map<number, ZCodeTaskChangeSummary> {
+  const result = new Map<number, ZCodeTaskChangeSummary>();
   if (!fileChanges || fileChanges.length === 0) {
     return result;
   }

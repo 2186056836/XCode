@@ -94,7 +94,7 @@ import {
 } from "@/ToolCallBlocks/renderers/createWorkflowHoleInput.js";
 import { ToolCallBlock } from "@/ToolCallBlocks.js";
 import { resolveWorkflowRunOpenToolCallId } from "@/v4/workflowRunCardJoin.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { requestTaskNavigation } from "@/store/zcodeSessionStoreNavigation.js";
 import { useOptionalProjectDirectory } from "@/project-sidebar/ProjectDirectoryProvider.js";
 import type { ProjectTask } from "@/project-sidebar/contract.js";
@@ -206,7 +206,7 @@ function findTaskById(tasks: readonly ProjectTask[], taskId: string): ProjectTas
  * 跳转需要的 workspacePath 与标题同源，猜路径会把「打不开」变成「打开了别的会话」。
  */
 const SessionSourceHint = memo(function SessionSourceHint({ source }: { source: SessionSource }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const directory = useOptionalProjectDirectory();
   const task = directory ? findTaskById(directory.tree.tasks, source.sessionId) : undefined;
   const workspacePath = task?.workspacePath;
@@ -260,7 +260,7 @@ const UnreadableRowView = memo(function UnreadableRowView({
 }: {
   row: UnreadableConversationRow;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <RowShell rowId={row.rowId} className="px-4 py-1">
       <div
@@ -422,7 +422,7 @@ const UserInputAttachmentList = memo(function UserInputAttachmentList({
   readAttachment?: NonNullable<ConversationRowRenderContext["readAttachment"]>;
   readAttachmentRange?: NonNullable<ConversationRowRenderContext["readAttachmentRange"]>;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [previewIndex, setPreviewIndex] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [failedRefs, setFailedRefs] = useState<ReadonlySet<string>>(() => new Set());
@@ -1040,7 +1040,7 @@ const SingleUserInputRowView = memo(function SingleUserInputRowView({
   editWorkspaceRewindAvailability?: EditWorkspaceRewindAvailability;
   status?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   // 引擎尾注折叠：正文只到 epilogueStart，
   // 之后的引擎文本折进气泡底部的披露。提示词上下文解析也只看正文——尾注里没有用户引用。
   const { body: bodyText, epilogue } = splitUserInputEpilogue(row.text, row.epilogueStart);
@@ -1367,7 +1367,7 @@ export const ConversationAssistantTextActions = memo(function ConversationAssist
   canEditAssistant?: boolean;
   className?: string;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const platform = useOptionalPlatform();
   const [localFeedback, setLocalFeedback] = useState<AssistantMessageFeedback | null>(feedback);
   const copyLabel = intl.formatMessage({ id: "chat.message.copy" });
@@ -1688,7 +1688,7 @@ const AssistantTextRowView = memo(function AssistantTextRowView({
         <GenUiMessageResponse
           completed={row.state === "complete"}
           messageKey={`${row.rowId}:${row.entityId ?? ""}`}
-          renderXCodeFileCitations
+          renderZCodeFileCitations
           streaming={streaming}
           workspacePath={context.workspacePath}
           workspaceIdentity={context.workspaceIdentity}

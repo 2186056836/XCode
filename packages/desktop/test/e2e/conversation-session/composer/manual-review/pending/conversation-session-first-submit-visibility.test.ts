@@ -22,7 +22,7 @@ describe("草稿首发列表与详情同步", () => {
         await startNewV4Draft();
       }
       // 展开所属项目；折叠偏好不是本用例要改变的创建语义。
-      const project = $('[data-project-name="XCodeProject"]');
+      const project = $('[data-project-name="ZCodeProject"]');
       let expectedProjectId: string | null = null;
       if (scope === "project") {
         await project.waitForDisplayed();

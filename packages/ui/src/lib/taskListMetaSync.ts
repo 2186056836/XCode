@@ -1,5 +1,5 @@
-import type { XCodeTaskMeta } from "@zcode/shared";
-import { getTaskMeta, useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import type { ZCodeTaskMeta } from "@zcode/shared";
+import { getTaskMeta, useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import { mergeTaskMetaCandidates } from "@/lib/zcodeTaskMetaMerge.js";
 import {
   applyTaskQueryCacheMutation,
@@ -81,7 +81,7 @@ function membershipForWorkspaceEventReason(
   }
 }
 
-function sortTasksByUpdatedAt(tasks: readonly XCodeTaskMeta[]): XCodeTaskMeta[] {
+function sortTasksByUpdatedAt(tasks: readonly ZCodeTaskMeta[]): ZCodeTaskMeta[] {
   return [...tasks].sort((left, right) => {
     if (right.updatedAt !== left.updatedAt) {
       return right.updatedAt - left.updatedAt;
@@ -96,14 +96,14 @@ function sortTasksByUpdatedAt(tasks: readonly XCodeTaskMeta[]): XCodeTaskMeta[] 
 export function syncTaskMetaToTaskCaches(params: {
   workspacePath: string;
   workspaceIdentity?: string;
-  task: XCodeTaskMeta;
+  task: ZCodeTaskMeta;
   membership?: TaskListMembershipState;
   forceInsertMembership?: boolean;
   ensureInWorkspaceTaskCache?: boolean;
   preserveListMembership?: boolean;
   applyQueryCacheMutation?: boolean;
 }): void {
-  const store = useXCodeSessionStore.getState();
+  const store = useZCodeSessionStore.getState();
   const workspaceState = store.getWorkspaceState(params.workspacePath, params.workspaceIdentity);
   const previousTask = getTaskMeta(workspaceState, params.task.taskId);
   const queryTask =
@@ -171,7 +171,7 @@ export function syncTaskMetaToTaskCaches(params: {
 export function insertTaskIntoTaskCaches(params: {
   workspacePath: string;
   workspaceIdentity?: string;
-  task: XCodeTaskMeta;
+  task: ZCodeTaskMeta;
   membership: TaskListMembershipState;
 }): void {
   // Bugfix: 新建/fork/远控 shared-host 创建 task 都应走同一条“无 -> 有”成员变更。
@@ -196,7 +196,7 @@ export function insertTaskIntoTaskCaches(params: {
 export function syncTaskMembershipEventToTaskCaches(params: {
   workspacePath: string;
   workspaceIdentity?: string;
-  task: XCodeTaskMeta;
+  task: ZCodeTaskMeta;
   reason: "task_archived" | "task_unarchived" | "task_pinned" | "task_unpinned";
 }): void {
   const previousMembership =
@@ -227,7 +227,7 @@ export function removeTaskFromTaskCaches(params: {
   workspaceIdentity?: string;
   taskId: string;
 }): boolean {
-  const store = useXCodeSessionStore.getState();
+  const store = useZCodeSessionStore.getState();
   const workspaceState = store.getWorkspaceState(params.workspacePath, params.workspaceIdentity);
   if (workspaceState.taskListCache) {
     store.setTaskListCache(

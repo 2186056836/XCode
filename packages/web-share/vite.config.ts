@@ -6,7 +6,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import {
   resolveBigModelApiOrigin,
-  resolveRuntimeXCodeEndpointOrigin,
+  resolveRuntimeZCodeEndpointOrigin,
   resolveZaiOAuthClientId,
   resolveZaiOAuthOrigin,
 } from "../shared/src/zcodeEndpoint.js";
@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
   const env = { ...loadEnv(mode, REPO_ROOT, ""), ...process.env };
   const zcodeEnv = env.ZCODE_ENV?.trim().toLowerCase() === "production" ? "production" : "test";
   const endpointEnv = { ...env, ZCODE_ENV: zcodeEnv };
-  const endpointOrigin = resolveRuntimeXCodeEndpointOrigin(endpointEnv);
+  const endpointOrigin = resolveRuntimeZCodeEndpointOrigin(endpointEnv);
   const oauthOrigin = resolveZaiOAuthOrigin(endpointEnv);
   const oauthClientId = resolveZaiOAuthClientId(endpointEnv);
   // BigModel 授权入口必须跟随 ZCODE_ENV，否则测试环境会把测试账号带到生产授权页。

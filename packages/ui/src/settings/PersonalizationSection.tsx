@@ -10,7 +10,7 @@ import {
 } from "@zcode/shared/test-ids";
 import { Button } from "@/components/ui/button.js";
 import { toast } from "@/components/ui/toast.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { SettingsFormActions } from "@/settings/SettingsFormActions.js";
 import { SettingsFormTextarea } from "@/settings/SettingsFormTextarea.js";
 import { logger } from "@/logger.js";
@@ -151,7 +151,7 @@ export function PersonalizationSection({
 }
 
 function LocalOnlyPersonalizationHint() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <p className="text-ui-base leading-6 text-foreground-subtle">
       {intl.formatMessage({ id: "settings.personalization.localOnly" })}
@@ -164,7 +164,7 @@ function DesktopPersonalizationEditor({
 }: {
   settingService: PersonalizationSettingService;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const readState = usePersonalizationDraftStore((state) => state.readState);
   const baseline = usePersonalizationDraftStore((state) => state.baseline);
   const draft = usePersonalizationDraftStore((state) => state.draft);

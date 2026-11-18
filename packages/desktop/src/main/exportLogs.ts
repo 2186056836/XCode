@@ -29,16 +29,16 @@ import {
 import { createAboutSnapshot, formatAboutDetail, readBuildMetadata } from "./about.js";
 import { logger } from "./logger.js";
 
-function getXCodeDataDir() {
+function getZCodeDataDir() {
   return getAppConfigDir();
 }
 
-function getXCodeCliDir() {
+function getZCodeCliDir() {
   return join(homedir(), ".xcode", "cli");
 }
 
-function getXCodeCliLogDir() {
-  return join(getXCodeCliDir(), "log");
+function getZCodeCliLogDir() {
+  return join(getZCodeCliDir(), "log");
 }
 
 /**
@@ -77,7 +77,7 @@ interface LogArchiveSkippedFileEntry {
 
 interface ExportLogsDependencies {
   now?: () => Date;
-  getXCodeDataDir?: () => string;
+  getZCodeDataDir?: () => string;
   getExportLogStageDir?: () => string;
   getExportLogDir?: () => string;
   createLogArchiveArtifacts?: (
@@ -1254,7 +1254,7 @@ export async function createLogArchiveArtifacts(
 
   await collectLogArchiveFilesFromDirectory(sourceDir, "", visitedDirs, files);
 
-  const zcodeCliLogDir = getXCodeCliLogDir();
+  const zcodeCliLogDir = getZCodeCliLogDir();
   // GLM / zcode-cli 的运行日志写在 ~/.xcode/cli/log，不在应用主数据目录 ~/.xcode/v2 下。
   // 如果导出日志只扫描 v2，定位 agent CLI 启动、协议或崩溃问题时会缺少最关键的原生侧日志。
   await collectLogArchiveFilesFromDirectory(
@@ -1264,7 +1264,7 @@ export async function createLogArchiveArtifacts(
     files,
   );
 
-  const zcodeCliDir = getXCodeCliDir();
+  const zcodeCliDir = getZCodeCliDir();
   await collectLogArchiveFilesByName(
     join(zcodeCliDir, CLI_MEMORY_DIAGNOSTIC_DIRECTORY),
     posix.join(".zcode", "cli", CLI_MEMORY_DIAGNOSTIC_DIRECTORY),
@@ -1444,22 +1444,22 @@ export async function createFeedbackLogArchiveFromExportLogs(
   return createFeedbackDiagnosticArchive({
     sources: [
       {
-        directory: join(getXCodeCliDir(), CLI_MEMORY_DIAGNOSTIC_DIRECTORY),
+        directory: join(getZCodeCliDir(), CLI_MEMORY_DIAGNOSTIC_DIRECTORY),
         archivePrefix: ".zcode/cli/memory-diagnostics",
         contentPolicy: "cli-memory",
         onlyCurrentDay: false,
       },
       { directory: join(sourceDir, "logs"), archivePrefix: "logs" },
-      { directory: getXCodeCliLogDir(), archivePrefix: ".xcode/cli/log" },
+      { directory: getZCodeCliLogDir(), archivePrefix: ".xcode/cli/log" },
       {
-        directory: getXCodeCliDir(),
+        directory: getZCodeCliDir(),
         archivePrefix: ".zcode/cli",
         includeFileNames: ["config.json"],
         onlyCurrentDay: false,
         contentPolicy: "cli-config",
       },
       {
-        directory: join(getXCodeCliDir(), "rollout"),
+        directory: join(getZCodeCliDir(), "rollout"),
         archivePrefix: ".zcode/cli/rollout",
       },
       {
@@ -1479,7 +1479,7 @@ export async function exportLogs(
 ): Promise<{ success: boolean; path?: string; error?: string }> {
   try {
     const now = dependencies.now ?? (() => new Date());
-    const getSourceDir = dependencies.getXCodeDataDir ?? getXCodeDataDir;
+    const getSourceDir = dependencies.getZCodeDataDir ?? getZCodeDataDir;
     const buildArtifacts = dependencies.createLogArchiveArtifacts ?? createLogArchiveArtifacts;
     const writeZip = dependencies.writeLogArchiveZip ?? writeLogArchiveZip;
     const writeDirectory = dependencies.writeLogArchiveDirectory ?? writeLogArchiveDirectory;

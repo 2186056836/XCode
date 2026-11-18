@@ -5,7 +5,7 @@ import {
   type PluginUiResourceSubscriberRef,
   type SessionEvent,
 } from "@zcode/contracts";
-import type { XCodeProtocolAgentServerContext } from "../server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "../server-types.js";
 import { parseMcpUiSubscriberKey } from "./contract.js";
 import { mcpUiInstances } from "./instances.js";
 
@@ -17,7 +17,7 @@ import { mcpUiInstances } from "./instances.js";
  * - tools/list_changed：adapter 已标 stale，这里只记 debug（回合边界重拉，A7）。
  */
 export function routeMcpServerNotification(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   notification: McpServerNotification,
 ): void {
   switch (notification.kind) {

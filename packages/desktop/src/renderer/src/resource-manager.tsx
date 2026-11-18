@@ -7,7 +7,7 @@ import type {
 import "@zcode/ui/styles.css";
 import {
   ResourceManagerApp,
-  XCodeIntlProvider,
+  ZCodeIntlProvider,
   applyUiFontSizePx,
   loadUiFontSizePx,
   subscribeToUiFontSizeStorageChanges,
@@ -61,7 +61,7 @@ const root = document.getElementById("root");
 if (root) {
   createRoot(root).render(
     // 语言沿用主窗口写入 localStorage 的偏好；不接 settingService，避免独立窗口再起一份 RPC。
-    <XCodeIntlProvider>
+    <ZCodeIntlProvider>
       <ResourceManagerApp
         setSamplingActive={window.resourceManager?.setSamplingActive}
         getSnapshot={
@@ -70,6 +70,6 @@ if (root) {
         storage={window.resourceManager?.storage}
         network={window.resourceManager?.network}
       />
-    </XCodeIntlProvider>,
+    </ZCodeIntlProvider>,
   );
 }

@@ -1,17 +1,17 @@
 /* oxlint-disable eslint(max-lines) -- re-home 产物：task 投影承重类型集中迁移，保持单文件契约面。 */
 // re-home 迁移产物（为删除旧协议树铺路）。
-// 本文件承载旧 task 投影中仍被存活栈消费的明星承重类型：XCodeTaskMeta / XCodeProvider /
-// XCodeStreamEvent / TraceId/InputId/QueryId / XCodePersistedMessage(Part) / XCodeTaskSnapshot /
-// XCodePlanStep / XCodePermissionRequest 及其依赖闭包（含 realtime 传输基础类型）。
+// 本文件承载旧 task 投影中仍被存活栈消费的明星承重类型：ZCodeTaskMeta / ZCodeProvider /
+// ZCodeStreamEvent / TraceId/InputId/QueryId / ZCodePersistedMessage(Part) / ZCodeTaskSnapshot /
+// ZCodePlanStep / ZCodePermissionRequest 及其依赖闭包（含 realtime 传输基础类型）。
 // zcode-task-types.ts / task-realtime.ts 仍保留旧协议兼容面，共用本文件中的核心类型。
 
-import type { XCodeBackgroundTaskControlItem } from "./background-task-controls.js";
+import type { ZCodeBackgroundTaskControlItem } from "./background-task-controls.js";
 import type { ToolCallDisplay } from "./zcode-protocol-v4/toolDisplay.js";
 import type {
-  XCodeContextUsageBreakdownItem,
-  XCodeInteractionRequestOrigin,
-  XCodePermissionResponse,
-  XCodeSessionActiveTurnKind,
+  ZCodeContextUsageBreakdownItem,
+  ZCodeInteractionRequestOrigin,
+  ZCodePermissionResponse,
+  ZCodeSessionActiveTurnKind,
 } from "./zcode-protocol-legacy-types.js";
 import type { ErrorAttribution } from "./zcode-protocol-v4/snapshot.js";
 
@@ -32,35 +32,35 @@ export type QueryId = string;
 // ---- XCode Provider ----
 
 /** 支持的 XCode agent 提供方；当前仅保留 glm。 */
-export type XCodeProvider = "glm";
-export type XCodeGlmAgentModelStateUpdateReason =
+export type ZCodeProvider = "glm";
+export type ZCodeGlmAgentModelStateUpdateReason =
   | "session_initialized"
   | "model_changed"
   | "thought_level_changed";
-export interface XCodeGlmAgentModelStateOption {
+export interface ZCodeGlmAgentModelStateOption {
   value: string;
   name: string;
 }
-export interface XCodeGlmAgentModelStateUpdatePayload {
+export interface ZCodeGlmAgentModelStateUpdatePayload {
   version: 1;
   sessionId: string;
-  reason: XCodeGlmAgentModelStateUpdateReason;
+  reason: ZCodeGlmAgentModelStateUpdateReason;
   model: {
     currentValue: string;
   };
   thoughtLevel: {
     enabled: boolean;
     currentValue?: string;
-    options: XCodeGlmAgentModelStateOption[];
+    options: ZCodeGlmAgentModelStateOption[];
   };
   contextWindow: {
     tokens: number;
   };
 }
 /** 外部历史迁移来源。当前落 Claude Code 与 ZCode 会话库选择性导入，后续其它来源继续在这里扩展。 */
-export type XCodeTaskMigrationSource = "claudeCode" | "zcodeSession";
-export type XCodeTaskGoalStatus = "active" | "paused" | "budget_limited" | "complete";
-export type XCodeTaskTargetChangedAction =
+export type ZCodeTaskMigrationSource = "claudeCode" | "zcodeSession";
+export type ZCodeTaskGoalStatus = "active" | "paused" | "budget_limited" | "complete";
+export type ZCodeTaskTargetChangedAction =
   | "set"
   | "status_updated"
   | "cleared"
@@ -68,13 +68,13 @@ export type XCodeTaskTargetChangedAction =
   | "run_started"
   | "run_finished"
   | "summary_updated";
-export type XCodeTaskTargetChangedSource = "command" | "tool" | "runtime";
-export interface XCodeTaskGoal {
+export type ZCodeTaskTargetChangedSource = "command" | "tool" | "runtime";
+export interface ZCodeTaskGoal {
   sessionID: string;
   targetID: string;
   objective: string;
   summaryTitle: string | null;
-  status: XCodeTaskGoalStatus;
+  status: ZCodeTaskGoalStatus;
   tokenBudget: number | null;
   tokensUsed: number;
   timeUsedSeconds: number;
@@ -86,7 +86,7 @@ export interface XCodeTaskGoal {
     updated: number;
   };
 }
-export interface XCodeTaskGoalStats {
+export interface ZCodeTaskGoalStats {
   /** goal 运行累计秒数；来自 agent 的 session_target 或历史 turn 投影。 */
   timeUsedSeconds: number;
   /** goal 累计 token；优先使用 goal 记账，必要时由 agent 按历史 turn 兜底。 */
@@ -102,25 +102,25 @@ export interface XCodeTaskGoalStats {
   /** 已触发的 goal verifier 生命周期轮次，不等同于普通 runtime turn 或用户继续次数。 */
   iterationCount: number;
 }
-export interface XCodeGoalVerification {
+export interface ZCodeGoalVerification {
   nextAction?: string | null;
   passed: boolean;
   reason: string;
 }
-export type XCodeGoalVerificationTimelineStatus =
+export type ZCodeGoalVerificationTimelineStatus =
   | "started"
   | "completed"
   | "failed_closed"
   | "cancelled";
-export interface XCodeGoalVerificationTimelineMeta {
+export interface ZCodeGoalVerificationTimelineMeta {
   version: 1;
   kind: "synthetic";
   type: "goal_verification";
   display: "separator";
   targetId: string;
   verificationId: string;
-  status: XCodeGoalVerificationTimelineStatus;
-  verification?: XCodeGoalVerification;
+  status: ZCodeGoalVerificationTimelineStatus;
+  verification?: ZCodeGoalVerification;
   goalIteration?: number;
   /** verifier divider 应锚定到完成本轮输出的 assistant message，而不是按时间漂移。 */
   anchorAssistantMessageId?: string;
@@ -129,26 +129,26 @@ export interface XCodeGoalVerificationTimelineMeta {
   startedAt?: number;
   updatedAt: number;
 }
-export interface XCodeTodoGroup {
+export interface ZCodeTodoGroup {
   id: string;
   source: "goal_iteration" | "session";
   goalIteration?: number;
   targetId?: string;
   startedAt?: number;
   updatedAt?: number;
-  todos: XCodePlanStep[];
+  todos: ZCodePlanStep[];
 }
-export interface XCodeTaskGoalChangedPatch {
-  action: XCodeTaskTargetChangedAction;
-  source: XCodeTaskTargetChangedSource;
-  target: XCodeTaskGoal | null;
-  previousTarget?: XCodeTaskGoal | null;
+export interface ZCodeTaskGoalChangedPatch {
+  action: ZCodeTaskTargetChangedAction;
+  source: ZCodeTaskTargetChangedSource;
+  target: ZCodeTaskGoal | null;
+  previousTarget?: ZCodeTaskGoal | null;
 }
 // ---- XCode task 模式 ----
 
 // 1010 扩宽（off-peak guarded 档 + 会话权限模式 default/acceptEdits/dontAsk/bypassPermissions）
 // fork 原为 6 值；扩宽是超集，旧代码不受影响
-export type XCodeTaskMode =
+export type ZCodeTaskMode =
   | "default"
   | "yolo"
   | "guarded"
@@ -161,19 +161,19 @@ export type XCodeTaskMode =
   | "autoEdit"
   | "build";
 
-export type XCodeOffPeakRunType = "init" | "resume";
+export type ZCodeOffPeakRunType = "init" | "resume";
 
 /** 单个自动输入轮的来源归因；两种后台业务身份禁止同时存在。 */
-export type XCodeBackgroundTurnAttribution =
+export type ZCodeBackgroundTurnAttribution =
   | { automationId: string; offPeakTaskId?: never; offPeakRunType?: never }
   | {
       offPeakTaskId: string;
-      offPeakRunType?: XCodeOffPeakRunType;
+      offPeakRunType?: ZCodeOffPeakRunType;
       automationId?: never;
     }
   | { automationId?: undefined; offPeakTaskId?: undefined; offPeakRunType?: never };
 /** 当前 workspace 下任务的运行时状态 */
-export type XCodeTaskRuntimeStatus =
+export type ZCodeTaskRuntimeStatus =
   | "idle"
   | "creating"
   | "notReady"
@@ -183,8 +183,8 @@ export type XCodeTaskRuntimeStatus =
   | "completed"
   | "failed";
 /** 持久化的任务状态，记录最后一次 prompt 的结果 */
-export type XCodeTaskPersistStatus = "running" | "completed" | "error";
-export interface XCodeTaskLastError {
+export type ZCodeTaskPersistStatus = "running" | "completed" | "error";
+export interface ZCodeTaskLastError {
   attribution?: ErrorAttribution;
   code?: string;
   message: string;
@@ -195,7 +195,7 @@ export interface XCodeTaskLastError {
  * 当前 prompt 支持的附件类型。
  * 图片小文件走 agent image block；本地文件/大图片优先走 localPath，让 agent 按自己的阈值读取。
  */
-export interface XCodePromptImageAttachment {
+export interface ZCodePromptImageAttachment {
   kind: "image";
   filename: string;
   mimeType: string;
@@ -205,7 +205,7 @@ export interface XCodePromptImageAttachment {
   /** 桌面端真实本地路径；大图片不再塞进协议正文，由 agent 侧按路径处理。 */
   localPath?: string;
 }
-export interface XCodePromptFileAttachment {
+export interface ZCodePromptFileAttachment {
   kind: "file";
   filename: string;
   mimeType: string;
@@ -221,7 +221,7 @@ export interface XCodePromptFileAttachment {
   textContent?: string;
   localPath?: string;
 }
-export interface XCodePromptAudioAttachment {
+export interface ZCodePromptAudioAttachment {
   kind: "audio";
   filename: string;
   mimeType: string;
@@ -230,7 +230,7 @@ export interface XCodePromptAudioAttachment {
   localPath?: string;
 }
 /** 视频附件：Web 小视频走 dataBase64，桌面端优先 localPath 零拷贝。 */
-export interface XCodePromptVideoAttachment {
+export interface ZCodePromptVideoAttachment {
   kind: "video";
   filename: string;
   mimeType: string;
@@ -240,7 +240,7 @@ export interface XCodePromptVideoAttachment {
   /** 桌面端真实本地路径；agent 侧按路径读取并做大小校验。 */
   localPath?: string;
 }
-export interface XCodePromptPdfAttachment {
+export interface ZCodePromptPdfAttachment {
   kind: "pdf";
   filename: string;
   mimeType: string;
@@ -248,15 +248,15 @@ export interface XCodePromptPdfAttachment {
   dataBase64?: string;
   localPath?: string;
 }
-export type XCodePromptAttachment =
-  | XCodePromptImageAttachment
-  | XCodePromptAudioAttachment
-  | XCodePromptVideoAttachment
-  | XCodePromptPdfAttachment
-  | XCodePromptFileAttachment;
+export type ZCodePromptAttachment =
+  | ZCodePromptImageAttachment
+  | ZCodePromptAudioAttachment
+  | ZCodePromptVideoAttachment
+  | ZCodePromptPdfAttachment
+  | ZCodePromptFileAttachment;
 // ---- Task 元数据 ----
 
-export type XCodeTaskInteractionAutoResolution =
+export type ZCodeTaskInteractionAutoResolution =
   | {
       state: "hiddenGrace" | "visibleCountdown";
       startedAt: number;
@@ -269,15 +269,15 @@ export type XCodeTaskInteractionAutoResolution =
       snoozedAt: number;
     };
 
-export interface XCodeTaskPendingInteraction {
+export interface ZCodeTaskPendingInteraction {
   interactionId: string;
   kind: "permission" | "userInput";
   /** sessions-index 下发的轻量工具身份；旧摘要缺失时保持兼容。 */
   toolName?: string;
-  autoResolution?: XCodeTaskInteractionAutoResolution;
+  autoResolution?: ZCodeTaskInteractionAutoResolution;
 }
 
-export interface XCodeTaskMeta {
+export interface ZCodeTaskMeta {
   /** UI taskId 与 XCode agent sessionId 保持一致，用于列表选择、日志关联和恢复会话。 */
   taskId: string;
   /** session/任务级观测 traceId，不用于区分单次用户输入 */
@@ -318,7 +318,7 @@ export interface XCodeTaskMeta {
   workspacePurpose?: import("./workspacePurpose.js").WorkspacePurpose;
   createdAt: number;
   updatedAt: number;
-  mode: XCodeTaskMode;
+  mode: ZCodeTaskMode;
   model?: string;
   /**
    * task 级推理强度。
@@ -337,7 +337,7 @@ export interface XCodeTaskMeta {
    */
   runtimeEpoch?: number;
   /** 创建此 task 时使用的 agent provider，缺省视为 "glm"（旧数据兼容） */
-  provider?: XCodeProvider;
+  provider?: ZCodeProvider;
   /**
    * 历史数据修复版本戳：host 在读取/迁移旧快照时补齐，用来避免重复修复。
    * UI 的任务元数据比较需要感知它，否则修复前后会被误判为同一条记录。
@@ -347,11 +347,11 @@ export interface XCodeTaskMeta {
     codexNativeSnapshotSubagentToolsVersion?: number;
   };
   /** 迁移来源；普通新建任务为空，用于识别 Claude Code 原生历史导入。 */
-  migrationSource?: XCodeTaskMigrationSource;
+  migrationSource?: ZCodeTaskMigrationSource;
   /**
    * cron 身份标记：该 session 属于哪条 automation。
    *
-   * cron 身份必须定义在共享的 XCodeTaskMeta 上，供持久化层、V4 UI 和服务契约
+   * cron 身份必须定义在共享的 ZCodeTaskMeta 上，供持久化层、V4 UI 和服务契约
    * 共同使用，避免字段已持久化却无法经类型契约访问。
    */
   cronAutomationId?: string;
@@ -366,22 +366,22 @@ export interface XCodeTaskMeta {
   /** 未读任务记录最近一次标记/产生未读的时间，用于跨重启保留蓝点状态。 */
   unreadAt?: number;
   /** 持久化的任务状态，记录最后一次 prompt 的结果 */
-  status?: XCodeTaskPersistStatus;
+  status?: ZCodeTaskPersistStatus;
   /** sessions-index 提供的队首阻塞交互摘要，供未打开的后台 task 渲染侧栏状态。 */
-  pendingInteraction?: XCodeTaskPendingInteraction;
+  pendingInteraction?: ZCodeTaskPendingInteraction;
   /**
    * 最后一次失败的可展示原因。
    *
    * 手机远控断连时实时 task_error 可能无法送达；恢复只能看到 meta.status=error，
    * 但拿不到错误正文，用户会以为发送没有触发。这里把失败原因随 task meta 一起持久化。
    */
-  lastError?: XCodeTaskLastError;
+  lastError?: ZCodeTaskLastError;
   /** 任务级文件改动摘要，仅用于列表/标题展示，真实回滚仍以 fileChanges 为准 */
-  changeSummary?: XCodeTaskChangeSummary;
+  changeSummary?: ZCodeTaskChangeSummary;
   /** zcode-cli /goal 会话目标；null 表示已显式清空。 */
-  target?: XCodeTaskGoal | null;
+  target?: ZCodeTaskGoal | null;
 }
-export interface XCodeTaskChangeSummary {
+export interface ZCodeTaskChangeSummary {
   /** 整个任务里涉及过的唯一文件数 */
   fileCount: number;
   /** 按最终文件结果聚合后的新增行数 */
@@ -389,9 +389,9 @@ export interface XCodeTaskChangeSummary {
   /** 按最终文件结果聚合后的删除行数 */
   removed: number;
   /** 任务涉及的文件摘要 */
-  files: XCodeTaskChangedFileSummary[];
+  files: ZCodeTaskChangedFileSummary[];
 }
-export interface XCodeTaskChangedFileSummary {
+export interface ZCodeTaskChangedFileSummary {
   path: string;
   added: number;
   removed: number;
@@ -403,7 +403,7 @@ export interface XCodeTaskChangedFileSummary {
 // ---- XCode 配置与命令类型 ----
 
 /** XCode configOptions 的 UI 投影（从 session/new 响应中提取） */
-export interface XCodeConfigOption {
+export interface ZCodeConfigOption {
   id: string;
   name: string;
   description?: string;
@@ -412,9 +412,9 @@ export interface XCodeConfigOption {
   type: "select" | "boolean";
   currentValue: string | boolean;
   /** type === "select" 时的选项列表 */
-  options?: XCodeConfigSelectValue[];
+  options?: ZCodeConfigSelectValue[];
 }
-export interface XCodeConfigSelectValue {
+export interface ZCodeConfigSelectValue {
   value: string;
   name: string;
   description?: string;
@@ -429,14 +429,14 @@ export interface XCodeConfigSelectValue {
   /** 模型目录声明的默认 reasoning 档位，不代表用户显式选择 */
   modelDefaultThoughtLevel?: string;
 }
-export interface XCodeSlashCommand {
+export interface ZCodeSlashCommand {
   name: string;
   description: string;
   inputHint?: string;
   /** 命令来源；旧协议可能为空，客户端应按 builtin 兼容处理。 */
   source?: "builtin" | "custom";
 }
-export interface XCodeTaskModeInfo {
+export interface ZCodeTaskModeInfo {
   id: string;
   name: string;
   description?: string;
@@ -444,41 +444,41 @@ export interface XCodeTaskModeInfo {
 // ---- XCode 流式事件（Host → Renderer） ----
 
 export type TaskStreamMirrorableEvent = (
-  | XCodeAgentMessageChunk
-  | XCodeAgentThoughtChunk
-  | XCodeToolCall
-  | XCodeToolCallUpdate
-  | XCodePlan
-  | XCodePermissionRequest
-  | XCodeTaskPermissionResponse
-  | XCodeElicitationRequest
-  | XCodeElicitationResponse
-  | XCodeTaskComplete
-  | XCodeTaskRunStarted
-  | XCodeTaskWarning
-  | XCodeTaskError
-  | XCodeConfigOptionUpdate
-  | XCodeAvailableCommandsUpdate
-  | XCodeModeUpdate
-  | XCodeSessionInfoUpdate
-  | XCodeGoalVerificationUpdate
-  | XCodeTaskTokenUsageDelta
-  | XCodeTaskNetworkDebugStatus
-  | XCodeUsageUpdate
-  | XCodeBackgroundTaskControlItemsUpdate
+  | ZCodeAgentMessageChunk
+  | ZCodeAgentThoughtChunk
+  | ZCodeToolCall
+  | ZCodeToolCallUpdate
+  | ZCodePlan
+  | ZCodePermissionRequest
+  | ZCodeTaskPermissionResponse
+  | ZCodeElicitationRequest
+  | ZCodeElicitationResponse
+  | ZCodeTaskComplete
+  | ZCodeTaskRunStarted
+  | ZCodeTaskWarning
+  | ZCodeTaskError
+  | ZCodeConfigOptionUpdate
+  | ZCodeAvailableCommandsUpdate
+  | ZCodeModeUpdate
+  | ZCodeSessionInfoUpdate
+  | ZCodeGoalVerificationUpdate
+  | ZCodeTaskTokenUsageDelta
+  | ZCodeTaskNetworkDebugStatus
+  | ZCodeUsageUpdate
+  | ZCodeBackgroundTaskControlItemsUpdate
 ) & { inputId?: InputId };
-export type XCodeStreamEvent = (
+export type ZCodeStreamEvent = (
   | TaskStreamMirrorableEvent
-  | XCodeGlmAgentModelStateUpdate
-  | XCodeGoalIterationStarted
-  | XCodeTurnSteerQueued
-  | XCodeTurnSteerStatus
+  | ZCodeGlmAgentModelStateUpdate
+  | ZCodeGoalIterationStarted
+  | ZCodeTurnSteerQueued
+  | ZCodeTurnSteerStatus
   | TaskStreamMirrorBatch
-  | XCodeTaskSnapshotUpdated
+  | ZCodeTaskSnapshotUpdated
 ) & { inputId?: InputId };
-export type XCodeTurnSteerSource = "plan_approval_feedback" | "workflow_refine_feedback";
-export type XCodeTurnSteerCommandKind = "sendText" | "sendGoalCommand" | "compact";
-export interface XCodeTurnSteerQueued {
+export type ZCodeTurnSteerSource = "plan_approval_feedback" | "workflow_refine_feedback";
+export type ZCodeTurnSteerCommandKind = "sendText" | "sendGoalCommand" | "compact";
+export interface ZCodeTurnSteerQueued {
   type: "turn_steer_queued";
   taskId: string;
   traceId: TraceId;
@@ -486,13 +486,13 @@ export interface XCodeTurnSteerQueued {
   queryId?: QueryId;
   pendingInputId: string;
   messageId?: string;
-  commandKind?: XCodeTurnSteerCommandKind;
-  source?: XCodeTurnSteerSource;
+  commandKind?: ZCodeTurnSteerCommandKind;
+  source?: ZCodeTurnSteerSource;
   targetTurnId?: string;
   content: string;
   raw?: unknown;
 }
-export interface XCodeTurnSteerStatus {
+export interface ZCodeTurnSteerStatus {
   type: "turn_steer_status";
   taskId: string;
   traceId: TraceId;
@@ -505,7 +505,7 @@ export interface XCodeTurnSteerStatus {
   reason?: string;
   raw?: unknown;
 }
-export interface XCodeAgentMessageChunk {
+export interface ZCodeAgentMessageChunk {
   type: "agent_message_chunk";
   taskId: string;
   traceId: TraceId;
@@ -515,9 +515,9 @@ export interface XCodeAgentMessageChunk {
   /** agent messageId；XCode synthetic timeline 消息用它做 upsert。 */
   messageId?: string;
   content: string;
-  zcodeTimeline?: XCodeTimelineMeta;
+  zcodeTimeline?: ZCodeTimelineMeta;
 }
-export interface XCodeAgentThoughtChunk {
+export interface ZCodeAgentThoughtChunk {
   type: "agent_thought_chunk";
   taskId: string;
   traceId: TraceId;
@@ -526,30 +526,30 @@ export interface XCodeAgentThoughtChunk {
   parentToolUseId?: string | null;
   content: string;
 }
-export type XCodeTimelineStatus =
+export type ZCodeTimelineStatus =
   | "started"
   | "retrying"
   | "skipped"
   | "completed"
   | "failed"
   | "interrupted";
-export type XCodeTimelineTrigger = "manual" | "auto" | "reactive" | "partial" | "session_memory";
-export type XCodeContextCompactionTimelinePhase =
+export type ZCodeTimelineTrigger = "manual" | "auto" | "reactive" | "partial" | "session_memory";
+export type ZCodeContextCompactionTimelinePhase =
   | "standalone_turn"
   | "pre_request"
   | "mid_turn"
   | "reactive";
-export type XCodeTimelineMeta =
-  | XCodeContextCompactionTimelineMeta
-  | XCodeGoalVerificationTimelineMeta
-  | XCodeSessionForkTimelineMeta;
-export interface XCodeContextCompactionTimelineMeta {
+export type ZCodeTimelineMeta =
+  | ZCodeContextCompactionTimelineMeta
+  | ZCodeGoalVerificationTimelineMeta
+  | ZCodeSessionForkTimelineMeta;
+export interface ZCodeContextCompactionTimelineMeta {
   version: 1;
   kind: "synthetic";
   type: "context_compaction";
   operationId: string;
-  status: XCodeTimelineStatus;
-  trigger: XCodeTimelineTrigger;
+  status: ZCodeTimelineStatus;
+  trigger: ZCodeTimelineTrigger;
   display: "separator";
   /**
    * `/compact` 本地会先渲染 optimistic 横条，agent lifecycle 事件稍后才到。
@@ -568,11 +568,11 @@ export interface XCodeContextCompactionTimelineMeta {
   attempt?: number;
   maxAttempts?: number;
   /** compact 阶段用于区分 mid_turn / pre_request 等真实压缩边界，避免 UI 和 e2e 只能按文案猜。 */
-  phase?: XCodeContextCompactionTimelinePhase;
+  phase?: ZCodeContextCompactionTimelinePhase;
   startedAt?: number;
   endedAt?: number;
 }
-export interface XCodeSessionForkTimelineMeta {
+export interface ZCodeSessionForkTimelineMeta {
   version: 1;
   kind: "synthetic";
   type: "session_fork";
@@ -583,7 +583,7 @@ export interface XCodeSessionForkTimelineMeta {
   targetCheckpointId?: string;
   restoredFileCount?: number;
 }
-export interface XCodeToolCall {
+export interface ZCodeToolCall {
   type: "tool_call";
   taskId: string;
   traceId: TraceId;
@@ -609,7 +609,7 @@ export interface XCodeToolCall {
     source?: "agents" | "zcode" | "bundled" | "plugin" | "remote";
   };
 }
-export interface XCodeToolCallUpdate {
+export interface ZCodeToolCallUpdate {
   type: "tool_call_update";
   taskId: string;
   traceId: TraceId;
@@ -640,19 +640,19 @@ export interface XCodeToolCallUpdate {
     source?: "agents" | "zcode" | "bundled" | "plugin" | "remote";
   };
 }
-export interface XCodePlan {
+export interface ZCodePlan {
   type: "plan";
   taskId: string;
   traceId: TraceId;
   inputId?: InputId;
-  steps: XCodePlanStep[];
+  steps: ZCodePlanStep[];
 }
-export interface XCodePlanStep {
+export interface ZCodePlanStep {
   id: string;
   title: string;
   status: "pending" | "in_progress" | "completed";
 }
-export interface XCodePermissionRequest {
+export interface ZCodePermissionRequest {
   type: "permission_request";
   taskId: string;
   traceId: TraceId;
@@ -661,10 +661,10 @@ export interface XCodePermissionRequest {
   description: string;
   kind: string;
   title?: string;
-  options: XCodePermissionOption[];
+  options: ZCodePermissionOption[];
   /** V4 permission 是否允许在 Deny 时附带用户反馈。 */
   freeText?: boolean;
-  origin?: XCodeInteractionRequestOrigin;
+  origin?: ZCodeInteractionRequestOrigin;
   /**
    * 工具自报的确认预览，复用 tool call row 的 display 投影（同一有界形状）。
    * 缺省 = 纯文本 ask（legacy v3 链路会显式剥离该字段）。
@@ -673,24 +673,24 @@ export interface XCodePermissionRequest {
   /** agent RequestPermissionRequest.toolCall 原始 payload */
   raw: unknown;
 }
-export interface XCodeTaskPermissionResponse {
+export interface ZCodeTaskPermissionResponse {
   type: "permission_response";
   taskId: string;
   traceId: TraceId;
   inputId?: InputId;
   requestId: string;
   optionId: string;
-  response: XCodePermissionResponse;
+  response: ZCodePermissionResponse;
 }
-export interface XCodePermissionOption {
+export interface ZCodePermissionOption {
   optionId: string;
   kind: string;
   name: string;
   description?: string;
-  response: XCodePermissionResponse;
+  response: ZCodePermissionResponse;
 }
 /** XCode Elicitation 请求事件，用于 AskUserQuestion 等需要用户交互的工具 */
-export interface XCodeElicitationRequest {
+export interface ZCodeElicitationRequest {
   type: "elicitation_request";
   taskId: string;
   traceId: TraceId;
@@ -698,33 +698,33 @@ export interface XCodeElicitationRequest {
   requestId: string;
   message: string;
   header?: string;
-  options: XCodeElicitationOption[];
+  options: ZCodeElicitationOption[];
   multiSelect?: boolean;
   /** AskUserQuestion 的多题结构；存在时 UI 以 tab 形式一次性收集全部答案。 */
-  questions?: XCodeElicitationQuestion[];
+  questions?: ZCodeElicitationQuestion[];
   /** remote 控制链路同步的当前题号，用于跨端保持 AskUserQuestion 进度。 */
   currentQuestionIndex?: number;
   /** remote 控制链路同步的草稿答案，key 为 answer_0 / answer_1。 */
   answerDrafts?: Record<string, string[]>;
-  origin?: XCodeInteractionRequestOrigin;
+  origin?: ZCodeInteractionRequestOrigin;
   /** ElicitationSchema 原始 payload */
   schema?: unknown;
 }
 /** XCode Elicitation 单个问题 */
-export interface XCodeElicitationQuestion {
+export interface ZCodeElicitationQuestion {
   question: string;
   header: string;
-  options: XCodeElicitationOption[];
+  options: ZCodeElicitationOption[];
   multiSelect?: boolean;
 }
 /** XCode Elicitation 选项 */
-export interface XCodeElicitationOption {
+export interface ZCodeElicitationOption {
   value: string;
   label: string;
   description?: string;
 }
 /** XCode Elicitation 响应事件 */
-export interface XCodeElicitationResponse {
+export interface ZCodeElicitationResponse {
   type: "elicitation_response";
   taskId: string;
   traceId: TraceId;
@@ -733,15 +733,15 @@ export interface XCodeElicitationResponse {
   action: "accept" | "decline" | "cancel";
   content?: Record<string, unknown>;
 }
-export interface XCodeTaskComplete {
+export interface ZCodeTaskComplete {
   type: "task_complete";
   taskId: string;
   traceId: TraceId;
   inputId?: InputId;
   stopReason: string;
-  usage?: XCodeUsage;
+  usage?: ZCodeUsage;
 }
-export interface XCodeTaskRunStarted {
+export interface ZCodeTaskRunStarted {
   inputOrigin?: "desktop" | "mobile";
   type: "task_run_started";
   taskId: string;
@@ -750,7 +750,7 @@ export interface XCodeTaskRunStarted {
   turnId?: string;
   startedAt: number;
 }
-export interface XCodeGoalIterationStarted {
+export interface ZCodeGoalIterationStarted {
   type: "goal_iteration_started";
   taskId: string;
   traceId: TraceId;
@@ -759,7 +759,7 @@ export interface XCodeGoalIterationStarted {
   targetId?: string;
   startedAt: number;
 }
-export interface XCodeTaskError {
+export interface ZCodeTaskError {
   type: "task_error";
   taskId: string;
   traceId: TraceId;
@@ -769,7 +769,7 @@ export interface XCodeTaskError {
   detail?: string;
   attribution?: ErrorAttribution;
 }
-export interface XCodeTaskWarning {
+export interface ZCodeTaskWarning {
   type: "task_warning";
   taskId: string;
   traceId: TraceId;
@@ -778,7 +778,7 @@ export interface XCodeTaskWarning {
   code?: string;
   detail?: string;
 }
-export interface XCodeUsage {
+export interface ZCodeUsage {
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
@@ -789,7 +789,7 @@ export interface XCodeUsage {
   /** 写入缓存的 input token 数 */
   cachedWriteInputTokens?: number;
 }
-export interface XCodeContextCacheUsage {
+export interface ZCodeContextCacheUsage {
   /** Provider 上报的最近一次主轮输入 token 数。 */
   inputTokens: number;
   /** Provider 上报的最近一次主轮缓存命中 token 数。 */
@@ -810,7 +810,7 @@ export interface XCodeContextCacheUsage {
   hitRate: number | null;
 }
 /** Agent 每次模型请求完成后推送的 task 累计 token 增量。 */
-export interface XCodeTaskTokenUsageDelta {
+export interface ZCodeTaskTokenUsageDelta {
   type: "task_token_usage_delta";
   taskId: string;
   traceId: TraceId;
@@ -820,16 +820,16 @@ export interface XCodeTaskTokenUsageDelta {
   eventKey: string;
   eventId?: string;
   querySource?: string;
-  usage: XCodeUsage;
+  usage: ZCodeUsage;
 }
-export type XCodeTaskNetworkDebugStatusType =
+export type ZCodeTaskNetworkDebugStatusType =
   | "model_request_started"
   | "model_request_completed"
   | "model_request_failed"
   | "model_retry_scheduled"
   | "model_stream_stalled";
 /** Agent 模型网络状态调试事件；只携带元信息和脱敏 header，不携带 response body/data。 */
-export interface XCodeTaskNetworkDebugStatus {
+export interface ZCodeTaskNetworkDebugStatus {
   type: "task_network_debug_status";
   taskId: string;
   traceId: TraceId;
@@ -837,7 +837,7 @@ export interface XCodeTaskNetworkDebugStatus {
   queryId?: QueryId;
   eventKey: string;
   eventId?: string;
-  statusType: XCodeTaskNetworkDebugStatusType;
+  statusType: ZCodeTaskNetworkDebugStatusType;
   requestId?: string;
   providerId?: string;
   modelId?: string;
@@ -865,41 +865,41 @@ export interface XCodeTaskNetworkDebugStatus {
 // ---- 新增流式事件类型 ----
 
 /** Agent 主动推送配置变更（如 rate limit 降级模型、模式联动变化） */
-export interface XCodeConfigOptionUpdate {
+export interface ZCodeConfigOptionUpdate {
   type: "config_option_update";
   taskId: string;
   traceId: TraceId;
   inputId?: InputId;
-  configOptions: XCodeConfigOption[];
+  configOptions: ZCodeConfigOption[];
 }
 /** zcode-cli/GLM agent 专属：模型变化后同步思考等级选项和上下文窗口。 */
-export interface XCodeGlmAgentModelStateUpdate extends XCodeGlmAgentModelStateUpdatePayload {
+export interface ZCodeGlmAgentModelStateUpdate extends ZCodeGlmAgentModelStateUpdatePayload {
   type: "glm_agent_model_state_update";
   taskId: string;
   traceId: TraceId;
   inputId?: InputId;
 }
 /** Agent 推送可用的 slash commands 列表 */
-export interface XCodeAvailableCommandsUpdate {
+export interface ZCodeAvailableCommandsUpdate {
   type: "available_commands_update";
   taskId: string;
   traceId: TraceId;
   inputId?: InputId;
-  commands: XCodeSlashCommand[];
+  commands: ZCodeSlashCommand[];
 }
 /** Agent 推送模式变更（如从 architect 自动切到 code） */
-export interface XCodeModeUpdate {
+export interface ZCodeModeUpdate {
   type: "mode_update";
   taskId: string;
   traceId: TraceId;
   inputId?: InputId;
   currentModeId: string;
-  availableModes: XCodeTaskModeInfo[];
+  availableModes: ZCodeTaskModeInfo[];
 }
 /** Agent API 遇到可重试错误时的临时状态；只用于内存 UI，不写入任务持久化。
  * attempt 表示当前正在进行的“第几次重试”，从 1 开始，不是总尝试次数。
  */
-export interface XCodeApiRetryStatus {
+export interface ZCodeApiRetryStatus {
   kind: "api_retry";
   attempt: number;
   maxRetries: number;
@@ -908,7 +908,7 @@ export interface XCodeApiRetryStatus {
   error: string;
 }
 /** Agent 推送会话标题等元信息更新 */
-export interface XCodeSessionInfoUpdate {
+export interface ZCodeSessionInfoUpdate {
   type: "session_info_update";
   taskId: string;
   traceId: TraceId;
@@ -921,22 +921,22 @@ export interface XCodeSessionInfoUpdate {
    * `null` 表示显式清空重试状态；
    * 对象表示进入/更新重试中。
    */
-  apiRetry?: XCodeApiRetryStatus | null;
+  apiRetry?: ZCodeApiRetryStatus | null;
   /**
    * zcode-cli 通过兼容 session_info_update._meta.zcode.target 投影的 /goal 状态补丁。
    * `undefined` 表示本次没有 target 变化；`target: null` 表示清空。
    */
-  target?: XCodeTaskGoalChangedPatch;
+  target?: ZCodeTaskGoalChangedPatch;
 }
-export interface XCodeGoalVerificationUpdate {
+export interface ZCodeGoalVerificationUpdate {
   type: "goal_verification_update";
   taskId: string;
   traceId: TraceId;
   inputId?: InputId;
-  verification: XCodeGoalVerification;
+  verification: ZCodeGoalVerification;
 }
 /** Agent 推送实时上下文窗口使用情况 */
-export interface XCodeUsageUpdate {
+export interface ZCodeUsageUpdate {
   type: "usage_update";
   taskId: string;
   traceId: TraceId;
@@ -948,20 +948,20 @@ export interface XCodeUsageUpdate {
   /** 累计费用 */
   cost?: { amount: number; currency: string } | null;
   /** 当前主轮 provider usage 暴露的缓存命中信息。 */
-  cache?: XCodeContextCacheUsage;
+  cache?: ZCodeContextCacheUsage;
   /** Agent 按来源估算的上下文字符量，用于 UI 展示比例，不作为 token 账本。 */
-  breakdown?: XCodeContextUsageBreakdownItem[];
+  breakdown?: ZCodeContextUsageBreakdownItem[];
 }
 /** Agent runtime 上报的后台任务控制项；只表示当前 host 内存态，不写入 session 文件。 */
-export interface XCodeBackgroundTaskControlItemsUpdate {
+export interface ZCodeBackgroundTaskControlItemsUpdate {
   type: "background_bash_jobs_update";
   taskId: string;
   traceId: TraceId;
   inputId?: InputId;
-  jobs: XCodeBackgroundTaskControlItem[];
+  jobs: ZCodeBackgroundTaskControlItem[];
 }
 /** 残余数据 flush 后通知 UI 重新拉取快照，确保迟到的流式数据能被渲染 */
-export interface XCodeTaskSnapshotUpdated {
+export interface ZCodeTaskSnapshotUpdated {
   type: "task_snapshot_updated";
   workspacePath: string;
   workspaceIdentity?: string;
@@ -973,9 +973,9 @@ export interface XCodeTaskSnapshotUpdated {
   runId?: string;
   streamWatermark?: TaskStreamWatermark;
 }
-export type XCodeTaskClientMode = "desktop-continuous" | "web-remote-replayable";
-export type XCodeTaskRuntimeCommandStatus = "accepted" | "running" | "failed";
-export interface XCodeTaskRuntimeCommandBase {
+export type ZCodeTaskClientMode = "desktop-continuous" | "web-remote-replayable";
+export type ZCodeTaskRuntimeCommandStatus = "accepted" | "running" | "failed";
+export interface ZCodeTaskRuntimeCommandBase {
   commandId: string;
   taskId: string;
   traceId: TraceId;
@@ -983,21 +983,21 @@ export interface XCodeTaskRuntimeCommandBase {
   workspacePath: string;
   workspaceIdentity?: string;
   workspaceKey: string;
-  status: XCodeTaskRuntimeCommandStatus;
+  status: ZCodeTaskRuntimeCommandStatus;
   createdAt: number;
   updatedAt: number;
   clientId?: string;
   clientLabel?: string;
   error?: string;
 }
-export interface XCodeTaskSendPromptCommand extends XCodeTaskRuntimeCommandBase {
+export interface ZCodeTaskSendPromptCommand extends ZCodeTaskRuntimeCommandBase {
   type: "send_prompt";
   content: string;
-  attachments?: XCodePromptAttachment[];
+  attachments?: ZCodePromptAttachment[];
   /** 定时任务派发的 host command 必须保留 automation 上下文，避免队列 drain 后重新暴露 CronCreate。 */
   automationId?: string;
 }
-export type XCodeTaskRuntimeCommand = XCodeTaskSendPromptCommand;
+export type ZCodeTaskRuntimeCommand = ZCodeTaskSendPromptCommand;
 export interface TaskStreamMirrorBatch {
   type: "task_stream_mirror_batch";
   workspacePath: string;
@@ -1016,75 +1016,75 @@ export interface TaskStreamMirrorBatch {
 }
 // ---- 持久化格式 ----
 
-export interface XCodeSessionFile {
-  meta: XCodeTaskMeta;
-  messages: XCodePersistedMessage[];
+export interface ZCodeSessionFile {
+  meta: ZCodeTaskMeta;
+  messages: ZCodePersistedMessage[];
   /** 文件变更记录，按轮次存储 */
-  fileChanges?: XCodePersistedFileChange[];
+  fileChanges?: ZCodePersistedFileChange[];
   /** Git checkpoint 元信息，按轮次存储，仅用于撤销编排 */
-  turnCheckpoints?: XCodePersistedTurnCheckpoint[];
+  turnCheckpoints?: ZCodePersistedTurnCheckpoint[];
 }
-export interface XCodeSessionRuntimeSnapshot {
-  pendingPermissions?: XCodePermissionRequest[];
-  pendingElicitations?: XCodeElicitationRequest[];
+export interface ZCodeSessionRuntimeSnapshot {
+  pendingPermissions?: ZCodePermissionRequest[];
+  pendingElicitations?: ZCodeElicitationRequest[];
   /** 当前 session 的 active turn 类型；用于 UI 区分普通 streaming 与 compact 维护态。 */
-  activeTurnKind?: XCodeSessionActiveTurnKind;
+  activeTurnKind?: ZCodeSessionActiveTurnKind;
   /** Agent API 网络重试是运行态提示，只随 snapshot 恢复，不写入 session JSON。 */
-  apiRetry?: XCodeApiRetryStatus | null;
+  apiRetry?: ZCodeApiRetryStatus | null;
   /** XCode Protocol projection 中的上下文窗口用量，用于恢复旧 task UI 的右下角 context meter。 */
   contextUsage?: {
     used: number;
     size: number;
     cost?: { amount: number; currency: string } | null;
-    cache?: XCodeContextCacheUsage;
-    breakdown?: XCodeContextUsageBreakdownItem[];
+    cache?: ZCodeContextCacheUsage;
+    breakdown?: ZCodeContextUsageBreakdownItem[];
   };
   streamWatermark?: TaskStreamWatermark;
-  pendingCommands?: XCodeTaskRuntimeCommand[];
+  pendingCommands?: ZCodeTaskRuntimeCommand[];
   /**
    * 从 agent session store 的持久 todo 映射出的恢复态。
    * UI 只消费它恢复 todo 面板，不把该字段写回旧 session JSON。
    */
-  plan?: XCodePlanStep[] | null;
+  plan?: ZCodePlanStep[] | null;
   /**
    * 目标摘要的运行态投影；从 agent DB / message tool parts 临时计算，不写入 task-index。
    */
-  goalStats?: XCodeTaskGoalStats | null;
-  goalVerifications?: XCodeGoalVerification[] | null;
-  goalVerificationTimeline?: XCodeGoalVerificationTimelineMeta[] | null;
+  goalStats?: ZCodeTaskGoalStats | null;
+  goalVerifications?: ZCodeGoalVerification[] | null;
+  goalVerificationTimeline?: ZCodeGoalVerificationTimelineMeta[] | null;
   /**
    * session 历史 TodoWrite 投影出的分组 todo；用于恢复展示，不作为 todo 权威存储。
    */
-  todoGroups?: XCodeTodoGroup[] | null;
+  todoGroups?: ZCodeTodoGroup[] | null;
   /** 兼容字段：承载 host/runtime 运行态后台任务 control，可随 snapshot 恢复，但不持久化到 session JSON。 */
-  backgroundBashJobs?: XCodeBackgroundTaskControlItem[];
+  backgroundBashJobs?: ZCodeBackgroundTaskControlItem[];
 }
-export interface XCodeTaskSnapshotHistory {
+export interface ZCodeTaskSnapshotHistory {
   /** 响应态历史窗口是否裁掉了更早消息；只由 getTaskSnapshot 返回，不写入 session JSON。 */
   truncatedBefore: boolean;
   /** 裁剪前可见消息总数，用于 UI 判断是否还能补拉更早历史。 */
   totalMessages: number;
 }
-export type XCodeTaskSnapshot = XCodeSessionFile & {
+export type ZCodeTaskSnapshot = ZCodeSessionFile & {
   /** 非持久化运行态，只由 getTaskSnapshot 组装返回，禁止写入 session JSON。 */
-  runtime?: XCodeSessionRuntimeSnapshot;
+  runtime?: ZCodeSessionRuntimeSnapshot;
   /** 非持久化历史窗口元数据，只描述本次 snapshot 响应是否为尾部窗口。 */
-  history?: XCodeTaskSnapshotHistory;
+  history?: ZCodeTaskSnapshotHistory;
   /** Agent/app 通信返回的可见命令列表；用于恢复 `/` 面板，不写入 session JSON。 */
-  slashCommands?: XCodeSlashCommand[];
+  slashCommands?: ZCodeSlashCommand[];
   /** 从 session settings 投影出的 UI 配置；只随 snapshot 返回，不写入 session JSON。 */
-  configOptions?: XCodeConfigOption[];
+  configOptions?: ZCodeConfigOption[];
 };
-export type XCodeTurnFileState = "applied" | "reverted";
+export type ZCodeTurnFileState = "applied" | "reverted";
 /** 持久化的轮次文件变更 */
-export interface XCodePersistedFileChange {
+export interface ZCodePersistedFileChange {
   turnIndex: number;
-  snapshots: XCodePersistedFileSnapshot[];
+  snapshots: ZCodePersistedFileSnapshot[];
   /** 当前这轮文件变更是否仍应用在 workspace 上 */
-  fileState?: XCodeTurnFileState;
+  fileState?: ZCodeTurnFileState;
 }
 /** 持久化的轮次文件 checkpoint 元信息 */
-export interface XCodePersistedTurnCheckpoint {
+export interface ZCodePersistedTurnCheckpoint {
   turnIndex: number;
   /** 该轮开始前的文件状态 checkpoint */
   baseFileCheckpointId: string;
@@ -1092,24 +1092,24 @@ export interface XCodePersistedTurnCheckpoint {
   resultFileCheckpointId?: string;
 }
 /** 持久化的文件快照 */
-export interface XCodePersistedFileSnapshot {
+export interface ZCodePersistedFileSnapshot {
   path: string;
   beforeContent: string | null;
   afterContent: string;
   writeCount: number;
   /** 仅用于响应态快照：表示文件快照正文已被首屏预算裁剪，可按 ref 拉取完整内容。 */
-  contentRefs?: XCodeTaskSnapshotFileContentRef[];
+  contentRefs?: ZCodeTaskSnapshotFileContentRef[];
 }
 /** 持久化消息的 parts 元素，记录 content / thought / tool-call 的交错顺序。
  *  恢复历史时用它还原 UI 侧的 parts 数组，避免所有文字堆到上面、工具调用排到下面。 */
-export type XCodePersistedMessagePart =
+export type ZCodePersistedMessagePart =
   | { type: "content"; content: string }
   | { type: "thought"; content: string }
   | { type: "tool-call"; toolIndex: number };
-export type XCodeAssistantMessageFeedback = "like" | "dislike";
-export type XCodeAssistantCheckpointState = "partial";
-export type XCodeAssistantCheckpointReason = "tool_completed" | "part_boundary" | "periodic";
-export interface XCodePersistedMessage {
+export type ZCodeAssistantMessageFeedback = "like" | "dislike";
+export type ZCodeAssistantCheckpointState = "partial";
+export type ZCodeAssistantCheckpointReason = "tool_completed" | "part_boundary" | "periodic";
+export interface ZCodePersistedMessage {
   /** 协议侧原始 messageId；用于让实时消息和 snapshot 恢复后的 timeline divider 保持同一身份。 */
   id?: string;
   /** 投影合并 assistant 后保留的原始 messageId 集合，用于 timeline anchor 仍能命中被合并的子消息。 */
@@ -1128,56 +1128,56 @@ export interface XCodePersistedMessage {
   /** assistant 是否以用户主动停止或异常中断结束；用于抑制 latest 回复区的提升。 */
   interrupted?: boolean;
   /** 用户对 assistant 回复的本地反馈；仅用于 XCode 展示/统计，不注入 Agent 上下文。 */
-  feedback?: XCodeAssistantMessageFeedback;
-  attachments?: XCodePromptAttachment[];
-  tools?: XCodePersistedToolCall[];
+  feedback?: ZCodeAssistantMessageFeedback;
+  attachments?: ZCodePromptAttachment[];
+  tools?: ZCodePersistedToolCall[];
   thought?: string;
   /** 消息各部分的交错顺序，用于历史恢复时保持 content 和 tool-call 的原始排列 */
-  parts?: XCodePersistedMessagePart[];
+  parts?: ZCodePersistedMessagePart[];
   /** assistant 运行中快照；用于崩溃/重启后恢复到最近一次 parts 边界，不代表本轮自然完成。 */
-  checkpointState?: XCodeAssistantCheckpointState;
-  checkpointReason?: XCodeAssistantCheckpointReason;
+  checkpointState?: ZCodeAssistantCheckpointState;
+  checkpointReason?: ZCodeAssistantCheckpointReason;
   checkpointUpdatedAt?: number;
   /** 该消息所属的对话轮次，用于关联 per-turn 文件变更摘要和回滚 */
   turnIndex?: number;
   /** 仅用于响应态快照：表示大字段已被首屏预算裁剪，可按 ref 拉取完整正文。 */
-  bodyRefs?: XCodeTaskSnapshotBodyRef[];
+  bodyRefs?: ZCodeTaskSnapshotBodyRef[];
   /** 仅用于响应态快照：tools 被按条数裁剪时的切片信息，可用于补拉更多工具调用。 */
-  toolSlice?: XCodeTaskSnapshotToolSlice;
+  toolSlice?: ZCodeTaskSnapshotToolSlice;
   /** synthetic divider 元数据（context_compaction / session_fork），随 snapshot 恢复用于 UI 渲染分隔条。 */
-  syntheticTimeline?: XCodeTimelineMeta;
+  syntheticTimeline?: ZCodeTimelineMeta;
 }
-export type XCodeTaskSnapshotBodyField = "content" | "thought";
-export interface XCodeTaskSnapshotBodyRef {
-  field: XCodeTaskSnapshotBodyField;
+export type ZCodeTaskSnapshotBodyField = "content" | "thought";
+export interface ZCodeTaskSnapshotBodyRef {
+  field: ZCodeTaskSnapshotBodyField;
   refId: string;
   hash: string;
   fullBytes: number;
   previewBytes: number;
 }
-export type XCodeTaskSnapshotToolField = "input" | "output" | "raw";
-export type XCodeTaskSnapshotFileContentField = "beforeContent" | "afterContent";
-export interface XCodeTaskSnapshotToolFieldRef {
-  field: XCodeTaskSnapshotToolField;
+export type ZCodeTaskSnapshotToolField = "input" | "output" | "raw";
+export type ZCodeTaskSnapshotFileContentField = "beforeContent" | "afterContent";
+export interface ZCodeTaskSnapshotToolFieldRef {
+  field: ZCodeTaskSnapshotToolField;
   refId: string;
   hash: string;
   fullBytes: number;
   previewBytes: number;
 }
-export interface XCodeTaskSnapshotFileContentRef {
-  field: XCodeTaskSnapshotFileContentField;
+export interface ZCodeTaskSnapshotFileContentRef {
+  field: ZCodeTaskSnapshotFileContentField;
   refId: string;
   hash: string;
   fullBytes: number;
   previewBytes: number;
 }
-export interface XCodeTaskSnapshotToolSlice {
+export interface ZCodeTaskSnapshotToolSlice {
   persistedMessageIndex: number;
   totalTools: number;
   startToolIndex: number;
   endToolIndexExclusive: number;
 }
-export interface XCodePersistedToolCall {
+export interface ZCodePersistedToolCall {
   /** XCode 固定工具名；旧快照里可能曾把 title 落在这里，读取侧需兼容。 */
   toolName?: string;
   title?: string;
@@ -1188,7 +1188,7 @@ export interface XCodePersistedToolCall {
   error?: string;
   raw?: unknown;
   /** 仅用于响应态快照：表示工具大字段已被首屏预算裁剪，可按 ref 拉取完整内容。 */
-  snapshotRefs?: XCodeTaskSnapshotToolFieldRef[];
+  snapshotRefs?: ZCodeTaskSnapshotToolFieldRef[];
 }
 export type TaskRealtimeReason =
   | "task_created"
@@ -1214,7 +1214,7 @@ export interface TaskStreamMirrorUserMessageOp {
   kind: "user_message";
   messageId: string;
   content: string;
-  attachments?: XCodePromptAttachment[];
+  attachments?: ZCodePromptAttachment[];
   timestamp: number;
 }
 export interface TaskStreamMirrorStreamEventOp {

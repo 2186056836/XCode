@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { ZCODE_PLUGIN_MENTION_ERROR_CODES } from "@zcode/shared";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { resolveLocalizedText } from "@/extension-slots/domain/slotSelectors.js";
 import { useComposerMentionSlot } from "@/extension-slots/adapters/useComposerMentionSlot.js";
 import type { ComposerMentionSlotProps } from "@/extension-slots/contract.js";
@@ -16,7 +16,7 @@ import type { MentionItem } from "@/mentions/mentionTypes.js";
 export function useExtensionMentionGroups(
   props: ComposerMentionSlotProps,
 ): MentionResultGroup<MentionItem>[] {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const groups = useComposerMentionSlot(props);
   return useMemo(
     () =>

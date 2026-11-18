@@ -17,8 +17,8 @@ import { readBackgroundBashOutputFromOwner } from "./background-work-owner.js";
 import {
   isConversationRealUserTurnStarter,
   parseRemoteWorkspaceIdentity,
-  type XCodeSessionContextUsage,
-  type XCodeWorkspaceRef,
+  type ZCodeSessionContextUsage,
+  type ZCodeWorkspaceRef,
 } from "@zcode/shared";
 import { createExternalTurnFaultError, normalizeGenUiInput } from "@zcode/core";
 import {
@@ -123,8 +123,8 @@ import {
   readSessionContextUsage,
 } from "./server-operations.js";
 import type {
-  XCodeProtocolAgentServerContext,
-  XCodeProtocolSessionRecord,
+  ZCodeProtocolAgentServerContext,
+  ZCodeProtocolSessionRecord,
 } from "./server-types.js";
 import { createProtocolLogger } from "./server-types.js";
 
@@ -137,7 +137,7 @@ function normalizeStoredTitleSource(
 }
 
 function sessionUsageSeedFromRuntimeContextUsage(
-  contextUsage: XCodeSessionContextUsage | undefined,
+  contextUsage: ZCodeSessionContextUsage | undefined,
   contextWindowOverride?: number,
 ): SessionUsageSeed | null {
   if (!contextUsage || contextUsage.used <= 0) {
@@ -170,7 +170,7 @@ function stableForkMode(value: string, fallback: CollaborationMode): Collaborati
 }
 
 async function readConversationFileChanges(
-  record: XCodeProtocolSessionRecord,
+  record: ZCodeProtocolSessionRecord,
   sessionId: string,
   messageIds: readonly string[],
   targetTurnId?: TurnId | null,
@@ -197,9 +197,9 @@ async function readConversationFileChanges(
  * 事件 id / traceId 照 transcript hydration 的合成事件；sequenceNumber 由 cold merge 统一重排。
  */
 async function replayDynamicWorkflowRunEvents(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   sessionId: string,
-  record: XCodeProtocolSessionRecord,
+  record: ZCodeProtocolSessionRecord,
   memoryEvents: readonly SessionEvent[],
 ): Promise<SessionEvent[]> {
   if (context.sessions.get(sessionId) !== record) return [];
@@ -235,9 +235,9 @@ async function replayDynamicWorkflowRunEvents(
 }
 
 async function resolveConversationBackingRecord(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   sessionId: string,
-): Promise<XCodeProtocolSessionRecord | undefined> {
+): Promise<ZCodeProtocolSessionRecord | undefined> {
   const direct = context.sessions.get(sessionId);
   if (direct) return direct;
 
@@ -251,7 +251,7 @@ async function resolveConversationBackingRecord(
 }
 
 async function previewConversationFileRewind(
-  record: XCodeProtocolSessionRecord,
+  record: ZCodeProtocolSessionRecord,
   messageIds: readonly string[],
   targetTurnId?: TurnId | null,
 ): Promise<V4ConversationFileRewindPreviewResult> {
@@ -482,7 +482,7 @@ function buildForkInitialInput(
 }
 
 async function recordForkStartFailureBestEffort(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   sessionId: string,
   command: Pick<CommandEnvelope, "commandId">,
   error: unknown,
@@ -567,8 +567,8 @@ async function recordForkStartFailureBestEffort(
  * 该阶段失败必须留下可重试事实与 warning，但不能把 durable accepted child 反转成 failed。
  */
 export async function registerCommittedForkBestEffort(
-  context: XCodeProtocolAgentServerContext,
-  record: XCodeProtocolSessionRecord,
+  context: ZCodeProtocolAgentServerContext,
+  record: ZCodeProtocolSessionRecord,
   fork: Parameters<typeof registerForkedSession>[2],
   options: Parameters<typeof registerForkedSession>[3] & { commandId: string },
   register: typeof registerForkedSession = registerForkedSession,
@@ -678,7 +678,7 @@ export function persistHighspeedTimingOnTurnTerminal(
 }
 
 export function createConversationV4Gateway(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
 ): ConversationV4Gateway {
   const log = createProtocolLogger(context.deps)?.child({
     module: "bootstrap.zcode_protocol_v4_gateway",
@@ -708,7 +708,7 @@ export function createConversationV4Gateway(
   // Highspeed 执行材料含临时凭据：只按 session/sourceCommandId 驻留内存，绝不进入
   // TurnSteerQueued、snapshot 或 transcript。CLI 重启后缺失时队列提升自动走原模型。
   const queuedTurnExecutions = new Map<string, Map<string, V4QueuedTurnExecution>>();
-  const autoDrainV4QueueIfReady = async (record: XCodeProtocolSessionRecord): Promise<void> => {
+  const autoDrainV4QueueIfReady = async (record: ZCodeProtocolSessionRecord): Promise<void> => {
     const head = context.v4Gateway?.getQueueHead(record.app.sessionId);
     if (!head) {
       // 外层恢复 FIFO 已消费到空；guide 仍只由 core tool-batch 边界行内消费。
@@ -789,7 +789,7 @@ export function createConversationV4Gateway(
       });
     }
   };
-  const scheduleAutoDrainRetry = (record: XCodeProtocolSessionRecord): void => {
+  const scheduleAutoDrainRetry = (record: ZCodeProtocolSessionRecord): void => {
     const sessionId = record.app.sessionId;
     if (autoDrainRetryTimers.has(sessionId)) return;
     const timer = setTimeout(() => {
@@ -1274,8 +1274,8 @@ export function createConversationV4Gateway(
       return { available: true };
     },
     afterLegacyStateMutation: async (record, reason) => {
-      await afterStateMutation(context, record as XCodeProtocolSessionRecord, reason);
-      await autoDrainV4QueueIfReady(record as XCodeProtocolSessionRecord);
+      await afterStateMutation(context, record as ZCodeProtocolSessionRecord, reason);
+      await autoDrainV4QueueIfReady(record as ZCodeProtocolSessionRecord);
     },
     // deleteSession 的执行面：先由 CLI 持久化软删除事实，再内联旧 closeSession op 的
     // 4 步释放运行实例（不 import 旧 op；随波次 2 会话注册表归 v4 后收编）。
@@ -1788,7 +1788,7 @@ export function createConversationV4Gateway(
     resumePersistedSession: async (
       sessionId,
       resumeThoughtLevel,
-      workspace?: XCodeWorkspaceRef,
+      workspace?: ZCodeWorkspaceRef,
       additionalDirectories?: string[],
       persistedMessages?: MessageWithParts[],
     ) => {

@@ -7,7 +7,7 @@ import {
 import type { ModelSelectionView } from "@zcode/services";
 import { validateModelSelectionOptions } from "@zcode/provider";
 import type { ModelSelectionState } from "@/hooks/useModelSelectionView.js";
-import type { XCodeUiError } from "@/lib/zcodeUiError.js";
+import type { ZCodeUiError } from "@/lib/zcodeUiError.js";
 
 export interface ComposerSubmissionConfig {
   modelSelection: ModelSelection;
@@ -72,7 +72,7 @@ export interface SessionModelUnavailable {
    * 发送再次被禁用却没有解释，重现了本来要解决的静默阻塞。
    */
   key: string;
-  error: XCodeUiError;
+  error: ZCodeUiError;
 }
 
 /**

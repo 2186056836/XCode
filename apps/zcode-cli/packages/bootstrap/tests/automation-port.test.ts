@@ -9,7 +9,7 @@ import {
 } from "../src/zcode-protocol/automation-port.js";
 import {
   ProtocolRequestError,
-  type XCodeProtocolAgentServerContext,
+  type ZCodeProtocolAgentServerContext,
 } from "../src/zcode-protocol/server-types.js";
 
 describe("createProtocolAutomationPort", () => {
@@ -35,7 +35,7 @@ describe("createProtocolAutomationPort", () => {
           },
         ],
       ]),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     await expect(
       port.create(
@@ -77,7 +77,7 @@ describe("createProtocolAutomationPort", () => {
           },
         ],
       ]),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     await expect(
       port.create(
@@ -146,7 +146,7 @@ describe("createProtocolAutomationPort", () => {
             },
           ],
         ]),
-      } as unknown as XCodeProtocolAgentServerContext);
+      } as unknown as ZCodeProtocolAgentServerContext);
 
       await expect(
         port.create(
@@ -260,7 +260,7 @@ describe("createProtocolAutomationPort", () => {
           },
         ],
       ]),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     const created = await port.create(
       {
@@ -331,7 +331,7 @@ describe("createProtocolAutomationPort", () => {
       chatType: "group" as const,
     };
     const port = createProtocolAutomationPort(
-      { requestClient, sessions: new Map() } as unknown as XCodeProtocolAgentServerContext,
+      { requestClient, sessions: new Map() } as unknown as ZCodeProtocolAgentServerContext,
       () =>
         ({
           activeBotDeliveryTarget: botDeliveryTarget,
@@ -401,7 +401,7 @@ describe("createProtocolAutomationPort", () => {
     const port = createProtocolAutomationPort({
       requestClient,
       sessions: new Map(),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     await expect(
       port.create(
@@ -453,7 +453,7 @@ describe("createProtocolAutomationPort", () => {
     const port = createProtocolAutomationPort({
       requestClient,
       sessions: new Map(),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     await expect(
       port.create(
@@ -495,7 +495,7 @@ describe("createProtocolAutomationPort", () => {
     const port = createProtocolAutomationPort({
       requestClient,
       sessions: new Map(),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     await port.create({
       delayMinutes: 3,
@@ -536,7 +536,7 @@ describe("createProtocolAutomationPort", () => {
     const port = createProtocolAutomationPort({
       requestClient,
       sessions: new Map(),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     // Bug 原因：`delayMinutes !== null` 判定下，省略字段（很多 provider 不稳定保留
     // null 字段）会被误当成相对任务，把普通 recurring 调度错建成一次性。
@@ -591,7 +591,7 @@ describe("createProtocolAutomationPort", () => {
     const port = createProtocolAutomationPort({
       requestClient,
       sessions: new Map(),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     const automations = await port.list();
 
@@ -613,7 +613,7 @@ describe("createProtocolAutomationPort", () => {
     const port = createProtocolAutomationPort({
       requestClient,
       sessions: new Map(),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     const error = await port
       .create(
@@ -638,7 +638,7 @@ describe("createProtocolAutomationPort", () => {
       logger,
       requestClient,
       sessions: new Map(),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     await expect(
       port.create(
@@ -711,7 +711,7 @@ describe("createProtocolAutomationPort", () => {
           },
         ],
       ]),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     await port.create(
       {
@@ -762,7 +762,7 @@ describe("createProtocolAutomationPort", () => {
     const port = createProtocolAutomationPort({
       requestClient,
       sessions: new Map(),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     await expect(
       port.update({
@@ -805,7 +805,7 @@ describe("createProtocolAutomationPort", () => {
     const port = createProtocolAutomationPort({
       requestClient,
       sessions: new Map(),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     await expect(port.delete({ id: "stale-id" })).resolves.toBe(false);
     expect(requestClient).toHaveBeenCalledWith(
@@ -820,7 +820,7 @@ describe("createProtocolAutomationPort", () => {
     const port = createProtocolAutomationPort({
       requestClient,
       sessions: new Map(),
-    } as unknown as XCodeProtocolAgentServerContext);
+    } as unknown as ZCodeProtocolAgentServerContext);
 
     await expect(port.pause({ id: "automation-1" })).resolves.toBe(true);
     expect(requestClient).toHaveBeenCalledWith(
@@ -871,7 +871,7 @@ describe("createProtocolAutomationPort", () => {
         requestClient,
         // 归属会话故意不在 sessions map 中，模拟 V4/desktop 场景。
         sessions: new Map(),
-      } as unknown as XCodeProtocolAgentServerContext,
+      } as unknown as ZCodeProtocolAgentServerContext,
       () => ownSession as unknown as never,
     );
 
@@ -912,9 +912,9 @@ it.each([false, true])("定时任务列表按协商能力携带自身工作区�
     {
       requestClient,
       sessionWorkspaceRoutingEnabled: enabled,
-    } as unknown as XCodeProtocolAgentServerContext,
+    } as unknown as ZCodeProtocolAgentServerContext,
     () =>
-      ({ workspace }) as import("../src/zcode-protocol/server-types.js").XCodeProtocolSessionRecord,
+      ({ workspace }) as import("../src/zcode-protocol/server-types.js").ZCodeProtocolSessionRecord,
   );
   await port.list({ sessionId: "session-b" });
   expect(requestClient).toHaveBeenCalledWith(

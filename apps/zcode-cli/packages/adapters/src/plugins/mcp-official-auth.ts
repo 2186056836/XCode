@@ -4,7 +4,7 @@
  * 单独成文件而不是留在 mcp.ts：官方鉴权的解析规则覆盖 http 与 stdio 两种传输方式，
  * 且与模板变量解析、传输层字段解析没有耦合——放一起只会让 mcp.ts 继续膨胀（它已到 max-lines 上限）。
  */
-import type { McpOfficialProvenance, XCodeOfficialMcpAuthConfig } from "@zcode/contracts";
+import type { McpOfficialProvenance, ZCodeOfficialMcpAuthConfig } from "@zcode/contracts";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -14,10 +14,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * 严格解析 `auth`。未声明返回 undefined（走普通 MCP 路径）；声明了但形状不合法一律抛错，
  * 不做宽容降级——降级会让"看起来配了官方鉴权、实际匿名请求"的配置静默上线。
  */
-export function parseXCodeOfficialAuth(
+export function parseZCodeOfficialAuth(
   value: unknown,
   mcpKey: string,
-): XCodeOfficialMcpAuthConfig | undefined {
+): ZCodeOfficialMcpAuthConfig | undefined {
   if (value === undefined) return undefined;
   if (!isRecord(value)) {
     throw new Error(`MCP server ${mcpKey}: auth must be an object`);

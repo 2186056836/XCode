@@ -1,6 +1,6 @@
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import type { XCodePluginsOverviewResult } from "@zcode/shared";
+import type { ZCodePluginsOverviewResult } from "@zcode/shared";
 import { clearAppData, getE2EAppDataPaths } from "#e2e/helpers/desktop-app";
 import {
   addMarketplaceSourceThroughAgent,
@@ -119,11 +119,11 @@ async function bumpCatalog(market: string): Promise<void> {
   await writeFile(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
 }
 
-function findAvailable(overview: XCodePluginsOverviewResult, id: string) {
+function findAvailable(overview: ZCodePluginsOverviewResult, id: string) {
   return overview.availablePlugins.find((plugin) => plugin.id === id);
 }
 
-function findInstalled(overview: XCodePluginsOverviewResult, id: string) {
+function findInstalled(overview: ZCodePluginsOverviewResult, id: string) {
   return overview.installedPlugins.find((plugin) => plugin.id === id);
 }
 

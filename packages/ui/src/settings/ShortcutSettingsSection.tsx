@@ -10,7 +10,7 @@ import { toast } from "@/components/ui/toast.js";
 import { useConfirmDialogStore } from "@/store/confirmDialogStore.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useSettings } from "@/hooks/useSettingService.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import {
   buildShortcutOverridesAfterAppend,
@@ -37,7 +37,7 @@ import { useShortcutRecording } from "@/settings/useShortcutRecording.js";
  * 命令级「+」追加；同命令物理等价重复在录制入口拒绝。
  */
 export function ShortcutSettingsSection({ isDesktop = false }: { isDesktop?: boolean }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { settings, update } = useSettings();
   const platform = usePlatform();
   const [query, setQuery] = useState("");

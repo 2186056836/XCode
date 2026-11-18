@@ -16,17 +16,17 @@ import {
   zcodeAutomationBotDeliveryTargetSchema,
   modelSelectionSchema,
   zcodeTaskModeSchema,
-  type XCodeAutomation,
-  type XCodeAutomationBotDeliveryTarget,
-  type XCodeAutomationCreateParams,
-  type XCodeAutomationDispatchStatus,
-  type XCodeAutomationLifecycleStatus,
+  type ZCodeAutomation,
+  type ZCodeAutomationBotDeliveryTarget,
+  type ZCodeAutomationCreateParams,
+  type ZCodeAutomationDispatchStatus,
+  type ZCodeAutomationLifecycleStatus,
   type ModelSelection,
-  type XCodeAutomationRun,
-  type XCodeAutomationRunDispatchStatus,
-  type XCodeAutomationRunOutcome,
-  type XCodeAutomationTrigger,
-  type XCodeAutomationUpdateParams,
+  type ZCodeAutomationRun,
+  type ZCodeAutomationRunDispatchStatus,
+  type ZCodeAutomationRunOutcome,
+  type ZCodeAutomationTrigger,
+  type ZCodeAutomationUpdateParams,
 } from "@zcode/shared";
 import { getTasksIndexDatabasePath } from "#src/paths.js";
 import { runTasksDatabaseMigrations } from "#src/session/tasksDatabase/migrations.js";
@@ -126,11 +126,11 @@ interface AutomationRunRow {
 }
 
 export interface ClaimedManualAutomationRun {
-  automation: XCodeAutomation;
-  run: XCodeAutomationRun;
+  automation: ZCodeAutomation;
+  run: ZCodeAutomationRun;
 }
 
-function rowToAutomation(row: AutomationRow): XCodeAutomation {
+function rowToAutomation(row: AutomationRow): ZCodeAutomation {
   const modelSelection = readAutomationModelSelection(row);
   return {
     automationId: row.automation_id,
@@ -160,15 +160,15 @@ function rowToAutomation(row: AutomationRow): XCodeAutomation {
     maxRuns: row.max_runs ?? undefined,
     endAt: row.end_at ?? undefined,
     scheduleRule: row.schedule_rule
-      ? (JSON.parse(row.schedule_rule) as XCodeAutomation["scheduleRule"])
+      ? (JSON.parse(row.schedule_rule) as ZCodeAutomation["scheduleRule"])
       : undefined,
     ...(row.schedule_edited_by_user === 1 ? { scheduleEditedByUser: true } : {}),
     runCount: row.run_count,
     enabled: row.enabled === 1,
-    lifecycleStatus: row.lifecycle_status as XCodeAutomationLifecycleStatus,
+    lifecycleStatus: row.lifecycle_status as ZCodeAutomationLifecycleStatus,
     nextRunAt: row.next_run_at ?? undefined,
     lastRunAt: row.last_run_at ?? undefined,
-    dispatchStatus: row.dispatch_status as XCodeAutomationDispatchStatus,
+    dispatchStatus: row.dispatch_status as ZCodeAutomationDispatchStatus,
     dispatchAttempts: row.dispatch_attempts,
     retryAt: row.retry_at ?? undefined,
     lastError: row.last_error ?? undefined,
@@ -177,13 +177,13 @@ function rowToAutomation(row: AutomationRow): XCodeAutomation {
   };
 }
 
-function readAutomationModelSelection(row: AutomationRow): XCodeAutomation["modelSelection"] {
+function readAutomationModelSelection(row: AutomationRow): ZCodeAutomation["modelSelection"] {
   // 旧字段只能经过独立 importer；新字段损坏或明确清空时不能复活旧选择。
   return readSerializedModelSelection(row.model_selection);
 }
 
 function serializeAutomationModelSelection(
-  selection: XCodeAutomation["modelSelection"],
+  selection: ZCodeAutomation["modelSelection"],
 ): string | null {
   if (!selection) return null;
   const options = selection.options;
@@ -195,7 +195,7 @@ function serializeAutomationModelSelection(
   return JSON.stringify(parsed);
 }
 
-function normalizeAutomationMode(mode: string | null): XCodeAutomation["mode"] | undefined {
+function normalizeAutomationMode(mode: string | null): ZCodeAutomation["mode"] | undefined {
   const parsed = zcodeTaskModeSchema.safeParse(mode);
   return parsed.success ? parsed.data : undefined;
 }
@@ -208,17 +208,17 @@ function assertValidAutomationMode(mode: unknown): void {
   }
 }
 
-function rowToRun(row: AutomationRunRow): XCodeAutomationRun {
+function rowToRun(row: AutomationRunRow): ZCodeAutomationRun {
   const modelSelection = readSerializedModelSelection(row.model_selection);
   return {
     runId: row.run_id,
     automationId: row.automation_id,
     workspaceKey: row.workspace_key,
     scheduledAt: row.scheduled_at ?? undefined,
-    trigger: row.trigger as XCodeAutomationTrigger,
+    trigger: row.trigger as ZCodeAutomationTrigger,
     ...(modelSelection ? { modelSelection } : {}),
-    dispatchStatus: row.dispatch_status as XCodeAutomationRunDispatchStatus,
-    outcome: (row.outcome as XCodeAutomationRunOutcome | null) ?? undefined,
+    dispatchStatus: row.dispatch_status as ZCodeAutomationRunDispatchStatus,
+    outcome: (row.outcome as ZCodeAutomationRunOutcome | null) ?? undefined,
     sessionId: row.session_id ?? undefined,
     error: row.error ?? undefined,
     attempts: row.attempts,
@@ -341,9 +341,9 @@ export class AutomationRepo {
   // ---- 管理 CRUD ----
 
   async create(
-    params: XCodeAutomationCreateParams,
-    options: { nextRunAt: number | null; lifecycleStatus?: XCodeAutomationLifecycleStatus },
-  ): Promise<XCodeAutomation> {
+    params: ZCodeAutomationCreateParams,
+    options: { nextRunAt: number | null; lifecycleStatus?: ZCodeAutomationLifecycleStatus },
+  ): Promise<ZCodeAutomation> {
     assertValidAutomationMode(params.mode);
     await this.ensureReady();
     const now = Date.now();
@@ -430,7 +430,7 @@ export class AutomationRepo {
   async list(scope?: {
     workspacePath?: string;
     workspaceIdentity?: string;
-  }): Promise<XCodeAutomation[]> {
+  }): Promise<ZCodeAutomation[]> {
     await this.ensureReady();
     const workspaceKey = scope?.workspacePath
       ? resolveWorkspaceKey({
@@ -470,7 +470,7 @@ export class AutomationRepo {
   async getBotDeliveryTarget(
     automationId: string,
     workspaceKey?: string,
-  ): Promise<XCodeAutomationBotDeliveryTarget | undefined> {
+  ): Promise<ZCodeAutomationBotDeliveryTarget | undefined> {
     await this.ensureReady();
     const raw = this.getRow(automationId, workspaceKey)?.bot_delivery_target;
     if (!raw) return undefined;
@@ -504,7 +504,7 @@ export class AutomationRepo {
     return row !== undefined;
   }
 
-  async get(automationId: string, workspaceKey?: string): Promise<XCodeAutomation | null> {
+  async get(automationId: string, workspaceKey?: string): Promise<ZCodeAutomation | null> {
     await this.ensureReady();
     const row = this.getRow(automationId, workspaceKey);
     return row ? rowToAutomation(row) : null;
@@ -523,14 +523,14 @@ export class AutomationRepo {
    */
   async update(
     automationId: string,
-    params: XCodeAutomationUpdateParams,
+    params: ZCodeAutomationUpdateParams,
     options?: {
       nextRunAt?: number | null;
-      lifecycleStatus?: XCodeAutomationLifecycleStatus;
+      lifecycleStatus?: ZCodeAutomationLifecycleStatus;
       resetRetry?: boolean;
     },
     workspaceKey?: string,
-  ): Promise<XCodeAutomation | null> {
+  ): Promise<ZCodeAutomation | null> {
     assertValidAutomationMode(params.mode);
     await this.ensureReady();
     const existing = this.getRow(automationId, workspaceKey);
@@ -771,7 +771,7 @@ export class AutomationRepo {
    * single-flight 认领到期项：原子 running=0→1。同时回收认领超时（claimed_at 过期）的僵尸项。
    * due 判定同时看 next_run_at 与 retry_at，任一到期即 due。
    */
-  async claimDue(now: number): Promise<XCodeAutomation[]> {
+  async claimDue(now: number): Promise<ZCodeAutomation[]> {
     await this.ensureReady();
     const db = this.getDatabase();
     db.exec("BEGIN IMMEDIATE");
@@ -804,7 +804,7 @@ export class AutomationRepo {
             )`,
         )
         .all({ now }) as unknown as AutomationRow[];
-      const claimed: XCodeAutomation[] = [];
+      const claimed: ZCodeAutomation[] = [];
       const claim = db.prepare(
         `UPDATE automations
         SET running = 1, claimed_at = @now, dispatch_status = 'claimed', updated_at = @now
@@ -1232,7 +1232,7 @@ export class AutomationRepo {
     automationId: string;
     workspaceKey: string;
     scheduledAt: number | null;
-    trigger: XCodeAutomationTrigger;
+    trigger: ZCodeAutomationTrigger;
   }): Promise<void> {
     await this.ensureReady();
     const now = Date.now();
@@ -1260,7 +1260,7 @@ export class AutomationRepo {
     automationId: string;
     workspaceKey: string;
     scheduledAt: number | null;
-    trigger: XCodeAutomationTrigger;
+    trigger: ZCodeAutomationTrigger;
     modelSelection?: ModelSelection;
   }): Promise<void> {
     await this.ensureReady();
@@ -1317,7 +1317,7 @@ export class AutomationRepo {
   /** 派发结果回写 run（dispatched 回填 session_id / failed_to_dispatch 记 error）。 */
   async markRunDispatch(params: {
     runId: string;
-    dispatchStatus: XCodeAutomationRunDispatchStatus;
+    dispatchStatus: ZCodeAutomationRunDispatchStatus;
     sessionId?: string | null;
     error?: string | null;
   }): Promise<void> {
@@ -1407,7 +1407,7 @@ export class AutomationRepo {
   /** session runtime 回写运行结果（running / succeeded / failed / stopped）。 */
   async markRunOutcome(
     runId: string,
-    outcome: XCodeAutomationRunOutcome,
+    outcome: ZCodeAutomationRunOutcome,
     error?: string,
   ): Promise<void> {
     await this.ensureReady();
@@ -1434,7 +1434,7 @@ export class AutomationRepo {
     automationId: string;
     workspaceKey: string;
     scheduledAt: number | null;
-    trigger: XCodeAutomationTrigger;
+    trigger: ZCodeAutomationTrigger;
     reason: string;
   }): Promise<void> {
     await this.ensureReady();
@@ -1459,7 +1459,7 @@ export class AutomationRepo {
       });
   }
 
-  async listRuns(automationId: string, workspaceKey?: string): Promise<XCodeAutomationRun[]> {
+  async listRuns(automationId: string, workspaceKey?: string): Promise<ZCodeAutomationRun[]> {
     await this.ensureReady();
     const rows = this.getDatabase()
       .prepare(
@@ -1475,7 +1475,7 @@ export class AutomationRepo {
     return rows.map(rowToRun);
   }
 
-  async getRun(runId: string): Promise<XCodeAutomationRun | null> {
+  async getRun(runId: string): Promise<ZCodeAutomationRun | null> {
     await this.ensureReady();
     const row = this.getDatabase()
       .prepare(`SELECT * FROM automation_runs WHERE run_id = @run_id`)

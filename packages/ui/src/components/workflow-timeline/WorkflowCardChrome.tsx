@@ -12,7 +12,7 @@ import {
   workflowRunStopReasonMessageId,
   isWorkflowRunSuperseded,
 } from "@/components/workflow-graph/run-status-presentation.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /**
  * 工作流卡的表头与页脚。
@@ -75,7 +75,7 @@ export function WorkflowRunStatus({
   className?: string;
   testId?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const effectiveStatus = status ?? run?.status ?? "pending";
   const reason =
     run === undefined ? undefined : readWorkflowRunStopReason({ ...run, status: effectiveStatus });
@@ -161,7 +161,7 @@ export function WorkflowCardHeader({
   /** chevron 的无障碍名；缺席时是工具卡的「展开 / 收起工具详情」。 */
   toggleLabel?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const openLabel = intl.formatMessage({ id: "chat.toolCall.workflow.openRunDetails" });
   const toggleLabel =
     toggleLabelOverride ??

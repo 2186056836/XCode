@@ -1,7 +1,7 @@
 import { BadgePercent } from "lucide-react";
 import type { CodingPlanBillingDiscountText } from "@zcode/shared";
 import { useCodingPlanBillingDiscount } from "@/hooks/useCodingPlanBillingDiscount.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { cn } from "@/components/lib/utils.js";
 
 /**
@@ -20,7 +20,7 @@ export function CodingPlanBillingDiscount({
   iconVisible?: boolean;
 }) {
   const { active, config } = useCodingPlanBillingDiscount();
-  const { locale } = useXCodeIntl();
+  const { locale } = useZCodeIntl();
 
   if (!active || !config) {
     return null;

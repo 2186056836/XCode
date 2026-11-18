@@ -1,6 +1,6 @@
 import type { ModelSelectionGhostReason } from "./model-selection-types.js";
 import { decodeCustomModelValue } from "./custom-model-value.js";
-import type { XCodeProvider } from "./zcode-task-types-core.js";
+import type { ZCodeProvider } from "./zcode-task-types-core.js";
 
 export const NATIVE_SUPPLIER_KEY_PREFIX = "native:";
 export const CUSTOM_SUPPLIER_KEY_PREFIX = "custom:";
@@ -29,7 +29,7 @@ export function normalizeSupplierBaseUrl(baseUrl: string): string {
   return baseUrl.trim().replace(TRAILING_SLASHES_RE, "");
 }
 
-export function buildNativeSupplierKey(zcodeProvider: XCodeProvider): string {
+export function buildNativeSupplierKey(zcodeProvider: ZCodeProvider): string {
   return `${NATIVE_SUPPLIER_KEY_PREFIX}${zcodeProvider}`;
 }
 
@@ -49,7 +49,7 @@ export function buildGhostSupplierIdentity(rawIdentity: string): string {
 }
 
 export function buildGhostSupplierKey(
-  zcodeProvider: XCodeProvider,
+  zcodeProvider: ZCodeProvider,
   reason: ModelSelectionGhostReason,
   rawIdentity: string,
 ): string {
@@ -64,7 +64,7 @@ export function buildGhostSupplierKey(
 }
 
 export function resolveSupplierKeyFromModelDisplayValue(
-  zcodeProvider: XCodeProvider,
+  zcodeProvider: ZCodeProvider,
   value: string | boolean | undefined,
 ): string {
   const customModel = decodeCustomModelValue(String(value ?? ""));

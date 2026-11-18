@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select.js";
 import { useBrowserSitePermissions } from "@/hooks/useBrowserSitePermissions.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /** 站点权限设置标签页：数据源为 main 站点权限 store，「仅本次」临时态不展示。 */
 export function BrowserSitePermissionsPage({
@@ -19,7 +19,7 @@ export function BrowserSitePermissionsPage({
   origin: string;
   isVisible: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const t = (id: string) => intl.formatMessage({ id: `browser.permission.${id}` });
   const { states, error: readError, refresh, supported, write, setPermission, reset, retryWrite } =
     useBrowserSitePermissions(origin, isVisible);

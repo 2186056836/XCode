@@ -14,19 +14,19 @@ import type {
 import {
   zcodeModelJailbreakSnapshotResultSchema,
   zcodeProtocolMethods,
-  type XCodeModelJailbreakProtocolSnapshot,
-  type XCodeProtocolMethod,
+  type ZCodeModelJailbreakProtocolSnapshot,
+  type ZCodeProtocolMethod,
 } from "@zcode/shared";
-import type { XCodeProtocolAgentServerContext } from "./server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "./server-types.js";
 
 export function createProtocolModelJailbreakPort(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
 ): ModelJailbreakPort {
-  const request = (method: XCodeProtocolMethod, params: unknown) =>
+  const request = (method: ZCodeProtocolMethod, params: unknown) =>
     context.requestClient(method, params, zcodeModelJailbreakSnapshotResultSchema);
 
   const toSnapshot = (
-    snapshot: XCodeModelJailbreakProtocolSnapshot,
+    snapshot: ZCodeModelJailbreakProtocolSnapshot,
   ): ModelJailbreakSnapshot => ({
     state: snapshot.state,
     ...(snapshot.templates ? { templates: snapshot.templates } : {}),

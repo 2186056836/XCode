@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { CommandAgentSource } from "./command-types.js";
-import type { XCodeProvider } from "./zcode-task-types-core.js";
+import type { ZCodeProvider } from "./zcode-task-types-core.js";
 
-export const ZCODE_AGENT_PROVIDER = "glm" satisfies XCodeProvider;
+export const ZCODE_AGENT_PROVIDER = "glm" satisfies ZCodeProvider;
 export const ZCODE_AGENT_PROVIDER_LABEL = "XCode Agent";
 export const ZCODE_COMMAND_AGENT_SOURCE = "zcodeAgent" satisfies CommandAgentSource;
 
@@ -18,30 +18,23 @@ export const legacyZCodeProviderSchema = z
 // fork 兼容：单值字面量 schema（1010 版改名/移除，此处保留导出）
 export const zcodeAgentProviderSchema = z.literal(ZCODE_AGENT_PROVIDER);
 
-/**
- * 上一轮合并漏做了本文件这两处导出的 Z→X 词表改名（仍是 ZCODE_ 前缀），而 W 类
- * 合并进来的 task-realtime-core / validation / validationAppSettings 已按词表引用
- * XCode 侧名字。此处补上 XCode 侧名字；上游 ZCODE_ 名保持不动。
- */
-export const legacyXCodeProviderSchema = legacyZCodeProviderSchema;
-
 export const ZCODE_ENABLED_AGENT_PROVIDERS = [
   ZCODE_AGENT_PROVIDER,
-] as const satisfies readonly XCodeProvider[];
+] as const satisfies readonly ZCodeProvider[];
 
 export const ZCODE_COMMAND_AGENT_SOURCES = [
   ZCODE_COMMAND_AGENT_SOURCE,
 ] as const satisfies readonly CommandAgentSource[];
 
-export function normalizeAgentProviderToXCodeAgent(
-  _provider?: XCodeProvider | null,
-): XCodeProvider {
+export function normalizeAgentProviderToZCodeAgent(
+  _provider?: ZCodeProvider | null,
+): ZCodeProvider {
   return ZCODE_AGENT_PROVIDER;
 }
 
-export function normalizeAgentProvidersToXCodeAgent(
-  _providers?: ReadonlyArray<XCodeProvider> | null,
-): XCodeProvider[] {
+export function normalizeAgentProvidersToZCodeAgent(
+  _providers?: ReadonlyArray<ZCodeProvider> | null,
+): ZCodeProvider[] {
   return [...ZCODE_ENABLED_AGENT_PROVIDERS];
 }
 
@@ -51,8 +44,8 @@ export function normalizeCommandAgentSourceToZCodeAgent(
   return ZCODE_COMMAND_AGENT_SOURCE;
 }
 
-export function isXCodeAgentProvider(
-  provider: XCodeProvider | null | undefined,
+export function isZCodeAgentProvider(
+  provider: ZCodeProvider | null | undefined,
 ): provider is typeof ZCODE_AGENT_PROVIDER {
   return provider === ZCODE_AGENT_PROVIDER;
 }

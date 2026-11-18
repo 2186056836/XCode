@@ -6,10 +6,10 @@ import {
   ZCODE_PLUGIN_READ_USER_OPTIONS_ERROR_CODES,
   zcodePluginQueryErrorDataSchema,
   zcodePluginsReadUserOptionsResultSchema,
-  type XCodePluginsReadUserOptionsResult,
+  type ZCodePluginsReadUserOptionsResult,
 } from "./contract.js";
 
-export function exampleReadUserOptionsResult(raw: unknown): XCodePluginsReadUserOptionsResult {
+export function exampleReadUserOptionsResult(raw: unknown): ZCodePluginsReadUserOptionsResult {
   // 值里可能有敏感值：只交给本插件的扩展，不打日志。
   return zcodePluginsReadUserOptionsResultSchema.parse(raw);
 }

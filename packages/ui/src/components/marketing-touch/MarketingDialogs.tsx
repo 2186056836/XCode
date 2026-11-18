@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { toZhOrEnLocale } from "@zcode/shared";
 import { useStore } from "zustand";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { toast } from "@/components/ui/toast.js";
 import { CloudContentDialog } from "@/components/cloud-content-dialog/CloudContentDialog.js";
 import { MarketingFailureDialog } from "@/components/marketing-touch/MarketingFailureDialog.js";
@@ -15,7 +15,7 @@ export function MarketingDialogs({ controller }: { controller: MarketingTouchCon
     marketingNavigation,
     (state) => state.request?.target.page === "upgrade",
   );
-  const { locale, intl } = useXCodeIntl();
+  const { locale, intl } = useZCodeIntl();
   const claimError = state.errorAction === "claim_zcode_plan" ? state.error : null;
   useEffect(() => {
     if (state.error && !claimError) {

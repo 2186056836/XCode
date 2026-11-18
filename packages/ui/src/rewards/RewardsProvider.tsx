@@ -9,8 +9,8 @@ import {
 } from "react";
 import { buildRewardsUrl, resolveRewardsOrigin, ZCODE_ENV } from "@zcode/shared";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { resolveTheme } from "@/useTheme.js";
 import { RewardsWebview } from "@/rewards/RewardsWebview.js";
 import { logger } from "@/logger.js";
@@ -26,11 +26,11 @@ export function RewardsProvider({
 }) {
   const [opened, setOpened] = useState(false);
   const platform = usePlatform();
-  const { locale } = useXCodeIntl();
-  const theme = useXCodeStore((s) => s.theme);
-  const user = useXCodeStore((s) => s.user);
-  const loginAttempt = useXCodeStore((s) => s.loginEntryAttempt);
-  const requestLogin = useXCodeStore((s) => s.requestLoginEntry);
+  const { locale } = useZCodeIntl();
+  const theme = useZCodeStore((s) => s.theme);
+  const user = useZCodeStore((s) => s.user);
+  const loginAttempt = useZCodeStore((s) => s.loginEntryAttempt);
+  const requestLogin = useZCodeStore((s) => s.requestLoginEntry);
   // 登录后营销实例会重建；续接意图由窗口级 Provider 持有，不能挂在旧 controller 上。
   const pendingLogin = useRef<number | null>(null);
   const openPage = useCallback(async () => {

@@ -1,8 +1,8 @@
 /* eslint-disable max-lines -- Coding Plan 用量视图集中维护来源选择、额度投影和重置入口；本阶段只迁移 Account Access，不拆分既有 UI 结构。 */
 import type {
   UsageEntitlementSnapshot,
-  XCodeAccountAccess,
-  XCodeProviderAccountAccess,
+  ZCodeAccountAccess,
+  ZCodeProviderAccountAccess,
 } from "@zcode/shared";
 import {
   BIGMODEL_PROVIDER_ID,
@@ -13,7 +13,7 @@ import {
 import { ChevronRightIcon, LoaderCircle } from "lucide-react";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   findCodingPlanQuotaLimit,
   formatQuotaRemainingPercentage,
@@ -29,7 +29,7 @@ import type {
 export interface CodingPlanUsageRemainingEntitlement {
   sourceId?: SidebarUsageCodingPlanSourceId;
   providerId: SidebarUsageCodingPlanProviderId;
-  accountAccess: XCodeProviderAccountAccess | XCodeAccountAccess;
+  accountAccess: ZCodeProviderAccountAccess | ZCodeAccountAccess;
   label?: string;
   snapshot: UsageEntitlementSnapshot | null;
   loading: boolean;
@@ -38,7 +38,7 @@ export interface CodingPlanUsageRemainingEntitlement {
 
 export interface CodingPlanUsageAvailableProvider {
   providerId: SidebarUsageCodingPlanProviderId;
-  accountAccess: XCodeProviderAccountAccess | XCodeAccountAccess;
+  accountAccess: ZCodeProviderAccountAccess | ZCodeAccountAccess;
   label: string;
 }
 
@@ -238,7 +238,7 @@ export function CodingPlanUsageRemainingPanel({
   onUsageClick?: () => void;
   selectedProviderId?: SidebarUsageCodingPlanSourceId;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const state = useMemo(
     () =>
       resolveCodingPlanUsageRemainingState({

@@ -48,8 +48,8 @@ import type {
   HighspeedPrepareTurnResult,
   GitRepositorySummary,
   ModelSelection,
-  XCodeProvider,
-  XCodeTaskChangeSummary,
+  ZCodeProvider,
+  ZCodeTaskChangeSummary,
 } from "@zcode/shared";
 import type {
   AttachmentRef,
@@ -88,7 +88,7 @@ import type {
 import { useCodingPlanBillingDiscountFromService } from "@/CodingPlanBillingDiscount.js";
 import { toast } from "@/components/ui/toast.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { DEFAULT_CODE_PREVIEW_SETTINGS } from "@/lib/codePreviewSettings.js";
 import type { CodeViewerSource } from "@/lib/codeViewer.js";
 import type { OpenAutomationsMain } from "@/lib/taskNavigationHistory.js";
@@ -158,7 +158,7 @@ import { usePlanIdentitySnapshot } from "@/hooks/usePlanIdentitySnapshot.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { selectGenUiModelContext } from "@zcode/shared/gen-ui";
 import { useWorkspaceHomePath } from "@/hooks/useWorkspaceHomePath.js";
-import { prepareWorkspaceWithXCodeSessionService } from "@/hooks/useWorkspacePrepare.js";
+import { prepareWorkspaceWithZCodeSessionService } from "@/hooks/useWorkspacePrepare.js";
 import {
   createCodingPlanFunnelContext,
   resolveCodingPlanEntryPlanState,
@@ -193,8 +193,8 @@ import { projectSessionConfigToTaskConfigOptions } from "@/v4/composer/sessionCo
 import { useDraftRuntimeRebuildGate } from "@/v4/composer/useDraftRuntimeRebuildGate.js";
 import { useDraftModelReadinessGate } from "@/v4/composer/useDraftModelReadinessGate.js";
 import { useSettings } from "@/hooks/useSettingService.js";
-import { useXCodeStoreWithDefault } from "@/store/StoreProvider.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeStoreWithDefault } from "@/store/StoreProvider.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import {
   DEFAULT_CONVERSATION_SHARE_ACCESS_MODE,
   DEFAULT_CONVERSATION_SHARE_DOCK_STATE,
@@ -348,7 +348,7 @@ import {
   hasChatLoadingBlockingActiveWork,
   hasChatLoadingBlockingInteraction,
 } from "@/v4/chatLoadingVisibility.js";
-import type { XCodeUiError } from "@/lib/zcodeUiError.js";
+import type { ZCodeUiError } from "@/lib/zcodeUiError.js";
 import {
   isModelNotInRegistryError,
   type ChatErrorBannerModelConfigTarget,
@@ -420,7 +420,7 @@ export interface SessionPaneProps {
   /** Prompt 模板埋点当前仅覆盖 Desktop；Web / 手机远控保留 UI 行为但不触发该事件。 */
   isDesktop?: boolean;
   compactForRemoteControl?: boolean;
-  provider?: XCodeProvider;
+  provider?: ZCodeProvider;
     onSessionCreated?: (sessionId: string, origin?: "draft-promotion") => void;
   /** 桌宠联动：本 pane 会话的任务状态变化上抛（官方 attention 语义）。侧 pane 可选传。 */
   onPetStateUpdate?: (update: {
@@ -463,7 +463,7 @@ export interface SessionPaneProps {
   gitDirtyFileCount?: number;
   gitWorktreeReviewSourceId?: GitChangeSourceId | null;
   gitWorktreeChangeSummary?: { added: number; removed: number } | null;
-  activeTaskChangeSummary?: XCodeTaskChangeSummary | null;
+  activeTaskChangeSummary?: ZCodeTaskChangeSummary | null;
   summaryPanelVariantOverride?: ChatViewSummaryPanelVariant | null;
   onSummaryPanelVariantOverrideChange?: (variant: ChatViewSummaryPanelVariant | null) => void;
   onRefreshGit?: () => void;
@@ -522,7 +522,7 @@ const MAX_CONVERSATION_FILE_CHANGES_CACHE_ENTRIES = 20;
 function toComposerUiError(
   sessionId: string | null | undefined,
   error: SessionErrorInfo,
-): XCodeUiError {
+): ZCodeUiError {
   return {
     code: error.code,
     message: error.message,
@@ -746,17 +746,17 @@ export function SessionPane({
     zcodeSessionService,
     zcodeTaskService,
   } = useServices();
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const slashCommands = useSlashCommands(workspacePath, workspaceIdentity);
   const baseWorkspaceServices = useBaseWorkspaceServices();
   const composerClientNamespace = useComposerClientNamespace();
-  const composerProjectId = useXCodeSessionStore(
+  const composerProjectId = useZCodeSessionStore(
     (store) => store.getWorkspaceState(workspacePath, workspaceIdentity).draftProjectId,
   );
-  const draftWorktreeEnabled = useXCodeSessionStore((store) =>
+  const draftWorktreeEnabled = useZCodeSessionStore((store) =>
     Boolean(store.getWorkspaceState(workspacePath, workspaceIdentity).draftWorktree),
   );
-  const viewWorktreeCreation = useXCodeSessionStore((state) => state.viewWorktreeCreation);
+  const viewWorktreeCreation = useZCodeSessionStore((state) => state.viewWorktreeCreation);
   // worktree 被删除后，任务按"工作区目录失效"规则只读（docs/git/worktree.md §3.12）。
   const {
     cwd: sessionCwd,
@@ -773,7 +773,7 @@ export function SessionPane({
     () => resolveComposerScope(composerProjectId, workspaceIdentity, composerClientNamespace),
     [composerProjectId, workspaceIdentity, composerClientNamespace],
   );
-  const composerDraftGeneration = useXCodeSessionStore(
+  const composerDraftGeneration = useZCodeSessionStore(
     (store) => store.getWorkspaceState(workspacePath, workspaceIdentity).draftFocusVersion,
   );
   const pendingAtEntry = useMemo(() => {
@@ -1245,7 +1245,7 @@ export function SessionPane({
     [fileChanges, sessionId, snapshot?.logEpoch],
   );
   const [dismissedErrorKeys, setDismissedErrorKeys] = useState<readonly string[]>([]);
-  const [sendSubmissionError, setSendSubmissionError] = useState<XCodeUiError | null>(null);
+  const [sendSubmissionError, setSendSubmissionError] = useState<ZCodeUiError | null>(null);
   const [paneLocalSummaryPanelVariantOverride, setPaneLocalSummaryPanelVariantOverride] =
     useState<ChatViewSummaryPanelVariant | null>(null);
   const [terminalSectionOpen, setTerminalSectionOpen] = useState(false);
@@ -1708,7 +1708,7 @@ export function SessionPane({
     sessionId,
     snapshot,
   ]);
-  const workspaceConfigOptions = useXCodeSessionStore(
+  const workspaceConfigOptions = useZCodeSessionStore(
     (store) => store.getWorkspaceState(workspacePath, workspaceIdentity).configOptions,
   );
   useEffect(() => {
@@ -1724,7 +1724,7 @@ export function SessionPane({
     // Bug 原因：V4 session 配置只存在 ConversationSnapshot，legacy task 配置桶一直为空；
     // 用户从 custom model 会话新建任务时，startDraft 只能继承 workspace 默认模型。
     // 这里仅把权威配置叠到完整目录并按 task 缓存，不改变 session 或 workspace 事实源。
-    useXCodeSessionStore
+    useZCodeSessionStore
       .getState()
       .setTaskConfigOptions(
         workspacePath,
@@ -1771,19 +1771,19 @@ export function SessionPane({
     // 生命周期边界，避免长时间 workbench 中 Set 随会话数增长。
     autoOpenedAssistantPptxKeysRef.current.clear();
   }, [sessionId, snapshot?.logEpoch, workspaceKey]);
-  const composerTextInsertRequest = useXCodeSessionStore(
+  const composerTextInsertRequest = useZCodeSessionStore(
     (store) => store.getWorkspaceState(workspacePath, workspaceIdentity).composerTextInsertRequest,
   );
-  const timelineBottomRequest = useXCodeSessionStore(
+  const timelineBottomRequest = useZCodeSessionStore(
     (store) => store.getWorkspaceState(workspacePath, workspaceIdentity).timelineBottomRequest,
   );
-  const draftRuntimeInvalidationVersion = useXCodeSessionStore(
+  const draftRuntimeInvalidationVersion = useZCodeSessionStore(
     (store) =>
       store.getWorkspaceState(workspacePath, workspaceIdentity).draftRuntimeInvalidationVersion,
   );
   const handleExternalTextInsertApplied = useCallback(
     (requestId: number) => {
-      useXCodeSessionStore
+      useZCodeSessionStore
         .getState()
         .clearComposerTextInsertRequest(workspacePath, requestId, workspaceIdentity);
     },
@@ -2171,7 +2171,7 @@ export function SessionPane({
     // Selection View。旧预热会话冻结了早期 fallback，即使最新 View 已包含当前账号连接，
     // Renderer 也会永久停在旧模型。未发送且无显式选择的草稿不是执行事实；View 更新时
     // 回收并按最新选择事实重建，已显式选择和正式会话仍保持冻结。
-    useXCodeSessionStore.getState().invalidateDraftRuntime(workspacePath, workspaceIdentity);
+    useZCodeSessionStore.getState().invalidateDraftRuntime(workspacePath, workspaceIdentity);
   }, [draftConfigRef, modelSelectionView?.revision, sessionId, workspaceIdentity, workspacePath]);
   const recommendStartPlan = useStartPlanRecommendation(modelSelectionView);
   const { settings: sharedSettings } = useSettings();
@@ -2349,8 +2349,8 @@ export function SessionPane({
 
   // 注入模式对齐 PermissionDialog：theme/codePreviewSettings 在宿主取 store，
   // 经稳定引用的 rowContext 下发给 memo 行组件（MessageResponse/ToolCallBlocks）。
-  const theme = useXCodeStoreWithDefault((state) => state.theme, "system");
-  const codePreviewSettings = useXCodeStoreWithDefault(
+  const theme = useZCodeStoreWithDefault((state) => state.theme, "system");
+  const codePreviewSettings = useZCodeStoreWithDefault(
     (state) => state.codePreviewSettings,
     DEFAULT_CODE_PREVIEW_SETTINGS,
   );
@@ -2449,7 +2449,7 @@ export function SessionPane({
         type === "createSession"
           ? creationProjectId !== undefined
             ? creationProjectId
-            : useXCodeSessionStore.getState().getWorkspaceState(workspacePath, workspaceIdentity)
+            : useZCodeSessionStore.getState().getWorkspaceState(workspacePath, workspaceIdentity)
                 .draftProjectId
           : undefined;
       // 必须早于第一次上行：transport error/renderer refresh 后仍有可查询线索。
@@ -2476,12 +2476,12 @@ export function SessionPane({
               taskGroupId:
                 creationTaskGroupId !== undefined
                   ? creationTaskGroupId
-                  : useXCodeSessionStore
+                  : useZCodeSessionStore
                       .getState()
                       .getWorkspaceState(workspacePath, workspaceIdentity).draftTaskGroupId,
               sessionCreateSource:
                 sessionCreateSource ??
-                useXCodeSessionStore.getState().getWorkspaceState(workspacePath, workspaceIdentity)
+                useZCodeSessionStore.getState().getWorkspaceState(workspacePath, workspaceIdentity)
                   .draftCreateSource,
             }
           : recentReceipt
@@ -2492,12 +2492,12 @@ export function SessionPane({
                       projectId: recentScope.projectId,
                       taskGroupId:
                         creationTaskGroupId ??
-                        useXCodeSessionStore
+                        useZCodeSessionStore
                           .getState()
                           .getWorkspaceState(workspacePath, workspaceIdentity).draftTaskGroupId,
                       sessionCreateSource:
                         sessionCreateSource ??
-                        useXCodeSessionStore
+                        useZCodeSessionStore
                           .getState()
                           .getWorkspaceState(workspacePath, workspaceIdentity).draftCreateSource,
                     }
@@ -3625,7 +3625,7 @@ export function SessionPane({
       : null,
   );
   const openPluginUi = useOpenPluginUi();
-  const pluginUiOpenRequest = useXCodeSessionStore(
+  const pluginUiOpenRequest = useZCodeSessionStore(
     (store) => store.getWorkspaceState(workspacePath, workspaceIdentity).pluginUiOpenRequest,
   );
   useEffect(() => {
@@ -3637,7 +3637,7 @@ export function SessionPane({
       readOnly
     )
       return;
-    const store = useXCodeSessionStore.getState();
+    const store = useZCodeSessionStore.getState();
     // 请求归属原草稿代际；StrictMode 重放与配置变化不能让旧请求打开新会话。
     if (
       store.getWorkspaceState(workspacePath, workspaceIdentity).pluginUiOpenRequest !==
@@ -3938,7 +3938,7 @@ export function SessionPane({
   const readGroupedDraftId = useCallback(
     () =>
       String(
-        useXCodeSessionStore.getState().getWorkspaceState(workspacePath, workspaceIdentity)
+        useZCodeSessionStore.getState().getWorkspaceState(workspacePath, workspaceIdentity)
           .draftFocusVersion,
       ),
     [workspacePath, workspaceIdentity],
@@ -4192,12 +4192,12 @@ export function SessionPane({
       // （docs/git/worktree.md §8.1）。这里只交出命令，进度与结果都来自 Host 的创建记录。
       const draftWorktree =
         sessionId === null
-          ? useXCodeSessionStore.getState().getWorkspaceState(workspacePath, workspaceIdentity)
+          ? useZCodeSessionStore.getState().getWorkspaceState(workspacePath, workspaceIdentity)
               .draftWorktree
           : null;
       if (draftWorktree) {
         const service = baseWorkspaceServices.managedWorktreeService;
-        const projectId = useXCodeSessionStore
+        const projectId = useZCodeSessionStore
           .getState()
           .getWorkspaceState(workspacePath, workspaceIdentity).draftProjectId;
         if (!service || !projectId) return "blocked" as const;
@@ -4416,7 +4416,7 @@ export function SessionPane({
 
   const dispatchSendText = useCallback(
     (text: string, options?: ConversationComposerSendOptions) => {
-      const createSource = useXCodeSessionStore
+      const createSource = useZCodeSessionStore
         .getState()
         .getWorkspaceState(workspacePath, workspaceIdentity).draftCreateSource;
       const submissionOptions = {
@@ -4428,7 +4428,7 @@ export function SessionPane({
       const highspeedOrigin = captureHighspeedPaneOrigin();
       const taskGroupId =
         sessionId === null
-          ? useXCodeSessionStore.getState().getWorkspaceState(workspacePath, workspaceIdentity)
+          ? useZCodeSessionStore.getState().getWorkspaceState(workspacePath, workspaceIdentity)
               .draftTaskGroupId
           : undefined;
       // followupMode 仍通过 Session CAS 同步；模型和模式已封装进 Submission，不再
@@ -5415,7 +5415,7 @@ export function SessionPane({
         provider: modelSelection.providerId,
         model: modelSelection.modelId,
       });
-      const store = useXCodeSessionStore.getState();
+      const store = useZCodeSessionStore.getState();
       store.setModelSelectionResolution(
         workspacePath,
         {
@@ -5441,7 +5441,7 @@ export function SessionPane({
           bumpRuntimeEpoch: true,
         });
 
-        const prepareResult = await prepareWorkspaceWithXCodeSessionService({
+        const prepareResult = await prepareWorkspaceWithZCodeSessionService({
           workspacePath,
           workspaceIdentity,
           provider: displayProvider,
@@ -5747,7 +5747,7 @@ export function SessionPane({
     ? (state.editPresentation?.rows ?? timelineSnapshot.rows)
     : null;
   // worktree 创建视图盖在本会话上，直到时间线出现内容或订阅出错（docs/git/worktree.md §3.3）。
-  const finishWorktreeHandoff = useXCodeSessionStore((store) => store.finishWorktreeHandoff);
+  const finishWorktreeHandoff = useZCodeSessionStore((store) => store.finishWorktreeHandoff);
   const timelineHasRows = (timelineRows?.totalCount ?? 0) > 0;
   useEffect(() => {
     if (sessionId && (timelineHasRows || errored))
@@ -5839,7 +5839,7 @@ export function SessionPane({
       scrollToBottom();
       secondFrame = window.requestAnimationFrame(() => {
         if (!scrollToBottom()) return;
-        useXCodeSessionStore
+        useZCodeSessionStore
           .getState()
           .clearTimelineBottomRequest(
             workspacePath,
@@ -6054,7 +6054,7 @@ export function SessionPane({
   // Bug 根因：当前显示哪条错误与「关闭」归谁曾在两处分别判断——渲染按「未关闭」状态取横幅，关闭处理却按
   // 原始状态分支；用户关掉模型失效横幅后，后续投影错误横幅的关闭按钮会一直落到已关闭的那条上而失效。
   // 这里把显示与关闭动作在同一处派生，两者不可能再分叉。
-  const composerBanner = useMemo<{ error: XCodeUiError; dismiss: () => void } | null>(() => {
+  const composerBanner = useMemo<{ error: ZCodeUiError; dismiss: () => void } | null>(() => {
     if (draftModelReadinessError) {
       return { error: draftModelReadinessError, dismiss: dismissDraftModelReadinessError };
     }

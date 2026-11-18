@@ -55,8 +55,8 @@ import { createHash, randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { isDeepStrictEqual, stripVTControlCharacters } from "node:util";
 import {
-  createSharedXCodeCredentialStore,
-  type SharedXCodeCredentialStore,
+  createSharedZCodeCredentialStore,
+  type SharedZCodeCredentialStore,
 } from "../auth/shared-credentials.js";
 import { normalizeMcpToolDescriptor } from "./descriptor.js";
 import {
@@ -144,9 +144,9 @@ export interface CreateMcpAdapterOptions {
     /**
      * 当前 XCode API origin。stdio 形态没有 `url` 可供校验，targetOrigin 只能由宿主给出
      * ——插件因此无法把身份头导向别的 origin。
-     * 与 trustedOrigins 的 `resolveXCodeApiOrigin` 必须同源，否则两侧判定会分叉。
+     * 与 trustedOrigins 的 `resolveZCodeApiOrigin` 必须同源，否则两侧判定会分叉。
      */
-    resolveXCodeApiOrigin?: () => string;
+    resolveZCodeApiOrigin?: () => string;
     workspaceIdentity?: string;
   };
   workingDirectory?: string;
@@ -275,7 +275,7 @@ class NodeMcpAdapter implements McpPort {
   private readonly officialMcpAuth?: CreateMcpAdapterOptions["officialMcpAuth"];
   private readonly telemetry?: McpTelemetryTracker;
   private readonly connectionGenerations = new Map<string, number>();
-  private credentialStore?: SharedXCodeCredentialStore;
+  private credentialStore?: SharedZCodeCredentialStore;
   /**
    * 官方鉴权失败分类的暂存槽。不能从 error 对象读——SDK 的 version
    * negotiation 会把 OfficialMcpAuthError 重新包装成普通 Error，instanceof 失效；
@@ -1014,7 +1014,7 @@ class NodeMcpAdapter implements McpPort {
     const official = config.official;
     const authHeadersPort = this.officialMcpAuth?.authHeadersPort;
     const trustedOrigins = this.officialMcpAuth?.trustedOrigins;
-    const resolveXCodeApiOrigin = this.officialMcpAuth?.resolveXCodeApiOrigin;
+    const resolveZCodeApiOrigin = this.officialMcpAuth?.resolveZCodeApiOrigin;
     const logBase = {
       event: "mcp.official_auth.stdio_meta",
       mcpKey: official.mcpKey,
@@ -1036,7 +1036,7 @@ class NodeMcpAdapter implements McpPort {
 
     // standalone CLI 没有 host auth port。不静默省略该键：插件区分不了"宿主不支持"与
     // "宿主支持但我没登录"，只有显式 reason 才能给出正确的用户提示。
-    if (!authHeadersPort || !trustedOrigins || !resolveXCodeApiOrigin) {
+    if (!authHeadersPort || !trustedOrigins || !resolveZCodeApiOrigin) {
       return fail("official_auth_unavailable");
     }
 
@@ -1051,7 +1051,7 @@ class NodeMcpAdapter implements McpPort {
     let targetOrigin: string;
     let trust: Awaited<ReturnType<OfficialMcpTrustedOriginRegistry["isTrusted"]>>;
     try {
-      targetOrigin = resolveXCodeApiOrigin();
+      targetOrigin = resolveZCodeApiOrigin();
       trust = await trustedOrigins.isTrusted({
         mcpKey: official.mcpKey,
         origin: targetOrigin,
@@ -1811,7 +1811,7 @@ class NodeMcpAdapter implements McpPort {
         input.name,
         input.generation,
       );
-      const credentialStore = oauthOptions?.credentialStore ?? createSharedXCodeCredentialStore();
+      const credentialStore = oauthOptions?.credentialStore ?? createSharedZCodeCredentialStore();
       const keyPrefix = createCredentialKeyPrefix(input.name, input.serverUrl, input.oauthConfig);
       // 403 step-up 的最终 scope 必须是 config ∪ token.scope ∪ challenge
       // 的并集。只带 challenge scope 重新授权时，授权服务器可能按新请求收回先前授予的 scope，
@@ -2114,8 +2114,8 @@ class NodeMcpAdapter implements McpPort {
     return undefined;
   }
 
-  private resolveCredentialStore(): SharedXCodeCredentialStore {
-    this.credentialStore ??= this.mcpOAuth?.credentialStore ?? createSharedXCodeCredentialStore();
+  private resolveCredentialStore(): SharedZCodeCredentialStore {
+    this.credentialStore ??= this.mcpOAuth?.credentialStore ?? createSharedZCodeCredentialStore();
     return this.credentialStore;
   }
 

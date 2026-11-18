@@ -10,7 +10,7 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import enUS from "@/i18n/locales/en-US.js";
 import type { SettingsSearchResult } from "@/settings-search/contract.js";
 import {
@@ -37,7 +37,7 @@ export function SettingsSearch({
   availability: Omit<SettingsSearchAvailability, "workflow">;
   onSelect: (result: SettingsSearchResult) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const visible: SettingsSearchAvailability = {
     ...availability,
     workflow: resolveDynamicWorkflowModeSettingView(useDynamicWorkflowAvailability()) !== null,

@@ -6,34 +6,34 @@ import {
   zcodeProtocolNotifications,
   zcodePluginsReferenceCatalogParamsSchema,
   zcodePluginsResolveSuggestedReferenceParamsSchema,
-  type XCodePluginReferenceCatalogEntry,
-  type XCodePluginDiagnostic as SharedPluginDiagnostic,
-  type XCodePluginsReferenceCatalogResult,
-  type XCodePluginsResolveSuggestedReferenceResult,
+  type ZCodePluginReferenceCatalogEntry,
+  type ZCodePluginDiagnostic as SharedPluginDiagnostic,
+  type ZCodePluginsReferenceCatalogResult,
+  type ZCodePluginsResolveSuggestedReferenceResult,
 } from "@zcode/shared";
 import type { PluginReferenceCatalogEntry } from "@zcode/contracts";
 import { buildPluginReferenceCatalog } from "@zcode/core";
 import {
   enrichCachedClaudeMarketplaceIconsForOverview,
-  getXCodePluginsOverview,
-  resolveXCodePlugins,
-  type ResolveXCodePluginsOptions,
-  updateXCodePluginMarketplace,
+  getZCodePluginsOverview,
+  resolveZCodePlugins,
+  type ResolveZCodePluginsOptions,
+  updateZCodePluginMarketplace,
 } from "../plugins.js";
 import {
   parseParams,
   requireSession,
-  type XCodeProtocolAgentServerContext,
+  type ZCodeProtocolAgentServerContext,
 } from "./server-types.js";
 
 // Picker 权威：带 sessionId → 该 Session 创建时冻结的 identity catalog（session-owned）；
 // 不带 → workspace 当前 catalog（新建草稿）。session 不存在时按协议错误 fail closed，
 // 禁止静默回退 workspace authority——否则草稿/会话两种权威会被混淆。
 export async function getPluginReferenceCatalog(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   includeCategory = false,
-): Promise<XCodePluginsReferenceCatalogResult> {
+): Promise<ZCodePluginsReferenceCatalogResult> {
   const params = parseParams(zcodePluginsReferenceCatalogParamsSchema, rawParams);
   if (params.sessionId) {
     const record = requireSession(context, params.sessionId);
@@ -50,7 +50,7 @@ export async function getPluginReferenceCatalog(
         .plugins.map((entry) => toReferenceCatalogEntry(entry, displayByPluginId, includeCategory)),
     };
   }
-  const outcome = await resolveXCodePlugins({
+  const outcome = await resolveZCodePlugins({
     pluginPreparation: context.deps?.pluginPreparation,
     pluginDiscovery: context.deps?.pluginDiscovery,
     workspaceIdentity: params.workspace.workspaceIdentity,
@@ -76,10 +76,10 @@ const SUGGESTED_PLUGIN_MARKETPLACE_REFRESH_TIMEOUT_MS = 10_000;
 
 /** 推荐 Prompt 的安装前可信解析；missing 必须先刷新官方目录，失败时禁止旧快照安装。 */
 export async function resolveSuggestedPluginReference(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   signal?: AbortSignal,
-): Promise<XCodePluginsResolveSuggestedReferenceResult> {
+): Promise<ZCodePluginsResolveSuggestedReferenceResult> {
   const params = parseParams(zcodePluginsResolveSuggestedReferenceParamsSchema, rawParams);
   const stableId = params.stableId.trim();
   const at = stableId.lastIndexOf("@");
@@ -110,7 +110,7 @@ export async function resolveSuggestedPluginReference(
 
   const workingDirectory = params.workspace.workspacePath;
   const readState = async () => {
-    const outcome = await resolveXCodePlugins({
+    const outcome = await resolveZCodePlugins({
       logger: context.logger,
       workingDirectory,
       pluginPreparation: context.deps?.pluginPreparation,
@@ -177,7 +177,7 @@ export async function resolveSuggestedPluginReference(
   let refreshTimedOut = false;
   let refreshTimeout: ReturnType<typeof setTimeout> | undefined;
   try {
-    const refreshRequest = updateXCodePluginMarketplace({
+    const refreshRequest = updateZCodePluginMarketplace({
       abortSignal: refreshController.signal,
       logger: context.logger,
       marketplace: SUGGESTED_PLUGIN_MARKETPLACE,
@@ -220,7 +220,7 @@ export async function resolveSuggestedPluginReference(
 
   const afterRefresh = await readState();
   if (afterRefresh.entry) return toResult(afterRefresh.entry);
-  const overview = await getXCodePluginsOverview({
+  const overview = await getZCodePluginsOverview({
     logger: context.logger,
     workingDirectory,
     pluginPreparation: context.deps?.pluginPreparation,
@@ -266,10 +266,10 @@ interface PluginReferenceListingDisplay {
 }
 
 async function resolveReferenceListingDisplayByPluginId(
-  options: ResolveXCodePluginsOptions,
+  options: ResolveZCodePluginsOptions,
 ): Promise<Map<string, PluginReferenceListingDisplay>> {
   enrichCachedClaudeMarketplaceIconsForOverview(options);
-  const overview = await getXCodePluginsOverview(options);
+  const overview = await getZCodePluginsOverview(options);
   const displayByPluginId = new Map<string, PluginReferenceListingDisplay>();
   for (const plugin of [
     ...overview.availablePlugins,
@@ -303,7 +303,7 @@ function toReferenceCatalogEntry(
   entry: PluginReferenceCatalogEntry,
   displayByPluginId: ReadonlyMap<string, PluginReferenceListingDisplay>,
   includeCategory = false,
-): XCodePluginReferenceCatalogEntry {
+): ZCodePluginReferenceCatalogEntry {
   const display = displayByPluginId.get(entry.pluginId);
   return {
     ...(includeCategory ? { category: display?.category ?? "other" } : {}),

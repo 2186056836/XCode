@@ -7,7 +7,7 @@ import { usePlatform } from "@/hooks/usePlatform.js";
 import { useOptionalServices } from "@/hooks/useServices.js";
 import { useWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import type { WorkspaceOpenInEditorScope } from "@/hooks/useWorkspaceOpenInEditorTarget.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { fileSaveSuccessMessageId, saveFileCopy } from "@/file-menu/fileCopy.js";
 import { logger } from "@/logger.js";
 
@@ -20,7 +20,7 @@ interface Props extends WorkspaceOpenInEditorScope {
 export function FileSaveAsMenuItem(props: Props) {
   const services = useOptionalServices();
   const platform = usePlatform();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const Item = props.variant === "context" ? ContextMenuItem : DropdownMenuItem;
   if (!services || !platform.saveFile) {
     return (
@@ -35,7 +35,7 @@ export function FileSaveAsMenuItem(props: Props) {
 
 function WorkspaceFileSaveAsMenuItem(props: Props) {
   const platform = usePlatform();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { fileService } = useWorkspaceServices(
     props.workspacePath,
     props.workspaceRemoteSessionId,

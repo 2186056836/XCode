@@ -15,7 +15,7 @@ import {
 import { filterUserVisibleComments, formatRelativeTime } from "@/feedback/feedbackUserView.js";
 import { getUserFacingEventSummary } from "@/feedback/feedbackTimelineSummary.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 type MessageFormatter = (
   descriptor: { id: string },
@@ -147,7 +147,7 @@ export function FeedbackTimeline({
   comments: FeedbackComment[];
   showDurations?: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const formatMessage = intl.formatMessage;
   const items = getFeedbackTimelineItems(events, comments, formatMessage);
 

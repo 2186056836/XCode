@@ -1,9 +1,9 @@
 import type { ProviderSettingsView } from "@zcode/services";
-import { type XCodeProviderAccountAccess, zcodeProviderAccountAccessSchema } from "@zcode/shared";
+import { type ZCodeProviderAccountAccess, zcodeProviderAccountAccessSchema } from "@zcode/shared";
 
 export interface EntitledAccountProviderAccess {
   readonly providerId: string;
-  readonly access: XCodeProviderAccountAccess;
+  readonly access: ZCodeProviderAccountAccess;
   readonly label?: string;
 }
 

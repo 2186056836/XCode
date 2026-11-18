@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import type { IServiceAccessor } from "@zcode/services";
-import type { XCodeConfigOption } from "@zcode/shared";
+import type { ZCodeConfigOption } from "@zcode/shared";
 import {
   buildTaskContextUsageFromUsageUpdate,
   recordTaskContextUsageUpdate,
 } from "@/lib/zcodeTaskUsageFallback.js";
-import { normalizeXCodeUiError } from "@/lib/zcodeUiError.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { normalizeZCodeUiError } from "@/lib/zcodeUiError.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import type { useTabStoreApi } from "@/store/TabStoreProvider.js";
 import {
   resolveBotTaskBroadcastRefresh,
@@ -20,13 +20,13 @@ import {
 
 export function syncBotTaskConfigOptionsToStore(params: {
   zcodeSessionStore: Pick<
-    ReturnType<typeof useXCodeSessionStore.getState>,
+    ReturnType<typeof useZCodeSessionStore.getState>,
     "setTaskConfigOptions"
   >;
   workspacePath: string;
   workspaceIdentity?: string;
   taskId: string;
-  configOptions: XCodeConfigOption[];
+  configOptions: ZCodeConfigOption[];
 }) {
   // Bugfix: Bot /mode 不经过 ChatInputToolbar/useTaskStreamEvents。
   // setTaskConfigOptions 会按 activeTaskId 决定是否同步到 workspace configOptions，
@@ -80,7 +80,7 @@ export function useBotBroadcastEffects(
         tabStoreApi.getState().tabs,
       );
       if (stream) {
-        const zcodeSessionStore = useXCodeSessionStore.getState();
+        const zcodeSessionStore = useZCodeSessionStore.getState();
         const workspaceState = zcodeSessionStore.getWorkspaceState(
           stream.workspacePath,
           stream.workspaceIdentity,
@@ -134,7 +134,7 @@ export function useBotBroadcastEffects(
             zcodeSessionStore.setTaskError(stream.workspacePath, stream.taskId, null, stream.workspaceIdentity);
             break;
           case "task_error": {
-            const normalizedError = normalizeXCodeUiError(
+            const normalizedError = normalizeZCodeUiError(
               {
                 message: event.error,
                 detail: event.detail,
@@ -161,7 +161,7 @@ export function useBotBroadcastEffects(
             zcodeSessionStore.setTaskError(
               stream.workspacePath,
               stream.taskId,
-              normalizeXCodeUiError(
+              normalizeZCodeUiError(
                 {
                   message: event.warning,
                   detail: event.detail,
@@ -241,7 +241,7 @@ export function useBotBroadcastEffects(
       }
       // Bots 在 host 侧创建/推进 task，不会挂载聊天视图里的 stream 订阅。
       // 因此除了刷新列表，还要同步 task 运行态；否则 sidebar 能看到新 task，却不会显示进行中状态。
-      const zcodeSessionStore = useXCodeSessionStore.getState();
+      const zcodeSessionStore = useZCodeSessionStore.getState();
       const workspaceState = zcodeSessionStore.getWorkspaceState(
         refresh.workspacePath,
         refresh.workspaceIdentity,

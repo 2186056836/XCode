@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { formatBytes } from "@/resource-manager/resourceUsageView.js";
 import { storageCategoryTitleId } from "./storageCategoryPresentation.js";
 
@@ -35,7 +35,7 @@ export function StorageCleanConfirmDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <AlertDialog
       open={target !== null}

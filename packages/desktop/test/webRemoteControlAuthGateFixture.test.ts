@@ -37,7 +37,7 @@ it("seeds a last-enabled target that the startup-restore case does not reopen", 
   const root = await mkdtemp(join(tmpdir(), "remote-startup-restore-fixture-"));
   const credentialsFile = join(root, "credentials.json");
   const settingsFile = join(root, "setting.json");
-  const workspacePath = join(root, "XCodeProject");
+  const workspacePath = join(root, "ZCodeProject");
   let close: (() => Promise<void>) | null = null;
   try {
     await writeFile(settingsFile, "{}");

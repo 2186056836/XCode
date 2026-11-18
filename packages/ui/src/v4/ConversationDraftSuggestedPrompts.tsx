@@ -18,7 +18,7 @@ import { ClientSceneLucideIcon } from "@/components/ClientSceneLucideIcon.js";
 import { Button } from "@/components/ui/button.js";
 import { cn } from "@/components/lib/utils.js";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   resolveDraftSuggestedPromptText,
   type DraftSuggestedPromptItem,
@@ -183,7 +183,7 @@ export function ConversationDraftSuggestedPrompts({
   refreshDisabled = false,
   pluginActionPopover,
 }: ConversationDraftSuggestedPromptsProps) {
-  const { locale, intl } = useXCodeIntl();
+  const { locale, intl } = useZCodeIntl();
   const [confirmClose, setConfirmClose] = useState(false);
 
   if (items.length === 0) return null;

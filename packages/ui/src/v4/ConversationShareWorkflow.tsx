@@ -10,7 +10,7 @@ import { EvalWorkflowSnippetToolCallBlock } from "@/ToolCallBlocks/renderers/eva
 import { ListSavedWorkflowsPresentation } from "@/ToolCallBlocks/renderers/list-saved-workflows-presentation.js";
 import { ResumeWorkflowRunToolCallBlock } from "@/ToolCallBlocks/renderers/resume-workflow-run.js";
 import { toolCallRowToLegacyNode } from "@/v4/toolCallRowAdapter.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 const RENDERERS: Partial<
   Record<ToolCallDisplay["kind"], ComponentType<ToolCallBlockRenderContext>>
@@ -28,7 +28,7 @@ export function hasConversationShareWorkflowDisplay(row: ToolCallRow): boolean {
 }
 
 export function ConversationShareWorkflow({ row, theme }: { row: ToolCallRow; theme: Theme }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const context = useMemo<ToolCallBlockRenderContext>(
     () => ({
       nestedToolRenderer: ToolPresentation,

@@ -70,10 +70,10 @@ async function hoverTaskRow(sessionId: string, view: "projects" | "grouped") {
 
 async function assertCardIdentity(card: Awaited<ReturnType<typeof hoverTaskRow>>, branch: string) {
   // 标签与路径都来自默认工作区；路径通过主机 home 缩写，仍保留目录名。
-  expect(await card.getText()).toContain("XCodeProject");
+  expect(await card.getText()).toContain("ZCodeProject");
   const path = card.$("[data-workspace-context-path]");
   await path.waitForDisplayed({ timeout: 10_000 });
-  expect(await path.getText()).toContain("XCodeProject");
+  expect(await path.getText()).toContain("ZCodeProject");
   const activity = card.$("[data-workspace-last-activity]");
   await activity.waitForDisplayed({ timeout: 10_000 });
   expect(await activity.getText()).toMatch(/Last active|最近活动/);

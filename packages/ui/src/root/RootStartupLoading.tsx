@@ -18,14 +18,14 @@ export function RootStartupLoading({ label, children, busy = true }: RootStartup
       aria-label={label}
       data-testid="root-startup-loading"
     >
-      <XCodeStartupLogoBadge />
+      <ZCodeStartupLogoBadge />
       {children}
     </div>
   );
 }
 
 /** 初始化与引导共用品牌图标，保持底色、描边、圆角和标志比例一致。 */
-export function XCodeStartupLogoBadge({
+export function ZCodeStartupLogoBadge({
   animated = true,
   size = "default",
 }: {
@@ -67,7 +67,7 @@ export function XCodeStartupLogoBadge({
   );
 }
 
-export function XCodeStartupLogo({
+export function ZCodeStartupLogo({
   className,
   animated = true,
 }: {

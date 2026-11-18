@@ -2,7 +2,7 @@
 // 「读 dotenv → 定位要恢复的会话 → 装 bootstrap 模块 → 起 Provider Registry
 // 常驻运行时 → 读默认模型选择」这段进程级准备拆到本文件；
 // 公开面仍从 tui-prompt-handler.ts 导出。
-import type { XCodeAppOptions } from "@zcode/bootstrap";
+import type { ZCodeAppOptions } from "@zcode/bootstrap";
 import { loadBootstrapModule } from "./bootstrap-loader.js";
 import { loadCliDotenv } from "./env.js";
 import { createCliProviderRefreshReporter } from "./provider-runtime-env.js";
@@ -16,7 +16,7 @@ type ProviderRegistryRuntime = Awaited<
 // 跨 App 替换（/new、/resume、/fork）复用的进程级句柄：整个 Prompt Handler 生命期只起一份，
 // 只在终态 close 时对称 shutdown。之前是 createTuiSubmitPrompt 里的三个 let 闭包变量。
 interface TuiProcessRuntimeState {
-  providerEndpointRoutingPort: XCodeAppOptions["providerEndpointRoutingPort"];
+  providerEndpointRoutingPort: ZCodeAppOptions["providerEndpointRoutingPort"];
   providerRegistryRuntimePromise: Promise<ProviderRegistryRuntime> | undefined;
   shutdownTelemetry: (() => Promise<void>) | undefined;
 }
@@ -28,7 +28,7 @@ export const createTuiProcessRuntimeState = (): TuiProcessRuntimeState => ({
 });
 
 // 返回值类型交给推断：原地 createApp 里这几个都是推断出来的局部变量，手写接口反而会把
-// 品牌类型（SessionId）和 createXCodeApp 的联合签名收窄错。
+// 品牌类型（SessionId）和 createZCodeApp 的联合签名收窄错。
 export async function prepareTuiAppRuntime(
   deps: RunDependencies,
   version: string,
@@ -49,14 +49,14 @@ export async function prepareTuiAppRuntime(
   }
 
   const sessionId = await resolveResumeSession(request, workingDirectory, env, deps);
-  const bootstrapModule = deps.createXCodeApp ? undefined : await loadBootstrapModule();
-  const createAppFactory = deps.createXCodeApp ?? bootstrapModule?.createXCodeApp;
+  const bootstrapModule = deps.createZCodeApp ? undefined : await loadBootstrapModule();
+  const createAppFactory = deps.createZCodeApp ?? bootstrapModule?.createZCodeApp;
   if (!createAppFactory) throw new Error("XCode app factory is unavailable.");
   const prepareTelemetry =
-    deps.prepareXCodeTelemetryEnv ?? bootstrapModule?.prepareXCodeTelemetryEnv;
+    deps.prepareZCodeTelemetryEnv ?? bootstrapModule?.prepareZCodeTelemetryEnv;
   if (prepareTelemetry) {
     state.shutdownTelemetry =
-      deps.shutdownXCodeTelemetry ?? bootstrapModule?.shutdownXCodeTelemetry;
+      deps.shutdownZCodeTelemetry ?? bootstrapModule?.shutdownZCodeTelemetry;
   }
   const appEnv = prepareTelemetry
     ? await prepareTelemetry(env, {

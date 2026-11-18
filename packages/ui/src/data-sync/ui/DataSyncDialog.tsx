@@ -20,7 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
 import { logger } from "@/logger.js";
 import { DialogFooterBar } from "@/data-sync/ui/DataSyncDialogFooter.js";
@@ -57,7 +57,7 @@ import {
 
 // 模型提供商是只读分类，不是 IDataSyncCategoryService：不参与勾选与「推送全部」，单独渲染。
 type ActiveTab = "overview" | "providers" | DataSyncCategoryId;
-type FormatMessage = ReturnType<typeof useXCodeIntl>["intl"]["formatMessage"];
+type FormatMessage = ReturnType<typeof useZCodeIntl>["intl"]["formatMessage"];
 
 const BLOCKED_REASON_MESSAGE_ID: Record<DataSyncBlockedReason, string> = {
   "size-limit": "remoteSync.blocked.sizeLimit",
@@ -151,7 +151,7 @@ function readyDependencyKeys(
 }
 
 export function DataSyncDialog(props: DataSyncDialogProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [activeTab, setActiveTab] = useState<ActiveTab>(props.initialCategory ?? "overview");
   const platform = useOptionalPlatform();
   const remoteKind = props.device.remoteKind;

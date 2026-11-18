@@ -7,7 +7,7 @@ import {
 } from "@zcode/shared";
 import { useOptionalServices } from "@/hooks/useServices.js";
 import { isRemoteWorkspaceDisconnectedError } from "@/lib/remoteWorkspaceServiceError.js";
-import { useXCodeStoreWithDefault } from "@/store/StoreProvider.js";
+import { useZCodeStoreWithDefault } from "@/store/StoreProvider.js";
 import { logger } from "@/logger.js";
 import {
   resolveEnterpriseCodingPlanProductList,
@@ -99,7 +99,7 @@ export function useEnterpriseCodingPlanProducts({
 }) {
   const services = useOptionalServices();
   const service = services?.codingPlanSubscriptionService;
-  const authScope = useXCodeStoreWithDefault(
+  const authScope = useZCodeStoreWithDefault(
     (state) => (state.user ? state.user.id + ":" + state.authSessionSeq : "signed-out"),
     "unscoped",
   );

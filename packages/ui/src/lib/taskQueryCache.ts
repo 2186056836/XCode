@@ -1,18 +1,18 @@
 import type {
-  XCodeTaskListKind,
-  XCodeTaskListSortBy,
-  XCodeTaskListWorkspaceScope,
+  ZCodeTaskListKind,
+  ZCodeTaskListSortBy,
+  ZCodeTaskListWorkspaceScope,
 } from "@zcode/services";
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 import { resolveWorkspaceStateKey } from "@/store/zcodeSessionStoreSelectors.js";
 
 export type TaskEntityKey = string;
 export type TaskListCacheKey = string;
-export type TaskListQueryKind = XCodeTaskListKind | "workspace";
+export type TaskListQueryKind = ZCodeTaskListKind | "workspace";
 
 export interface TaskListCacheDescriptor {
   kind: TaskListQueryKind;
-  sortBy: XCodeTaskListSortBy;
+  sortBy: ZCodeTaskListSortBy;
   search: string;
   expanded: boolean;
   visibleLimit: number | null;
@@ -41,14 +41,14 @@ export function buildTaskWorkspaceKey(workspacePath: string, workspaceIdentity?:
   return resolveWorkspaceStateKey(workspacePath, workspaceIdentity);
 }
 
-export function buildTaskEntityKey(task: Pick<XCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">): TaskEntityKey {
+export function buildTaskEntityKey(task: Pick<ZCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">): TaskEntityKey {
   return `${buildTaskWorkspaceKey(task.workspacePath, task.workspaceIdentity)}::${task.taskId}`;
 }
 
 export function normalizeTaskListWorkspaceScopes(
-  scopes: XCodeTaskListWorkspaceScope[],
-): XCodeTaskListWorkspaceScope[] {
-  const uniqueScopes = new Map<string, XCodeTaskListWorkspaceScope>();
+  scopes: ZCodeTaskListWorkspaceScope[],
+): ZCodeTaskListWorkspaceScope[] {
+  const uniqueScopes = new Map<string, ZCodeTaskListWorkspaceScope>();
 
   for (const scope of scopes) {
     const workspaceKey = buildTaskWorkspaceKey(scope.workspacePath, scope.workspaceIdentity);
@@ -69,8 +69,8 @@ function normalizeTaskListSearch(search?: string): string {
 
 export function buildTaskListCacheDescriptor(params: {
   kind: TaskListQueryKind;
-  workspaceScopes: XCodeTaskListWorkspaceScope[];
-  sortBy: XCodeTaskListSortBy;
+  workspaceScopes: ZCodeTaskListWorkspaceScope[];
+  sortBy: ZCodeTaskListSortBy;
   search?: string;
   expanded: boolean;
   visibleLimit?: number | null;

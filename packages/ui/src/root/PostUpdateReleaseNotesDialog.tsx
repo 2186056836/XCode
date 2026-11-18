@@ -8,8 +8,8 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
-import { useXCodeStoreWithDefault } from "@/store/StoreProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeStoreWithDefault } from "@/store/StoreProvider.js";
 import { DEFAULT_CODE_PREVIEW_SETTINGS } from "@/lib/codePreviewSettings.js";
 
 interface PostUpdateReleaseNotesDialogProps {
@@ -23,10 +23,10 @@ export function PostUpdateReleaseNotesDialog({
   onAcknowledge,
   onOpenExternalUrl,
 }: PostUpdateReleaseNotesDialogProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   // M5②.5 store 耦合剥离：MessageResponse 不再自取 store，主题/代码预览设置由调用方传入。
-  const theme = useXCodeStoreWithDefault((state) => state.theme, "system");
-  const codePreviewSettings = useXCodeStoreWithDefault(
+  const theme = useZCodeStoreWithDefault((state) => state.theme, "system");
+  const codePreviewSettings = useZCodeStoreWithDefault(
     (state) => state.codePreviewSettings,
     DEFAULT_CODE_PREVIEW_SETTINGS,
   );

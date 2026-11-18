@@ -305,7 +305,7 @@ describe(marker, () => {
     ).projects.find((project) => project.name === `${marker}_LOCAL`)!;
     const localPath = localProject.roots[0]!.rootPath;
     const created = await callHandoffHost<{ session: { sessionId: string } }>(
-      ServiceChannels.XCodeAgent,
+      ServiceChannels.ZCodeAgent,
       "createSession",
       [
         {
@@ -324,7 +324,7 @@ describe(marker, () => {
       ],
     );
     const taskId = created.session.sessionId;
-    await callHandoffHost(ServiceChannels.XCodeTask, "resumeTask", [
+    await callHandoffHost(ServiceChannels.ZCodeTask, "resumeTask", [
       { taskId, workspacePath: localPath },
     ]);
     const toggle = localRow.$('[data-testid="virtual-project-toggle"]');

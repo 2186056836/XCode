@@ -1,8 +1,8 @@
 import { ServiceChannels } from "@zcode/shared";
 import { createServiceDescriptor } from "../descriptors.js";
 import type {
-  XCodeConfigOption,
-  XCodeProvider,
+  ZCodeConfigOption,
+  ZCodeProvider,
   BotConfig,
   BotContextState,
   BotInboundMessage,
@@ -12,9 +12,9 @@ import type {
   BotServiceStatus,
   BotWorkspaceRef,
   BotsConfigFile,
-  XCodeAutomationBotDeliveryTarget,
+  ZCodeAutomationBotDeliveryTarget,
 } from "@zcode/shared";
-import type { XCodeAgentAppRuntimePreferences } from "../zcode-agent/zcodeAgent.js";
+import type { ZCodeAgentAppRuntimePreferences } from "../zcode-agent/zcodeAgent.js";
 
 export interface BotCreateBindCodeParams {
   botId?: string;
@@ -47,13 +47,13 @@ export interface BotListWorkspaceRefsParams {
 export interface BotUserConfigOptionsParams {
   workspacePath: string;
   workspaceIdentity?: string;
-  provider: XCodeProvider;
+  provider: ZCodeProvider;
 }
 
 export interface BotAutomationRunWatchParams {
   /** 与该次 sendPrompt.traceId 一致，避免排队期间污染其他轮次。 */
   runId?: string;
-  target: XCodeAutomationBotDeliveryTarget;
+  target: ZCodeAutomationBotDeliveryTarget;
   taskId: string;
   workspacePath: string;
   workspaceIdentity?: string;
@@ -135,15 +135,15 @@ export interface IBotsService {
   ): Promise<void>;
   readTopicResource?(
     params: import("#src/bots/topicResource.js").TopicResourceRequest,
-  ): Promise<import("@zcode/shared").XCodePromptAttachment>;
+  ): Promise<import("@zcode/shared").ZCodePromptAttachment>;
   /**
    * 将 App 全局交互偏好同步给 Bot 已持有的远端 runtime；不得为此建立新的远端连接。
    */
-  syncAppRuntimePreferences(preferences: XCodeAgentAppRuntimePreferences): Promise<void>;
+  syncAppRuntimePreferences(preferences: ZCodeAgentAppRuntimePreferences): Promise<void>;
   getStatus(): Promise<BotServiceStatus>;
   getConfig(): Promise<BotsConfigFile>;
   listWorkspaceRefs(params?: BotListWorkspaceRefsParams): Promise<BotWorkspaceRef[]>;
-  getUserConfigOptions(params: BotUserConfigOptionsParams): Promise<XCodeConfigOption[]>;
+  getUserConfigOptions(params: BotUserConfigOptionsParams): Promise<ZCodeConfigOption[]>;
   beginFeishuRegistration(
     params?: BotFeishuRegistrationBeginParams,
   ): Promise<BotFeishuRegistrationBeginResult>;

@@ -2,7 +2,7 @@ import { createServiceLogger } from "@zcode/services/node";
 import { createHash } from "node:crypto";
 import { collectMobilePushEvents, type MobilePushEvent } from "@zcode/shared/web-remote-relay";
 import type { IDisposable } from "@zcode/rpc";
-import { ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE, type IXCodeAgentService } from "@zcode/services";
+import { ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE, type IZCodeAgentService } from "@zcode/services";
 import {
   PROTOCOL_V4_LIMITS,
   sessionsIndexTopic,
@@ -20,14 +20,14 @@ const MAX_STAGED_WIRES = 1_024;
 const MAX_STAGED_BYTES = 32 * 1024 * 1024;
 
 type SessionsIndexAgentService = Pick<
-  IXCodeAgentService,
+  IZCodeAgentService,
   | "subscribeSessionsIndexV4"
   | "resyncSessionsIndexV4"
   | "unsubscribeSessionsIndexV4"
   | "onDynamicSessionsIndexFrame"
   | "onAgentRuntimeRestarted"
 > &
-  Partial<Pick<IXCodeAgentService, "onAgentRuntimeLifecycle">>;
+  Partial<Pick<IZCodeAgentService, "onAgentRuntimeLifecycle">>;
 
 export interface WindowHostSessionsIndexObserver {
   start(): Promise<void>;

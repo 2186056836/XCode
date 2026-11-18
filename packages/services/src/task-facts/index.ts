@@ -2,7 +2,7 @@ import {
   generateTraceId,
   resolveWorkspaceKey,
   ZCODE_AGENT_PROVIDER,
-  type XCodeTaskMeta,
+  type ZCodeTaskMeta,
 } from "@zcode/shared";
 import type { SessionsIndexReconcileResult } from "@zcode/shared/zcode-protocol-v4";
 import type {
@@ -86,7 +86,7 @@ export function createTaskFacts(options: {
     async ingest(target, summary) {
       refreshes.delete(key({ ...target, taskId: summary.sessionId }));
       const lastOutcome = summary.lastOutcome;
-      const meta: XCodeTaskMeta = {
+      const meta: ZCodeTaskMeta = {
         taskId: summary.sessionId,
         traceId: generateTraceId(summary.sessionId),
         title: summary.title,

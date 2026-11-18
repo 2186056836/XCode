@@ -6,7 +6,7 @@ import {
 } from "@zcode/shared/test-ids";
 import { XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { runUserAction } from "@/lib/userActionTelemetry.js";
 
 /** 跨 workspace pane 的归属徽标（未来跨 workspace session 的多路径徽标在此扩展）。 */
@@ -33,7 +33,7 @@ export interface ConversationHeaderProps {
  * 保留 title data 节点，供 E2E 读取投影但不恢复旧横条。
  */
 function ConversationHeaderImpl({ title, onClosePane, workspaceBadge }: ConversationHeaderProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const hasFloatingActions = Boolean(workspaceBadge) || Boolean(onClosePane);
 
   return (

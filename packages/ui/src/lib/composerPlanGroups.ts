@@ -3,7 +3,7 @@ import {
   resolveModelProviderFamilySpecByProviderId,
   type ProviderFamilyDomain,
   type ProviderFamilyConnectionSelection,
-  type XCodeProvider,
+  type ZCodeProvider,
 } from "@zcode/shared";
 import type { ModelSelectGroup, ModelSelectGroupItem } from "@/ModelConfigSelect.js";
 import {
@@ -56,7 +56,7 @@ export function buildComposerPlanGroups(
   groups: readonly ModelSelectGroup[],
   products: readonly TeamProduct[],
   settingsView?: ProviderSettingsView | null,
-  agentProvider: XCodeProvider = "glm",
+  agentProvider: ZCodeProvider = "glm",
   labels: ModelProviderGroupLabelOptions = {},
   selections?: Partial<Record<ProviderFamilyDomain, ProviderFamilyConnectionSelection>>,
 ): ComposerPlanGroup[] {

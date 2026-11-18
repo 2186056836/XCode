@@ -12,7 +12,7 @@ type AiSdkWarningGlobal = typeof globalThis & {
   AI_SDK_LOG_WARNINGS?: false | AiSdkWarningLogger;
 };
 
-export function installXCodeProtocolAiSdkWarningLogger(logger: Logger): void {
+export function installZCodeProtocolAiSdkWarningLogger(logger: Logger): void {
   // AI SDK 默认 warning logger 第一次会用 console.info 写 stdout；
   // app-server --stdio 的 stdout 是 XCode Protocol NDJSON 帧通道，任何普通文本都会让宿主解析失败。
   (globalThis as AiSdkWarningGlobal).AI_SDK_LOG_WARNINGS = (

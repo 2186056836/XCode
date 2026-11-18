@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { GlobeIcon } from "lucide-react";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { ToolLayout } from "@/ToolCallBlocks/ToolLayout.js";
 import type { ToolCallBlockRenderContext } from "@/ToolCallBlocks/shared.js";
 
@@ -15,7 +15,7 @@ export function getWebFetchPrimaryText(input: unknown): string {
 }
 
 export function WebFetchToolCallBlock(context: ToolCallBlockRenderContext) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { toolCall } = context.toolCallNode;
   const url = getWebFetchPrimaryText(toolCall.input);
   const primaryText = useMemo(() => <span className="min-w-0 truncate">{url}</span>, [url]);

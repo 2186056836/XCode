@@ -7,7 +7,7 @@
 // 事实递过去，解析本身留在 core 的纯函数里。
 //
 // 与 provider-registry-selection.ts 的 `listRegistryBackedModels` 是同一份注册表的**两张脸**：
-// 那边产出 GUI picker 的 `XCodeModelOption`（带 label / maxOutputTokens / 格式属性），这边产出
+// 那边产出 GUI picker 的 `ZCodeModelOption`（带 label / maxOutputTokens / 格式属性），这边产出
 // 工具层要的窄条目。刻意不共用一个投影函数——两张脸的字段集与在场规则各自独立，硬要合并只会
 // 让一次为 picker 做的改动悄悄改掉模型解析的判据。共用的是**默认档位那条规则**（见下）。
 

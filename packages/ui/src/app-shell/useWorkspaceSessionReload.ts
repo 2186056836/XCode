@@ -1,17 +1,17 @@
 import { useWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useCallback, useRef, useState } from "react";
 import type { IServiceAccessor } from "@zcode/services";
-import type { XCodeProvider } from "@zcode/shared";
+import type { ZCodeProvider } from "@zcode/shared";
 import { toast } from "@/components/ui/toast.js";
 import {
   buildWorkspaceSessionReloadDraftError,
   shouldDebounceWorkspaceSessionReload,
 } from "@/lib/workspaceSessionReloadPlan.js";
 import { resolveWorkspaceModelConfigSyncScope } from "@/lib/modelConfigSync.js";
-import { prepareWorkspaceWithXCodeSessionService } from "@/hooks/useWorkspacePrepare.js";
+import { prepareWorkspaceWithZCodeSessionService } from "@/hooks/useWorkspacePrepare.js";
 import { logger } from "@/logger.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import { useTabStore } from "@/store/TabStoreProvider.js";
 import { isWorkspaceTab } from "@/store/tabStore.js";
 
@@ -42,7 +42,7 @@ export function useWorkspaceSessionReload({
   const lastReloadSessionTriggeredAtRef = useRef<number | null>(null);
 
   const handleReloadSession = useCallback(
-    async (options?: { resumeTaskId?: string | null; provider?: XCodeProvider | null }) => {
+    async (options?: { resumeTaskId?: string | null; provider?: ZCodeProvider | null }) => {
       if (reloadSessionDisabled || reloadSessionPending) {
         return;
       }
@@ -57,13 +57,13 @@ export function useWorkspaceSessionReload({
       lastReloadSessionTriggeredAtRef.current = now;
       setReloadSessionPending(true);
 
-      const zcodeSessionStore = useXCodeSessionStore.getState();
+      const zcodeSessionStore = useZCodeSessionStore.getState();
       const latestWorkspaceState = zcodeSessionStore.getWorkspaceState(
         workspaceAbsPath,
         workspaceIdentity,
       );
       const actionScope = resolveWorkspaceModelConfigSyncScope(latestWorkspaceState);
-      const provider: XCodeProvider = options?.provider ?? actionScope.provider;
+      const provider: ZCodeProvider = options?.provider ?? actionScope.provider;
       const resumeTaskId =
         options?.resumeTaskId?.trim() || latestWorkspaceState.activeTaskId || undefined;
       const shouldPrepareWorkspace = !resumeTaskId;
@@ -94,7 +94,7 @@ export function useWorkspaceSessionReload({
         });
 
         if (shouldPrepareWorkspace) {
-          const prepareResult = await prepareWorkspaceWithXCodeSessionService({
+          const prepareResult = await prepareWorkspaceWithZCodeSessionService({
             workspacePath: workspaceAbsPath,
             workspaceIdentity,
             provider,
@@ -197,7 +197,7 @@ export function useSessionRuntimeRestart(
     remoteSessionId ?? undefined,
     workspaceIdentity,
   );
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const key = `${workspaceIdentity || workspacePath}\0${sessionId ?? ""}`;
   const flight = useRef<{ key: string; promise: Promise<boolean> } | null>(null);

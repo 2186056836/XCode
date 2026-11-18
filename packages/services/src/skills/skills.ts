@@ -1,4 +1,4 @@
-import type { XCodeProvider, SkillsPromptContext, SkillsListResult } from "@zcode/shared";
+import type { ZCodeProvider, SkillsPromptContext, SkillsListResult } from "@zcode/shared";
 import { ServiceChannels } from "@zcode/shared";
 import { createServiceDescriptor } from "../descriptors.js";
 
@@ -6,12 +6,12 @@ export interface ISkillsService {
   list(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-    provider?: XCodeProvider;
+    provider?: ZCodeProvider;
   }): Promise<SkillsListResult>;
   setEnabled(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-    provider?: XCodeProvider;
+    provider?: ZCodeProvider;
     scope?: "workspace" | "user" | "plugin";
     skillId: string;
     enabled: boolean;
@@ -19,7 +19,7 @@ export interface ISkillsService {
   buildPromptContext(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-    provider?: XCodeProvider;
+    provider?: ZCodeProvider;
     prompt: string;
   }): Promise<SkillsPromptContext>;
   /** 将指定 skill 复制到通用目录（.xcode/skills），成功后返回新 skill 的路径。 */

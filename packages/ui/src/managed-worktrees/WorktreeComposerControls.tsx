@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.js";
 import { useServices } from "@/hooks/useServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { cn } from "@/components/lib/utils.js";
 
@@ -35,7 +35,7 @@ export function WorktreeToggle({
   /** 允许调用方做位置对齐；高度固定 `h-7`，与项目/分支胶囊的 Button `size="default"` 一致。 */
   className?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <label
       title={intl.formatMessage({ id: "git.managedWorktree.toggle.tooltip" })}
@@ -76,7 +76,7 @@ export function WorktreeBranchPicker({
   /** 与 GitBranchSwitcher 的外层 className 一致，切换复选框时头部布局不变（§3.3）。 */
   className?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { managedWorktreeService } = useServices();
   const [open, setOpen] = useState(false);
   const [refs, setRefs] = useState<ManagedWorktreeStartRefs | null>(null);

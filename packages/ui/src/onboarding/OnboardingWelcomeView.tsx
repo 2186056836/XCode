@@ -1,11 +1,11 @@
 import { ArrowRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
-import { XCodeAboutLogo } from "@/components/ui/XCodeAboutLogo.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { ZCodeAboutLogo } from "@/components/ui/ZCodeAboutLogo.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { OnboardingWelcomeAsciiVisual } from "@/onboarding/OnboardingWelcomeAsciiVisual.js";
 
 export function OnboardingWelcomeView(props: { onStart: () => void; onOpenMigration: () => void }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <div className="flex h-full min-h-0">
@@ -22,7 +22,7 @@ export function OnboardingWelcomeView(props: { onStart: () => void; onOpenMigrat
               aria-label="XCode"
               role="img"
             >
-              <XCodeAboutLogo className="h-auto w-8" />
+              <ZCodeAboutLogo className="h-auto w-8" />
             </div>
             <div className="text-4xl font-bold tracking-tight text-foreground">
               {intl.formatMessage({ id: "onboarding.welcome.title" })}

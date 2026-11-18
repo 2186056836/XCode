@@ -17,7 +17,7 @@ import { type GitPaneFileChange, type GitPaneRepositoryState } from "@/hooks/use
 import { useServices } from "@/hooks/useServices.js";
 import { useFileContextActions } from "@/hooks/useFileContextActions.js";
 import { useWorkspaceOpenInEditorTarget } from "@/hooks/useWorkspaceOpenInEditorTarget.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { joinFilePath, isAbsoluteFilePath } from "@/lib/path.js";
 import {
   getDiffCacheKey,
@@ -28,7 +28,7 @@ import {
 import { GitPaneChangeCard } from "@/GitPaneChangeCard.js";
 import { getFileChangeFindState } from "@/GitPane/fileChangeFindSearch.js";
 import { logger } from "@/logger.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { resolveTheme } from "@/useTheme.js";
 import { getWorkspaceFileRelativePath } from "@/workspace-file-tree/model.js";
 
@@ -72,9 +72,9 @@ export function GitPane({
   onRevealFileInTree?: (path: string) => void;
 }) {
   const { gitService } = useServices();
-  const { intl } = useXCodeIntl();
-  const theme = useXCodeStore((state) => state.theme);
-  const codePreviewSettings = useXCodeStore((state) => state.codePreviewSettings);
+  const { intl } = useZCodeIntl();
+  const theme = useZCodeStore((state) => state.theme);
+  const codePreviewSettings = useZCodeStore((state) => state.codePreviewSettings);
   const workspaceOpenTarget = useWorkspaceOpenInEditorTarget({
     workspacePath,
     workspaceIdentity,

@@ -3,7 +3,7 @@ export type CodingPlanResetType = "FIVE_HOUR" | "WEEK";
 export interface CodingPlanResetScopeRequest {
   preferredProviderId: string;
   /** Registry 静态访问类别，或调用边界已解析的 Team scope。 */
-  accountAccess: XCodeProviderAccountAccess | XCodeAccountAccess;
+  accountAccess: ZCodeProviderAccountAccess | ZCodeAccountAccess;
 }
 
 export interface CodingPlanResetOpportunitySnapshot {
@@ -39,4 +39,4 @@ export interface CodingPlanResetUseRequest extends CodingPlanResetScopeRequest {
 export interface CodingPlanResetUseResult {
   used: true;
 }
-import type { XCodeAccountAccess, XCodeProviderAccountAccess } from "./zcode-protocol/index.js";
+import type { ZCodeAccountAccess, ZCodeProviderAccountAccess } from "./zcode-protocol/index.js";

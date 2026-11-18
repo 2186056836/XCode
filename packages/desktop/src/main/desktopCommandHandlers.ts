@@ -1,18 +1,18 @@
 import { getPluginSandboxHost } from "./pluginSandbox/index.js";
 /* eslint-disable max-lines -- 桌面命令分发需要共享窗口与平台上下文，集中维护更便于一致性 */
-import { readXCodeStdioTapDevState, setXCodeStdioTapDevEnabled } from "@zcode/services/node";
+import { readZCodeStdioTapDevState, setZCodeStdioTapDevEnabled } from "@zcode/services/node";
 import {
-  buildXCodeEndpointUrls,
+  buildZCodeEndpointUrls,
   DEFAULT_XCODE_ENDPOINT_ORIGIN,
   DesktopCommandIds,
   REWARDS_PARTITION,
   TEST_XCODE_ENDPOINT_ORIGIN,
   getCommunityUrlFromConfigs,
   getFeedbackUrlFromConfig,
-  normalizeXCodeEndpointOrigin,
+  normalizeZCodeEndpointOrigin,
   PlatformChannels,
   resolveHelpAppConfig,
-  resolveXCodeEndpointOrigin,
+  resolveZCodeEndpointOrigin,
   ZCODE_ENV,
   ZCODE_PRODUCT_FLAVOR,
   type AppSettings,
@@ -288,11 +288,11 @@ async function openCommunity(
   await shell.openExternal(communityUrl);
 }
 
-async function promptCustomXCodeEndpoint(
+async function promptCustomZCodeEndpoint(
   targetWindow: BrowserWindow | null | undefined,
   currentValue: string,
 ): Promise<string | undefined> {
-  return showXCodeEndpointPromptWindow({
+  return showZCodeEndpointPromptWindow({
     currentValue,
     parentWindow: targetWindow && !targetWindow.isDestroyed() ? targetWindow : undefined,
   });
@@ -306,7 +306,7 @@ function escapeHtmlAttribute(value: string): string {
     .replace(/>/g, "&gt;");
 }
 
-function buildXCodeEndpointPromptHtml(currentValue: string): string {
+function buildZCodeEndpointPromptHtml(currentValue: string): string {
   const value = escapeHtmlAttribute(currentValue);
   return `<!doctype html>
 <html>
@@ -350,7 +350,7 @@ function buildXCodeEndpointPromptHtml(currentValue: string): string {
 </html>`;
 }
 
-function showXCodeEndpointPromptWindow(options: {
+function showZCodeEndpointPromptWindow(options: {
   currentValue: string;
   parentWindow?: BrowserWindow;
 }): Promise<string | undefined> {
@@ -401,24 +401,24 @@ function showXCodeEndpointPromptWindow(options: {
     // 这里改为主进程创建受控 modal 输入窗，确保 Custom... 始终有可见交互入口。
     void promptWindow.loadURL(
       `data:text/html;charset=utf-8,${encodeURIComponent(
-        buildXCodeEndpointPromptHtml(options.currentValue),
+        buildZCodeEndpointPromptHtml(options.currentValue),
       )}`,
     );
   });
 }
 
-async function setXCodeEndpointOverride(options: {
+async function setZCodeEndpointOverride(options: {
   value: string | undefined;
   settingService: { update(patch: { zcodeEndpointOrigin?: string | undefined }): Promise<void> };
-  onXCodeEndpointChanged: () => Promise<void> | void;
+  onZCodeEndpointChanged: () => Promise<void> | void;
   logger: { warn: (...args: unknown[]) => void };
 }) {
   if (ZCODE_ENV === "production") {
     return;
   }
-  const normalized = options.value ? normalizeXCodeEndpointOrigin(options.value) : undefined;
+  const normalized = options.value ? normalizeZCodeEndpointOrigin(options.value) : undefined;
   await options.settingService.update({ zcodeEndpointOrigin: normalized });
-  await options.onXCodeEndpointChanged();
+  await options.onZCodeEndpointChanged();
 }
 
 async function persistDesktopZoomLevel(options: {
@@ -435,13 +435,13 @@ async function persistDesktopZoomLevel(options: {
   }
 }
 
-function toggleXCodeStdioTapDevProxy(options: {
+function toggleZCodeStdioTapDevProxy(options: {
   logger: { info: (...args: unknown[]) => void };
-  updateXCodeStdioTapDevMenuState: () => void;
+  updateZCodeStdioTapDevMenuState: () => void;
 }) {
-  const current = readXCodeStdioTapDevState();
-  const next = setXCodeStdioTapDevEnabled(!current.enabled);
-  options.updateXCodeStdioTapDevMenuState();
+  const current = readZCodeStdioTapDevState();
+  const next = setZCodeStdioTapDevEnabled(!current.enabled);
+  options.updateZCodeStdioTapDevMenuState();
   options.logger.info("[stdio-tap] dev proxy toggled", {
     enabled: next.enabled,
     visible: next.visible,
@@ -455,7 +455,7 @@ function resolveChangelogUrl(
 ): string {
   // 帮助菜单里的外链以前只有固定英文地址，切到中文界面后仍会落到英文 changelog。
   // 这里统一收口到主进程按当前应用语言分流，避免菜单模板里手写分支后续再出现多处不一致。
-  const origin = buildXCodeEndpointUrls(endpointOrigin).origin;
+  const origin = buildZCodeEndpointUrls(endpointOrigin).origin;
   return locale === "zh-CN" ? `${origin}/cn/changelog` : `${origin}/en/changelog`;
 }
 
@@ -466,12 +466,12 @@ export async function openChangelog(
   await shell.openExternal(resolveChangelogUrl(locale, endpointOrigin));
 }
 
-async function resolveCurrentXCodeEndpointOrigin(settingService: {
+async function resolveCurrentZCodeEndpointOrigin(settingService: {
   get(): Promise<{ zcodeEndpointOrigin?: string }>;
   envBaseOrigin?: string | null;
 }): Promise<string> {
   const settings = await settingService.get();
-  return resolveXCodeEndpointOrigin({
+  return resolveZCodeEndpointOrigin({
     env: ZCODE_ENV,
     envBaseOrigin: settingService.envBaseOrigin,
     overrideOrigin: settings.zcodeEndpointOrigin,
@@ -487,9 +487,9 @@ export async function executeDesktopCommand(options: {
     warn: (...args: unknown[]) => void;
     error: (...args: unknown[]) => void;
   };
-  updateXCodeStdioTapDevMenuState: () => void;
+  updateZCodeStdioTapDevMenuState: () => void;
   onDesktopZoomChanged?: (zoomLevel: number) => Promise<void> | void;
-  onXCodeEndpointChanged: () => Promise<void> | void;
+  onZCodeEndpointChanged: () => Promise<void> | void;
   onRelaunchApp: () => Promise<void>;
   settingService: {
     get(): Promise<Pick<AppSettings, "zcodeEndpointOrigin" | "desktopZoomLevel">>;
@@ -588,7 +588,7 @@ export async function executeDesktopCommand(options: {
     case DesktopCommandIds.OpenChangelog:
       await openChangelog(
         options.currentApplicationLocale,
-        await resolveCurrentXCodeEndpointOrigin({
+        await resolveCurrentZCodeEndpointOrigin({
           ...options.settingService,
           envBaseOrigin: options.zcodeEndpointEnvBaseOrigin,
         }),
@@ -627,40 +627,40 @@ export async function executeDesktopCommand(options: {
     case DesktopCommandIds.OpenResourceManager:
       openResourceManager();
       return;
-    case DesktopCommandIds.ToggleXCodeStdioTapDevProxy:
-      toggleXCodeStdioTapDevProxy({
+    case DesktopCommandIds.ToggleZCodeStdioTapDevProxy:
+      toggleZCodeStdioTapDevProxy({
         logger: options.logger,
-        updateXCodeStdioTapDevMenuState: options.updateXCodeStdioTapDevMenuState,
+        updateZCodeStdioTapDevMenuState: options.updateZCodeStdioTapDevMenuState,
       });
       return;
-    case DesktopCommandIds.SetXCodeEndpointProduction:
-      await setXCodeEndpointOverride({
+    case DesktopCommandIds.SetZCodeEndpointProduction:
+      await setZCodeEndpointOverride({
         value: DEFAULT_XCODE_ENDPOINT_ORIGIN,
         settingService: options.settingService,
-        onXCodeEndpointChanged: options.onXCodeEndpointChanged,
+        onZCodeEndpointChanged: options.onZCodeEndpointChanged,
         logger: options.logger,
       });
       return;
-    case DesktopCommandIds.SetXCodeEndpointTest:
-      await setXCodeEndpointOverride({
+    case DesktopCommandIds.SetZCodeEndpointTest:
+      await setZCodeEndpointOverride({
         value: TEST_XCODE_ENDPOINT_ORIGIN,
         settingService: options.settingService,
-        onXCodeEndpointChanged: options.onXCodeEndpointChanged,
+        onZCodeEndpointChanged: options.onZCodeEndpointChanged,
         logger: options.logger,
       });
       return;
-    case DesktopCommandIds.SetXCodeEndpointCustom: {
+    case DesktopCommandIds.SetZCodeEndpointCustom: {
       const current =
         (await options.settingService.get()).zcodeEndpointOrigin ?? DEFAULT_XCODE_ENDPOINT_ORIGIN;
-      const value = await promptCustomXCodeEndpoint(targetWindow, current);
+      const value = await promptCustomZCodeEndpoint(targetWindow, current);
       if (!value) {
         return;
       }
       try {
-        await setXCodeEndpointOverride({
+        await setZCodeEndpointOverride({
           value,
           settingService: options.settingService,
-          onXCodeEndpointChanged: options.onXCodeEndpointChanged,
+          onZCodeEndpointChanged: options.onZCodeEndpointChanged,
           logger: options.logger,
         });
       } catch (error) {
@@ -673,11 +673,11 @@ export async function executeDesktopCommand(options: {
       }
       return;
     }
-    case DesktopCommandIds.ResetXCodeEndpoint:
-      await setXCodeEndpointOverride({
+    case DesktopCommandIds.ResetZCodeEndpoint:
+      await setZCodeEndpointOverride({
         value: undefined,
         settingService: options.settingService,
-        onXCodeEndpointChanged: options.onXCodeEndpointChanged,
+        onZCodeEndpointChanged: options.onZCodeEndpointChanged,
         logger: options.logger,
       });
       return;

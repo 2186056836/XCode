@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button.js";
 import { useProjectTaskActions } from "@/project-sidebar/useProjectTaskActions.js";
 import { ProjectTaskListContext } from "@/project-sidebar/ProjectTaskListContext.js";
 import { compareProjectTaskRows } from "@/project-sidebar/view.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { timelineDateHeadings } from "@/project-sidebar/timelineDates.js";
 
 const EMPTY: ProjectTask[] = [];
@@ -30,7 +30,7 @@ export const ProjectTaskRow = memo(function Row({
   const { remoteSessionId, rename, pin, archive, unread } = useProjectTaskActions(task, refresh);
   const workspaceKey = task.workspaceIdentity?.trim() || task.workspacePath;
   // 原因：每行订阅完整 activeTaskId 会让同工作区所有行随选择更新；只订阅自身选中态。
-  const isActive = useXCodeSessionStore(
+  const isActive = useZCodeSessionStore(
     (state) => state.workspaces[workspaceKey]?.activeTaskId === task.taskId,
   );
   const rows = useMemo(() => [task], [task]);
@@ -99,7 +99,7 @@ export function ProjectTaskRows({
   onSelect: ProjectSidebarProps["onSelectTask"];
   refresh(): Promise<void>;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const chronological = kind === "timeline" || kind === "unread";
   const pageSize = chronological ? 20 : 5;
   const [limit, setLimit] = useState(pageSize);

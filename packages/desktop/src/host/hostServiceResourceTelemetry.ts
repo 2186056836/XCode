@@ -2,7 +2,7 @@ import { HostResponseTypes } from "@zcode/shared";
 import { registerHostToolExecResourceTelemetry } from "./hostToolExecResourceTelemetry.js";
 import { registerHostMcpResourceTelemetry } from "./hostMcpResourceTelemetry.js";
 import type { IDisposable } from "@zcode/rpc";
-import { IXCodeAgentService, type ServiceCollection } from "@zcode/services";
+import { IZCodeAgentService, type ServiceCollection } from "@zcode/services";
 import type { ProcessResourceRuntimeSurface } from "@zcode/shared";
 import { registerHostAgentResourceTelemetry } from "./hostAgentResourceTelemetry.js";
 import { registerHostMcpTelemetry } from "./hostMcpTelemetry.js";
@@ -55,7 +55,7 @@ export function registerHostServiceResourceTelemetry(
   ) {
     return NO_TELEMETRY;
   }
-  const agentService = options.services.getOptional(IXCodeAgentService);
+  const agentService = options.services.getOptional(IZCodeAgentService);
   if (!agentService) {
     return NO_TELEMETRY;
   }

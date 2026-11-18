@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { CornerDownLeftIcon, Trash2Icon } from "lucide-react";
 import { cn } from "@/components/lib/utils.js";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { CONVERSATION_SELECTION_MAX_COMMENT_LENGTH } from "@/lib/conversationSelectionReference.js";
 import {
   useSelectionAnchoredPosition,
@@ -53,7 +53,7 @@ export function SelectionCommentEditor({
   /** 仅编辑态：删除整条注释。 */
   onDelete?: () => void;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const ref = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState(initialComment);

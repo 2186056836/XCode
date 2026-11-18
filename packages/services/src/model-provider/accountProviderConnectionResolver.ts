@@ -18,8 +18,8 @@ import {
   type ApiClient,
   type ProviderFamilyConnectionSelectionSettings,
   type ProviderFamilyDomain,
-  type XCodeAccountAccess,
-  type XCodeProviderAccountAccess,
+  type ZCodeAccountAccess,
+  type ZCodeProviderAccountAccess,
 } from "@zcode/shared";
 import type {
   CodingPlanAvailabilityProvider,
@@ -434,7 +434,7 @@ export function createCodingPlanFamilyAvailabilityResolver(
  * 每次请求重新读取当前选择；只有 family 与 mode 兼容时才返回动态访问事实。
  */
 export async function resolveCurrentAccountAccess(input: {
-  readonly access: XCodeProviderAccountAccess;
+  readonly access: ZCodeProviderAccountAccess;
   readonly readSettings: () => Promise<AccountProviderConnectionSettings>;
   readonly loadAccountIdentity: (family: ProviderFamilyDomain) => Promise<string | null>;
     readonly loadStartPlanMaterial: (
@@ -445,7 +445,7 @@ export async function resolveCurrentAccountAccess(input: {
      * 使同一 family 的兄弟账号也能解析出 Access；family/mode/team scope 仍按当前选择校验。
      */
     readonly accountIdentity?: string;
-}): Promise<XCodeAccountAccess | null> {
+}): Promise<ZCodeAccountAccess | null> {
   const settings = await input.readSettings();
   const { accountType, mode } = input.access;
   if (settings.providerFamilyDomain !== accountType) {

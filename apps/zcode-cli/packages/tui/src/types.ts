@@ -1,5 +1,5 @@
 import type { WorkflowRunProgressEnvelope } from "@zcode/shared/zcode-protocol-v4";
-import type { ModelSelection, XCodeModelOption } from "@zcode/shared";
+import type { ModelSelection, ZCodeModelOption } from "@zcode/shared";
 import type {
   CollaborationMode,
   InputDelivery,
@@ -225,7 +225,7 @@ export type TuiCancelBackgroundTask = (taskId: string) => Promise<unknown>;
 export type TuiReadSubagents = (input?: {
   endedCursor?: string;
   endedLimit?: number;
-}) => Promise<import("@zcode/shared").XCodeSessionSubagentsResult>;
+}) => Promise<import("@zcode/shared").ZCodeSessionSubagentsResult>;
 export type TuiSubagentTranscriptSnapshot = {
   sessionId: string;
   sequenceNumber: number;
@@ -290,7 +290,7 @@ export type TuiSlashCommandSuggestion = {
   usage: string;
 };
 
-export type TuiModelOption = XCodeModelOption;
+export type TuiModelOption = ZCodeModelOption;
 
 export type TuiEffortOption = {
   description?: string;

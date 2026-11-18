@@ -53,7 +53,7 @@ import { OAuthCredentialRepo, type OAuthAccountEntry } from "./repo/oauthCredent
 import { createOAuthRuntimeConfig } from "./runtimeConfig.js";
 import {
   buildDesktopOAuthRedirectUriFromEnv,
-  buildXCodeApiUrlFromEnv,
+  buildZCodeApiUrlFromEnv,
 } from "./providers/configUtils.js";
 
 /** OAuth 超时时间（5 分钟） */
@@ -345,7 +345,7 @@ export class OAuthService implements IOAuthService {
     const refresh = (async () => {
       const response = await readApiJson<OAuthFlowEnvelope>(
         this.apiClient!,
-        buildXCodeApiUrlFromEnv(this.env, "/api/v1/oauth/profile"),
+        buildZCodeApiUrlFromEnv(this.env, "/api/v1/oauth/profile"),
         {
           headers: { Authorization: `Bearer ${jwt}` },
           authFailurePolicy: "caller-handled",
@@ -886,7 +886,7 @@ export class OAuthService implements IOAuthService {
     if (this.oauthFlowStartGeneration !== startGeneration)
       throw new Error("OAuth flow 已被新的登录请求替换");
     const pollToken = randomBytes(32).toString("hex");
-    const initUrl = buildXCodeApiUrlFromEnv(this.env, "/api/v1/oauth/cli/init");
+    const initUrl = buildZCodeApiUrlFromEnv(this.env, "/api/v1/oauth/cli/init");
     const envelope = await readApiJson<OAuthFlowEnvelope>(this.apiClient, initUrl, {
       method: "POST",
       headers: {
@@ -983,7 +983,7 @@ export class OAuthService implements IOAuthService {
         nextPollAt: this.monotonicNow(),
         pollIntervalMs,
         pollToken,
-        pollUrl: buildXCodeApiUrlFromEnv(
+        pollUrl: buildZCodeApiUrlFromEnv(
           this.env,
           `/api/v1/oauth/cli/poll/${encodeURIComponent(flowId)}`,
         ),

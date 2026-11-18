@@ -1,7 +1,7 @@
 import { isSessionToolName } from "@/ToolCallBlocks/session/contract.js";
 import type { IntlInstance } from "@/i18n/IntlProvider.js";
 import * as workflowToolNames from "@/lib/workflowToolNames.js";
-import { isXCodeCuaToolName } from "@/lib/cuaPermissionAction.js";
+import { isZCodeCuaToolName } from "@/lib/cuaPermissionAction.js";
 import { joinFilePath } from "@/lib/path.js";
 import { readRawToolCallFileSummaries } from "@/ToolCallBlocks/fileSummaries.js";
 import { resolveToolCallIdentity } from "@/lib/toolIdentity.js";
@@ -146,7 +146,7 @@ export function getAssistantSummaryToolCategory(
   if (
     family === "shell" ||
     family === "node-repl" ||
-    [tool.toolName, tool.kind].some(isXCodeCuaToolName)
+    [tool.toolName, tool.kind].some(isZCodeCuaToolName)
   )
     return "run";
   if (family === "file-write") return "change";
@@ -295,7 +295,7 @@ export function getAssistantSummaryIconItem(items: readonly ConversationAssistan
     const category = getAssistantSummaryToolCategory(item.row);
     if (!category || item.row.kind !== "toolCall") continue;
     const tool = toolCallRowToLegacyNode(item.row).toolCall;
-    const priority = [tool.toolName, tool.kind].some(isXCodeCuaToolName)
+    const priority = [tool.toolName, tool.kind].some(isZCodeCuaToolName)
       ? 0
       : resolveToolCallIdentity(tool).family === "node-repl"
         ? 1

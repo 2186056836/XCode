@@ -10,7 +10,7 @@ import type { LogContext, LogEntry, Logger, LoggerFactory, LogRedactor } from "@
 import { LogLevel, LogLevelName } from "@zcode/contracts";
 import {
   ZCODE_RUNTIME_ENV_KEY,
-  normalizeXCodeRuntimeEnv,
+  normalizeZCodeRuntimeEnv,
   createLocalTtftLogQueue,
 } from "@zcode/shared";
 import {
@@ -267,7 +267,7 @@ function getDefaultMinLevel(env: NodeJS.ProcessEnv | undefined): LogLevel {
 }
 
 function isDevelopmentMode(env: NodeJS.ProcessEnv): boolean {
-  const runtimeEnv = normalizeXCodeRuntimeEnv(env[ZCODE_RUNTIME_ENV_KEY]);
+  const runtimeEnv = normalizeZCodeRuntimeEnv(env[ZCODE_RUNTIME_ENV_KEY]);
   if (runtimeEnv === "development") return true;
   if (runtimeEnv === "production" || runtimeEnv === "test") return false;
 

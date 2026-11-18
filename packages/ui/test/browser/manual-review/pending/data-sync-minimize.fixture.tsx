@@ -5,7 +5,7 @@ import type { IPlatformService } from "@zcode/shared";
 import { DataSyncDialogProvider, useDataSyncEntry } from "@/data-sync/index.js";
 import { PlatformProvider } from "@/hooks/usePlatform.js";
 import { ServiceProvider } from "@/hooks/useServices.js";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { TabStoreProvider } from "@/store/TabStoreProvider.js";
 import { registerSourceSettingsServices } from "@/store/sourceSettingsServiceStore.js";
 import "@/styles.css";
@@ -164,7 +164,7 @@ function Fixture() {
   );
 }
 createRoot(document.getElementById("root")!).render(
-  <XCodeIntlProvider initialLocale={locale}>
+  <ZCodeIntlProvider initialLocale={locale}>
     <ServiceProvider services={services}>
       <PlatformProvider platform={platform}>
         <TabStoreProvider>
@@ -178,5 +178,5 @@ createRoot(document.getElementById("root")!).render(
         </TabStoreProvider>
       </PlatformProvider>
     </ServiceProvider>
-  </XCodeIntlProvider>,
+  </ZCodeIntlProvider>,
 );

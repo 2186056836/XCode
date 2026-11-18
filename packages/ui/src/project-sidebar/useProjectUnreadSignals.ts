@@ -9,7 +9,7 @@ import { mutateProjectTask, readProjectTaskMeta } from "@/project-sidebar/task-m
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { useTabStoreApi } from "@/store/TabStoreProvider.js";
 import { isWorkspaceTab } from "@/store/tabStore.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import { onTaskNavigationCommitted } from "@/store/zcodeSessionStoreNavigation.js";
 import { logger } from "@/logger.js";
 
@@ -245,7 +245,7 @@ export function useProjectUnreadSignals(
       const tabState = tabs.getState();
       const tab = tabState.tabs.find((item) => item.id === tabState.activeTabId);
       const key = target.workspaceIdentity?.trim() || target.workspacePath;
-      const state = useXCodeSessionStore.getState();
+      const state = useZCodeSessionStore.getState();
       const route = state.taskNavHistory.entries[state.taskNavHistory.cursor];
       // 前台完成只认完整导航地址；缓存 activeTaskId 或其它工作区的同名任务不代表当前页面。
       return Boolean(

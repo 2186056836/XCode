@@ -19,7 +19,7 @@
  * 主进程聚合时优先级更高的一方可带动作；本模块不重复实现 resolveInteraction。
  */
 import { useEffect, useRef } from "react";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import {
   readSessionsIndexRegistry,
   subscribeSessionsIndexRegistry,
@@ -117,7 +117,7 @@ function dismissalKey(sessionId: string, summary: SessionSummary): string {
 
 function activeSessionIds(): Set<string> {
   const ids = new Set<string>();
-  const workspaces = useXCodeSessionStore.getState().workspaces ?? {};
+  const workspaces = useZCodeSessionStore.getState().workspaces ?? {};
   for (const workspace of Object.values(workspaces)) {
     if (workspace?.activeTaskId) ids.add(workspace.activeTaskId);
   }
@@ -245,7 +245,7 @@ export function usePetTaskStateBinding(): void {
 
     compute();
     const unsubscribeIndex = subscribeSessionsIndexRegistry(compute);
-    const unsubscribeStore = useXCodeSessionStore.subscribe(compute);
+    const unsubscribeStore = useZCodeSessionStore.subscribe(compute);
     const expiryTimer = setInterval(compute, EXPIRY_TICK_MS);
     return () => {
       unsubscribeIndex();

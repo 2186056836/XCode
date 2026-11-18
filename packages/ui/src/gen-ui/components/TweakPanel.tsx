@@ -1,11 +1,11 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { GenUiPage, GenUiPageSnapshot } from "../contract.js";
 export function TweakPanel({ snapshot, page }: { snapshot: GenUiPageSnapshot; page: GenUiPage }) {
   const { groups, tweakValues: values, previewOriginal: preview } = snapshot;
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const original = Object.fromEntries(
     groups.flatMap((group) => group.controls).map((control) => [control.id, control.value]),
   );

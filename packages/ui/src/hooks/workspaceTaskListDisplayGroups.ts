@@ -1,4 +1,4 @@
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 import type { CachedTaskListResult } from "@/lib/taskQueryCache.js";
 import {
   mergeWorkspaceTaskListItemsWithOptimistic,
@@ -21,7 +21,7 @@ interface WorkspaceTaskListDisplayConfig {
 export interface WorkspaceTaskListGroup {
   workspacePath: string;
   workspaceIdentity?: string;
-  items: XCodeTaskMeta[];
+  items: ZCodeTaskMeta[];
   total: number;
   hasMore: boolean;
   hasUnread: boolean;
@@ -32,7 +32,7 @@ export interface WorkspaceTaskListGroup {
 export function buildWorkspaceTaskListDisplayGroups(params: {
   queryConfigs: WorkspaceTaskListDisplayConfig[];
   resultsByQueryKey: Record<string, CachedTaskListResult>;
-  taskMetaByEntityKey: Record<string, XCodeTaskMeta>;
+  taskMetaByEntityKey: Record<string, ZCodeTaskMeta>;
   taskUnreadOverlayByEntityKey: Record<string, number | null>;
   optimisticTaskOverlayByWorkspaceKey: Map<string, WorkspaceOptimisticTaskOverlay>;
   previousGroupsByWorkspaceKey: Map<string, WorkspaceTaskListGroup>;
@@ -72,7 +72,7 @@ export function buildWorkspaceTaskListDisplayGroups(params: {
     const cachedItems =
       displayResult?.taskKeys
         .map((taskKey) => params.taskMetaByEntityKey[taskKey])
-        .filter((task): task is XCodeTaskMeta => Boolean(task)) ?? [];
+        .filter((task): task is ZCodeTaskMeta => Boolean(task)) ?? [];
     const optimisticOverlay = params.optimisticTaskOverlayByWorkspaceKey.get(config.workspaceKey);
     const items = mergeWorkspaceTaskListItemsWithOptimistic({
       items: cachedItems,

@@ -13,7 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import { cn } from "../lib/utils.js";
 import { TID_CHAT_REASONING_CONTENT, TID_CHAT_REASONING_TRIGGER } from "@zcode/shared/test-ids";
 import { BrainIcon, ChevronRightIcon } from "lucide-react";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { QueuedSummaryContent } from "@/ToolCallBlocks/QueuedSummaryContent.js";
 import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { useBottomFollowingScroll } from "@/mentions/components/scrollMask.js";
@@ -277,7 +277,7 @@ export const ReasoningTrigger = memo(
   }: ReasoningTriggerProps) => {
     const preview = useContext(SummaryPreviewContext);
     const { isStreaming, isOpen, duration } = useReasoning();
-    const { intl } = useXCodeIntl();
+    const { intl } = useZCodeIntl();
     const streamingSummary =
       isStreaming && !isOpen ? resolveReasoningStreamingSummary(streamingText) : null;
     const streamingSummaryRef = useRef<HTMLSpanElement | null>(null);

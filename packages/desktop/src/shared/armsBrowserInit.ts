@@ -1,5 +1,5 @@
 import armsRum from "@arms/rum-electron/browser";
-import type { XCodeRuntimeEnv } from "@zcode/shared";
+import type { ZCodeRuntimeEnv } from "@zcode/shared";
 import { buildArmsBrowserInitConfig } from "./armsRumShared.js";
 
 let bootstrapped = false;
@@ -9,7 +9,7 @@ let bootstrapped = false;
  * 原因：Vite `type="module"` 的 main.tsx 往往在 window.load 之后才执行，perf-collector 只在 load 回调 sendPerf，
  * 仅放在 renderer 入口会导致 beforeReport 长期 perf=0；须在 preload 末尾（ARMS frame preload 已注入 Bridge 之后）调用。
  */
-export function initArmsBrowserRumOnce(runtimeEnv: XCodeRuntimeEnv): boolean {
+export function initArmsBrowserRumOnce(runtimeEnv: ZCodeRuntimeEnv): boolean {
   if (bootstrapped) {
     return true;
   }
@@ -44,7 +44,7 @@ export function initArmsBrowserRumOnce(runtimeEnv: XCodeRuntimeEnv): boolean {
 }
 
 /** preload 中 ARMS frame preload 可能晚于本脚本一帧，短重试避免 Bridge 尚未就绪 */
-export function scheduleArmsBrowserRumInit(runtimeEnv: XCodeRuntimeEnv, maxAttempts = 50): void {
+export function scheduleArmsBrowserRumInit(runtimeEnv: ZCodeRuntimeEnv, maxAttempts = 50): void {
   let attempts = 0;
   const tick = (): void => {
     if (initArmsBrowserRumOnce(runtimeEnv)) {

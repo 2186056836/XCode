@@ -1,5 +1,5 @@
 import { toast } from "@/components/ui/toast.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { formatRemoteConnectionError } from "@/lib/remoteConnectionPresentation.js";
 import { getRemoteConnectionFailureCode } from "@/lib/remoteWorkspaceServiceError.js";
 import { resolveWorkspaceKey } from "@zcode/shared";
@@ -19,7 +19,7 @@ export function useRemoteProjectConnectionPresentation(scope: {
   workspacePath: string;
   workspaceIdentity?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const workspaceKey = resolveWorkspaceKey(scope);
   const tab = useTabStore((state) =>
     state.tabs.find(

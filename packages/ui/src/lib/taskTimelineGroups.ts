@@ -1,4 +1,4 @@
-import type { Locale, XCodeTaskMeta } from "@zcode/shared";
+import type { Locale, ZCodeTaskMeta } from "@zcode/shared";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -102,7 +102,7 @@ function serializeTaskTimelineGroupKey(groupKey: TaskTimelineGroupKey): string {
   return groupKey.kind === "daysAgo" ? `${groupKey.kind}:${groupKey.daysAgo ?? 0}` : groupKey.kind;
 }
 
-export function groupTaskTimelineItems<TTask extends Pick<XCodeTaskMeta, "createdAt" | "updatedAt">>(
+export function groupTaskTimelineItems<TTask extends Pick<ZCodeTaskMeta, "createdAt" | "updatedAt">>(
   items: TTask[],
   options: {
     sortBy: "created" | "updated";

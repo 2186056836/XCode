@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select.js";
 import { toast } from "@/components/ui/toast.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { useExtensionLogs } from "@/extension-slots/adapters/useExtensionLogs.js";
 import {
@@ -97,7 +97,7 @@ const ExtensionLogRow = memo(function ExtensionLogRow({
  * 来源、级别过滤与自动滚动是标签内的状态；「清空」只清视图（store 记下 seq）。
  */
 export function ExtensionLogsPane({ visible }: ExtensionLogsPaneProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const model = useExtensionLogs();
   const [source, setSource] = useState<ExtensionLogSourceFilter>("all");
   const [level, setLevel] = useState<ExtensionLogLevelFilter>("all");

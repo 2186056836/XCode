@@ -13,7 +13,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox.js";
 import { Input } from "@/components/ui/input.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   formatCountMessage,
   summarizeProjectRemoval,
@@ -45,7 +45,7 @@ export function ProjectRemovalDialog({
   onCancel(): void;
   onConfirm(rows: readonly ProjectManagementRow[], options?: ProjectRemovalOptions): void;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const msg = (id: string, values?: Record<string, string | number>) =>
     intl.formatMessage({ id: `projectManagement.${id}` }, values);
   const count = (id: string, n: number, values?: Record<string, string | number>) =>

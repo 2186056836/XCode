@@ -77,7 +77,7 @@ function roundedDuration(startedAt: number, endedAt: number): number {
 /**
  * 是否为 runtime 换代/回收导致的瞬态 subscribe 失败。
  *
- * 已知文案都来自同一次回收：transport 关闭时 XCodeProtocolClient.rejectAll 打断在途请求
+ * 已知文案都来自同一次回收：transport 关闭时 ZCodeProtocolClient.rejectAll 打断在途请求
  * （transport closed），复用已回收 client 时 assertNotDisposed 早退（client disposed），
  * 以及 runtime 尚未重新拉起时的 fail-fast（runtime is not running）。
  */

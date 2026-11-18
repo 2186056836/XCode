@@ -1,14 +1,14 @@
 import {
   zcodeProtocolMethods,
   zcodePluginsReferenceCatalogResultSchema,
-  type XCodePluginsReferenceCatalogParams,
+  type ZCodePluginsReferenceCatalogParams,
 } from "@zcode/shared";
-import type { XCodeProtocolClient } from "#src/zcode-agent/zcodeProtocolClient.js";
+import type { ZCodeProtocolClient } from "#src/zcode-agent/zcodeProtocolClient.js";
 
 /** 旧协议严格校验响应；新展示字段走独立入口，只有 -32601 能证明旧 Agent 不支持。 */
 export async function requestPluginReferenceCatalog(
-  client: Pick<XCodeProtocolClient, "request">,
-  params: XCodePluginsReferenceCatalogParams,
+  client: Pick<ZCodeProtocolClient, "request">,
+  params: ZCodePluginsReferenceCatalogParams,
 ) {
   try {
     return await client.request(

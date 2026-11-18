@@ -24,7 +24,7 @@ export async function loginForTui(
     });
   }
 
-  const login = deps.loginXCodeCli ?? (await loadBootstrapModule()).loginXCodeCli;
+  const login = deps.loginZCodeCli ?? (await loadBootstrapModule()).loginZCodeCli;
   return await login({
     abortSignal: options?.abortSignal,
     env,
@@ -85,6 +85,6 @@ export async function logoutForTui(deps: RunDependencies) {
     });
   }
 
-  const logout = deps.logoutXCodeCli ?? (await loadBootstrapModule()).logoutXCodeCli;
+  const logout = deps.logoutZCodeCli ?? (await loadBootstrapModule()).logoutZCodeCli;
   return await logout({ env });
 }

@@ -3,8 +3,8 @@ import { createServer, type Socket } from "node:net";
 import { createInterface } from "node:readline";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { XCodeProtocolClient } from "../../../services/src/zcode-agent/zcodeProtocolClient.js";
-import { XCodeStdioTransport } from "../../../services/src/zcode-agent/zcodeStdioTransport.js";
+import { ZCodeProtocolClient } from "../../../services/src/zcode-agent/zcodeProtocolClient.js";
+import { ZCodeStdioTransport } from "../../../services/src/zcode-agent/zcodeStdioTransport.js";
 
 export class Events<T> {
   readonly history: T[] = [];
@@ -80,10 +80,10 @@ export async function startAgent(
     },
     stdio: ["pipe", "pipe", "pipe"],
   });
-  const transport = new XCodeStdioTransport(child, {
+  const transport = new ZCodeStdioTransport(child, {
     onStderrLine: (line) => process.stderr.write(line + "\n"),
   });
-  const client = new XCodeProtocolClient(transport, {
+  const client = new ZCodeProtocolClient(transport, {
     requireStorageStartup: true,
     requestTimeoutMs: 15_000,
   });

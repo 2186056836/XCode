@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import type { XCodeModelTrajectoryMessage, XCodeModelTrajectoryRecord } from "@zcode/services";
+import type { ZCodeModelTrajectoryMessage, ZCodeModelTrajectoryRecord } from "@zcode/services";
 import {
   trajectoryToolCallInputs,
   trajectoryToolMetadata,
@@ -27,8 +27,8 @@ export interface TrajectorySearchIndex {
 
 export interface TrajectorySearchTimelineItem {
   key: string;
-  record: XCodeModelTrajectoryRecord;
-  inputMessages: XCodeModelTrajectoryMessage[];
+  record: ZCodeModelTrajectoryRecord;
+  inputMessages: ZCodeModelTrajectoryMessage[];
 }
 
 interface SearchTarget {
@@ -98,7 +98,7 @@ function messageTargets(
   callKey: string,
   callIndex: number,
   expansionKey: string,
-  message: XCodeModelTrajectoryMessage,
+  message: ZCodeModelTrajectoryMessage,
 ): SearchTarget[] {
   const metadata = trajectoryToolMetadata(message);
   const content = message.parts.some((part) => part.kind === "tool-result")

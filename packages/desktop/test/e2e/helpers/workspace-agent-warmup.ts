@@ -1,4 +1,4 @@
-import { formatXCodeAgentProcessName } from "@zcode/shared";
+import { formatZCodeAgentProcessName } from "@zcode/shared";
 import { startDraftFromProject, waitForProjectRow } from "./project-sidebar.js";
 import {
   countAgentProcessRows,
@@ -75,9 +75,9 @@ export async function assertStableAgentSelection(
   expect(identities).toHaveLength(expectedWorkspacePaths.length);
 
   const expected = new Set(expectedWorkspacePaths);
-  const placeholderPrefix = formatXCodeAgentProcessName("placeholder");
+  const placeholderPrefix = formatZCodeAgentProcessName("placeholder");
   for (const workspacePath of allWorkspacePaths) {
-    const formatted = formatXCodeAgentProcessName("placeholder", workspacePath);
+    const formatted = formatZCodeAgentProcessName("placeholder", workspacePath);
     const workspaceNameSuffix = formatted.slice(placeholderPrefix.length);
     const actual = await countAgentProcessRows({ workspaceNameSuffix });
     expect(actual).toBe(expected.has(workspacePath) ? 1 : 0);

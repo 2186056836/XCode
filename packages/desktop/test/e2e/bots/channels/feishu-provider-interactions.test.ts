@@ -1,4 +1,4 @@
-import type { XCodeStreamEvent } from "@zcode/shared";
+import type { ZCodeStreamEvent } from "@zcode/shared";
 
 import {
   createBotsServiceHarness,
@@ -55,7 +55,7 @@ describe("Bot provider interaction E2E", () => {
           multiSelect: true,
         },
       ],
-    } as XCodeStreamEvent);
+    } as ZCodeStreamEvent);
 
     const token = requests
       .map((request) => request.body ?? "")
@@ -157,7 +157,7 @@ describe("Bot provider interaction E2E", () => {
       taskId: "task-e2e-bot",
       traceId: "run-e2e-il-before",
       content: "交互前的普通输出",
-    } as XCodeStreamEvent);
+    } as ZCodeStreamEvent);
     await listener?.({
       type: "elicitation_request",
       taskId: "task-e2e-bot",
@@ -169,7 +169,7 @@ describe("Bot provider interaction E2E", () => {
         interaction: "plan_approval",
         plan: "# 完整计划\n\n执行生命周期调整。",
       },
-    } as XCodeStreamEvent);
+    } as ZCodeStreamEvent);
 
     const token = requests
       .map((request) => request.body ?? "")
@@ -199,7 +199,7 @@ describe("Bot provider interaction E2E", () => {
       taskId: "task-e2e-bot",
       traceId: "run-e2e-il-after",
       content: "交互后的新输出",
-    } as XCodeStreamEvent);
+    } as ZCodeStreamEvent);
 
     const messagePosts = requests.filter(
       (request) =>

@@ -26,7 +26,7 @@ export const ZCODE_CUA_NODE_REPL_HOST_ENV_KEY = "ZCODE_CUA_NODE_REPL_HOST";
 // main→host 边界删除，不能用于 signed release 的 runtime override。
 export const ZCODE_CUA_DEV_MODE_ENV_KEY = "ZCODE_CUA_DEV_MODE";
 
-export type XCodeRuntimeEnv = "development" | "production" | "test";
+export type ZCodeRuntimeEnv = "development" | "production" | "test";
 
 type EnvRecord = Record<string, string | undefined>;
 
@@ -35,7 +35,7 @@ export function isCuaDevModeRequested(env: EnvRecord = process.env): boolean {
   return explicit === "1" || explicit === "true" || explicit === "on";
 }
 
-export function isXCodeCuaInternalFeatureEnabled(env: EnvRecord = process.env): boolean {
+export function isZCodeCuaInternalFeatureEnabled(env: EnvRecord = process.env): boolean {
   // CUA 现已默认打包进正式版（plugin staged + Helper enabled），不再需要显式 env flag。
   // DEV_MODE 仍然 implied（开发一键），PRODUCT_HELPER=0/off/false 可显式关闭。
   if (isCuaDevModeRequested(env)) return true;
@@ -68,7 +68,7 @@ const SANITIZED_RUNTIME_ENV_KEYS = [
   // env 注入在 buildMcpStdioEnv 之后 spread，因此仍能拿到（见 adapters/mcp StdioClientTransport）。
   ZCODE_CUA_BROKER_SOCKET_ENV_KEY,
   // 遗留 bearer token：当前 broker 是 identity 模式（socket + authority，无口令，见
-  // captureXCodeCuaBrokerCredentials），本进程不再产生也不再消费它。仍然剔除，因为用户机上
+  // captureZCodeCuaBrokerCredentials），本进程不再产生也不再消费它。仍然剔除，因为用户机上
   // 可能装着旧版 Helper —— 那些版本认 bearer token，一旦这个变量随 agent 全局 env 漏给别的
   // MCP server / Bash 子进程，同一个 confused-deputy 又成立。剔除一个已不用的键是零成本的。
   "ZCODE_CUA_PERMISSION_BROKER_TOKEN",
@@ -119,7 +119,7 @@ const NON_TOOL_PASSTHROUGH_RUNTIME_ENV_KEYS = [
 const SANITIZED_PACKAGE_MANAGER_ENV_PATTERN =
   /^(npm_config|yarn|pnpm)_(http_proxy|https_proxy|proxy|all_proxy|no_proxy|cafile|ca)$/i;
 
-export function normalizeXCodeRuntimeEnv(value: string | undefined): XCodeRuntimeEnv | undefined {
+export function normalizeZCodeRuntimeEnv(value: string | undefined): ZCodeRuntimeEnv | undefined {
   const normalized = value?.trim().toLowerCase();
   if (normalized === "development" || normalized === "production" || normalized === "test") {
     return normalized;
@@ -127,11 +127,11 @@ export function normalizeXCodeRuntimeEnv(value: string | undefined): XCodeRuntim
   return undefined;
 }
 
-export function resolveXCodeRuntimeEnv(
+export function resolveZCodeRuntimeEnv(
   env: Record<string, string | undefined>,
-  fallback: XCodeRuntimeEnv = "production",
-): XCodeRuntimeEnv {
-  return normalizeXCodeRuntimeEnv(env[ZCODE_RUNTIME_ENV_KEY]) ?? fallback;
+  fallback: ZCodeRuntimeEnv = "production",
+): ZCodeRuntimeEnv {
+  return normalizeZCodeRuntimeEnv(env[ZCODE_RUNTIME_ENV_KEY]) ?? fallback;
 }
 
 // Exported so services/node.ts can inject the Helper's plugin authority into the agent spawn env
@@ -145,16 +145,16 @@ interface CapturedCuaBrokerCredentials {
 }
 
 let capturedCuaBrokerCredentials: Readonly<CapturedCuaBrokerCredentials> | undefined;
-const capturedXCodeAgentTelemetryEnv: Record<string, string> = {};
+const capturedZCodeAgentTelemetryEnv: Record<string, string> = {};
 
 // CUA broker socket 会被上面的 sanitize 从子进程 env 中剔除（confused-deputy 防护 —— 不能让
 // 其它 MCP server / Bash / tool 子进程直接驱动已授权 Helper）。但 CLI 入口在 bootstrap
 // 解析全局 ~/.xcode/cli/config.json 里的 `zcode-cua` server 之前就会先 sanitize process.env，导致
 // 定向注入时已经读不到凭据 → 全局 zcode-cua 回退 `--backend auto`，让 Python/uvx 成为 TCC 主体
 // （fail-open，违反 "Python/uvx must never become the implicit permission owner"）。因此在剔除前把
-// 凭据捕获进本进程私有存储，只经 getCapturedXCodeCuaBrokerCredentials() 暴露给 bootstrap 的定向
+// 凭据捕获进本进程私有存储，只经 getCapturedZCodeCuaBrokerCredentials() 暴露给 bootstrap 的定向
 // 注入路径，绝不写回任何子进程 env。
-function captureXCodeCuaBrokerCredentials(env: Record<string, string | undefined>): void {
+function captureZCodeCuaBrokerCredentials(env: Record<string, string | undefined>): void {
   const socket = env[ZCODE_CUA_BROKER_SOCKET_ENV_KEY]?.trim();
   const pluginAuthority = env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY]?.trim();
   const refreshMarker = env["ZCODE_CUA_PERMISSION_BROKER_REFRESH_MARKER"]?.trim();
@@ -174,31 +174,31 @@ function captureXCodeCuaBrokerCredentials(env: Record<string, string | undefined
   }
 }
 
-function captureXCodeAgentTelemetryEnv(env: Record<string, string | undefined>): void {
-  Object.assign(capturedXCodeAgentTelemetryEnv, readXCodeAgentTelemetryEnv(env));
+function captureZCodeAgentTelemetryEnv(env: Record<string, string | undefined>): void {
+  Object.assign(capturedZCodeAgentTelemetryEnv, readZCodeAgentTelemetryEnv(env));
 }
 
 /**
  * 只提取供 Agent telemetry bootstrap 使用的配置。宿主可在经过通用 env 清洗后，
  * 将这组值定向传给 host/Agent；不得把它并入 Bash/MCP 的 tool env。
  */
-export function readXCodeAgentTelemetryEnv(
+export function readZCodeAgentTelemetryEnv(
   env: Record<string, string | undefined>,
 ): Record<string, string> {
   const telemetryEnv: Record<string, string> = {};
   for (const key of SANITIZED_RUNTIME_ENV_KEYS) {
-    if (!isXCodeAgentTelemetryEnvKey(key)) continue;
+    if (!isZCodeAgentTelemetryEnvKey(key)) continue;
     const value = env[key]?.trim();
     if (value) telemetryEnv[key] = value;
   }
   return telemetryEnv;
 }
 
-export function getCapturedXCodeAgentTelemetryEnv(): Record<string, string> {
-  return { ...capturedXCodeAgentTelemetryEnv };
+export function getCapturedZCodeAgentTelemetryEnv(): Record<string, string> {
+  return { ...capturedZCodeAgentTelemetryEnv };
 }
 
-export function getCapturedXCodeCuaBrokerCredentials(): {
+export function getCapturedZCodeCuaBrokerCredentials(): {
   socket: string | undefined;
   pluginAuthority: string | undefined;
   refreshMarker?: string;
@@ -209,24 +209,24 @@ export function getCapturedXCodeCuaBrokerCredentials(): {
 }
 
 // 仅供测试重置进程内捕获状态。
-export function resetCapturedXCodeCuaBrokerCredentialsForTest(): void {
+export function resetCapturedZCodeCuaBrokerCredentialsForTest(): void {
   capturedCuaBrokerCredentials = undefined;
 }
 
-export function resetCapturedXCodeAgentTelemetryEnvForTest(): void {
-  for (const key of Object.keys(capturedXCodeAgentTelemetryEnv)) {
-    delete capturedXCodeAgentTelemetryEnv[key];
+export function resetCapturedZCodeAgentTelemetryEnvForTest(): void {
+  for (const key of Object.keys(capturedZCodeAgentTelemetryEnv)) {
+    delete capturedZCodeAgentTelemetryEnv[key];
   }
 }
 
-export function sanitizeXCodeRuntimeEnv<T extends Record<string, string | undefined>>(
+export function sanitizeZCodeRuntimeEnv<T extends Record<string, string | undefined>>(
   env: T,
 ): Record<string, string> {
-  captureXCodeCuaBrokerCredentials(env);
-  captureXCodeAgentTelemetryEnv(env);
+  captureZCodeCuaBrokerCredentials(env);
+  captureZCodeAgentTelemetryEnv(env);
   const sanitized: Record<string, string> = {};
   for (const [key, value] of Object.entries(env)) {
-    if (value === undefined || shouldSanitizeXCodeRuntimeEnvKey(key)) {
+    if (value === undefined || shouldSanitizeZCodeRuntimeEnvKey(key)) {
       continue;
     }
     sanitized[key] = value;
@@ -234,20 +234,20 @@ export function sanitizeXCodeRuntimeEnv<T extends Record<string, string | undefi
   return sanitized;
 }
 
-export function buildXCodeToolEnvPassthroughEnv(env: EnvRecord): Record<string, string> {
-  const captured = readXCodeToolEnvPassthroughEnv(env);
+export function buildZCodeToolEnvPassthroughEnv(env: EnvRecord): Record<string, string> {
+  const captured = readZCodeToolEnvPassthroughEnv(env);
 
   for (const [key, value] of Object.entries(env)) {
-    if (value === undefined || !shouldCaptureXCodeToolEnvPassthroughKey(key)) {
+    if (value === undefined || !shouldCaptureZCodeToolEnvPassthroughKey(key)) {
       continue;
     }
     captured[key] = value;
   }
 
-  return stringifyXCodeToolEnvPassthroughEnv(captured);
+  return stringifyZCodeToolEnvPassthroughEnv(captured);
 }
 
-export function readXCodeToolEnvPassthroughEnv(env: EnvRecord): Record<string, string> {
+export function readZCodeToolEnvPassthroughEnv(env: EnvRecord): Record<string, string> {
   const raw = env[ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY];
   if (!raw) {
     return {};
@@ -264,7 +264,7 @@ export function readXCodeToolEnvPassthroughEnv(env: EnvRecord): Record<string, s
       if (
         typeof value === "string" &&
         /^[A-Za-z_][A-Za-z0-9_]*$/.test(key) &&
-        shouldCaptureXCodeToolEnvPassthroughKey(key)
+        shouldCaptureZCodeToolEnvPassthroughKey(key)
       ) {
         captured[key] = value;
       }
@@ -275,17 +275,17 @@ export function readXCodeToolEnvPassthroughEnv(env: EnvRecord): Record<string, s
   }
 }
 
-export function sanitizeXCodeRuntimeEnvInPlace(env: Record<string, string | undefined>): void {
-  captureXCodeCuaBrokerCredentials(env);
-  captureXCodeAgentTelemetryEnv(env);
+export function sanitizeZCodeRuntimeEnvInPlace(env: Record<string, string | undefined>): void {
+  captureZCodeCuaBrokerCredentials(env);
+  captureZCodeAgentTelemetryEnv(env);
   for (const key of Object.keys(env)) {
-    if (shouldSanitizeXCodeRuntimeEnvKey(key)) {
+    if (shouldSanitizeZCodeRuntimeEnvKey(key)) {
       delete env[key];
     }
   }
 }
 
-function isXCodeAgentTelemetryEnvKey(key: string): boolean {
+function isZCodeAgentTelemetryEnvKey(key: string): boolean {
   return (
     key.startsWith("OTEL_") ||
     key.startsWith("ZCODE_TELEMETRY_") ||
@@ -293,7 +293,7 @@ function isXCodeAgentTelemetryEnvKey(key: string): boolean {
   );
 }
 
-export function shouldSanitizeXCodeRuntimeEnvKey(key: string): boolean {
+export function shouldSanitizeZCodeRuntimeEnvKey(key: string): boolean {
   const upperKey = key.toUpperCase();
   return (
     SANITIZED_RUNTIME_ENV_KEYS.some((candidate) => candidate === upperKey) ||
@@ -301,18 +301,18 @@ export function shouldSanitizeXCodeRuntimeEnvKey(key: string): boolean {
   );
 }
 
-export function shouldCaptureXCodeToolEnvPassthroughKey(key: string): boolean {
+export function shouldCaptureZCodeToolEnvPassthroughKey(key: string): boolean {
   const upperKey = key.toUpperCase();
-  if (isXCodeAgentTelemetryEnvKey(upperKey)) {
+  if (isZCodeAgentTelemetryEnvKey(upperKey)) {
     return false;
   }
   if (NON_TOOL_PASSTHROUGH_RUNTIME_ENV_KEYS.some((candidate) => candidate === upperKey)) {
     return false;
   }
-  return shouldSanitizeXCodeRuntimeEnvKey(key);
+  return shouldSanitizeZCodeRuntimeEnvKey(key);
 }
 
-function stringifyXCodeToolEnvPassthroughEnv(
+function stringifyZCodeToolEnvPassthroughEnv(
   captured: Record<string, string>,
 ): Record<string, string> {
   const entries = Object.entries(captured).sort(([left], [right]) => left.localeCompare(right));

@@ -11,9 +11,9 @@ import {
   IOnboardingRecordService,
   ICredentialService,
   IBroadcastService,
-  IXCodeTaskService,
-  IXCodeAgentService,
-  IXCodeSessionService,
+  IZCodeTaskService,
+  IZCodeAgentService,
+  IZCodeSessionService,
   IConversationShareService,
   createUnsupportedConversationShareService,
   IBotsService,
@@ -77,9 +77,9 @@ export const REMOTE_WORKSPACE_RPC_REGISTRATIONS = [
   ["onboardingRecordService", IOnboardingRecordService],
   ["credentialService", ICredentialService],
   ["broadcastService", IBroadcastService],
-  ["zcodeTaskService", IXCodeTaskService],
-  ["zcodeAgentService", IXCodeAgentService],
-  ["zcodeSessionService", IXCodeSessionService],
+  ["zcodeTaskService", IZCodeTaskService],
+  ["zcodeAgentService", IZCodeAgentService],
+  ["zcodeSessionService", IZCodeSessionService],
   ["conversationShareService", IConversationShareService],
   ["botsService", IBotsService],
   ["fileWatcherService", IFileWatcherService],
@@ -206,9 +206,9 @@ export function createServerRemoteWorkspaceServiceCollection(params: {
     .register(IOnboardingRecordService, params.connectionServices.onboardingRecordService)
     .register(ICredentialService, params.connectionServices.credentialService)
     .register(IBroadcastService, params.connectionServices.broadcastService)
-    .register(IXCodeTaskService, params.connectionServices.zcodeTaskService)
-    .register(IXCodeAgentService, params.connectionServices.zcodeAgentService)
-    .register(IXCodeSessionService, params.connectionServices.zcodeSessionService)
+    .register(IZCodeTaskService, params.connectionServices.zcodeTaskService)
+    .register(IZCodeAgentService, params.connectionServices.zcodeAgentService)
+    .register(IZCodeSessionService, params.connectionServices.zcodeSessionService)
     // R3 的分享属于目标 Environment；不能恢复旧 SSH 的本机 JWT 混装。
     .register(
       IConversationShareService,

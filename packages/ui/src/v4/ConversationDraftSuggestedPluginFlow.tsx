@@ -1,13 +1,13 @@
 import {
   ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
-  type XCodePluginsResolveSuggestedReferenceResult,
+  type ZCodePluginsResolveSuggestedReferenceResult,
 } from "@zcode/shared";
 
 export interface DraftSuggestedPluginFlow {
   anchorItemId: string;
   operationId: string;
   plugin: { stableId: string; label: string };
-  result?: XCodePluginsResolveSuggestedReferenceResult;
+  result?: ZCodePluginsResolveSuggestedReferenceResult;
   stage: "checking" | "missing" | "disabled" | "unavailable";
 }
 
@@ -40,7 +40,7 @@ export async function trackDraftSuggestedPluginOperation<T>(
 }
 
 export function resolveDraftSuggestedPluginFlowStage(
-  result: XCodePluginsResolveSuggestedReferenceResult,
+  result: ZCodePluginsResolveSuggestedReferenceResult,
 ): DraftSuggestedPluginFlow["stage"] {
   const { status } = result;
   if (

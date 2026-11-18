@@ -69,12 +69,12 @@ import {
   IWindowControllerService,
   IConversationShareService,
   IPromptAttachmentTransferService,
-  IXCodeAgentService,
-  IXCodeTaskService,
-  IXCodeSessionService,
+  IZCodeAgentService,
+  IZCodeTaskService,
+  IZCodeSessionService,
   ICuaPipSessionService,
-  createXCodeAgentConnectionScope,
-  type XCodeAgentV4ClientMode,
+  createZCodeAgentConnectionScope,
+  type ZCodeAgentV4ClientMode,
   collectServiceMemoryDiagnostics,
   createWebRemoteProjectTreeActivityBridge,
 } from "@zcode/services";
@@ -122,7 +122,7 @@ import {
   HostMessageTypes,
   HostResponseTypes,
   formatLogPrefix,
-  formatXCodeHostProcessName,
+  formatZCodeHostProcessName,
   formatZodError,
   buildRemoteWorkspaceIdentity,
   buildServerRemoteWorkspaceIdentity,
@@ -135,17 +135,17 @@ import {
   REMOTE_BIND_CANCELED_ERROR_CODE,
   REMOTE_WORKSPACE_BIND_SESSION_MISSING_ERROR_CODE,
   formatModelPickerValue,
-  type XCodePromptAttachment,
-  type XCodeStreamEvent,
-  type XCodeTaskMeta,
+  type ZCodePromptAttachment,
+  type ZCodeStreamEvent,
+  type ZCodeTaskMeta,
   type TaskStreamMirrorableEvent,
   type TraceId,
-  type XCodeTaskMode,
+  type ZCodeTaskMode,
   type WindowHostAttachmentScope,
   type SourceServerArtifactPolicy,
-  type XCodeAutomation,
-  type XCodeAutomationRun,
-  type XCodeAutomationRunOutcome,
+  type ZCodeAutomation,
+  type ZCodeAutomationRun,
+  type ZCodeAutomationRunOutcome,
   type ModelSelection,
 } from "@zcode/shared";
 import {
@@ -284,7 +284,7 @@ const hostNetworkCapture = createHostNetworkCapture(parentPort);
 
 // 进程检索体验优化：host 由 utilityProcess 拉起时外壳仍是 Electron Helper，
 // 这里根据 main 传入的窗口 label 补一层稳定的 zcode-* title，方便系统进程列表过滤。
-process.title = formatXCodeHostProcessName(process.env["ZCODE_PROCESS_LABEL"]);
+process.title = formatZCodeHostProcessName(process.env["ZCODE_PROCESS_LABEL"]);
 
 type HostLogLevel = "info" | "warn" | "error";
 
@@ -590,7 +590,7 @@ function disposeOffPeakRunSubscription(key: string): void {
 
 /** 终态回填 files_changed：复用现有 task diff 汇总（工具写盘型统计，Bash 改动不计入，接受）。 */
 async function resolveOffPeakFilesChanged(params: {
-  zcodeTaskService: IXCodeTaskService;
+  zcodeTaskService: IZCodeTaskService;
   taskId: string;
   workspacePath: string;
   workspaceIdentity?: string;
@@ -613,12 +613,12 @@ async function resolveOffPeakFilesChanged(params: {
 
 /** loop 终态 → off_peak_tasks 终态：succeeded→completed、stopped→cancelled（用户手动停止）、其余→failed。 */
 async function finalizeOffPeakRun(params: {
-  zcodeTaskService: IXCodeTaskService;
+  zcodeTaskService: IZCodeTaskService;
   offPeakTaskId: string;
   taskId: string;
   workspacePath: string;
   workspaceIdentity?: string;
-  outcome: XCodeAutomationRunOutcome;
+  outcome: ZCodeAutomationRunOutcome;
   error?: string;
 }): Promise<void> {
   const status =
@@ -654,8 +654,8 @@ async function finalizeOffPeakRun(params: {
 }
 
 function trackOffPeakRunOutcome(params: {
-  zcodeTaskService: IXCodeTaskService;
-  zcodeAgentService: IXCodeAgentService;
+  zcodeTaskService: IZCodeTaskService;
+  zcodeAgentService: IZCodeAgentService;
   service: OffPeakTaskService;
   ticketId: string;
   offPeakTaskId: string;
@@ -705,8 +705,8 @@ async function dispatchOffPeakRun(request: OffPeakRunDispatchRequest): Promise<{
   sessionId?: string;
   lifecycleManaged: true;
 }> {
-  const zcodeTaskService = activeServices?.getOptional(IXCodeTaskService);
-  const zcodeAgentService = activeServices?.getOptional(IXCodeAgentService);
+  const zcodeTaskService = activeServices?.getOptional(IZCodeTaskService);
+  const zcodeAgentService = activeServices?.getOptional(IZCodeAgentService);
   if (!zcodeTaskService || !zcodeAgentService) {
     throw new Error("XCode task service is not initialized.");
   }
@@ -835,7 +835,7 @@ async function dispatchOffPeakRun(request: OffPeakRunDispatchRequest): Promise<{
         additionalDirectories: request.additionalDirectories,
         // 空 Session 沿用普通初始化；idle Selection 只在下方执行中注入。
         // 在此写入会让闲时轮结束后的普通消息继续使用无票的隐藏 Provider。
-        mode: request.permissionMode as XCodeTaskMode,
+        mode: request.permissionMode as ZCodeTaskMode,
         // 闲时任务是无界面的 createTask + sendPrompt 连续派发；空 session 必须在首条
         // V4 admission 内先持久化，否则 session_input 外键会先于 session 主记录写入。
         deferPersistenceUntilFirstPrompt: true,
@@ -920,7 +920,7 @@ interface CronRunDispatchRequest {
   prompt: string;
   targetTaskId?: string;
   modelSelection?: ModelSelection;
-  mode?: XCodeTaskMode;
+  mode?: ZCodeTaskMode;
   workspacePath: string;
   workspaceIdentity?: string;
   projectId?: string | null;
@@ -972,7 +972,7 @@ function markCronRunOutcome(params: {
   workspaceKey: string;
   scheduledAt: number | null;
   trigger: "schedule" | "manual";
-  outcome: XCodeAutomationRunOutcome;
+  outcome: ZCodeAutomationRunOutcome;
   error?: string;
 }): void {
   void recordCronRunOutcomeBestEffort({
@@ -990,7 +990,7 @@ function disposeCronRunSubscription(key: string): void {
 }
 
 async function applyCronRunConfigToExistingTask(params: {
-  zcodeTaskService: IXCodeTaskService;
+  zcodeTaskService: IZCodeTaskService;
   taskId: string;
   traceId: TraceId;
   modelSelection?: ModelSelection;
@@ -1004,7 +1004,7 @@ async function applyCronRunConfigToExistingTask(params: {
       traceId: params.traceId,
       modelSelection: params.modelSelection,
       thoughtLevel: params.modelSelection.options?.reasoningLevel,
-      mode: params.mode?.trim() as XCodeTaskMode | undefined,
+      mode: params.mode?.trim() as ZCodeTaskMode | undefined,
     });
     thoughtAppliedWithModel = true;
     modeAppliedWithModel = true;
@@ -1028,7 +1028,7 @@ async function applyCronRunConfigToExistingTask(params: {
 }
 
 function trackCronRunOutcome(params: {
-  zcodeTaskService: IXCodeTaskService;
+  zcodeTaskService: IZCodeTaskService;
   taskId: string;
   traceId: TraceId;
   workspacePath: string;
@@ -1087,7 +1087,7 @@ async function dispatchCronRun(request: CronRunDispatchRequest): Promise<{
   sessionId: string;
 }> {
   const targetServices = resolveAutomationTargetServices(request);
-  const zcodeTaskService = targetServices.getOptional(IXCodeTaskService);
+  const zcodeTaskService = targetServices.getOptional(IZCodeTaskService);
   if (!zcodeTaskService) {
     throw new Error("XCode task service is not initialized.");
   }
@@ -1223,8 +1223,8 @@ async function dispatchCronRun(request: CronRunDispatchRequest): Promise<{
 }
 
 async function dispatchManualAutomationRun(params: {
-  automation: XCodeAutomation;
-  run: XCodeAutomationRun;
+  automation: ZCodeAutomation;
+  run: ZCodeAutomationRun;
 }): Promise<void> {
   logger.info(
     `direct manual automation dispatch started automation=${params.automation.automationId} runId=${params.run.runId}`,
@@ -1389,7 +1389,7 @@ const workspaceTaskTracker = createHostWorkspaceTaskTracker((event) => {
   reportHostRunningTaskCount();
 });
 
-function isXCodeTaskMeta(value: unknown): value is XCodeTaskMeta {
+function isZCodeTaskMeta(value: unknown): value is ZCodeTaskMeta {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -1403,12 +1403,12 @@ function isXCodeTaskMeta(value: unknown): value is XCodeTaskMeta {
 }
 
 function isRemoteMirrorableStreamEvent(
-  event: XCodeStreamEvent,
+  event: ZCodeStreamEvent,
 ): event is TaskStreamMirrorableEvent {
   return event.type !== "task_stream_mirror_batch" && event.type !== "task_snapshot_updated";
 }
 
-function createReportingRemoteXCodeTaskService<T extends object>(
+function createReportingRemoteZCodeTaskService<T extends object>(
   service: T,
   options?: {
     reportRunningPromptCount?: boolean;
@@ -1417,8 +1417,8 @@ function createReportingRemoteXCodeTaskService<T extends object>(
       taskId: string;
       traceId: TraceId;
       content: string;
-      attachments?: XCodePromptAttachment[];
-    }) => Promise<{ content: string; attachments?: XCodePromptAttachment[] }>;
+      attachments?: ZCodePromptAttachment[];
+    }) => Promise<{ content: string; attachments?: ZCodePromptAttachment[] }>;
   },
 ): T {
   const workspaceProxyState = createHostRemoteWorkspaceProxyState();
@@ -1430,7 +1430,7 @@ function createReportingRemoteXCodeTaskService<T extends object>(
     });
   }
 
-  function subscribeSessionMessageRequests(target: T, meta: XCodeTaskMeta): void {
+  function subscribeSessionMessageRequests(target: T, meta: ZCodeTaskMeta): void {
     const onDynamicWorkspaceEvent = Reflect.get(target, "onDynamicWorkspaceEvent");
     if (typeof onDynamicWorkspaceEvent !== "function") {
       return;
@@ -1456,7 +1456,7 @@ function createReportingRemoteXCodeTaskService<T extends object>(
   }
 
   function rememberTaskMeta(result: unknown): void {
-    if (isXCodeTaskMeta(result)) {
+    if (isZCodeTaskMeta(result)) {
       workspaceProxyState.rememberTaskMeta(result);
       subscribeSessionMessageRequests(service, result);
       parentPort?.postMessage({
@@ -1496,12 +1496,12 @@ function createReportingRemoteXCodeTaskService<T extends object>(
     taskId: string;
     traceId: TraceId;
     content: string;
-    attachments?: XCodePromptAttachment[];
+    attachments?: ZCodePromptAttachment[];
   }): Promise<{
     taskId: string;
     traceId: TraceId;
     content: string;
-    attachments?: XCodePromptAttachment[];
+    attachments?: ZCodePromptAttachment[];
   }> {
     if (!options?.materializePromptAttachments) {
       return params;
@@ -1519,7 +1519,7 @@ function createReportingRemoteXCodeTaskService<T extends object>(
       taskId: string;
       traceId: TraceId;
       content: string;
-      attachments?: XCodePromptAttachment[];
+      attachments?: ZCodePromptAttachment[];
     },
   ): Promise<unknown> {
     const taskRealtimePort = options?.taskRealtimePort;
@@ -1556,10 +1556,10 @@ function createReportingRemoteXCodeTaskService<T extends object>(
 
     // 写路径（send/stop/交互回执）已收敛 v4 命令面；本镜像属**读路径**——
     // taskRealtimePort → 手机 relay → 手机端
-    // zcodeSessionStore 的整条消费链词表都是 XCodeStreamEvent。两个方案的评估结论：
+    // zcodeSessionStore 的整条消费链词表都是 ZCodeStreamEvent。两个方案的评估结论：
     // a) relay 直接转发 v4 帧、手机端消费 v4 store（正解）：需要重做 relay stream-op
     //    协议 + 手机端 store；
-    // b) 帧→XCodeStreamEvent 薄映射：等价复刻 adapter mapSessionEvent，
+    // b) 帧→ZCodeStreamEvent 薄映射：等价复刻 adapter mapSessionEvent，
     //    否决。
     // 结论：本镜像保持 legacy 源不动。
     const dynamicStreamEvent = Reflect.get(target, "onDynamicStreamEvent");
@@ -1568,7 +1568,7 @@ function createReportingRemoteXCodeTaskService<T extends object>(
         ? dynamicStreamEvent.call(
             target,
             params.taskId,
-          )((event: XCodeStreamEvent) => {
+          )((event: ZCodeStreamEvent) => {
             if (isRemoteMirrorableStreamEvent(event)) {
               taskRealtimePort.publishStreamOp(mirrorTarget, {
                 kind: "stream_event",
@@ -1588,12 +1588,12 @@ function createReportingRemoteXCodeTaskService<T extends object>(
     }
   }
 
-  function finishWorkspaceTask(taskId: string, meta: XCodeTaskMeta): void {
+  function finishWorkspaceTask(taskId: string, meta: ZCodeTaskMeta): void {
     workspaceProxyState.disposeTaskReadySubscription(taskId);
     workspaceTaskTracker.finish(taskId, meta);
   }
 
-  function beginWorkspaceTask(target: T, taskId: string, meta: XCodeTaskMeta): boolean {
+  function beginWorkspaceTask(target: T, taskId: string, meta: ZCodeTaskMeta): boolean {
     const started = workspaceTaskTracker.begin(taskId, meta);
     if (!started) {
       return false;
@@ -1675,7 +1675,7 @@ function createReportingRemoteXCodeTaskService<T extends object>(
       }
 
       return async (...args: unknown[]) => {
-        let trackedTask: { taskId: string; meta: XCodeTaskMeta; started: boolean } | undefined;
+        let trackedTask: { taskId: string; meta: ZCodeTaskMeta; started: boolean } | undefined;
         let tracksOnlyRpcLifetime = false;
         try {
           const params = args[0];
@@ -1690,10 +1690,10 @@ function createReportingRemoteXCodeTaskService<T extends object>(
               taskId: string;
               traceId: TraceId;
               content: string;
-              attachments?: XCodePromptAttachment[];
+              attachments?: ZCodePromptAttachment[];
             };
             const taskMeta = workspaceProxyState.getTaskMeta(promptParams.taskId) as
-              | XCodeTaskMeta
+              | ZCodeTaskMeta
               | undefined;
             if (taskMeta) {
               trackedTask = {
@@ -1737,7 +1737,7 @@ function createReportingRemoteXCodeTaskService<T extends object>(
   });
 }
 
-function warmUpXCodeAgent(
+function warmUpZCodeAgent(
   services: ServiceCollection,
   context: { workspacePath?: string; workspaceIdentity?: string },
   reason: string,
@@ -1747,7 +1747,7 @@ function warmUpXCodeAgent(
   }
   const workspacePath = context.workspacePath;
   const workspaceIdentity = context.workspaceIdentity;
-  const zcodeSessionService = services.getOptional(IXCodeSessionService);
+  const zcodeSessionService = services.getOptional(IZCodeSessionService);
   if (!zcodeSessionService) {
     return;
   }
@@ -1881,11 +1881,11 @@ function resolveBotProjectConnection(hostId: string): BotProjectConnection | und
     const services = registered.services;
     return {
       owner: registered.capabilities?.physicalOwner?.() ?? services,
-      taskService: createControllerRoutedTaskService(services.get(IXCodeTaskService), {
+      taskService: createControllerRoutedTaskService(services.get(IZCodeTaskService), {
         kind: "local",
       }),
       modelSelectionService: services.get(IModelSelectionService),
-      agentService: services.get(IXCodeAgentService),
+      agentService: services.get(IZCodeAgentService),
       bindWorkspace: async (target) => {
         await registered.capabilities?.bindWorkspaceIdentity?.({
           workspacePath: target.workspacePath,
@@ -1959,7 +1959,7 @@ async function ensureSourceServerConnectionManager(): Promise<SourceServerConnec
 let activeLocalResourceTelemetry: IDisposable | null = null;
 // 资源管理器采样只在 main 请求时执行一次，Host 不维护任何周期定时器。
 const hostResourceUsageResponder = createHostResourceUsageResponder({
-  getAgentService: () => activeServices?.getOptional(IXCodeAgentService),
+  getAgentService: () => activeServices?.getOptional(IZCodeAgentService),
   postMessage: (message) => parentPort?.postMessage(message),
 });
 let activeSessionRealtimePort: ReturnType<typeof createTaskRealtimeBridgeForHostInit> = null;
@@ -2344,7 +2344,7 @@ const windowRemoteConnectionRegistry = createWindowRemoteConnectionRegistry<
     }
   },
   releaseWorkspace: async (services, context) => {
-    await services.get(IXCodeTaskService).releaseWorkspacePreparation({
+    await services.get(IZCodeTaskService).releaseWorkspacePreparation({
       workspacePath: context.workspacePath,
       ...(context.workspaceIdentity ? { workspaceIdentity: context.workspaceIdentity } : {}),
       provider: "glm",
@@ -2429,8 +2429,8 @@ const windowRemoteConnectionRegistry = createWindowRemoteConnectionRegistry<
       previousScope,
       {
         scope: currentScope,
-        taskService: currentServices.get(IXCodeTaskService),
-        agentService: currentServices.getOptional(IXCodeAgentService),
+        taskService: currentServices.get(IZCodeTaskService),
+        agentService: currentServices.getOptional(IZCodeAgentService),
         sourceAvailability: "online",
       },
       {
@@ -2480,7 +2480,7 @@ const windowHostControllerRuntime = createWindowHostControllerRuntime({
   createId: randomUUID,
   readHostTaskList: (query) => {
     if (!activeServices) throw new Error("Window Host services unavailable");
-    return activeServices.get(IXCodeTaskService).listTaskList(query);
+    return activeServices.get(IZCodeTaskService).listTaskList(query);
   },
   onSourceError: (scope, operation, error) => {
     logger.warn(
@@ -2541,8 +2541,8 @@ const windowHostControllerRuntime = createWindowHostControllerRuntime({
       const services = windowRemoteConnectionRegistry.resolveScopedServices(controllerScope);
       return {
         scope: controllerScope,
-        taskService: services.get(IXCodeTaskService),
-        agentService: services.getOptional(IXCodeAgentService),
+        taskService: services.get(IZCodeTaskService),
+        agentService: services.getOptional(IZCodeAgentService),
         sourceAvailability: "online" as const,
       };
     }
@@ -2571,15 +2571,15 @@ const windowHostControllerRuntime = createWindowHostControllerRuntime({
             workspaceIdentity: scope.workspaceIdentity,
           },
           taskService:
-            connection?.services.zcodeTaskService ?? registered!.services.get(IXCodeTaskService),
+            connection?.services.zcodeTaskService ?? registered!.services.get(IZCodeTaskService),
           agentService:
             connection?.services.zcodeAgentService ??
-            registered!.services.getOptional(IXCodeAgentService),
+            registered!.services.getOptional(IZCodeAgentService),
           sourceAvailability: "online" as const,
         };
       return null;
     }
-    const taskService = activeServices?.getOptional(IXCodeTaskService);
+    const taskService = activeServices?.getOptional(IZCodeTaskService);
     if (!taskService) {
       return null;
     }
@@ -2590,7 +2590,7 @@ const windowHostControllerRuntime = createWindowHostControllerRuntime({
         ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
       },
       taskService,
-      agentService: activeServices?.getOptional(IXCodeAgentService),
+      agentService: activeServices?.getOptional(IZCodeAgentService),
       sourceAvailability: "online" as const,
     };
   },
@@ -2629,9 +2629,9 @@ type ExposedServicePortHandle = {
 };
 
 function createControllerRoutedTaskService(
-  base: IXCodeTaskService,
+  base: IZCodeTaskService,
   attachmentScope: WindowHostAttachmentScope,
-): IXCodeTaskService {
+): IZCodeTaskService {
   const route = async (
     params: {
       taskId: string;
@@ -2658,7 +2658,7 @@ function createControllerRoutedTaskService(
   return new Proxy(base, {
     get(target, property, receiver) {
       if (property === "setTaskPinned") {
-        return async (params: Parameters<IXCodeTaskService["setTaskPinned"]>[0]) => {
+        return async (params: Parameters<IZCodeTaskService["setTaskPinned"]>[0]) => {
           const meta = await route(params, {
             kind: "pin",
             pinned: params.pinned,
@@ -2670,8 +2670,8 @@ function createControllerRoutedTaskService(
       if (property === "archiveTask" || property === "unarchiveTask") {
         return async (
           params:
-            | Parameters<IXCodeTaskService["archiveTask"]>[0]
-            | Parameters<IXCodeTaskService["unarchiveTask"]>[0],
+            | Parameters<IZCodeTaskService["archiveTask"]>[0]
+            | Parameters<IZCodeTaskService["unarchiveTask"]>[0],
         ) => {
           const meta = await route(params, {
             kind: "archive",
@@ -2682,12 +2682,12 @@ function createControllerRoutedTaskService(
         };
       }
       if (property === "deleteTask") {
-        return async (params: Parameters<IXCodeTaskService["deleteTask"]>[0]) => {
+        return async (params: Parameters<IZCodeTaskService["deleteTask"]>[0]) => {
           await route(params, { kind: "delete" });
         };
       }
       if (property === "deleteArchivedTasks") {
-        return async (params: Parameters<IXCodeTaskService["deleteArchivedTasks"]>[0]) => {
+        return async (params: Parameters<IZCodeTaskService["deleteArchivedTasks"]>[0]) => {
           if (params.taskIds.length === 0) {
             return { deletedTaskIds: [], skippedTaskIds: [], failedTaskIds: [] };
           }
@@ -2704,7 +2704,7 @@ function createControllerRoutedTaskService(
         };
       }
       if (property === "deleteArchivedTask") {
-        return async (params: Parameters<IXCodeTaskService["deleteArchivedTask"]>[0]) =>
+        return async (params: Parameters<IZCodeTaskService["deleteArchivedTask"]>[0]) =>
           windowHostControllerRuntime.service.deleteArchivedTask({
             address: await windowHostControllerRuntime.resolveTaskAddress({
               ...params,
@@ -2714,7 +2714,7 @@ function createControllerRoutedTaskService(
           });
       }
       if (property === "setTaskUnread") {
-        return async (params: Parameters<IXCodeTaskService["setTaskUnread"]>[0]) => {
+        return async (params: Parameters<IZCodeTaskService["setTaskUnread"]>[0]) => {
           const meta = await route(
             params,
             params.unread
@@ -2756,7 +2756,7 @@ function exposeServicesOnMessagePort(
   port: Electron.MessagePortMain,
   services: ServiceCollection,
   deferInit: boolean,
-  clientMode: XCodeAgentV4ClientMode = "desktop-continuous",
+  clientMode: ZCodeAgentV4ClientMode = "desktop-continuous",
   attachmentScope: WindowHostAttachmentScope = { kind: "local" },
   capabilities?: HostRemoteConnectionCapabilities,
   terminalOwnerId?: string,
@@ -2789,10 +2789,10 @@ function exposeServicesOnMessagePort(
   const rawServer = new ChannelServer(protocol, "host", 1000, deferInit);
   const loggedServer = new LoggingChannelServer(rawServer, logRpc);
   const server = new NetworkTelemetryChannelServer(loggedServer);
-  const agentService = services.getOptional(IXCodeAgentService);
+  const agentService = services.getOptional(IZCodeAgentService);
   const connectionContext = { connectionId: `host-rpc-${randomUUID()}`, clientMode };
   const connectionScope = agentService
-    ? createXCodeAgentConnectionScope(agentService, connectionContext)
+    ? createZCodeAgentConnectionScope(agentService, connectionContext)
     : undefined;
   services.register(IWindowControllerService, windowHostControllerRuntime.service);
   // 未读自动写入只归窗口 base renderer；手机和 remote facade 不能重复消费同一完成信号。
@@ -2832,15 +2832,15 @@ function exposeServicesOnMessagePort(
     // dispose 只属于 Host attachment 生命周期，不暴露为 Renderer RPC。
     overrides.set(IPromptAttachmentTransferService.channelName, promptAttachmentService);
   }
-  const taskService = services.getOptional(IXCodeTaskService);
+  const taskService = services.getOptional(IZCodeTaskService);
   if (taskService) {
     overrides.set(
-      IXCodeTaskService.channelName,
+      IZCodeTaskService.channelName,
       createControllerRoutedTaskService(taskService, attachmentScope),
     );
   }
   if (connectionScope) {
-    overrides.set(IXCodeAgentService.channelName, connectionScope.service);
+    overrides.set(IZCodeAgentService.channelName, connectionScope.service);
   }
   const conversationShareService = services.getOptional(IConversationShareService);
   if (conversationShareService) {
@@ -3431,7 +3431,7 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
       try {
         const dispatchResult = await dispatchCronRun({
           ...msg,
-          mode: msg.mode as XCodeTaskMode | undefined,
+          mode: msg.mode as ZCodeTaskMode | undefined,
         });
         parentPort.postMessage({
           type: HostResponseTypes.CronRunResult,
@@ -3510,7 +3510,7 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
   }
 
   if (msg.type === HostMessageTypes.SessionMessageDeliver) {
-    const zcodeTaskService = activeServices?.getOptional(IXCodeTaskService);
+    const zcodeTaskService = activeServices?.getOptional(IZCodeTaskService);
     if (!zcodeTaskService) {
       parentPort.postMessage({
         type: HostResponseTypes.SessionMessageDeliverResult,
@@ -3549,7 +3549,7 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
   }
 
   if (msg.type === HostMessageTypes.SessionMessageDeliveryResult) {
-    const zcodeTaskService = activeServices?.getOptional(IXCodeTaskService);
+    const zcodeTaskService = activeServices?.getOptional(IZCodeTaskService);
     if (!zcodeTaskService) {
       logger.warn("session message delivery result received before XCode task service initialized");
       return;
@@ -3668,7 +3668,7 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
               const services = windowRemoteConnectionRegistry.resolveScopedServices(nextScope);
               await windowHostControllerRuntime.replaceDisconnectedSource(previousScope, {
                 scope: nextScope,
-                taskService: services.get(IXCodeTaskService),
+                taskService: services.get(IZCodeTaskService),
                 sourceAvailability: "online",
               });
             } catch (error) {
@@ -4288,7 +4288,7 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
                     .listReadyConnections()
                     .map(({ target, services: remoteServices }) => ({
                       target,
-                      zcodeAgentService: remoteServices.get(IXCodeAgentService),
+                      zcodeAgentService: remoteServices.get(IZCodeAgentService),
                     })),
                   mode,
                   (error) => logger.warn("remote dynamic workflow user mode forward failed", error),
@@ -4339,15 +4339,15 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
             return initializedServices;
           },
         });
-        const zcodeTaskService = services.getOptional(IXCodeTaskService);
+        const zcodeTaskService = services.getOptional(IZCodeTaskService);
         if (zcodeTaskService) {
-          const reportingXCodeTaskService = createReportingRemoteXCodeTaskService(
+          const reportingZCodeTaskService = createReportingRemoteZCodeTaskService(
             zcodeTaskService,
             {
               reportRunningPromptCount: false,
             },
           );
-          services.register(IXCodeTaskService, reportingXCodeTaskService);
+          services.register(IZCodeTaskService, reportingZCodeTaskService);
         }
         sourceServerDirectory = new SourceServerDirectory({
           settingService: services.get(ISettingService),
@@ -4439,7 +4439,7 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
         windowHostExtensions = createWindowHostExtensions({
           pluginManagement: services.get(IPluginManagementService),
           // context 组成与生成速率的数据泵（docs/plugins/extension-host.md §9、§10），也是会话读连接的底座（§17.5）。
-          agent: services.get(IXCodeAgentService),
+          agent: services.get(IZCodeAgentService),
           // 会话列表泵（§17.5）：与侧栏、手机同一份控制器投影，只在本进程内交给扩展门面。
           taskRows: {
             read: () => windowHostControllerRuntime.readTaskRows(),
@@ -4479,7 +4479,7 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
         // Main 已把启动预热限制为 active workspace 1 个；Host 必须显式消费这份固定名单，
         // 不能让后续 task-list observer 再隐式扩大，也不能因失败扫描补位。
         agentWarmupTargets.forEach((target, index) => {
-          warmUpXCodeAgent(
+          warmUpZCodeAgent(
             services,
             target,
             `local host init (${index + 1}/${agentWarmupTargets.length})`,

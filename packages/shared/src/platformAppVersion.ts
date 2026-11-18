@@ -12,7 +12,7 @@
  * 取值后缓存 15 分钟（与官方客户端自动检查更新的节奏一致），失败保留上次成功值，
  * 再退回内置基线，绝不因为网络问题发出空版本头。
  */
-import { DEFAULT_XCODE_ENDPOINT_ORIGIN, normalizeXCodeEndpointOrigin } from "./zcodeEndpoint.js";
+import { DEFAULT_XCODE_ENDPOINT_ORIGIN, normalizeZCodeEndpointOrigin } from "./zcodeEndpoint.js";
 
 /** 内置基线：官方 3.17.2（首个确认营销投放可用的版本）。仅当远端从未成功时为兜底。 */
 const PLATFORM_APP_VERSION_BASELINE = "3.17.2";
@@ -76,7 +76,7 @@ export async function fetchLatestPlatformAppVersion(options?: {
   const fetchImpl = options?.fetchImpl ?? globalThis.fetch;
   if (typeof fetchImpl !== "function") return null;
   try {
-    const origin = normalizeXCodeEndpointOrigin(
+    const origin = normalizeZCodeEndpointOrigin(
       options?.endpointOrigin?.trim() || DEFAULT_XCODE_ENDPOINT_ORIGIN,
     );
     const url = new URL(`${origin}/api/v1/releases/electron/manifest`);

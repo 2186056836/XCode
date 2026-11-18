@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { XCodeProvider } from "@zcode/shared";
+import type { ZCodeProvider } from "@zcode/shared";
 import { logger } from "@/logger.js";
 import { shouldEnableWorkspaceRpc } from "@/lib/workspaceRpcAvailability.js";
-import { useXCodeTaskService } from "@/hooks/useXCodeTaskService.js";
+import { useZCodeTaskService } from "@/hooks/useZCodeTaskService.js";
 import { useRemoteWorkspaceSessionStore } from "@/store/remoteWorkspaceSessionStore.js";
 import { useResolvedRemoteWorkspaceSessionId } from "@/hooks/useResolvedRemoteWorkspaceSessionId.js";
-import type { IXCodeTaskService } from "@zcode/services";
+import type { IZCodeTaskService } from "@zcode/services";
 
 interface WorkspaceProviderConfigFileState {
   path: string | null;
@@ -40,10 +40,10 @@ type WorkspaceProviderConfigServiceScope = "workspace" | "base";
 
 export function resolveWorkspaceProviderConfigZCodeService(params: {
   configuredServiceScope: WorkspaceProviderConfigServiceScope;
-  workspaceZCodeService: IXCodeTaskService;
-  baseZCodeService: IXCodeTaskService | null;
+  workspaceZCodeService: IZCodeTaskService;
+  baseZCodeService: IZCodeTaskService | null;
   remoteSessionId: string | null;
-}): IXCodeTaskService | null {
+}): IZCodeTaskService | null {
   if (params.configuredServiceScope === "workspace") {
     return params.workspaceZCodeService;
   }
@@ -69,7 +69,7 @@ export function resolveWorkspaceProviderConfigZCodeService(params: {
  */
 export function useWorkspaceProviderConfigFile(
   workspacePath: string,
-  provider: XCodeProvider,
+  provider: ZCodeProvider,
   preferredRemoteSessionId?: string | null,
   workspaceIdentity?: string,
   options?: {
@@ -77,7 +77,7 @@ export function useWorkspaceProviderConfigFile(
     enabled?: boolean;
   },
 ) {
-  const workspaceZCodeService = useXCodeTaskService(
+  const workspaceZCodeService = useZCodeTaskService(
     workspacePath,
     preferredRemoteSessionId,
     workspaceIdentity,

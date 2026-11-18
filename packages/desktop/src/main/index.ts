@@ -70,11 +70,11 @@ import {
   getConversationWorkspaceDir,
   getDataBaseDir,
   getExportLogDir,
-  getXCodeDataRootDir,
+  getZCodeDataRootDir,
   normalizeRuntimeProcessEnv,
   setDataBaseDir,
   migrateApplicationStorage,
-  resolveDefaultXCodeAgentCommand,
+  resolveDefaultZCodeAgentCommand,
   startupStorage,
 } from "@zcode/services/node";
 import {
@@ -92,9 +92,9 @@ import {
   toZhOrEnLocale,
   TEST_XCODE_ENDPOINT_ORIGIN,
   ZCODE_VERSION,
-  buildXCodeEndpointUrls,
+  buildZCodeEndpointUrls,
   resolveWebRemoteControlRelayWsUrl,
-  resolveXCodeEndpointOrigin,
+  resolveZCodeEndpointOrigin,
   shouldEnableE2ETestBridge,
   type UpdateStatePayload,
   type TelemetryEventPayload,
@@ -160,7 +160,7 @@ import {
   getDesktopMenuLabel as getDesktopMenuLabelByLocale,
   rebuildApplicationMenu,
   resolveSystemApplicationLocale,
-  updateXCodeStdioTapDevMenuState,
+  updateZCodeStdioTapDevMenuState,
 } from "./desktopApplicationMenu.js";
 import { applyAppIcon } from "./desktopWindowChrome.js";
 import { resolveWindowsAppUserModelIdForFlavor } from "../../scripts/desktop-product-identity.mjs";
@@ -183,7 +183,7 @@ import {
   syncApplicationUnreadBadge,
   handleDesktopWindowCloseRequest,
 } from "./desktopWindowLifecycle.js";
-import { resolveXCodeBuiltinProviderConfigFilePath } from "./desktopProviderConfig.js";
+import { resolveZCodeBuiltinProviderConfigFilePath } from "./desktopProviderConfig.js";
 import {
   getCredentialsDir,
   isDockerDaemonAvailable,
@@ -193,7 +193,7 @@ import {
   loadHostProcessEnvFromLocalFiles,
   resolveBundledGlmBinaryPath,
   resolveRemoteAssetDirs,
-  resolveXCodeEndpointEnvBaseOrigin,
+  resolveZCodeEndpointEnvBaseOrigin,
   desktopRuntimeEnv,
   runtimeApplicationName,
   runtimeHomePath,
@@ -270,9 +270,9 @@ import {
 } from "./desktopResourceTelemetry.js";
 import { registerRendererHeapSampleIpc } from "./processResourceRendererHeapSource.js";
 import {
-  registerDesktopXCodeDataSizeTelemetry,
-  stopDesktopXCodeDataSizeTelemetry,
-} from "./desktopXCodeDataSizeTelemetry.js";
+  registerDesktopZCodeDataSizeTelemetry,
+  stopDesktopZCodeDataSizeTelemetry,
+} from "./desktopZCodeDataSizeTelemetry.js";
 import { configureDesktopMcpTelemetry, reportMcpTelemetryToArms } from "./desktopMcpTelemetry.js";
 import {
   configureDesktopNetworkTelemetry,
@@ -286,7 +286,7 @@ import {
   createEmbeddedBrowserPermissionUiBridge,
   setActiveEmbeddedBrowserPermissionUiBridge,
 } from "./embeddedBrowserPermissionUiBridge.js";
-import { mapXCodeEnvToArmsRumEnv } from "@zcode/shared";
+import { mapZCodeEnvToArmsRumEnv } from "@zcode/shared";
 import {
   findWindowsProcessesReferencingResourceMarkers,
   probeWindowsPackagedResourceWritable,
@@ -785,10 +785,10 @@ const appLaunchGate = createAppLaunchGate();
 const appLaunchCoordinator = createAppLaunchCoordinator(appLaunchGate);
 const appTelemetryCredentialService = createCredentialService();
 const autoUpdateCredentialService = createCredentialService();
-async function resolveCurrentXCodeEndpointOrigin() {
-  return resolveXCodeEndpointOrigin({
+async function resolveCurrentZCodeEndpointOrigin() {
+  return resolveZCodeEndpointOrigin({
     env: ZCODE_ENV,
-    envBaseOrigin: resolveXCodeEndpointEnvBaseOrigin(hostProcessLocalEnv),
+    envBaseOrigin: resolveZCodeEndpointEnvBaseOrigin(hostProcessLocalEnv),
     overrideOrigin: (await mainSettingService.get()).zcodeEndpointOrigin,
   });
 }
@@ -842,7 +842,7 @@ const appTelemetryCore = createTelemetryCore({
   loadUserId: createTelemetryUserIdLoader(appTelemetryCredentialService),
   loadAuthorization: createTelemetryAuthorizationLoader(appTelemetryCredentialService),
   loadMarketingParams: createTelemetryMarketingParamsLoader(appTelemetryCredentialService),
-  resolveXCodeEndpointOrigin: resolveCurrentXCodeEndpointOrigin,
+  resolveZCodeEndpointOrigin: resolveCurrentZCodeEndpointOrigin,
   // 遥测的语言取 Main 的实时界面语言，不用 renderer 的 Intl 系统语言；未确定前不覆盖。
   resolveClientLanguage: resolveKnownApplicationLocale,
   fetchImpl: createDesktopTelemetryFetch({
@@ -937,7 +937,7 @@ const readHelpConfig = createDesktopHelpConfigReader({
   appVersion: ZCODE_VERSION || app.getVersion(),
   deviceMid,
   getClientLanguage: () => currentApplicationLocale,
-  resolveEndpointOrigin: resolveCurrentXCodeEndpointOrigin,
+  resolveEndpointOrigin: resolveCurrentZCodeEndpointOrigin,
 });
 // 同一个 /api/v1/client/configs fetcher 供两个灰度 rollout 共用（请求参数与鉴权完全一致，
 // 各自独立缓存/去重，服务端按 data.configs.<key> 区分功能）。
@@ -946,7 +946,7 @@ const electronClientConfigsFetcher = createElectronDesktopContextPromptConfigFet
   appVersion: ZCODE_VERSION || app.getVersion(),
   deviceMid,
   getClientLanguage: () => currentApplicationLocale,
-  resolveEndpointOrigin: resolveCurrentXCodeEndpointOrigin,
+  resolveEndpointOrigin: resolveCurrentZCodeEndpointOrigin,
 });
 desktopContextPromptRollout = createDesktopContextPromptRollout({
   fetchConfig: electronClientConfigsFetcher,
@@ -977,7 +977,7 @@ const armsUserIdentitySync = createArmsUserIdentitySync({
   setUser: (user) => armsRum.setConfig("user", user),
 });
 const webRemoteControlAppVersion = ZCODE_VERSION || app.getVersion();
-const defaultXCodeEndpointUrls = buildXCodeEndpointUrls(DEFAULT_XCODE_ENDPOINT_ORIGIN, {
+const defaultZCodeEndpointUrls = buildZCodeEndpointUrls(DEFAULT_XCODE_ENDPOINT_ORIGIN, {
   appVersion: webRemoteControlAppVersion,
 });
 const webRemoteControlRelayWsEnvOverride =
@@ -1020,7 +1020,7 @@ function getMobileLogSink(): MobileLogSink {
 const webRemoteControlManager = createWebRemoteControlManager({
   mobileLogSink: { append: (target, events) => getMobileLogSink().append(target, events) },
   getEndpointUrls: async () => {
-    const derived = buildXCodeEndpointUrls(await resolveCurrentXCodeEndpointOrigin(), {
+    const derived = buildZCodeEndpointUrls(await resolveCurrentZCodeEndpointOrigin(), {
       appVersion: webRemoteControlAppVersion,
     });
     return {
@@ -1036,7 +1036,7 @@ const webRemoteControlManager = createWebRemoteControlManager({
     endpointOrigin: DEFAULT_XCODE_ENDPOINT_ORIGIN,
     overrideUrl: webRemoteControlRelayWsEnvOverride,
   }),
-  mobileRemoteControlUrl: webRemoteControlUrlEnvOverride || defaultXCodeEndpointUrls.remoteUrl,
+  mobileRemoteControlUrl: webRemoteControlUrlEnvOverride || defaultZCodeEndpointUrls.remoteUrl,
   // 远控通知轮询在模块加载时就启动，界面语言确定前不带语言头（不拿默认中文冒充）。
   getClientLanguage: resolveKnownApplicationLocale,
   deviceMid,
@@ -1324,7 +1324,7 @@ async function prepareAppQuit(reason: string, kind: AppShutdownKind = "normal"):
   // Bug 根因：资源样本改为 5 分钟窗口后，退出仍直接 stop 会清空未满窗口的数据。
   // 退出时只排空已存在的角色 / Agent 内存窗口，不启动新采样、目录扫描或外部探针。
   stopDesktopResourceTelemetry({ flushPendingWindows: true });
-  stopDesktopXCodeDataSizeTelemetry();
+  stopDesktopZCodeDataSizeTelemetry();
   stopDesktopNetworkTelemetry();
   stopRemoteUsageArmsPeriodicSampling();
   disposeRendererActionTraceIpc?.();
@@ -1711,14 +1711,14 @@ async function executeDesktopCommandForApp(
     command,
     senderWindow,
     logger,
-    updateXCodeStdioTapDevMenuState,
+    updateZCodeStdioTapDevMenuState,
     onDesktopZoomChanged: (zoomLevel) => {
       currentDesktopZoomLevel = clampDesktopZoomLevel(zoomLevel);
       rebuildMenu();
     },
     settingService: mainSettingService,
-    onXCodeEndpointChanged: handleXCodeEndpointChanged,
-    zcodeEndpointEnvBaseOrigin: resolveXCodeEndpointEnvBaseOrigin(hostProcessLocalEnv),
+    onZCodeEndpointChanged: handleZCodeEndpointChanged,
+    zcodeEndpointEnvBaseOrigin: resolveZCodeEndpointEnvBaseOrigin(hostProcessLocalEnv),
     onRelaunchApp: async () => {
       await prepareAppQuit("desktop-command-relaunch");
       app.relaunch();
@@ -1746,11 +1746,11 @@ async function executeDesktopCommandForApp(
   });
 }
 
-async function resolveXCodeEndpointSelection(): Promise<"production" | "test" | "custom"> {
+async function resolveZCodeEndpointSelection(): Promise<"production" | "test" | "custom"> {
   if (ZCODE_ENV === "production") {
     return "production";
   }
-  const origin = await resolveCurrentXCodeEndpointOrigin();
+  const origin = await resolveCurrentZCodeEndpointOrigin();
   if (origin === DEFAULT_XCODE_ENDPOINT_ORIGIN) {
     return "production";
   }
@@ -1760,7 +1760,7 @@ async function resolveXCodeEndpointSelection(): Promise<"production" | "test" | 
   return "custom";
 }
 
-async function handleXCodeEndpointChanged() {
+async function handleZCodeEndpointChanged() {
   rebuildMenu();
   for (const win of getApplicationWindowsExcludingCuaIndicator()) {
     await webRemoteControlManagerRef.current?.suspend(win.id, "endpoint-changed");
@@ -1802,7 +1802,7 @@ function resetShortcutRecordingForWebContents(webContentsId: number) {
 }
 
 function rebuildMenu() {
-  void Promise.all([resolveXCodeEndpointSelection(), mainSettingService.get()]).then(
+  void Promise.all([resolveZCodeEndpointSelection(), mainSettingService.get()]).then(
     ([zcodeEndpointSelection, settings]) => {
       rebuildApplicationMenu({
         currentApplicationLocale,
@@ -2200,7 +2200,7 @@ function createWindowInstance(startupBootstrap: StartupWindowBootstrap = {}) {
         {
           ...initMessage,
           browserBackendIdentity: browserGuestManager.getBackendIdentity(win.id),
-          zcodeBuiltinProviderConfigFilePath: resolveXCodeBuiltinProviderConfigFilePath(),
+          zcodeBuiltinProviderConfigFilePath: resolveZCodeBuiltinProviderConfigFilePath(),
         },
         {
           hostProcessLocalEnv,
@@ -2547,7 +2547,7 @@ app.whenReady().then(async () => {
     settingService: mainSettingService,
     locale: currentApplicationLocale,
     deviceMid,
-    resolveEndpointOrigin: resolveCurrentXCodeEndpointOrigin,
+    resolveEndpointOrigin: resolveCurrentZCodeEndpointOrigin,
     resolveXcodeJwtToken: () => autoUpdateCredentialService.load("zcodejwttoken"),
     updateFeedSource: resolveUpdateFeedSourceFromStartupConfig({
       argv: process.argv,
@@ -2755,7 +2755,7 @@ app.whenReady().then(async () => {
       deviceMid,
       platform: process.platform,
       appVersion: ZCODE_VERSION,
-      armsEnv: mapXCodeEnvToArmsRumEnv(desktopRuntimeEnv),
+      armsEnv: mapZCodeEnvToArmsRumEnv(desktopRuntimeEnv),
     },
     finalArmsCustomEventE2EEnabled: shouldEnableE2ETestBridge(process.env),
     webRemoteControlManager,
@@ -2804,34 +2804,34 @@ app.whenReady().then(async () => {
     deviceMid,
     platform: process.platform,
     appVersion: ZCODE_VERSION,
-    armsEnv: mapXCodeEnvToArmsRumEnv(desktopRuntimeEnv),
+    armsEnv: mapZCodeEnvToArmsRumEnv(desktopRuntimeEnv),
   });
   configureDesktopResourceTelemetry({
     deviceMid,
     platform: process.platform,
     appVersion: ZCODE_VERSION,
-    armsEnv: mapXCodeEnvToArmsRumEnv(desktopRuntimeEnv),
+    armsEnv: mapZCodeEnvToArmsRumEnv(desktopRuntimeEnv),
   });
   configureDesktopMcpTelemetry({
     deviceMid,
     appVersion: ZCODE_VERSION,
-    armsEnv: mapXCodeEnvToArmsRumEnv(desktopRuntimeEnv),
+    armsEnv: mapZCodeEnvToArmsRumEnv(desktopRuntimeEnv),
   });
   configureDesktopNetworkTelemetry({
     deviceMid,
     platform: process.platform,
     appVersion: ZCODE_VERSION,
-    armsEnv: mapXCodeEnvToArmsRumEnv(desktopRuntimeEnv),
+    armsEnv: mapZCodeEnvToArmsRumEnv(desktopRuntimeEnv),
   });
   registerDesktopStabilityMonitors(logger, crashCapturePaths);
   registerDesktopResourceTelemetry(logger);
   // 主窗口 renderer 的 60 秒 heap 样本入口；随 App 生命周期常驻，只注册一次。
   registerRendererHeapSampleIpc();
   const defaultDataBaseDir = process.env.HOME?.trim() || homedir();
-  registerDesktopXCodeDataSizeTelemetry({
+  registerDesktopZCodeDataSizeTelemetry({
     context: {
       appVersion: ZCODE_VERSION,
-      armsEnv: mapXCodeEnvToArmsRumEnv(desktopRuntimeEnv),
+      armsEnv: mapZCodeEnvToArmsRumEnv(desktopRuntimeEnv),
       dataRootKind:
         resolve(getDataBaseDir()) === resolve(defaultDataBaseDir) ? "default" : "custom",
       deviceMid,
@@ -2839,9 +2839,9 @@ app.whenReady().then(async () => {
     },
     getSystemIdleTimeSeconds: () => powerMonitor.getSystemIdleTime(),
     isAppBackground: () => resolveResourceUsageScene() === "background",
-    isXCodeBusy: () => getRunningAgentSessionCount() > 0,
+    isZCodeBusy: () => getRunningAgentSessionCount() > 0,
     logger,
-    rootPath: getXCodeDataRootDir(),
+    rootPath: getZCodeDataRootDir(),
     stateFile: join(app.getPath("userData"), "zcode-data-size-telemetry.json"),
   });
   registerDesktopNetworkTelemetry(logger);
@@ -2859,7 +2859,7 @@ app.whenReady().then(async () => {
           resolveXcodeJwtToken: () => autoUpdateCredentialService.load("zcodejwttoken"),
           locale: currentApplicationLocale,
           logger,
-          endpointOrigin: await resolveCurrentXCodeEndpointOrigin(),
+          endpointOrigin: await resolveCurrentZCodeEndpointOrigin(),
           onBlocked: () => {
             forceUpdateMainWindowCreationBlocked = true;
           },

@@ -4,7 +4,7 @@
  */
 import { create } from "zustand";
 import type {
-  XCodeAgentMcpServer,
+  ZCodeAgentMcpServer,
   CliMcpSource,
   McpConfig,
   McpScope,
@@ -12,11 +12,11 @@ import type {
   McpServerStatus,
   McpSource,
   NativeMcpServerRecord,
-  XCodeMcpListMode,
-  XCodeMcpServerStatusSnapshot,
-  XCodeMcpServer,
+  ZCodeMcpListMode,
+  ZCodeMcpServerStatusSnapshot,
+  ZCodeMcpServer,
 } from "@zcode/shared";
-import { convertToXCodeAgentMcpServer } from "@zcode/shared";
+import { convertToZCodeAgentMcpServer } from "@zcode/shared";
 import { logger } from "@/logger.js";
 import {
   fetchNativeMcpServers,
@@ -27,8 +27,8 @@ import {
   type MigrateLegacyResult,
 } from "@/store/mcpStoreDesktop.js";
 import {
-  importLegacyCommonServersToXCodeAgent,
-  migrateStoredCommonMcpToXCodeAgent,
+  importLegacyCommonServersToZCodeAgent,
+  migrateStoredCommonMcpToZCodeAgent,
 } from "@/store/mcpStoreMigration.js";
 import {
   buildServerList,
@@ -56,8 +56,8 @@ interface UpdateServerStatusOptions {
 interface McpStoreState {
   config: McpConfig;
   nativeServers: NativeMcpServerRecord[];
-  servers: XCodeMcpServer[];
-  statusSnapshots: Record<string, XCodeMcpServerStatusSnapshot>;
+  servers: ZCodeMcpServer[];
+  statusSnapshots: Record<string, ZCodeMcpServerStatusSnapshot>;
   currentProjectPath: string;
   currentWorkspaceIdentity?: string;
   currentAuthorityKey?: string;
@@ -96,9 +96,9 @@ interface McpStoreState {
     projectPath?: string,
   ) => Promise<void>;
   deleteScopedMcpServer: (source: McpSource, name: string, projectPath?: string) => void;
-  addXCodeAgentMcpServer: (name: string, config: McpServerConfig, projectPath?: string) => void;
-  updateXCodeAgentMcpServer: (name: string, config: McpServerConfig, projectPath?: string) => void;
-  deleteXCodeAgentMcpServer: (name: string, projectPath?: string) => void;
+  addZCodeAgentMcpServer: (name: string, config: McpServerConfig, projectPath?: string) => void;
+  updateZCodeAgentMcpServer: (name: string, config: McpServerConfig, projectPath?: string) => void;
+  deleteZCodeAgentMcpServer: (name: string, projectPath?: string) => void;
   addClaudeCliMcpServer: (name: string, config: McpServerConfig, projectPath?: string) => void;
   updateClaudeCliMcpServer: (name: string, config: McpServerConfig, projectPath?: string) => void;
   deleteClaudeCliMcpServer: (name: string, projectPath?: string) => void;
@@ -118,25 +118,25 @@ interface McpStoreState {
     error?: string,
     options?: UpdateServerStatusOptions,
   ) => void;
-  beginServerStatusListRefresh: (mode?: XCodeMcpListMode) => number;
+  beginServerStatusListRefresh: (mode?: ZCodeMcpListMode) => number;
   markServerStatusListRefreshFailed: (
     error: string,
     requestEpoch: number,
-    mode?: XCodeMcpListMode,
+    mode?: ZCodeMcpListMode,
   ) => void;
   mergeServerStatusSnapshots: (
-    statuses: Record<string, XCodeMcpServerStatusSnapshot>,
+    statuses: Record<string, ZCodeMcpServerStatusSnapshot>,
     requestEpoch: number,
     mode?: "connect" | "status",
   ) => void;
-  getServer: (id: string) => XCodeMcpServer | undefined;
+  getServer: (id: string) => ZCodeMcpServer | undefined;
   setCurrentProjectPath: (
     path: string,
     workspaceIdentity?: string,
     directoryService?: McpDirectoryService | null,
     authorityKey?: string,
   ) => void;
-  getEnabledMcpServersForXCode: (provider: string) => XCodeAgentMcpServer[];
+  getEnabledMcpServersForZCode: (provider: string) => ZCodeAgentMcpServer[];
   checkAllServerStatus: (
     tester: (config: McpServerConfig) => Promise<{ success: boolean; error?: string }>,
   ) => Promise<void>;
@@ -149,7 +149,7 @@ interface McpStoreState {
 export const useMcpStore = create<McpStoreState>((set, get) => {
   let loadMcpPromise: Promise<boolean> | null = null;
   let loadMcpWorkspaceKey: string | null = null;
-  const statusListEpochs: Record<XCodeMcpListMode, number> = {
+  const statusListEpochs: Record<ZCodeMcpListMode, number> = {
     connect: 0,
     status: 0,
   };
@@ -335,7 +335,7 @@ export const useMcpStore = create<McpStoreState>((set, get) => {
             activeDirectoryService,
           );
           if (!activeDirectoryService) {
-            servers = await migrateStoredCommonMcpToXCodeAgent(
+            servers = await migrateStoredCommonMcpToZCodeAgent(
               mcpPlatformService,
               servers,
               latestWorkspacePath,
@@ -403,9 +403,9 @@ export const useMcpStore = create<McpStoreState>((set, get) => {
       safeWriteJson(MCP_DELETED_PRELOAD_KEY, Array.from(deletedPreloadMcpServers));
     },
 
-    addMcpServer: (name, config) => get().addXCodeAgentMcpServer(name, config),
-    updateMcpServer: (name, config) => get().updateXCodeAgentMcpServer(name, config),
-    deleteMcpServer: (name) => get().deleteXCodeAgentMcpServer(name),
+    addMcpServer: (name, config) => get().addZCodeAgentMcpServer(name, config),
+    updateMcpServer: (name, config) => get().updateZCodeAgentMcpServer(name, config),
+    deleteMcpServer: (name) => get().deleteZCodeAgentMcpServer(name),
     addScopedMcpServer: async (source, name, config, projectPath) => {
       invalidateStatusListRequests();
       const targetSource: CliMcpSource = source === "mcp" ? "zcodeagentmcp" : source;
@@ -479,11 +479,11 @@ export const useMcpStore = create<McpStoreState>((set, get) => {
       get().updateScopedMcpServer("opencodemcp", name, config, projectPath),
     deleteOpenCodeMcpServer: (name, projectPath) =>
       get().deleteScopedMcpServer("opencodemcp", name, projectPath),
-    addXCodeAgentMcpServer: (name, config, projectPath) =>
+    addZCodeAgentMcpServer: (name, config, projectPath) =>
       get().addScopedMcpServer("zcodeagentmcp", name, config, projectPath),
-    updateXCodeAgentMcpServer: (name, config, projectPath) =>
+    updateZCodeAgentMcpServer: (name, config, projectPath) =>
       get().updateScopedMcpServer("zcodeagentmcp", name, config, projectPath),
-    deleteXCodeAgentMcpServer: (name, projectPath) =>
+    deleteZCodeAgentMcpServer: (name, projectPath) =>
       get().deleteScopedMcpServer("zcodeagentmcp", name, projectPath),
 
     toggleServer: async (id, enabled) => {
@@ -664,9 +664,9 @@ export const useMcpStore = create<McpStoreState>((set, get) => {
       }
     },
 
-    getEnabledMcpServersForXCode: (_provider) => {
+    getEnabledMcpServersForZCode: (_provider) => {
       const { servers, enabledStates, currentProjectPath } = get();
-      const candidates = new Map<string, XCodeMcpServer>();
+      const candidates = new Map<string, ZCodeMcpServer>();
 
       for (const server of servers) {
         const isEnabled = enabledStates[server.id] ?? server.enabled;
@@ -680,9 +680,9 @@ export const useMcpStore = create<McpStoreState>((set, get) => {
         }
       }
 
-      const result: XCodeAgentMcpServer[] = [];
+      const result: ZCodeAgentMcpServer[] = [];
       for (const server of candidates.values()) {
-        const zcodeAgentServer = convertToXCodeAgentMcpServer(
+        const zcodeAgentServer = convertToZCodeAgentMcpServer(
           server.name,
           server.config,
           server.scope === "workspace" ? "workspace" : "user",
@@ -778,7 +778,7 @@ export const useMcpStore = create<McpStoreState>((set, get) => {
         get().nativeServers.length > 0
           ? get().nativeServers
           : await fetchNativeMcpServers(mcpPlatformService, { workspacePath: latestWorkspacePath });
-      const migration = await importLegacyCommonServersToXCodeAgent(
+      const migration = await importLegacyCommonServersToZCodeAgent(
         mcpPlatformService,
         result.servers ?? {},
         currentNativeServers,

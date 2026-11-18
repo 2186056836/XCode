@@ -2,27 +2,27 @@ import { formatJson } from "@zcode/core";
 import type { Logger } from "@zcode/contracts";
 import type { GlobalOptions, RunContext } from "@zcode/shared-types";
 import type {
-  inspectXCodeCustomCommand,
-  InspectXCodeCustomCommandOptions,
-  listXCodeCustomCommands,
-  ListXCodeCustomCommandsOptions,
-  XCodeCustomCommandInspection,
+  inspectZCodeCustomCommand,
+  InspectZCodeCustomCommandOptions,
+  listZCodeCustomCommands,
+  ListZCodeCustomCommandsOptions,
+  ZCodeCustomCommandInspection,
 } from "@zcode/bootstrap";
 import type { CliEnv } from "./env.js";
 
 type BootstrapModule = typeof import("@zcode/bootstrap");
-type CustomCommandListOutcome = Awaited<ReturnType<typeof listXCodeCustomCommands>>;
+type CustomCommandListOutcome = Awaited<ReturnType<typeof listZCodeCustomCommands>>;
 type CustomCommandListItem = CustomCommandListOutcome["commands"][number];
 
 interface CommandsCommandDependencies {
   cwd?: () => string;
   env?: CliEnv;
   inspectCustomCommand?: (
-    options: InspectXCodeCustomCommandOptions,
-  ) => ReturnType<typeof inspectXCodeCustomCommand>;
+    options: InspectZCodeCustomCommandOptions,
+  ) => ReturnType<typeof inspectZCodeCustomCommand>;
   listCustomCommands?: (
-    options: ListXCodeCustomCommandsOptions,
-  ) => ReturnType<typeof listXCodeCustomCommands>;
+    options: ListZCodeCustomCommandsOptions,
+  ) => ReturnType<typeof listZCodeCustomCommands>;
   loadBootstrapModule?: () => Promise<BootstrapModule>;
   logger?: Logger;
 }
@@ -109,13 +109,13 @@ async function runCommandsInspectCommand(
 async function resolveListCustomCommands(deps: CommandsCommandDependencies) {
   if (deps.listCustomCommands) return deps.listCustomCommands;
   const bootstrap = deps.loadBootstrapModule ?? (() => import("@zcode/bootstrap"));
-  return (await bootstrap()).listXCodeCustomCommands;
+  return (await bootstrap()).listZCodeCustomCommands;
 }
 
 async function resolveInspectCustomCommand(deps: CommandsCommandDependencies) {
   if (deps.inspectCustomCommand) return deps.inspectCustomCommand;
   const bootstrap = deps.loadBootstrapModule ?? (() => import("@zcode/bootstrap"));
-  return (await bootstrap()).inspectXCodeCustomCommand;
+  return (await bootstrap()).inspectZCodeCustomCommand;
 }
 
 function reportCommandsError(ctx: RunContext, options: GlobalOptions, error: unknown): number {
@@ -147,7 +147,7 @@ function formatHumanCommandList(
 }
 
 function formatHumanCommandInspection(
-  inspection: XCodeCustomCommandInspection,
+  inspection: ZCodeCustomCommandInspection,
   options: GlobalOptions,
 ): string {
   const { metadata } = inspection.command;
@@ -199,7 +199,7 @@ const formatCommandJson = (outcome: CustomCommandListOutcome, cwd: string): stri
   });
 
 const formatCommandInspectionJson = (
-  inspection: XCodeCustomCommandInspection,
+  inspection: ZCodeCustomCommandInspection,
   cwd: string,
 ): string =>
   formatJson({

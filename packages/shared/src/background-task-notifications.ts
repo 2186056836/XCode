@@ -1,9 +1,9 @@
-import type { XCodeMessageWithParts } from "./zcode-protocol-legacy-types.js";
-import { textFromXCodeMessageParts } from "./zcode-protocol-legacy-types.js";
-import type { XCodeStreamEvent } from "./zcode-task-types-core.js";
+import type { ZCodeMessageWithParts } from "./zcode-protocol-legacy-types.js";
+import { textFromZCodeMessageParts } from "./zcode-protocol-legacy-types.js";
+import type { ZCodeStreamEvent } from "./zcode-task-types-core.js";
 import { subagentResultMetaSchema } from "./zcode-protocol-v4/workflow-row-meta.js";
 
-export interface XCodeBackgroundTaskNotificationInfo {
+export interface ZCodeBackgroundTaskNotificationInfo {
   error?: string;
   outputFile?: string;
   result?: string;
@@ -16,7 +16,7 @@ const TASK_NOTIFICATION_OPEN = "<task-notification>";
 const TASK_NOTIFICATION_CLOSE = "</task-notification>";
 
 export interface ZCodeParsedBackgroundTaskNotification {
-  notification: XCodeBackgroundTaskNotificationInfo;
+  notification: ZCodeBackgroundTaskNotificationInfo;
   toolUseId: string;
 }
 
@@ -78,16 +78,16 @@ function isModelOnlyPartialResult(block: string, status: string | undefined): bo
   return status === "failed" && readTaskNotificationTag(block, "note") !== undefined;
 }
 
-export function collectXCodeBackgroundTaskNotificationsByToolUseId(
-  messages: readonly XCodeMessageWithParts[],
-): Map<string, XCodeBackgroundTaskNotificationInfo> {
-  const notifications = new Map<string, XCodeBackgroundTaskNotificationInfo>();
+export function collectZCodeBackgroundTaskNotificationsByToolUseId(
+  messages: readonly ZCodeMessageWithParts[],
+): Map<string, ZCodeBackgroundTaskNotificationInfo> {
+  const notifications = new Map<string, ZCodeBackgroundTaskNotificationInfo>();
   for (const message of messages) {
     if (message.info.role !== "user") {
       continue;
     }
     for (const parsed of parseZCodeBackgroundTaskNotifications(
-      textFromXCodeMessageParts(message.parts),
+      textFromZCodeMessageParts(message.parts),
       message.info.metadata?.originMeta,
     )) {
       notifications.set(parsed.toolUseId, parsed.notification);
@@ -101,7 +101,7 @@ export function collectXCodeBackgroundTaskNotificationsByToolUseId(
  * 用这条通知自己的 result / summary 整句（与 V4 投影相同），不从 summary 里截取原因。
  */
 export function zcodeBackgroundTaskNotificationFailureText(
-  notification: XCodeBackgroundTaskNotificationInfo,
+  notification: ZCodeBackgroundTaskNotificationInfo,
 ): string | undefined {
   return notification.error ?? notification.result ?? notification.summary;
 }
@@ -109,7 +109,7 @@ export function zcodeBackgroundTaskNotificationFailureText(
 export function zcodeBackgroundTaskNotificationToolUpdateStatus(
   status: string | undefined,
 ): Extract<
-  Extract<XCodeStreamEvent, { type: "tool_call_update" }>["status"],
+  Extract<ZCodeStreamEvent, { type: "tool_call_update" }>["status"],
   "completed" | "failed" | "stopped"
 > {
   if (status === "failed" || status === "lost") {
@@ -122,9 +122,9 @@ export function zcodeBackgroundTaskNotificationToolUpdateStatus(
   return "completed";
 }
 
-export function attachXCodeBackgroundTaskNotificationToRaw(
+export function attachZCodeBackgroundTaskNotificationToRaw(
   raw: unknown,
-  notification: XCodeBackgroundTaskNotificationInfo | undefined,
+  notification: ZCodeBackgroundTaskNotificationInfo | undefined,
 ): unknown {
   if (!notification) {
     return raw;

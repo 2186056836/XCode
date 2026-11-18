@@ -31,7 +31,7 @@ const percentile = (values: number[], ratio: number) =>
 async function createLongHistory(history: string) {
   const id = -948001;
   const writer = new BufferWriter();
-  serialize(writer, [100, id, ServiceChannels.XCodeAgent, "createSession"]);
+  serialize(writer, [100, id, ServiceChannels.ZCodeAgent, "createSession"]);
   serialize(writer, [
     {
       workspacePath: DEFAULT_WORKSPACE,
@@ -198,7 +198,7 @@ describe("PERF04 long history streaming", () => {
     const history =
       "历史正文包含足够多的内容用于稳定复现。 History paragraph for streaming. ".repeat(65);
     const result = await createLongHistory(history);
-    await callHandoffHost(ServiceChannels.XCodeTask, "resumeTask", [
+    await callHandoffHost(ServiceChannels.ZCodeTask, "resumeTask", [
       { taskId: result.session.sessionId, workspacePath: DEFAULT_WORKSPACE },
     ]);
     await selectV4TaskById(result.session.sessionId);

@@ -17,13 +17,13 @@ import {
 } from "@zcode/shared/zcode-protocol-v4";
 import type { ModelSelection } from "@zcode/shared";
 import type { ServiceLogger } from "#src/logger/serviceLogger.js";
-import type { XCodeAgentWorkspaceTarget } from "#src/zcode-agent/zcodeAgentPluginParams.js";
-import type { XCodeProtocolClient } from "#src/zcode-agent/zcodeProtocolClient.js";
+import type { ZCodeAgentWorkspaceTarget } from "#src/zcode-agent/zcodeAgentPluginParams.js";
+import type { ZCodeProtocolClient } from "#src/zcode-agent/zcodeProtocolClient.js";
 
 /** JSON-RPC method-not-found：旧 CLI 不认识查询方法。 */
 const METHOD_NOT_FOUND_CODE = -32601;
 
-export interface XCodeAgentContextCompositionParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentContextCompositionParams extends ZCodeAgentWorkspaceTarget {
   sessionId: string;
   /** 完整模型选择（含思考档位）；省略时 CLI 用会话当前模型。草稿按 Renderer 报告的所选模型传。 */
   modelSelection?: ModelSelection;
@@ -31,21 +31,21 @@ export interface XCodeAgentContextCompositionParams extends XCodeAgentWorkspaceT
 
 export interface ContextCompositionClientDeps {
   /** existing-only：工作区没有运行中的 CLI 时抛 runtime-unavailable 错误，不启动进程。 */
-  getExistingClient(target: XCodeAgentWorkspaceTarget): Promise<XCodeProtocolClient>;
+  getExistingClient(target: ZCodeAgentWorkspaceTarget): Promise<ZCodeProtocolClient>;
   isRuntimeUnavailableError(error: unknown): boolean;
-  resolveWorkspaceKey(target: XCodeAgentWorkspaceTarget): string;
+  resolveWorkspaceKey(target: ZCodeAgentWorkspaceTarget): string;
   logger: Pick<ServiceLogger, "debug">;
 }
 
 export interface ContextCompositionClient {
   getContextComposition(
-    params: XCodeAgentContextCompositionParams,
+    params: ZCodeAgentContextCompositionParams,
   ): Promise<ContextComposition | null>;
-  onDidChange(target: XCodeAgentWorkspaceTarget): Event<ContextCompositionChangedEvent>;
-  onModelRequestMetrics(target: XCodeAgentWorkspaceTarget): Event<ModelRequestMetricsFact>;
+  onDidChange(target: ZCodeAgentWorkspaceTarget): Event<ContextCompositionChangedEvent>;
+  onModelRequestMetrics(target: ZCodeAgentWorkspaceTarget): Event<ModelRequestMetricsFact>;
   /** 通知路由：认识的方法返回 true（已处理，调用方直接 return）。 */
   handleNotification(
-    workspace: XCodeAgentWorkspaceTarget,
+    workspace: ZCodeAgentWorkspaceTarget,
     message: { method: string; params?: unknown },
   ): boolean;
   dispose(): void;
@@ -56,7 +56,7 @@ export function createContextCompositionClient(
 ): ContextCompositionClient {
   const changedEmitters = new Map<string, Emitter<ContextCompositionChangedEvent>>();
   const metricsEmitters = new Map<string, Emitter<ModelRequestMetricsFact>>();
-  const emitterFor = <T>(map: Map<string, Emitter<T>>, target: XCodeAgentWorkspaceTarget) => {
+  const emitterFor = <T>(map: Map<string, Emitter<T>>, target: ZCodeAgentWorkspaceTarget) => {
     const key = deps.resolveWorkspaceKey(target);
     let emitter = map.get(key);
     if (!emitter) {
@@ -72,7 +72,7 @@ export function createContextCompositionClient(
         sessionId: params.sessionId,
         ...(params.modelSelection ? { modelSelection: params.modelSelection } : {}),
       });
-      let client: XCodeProtocolClient;
+      let client: ZCodeProtocolClient;
       try {
         client = await deps.getExistingClient(params);
       } catch (error) {

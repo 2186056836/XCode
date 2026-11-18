@@ -4,14 +4,14 @@ import {
 } from "#src/oauth/repo/oauthCredentialRepo.js";
 import {
   ApiError,
-  resolveOptionalXCodeAuthorization,
+  resolveOptionalZCodeAuthorization,
   readValidatedRequestVerificationConfig,
   requestVerificationClaimHeaders,
   isRequestVerificationMessage,
   type RequestVerificationClientConfig,
 } from "@zcode/shared";
 /* eslint-disable max-lines -- Coding Plan provider 需要集中维护 BigModel 支付宝与 Z.ai Stripe/PayPal 接口映射，拆分会让共享鉴权和响应解包更难追踪。 */
-import { buildXCodeSourceHeaders } from "../providers/sourceHeaders.js";
+import { buildZCodeSourceHeaders } from "../providers/sourceHeaders.js";
 import { ensureDeviceMidForAccount } from "../device/deviceMid.js";
 import {
   buildZaiStartPlanBalanceUrl,
@@ -67,7 +67,7 @@ import type {
   EnterpriseCodingPlanProjectApiKeyUnavailableReason,
   EnterpriseCodingPlanProjectContext,
   StartPlanPreviewConfig,
-  XCodeModelContextBudgetStrategy,
+  ZCodeModelContextBudgetStrategy,
   DynamicWorkflowClientConfig,
   MarketingCaptchaConfig,
   RequestVerificationConfig,
@@ -80,7 +80,7 @@ import type { OffPeakClientConfig } from "./codingPlanSubscription.js";
 import {
   BUILTIN_MODEL_PROVIDER_IDS,
   CODING_PLAN_SYSTEM_BUSY,
-  buildRuntimeXCodeApiUrl,
+  buildRuntimeZCodeApiUrl,
   isZaiCodingPlanProviderId,
   resolveBigModelApiOrigin,
   resolveZaiBusinessBaseUrl,
@@ -123,7 +123,7 @@ interface RemoteEnvelope<T> {
   data?: T | null;
 }
 
-interface XCodeClientConfigEnvelope {
+interface ZCodeClientConfigEnvelope {
   code?: number;
   msg?: string;
   success?: boolean;
@@ -197,9 +197,9 @@ export class BigModelCodingPlanSubscriptionProvider {
   private readonly resolveOffPeakModelSelectionView?: () => Promise<ModelSelectionView>;
   private readonly accountApiClient?: (accountRef?: string) => ApiClient;
   private clientConfigKey = "";
-  private clientConfigSnapshot: XCodeClientConfigEnvelope | null = null;
+  private clientConfigSnapshot: ZCodeClientConfigEnvelope | null = null;
   private clientConfigSnapshotExpiresAt = 0;
-  private clientConfigRequest: Promise<XCodeClientConfigEnvelope> | null = null;
+  private clientConfigRequest: Promise<ZCodeClientConfigEnvelope> | null = null;
 
   constructor(options: BigModelCodingPlanSubscriptionProviderOptions) {
     this.apiClient = options.apiClient;
@@ -316,7 +316,7 @@ export class BigModelCodingPlanSubscriptionProvider {
     }
   }
 
-  async getModelContextBudgetStrategy(): Promise<XCodeModelContextBudgetStrategy> {
+  async getModelContextBudgetStrategy(): Promise<ZCodeModelContextBudgetStrategy> {
     // 3.12.2：预算统一为 preflight-v1；保留兼容方法，但不能再为每次建会话等待远端配置。
     return DEFAULT_XCODE_MODEL_CONTEXT_BUDGET_STRATEGY;
   }
@@ -470,7 +470,7 @@ export class BigModelCodingPlanSubscriptionProvider {
     if (accountRef) {
       ensureDeviceMidForAccount(accountRef);
     }
-    const sourceHeaders = accountRef ? buildXCodeSourceHeaders({ accountRef }) : {};
+    const sourceHeaders = accountRef ? buildZCodeSourceHeaders({ accountRef }) : {};
     // 一键领取按账号凭据直领：accountRef 给定时读 per-account JWT（zcodejwt:{ref}，
     // 与 oauthCredentialRepo 的 accountZcodeJwtKey 同 key 约定），不读全局镜像、不切激活账号。
     const token = (
@@ -833,8 +833,8 @@ export class BigModelCodingPlanSubscriptionProvider {
     return unwrapEnvelope(payload, endpoint.providerId);
   }
 
-  private async getClientConfigs(): Promise<XCodeClientConfigEnvelope> {
-    const authorization = await resolveOptionalXCodeAuthorization(() =>
+  private async getClientConfigs(): Promise<ZCodeClientConfigEnvelope> {
+    const authorization = await resolveOptionalZCodeAuthorization(() =>
       this.credentialService.load(ZCODE_JWT_TOKEN_KEY),
     );
     const url = resolveCodingPlanClientConfigUrl(process.env);
@@ -854,7 +854,7 @@ export class BigModelCodingPlanSubscriptionProvider {
     }
     if (this.clientConfigRequest) return this.clientConfigRequest;
 
-    const request = readCodingPlanApiJson<XCodeClientConfigEnvelope>(this.apiClient, url, {
+    const request = readCodingPlanApiJson<ZCodeClientConfigEnvelope>(this.apiClient, url, {
       method: "GET",
       redirect: "error",
       timeoutMs: REQUEST_TIMEOUT_MS,
@@ -1060,7 +1060,7 @@ export class BigModelCodingPlanSubscriptionProvider {
 }
 
 function resolveCodingPlanClientConfigUrl(env: NodeJS.ProcessEnv): URL {
-  return new URL(buildRuntimeXCodeApiUrl(env, ZCODE_CLIENT_CONFIG_API_PREFIX));
+  return new URL(buildRuntimeZCodeApiUrl(env, ZCODE_CLIENT_CONFIG_API_PREFIX));
 }
 
 function resolveFallbackEnterpriseTeamPlanProduct(
@@ -1362,7 +1362,7 @@ function normalizeStaticProductProviderIds<T>(
 }
 
 function unwrapClientConfigProducts(
-  payload: XCodeClientConfigEnvelope,
+  payload: ZCodeClientConfigEnvelope,
 ): CodingPlanStaticProductsConfig {
   if (payload.code !== undefined && payload.code !== 0) {
     throw new Error(payload.msg?.trim() || "XCode client config request failed");
@@ -1375,7 +1375,7 @@ function unwrapClientConfigProducts(
 }
 
 function unwrapClientConfigTeamProducts(
-  payload: XCodeClientConfigEnvelope,
+  payload: ZCodeClientConfigEnvelope,
 ): CodingPlanStaticTeamProductsConfig {
   if (payload.code !== undefined && payload.code !== 0) {
     throw new Error(payload.msg?.trim() || "XCode client config request failed");
@@ -1439,7 +1439,7 @@ function isValidCardCopyConfigItem(value: unknown): boolean {
 }
 
 function unwrapClientConfigStartPlanPreview(
-  payload: XCodeClientConfigEnvelope,
+  payload: ZCodeClientConfigEnvelope,
 ): StartPlanPreviewConfig | null {
   if (payload.code !== undefined && payload.code !== 0) {
     throw new Error(payload.msg?.trim() || "XCode client config request failed");
@@ -1463,7 +1463,7 @@ function unwrapClientConfigStartPlanPreview(
 }
 
 function unwrapClientConfigForceUpdate(
-  payload: XCodeClientConfigEnvelope,
+  payload: ZCodeClientConfigEnvelope,
 ): ForceUpdateConfig | null {
   if (payload.code !== undefined && payload.code !== 0) {
     throw new Error(payload.msg?.trim() || "XCode client config request failed");
@@ -1483,7 +1483,7 @@ function unwrapClientConfigForceUpdate(
 }
 
 function unwrapClientConfigBillingDiscount(
-  payload: XCodeClientConfigEnvelope,
+  payload: ZCodeClientConfigEnvelope,
 ): CodingPlanBillingDiscountConfig | null {
   if (payload.code !== undefined && payload.code !== 0) {
     throw new Error(payload.msg?.trim() || "XCode client config request failed");
@@ -1510,7 +1510,7 @@ function unwrapClientConfigBillingDiscount(
 }
 
 function unwrapClientConfigCaptcha(
-  payload: XCodeClientConfigEnvelope,
+  payload: ZCodeClientConfigEnvelope,
 ): MarketingCaptchaConfig | null {
   if (payload.code !== undefined && payload.code !== 0) {
     throw new Error(payload.msg?.trim() || "XCode client config request failed");
@@ -1614,7 +1614,7 @@ function dropUndefined(value: Record<string, unknown>): Record<string, unknown> 
  * mock 模式（ZCODE_OFFPEAK_MOCK=1）只替代产品曝光与套餐状态；模型候选仍来自 Registry。
  */
 export function resolveOffPeakClientConfig(
-  payload: XCodeClientConfigEnvelope,
+  payload: ZCodeClientConfigEnvelope,
   env: NodeJS.ProcessEnv,
   modelSelectionView: ModelSelectionView = EMPTY_OFF_PEAK_MODEL_SELECTION_VIEW,
 ): OffPeakClientConfig {

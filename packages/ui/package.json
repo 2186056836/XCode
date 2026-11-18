@@ -12,7 +12,7 @@
     "./useTheme": "./src/useTheme.ts",
     "./conversation-share-readonly": "./src/v4/ConversationShareReadonlyTimeline.tsx",
     "./oauth-provider-icon": "./src/lib/oauthProviderIcon.tsx",
-    "./app-logo": "./src/components/mobile-ui/XCodeAppLogo.tsx",
+    "./app-logo": "./src/components/mobile-ui/ZCodeAppLogo.tsx",
     "./bottom-sheet": "./src/components/mobile-ui/bottom-sheet.tsx",
     "./device-platform-icon": "./src/components/mobile-ui/DevicePlatformIcon.tsx",
     "./message": "./src/components/ai-elements/message.tsx",

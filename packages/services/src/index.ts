@@ -117,24 +117,24 @@ export type {
 } from "./broadcast/broadcast.js";
 
 // XCode task wrapper service — task 列表/置顶/归档等 app 侧包装状态入口。
-export { IXCodeTaskService } from "./session/zcodeTaskService.js";
+export { IZCodeTaskService } from "./session/zcodeTaskService.js";
 export type {
-  XCodeArchivedTaskDeletionResult,
-  XCodeModelTrajectory,
-  XCodeModelTrajectoryCallSource,
-  XCodeModelTrajectoryCallSourceKind,
-  XCodeModelTrajectoryContentPart,
-  XCodeModelTrajectoryMessage,
-  XCodeModelTrajectoryRecord,
-  XCodeModelTrajectoryUsage,
-  XCodeTaskListKind,
-  XCodeTaskListQuery,
-  XCodeTaskListResult,
-  XCodeTaskListSortBy,
-  XCodeTaskListWorkspaceScope,
-  XCodeTaskReadyOutcome,
+  ZCodeArchivedTaskDeletionResult,
+  ZCodeModelTrajectory,
+  ZCodeModelTrajectoryCallSource,
+  ZCodeModelTrajectoryCallSourceKind,
+  ZCodeModelTrajectoryContentPart,
+  ZCodeModelTrajectoryMessage,
+  ZCodeModelTrajectoryRecord,
+  ZCodeModelTrajectoryUsage,
+  ZCodeTaskListKind,
+  ZCodeTaskListQuery,
+  ZCodeTaskListResult,
+  ZCodeTaskListSortBy,
+  ZCodeTaskListWorkspaceScope,
+  ZCodeTaskReadyOutcome,
 } from "./session/zcodeTaskService.js";
-export type { XCodeTaskListItem } from "./session/zcodeTaskListTypes.js";
+export type { ZCodeTaskListItem } from "./session/zcodeTaskListTypes.js";
 
 export { IWindowControllerService } from "./window-controller/windowController.js";
 export {
@@ -157,75 +157,75 @@ export type {
   WindowHostTasksRemovedSignal,
 } from "./window-controller/windowController.js";
 
-// XCode agent service — IXCodeAgentService is both a type (interface) and value (descriptor)
+// XCode agent service — IZCodeAgentService is both a type (interface) and value (descriptor)
 export {
-  IXCodeAgentService,
-  type XCodeAgentGenerateWorkspaceTextParams,
-  type XCodeAgentLocalRuntimeChildProcesses,
+  IZCodeAgentService,
+  type ZCodeAgentGenerateWorkspaceTextParams,
+  type ZCodeAgentLocalRuntimeChildProcesses,
   ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE,
 } from "./zcode-agent/zcodeAgent.js";
 export {
-  isXCodeAgentModelSelectionBasisUnsupportedError,
-  XCodeAgentModelSelectionBasisUnsupportedError,
-  isXCodeAgentMcpStatusModeUnsupportedError,
+  isZCodeAgentModelSelectionBasisUnsupportedError,
+  ZCodeAgentModelSelectionBasisUnsupportedError,
+  isZCodeAgentMcpStatusModeUnsupportedError,
   ZCODE_AGENT_MCP_STATUS_MODE_UNSUPPORTED_ERROR_CODE,
-  XCodeAgentMcpStatusModeUnsupportedError,
+  ZCodeAgentMcpStatusModeUnsupportedError,
 } from "./zcode-agent/zcodeAgentErrors.js";
 export {
-  createXCodeAgentConnectionScope,
-  readTrustedXCodeAgentV4Connection,
+  createZCodeAgentConnectionScope,
+  readTrustedZCodeAgentV4Connection,
 } from "./zcode-agent/zcodeAgentConnectionScope.js";
 export type {
-  XCodeAgentConnectionScope,
-  XCodeAgentV4ClientMode,
-  XCodeAgentV4ConnectionContext,
+  ZCodeAgentConnectionScope,
+  ZCodeAgentV4ClientMode,
+  ZCodeAgentV4ConnectionContext,
 } from "./zcode-agent/zcodeAgentConnectionScope.js";
 export type {
-  XCodeAgentAttachmentBeginParams,
-  XCodeAgentAttachmentChunkParams,
-  XCodeAgentAttachmentTerminalParams,
-  XCodeAgentCreateSessionParams,
-  XCodeAgentCuaPermissionObservation,
-  XCodeAgentInitializeResult,
-  XCodeAgentStorageStartupSnapshot,
-  XCodeAgentRuntimeExitedEvent,
-  XCodeAgentRuntimeLifecycleEvent,
-  XCodeAgentRuntimePolicy,
-  XCodeAgentReadSessionParams,
+  ZCodeAgentAttachmentBeginParams,
+  ZCodeAgentAttachmentChunkParams,
+  ZCodeAgentAttachmentTerminalParams,
+  ZCodeAgentCreateSessionParams,
+  ZCodeAgentCuaPermissionObservation,
+  ZCodeAgentInitializeResult,
+  ZCodeAgentStorageStartupSnapshot,
+  ZCodeAgentRuntimeExitedEvent,
+  ZCodeAgentRuntimeLifecycleEvent,
+  ZCodeAgentRuntimePolicy,
+  ZCodeAgentReadSessionParams,
   ZCodeAgentRespondProviderRuntimeHeadersParams,
   ZCodeAgentProviderRuntimeHeadersRequest,
-  XCodeAgentResumeSessionParams,
-  XCodeAgentRunAutomationNowResult,
-  XCodeAgentSavedWorkflowTarget,
-  XCodeAgentSendPromptParams,
-  XCodeAgentServiceEvent,
-  XCodeAgentSessionSubscribeParams,
-  XCodeAgentSessionTarget,
-  XCodeAgentSetModeParams,
-  XCodeAgentSetModelParams,
-  XCodeAgentSetThoughtLevelParams,
-  XCodeAgentWorkspaceTarget,
-  XCodeAgentSetPersonaParams,
-  XCodeAgentSetPrefillParams,
+  ZCodeAgentResumeSessionParams,
+  ZCodeAgentRunAutomationNowResult,
+  ZCodeAgentSavedWorkflowTarget,
+  ZCodeAgentSendPromptParams,
+  ZCodeAgentServiceEvent,
+  ZCodeAgentSessionSubscribeParams,
+  ZCodeAgentSessionTarget,
+  ZCodeAgentSetModeParams,
+  ZCodeAgentSetModelParams,
+  ZCodeAgentSetThoughtLevelParams,
+  ZCodeAgentWorkspaceTarget,
+  ZCodeAgentSetPersonaParams,
+  ZCodeAgentSetPrefillParams,
 } from "./zcode-agent/zcodeAgent.js";
 
 // XCode session service — app-facing session facade without XCode Agent naming.
-export { IXCodeSessionService } from "./zcode-session/zcodeSession.js";
+export { IZCodeSessionService } from "./zcode-session/zcodeSession.js";
 export type {
-  XCodeSessionCreateParams,
-  XCodeSessionEventsParams,
-  XCodeSessionInitializeResult,
-  XCodeSessionListParams,
-  XCodeSessionMessagesParams,
-  XCodeSessionReadParams,
-  XCodeSessionResumeParams,
-  XCodeSessionServiceEvent,
-  XCodeSessionSetModeParams,
-  XCodeSessionSetModelParams,
-  XCodeSessionSetThoughtLevelParams,
-  XCodeSessionSubscribeParams,
-  XCodeTaskTarget,
-  XCodeSessionWorkspaceTarget,
+  ZCodeSessionCreateParams,
+  ZCodeSessionEventsParams,
+  ZCodeSessionInitializeResult,
+  ZCodeSessionListParams,
+  ZCodeSessionMessagesParams,
+  ZCodeSessionReadParams,
+  ZCodeSessionResumeParams,
+  ZCodeSessionServiceEvent,
+  ZCodeSessionSetModeParams,
+  ZCodeSessionSetModelParams,
+  ZCodeSessionSetThoughtLevelParams,
+  ZCodeSessionSubscribeParams,
+  ZCodeTaskTarget,
+  ZCodeSessionWorkspaceTarget,
 } from "./zcode-session/zcodeSession.js";
 
 // Bots service — IBotsService is both a type (interface) and value (descriptor).

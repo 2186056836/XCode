@@ -1,27 +1,27 @@
 import { createConfig, type ConfigResult } from "@zcode/adapters/config";
 import {
-  createSharedXCodeCredentialStore,
+  createSharedZCodeCredentialStore,
   SHARED_XCODE_CREDENTIAL_KEYS,
-  type SharedXCodeCredentialStore,
+  type SharedZCodeCredentialStore,
 } from "@zcode/adapters/auth";
 import { createNodeHttpClientAdapter } from "@zcode/adapters/http";
 import { createProviderEndpointRoutingPort } from "@zcode/adapters/model";
 import { createNodeLoggerFactory } from "@zcode/adapters/logging";
-import { resolveRuntimeXCodeEndpointOrigin } from "@zcode/shared";
+import { resolveRuntimeZCodeEndpointOrigin } from "@zcode/shared";
 import type { Logger, LoggerFactory, ProviderEndpointRoutingPort } from "@zcode/contracts";
 import type { ModelProviderSourceTitle } from "./model-config.js";
 import { createProviderEndpointRoutingSourceHeaders } from "./provider-endpoint-routing-source-headers.js";
 
 const processRoutingPorts = new Map<string, ProviderEndpointRoutingPort>();
 const delegatedRoutingPorts = new WeakMap<
-  SharedXCodeCredentialStore,
+  SharedZCodeCredentialStore,
   Map<string, ProviderEndpointRoutingPort>
 >();
 
 type NetworkConfig = ConfigResult["config"]["network"];
 
 export interface ResolveProcessProviderEndpointRoutingPortOptions {
-  credentialStore?: SharedXCodeCredentialStore;
+  credentialStore?: SharedZCodeCredentialStore;
   appVersion?: string;
   env?: NodeJS.ProcessEnv;
   logger: Logger;
@@ -44,7 +44,7 @@ export function resolveProcessProviderEndpointRoutingPort(
   options: ResolveProcessProviderEndpointRoutingPortOptions,
 ): ProviderEndpointRoutingPort {
   const env = options.env ?? process.env;
-  const endpointOrigin = resolveRuntimeXCodeEndpointOrigin(env);
+  const endpointOrigin = resolveRuntimeZCodeEndpointOrigin(env);
   const key = routingRegistryKey(endpointOrigin, options.network);
   // App-managed CLI 必须复用宿主凭据端口；不能与 standalone 的本地 Store 混用缓存。
   let ports = processRoutingPorts;
@@ -58,7 +58,7 @@ export function resolveProcessProviderEndpointRoutingPort(
     return existing;
   }
 
-  const credentialStore = options.credentialStore ?? createSharedXCodeCredentialStore({ env });
+  const credentialStore = options.credentialStore ?? createSharedZCodeCredentialStore({ env });
 
   const port = createProviderEndpointRoutingPort({
     appVersion: options.appVersion,
@@ -72,7 +72,7 @@ export function resolveProcessProviderEndpointRoutingPort(
     logger: options.logger.child({
       module: "adapters.model.provider_endpoint_routing",
     }),
-    readXCodeJwt: () => credentialStore.load(SHARED_XCODE_CREDENTIAL_KEYS.zcodeJwtToken),
+    readZCodeJwt: () => credentialStore.load(SHARED_XCODE_CREDENTIAL_KEYS.zcodeJwtToken),
     sourceHeaders: () =>
       createProviderEndpointRoutingSourceHeaders({
         appVersion: options.appVersion,

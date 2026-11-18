@@ -12,7 +12,7 @@ import {
   STREAM_RECOVERY_DISCARDED_ERROR_NAME,
 } from "@zcode/contracts";
 import { readSubagentRunMetadata, type SubagentRunMetadata } from "@zcode/core";
-import type { XCodeSessionEndedSubagent, XCodeSessionRunningSubagent } from "@zcode/shared";
+import type { ZCodeSessionEndedSubagent, ZCodeSessionRunningSubagent } from "@zcode/shared";
 
 const SUBAGENT_TOOL_NAMES = new Set(["Agent", "Task", "subagent"]);
 const CANCELLATION_PATTERN = /abort|cancel|interrupt|stop/i;
@@ -49,8 +49,8 @@ interface SubagentEventRelation {
 
 export interface SessionSubagentProjection {
   revision: number;
-  running: XCodeSessionRunningSubagent[];
-  ended: XCodeSessionEndedSubagent[];
+  running: ZCodeSessionRunningSubagent[];
+  ended: ZCodeSessionEndedSubagent[];
 }
 
 export interface ProjectSessionSubagentsInput {
@@ -348,7 +348,7 @@ function runningStatus(input: {
   childProjection?: SessionProjection;
   fromPreviousRuntime: boolean;
   parentProjection?: SessionProjection;
-}): XCodeSessionRunningSubagent["status"] | undefined {
+}): ZCodeSessionRunningSubagent["status"] | undefined {
   if (input.background?.status === "running") {
     return input.background.blocked ? "blocked" : "running";
   }
@@ -388,7 +388,7 @@ function runningStatus(input: {
 
 function terminalBackgroundStatus(
   task: BackgroundTaskInfo | undefined,
-): XCodeSessionEndedSubagent["status"] | undefined {
+): ZCodeSessionEndedSubagent["status"] | undefined {
   switch (task?.status) {
     case "completed":
       return "success";
@@ -408,7 +408,7 @@ function terminalBackgroundStatus(
 /** metadata.json 的终态映射到子代理目录的状态；running 不是终态（旧进程退出时停在这里）。 */
 function runMetadataEndedStatus(
   metadata: SubagentRunMetadata | undefined,
-): XCodeSessionEndedSubagent["status"] | undefined {
+): ZCodeSessionEndedSubagent["status"] | undefined {
   switch (metadata?.status) {
     case "completed":
       return "success";
@@ -428,7 +428,7 @@ function endedStatus(input: {
   childProjection?: SessionProjection;
   fromPreviousRuntime: boolean;
   runMetadata?: SubagentRunMetadata;
-}): XCodeSessionEndedSubagent["status"] {
+}): ZCodeSessionEndedSubagent["status"] {
   const backgroundStatus = terminalBackgroundStatus(input.background);
   if (backgroundStatus) return backgroundStatus;
   if (input.childProjection?.status === "error") return "failed";
@@ -519,8 +519,8 @@ export async function loadPreviousRuntimeRunMetadata(input: {
 export function projectSessionSubagents(
   input: ProjectSessionSubagentsInput,
 ): SessionSubagentProjection {
-  const running: XCodeSessionRunningSubagent[] = [];
-  const ended: XCodeSessionEndedSubagent[] = [];
+  const running: ZCodeSessionRunningSubagent[] = [];
+  const ended: ZCodeSessionEndedSubagent[] = [];
   for (const candidate of collectCandidates(
     input.parentSession,
     input.messages,
@@ -607,7 +607,7 @@ export function projectSessionSubagents(
   return { revision: input.revision, running, ended };
 }
 
-function encodeCursor(item: XCodeSessionEndedSubagent): string {
+function encodeCursor(item: ZCodeSessionEndedSubagent): string {
   return Buffer.from(
     JSON.stringify({ childSessionId: item.childSessionId, endedAt: item.endedAt ?? 0 }),
   ).toString("base64url");
@@ -631,9 +631,9 @@ function decodeCursor(cursor: string | undefined): {
 }
 
 export function paginateEndedSubagents(
-  ended: readonly XCodeSessionEndedSubagent[],
+  ended: readonly ZCodeSessionEndedSubagent[],
   options: { cursor?: string; limit: number },
-): { items: XCodeSessionEndedSubagent[]; nextCursor?: string } {
+): { items: ZCodeSessionEndedSubagent[]; nextCursor?: string } {
   const cursor = decodeCursor(options.cursor);
   const start = cursor
     ? ended.findIndex(

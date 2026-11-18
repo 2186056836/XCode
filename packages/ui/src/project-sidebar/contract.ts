@@ -50,7 +50,7 @@ export type {
   SaveProjectInput,
   IProjectService,
   IWindowControllerService,
-  IXCodeTaskService,
+  IZCodeTaskService,
   WindowHostControllerMutation,
   WindowHostControllerFrame,
   WindowHostTaskUnreadSignal,

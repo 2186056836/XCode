@@ -1,6 +1,6 @@
 import type { SpawnOptions } from "node:child_process";
 import type { BashFileOutput } from "./bash-file-output.js";
-import type { XCodeToolExecResource } from "@zcode/shared";
+import type { ZCodeToolExecResource } from "@zcode/shared";
 import type { NetworkEgressEnvPolicy } from "../network/subprocess-env.js";
 import type { ResolvedSpawnCommand } from "./execution-command.js";
 import type {
@@ -81,7 +81,7 @@ export interface ActiveExecutionRecord {
 }
 
 export interface NodeExecutionAdapterOptions {
-  onToolExecResource?: (sample: XCodeToolExecResource) => void;
+  onToolExecResource?: (sample: ZCodeToolExecResource) => void;
   outputRootDir?: string;
   /** 仅 Bash 输出优先使用的临时父目录；不可用时复用 outputRootDir。 */
   bashOutputTempDir?: string;

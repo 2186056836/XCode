@@ -8,8 +8,8 @@ import { useShallow } from "zustand/react/shallow";
 import { resolveTaskRestorePreloadConfigOptions } from "@/lib/taskModelRecovery.js";
 import {
   getTaskMeta,
-  useXCodeSessionStore,
-  selectWorkspaceXCodeState,
+  useZCodeSessionStore,
+  selectWorkspaceZCodeState,
 } from "@/store/zcodeSessionStore.js";
 import type { ConfigOptionsStatus } from "@/store/zcodeSessionStoreTypes.js";
 import { useTabStore } from "@/store/TabStoreProvider.js";
@@ -38,9 +38,9 @@ export function useToolbarConfigOptions(
 ) {
   const activeWorkspaceIdentity = useActiveWorkspaceIdentity(workspacePath);
   const resolvedWorkspaceIdentity = workspaceIdentity ?? activeWorkspaceIdentity;
-  const { configOptions, configOptionsStatus } = useXCodeSessionStore(
+  const { configOptions, configOptionsStatus } = useZCodeSessionStore(
     useShallow((state) => {
-      const workspaceState = selectWorkspaceXCodeState(
+      const workspaceState = selectWorkspaceZCodeState(
         state,
         workspacePath,
         resolvedWorkspaceIdentity,

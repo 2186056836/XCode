@@ -2,10 +2,10 @@ import type { FileManagerTarget } from "@/lib/workspaceSidePane.js";
 import type { ComposerDraftHandoff } from "@/v4/composer/composerDraftWorkspaceTransfer.js";
 import type { RefObject } from "react";
 import type {
-  XCodeProvider,
+  ZCodeProvider,
   SessionCreateSource,
-  XCodeTaskRuntimeStatus,
-  XCodeTaskMeta,
+  ZCodeTaskRuntimeStatus,
+  ZCodeTaskMeta,
   GitChangeSourceId,
   DesktopWindowChromeState,
   IPlatformService,
@@ -35,7 +35,7 @@ import type {
   OpenScopedWorkflowWorkspaceSideTabRequest,
   WorkspaceSidePaneState,
 } from "@/lib/workspaceSidePane.js";
-import type { WorkspaceXCodeUIState } from "@/store/zcodeSessionStore.js";
+import type { WorkspaceZCodeUIState } from "@/store/zcodeSessionStore.js";
 import type { RemoteConnectionLogEntry } from "@/hooks/useRemoteConnectionLogs.js";
 import type { Theme } from "@/useTheme.js";
 import type {
@@ -48,15 +48,15 @@ import type { TaskFindDialogProps } from "@/quickpick/TaskFindDialog.js";
 import type { AutomationsNavigationTab, OpenAutomationsMain } from "@/lib/taskNavigationHistory.js";
 import type { SidePaneFullViewController } from "@/side-pane-full-view/contract.js";
 
-export interface WorkspaceShellXCodeState {
-  activeTaskId: WorkspaceXCodeUIState["activeTaskId"];
-  draftFocusVersion: WorkspaceXCodeUIState["draftFocusVersion"];
-  modelSwitchPending: WorkspaceXCodeUIState["modelSwitchPending"];
-  modelSwitchStage: WorkspaceXCodeUIState["modelSwitchStage"];
-  selectedProvider: WorkspaceXCodeUIState["selectedProvider"];
-  optimisticTaskListByTaskId: WorkspaceXCodeUIState["optimisticTaskListByTaskId"];
-  workspaceInit: WorkspaceXCodeUIState["workspaceInit"];
-  taskStatus: XCodeTaskRuntimeStatus;
+export interface WorkspaceShellZCodeState {
+  activeTaskId: WorkspaceZCodeUIState["activeTaskId"];
+  draftFocusVersion: WorkspaceZCodeUIState["draftFocusVersion"];
+  modelSwitchPending: WorkspaceZCodeUIState["modelSwitchPending"];
+  modelSwitchStage: WorkspaceZCodeUIState["modelSwitchStage"];
+  selectedProvider: WorkspaceZCodeUIState["selectedProvider"];
+  optimisticTaskListByTaskId: WorkspaceZCodeUIState["optimisticTaskListByTaskId"];
+  workspaceInit: WorkspaceZCodeUIState["workspaceInit"];
+  taskStatus: ZCodeTaskRuntimeStatus;
   taskError: string | null;
 }
 
@@ -69,7 +69,7 @@ export interface CreateTaskOptions {
   onError?: (error: unknown) => void;
   /** 异步预填只能提交到解析 Skill 时的同一新任务目标。 */
   expectedWorkspaceKey?: string;
-  provider?: XCodeProvider;
+  provider?: ZCodeProvider;
   projectId?: string | null;
   /** 未归类任务目录准备的幂等身份，不作为 session 身份。 */
   draftId?: string;
@@ -97,7 +97,7 @@ export interface CreateTaskOptions {
   };
 }
 
-export type CreateTaskRequest = XCodeProvider | CreateTaskOptions;
+export type CreateTaskRequest = ZCodeProvider | CreateTaskOptions;
 
 export interface RemoteWorkspaceRecoveryStatus {
   mode: "automatic" | "manual";
@@ -233,7 +233,7 @@ export interface WorkspaceShellLayoutProps extends Omit<AppProps, "baseFeedbackS
   onOpenAutomationConsumed: () => void;
   handleOpenAutomations: OpenAutomationsMain;
   handleOpenPluginStore: () => void;
-  workspaceShellXCodeState: WorkspaceShellXCodeState;
+  workspaceShellZCodeState: WorkspaceShellZCodeState;
   theme: Theme;
   isMacFullscreen: boolean;
   desktopWindowChromeState: DesktopWindowChromeState | null;
@@ -283,8 +283,8 @@ export interface WorkspaceShellLayoutProps extends Omit<AppProps, "baseFeedbackS
   handleSidePaneDraftPromotion: (sessionId: string) => void;
   activeTraceId: string | null;
   activeSessionId: string | null;
-  activeTaskProvider: XCodeProvider | null;
-  resolvedActiveTaskMeta?: XCodeTaskMeta | null;
+  activeTaskProvider: ZCodeProvider | null;
+  resolvedActiveTaskMeta?: ZCodeTaskMeta | null;
   activeTaskTitle: string;
   activeTaskChangeSummary: ReturnType<
     typeof import("@/lib/taskChangeSummary.js").getTaskChangeSummary
@@ -320,7 +320,7 @@ export interface WorkspaceShellLayoutProps extends Omit<AppProps, "baseFeedbackS
   reloadSessionPending: boolean;
   handleReloadSession: (options?: {
     resumeTaskId?: string | null;
-    provider?: XCodeProvider | null;
+    provider?: ZCodeProvider | null;
   }) => Promise<void>;
   handleSelectTask: (
     targetWorkspacePath: string,

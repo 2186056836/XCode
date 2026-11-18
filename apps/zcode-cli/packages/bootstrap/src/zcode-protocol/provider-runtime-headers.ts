@@ -4,13 +4,13 @@ import {
   zcodeProtocolMethods,
   zcodeProtocolNotifications,
   zcodeProviderRuntimeHeadersResponseSchema,
-  type XCodeWorkspaceRef,
+  type ZCodeWorkspaceRef,
 } from "@zcode/shared";
-import type { XCodeAppOptions } from "../app/types.js";
+import type { ZCodeAppOptions } from "../app/types.js";
 import {
   ProtocolRequestError,
   protocolTraceFromTraceContext,
-  type XCodeProtocolAgentServerContext,
+  type ZCodeProtocolAgentServerContext,
 } from "./server-types.js";
 
 // 无应答方时 UI 的 SDK 超时不会启动；端口总时限同时覆盖排队与凭据解析。
@@ -18,9 +18,9 @@ const PROVIDER_RUNTIME_HEADERS_TIMEOUT_MS = 180_000;
 const CLIENT_REQUEST_TIMEOUT_CODE = -32022;
 
 export function createProviderRuntimeHeadersPort(
-  context: XCodeProtocolAgentServerContext,
-  workspace: XCodeWorkspaceRef,
-): NonNullable<XCodeAppOptions["providerRuntimeHeadersPort"]> {
+  context: ZCodeProtocolAgentServerContext,
+  workspace: ZCodeWorkspaceRef,
+): NonNullable<ZCodeAppOptions["providerRuntimeHeadersPort"]> {
   return {
     shouldRefreshBeforeModelRequest() {
       // Account 请求由绑定 Model 决定是否进入鉴权，不能把所有账号收窄到旧 Start ID。

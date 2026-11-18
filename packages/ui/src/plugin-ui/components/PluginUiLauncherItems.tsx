@@ -15,7 +15,7 @@ import { buttonVariants } from "@/components/ui/button.js";
 import { Spinner } from "@/components/ui/spinner.js";
 import { cn } from "@/components/lib/utils.js";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { OpenPluginUiSideTabRequest } from "@/plugin-ui/contract.js";
 import { resolvePluginUiSurfaceTitle } from "@/plugin-ui/adapters/usePluginUiSurfaces.js";
 
@@ -40,7 +40,7 @@ export function buildPluginUiLauncherItemId(pluginId: string, surfaceId: string)
  * 旧分组容器会占据一个网格单元，导致插件全部挤在同一列；使用 Fragment 让按钮直接参与父级布局。
  */
 export function PluginUiLauncherItems(props: PluginUiLauncherItemsProps) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const platform = useOptionalPlatform();
   const {
     entries,
@@ -243,7 +243,7 @@ export function SidePaneLauncherRow({
   testId?: string;
   onOpen?: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const content = (
     <>
       {/* 应用插件复用市场图标来源；固定 PuzzleIcon 会忽略已发布的品牌图片。 */}

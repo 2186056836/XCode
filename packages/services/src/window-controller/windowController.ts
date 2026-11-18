@@ -4,7 +4,7 @@ import type {
 } from "@zcode/shared/zcode-protocol-v4";
 import type { Event } from "@zcode/rpc";
 import { ServiceChannels } from "@zcode/shared";
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 import type {
   ControllerResyncParams,
   ControllerResyncResult,
@@ -17,11 +17,11 @@ import type {
   WindowHostTaskAddress,
 } from "@zcode/shared/zcode-protocol-v4";
 import { createServiceDescriptor } from "../descriptors.js";
-import type { XCodeArchivedTaskDeletionResult } from "#src/session/zcodeTaskService.js";
+import type { ZCodeArchivedTaskDeletionResult } from "#src/session/zcodeTaskService.js";
 import type {
-  XCodeTaskListItem,
-  XCodeTaskListQuery,
-  XCodeTaskListResult,
+  ZCodeTaskListItem,
+  ZCodeTaskListQuery,
+  ZCodeTaskListResult,
 } from "../session/zcodeTaskListTypes.js";
 
 export type WindowHostControllerMutation =
@@ -35,7 +35,7 @@ export type WindowHostControllerMutation =
   | { kind: "open" }
   | { kind: "resume" };
 
-export type WindowHostControllerTaskListItem = XCodeTaskListItem & {
+export type WindowHostControllerTaskListItem = ZCodeTaskListItem & {
   sourceServerId?: string;
   serverDisplayName?: string;
   remoteSessionId?: string;
@@ -44,7 +44,7 @@ export type WindowHostControllerTaskListItem = XCodeTaskListItem & {
   activity?: WindowHostControllerTaskRow["activity"];
 };
 
-export interface WindowHostControllerTaskListResult extends Omit<XCodeTaskListResult, "items"> {
+export interface WindowHostControllerTaskListResult extends Omit<ZCodeTaskListResult, "items"> {
   items: WindowHostControllerTaskListItem[];
 }
 
@@ -85,14 +85,14 @@ export interface IWindowControllerService {
   deleteArchivedTasks(params: {
     address: WindowHostTaskAddress;
     taskIds: string[];
-  }): Promise<XCodeArchivedTaskDeletionResult>;
-  listTaskList(params: XCodeTaskListQuery): Promise<WindowHostControllerTaskListResult>;
+  }): Promise<ZCodeArchivedTaskDeletionResult>;
+  listTaskList(params: ZCodeTaskListQuery): Promise<WindowHostControllerTaskListResult>;
   /** 直接读取所属 owner 的轻量 meta；未读 CAS 不得使用可能降级为旧快照的列表投影。 */
-  getTaskMeta(params: { address: WindowHostTaskAddress }): Promise<XCodeTaskMeta | null>;
+  getTaskMeta(params: { address: WindowHostTaskAddress }): Promise<ZCodeTaskMeta | null>;
   mutateTask(params: {
     address: WindowHostTaskAddress;
     mutation: WindowHostControllerMutation;
-  }): Promise<XCodeTaskMeta | null>;
+  }): Promise<ZCodeTaskMeta | null>;
   subscribeControllerV4(params: ControllerSubscribeParams): Promise<ControllerSubscribeResult>;
   resyncControllerV4(params: ControllerResyncParams): Promise<ControllerResyncResult>;
   unsubscribeControllerV4(params: ControllerUnsubscribeParams): Promise<void>;

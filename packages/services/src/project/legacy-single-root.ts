@@ -1,4 +1,4 @@
-import type { AppSettings, FileEntry, SystemInfo, XCodeTaskMeta } from "@zcode/shared";
+import type { AppSettings, FileEntry, SystemInfo, ZCodeTaskMeta } from "@zcode/shared";
 import { createHash } from "node:crypto";
 import { posix, win32 } from "node:path";
 import { remoteHostIdFromWorkspaceIdentity } from "@zcode/shared";
@@ -15,7 +15,7 @@ interface LegacyProjectReadPort {
   readTasks(input: {
     workspacePath: string;
     kind: "active" | "pinned" | "archived";
-  }): Promise<XCodeTaskMeta[]>;
+  }): Promise<ZCodeTaskMeta[]>;
   ensureConversation(): Promise<string>;
   readKnownWorkspaces?(): Promise<
     readonly { workspacePath: string; workspacePurpose?: "project" | "conversation" }[]

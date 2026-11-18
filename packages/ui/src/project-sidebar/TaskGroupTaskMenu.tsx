@@ -12,12 +12,12 @@ import {
   taskGroupKey,
 } from "@/project-sidebar/grouped-view.js";
 import type { ProjectTask } from "@/project-sidebar/contract.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { toast } from "@/components/ui/toast.js";
 export function TaskGroupTaskMenu({ task }: { task: ProjectTask }) {
   const { groups } = useProjectDirectory();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (!groups.available || task.archived) return null;
   const parent = groups.parents.get(taskGroupKey(task)) ?? null;
   const move = (groupId: string | null) => {

@@ -1,4 +1,4 @@
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 import type { CachedTaskListResult, TaskEntityKey } from "@/lib/taskQueryCache.js";
 import { buildTaskWorkspaceKey } from "@/lib/taskQueryCache.js";
 
@@ -32,7 +32,7 @@ export function selectQuickPickConversationTaskIds(params: {
   workspacePath: string;
   workspaceIdentity?: string;
   resultsByQueryKey: Record<string, CachedTaskListResult>;
-  taskMetaByEntityKey: Record<TaskEntityKey, XCodeTaskMeta>;
+  taskMetaByEntityKey: Record<TaskEntityKey, ZCodeTaskMeta>;
   fallbackTaskIds: readonly string[];
 }): string[] {
   const workspaceKey = buildTaskWorkspaceKey(params.workspacePath, params.workspaceIdentity);

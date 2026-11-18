@@ -1,6 +1,6 @@
 import { Library } from "lucide-react";
 import { useCallback, useMemo, type ReactNode } from "react";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { ToolSnapshotFieldNotice } from "@/ToolCallBlocks/ToolSnapshotFieldNotice.js";
 import { readToolResultDisplay } from "@/ToolCallBlocks/toolResultDisplay.js";
 import { ToolLayout } from "../ToolLayout.js";
@@ -149,7 +149,7 @@ export function readListSavedWorkflowsResult(
 export function ListSavedWorkflowsPresentation(
   context: ToolCallBlockRenderContext & { fallback?: ReactNode },
 ) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { toolCall } = context.toolCallNode;
 
   const result = useMemo(() => readListSavedWorkflowsResult(toolCall), [toolCall]);

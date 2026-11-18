@@ -7,7 +7,7 @@ import {
 } from "@zcode/contracts";
 import { createDenyPermissionBroker } from "@zcode/core";
 import type { GlobalOptions } from "@zcode/shared-types";
-import type { XCodeAppOptions } from "@zcode/bootstrap";
+import type { ZCodeAppOptions } from "@zcode/bootstrap";
 import { readRuntimeFunction } from "./runtime-event-subscriber.js";
 
 /**
@@ -29,7 +29,7 @@ import { readRuntimeFunction } from "./runtime-event-subscriber.js";
  * 的 `??` 短路），权限事件照常发射，run 内 actor 照旧继承会话的权限 profile。
  */
 export const createHeadlessPermissionBroker = (): NonNullable<
-  XCodeAppOptions["permissionBroker"]
+  ZCodeAppOptions["permissionBroker"]
 > => {
   const denyBroker = createDenyPermissionBroker();
   return {
@@ -354,7 +354,7 @@ export const waitForHeadlessWorkflowSettle = async (input: {
  * 这个 app 的 runtime 能提供 busy 事实吗？
  *
  * 动态读取的理由见 `runtime-event-subscriber.ts` 的 `readRuntimeFunction`（同一个
- * `RunDependencies.createXCodeApp` 注入点边界）。
+ * `RunDependencies.createZCodeApp` 注入点边界）。
  *
  * **不静默降级**：拿不到 busy 事实就不进等待——"这个宿主没有这个能力"的诚实答复，
  * 而不是假装等过了。

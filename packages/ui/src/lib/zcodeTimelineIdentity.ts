@@ -1,4 +1,4 @@
-import type { XCodeTimelineMeta } from "@zcode/shared";
+import type { ZCodeTimelineMeta } from "@zcode/shared";
 
 function addTimelineIdentityKey(
   keys: string[],
@@ -10,8 +10,8 @@ function addTimelineIdentityKey(
   }
 }
 
-export function getXCodeTimelineIdentityKeys(
-  timeline: XCodeTimelineMeta,
+export function getZCodeTimelineIdentityKeys(
+  timeline: ZCodeTimelineMeta,
 ): string[] {
   const keys: string[] = [];
   if (timeline.type === "context_compaction") {
@@ -68,17 +68,17 @@ export function getXCodeTimelineIdentityKeys(
   return keys;
 }
 
-export function hasSharedXCodeTimelineIdentity(
+export function hasSharedZCodeTimelineIdentity(
   left: readonly string[],
   right: readonly string[],
 ): boolean {
   return left.some((key) => right.includes(key));
 }
 
-export function mergeXCodeTimelineMeta(
-  previousTimeline: XCodeTimelineMeta | undefined,
-  nextTimeline: XCodeTimelineMeta,
-): XCodeTimelineMeta {
+export function mergeZCodeTimelineMeta(
+  previousTimeline: ZCodeTimelineMeta | undefined,
+  nextTimeline: ZCodeTimelineMeta,
+): ZCodeTimelineMeta {
   if (
     previousTimeline?.type === "context_compaction" &&
     nextTimeline.type === "context_compaction"

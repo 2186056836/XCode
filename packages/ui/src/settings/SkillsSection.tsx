@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button.js";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.js";
 import { Switch } from "@/components/ui/switch.js";
 import type {
-  XCodeProvider,
+  ZCodeProvider,
   SkillDiagnostic,
   SkillDiagnosticCode,
   SkillSummary,
@@ -26,7 +26,7 @@ import type {
 import type { IServiceAccessor } from "@zcode/services";
 import { ZCODE_AGENT_PROVIDER } from "@zcode/shared";
 import type { CreateTaskRequest } from "@/app-shell/types.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { toast } from "@/components/ui/toast.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useConfigWorkspaceServicesResolution as useWorkspaceServicesResolution } from "@/workspace-config-catalog/index.js";
@@ -181,7 +181,7 @@ export function SkillsSection({
   unscopedServices,
   cacheAuthorityKey,
 }: SkillsSectionProps) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const platform = usePlatform();
   const plugins = usePluginManagementStore((state) => state.plugins);
   const installedPlugins = usePluginManagementStore((state) => state.installedPlugins);
@@ -389,7 +389,7 @@ export function SkillsSection({
       }
       // 移除三方来源后，技能状态统一写入 XCode Agent 上下文，避免旧 provider 前缀带来分桶漂移。
       const targetSkill = skills.find((skill) => skill.id === skillId);
-      const effectiveProvider: XCodeProvider = ZCODE_AGENT_PROVIDER;
+      const effectiveProvider: ZCodeProvider = ZCODE_AGENT_PROVIDER;
       try {
         await skillsService.setEnabled({
           workspacePath: activeWorkspacePath,
@@ -527,7 +527,7 @@ export function SkillsSection({
     if (!activeWorkspacePath || !onCreateTask) {
       return;
     }
-    const effectiveProvider: XCodeProvider = ZCODE_AGENT_PROVIDER;
+    const effectiveProvider: ZCodeProvider = ZCODE_AGENT_PROVIDER;
     const skillCreator = filterSkillsForProvider(skills, effectiveProvider).find(
       (skill) => skill.name === "skill-creator",
     );

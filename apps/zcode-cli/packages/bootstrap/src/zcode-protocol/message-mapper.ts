@@ -1,10 +1,10 @@
 import { normalizeGenUiInput } from "@zcode/core";
 import { genUiModelContextSchema } from "@zcode/shared/gen-ui";
-import type { XCodeMessagePart, XCodeMessageWithParts, XCodeToolState } from "@zcode/shared";
+import type { ZCodeMessagePart, ZCodeMessageWithParts, ZCodeToolState } from "@zcode/shared";
 import type { MessagePart, MessageWithParts, ToolState } from "@zcode/contracts";
 import { shouldHideInvalidToolCallFromProduct } from "../tool-call-product-visibility.js";
 
-export function mapMessageWithParts(message: MessageWithParts): XCodeMessageWithParts {
+export function mapMessageWithParts(message: MessageWithParts): ZCodeMessageWithParts {
   const intent =
     message.info.metadata?.conversationInputIntent ?? message.info.metadata?.inputIntent;
   const context = genUiModelContextSchema.safeParse(
@@ -83,7 +83,7 @@ export function mapMessageWithParts(message: MessageWithParts): XCodeMessageWith
   };
 }
 
-function mapMessagePart(part: MessagePart): XCodeMessagePart {
+function mapMessagePart(part: MessagePart): ZCodeMessagePart {
   const base = {
     messageId: String(part.messageID),
     partId: String(part.id),
@@ -240,7 +240,7 @@ function mapToolPartMetadata(
   return Object.keys(visibleMetadata).length > 0 ? visibleMetadata : undefined;
 }
 
-function mapToolState(state: ToolState): XCodeToolState {
+function mapToolState(state: ToolState): ZCodeToolState {
   switch (state.status) {
     case "pending":
       return { input: state.input, raw: state.raw, status: "pending" };

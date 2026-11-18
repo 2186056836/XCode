@@ -4,27 +4,27 @@
 import {
   ZCODE_PLUGIN_READ_USER_OPTIONS_ERROR_CODES,
   zcodePluginsReadUserOptionsParamsSchema,
-  type XCodePluginsReadUserOptionsResult,
+  type ZCodePluginsReadUserOptionsResult,
 } from "@zcode/shared";
 import type { PluginMetadata, PluginOptionValues } from "@zcode/contracts";
 import { createConfigWithPluginMigrations } from "@zcode/adapters/config";
-import { resolveXCodePlugins } from "../plugins.js";
+import { resolveZCodePlugins } from "../plugins.js";
 import {
   ProtocolRequestError,
   parseParams,
-  type XCodeProtocolAgentServerContext,
+  type ZCodeProtocolAgentServerContext,
 } from "./server-types.js";
 
 const INVALID_PARAMS_CODE = -32602;
 
 export async function readPluginUserOptions(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodePluginsReadUserOptionsResult> {
+): Promise<ZCodePluginsReadUserOptionsResult> {
   const params = parseParams(zcodePluginsReadUserOptionsParamsSchema, rawParams);
   context.deps?.pluginPreparation?.signal.throwIfAborted();
   // user 视图：不传 workingDirectory 就不加载任何项目配置层（扩展只认用户级，见扩展进程 §13）。
-  const outcome = await resolveXCodePlugins({
+  const outcome = await resolveZCodePlugins({
     configResult: await createConfigWithPluginMigrations({ env: context.deps?.env }),
     logger: context.logger,
     pluginDiscovery: context.deps?.pluginDiscovery,

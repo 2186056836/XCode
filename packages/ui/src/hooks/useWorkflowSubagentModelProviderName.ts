@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import type { XCodeConfigOption } from "@zcode/shared";
-import { selectWorkspaceXCodeState, useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import type { ZCodeConfigOption } from "@zcode/shared";
+import { selectWorkspaceZCodeState, useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 
 /**
  * 子代理模型的 provider 名从哪儿来：会话的模型清单
@@ -12,7 +12,7 @@ import { selectWorkspaceXCodeState, useXCodeSessionStore } from "@/store/zcodeSe
  * providerId（团队套餐的它是一个 UUID）。
  */
 function workflowSubagentProviderNameLookup(
-  configOptions: readonly XCodeConfigOption[] | null | undefined,
+  configOptions: readonly ZCodeConfigOption[] | null | undefined,
 ): ((providerId: string) => string | undefined) | undefined {
   const entries = configOptions?.find((option) => option.category === "model")?.options;
   if (entries === undefined) {
@@ -40,10 +40,10 @@ export function useWorkflowSubagentModelProviderName(
   workspacePath: string | undefined,
   workspaceIdentity?: string,
 ): ((providerId: string) => string | undefined) | undefined {
-  const configOptions = useXCodeSessionStore((state) =>
+  const configOptions = useZCodeSessionStore((state) =>
     workspacePath === undefined
       ? undefined
-      : selectWorkspaceXCodeState(state, workspacePath, workspaceIdentity).configOptions,
+      : selectWorkspaceZCodeState(state, workspacePath, workspaceIdentity).configOptions,
   );
   return useMemo(() => workflowSubagentProviderNameLookup(configOptions), [configOptions]);
 }

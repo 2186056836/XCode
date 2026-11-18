@@ -1,5 +1,5 @@
 import type { OAuthDiscoveryState } from "@modelcontextprotocol/client";
-import type { SharedXCodeCredentialStore } from "../auth/shared-credentials.js";
+import type { SharedZCodeCredentialStore } from "../auth/shared-credentials.js";
 import { isRecord, mcpOAuthCredentialKey } from "./oauth-credentials.js";
 
 export const MCP_OAUTH_DISCOVERY_STATE_KEY = "discovery_state";
@@ -23,7 +23,7 @@ export interface McpOAuthAuthorizationContext {
  * 向后兼容的做法。
  */
 export async function saveDiscoveryRecord(
-  credentialStore: SharedXCodeCredentialStore,
+  credentialStore: SharedZCodeCredentialStore,
   keyPrefix: string,
   state: OAuthDiscoveryState,
   now = Date.now(),
@@ -41,7 +41,7 @@ export async function saveDiscoveryRecord(
  * 时间戳，自愈。
  */
 export async function loadDiscoveryRecord(
-  credentialStore: SharedXCodeCredentialStore,
+  credentialStore: SharedZCodeCredentialStore,
   keyPrefix: string,
   options: { expectedIssuer?: string; now?: number; ttlMs?: number } = {},
 ): Promise<OAuthDiscoveryState | undefined> {

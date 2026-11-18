@@ -32,10 +32,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog.js";
 import { toast } from "@/components/ui/toast.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useOAuth } from "@/hooks/useOAuth.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { getBotProviderRegionTagLabelId } from "@/botsUi.js";
 
@@ -51,9 +51,9 @@ const REMOTE_CONTROL_BOT_ENTRIES: Array<{
 ];
 
 function WebRemoteControlLoginButton({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
-  const { intl } = useXCodeIntl();
-  const hasUser = useXCodeStore((state) => Boolean(state.user));
-  const requestLoginEntry = useXCodeStore((state) => state.requestLoginEntry);
+  const { intl } = useZCodeIntl();
+  const hasUser = useZCodeStore((state) => Boolean(state.user));
+  const requestLoginEntry = useZCodeStore((state) => state.requestLoginEntry);
   const { activeProvider, loadingProviders, refreshProviders } = useOAuth();
 
   return (
@@ -94,7 +94,7 @@ export const WebRemoteControlDialog = memo(function WebRemoteControlDialogCompon
   initialTaskId?: string;
 }) {
   const platform = usePlatform();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [status, setStatus] = useState<WebRemoteControlStatus>({
     status: "idle",
   });

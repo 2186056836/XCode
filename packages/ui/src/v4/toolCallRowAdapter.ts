@@ -1,7 +1,7 @@
 // v4 ToolCallRow → 旧 ToolCallBlocks 输入形态（TaskChatToolCallTreeNode）适配。
 // 纯函数：ToolCallBlock 及其 renderers（execute/read/edit/...）吃的是旧 XCode Agent 的
 // TaskChatToolCall 形态；v4 row 自包含，字段一一映射即可，不需要看别的行。
-import { buildXCodeStreamingToolInputPreview } from "@zcode/shared";
+import { buildZCodeStreamingToolInputPreview } from "@zcode/shared";
 import type { ToolCallRow } from "@zcode/shared/zcode-protocol-v4";
 import type { TaskChatToolCallTreeNode } from "@/lib/toolCallTree.js";
 import { normalizeWrappedErrorText } from "@/lib/toolError.js";
@@ -45,7 +45,7 @@ function resolveToolInputPreview(row: ToolCallRow): ResolvedToolInputPreview {
   if (!row.inputText) {
     return { input: undefined };
   }
-  const preview = buildXCodeStreamingToolInputPreview(row.inputText);
+  const preview = buildZCodeStreamingToolInputPreview(row.inputText);
   return {
     input: isEmptyPlainRecord(preview.input) ? undefined : preview.input,
     inputPreviewComplete: preview.complete,

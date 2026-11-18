@@ -56,7 +56,7 @@ export interface McpUiCallToolResult {
 
 /**
  * 处理器依赖的最小 session 视图：由 bootstrap 的 session record 适配，
- * 处理器不直接接触 XCodeApp 或 mcpPort 的其余能力。
+ * 处理器不直接接触 ZCodeApp 或 mcpPort 的其余能力。
  */
 export interface McpUiSessionAccess extends McpUiResourceSessionAccess {
   /** serverName 是否是本 session 已配置的 MCP server（插件 server 与普通 MCP server 同一张表）。 */

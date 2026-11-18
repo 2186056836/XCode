@@ -20,10 +20,10 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { LexicalChatInputHandle } from "@/LexicalChatInput.js";
 import { logger } from "@/logger.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { toast } from "@/components/ui/toast.js";
 import type {
   ComposerVoiceInput,
@@ -62,8 +62,8 @@ export function useComposerVoiceInput(options: {
   const platform = useOptionalPlatform();
   const microphone = platform?.microphone;
   const { voiceInputService } = useBaseWorkspaceServices();
-  const isLoggedIn = useXCodeStore((state) => state.user !== null);
-  const { intl, locale } = useXCodeIntl();
+  const isLoggedIn = useZCodeStore((state) => state.user !== null);
+  const { intl, locale } = useZCodeIntl();
   const available = Boolean(options.enabled && microphone && voiceInputService && isLoggedIn);
   const permissionGuide = useMicrophonePermissionGuide();
   const showPermissionGuide = permissionGuide.show;

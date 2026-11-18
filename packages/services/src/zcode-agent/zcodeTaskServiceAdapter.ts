@@ -7,7 +7,7 @@ import {
 import { uploadBotGroupAttachments } from "./groupAttachmentUpload.js";
 /* oxlint-disable eslint(max-lines) -- 迁移期需要在一个门面里集中维护旧 task projection 到 XCode session 的协议适配。 */
 import { createHash, randomUUID } from "node:crypto";
-import { createXCodeAgentConnectionScope } from "#src/zcode-agent/zcodeAgentConnectionScope.js";
+import { createZCodeAgentConnectionScope } from "#src/zcode-agent/zcodeAgentConnectionScope.js";
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -18,118 +18,118 @@ import {
   type NetworkObservation,
 } from "@zcode/rpc";
 import {
-  coalesceConsecutiveXCodeAssistants,
+  coalesceConsecutiveZCodeAssistants,
   createSessionTraceId,
   decodeCustomModelValue,
-  deriveXCodeTaskStatusFromSessionSnapshot,
+  deriveZCodeTaskStatusFromSessionSnapshot,
   extractPlanStepsFromToolInput,
   extractPlanStepsFromToolOutput,
   generateTraceId,
-  getXCodeGoalActiveIterationCount,
-  getXCodeGoalIterationByAssistantMessageId,
-  getXCodeUserVisibleMessages,
+  getZCodeGoalActiveIterationCount,
+  getZCodeGoalIterationByAssistantMessageId,
+  getZCodeUserVisibleMessages,
   isMainAgentToolProjectionSource,
-  normalizeXCodeApiRetryStatus,
-  attachXCodeBackgroundTaskNotificationToRaw,
-  collectXCodeBackgroundTaskNotificationsByToolUseId,
-  mergeXCodeBackgroundTaskControlItems,
-  parseXCodeBackgroundTaskControlItems,
+  normalizeZCodeApiRetryStatus,
+  attachZCodeBackgroundTaskNotificationToRaw,
+  collectZCodeBackgroundTaskNotificationsByToolUseId,
+  mergeZCodeBackgroundTaskControlItems,
+  parseZCodeBackgroundTaskControlItems,
   parseZCodeBackgroundTaskNotifications,
   parseModelPickerValue as parseSharedModelSelection,
   resolveWorkspaceKey,
-  resolveXCodeVisibleSessionTitle,
-  textFromXCodeMessageParts,
+  resolveZCodeVisibleSessionTitle,
+  textFromZCodeMessageParts,
   ZCODE_AGENT_PROVIDER,
   zcodeBackgroundTaskNotificationFailureText,
   zcodeBackgroundTaskNotificationToolUpdateStatus,
-  appendXCodeStreamingToolInputDelta,
-  buildXCodeStreamingToolInputPreview,
-  createXCodeToolProjectionMemory,
-  finalizeXCodeToolProjectionInput,
-  forgetXCodeToolProjectionMetadata,
-  isXCodeModelRetryRecoveryProgressPayload,
-  markXCodeStreamingToolInputPreviewMaterialized,
-  resolveXCodeToolProjectionMetadata,
+  appendZCodeStreamingToolInputDelta,
+  buildZCodeStreamingToolInputPreview,
+  createZCodeToolProjectionMemory,
+  finalizeZCodeToolProjectionInput,
+  forgetZCodeToolProjectionMetadata,
+  isZCodeModelRetryRecoveryProgressPayload,
+  markZCodeStreamingToolInputPreviewMaterialized,
+  resolveZCodeToolProjectionMetadata,
   zcodeApiRetryFromModelNetworkStatusPayload,
   zcodeApiRetryFromStreamRecoveryPayload,
   zcodeTaskNetworkDebugStatusFromPayload,
-  shouldMaterializeXCodeStreamingToolInputPreview,
-  type XCodeApiRetryStatus,
-  type XCodeAssistantMessageFeedback,
-  type XCodeBackgroundTaskNotificationInfo,
-  type XCodeBackgroundTaskControlItem,
-  type XCodeBackgroundTurnAttribution,
-  type XCodeAutomationBotDeliveryTarget,
-  type XCodeCancelTaskCommandResult,
-  type XCodeCodexConnectivityCheckResult,
-  type XCodeConfigOption,
-  type XCodeEnqueueTaskCommandResult,
-  type XCodeError,
-  type XCodeGoalVerificationTimelineMeta,
-  type XCodeImportSessionsResult,
-  type XCodeImportableSessionCandidate,
-  type XCodeUsage,
-  type XCodePersistedMessage,
-  type XCodePersistedMessagePart,
-  type XCodePersistedToolCall,
-  type XCodePromptAttachment,
-  type XCodeProvider,
-  type XCodeSessionFile,
-  type XCodeTaskGoal,
-  type XCodeTaskGoalStats,
-  type XCodeTaskMode,
-  type XCodePlanStep,
-  type XCodeSlashCommand,
-  type XCodeStreamEvent,
-  type XCodeSwitchAgentResult,
-  type XCodeSyncTaskSessionBindingResult,
-  type XCodeTaskCreateResult,
-  type XCodeTaskMeta,
-  type XCodeTaskClientMode,
-  type XCodeTaskRuntimeCommand,
-  type XCodeTaskSnapshot,
-  type XCodeTaskSnapshotBody,
-  type XCodeTaskSnapshotRefContent,
-  type XCodeTaskSnapshotToolCallsSlice,
-  type XCodeTaskTokenUsageResult,
-  type XCodeTodoGroup,
-  type XCodeTurnSteerCommandKind,
-  type XCodeTurnSteerSource,
-  type XCodeWorkspaceEvent,
-  type XCodeWorkspaceTaskListChanged,
+  shouldMaterializeZCodeStreamingToolInputPreview,
+  type ZCodeApiRetryStatus,
+  type ZCodeAssistantMessageFeedback,
+  type ZCodeBackgroundTaskNotificationInfo,
+  type ZCodeBackgroundTaskControlItem,
+  type ZCodeBackgroundTurnAttribution,
+  type ZCodeAutomationBotDeliveryTarget,
+  type ZCodeCancelTaskCommandResult,
+  type ZCodeCodexConnectivityCheckResult,
+  type ZCodeConfigOption,
+  type ZCodeEnqueueTaskCommandResult,
+  type ZCodeError,
+  type ZCodeGoalVerificationTimelineMeta,
+  type ZCodeImportSessionsResult,
+  type ZCodeImportableSessionCandidate,
+  type ZCodeUsage,
+  type ZCodePersistedMessage,
+  type ZCodePersistedMessagePart,
+  type ZCodePersistedToolCall,
+  type ZCodePromptAttachment,
+  type ZCodeProvider,
+  type ZCodeSessionFile,
+  type ZCodeTaskGoal,
+  type ZCodeTaskGoalStats,
+  type ZCodeTaskMode,
+  type ZCodePlanStep,
+  type ZCodeSlashCommand,
+  type ZCodeStreamEvent,
+  type ZCodeSwitchAgentResult,
+  type ZCodeSyncTaskSessionBindingResult,
+  type ZCodeTaskCreateResult,
+  type ZCodeTaskMeta,
+  type ZCodeTaskClientMode,
+  type ZCodeTaskRuntimeCommand,
+  type ZCodeTaskSnapshot,
+  type ZCodeTaskSnapshotBody,
+  type ZCodeTaskSnapshotRefContent,
+  type ZCodeTaskSnapshotToolCallsSlice,
+  type ZCodeTaskTokenUsageResult,
+  type ZCodeTodoGroup,
+  type ZCodeTurnSteerCommandKind,
+  type ZCodeTurnSteerSource,
+  type ZCodeWorkspaceEvent,
+  type ZCodeWorkspaceTaskListChanged,
   type InputId,
   type TraceId,
   zcodeContextUsageBreakdownSchema,
   zcodeSessionSettingsStateSchema,
-  type XCodeDeliveryKind,
-  type XCodeMessagePart,
-  type XCodeMessageWithParts,
+  type ZCodeDeliveryKind,
+  type ZCodeMessagePart,
+  type ZCodeMessageWithParts,
   type ModelSelection,
-  type XCodePermissionOption,
-  type XCodePermissionRequestParams,
-  type XCodePermissionRequest,
-  type XCodeSessionEvent,
-  type XCodeSessionMode,
-  type XCodeSessionSettingsState,
-  type XCodeSessionStateSnapshot,
-  type XCodeStateUpdatedNotification,
-  type XCodeContextCompactionTimelineMeta,
-  type XCodeTimelineMeta,
-  type XCodeTimelineStatus,
-  type XCodeTimelineTrigger,
-  type XCodeToolProjectionMemory,
-  type XCodeUserInputRequestParams,
-  type XCodeUserInputResponse,
-  type XCodeAgentMcpServer,
+  type ZCodePermissionOption,
+  type ZCodePermissionRequestParams,
+  type ZCodePermissionRequest,
+  type ZCodeSessionEvent,
+  type ZCodeSessionMode,
+  type ZCodeSessionSettingsState,
+  type ZCodeSessionStateSnapshot,
+  type ZCodeStateUpdatedNotification,
+  type ZCodeContextCompactionTimelineMeta,
+  type ZCodeTimelineMeta,
+  type ZCodeTimelineStatus,
+  type ZCodeTimelineTrigger,
+  type ZCodeToolProjectionMemory,
+  type ZCodeUserInputRequestParams,
+  type ZCodeUserInputResponse,
+  type ZCodeAgentMcpServer,
 } from "@zcode/shared";
 import type {
-  XCodeTaskListQuery,
-  XCodeTaskListResult,
-  XCodeWorkspaceEventSubscriptionParams,
-  IXCodeTaskService,
-  XCodeArchivedTaskDeletionResult,
-  XCodeTaskReadyOutcome,
-  XCodeTaskTerminalOutcome,
+  ZCodeTaskListQuery,
+  ZCodeTaskListResult,
+  ZCodeWorkspaceEventSubscriptionParams,
+  IZCodeTaskService,
+  ZCodeArchivedTaskDeletionResult,
+  ZCodeTaskReadyOutcome,
+  ZCodeTaskTerminalOutcome,
 } from "../session/zcodeTaskService.js";
 import { createServiceLogger } from "#src/logger/serviceLogger.js";
 import {
@@ -143,14 +143,14 @@ import type {
 } from "#src/session/sessionMailbox.js";
 import { TaskIndexRepo } from "#src/session/taskIndexRepo.js";
 import type {
-  IXCodeAgentService,
-  XCodeAgentServiceEvent,
-  XCodeAgentWorkspaceTarget,
+  IZCodeAgentService,
+  ZCodeAgentServiceEvent,
+  ZCodeAgentWorkspaceTarget,
 } from "./zcodeAgent.js";
 import type {
-  XCodeTaskIndexReadyEvent,
-  XCodeTaskIndexSyncer,
-  XCodeTaskIndexTerminalEvent,
+  ZCodeTaskIndexReadyEvent,
+  ZCodeTaskIndexSyncer,
+  ZCodeTaskIndexTerminalEvent,
 } from "./zcodeTaskIndexSyncer.js";
 import { readModelTrajectory } from "./modelTrajectory.js";
 import {
@@ -181,19 +181,19 @@ import {
   THOUGHT_LEVEL_CONFIG_ID,
   formatTaskMetaModelSelectionFromSnapshot,
   formatModelPickerValue,
-  getXCodeAgentAvailableModes,
-  normalizeAvailableXCodeMode,
+  getZCodeAgentAvailableModes,
+  normalizeAvailableZCodeMode,
   settingsToConfigOptions,
 } from "./zcodeConfigOptions.js";
 import type { CuaProductMcpServerResolver } from "#src/cua-permission-broker/index.js";
 import { registerMemoryDiagnosticsProvider } from "#src/memoryDiagnostics.js";
 
-interface CreateXCodeTaskServiceAdapterOptions {
-  zcodeAgentService: IXCodeAgentService;
+interface CreateZCodeTaskServiceAdapterOptions {
+  zcodeAgentService: IZCodeAgentService;
   taskIndexRepo?: TaskIndexRepo;
   // syncer 现在持有 workspace emitter 和 broadcast 入口，adapter 必须共用同一实例，
   // 否则 desktop-continuous 路径和 task adapter 路径的事件订阅会分裂成两份，UI 收不全。
-  taskIndexSyncer: XCodeTaskIndexSyncer;
+  taskIndexSyncer: ZCodeTaskIndexSyncer;
   settingService?: Pick<ISettingService, "get">;
   cuaProductMcpServerResolver?: CuaProductMcpServerResolver;
 }
@@ -210,18 +210,18 @@ interface TaskTargetWithMcpServers extends TaskTarget {
   additionalDirectories?: string[];
   model?: string;
   thoughtLevel?: string;
-  mcpServers?: XCodeAgentMcpServer[];
+  mcpServers?: ZCodeAgentMcpServer[];
   toolDenylist?: string[];
 }
 
-type WorkspaceEventInput = string | XCodeWorkspaceEventSubscriptionParams;
-type XCodeSendPromptRuntimeCommand = Extract<XCodeTaskRuntimeCommand, { type: "send_prompt" }>;
-type XCodeTerminalStreamEvent =
-  | Extract<XCodeStreamEvent, { type: "task_complete" }>
-  | Extract<XCodeStreamEvent, { type: "task_error" }>;
+type WorkspaceEventInput = string | ZCodeWorkspaceEventSubscriptionParams;
+type ZCodeSendPromptRuntimeCommand = Extract<ZCodeTaskRuntimeCommand, { type: "send_prompt" }>;
+type ZCodeTerminalStreamEvent =
+  | Extract<ZCodeStreamEvent, { type: "task_complete" }>
+  | Extract<ZCodeStreamEvent, { type: "task_error" }>;
 
-const GLM_PROVIDER: XCodeProvider = ZCODE_AGENT_PROVIDER;
-const EMPTY_SLASH_COMMANDS: XCodeSlashCommand[] = [];
+const GLM_PROVIDER: ZCodeProvider = ZCODE_AGENT_PROVIDER;
+const EMPTY_SLASH_COMMANDS: ZCodeSlashCommand[] = [];
 const logger = createServiceLogger("zcode-task-service");
 const ASK_USER_QUESTION_TOOL_NAME = "AskUserQuestion";
 const EXIT_PLAN_MODE_TOOL_NAME = "ExitPlanMode";
@@ -234,7 +234,7 @@ const MAX_LIVE_TOOL_PROJECTION_TOOLS_PER_TASK = 2000;
 interface LiveToolProjection {
   order: number;
   parentToolUseId: string | null;
-  tool: XCodePersistedToolCall;
+  tool: ZCodePersistedToolCall;
   toolId: string;
 }
 
@@ -242,27 +242,27 @@ function padDatePart(value: number): string {
   return value.toString().padStart(2, "0");
 }
 
-function formatXCodeAgentLogDate(now: Date): string {
+function formatZCodeAgentLogDate(now: Date): string {
   return [now.getFullYear(), padDatePart(now.getMonth() + 1), padDatePart(now.getDate())].join("-");
 }
 
-function resolveXCodeAgentCurrentLogFilePath(now = new Date()): string {
+function resolveZCodeAgentCurrentLogFilePath(now = new Date()): string {
   const configuredLogDir = process.env.ZCODE_LOG_DIR?.trim();
   const logDir = configuredLogDir || join(homedir(), ".xcode", "cli", "log");
-  return join(logDir, `zcode-${formatXCodeAgentLogDate(now)}.jsonl`);
+  return join(logDir, `zcode-${formatZCodeAgentLogDate(now)}.jsonl`);
 }
 
-export function createXCodeTaskServiceAdapter(
-  options: CreateXCodeTaskServiceAdapterOptions,
-): IXCodeTaskService {
+export function createZCodeTaskServiceAdapter(
+  options: CreateZCodeTaskServiceAdapterOptions,
+): IZCodeTaskService {
   // Bot 原来绕过连接 facade，导致真实附件 admission 缺少可信身份；复用既有 scope，
   // 同一 Bot 接入的附件、命令及对账共用连接，不改变桌面与手机各自的传输模式。
-  const botConnectionScopes = new Map<string, ReturnType<typeof createXCodeAgentConnectionScope>>();
-  function botAgent(workspace: XCodeAgentWorkspaceTarget) {
+  const botConnectionScopes = new Map<string, ReturnType<typeof createZCodeAgentConnectionScope>>();
+  function botAgent(workspace: ZCodeAgentWorkspaceTarget) {
     const key = JSON.stringify([resolveWorkspaceKey(workspace), workspace.remoteSessionId ?? ""]);
     let scope = botConnectionScopes.get(key);
     if (!scope) {
-      scope = createXCodeAgentConnectionScope(options.zcodeAgentService, {
+      scope = createZCodeAgentConnectionScope(options.zcodeAgentService, {
         connectionId: `bot-${randomUUID()}`,
         clientMode: "desktop-continuous",
         role: "trusted-host-relay",
@@ -271,18 +271,18 @@ export function createXCodeTaskServiceAdapter(
     }
     return scope.service;
   }
-  const errorEmitter = new Emitter<XCodeError>();
-  const taskEmitters = new Map<string, Emitter<XCodeStreamEvent>>();
-  const globalTaskEmitters = new Map<string, Emitter<XCodeStreamEvent>>();
+  const errorEmitter = new Emitter<ZCodeError>();
+  const taskEmitters = new Map<string, Emitter<ZCodeStreamEvent>>();
+  const globalTaskEmitters = new Map<string, Emitter<ZCodeStreamEvent>>();
   const taskTargets = new Map<string, TaskTarget>();
   const topicAdmission = createBotTopicAdmission();
-  const runtimeCommands = new Map<string, XCodeTaskRuntimeCommand[]>();
+  const runtimeCommands = new Map<string, ZCodeTaskRuntimeCommand[]>();
   const runtimeCommandDrains = new Map<string, Promise<void>>();
-  const apiRetryByTaskKey = new Map<string, XCodeApiRetryStatus | null>();
-  const backgroundTaskControlsByTaskKey = new Map<string, XCodeBackgroundTaskControlItem[]>();
+  const apiRetryByTaskKey = new Map<string, ZCodeApiRetryStatus | null>();
+  const backgroundTaskControlsByTaskKey = new Map<string, ZCodeBackgroundTaskControlItem[]>();
   const streamedTurnText = new Map<string, { messageId?: string; text: string }>();
   const activePromptInputIds = new Map<string, InputId>();
-  const toolProjectionMemoryByTaskKey = new Map<string, XCodeToolProjectionMemory>();
+  const toolProjectionMemoryByTaskKey = new Map<string, ZCodeToolProjectionMemory>();
   const liveToolProjectionsByTaskKey = new Map<string, Map<string, LiveToolProjection>>();
   let liveToolProjectionOrder = 0;
   const legacySnapshotTaskKeys = new Set<string>();
@@ -308,7 +308,7 @@ export function createXCodeTaskServiceAdapter(
 
   function unsupported(name: string): never {
     throw Object.assign(
-      new Error(`XCode task service adapter does not support IXCodeTaskService.${name} yet.`),
+      new Error(`XCode task service adapter does not support IZCodeTaskService.${name} yet.`),
       {
         code: "ZCODE_AGENT_UNSUPPORTED_LEGACY_TASK_METHOD",
       },
@@ -339,8 +339,8 @@ export function createXCodeTaskServiceAdapter(
   }
 
   function turnAttributionOf(
-    params: XCodeBackgroundTurnAttribution,
-  ): XCodeBackgroundTurnAttribution {
+    params: ZCodeBackgroundTurnAttribution,
+  ): ZCodeBackgroundTurnAttribution {
     if (params.automationId) return { automationId: params.automationId };
     if (params.offPeakTaskId) {
       return {
@@ -352,8 +352,8 @@ export function createXCodeTaskServiceAdapter(
   }
 
   async function resolveProductMcpServers(
-    servers: XCodeAgentMcpServer[] | undefined,
-  ): Promise<XCodeAgentMcpServer[] | undefined> {
+    servers: ZCodeAgentMcpServer[] | undefined,
+  ): Promise<ZCodeAgentMcpServer[] | undefined> {
     const configuredServers = (servers?.length ?? 0) > 0 ? servers : undefined;
     if (!configuredServers || !options.cuaProductMcpServerResolver) {
       return configuredServers;
@@ -401,16 +401,16 @@ export function createXCodeTaskServiceAdapter(
       queryId?: string;
       messageId?: string;
       content: string;
-      attachments?: XCodePromptAttachment[];
+      attachments?: ZCodePromptAttachment[];
       toolDenylist?: string[];
-      botDeliveryTarget?: XCodeAutomationBotDeliveryTarget;
+      botDeliveryTarget?: ZCodeAutomationBotDeliveryTarget;
       clientId?: string;
-      clientMode?: XCodeTaskClientMode;
+      clientMode?: ZCodeTaskClientMode;
       logReason?: string;
       modelSelection?: CommandPayloadMap["sendText"]["modelSelection"];
       modelSelectionBasis?: CommandPayloadMap["sendText"]["modelSelectionBasis"];
       modelExecution?: CommandPayloadMap["sendText"]["modelExecution"];
-    } & XCodeBackgroundTurnAttribution,
+    } & ZCodeBackgroundTurnAttribution,
   ): Promise<CommandAck | undefined> {
     const startedAt = Date.now();
     notifySyncerSession(target);
@@ -521,7 +521,7 @@ export function createXCodeTaskServiceAdapter(
     }
   }
 
-  function setRuntimeCommands(params: TaskTarget, commands: XCodeTaskRuntimeCommand[]): void {
+  function setRuntimeCommands(params: TaskTarget, commands: ZCodeTaskRuntimeCommand[]): void {
     const key = taskKey(params);
     if (commands.length === 0) {
       runtimeCommands.delete(key);
@@ -532,10 +532,10 @@ export function createXCodeTaskServiceAdapter(
 
   function markRuntimeCommandRunning(
     params: TaskTarget,
-    command: XCodeSendPromptRuntimeCommand,
-  ): XCodeSendPromptRuntimeCommand {
+    command: ZCodeSendPromptRuntimeCommand,
+  ): ZCodeSendPromptRuntimeCommand {
     const key = taskKey(params);
-    const runningCommand: XCodeSendPromptRuntimeCommand = {
+    const runningCommand: ZCodeSendPromptRuntimeCommand = {
       ...command,
       status: "running",
       updatedAt: Date.now(),
@@ -551,11 +551,11 @@ export function createXCodeTaskServiceAdapter(
 
   function markRuntimeCommandFailed(
     params: TaskTarget,
-    command: XCodeSendPromptRuntimeCommand,
+    command: ZCodeSendPromptRuntimeCommand,
     error: unknown,
   ): void {
     const key = taskKey(params);
-    const failedCommand: XCodeSendPromptRuntimeCommand = {
+    const failedCommand: ZCodeSendPromptRuntimeCommand = {
       ...command,
       status: "failed",
       updatedAt: Date.now(),
@@ -622,7 +622,7 @@ export function createXCodeTaskServiceAdapter(
 
   function completeRuntimeCommandForTerminalEvent(
     params: TaskTarget,
-    event: XCodeTerminalStreamEvent,
+    event: ZCodeTerminalStreamEvent,
   ): void {
     completeRuntimeCommandByInputId(params, event.inputId ?? event.traceId, event.type);
   }
@@ -637,7 +637,7 @@ export function createXCodeTaskServiceAdapter(
       return;
     }
     const command = commands.find(
-      (candidate): candidate is XCodeSendPromptRuntimeCommand =>
+      (candidate): candidate is ZCodeSendPromptRuntimeCommand =>
         candidate.type === "send_prompt" && candidate.status === "accepted",
     );
     if (!command) {
@@ -784,8 +784,8 @@ export function createXCodeTaskServiceAdapter(
   }
 
   function persistedStatusFromToolUpdate(
-    status: Extract<XCodeStreamEvent, { type: "tool_call_update" }>["status"],
-  ): XCodePersistedToolCall["status"] | undefined {
+    status: Extract<ZCodeStreamEvent, { type: "tool_call_update" }>["status"],
+  ): ZCodePersistedToolCall["status"] | undefined {
     return status === "completed" ||
       status === "failed" ||
       status === "denied" ||
@@ -794,7 +794,7 @@ export function createXCodeTaskServiceAdapter(
       : undefined;
   }
 
-  function rememberLiveToolProjection(params: TaskTarget, event: XCodeStreamEvent): void {
+  function rememberLiveToolProjection(params: TaskTarget, event: ZCodeStreamEvent): void {
     if (event.type !== "tool_call" && event.type !== "tool_call_update") {
       return;
     }
@@ -803,7 +803,7 @@ export function createXCodeTaskServiceAdapter(
     const existing = projection.get(event.toolId);
     const parentToolUseId = event.parentToolUseId ?? existing?.parentToolUseId ?? null;
     const raw = normalizeLiveToolRaw(event.raw, event.toolId, parentToolUseId);
-    const nextTool: XCodePersistedToolCall =
+    const nextTool: ZCodePersistedToolCall =
       event.type === "tool_call"
         ? {
             ...existing?.tool,
@@ -833,7 +833,7 @@ export function createXCodeTaskServiceAdapter(
     trimLiveToolProjectionMap(projection);
   }
 
-  function persistedToolId(tool: XCodePersistedToolCall): string | undefined {
+  function persistedToolId(tool: ZCodePersistedToolCall): string | undefined {
     return stringValue(asRecord(tool.raw).toolCallId);
   }
 
@@ -856,9 +856,9 @@ export function createXCodeTaskServiceAdapter(
   }
 
   function mergePersistedToolCall(
-    snapshotTool: XCodePersistedToolCall | undefined,
-    liveTool: XCodePersistedToolCall,
-  ): XCodePersistedToolCall {
+    snapshotTool: ZCodePersistedToolCall | undefined,
+    liveTool: ZCodePersistedToolCall,
+  ): ZCodePersistedToolCall {
     if (!snapshotTool) {
       return liveTool;
     }
@@ -878,7 +878,7 @@ export function createXCodeTaskServiceAdapter(
   }
 
   function findToolLocation(
-    messages: readonly XCodePersistedMessage[],
+    messages: readonly ZCodePersistedMessage[],
     toolId: string,
   ): { messageIndex: number; toolIndex: number } | null {
     for (let messageIndex = 0; messageIndex < messages.length; messageIndex += 1) {
@@ -892,7 +892,7 @@ export function createXCodeTaskServiceAdapter(
     return null;
   }
 
-  function latestAssistantMessageIndex(messages: readonly XCodePersistedMessage[]): number {
+  function latestAssistantMessageIndex(messages: readonly ZCodePersistedMessage[]): number {
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       if (messages[index]?.role === "assistant") {
         return index;
@@ -902,9 +902,9 @@ export function createXCodeTaskServiceAdapter(
   }
 
   function upsertPersistedToolPart(
-    parts: readonly XCodePersistedMessagePart[] | undefined,
+    parts: readonly ZCodePersistedMessagePart[] | undefined,
     toolIndex: number,
-  ): XCodePersistedMessagePart[] {
+  ): ZCodePersistedMessagePart[] {
     if (parts?.some((part) => part.type === "tool-call" && part.toolIndex === toolIndex)) {
       return [...parts];
     }
@@ -912,10 +912,10 @@ export function createXCodeTaskServiceAdapter(
   }
 
   function updateSnapshotMessageTool(
-    message: XCodePersistedMessage,
+    message: ZCodePersistedMessage,
     toolIndex: number,
-    tool: XCodePersistedToolCall,
-  ): XCodePersistedMessage {
+    tool: ZCodePersistedToolCall,
+  ): ZCodePersistedMessage {
     const tools = [...(message.tools ?? [])];
     tools[toolIndex] = mergePersistedToolCall(tools[toolIndex], tool);
     return {
@@ -929,9 +929,9 @@ export function createXCodeTaskServiceAdapter(
   }
 
   function appendSnapshotMessageTool(
-    message: XCodePersistedMessage,
-    tool: XCodePersistedToolCall,
-  ): XCodePersistedMessage {
+    message: ZCodePersistedMessage,
+    tool: ZCodePersistedToolCall,
+  ): ZCodePersistedMessage {
     const tools = [...(message.tools ?? []), tool];
     const toolIndex = tools.length - 1;
     return {
@@ -945,9 +945,9 @@ export function createXCodeTaskServiceAdapter(
   }
 
   function mergeLiveToolProjectionIntoSnapshotMessages(
-    meta: XCodeTaskMeta,
-    messages: XCodePersistedMessage[],
-  ): XCodePersistedMessage[] {
+    meta: ZCodeTaskMeta,
+    messages: ZCodePersistedMessage[],
+  ): ZCodePersistedMessage[] {
     const projection = liveToolProjectionsByTaskKey.get(taskKey(meta));
     if (!projection || projection.size === 0 || messages.length === 0) {
       return messages;
@@ -1020,11 +1020,11 @@ export function createXCodeTaskServiceAdapter(
     return target;
   }
 
-  function getToolProjectionMemory(params: TaskTarget): XCodeToolProjectionMemory {
+  function getToolProjectionMemory(params: TaskTarget): ZCodeToolProjectionMemory {
     const key = taskKey(params);
     let memory = toolProjectionMemoryByTaskKey.get(key);
     if (!memory) {
-      memory = createXCodeToolProjectionMemory();
+      memory = createZCodeToolProjectionMemory();
       toolProjectionMemoryByTaskKey.set(key, memory);
     }
     return memory;
@@ -1036,30 +1036,30 @@ export function createXCodeTaskServiceAdapter(
 
   // Bugfix: workspace emitter 已上提到 syncer，adapter 通过 syncer 获取共享 emitter，
   // 保证 task adapter 路径和 desktop-continuous 路径走同一份订阅，UI 不会漏事件。
-  function getWorkspaceEmitter(workspace: WorkspaceEventInput): Emitter<XCodeWorkspaceEvent> {
+  function getWorkspaceEmitter(workspace: WorkspaceEventInput): Emitter<ZCodeWorkspaceEvent> {
     return taskIndexSyncer.getWorkspaceEmitter(workspace);
   }
 
-  function getTaskEmitter(params: TaskTarget): Emitter<XCodeStreamEvent> {
+  function getTaskEmitter(params: TaskTarget): Emitter<ZCodeStreamEvent> {
     const key = taskKey(params);
     let emitter = taskEmitters.get(key);
     if (!emitter) {
-      emitter = new Emitter<XCodeStreamEvent>();
+      emitter = new Emitter<ZCodeStreamEvent>();
       taskEmitters.set(key, emitter);
     }
     return emitter;
   }
 
-  function getGlobalTaskEmitter(taskId: string): Emitter<XCodeStreamEvent> {
+  function getGlobalTaskEmitter(taskId: string): Emitter<ZCodeStreamEvent> {
     let emitter = globalTaskEmitters.get(taskId);
     if (!emitter) {
-      emitter = new Emitter<XCodeStreamEvent>();
+      emitter = new Emitter<ZCodeStreamEvent>();
       globalTaskEmitters.set(taskId, emitter);
     }
     return emitter;
   }
 
-  function emitTaskEvent(params: TaskTarget, event: XCodeStreamEvent): void {
+  function emitTaskEvent(params: TaskTarget, event: ZCodeStreamEvent): void {
     getTaskEmitter(params).fire(event);
     getGlobalTaskEmitter(params.taskId).fire(event);
   }
@@ -1073,15 +1073,15 @@ export function createXCodeTaskServiceAdapter(
       workspaceIdentity?: string;
       taskId?: string;
     },
-    taskMeta: XCodeTaskMeta | undefined,
-    reason: XCodeWorkspaceTaskListChanged["reason"],
+    taskMeta: ZCodeTaskMeta | undefined,
+    reason: ZCodeWorkspaceTaskListChanged["reason"],
   ) {
     taskIndexSyncer.emitWorkspaceTaskListChanged(params, taskMeta, reason);
   }
 
   function emitWorkspaceConfig(
-    params: XCodeAgentWorkspaceTarget,
-    settings: XCodeSessionSettingsState,
+    params: ZCodeAgentWorkspaceTarget,
+    settings: ZCodeSessionSettingsState,
   ) {
     getWorkspaceEmitter(params).fire({
       type: "workspace_config_options_update",
@@ -1093,7 +1093,7 @@ export function createXCodeTaskServiceAdapter(
 
   async function resumeSnapshot(
     params: TaskTargetWithMcpServers,
-  ): Promise<XCodeSessionStateSnapshot> {
+  ): Promise<ZCodeSessionStateSnapshot> {
     rememberTaskTarget(params);
     const thoughtLevel = params.thoughtLevel?.trim();
     const mcpServers = await resolveProductMcpServers(params.mcpServers);
@@ -1142,12 +1142,12 @@ export function createXCodeTaskServiceAdapter(
   /**
    * session/setMode → v4 switchCollaborationMode。
    * auto 例外保真：v4 命令值域刻意排除 auto（「auto 非用户可切，不进 UI 命令面」，
-   * command.ts 裁决），而旧协议 XCodeSessionMode 含 auto 且旧 op 接受它——为 UI 行为
+   * command.ts 裁决），而旧协议 ZCodeSessionMode 含 auto 且旧 op 接受它——为 UI 行为
    * 零变化，auto 继续走旧 op，其余值一律 v4 原生。过渡归宿 = auto 语义在 v4 侧裁决后收口。
    */
   async function switchCollaborationModeViaProtocol(
     target: TaskTarget,
-    mode: XCodeSessionMode,
+    mode: ZCodeSessionMode,
   ): Promise<void> {
     if (mode === "auto") {
       await options.zcodeAgentService.setMode({
@@ -1168,8 +1168,8 @@ export function createXCodeTaskServiceAdapter(
 
   async function repairEmptyImportedClaudeSnapshot(
     params: TaskTargetWithMcpServers,
-    snapshot: XCodeSessionStateSnapshot,
-  ): Promise<XCodeSessionStateSnapshot> {
+    snapshot: ZCodeSessionStateSnapshot,
+  ): Promise<ZCodeSessionStateSnapshot> {
     const repaired = await repairImportedClaudeSessionSnapshot({
       snapshot,
       target: params,
@@ -1194,7 +1194,7 @@ export function createXCodeTaskServiceAdapter(
     return /\bSession (not found|is not active):/i.test(message);
   }
 
-  async function readLegacyTaskSnapshot(params: TaskTarget): Promise<XCodeTaskSnapshot | null> {
+  async function readLegacyTaskSnapshot(params: TaskTarget): Promise<ZCodeTaskSnapshot | null> {
     const paths = [
       getLegacyTaskSessionSnapshotPath(
         params.workspacePath,
@@ -1226,7 +1226,7 @@ export function createXCodeTaskServiceAdapter(
 
       const legacyFile = parsed.data;
       const indexedMeta = await taskIndexRepo.getTaskMeta(params).catch(() => null);
-      const legacyMeta: XCodeTaskMeta = {
+      const legacyMeta: ZCodeTaskMeta = {
         ...legacyFile.meta,
         // Bugfix: 旧 ACP task 只落在 ~/.xcode/v2/sessions/*.json，没有写入
         // zcode-cli 的 sqlite session 表。新协议 resume 会把 taskId 当 sessionId
@@ -1242,7 +1242,7 @@ export function createXCodeTaskServiceAdapter(
         status: legacyFile.meta.status ?? indexedMeta?.status ?? "completed",
         lastError: legacyFile.meta.lastError ?? indexedMeta?.lastError,
       };
-      const snapshot: XCodeTaskSnapshot = {
+      const snapshot: ZCodeTaskSnapshot = {
         ...legacyFile,
         meta: {
           ...legacyMeta,
@@ -1265,8 +1265,8 @@ export function createXCodeTaskServiceAdapter(
   async function resumeSnapshotOrLegacy(
     params: TaskTargetWithMcpServers,
   ): Promise<
-    | { kind: "session"; snapshot: XCodeSessionStateSnapshot }
-    | { kind: "legacy"; snapshot: XCodeTaskSnapshot }
+    | { kind: "session"; snapshot: ZCodeSessionStateSnapshot }
+    | { kind: "legacy"; snapshot: ZCodeTaskSnapshot }
   > {
     try {
       const snapshot = await resumeSnapshot(params);
@@ -1330,7 +1330,7 @@ export function createXCodeTaskServiceAdapter(
     }
   }
 
-  function snapshotToMeta(snapshot: XCodeSessionStateSnapshot): XCodeTaskMeta {
+  function snapshotToMeta(snapshot: ZCodeSessionStateSnapshot): ZCodeTaskMeta {
     const target = {
       taskId: snapshot.session.sessionId,
       workspacePath: snapshot.session.workspace.workspacePath,
@@ -1345,11 +1345,11 @@ export function createXCodeTaskServiceAdapter(
       workspaceIdentity: snapshot.session.workspace.workspaceIdentity,
       createdAt: snapshot.session.createdAt,
       updatedAt: snapshot.session.updatedAt,
-      mode: fromXCodeMode(snapshot.session.mode),
+      mode: fromZCodeMode(snapshot.session.mode),
       model: formatTaskMetaModelSelectionFromSnapshot(snapshot),
       thoughtLevel: snapshot.settings.thoughtLevel.current,
       provider: GLM_PROVIDER,
-      status: deriveXCodeTaskStatusFromSessionSnapshot(snapshot),
+      status: deriveZCodeTaskStatusFromSessionSnapshot(snapshot),
       lastError: snapshot.projection.lastError
         ? {
             code: snapshot.projection.lastError.code ?? snapshot.projection.lastError.type,
@@ -1365,12 +1365,12 @@ export function createXCodeTaskServiceAdapter(
           }
         : undefined,
       target: snapshot.projection.target
-        ? fromXCodeGoal(snapshot.projection.target)
+        ? fromZCodeGoal(snapshot.projection.target)
         : snapshot.projection.target,
     };
   }
 
-  function rememberIndexedTaskMeta(meta: XCodeTaskMeta): XCodeTaskMeta {
+  function rememberIndexedTaskMeta(meta: ZCodeTaskMeta): ZCodeTaskMeta {
     const existing = taskTargets.get(meta.taskId);
     // 权威归属刷新：index meta 是唯一可以设置/清除 cronAutomationId 的来源，直接以 meta 为准
     // 写入（绕过 rememberTaskTarget 的 merge-preserve），以便解绑/删除 automation 后能真正清空。
@@ -1418,7 +1418,7 @@ export function createXCodeTaskServiceAdapter(
     };
   }
 
-  async function updateIndexedPresentation(meta: XCodeTaskMeta): Promise<XCodeTaskMeta> {
+  async function updateIndexedPresentation(meta: ZCodeTaskMeta): Promise<ZCodeTaskMeta> {
     const {
       mode,
       model,
@@ -1446,9 +1446,9 @@ export function createXCodeTaskServiceAdapter(
   }
 
   async function syncTaskIndexSnapshot(
-    snapshot: XCodeSessionStateSnapshot,
-    broadcastReason: XCodeWorkspaceTaskListChanged["reason"] | null = "task_status_changed",
-  ): Promise<XCodeTaskMeta> {
+    snapshot: ZCodeSessionStateSnapshot,
+    broadcastReason: ZCodeWorkspaceTaskListChanged["reason"] | null = "task_status_changed",
+  ): Promise<ZCodeTaskMeta> {
     if (isAuxiliarySessionKind(snapshot.session.sessionKind)) return snapshotToMeta(snapshot);
     return rememberIndexedTaskMeta(
       await taskIndexSyncer.syncSnapshotAndBroadcast(snapshot, {
@@ -1460,7 +1460,7 @@ export function createXCodeTaskServiceAdapter(
   async function updateIndexedTaskState(
     params: TaskTarget,
     patch: { pinned?: boolean; archived?: boolean; unreadAt?: number },
-  ): Promise<XCodeTaskMeta> {
+  ): Promise<ZCodeTaskMeta> {
     return taskIndexRepo.updateTaskState({
       workspacePath: params.workspacePath,
       workspaceIdentity: params.workspaceIdentity,
@@ -1469,7 +1469,7 @@ export function createXCodeTaskServiceAdapter(
     });
   }
 
-  function updateTaskApiRetryFromStreamEvent(params: TaskTarget, event: XCodeStreamEvent): void {
+  function updateTaskApiRetryFromStreamEvent(params: TaskTarget, event: ZCodeStreamEvent): void {
     const key = taskKey(params);
     if (event.type === "session_info_update" && event.apiRetry !== undefined) {
       apiRetryByTaskKey.set(key, event.apiRetry ?? null);
@@ -1484,20 +1484,20 @@ export function createXCodeTaskServiceAdapter(
     return apiRetryByTaskKey.get(taskKey(params)) != null;
   }
 
-  function snapshotToXCode(
-    snapshot: XCodeSessionStateSnapshot,
+  function snapshotToZCode(
+    snapshot: ZCodeSessionStateSnapshot,
     options?: { includeEmptyPendingElicitations?: boolean },
-  ): XCodeTaskSnapshot {
+  ): ZCodeTaskSnapshot {
     const meta = snapshotToMeta(snapshot);
     const activeGoalIterationCount = getSnapshotGoalActiveIterationCount(snapshot);
-    const goalIterationByAssistantMessageId = getXCodeGoalIterationByAssistantMessageId(
+    const goalIterationByAssistantMessageId = getZCodeGoalIterationByAssistantMessageId(
       snapshot.messages,
       {
         ...(activeGoalIterationCount > 0 ? { maxGoalIteration: activeGoalIterationCount } : {}),
         target: snapshot.projection.target,
       },
     );
-    const backgroundTaskNotifications = collectXCodeBackgroundTaskNotificationsByToolUseId(
+    const backgroundTaskNotifications = collectZCodeBackgroundTaskNotificationsByToolUseId(
       snapshot.messages,
     );
     const messages = mergeLiveToolProjectionIntoSnapshotMessages(
@@ -1505,8 +1505,8 @@ export function createXCodeTaskServiceAdapter(
       normalizeGoalVerificationTimelineMessageOrder(
         addGoalVerificationTimelineSnapshotFallback(
           addSessionForkSnapshotFallback(
-            coalesceConsecutiveXCodeAssistants(
-              getXCodeUserVisibleMessages(snapshot.messages, {
+            coalesceConsecutiveZCodeAssistants(
+              getZCodeUserVisibleMessages(snapshot.messages, {
                 target: snapshot.projection.target,
               }).map((message) =>
                 mapMessage(
@@ -1524,7 +1524,7 @@ export function createXCodeTaskServiceAdapter(
         ),
       ),
     );
-    const pendingPermissions: XCodePermissionRequest[] = snapshot.projection.pendingPermissions
+    const pendingPermissions: ZCodePermissionRequest[] = snapshot.projection.pendingPermissions
       .filter((permission) => !isUserInputBackedPermissionToolName(permission.toolName))
       .map((permission) => pendingPermissionToStreamEvent(snapshot.session.sessionId, permission));
     const pendingElicitations = snapshot.projection.pendingPermissions
@@ -1533,10 +1533,10 @@ export function createXCodeTaskServiceAdapter(
         pendingUserInputBackedPermissionToElicitationEvent(snapshot.session.sessionId, permission),
       )
       .filter(
-        (event): event is Extract<XCodeStreamEvent, { type: "elicitation_request" }> =>
+        (event): event is Extract<ZCodeStreamEvent, { type: "elicitation_request" }> =>
           event !== null,
       );
-    const backgroundTaskControls = parseXCodeBackgroundTaskControlItems(
+    const backgroundTaskControls = parseZCodeBackgroundTaskControlItems(
       snapshot.projection.backgroundJobs,
     );
     setTaskBackgroundTaskControlCache(
@@ -1578,12 +1578,12 @@ export function createXCodeTaskServiceAdapter(
     };
   }
 
-  function mapServiceEvent(params: TaskTarget, event: XCodeAgentServiceEvent): void {
+  function mapServiceEvent(params: TaskTarget, event: ZCodeAgentServiceEvent): void {
     if (event.type === "snapshot") {
       void syncTaskIndexSnapshot(event.snapshot).catch((error) => {
         logger.warn(undefined, "同步 XCode snapshot 到 task index 失败", error);
       });
-      const snapshotEvent: XCodeStreamEvent = {
+      const snapshotEvent: ZCodeStreamEvent = {
         type: "task_snapshot_updated",
         workspacePath: params.workspacePath,
         workspaceIdentity: params.workspaceIdentity,
@@ -1664,7 +1664,7 @@ export function createXCodeTaskServiceAdapter(
 
   let disposed = false;
 
-  function handleTaskIndexTerminalEvent(event: XCodeTaskIndexTerminalEvent): void {
+  function handleTaskIndexTerminalEvent(event: ZCodeTaskIndexTerminalEvent): void {
     const params: TaskTarget = {
       taskId: event.target.sessionId,
       workspacePath: event.target.workspacePath,
@@ -1691,7 +1691,7 @@ export function createXCodeTaskServiceAdapter(
     });
   });
 
-  function handleTaskIndexReadyEvent(event: XCodeTaskIndexReadyEvent): void {
+  function handleTaskIndexReadyEvent(event: ZCodeTaskIndexReadyEvent): void {
     const params: TaskTarget = {
       taskId: event.target.sessionId,
       workspacePath: event.target.workspacePath,
@@ -1731,8 +1731,8 @@ export function createXCodeTaskServiceAdapter(
     streamedTurnText.clear();
   }
 
-  async function disposeXCodeAgentServiceAndWait(): Promise<void> {
-    const agentService = options.zcodeAgentService as IXCodeAgentService & {
+  async function disposeZCodeAgentServiceAndWait(): Promise<void> {
+    const agentService = options.zcodeAgentService as IZCodeAgentService & {
       disposeAllAndWait?: () => Promise<void>;
     };
     if (agentService.disposeAllAndWait) {
@@ -1742,7 +1742,7 @@ export function createXCodeTaskServiceAdapter(
     agentService.disposeAll();
   }
 
-  const service: IXCodeTaskService & {
+  const service: IZCodeTaskService & {
     disposeAll(): void;
     disposeAllAndWait(): Promise<void>;
   } = {
@@ -1763,11 +1763,11 @@ export function createXCodeTaskServiceAdapter(
       });
     },
 
-    async checkCodexConnectivity(): Promise<XCodeCodexConnectivityCheckResult> {
+    async checkCodexConnectivity(): Promise<ZCodeCodexConnectivityCheckResult> {
       return { target: "zcode-agent", reachable: true };
     },
 
-    async createTask(params): Promise<XCodeTaskCreateResult> {
+    async createTask(params): Promise<ZCodeTaskCreateResult> {
       const target = normalizeWorkspaceParams(params);
       const requestedSelection =
         params.modelSelection ??
@@ -1778,7 +1778,7 @@ export function createXCodeTaskServiceAdapter(
             }
           : undefined);
       const mcpServers = await resolveProductMcpServers(params.mcpServers);
-      let snapshot: XCodeSessionStateSnapshot;
+      let snapshot: ZCodeSessionStateSnapshot;
       // M5 ③-2 评估标注（生命周期 op，不迁）：v4 createSession 命令已原生（desktop
       // v4 UI 在用），但 replayable createTask 需要 mcpServers/model/importedHistory
       // 载荷与 snapshot 返回值（task index 同步依赖），v4 命令面均未建模；
@@ -1804,7 +1804,7 @@ export function createXCodeTaskServiceAdapter(
                   ...(model?.options?.reasoningLevel
                     ? { thought: model.options.reasoningLevel }
                     : {}),
-                  ...(params.mode ? { mode: toXCodeMode(params.mode) } : {}),
+                  ...(params.mode ? { mode: toZCodeMode(params.mode) } : {}),
                 },
                 ...(mcpServers ? { mcpServers } : {}),
               },
@@ -1826,7 +1826,7 @@ export function createXCodeTaskServiceAdapter(
           projectId: params.projectId ?? null,
           additionalDirectories: params.additionalDirectories,
           sessionTraceId: createSessionTraceId(),
-          mode: toXCodeMode(params.mode),
+          mode: toZCodeMode(params.mode),
           model: requestedSelection,
           thoughtLevel: requestedSelection?.options?.reasoningLevel,
           ...(params.automationId || params.deferPersistenceUntilFirstPrompt
@@ -2130,10 +2130,10 @@ export function createXCodeTaskServiceAdapter(
       unsupported("sendSessionMessageDeliveryResult");
     },
 
-    async enqueueTaskCommand(params): Promise<XCodeEnqueueTaskCommandResult> {
+    async enqueueTaskCommand(params): Promise<ZCodeEnqueueTaskCommandResult> {
       assertCurrentOwnerRun(params, params.ownerRunId);
       const workspaceKeyValue = workspaceKey(params);
-      const command: XCodeTaskRuntimeCommand = {
+      const command: ZCodeTaskRuntimeCommand = {
         commandId: params.commandId,
         taskId: params.taskId,
         traceId: params.traceId,
@@ -2161,7 +2161,7 @@ export function createXCodeTaskServiceAdapter(
       return { accepted: true, command };
     },
 
-    async promoteTaskCommand(params): Promise<XCodeEnqueueTaskCommandResult> {
+    async promoteTaskCommand(params): Promise<ZCodeEnqueueTaskCommandResult> {
       assertCurrentOwnerRun(params, params.ownerRunId);
       const key = taskKey(params);
       const commands = runtimeCommands.get(key) ?? [];
@@ -2184,7 +2184,7 @@ export function createXCodeTaskServiceAdapter(
       return { accepted: true, command: nextCommand };
     },
 
-    async cancelTaskCommand(params): Promise<XCodeCancelTaskCommandResult> {
+    async cancelTaskCommand(params): Promise<ZCodeCancelTaskCommandResult> {
       assertCurrentOwnerRun(params, params.ownerRunId);
       const key = taskKey(params);
       const commands = runtimeCommands.get(key) ?? [];
@@ -2459,7 +2459,7 @@ export function createXCodeTaskServiceAdapter(
       return true;
     },
 
-    async resumeTask(params): Promise<XCodeTaskMeta> {
+    async resumeTask(params): Promise<ZCodeTaskMeta> {
       // v4 侧 resume 已走 subscribe 冷恢复钩子
       // （CLI cold-resume），但 replayable resumeTask 还承担 model/thoughtLevel 回填与
       // snapshot→task index 正文索引回源，旧 resumeSession op 保留到 v4 生命周期收口。
@@ -2511,7 +2511,7 @@ export function createXCodeTaskServiceAdapter(
       return meta;
     },
 
-    async listTasks(params): Promise<XCodeTaskMeta[]> {
+    async listTasks(params): Promise<ZCodeTaskMeta[]> {
       const tasks = await taskIndexRepo.listTaskMetas({
         workspacePath: params.workspacePath,
         workspaceIdentity: params.workspaceIdentity,
@@ -2531,7 +2531,7 @@ export function createXCodeTaskServiceAdapter(
       return tasks.map((task) => task.taskId);
     },
 
-    async listPinnedTasks(params): Promise<XCodeTaskMeta[]> {
+    async listPinnedTasks(params): Promise<ZCodeTaskMeta[]> {
       const tasks = await taskIndexRepo.listTaskMetas({
         workspacePath: params.workspacePath,
         workspaceIdentity: params.workspaceIdentity,
@@ -2563,7 +2563,7 @@ export function createXCodeTaskServiceAdapter(
     },
 
     // 保留全局搜索与 Controller 的显式 scopes 查询；项目侧栏不再维护旧远端列表镜像。
-    async listTaskList(params: XCodeTaskListQuery): Promise<XCodeTaskListResult> {
+    async listTaskList(params: ZCodeTaskListQuery): Promise<ZCodeTaskListResult> {
       const result = await taskIndexRepo.queryTaskList({
         ...params,
         provider: GLM_PROVIDER,
@@ -2574,7 +2574,7 @@ export function createXCodeTaskServiceAdapter(
       };
     },
 
-    async listArchivedTasks(params): Promise<XCodeTaskMeta[]> {
+    async listArchivedTasks(params): Promise<ZCodeTaskMeta[]> {
       const tasks = await taskIndexRepo.listTaskMetas({
         workspacePath: params.workspacePath,
         workspaceIdentity: params.workspaceIdentity,
@@ -2584,7 +2584,7 @@ export function createXCodeTaskServiceAdapter(
       return tasks.map(rememberIndexedTaskMeta);
     },
 
-    async getTaskSnapshot(params): Promise<XCodeTaskSnapshot | null> {
+    async getTaskSnapshot(params): Promise<ZCodeTaskSnapshot | null> {
       const startedAt = Date.now();
       const resumeStartedAt = Date.now();
       const explicitModel = params.model?.trim();
@@ -2634,7 +2634,7 @@ export function createXCodeTaskServiceAdapter(
       const snapshot = restored.snapshot;
       const projectionStartedAt = Date.now();
       const zcodeSnapshot = limitTaskSnapshotMessages(
-        snapshotToXCode(snapshot, {
+        snapshotToZCode(snapshot, {
           includeEmptyPendingElicitations: params.clientMode === "web-remote-replayable",
         }),
         params.messageLimit,
@@ -2703,24 +2703,24 @@ export function createXCodeTaskServiceAdapter(
       return { snapshot, etag };
     },
 
-    async getTaskSnapshotBody(): Promise<XCodeTaskSnapshotBody | null> {
+    async getTaskSnapshotBody(): Promise<ZCodeTaskSnapshotBody | null> {
       return null;
     },
 
-    async getTaskSnapshotRef(): Promise<XCodeTaskSnapshotRefContent | null> {
+    async getTaskSnapshotRef(): Promise<ZCodeTaskSnapshotRefContent | null> {
       return null;
     },
 
-    async getTaskSnapshotToolCallsSlice(): Promise<XCodeTaskSnapshotToolCallsSlice | null> {
+    async getTaskSnapshotToolCallsSlice(): Promise<ZCodeTaskSnapshotToolCallsSlice | null> {
       return null;
     },
 
-    async getTaskMeta(params): Promise<XCodeTaskMeta | null> {
+    async getTaskMeta(params): Promise<ZCodeTaskMeta | null> {
       const meta = await taskIndexRepo.getTaskMeta(params);
       return meta ? rememberIndexedTaskMeta(meta) : null;
     },
 
-    async getTaskConfigOptions(params): Promise<XCodeConfigOption[]> {
+    async getTaskConfigOptions(params): Promise<ZCodeConfigOption[]> {
       const snapshot = await resumeSnapshot(getTaskTarget(params.taskId));
       return settingsToConfigOptions(snapshot.settings);
     },
@@ -2735,7 +2735,7 @@ export function createXCodeTaskServiceAdapter(
       return snapshot.settings.model.current ?? null;
     },
 
-    async setAssistantMessageFeedback(params): Promise<XCodeSessionFile> {
+    async setAssistantMessageFeedback(params): Promise<ZCodeSessionFile> {
       const snapshot = await service.getTaskSnapshot(params);
       if (!snapshot) {
         unsupported("setAssistantMessageFeedback");
@@ -2743,16 +2743,16 @@ export function createXCodeTaskServiceAdapter(
       const assistantMessages = snapshot.messages.filter((message) => message.role === "assistant");
       const targetMessage = assistantMessages[params.turnIndex];
       if (targetMessage) {
-        targetMessage.feedback = params.feedback as XCodeAssistantMessageFeedback | undefined;
+        targetMessage.feedback = params.feedback as ZCodeAssistantMessageFeedback | undefined;
       }
       return snapshot;
     },
 
-    async syncTaskSessionBinding(): Promise<XCodeSyncTaskSessionBindingResult> {
+    async syncTaskSessionBinding(): Promise<ZCodeSyncTaskSessionBindingResult> {
       unsupported("syncTaskSessionBinding");
     },
 
-    async switchAgent(): Promise<XCodeSwitchAgentResult> {
+    async switchAgent(): Promise<ZCodeSwitchAgentResult> {
       unsupported("switchAgent");
     },
 
@@ -2761,7 +2761,7 @@ export function createXCodeTaskServiceAdapter(
       workspaceIdentity?: string;
       modifiedSince?: number;
       limit?: number;
-    }): Promise<XCodeImportableSessionCandidate[]> {
+    }): Promise<ZCodeImportableSessionCandidate[]> {
       // legacy ACP 下线后 scanImportableClaudeSessions 被留成空桩，迁移向导扫不到 ~/.claude/projects。
       // workspaceIdentity 仅影响导入落盘目录，扫描仍按 jsonl 内 cwd 与可选 workspacePath 过滤。
       void params.workspaceIdentity;
@@ -2776,7 +2776,7 @@ export function createXCodeTaskServiceAdapter(
       workspacePath?: string;
       workspaceIdentity?: string;
       sessionIds: string[];
-    }): Promise<XCodeImportSessionsResult> {
+    }): Promise<ZCodeImportSessionsResult> {
       return importClaudeNativeSessions({
         taskIndexRepo,
         workspacePath: params.workspacePath,
@@ -2829,7 +2829,7 @@ export function createXCodeTaskServiceAdapter(
       workspacePath?: string;
       modifiedSince?: number;
       limit?: number;
-    }): Promise<XCodeImportableSessionCandidate[]> {
+    }): Promise<ZCodeImportableSessionCandidate[]> {
       return scanImportableZcodeSessions(params);
     },
 
@@ -2868,12 +2868,12 @@ export function createXCodeTaskServiceAdapter(
       // sendHostCasCommandV4）。v4 handler 不发旧 state.updated，观察端一致性与桌面
       // v4 工具条切换同批（读路径 v4 store 收口）；发起端由下方 resumeSnapshot 保真。
       const target = getTaskTarget(params.taskId);
-      await switchCollaborationModeViaProtocol(target, toXCodeMode(params.mode) ?? "build");
+      await switchCollaborationModeViaProtocol(target, toZCodeMode(params.mode) ?? "build");
       const snapshot = await resumeSnapshot(target);
       await syncTaskIndexSnapshot(snapshot);
     },
 
-    async setConfigOption(params): Promise<XCodeConfigOption[]> {
+    async setConfigOption(params): Promise<ZCodeConfigOption[]> {
       const target = getTaskTarget(params.taskId);
       if (params.configId === MODEL_CONFIG_ID) {
         return service.setModel({
@@ -2908,7 +2908,7 @@ export function createXCodeTaskServiceAdapter(
       } else if (params.configId === MODE_CONFIG_ID) {
         await switchCollaborationModeViaProtocol(
           target,
-          toXCodeMode(params.value as XCodeTaskMode) ?? "build",
+          toZCodeMode(params.value as ZCodeTaskMode) ?? "build",
         );
       }
       const snapshot = await resumeSnapshot(target);
@@ -2916,7 +2916,7 @@ export function createXCodeTaskServiceAdapter(
       return settingsToConfigOptions(snapshot.settings);
     },
 
-    async setModel(params): Promise<XCodeConfigOption[]> {
+    async setModel(params): Promise<ZCodeConfigOption[]> {
       // replayable facade 仍依赖 legacy op 返回的 Session
       // Snapshot；模型执行事实已经收敛到目标 Worker Registry，Host 只发送 Selection。
       // 过渡归宿 = task facade 原生消费 V4 config 投影与 revision。
@@ -2934,7 +2934,7 @@ export function createXCodeTaskServiceAdapter(
       return settingsToConfigOptions(snapshot.settings);
     },
 
-    async setAutomationSessionConfig(params): Promise<XCodeConfigOption[]> {
+    async setAutomationSessionConfig(params): Promise<ZCodeConfigOption[]> {
       const target = getTaskTarget(params.taskId);
       const model = params.modelSelection;
       const thoughtLevel = params.thoughtLevel?.trim() ?? "";
@@ -2967,7 +2967,7 @@ export function createXCodeTaskServiceAdapter(
         );
       }
       if (params.mode?.trim()) {
-        await switchCollaborationModeViaProtocol(target, toXCodeMode(params.mode) ?? "build");
+        await switchCollaborationModeViaProtocol(target, toZCodeMode(params.mode) ?? "build");
       }
       const snapshot = await resumeSnapshot(target);
       await syncTaskIndexSnapshot(snapshot);
@@ -2984,7 +2984,7 @@ export function createXCodeTaskServiceAdapter(
     },
 
     async getTaskNativeSessionLogFile() {
-      const path = resolveXCodeAgentCurrentLogFilePath();
+      const path = resolveZCodeAgentCurrentLogFilePath();
       // 返回 XCode Agent 的结构化日志 JSONL；日志行中的 sessionId 用于按当前任务排查。
       return { provider: GLM_PROVIDER, path, exists: existsSync(path) };
     },
@@ -2994,12 +2994,12 @@ export function createXCodeTaskServiceAdapter(
       // 这里按 sessionId 还原该 task 的模型调用轨迹，供 UI 侧边栏可视化。
       const trajectory = await readModelTrajectory(params.taskId, params.limit);
       logger.info(
-        `[XCodeTaskService] getModelTrajectory taskId=${params.taskId} records=${trajectory.records.length} files=${trajectory.sourceFiles.length} truncated=${trajectory.truncated}`,
+        `[ZCodeTaskService] getModelTrajectory taskId=${params.taskId} records=${trajectory.records.length} files=${trajectory.sourceFiles.length} truncated=${trajectory.truncated}`,
       );
       return trajectory;
     },
 
-    async getTaskTokenUsage(params): Promise<XCodeTaskTokenUsageResult> {
+    async getTaskTokenUsage(params): Promise<ZCodeTaskTokenUsageResult> {
       // 摘要面板需要展示 task 的累计模型消耗，不能复用 usage_update 的 context window。
       // 这里通过 XCode Protocol 读 agent SQLite 的 model_usage 聚合，保持桌面和远控同一事实源。
       return options.zcodeAgentService.getTaskTokenUsage({
@@ -3076,8 +3076,8 @@ export function createXCodeTaskServiceAdapter(
       return true;
     },
 
-    async deleteArchivedTasks(params): Promise<XCodeArchivedTaskDeletionResult> {
-      const result: XCodeArchivedTaskDeletionResult = {
+    async deleteArchivedTasks(params): Promise<ZCodeArchivedTaskDeletionResult> {
+      const result: ZCodeArchivedTaskDeletionResult = {
         deletedTaskIds: [],
         skippedTaskIds: [],
         failedTaskIds: [],
@@ -3124,7 +3124,7 @@ export function createXCodeTaskServiceAdapter(
       return result;
     },
 
-    async renameTask(params): Promise<XCodeTaskMeta> {
+    async renameTask(params): Promise<ZCodeTaskMeta> {
       const meta = await taskIndexSyncer.mutateSessionFacts(
         { ...params, sessionId: params.taskId },
         { type: "rename", title: params.title },
@@ -3133,7 +3133,7 @@ export function createXCodeTaskServiceAdapter(
       return meta;
     },
 
-    async setTaskPinned(params): Promise<XCodeTaskMeta> {
+    async setTaskPinned(params): Promise<ZCodeTaskMeta> {
       const meta = await updateIndexedTaskState(params, {
         pinned: params.pinned,
       });
@@ -3141,7 +3141,7 @@ export function createXCodeTaskServiceAdapter(
       return meta;
     },
 
-    async setTaskUnread(params): Promise<XCodeTaskMeta> {
+    async setTaskUnread(params): Promise<ZCodeTaskMeta> {
       if (!params.unread && typeof params.expectedUnreadAt === "number") {
         const result = await taskIndexRepo.clearTaskUnreadIfMatches({
           taskId: params.taskId,
@@ -3166,27 +3166,27 @@ export function createXCodeTaskServiceAdapter(
       return meta;
     },
 
-    async archiveTask(params): Promise<XCodeTaskMeta> {
+    async archiveTask(params): Promise<ZCodeTaskMeta> {
       const meta = await updateIndexedTaskState(params, { archived: true });
       emitWorkspaceTaskListChanged(params, meta, "task_archived");
       return meta;
     },
 
-    async unarchiveTask(params): Promise<XCodeTaskMeta> {
+    async unarchiveTask(params): Promise<ZCodeTaskMeta> {
       const meta = await updateIndexedTaskState(params, { archived: false });
       emitWorkspaceTaskListChanged(params, meta, "task_unarchived");
       return meta;
     },
 
-    async branchTaskFromPrompt(): Promise<XCodeTaskCreateResult> {
+    async branchTaskFromPrompt(): Promise<ZCodeTaskCreateResult> {
       unsupported("branchTaskFromPrompt");
     },
 
-    onDynamicStreamEvent(taskId: string): Event<XCodeStreamEvent> {
+    onDynamicStreamEvent(taskId: string): Event<ZCodeStreamEvent> {
       return getGlobalTaskEmitter(taskId).event;
     },
 
-    onDynamicTaskTerminalOutcome(taskId: string): Event<XCodeTaskTerminalOutcome> {
+    onDynamicTaskTerminalOutcome(taskId: string): Event<ZCodeTaskTerminalOutcome> {
       // 合并迁移：V4 syncer 只暴露归一化后的终态 kind，不再携带旧协议 event payload。
       // automation 只需要稳定收口运行结果，因此 completed/failed 在此映射为公开 outcome。
       return (listener) =>
@@ -3208,7 +3208,7 @@ export function createXCodeTaskServiceAdapter(
         });
     },
 
-    onDynamicTaskReady(taskId: string): Event<XCodeTaskReadyOutcome> {
+    onDynamicTaskReady(taskId: string): Event<ZCodeTaskReadyOutcome> {
       return (listener) =>
         taskIndexSyncer.onSessionReadyEvent((ready) => {
           if (ready.target.sessionId !== taskId) {
@@ -3218,7 +3218,7 @@ export function createXCodeTaskServiceAdapter(
         });
     },
 
-    onDynamicTaskEvent(params): Event<XCodeStreamEvent> {
+    onDynamicTaskEvent(params): Event<ZCodeStreamEvent> {
       const target = {
         taskId: params.taskId,
         workspacePath: params.workspacePath,
@@ -3236,7 +3236,7 @@ export function createXCodeTaskServiceAdapter(
         // M5 ③-2 复核（2026-07-06）：这里仍是 services/ 内旧 session/subscribe 词表的
         // 最后消费点（replayable/bots 的 stream 投影源）。写路径（send/stop/交互回执）
         // 本波已收敛 v4 命令；读路径消费方是 bots handleStreamEvent（10 种事件词表）与
-        // host 镜像 taskRealtimePort（词表同为 XCodeStreamEvent），二者换 v4 帧 = relay
+        // host 镜像 taskRealtimePort（词表同为 ZCodeStreamEvent），二者换 v4 帧 = relay
         // 协议 + 手机 store + bots 投影整波重做（且 ui/store 本波由并行 agent 主修，避让）。
         // 死期改判 = replayable 读路径 v4 store 波次（波次 3），与 host/index.ts 镜像、
         // mapStateUpdated/mapServiceEvent、agentService.onDynamicSessionEvent 同批摘除。
@@ -3244,7 +3244,7 @@ export function createXCodeTaskServiceAdapter(
           workspacePath: params.workspacePath,
           workspaceIdentity: params.workspaceIdentity,
           sessionId: params.taskId,
-          deliveryKind: toXCodeDeliveryKind(params.deliveryKind),
+          deliveryKind: toZCodeDeliveryKind(params.deliveryKind),
           includeSnapshot: params.deliveryKind === "replayable",
         })((event) => mapServiceEvent(target, event));
         return {
@@ -3256,7 +3256,7 @@ export function createXCodeTaskServiceAdapter(
       };
     },
 
-    onDynamicWorkspaceEvent(workspace): Event<XCodeWorkspaceEvent> {
+    onDynamicWorkspaceEvent(workspace): Event<ZCodeWorkspaceEvent> {
       return taskIndexSyncer.onDynamicWorkspaceEvent(workspace);
     },
 
@@ -3288,7 +3288,7 @@ export function createXCodeTaskServiceAdapter(
       taskIndexSyncer.disposeAll();
       await Promise.all([...botConnectionScopes.values()].map((scope) => scope.dispose()));
       botConnectionScopes.clear();
-      await disposeXCodeAgentServiceAndWait();
+      await disposeZCodeAgentServiceAndWait();
       disposeLocalTaskState();
     },
   };
@@ -3299,15 +3299,15 @@ export function createXCodeTaskServiceAdapter(
 function normalizeWorkspaceParams(params: {
   workspacePath: string;
   workspaceIdentity?: string;
-}): XCodeAgentWorkspaceTarget {
+}): ZCodeAgentWorkspaceTarget {
   return {
     workspacePath: params.workspacePath,
     workspaceIdentity: params.workspaceIdentity,
   };
 }
 
-function deriveTitleFromSnapshot(snapshot: XCodeSessionStateSnapshot): string {
-  return resolveXCodeVisibleSessionTitle({
+function deriveTitleFromSnapshot(snapshot: ZCodeSessionStateSnapshot): string {
+  return resolveZCodeVisibleSessionTitle({
     title: snapshot.session.title,
     messages: snapshot.messages,
     target: snapshot.projection.target,
@@ -3324,14 +3324,14 @@ function normalizeSnapshotMessageLimit(messageLimit: number | undefined): number
 function buildSnapshotHistory(
   totalMessages: number,
   messageLimit: number,
-): NonNullable<XCodeTaskSnapshot["history"]> {
+): NonNullable<ZCodeTaskSnapshot["history"]> {
   return {
     truncatedBefore: totalMessages > messageLimit,
     totalMessages,
   };
 }
 
-function getTaskSnapshotMessageDiagnostics(snapshot: XCodeTaskSnapshot) {
+function getTaskSnapshotMessageDiagnostics(snapshot: ZCodeTaskSnapshot) {
   let assistantMessages = 0;
   let userMessages = 0;
   let toolCalls = 0;
@@ -3372,9 +3372,9 @@ function getTaskSnapshotMessageDiagnostics(snapshot: XCodeTaskSnapshot) {
 }
 
 function limitTaskSnapshotMessages(
-  snapshot: XCodeTaskSnapshot,
+  snapshot: ZCodeTaskSnapshot,
   messageLimit: number | undefined,
-): XCodeTaskSnapshot {
+): ZCodeTaskSnapshot {
   const limit = normalizeSnapshotMessageLimit(messageLimit);
   if (!limit) {
     return snapshot;
@@ -3403,7 +3403,7 @@ function parseModelPickerValue(value: string): ModelSelection {
   return parseSharedModelSelection(value);
 }
 
-function toXCodeMode(mode: XCodeTaskMode | undefined): XCodeSessionMode | undefined {
+function toZCodeMode(mode: ZCodeTaskMode | undefined): ZCodeSessionMode | undefined {
   switch (mode) {
     case "plan":
       return "plan";
@@ -3429,14 +3429,14 @@ function toXCodeMode(mode: XCodeTaskMode | undefined): XCodeSessionMode | undefi
   }
 }
 
-function fromXCodeMode(mode: XCodeSessionMode): XCodeTaskMode {
+function fromZCodeMode(mode: ZCodeSessionMode): ZCodeTaskMode {
   return mode === "build" ? "build" : mode;
 }
 
 function addSessionForkSnapshotFallback(
-  messages: XCodePersistedMessage[],
-  snapshot: XCodeSessionStateSnapshot,
-): XCodePersistedMessage[] {
+  messages: ZCodePersistedMessage[],
+  snapshot: ZCodeSessionStateSnapshot,
+): ZCodePersistedMessage[] {
   const parentSessionId = snapshot.session.parentSessionId;
   if (
     !parentSessionId ||
@@ -3467,9 +3467,9 @@ function addSessionForkSnapshotFallback(
 }
 
 function addGoalVerificationTimelineSnapshotFallback(
-  messages: XCodePersistedMessage[],
-  snapshot: XCodeSessionStateSnapshot,
-): XCodePersistedMessage[] {
+  messages: ZCodePersistedMessage[],
+  snapshot: ZCodeSessionStateSnapshot,
+): ZCodePersistedMessage[] {
   const timeline = snapshot.runtime.goalVerificationTimeline ?? [];
   if (timeline.length === 0) {
     return messages;
@@ -3485,7 +3485,7 @@ function addGoalVerificationTimelineSnapshotFallback(
   );
   const timelineMessages = timeline
     .filter((item) => !existingIds.has(goalVerificationTimelineIdentityKey(item)))
-    .map<XCodePersistedMessage>((item) => ({
+    .map<ZCodePersistedMessage>((item) => ({
       id: goalVerificationTimelineMessageId(item),
       role: "assistant",
       content: "",
@@ -3501,7 +3501,7 @@ function addGoalVerificationTimelineSnapshotFallback(
 }
 
 function goalVerificationTimelineIdentityKey(
-  item: Extract<XCodeGoalVerificationTimelineMeta, { type: "goal_verification" }>,
+  item: Extract<ZCodeGoalVerificationTimelineMeta, { type: "goal_verification" }>,
 ): string {
   if (typeof item.goalIteration === "number") {
     return `${item.targetId}:${item.goalIteration}`;
@@ -3510,7 +3510,7 @@ function goalVerificationTimelineIdentityKey(
 }
 
 function goalVerificationTimelineMessageId(
-  item: Extract<XCodeGoalVerificationTimelineMeta, { type: "goal_verification" }>,
+  item: Extract<ZCodeGoalVerificationTimelineMeta, { type: "goal_verification" }>,
 ): string {
   if (typeof item.goalIteration === "number") {
     return `zcode-goal-verification-${item.targetId}-${item.goalIteration}`;
@@ -3519,9 +3519,9 @@ function goalVerificationTimelineMessageId(
 }
 
 function insertGoalVerificationTimelineMessages(
-  messages: XCodePersistedMessage[],
-  timelineMessages: XCodePersistedMessage[],
-): XCodePersistedMessage[] {
+  messages: ZCodePersistedMessage[],
+  timelineMessages: ZCodePersistedMessage[],
+): ZCodePersistedMessage[] {
   const result = [...messages];
   for (const message of [...timelineMessages].sort(
     (left, right) => left.timestamp - right.timestamp,
@@ -3541,8 +3541,8 @@ function insertGoalVerificationTimelineMessages(
 }
 
 function normalizeGoalVerificationTimelineMessageOrder(
-  messages: XCodePersistedMessage[],
-): XCodePersistedMessage[] {
+  messages: ZCodePersistedMessage[],
+): ZCodePersistedMessage[] {
   const timelineMessages = messages.filter(
     (message) => message.syntheticTimeline?.type === "goal_verification",
   );
@@ -3558,7 +3558,7 @@ function normalizeGoalVerificationTimelineMessageOrder(
 }
 
 function goalVerificationAnchorInsertIndex(
-  messages: readonly XCodePersistedMessage[],
+  messages: readonly ZCodePersistedMessage[],
   anchorIndex: number,
 ): number {
   let index = anchorIndex + 1;
@@ -3572,7 +3572,7 @@ function goalVerificationAnchorInsertIndex(
 }
 
 function timestampInsertIndex(
-  messages: readonly XCodePersistedMessage[],
+  messages: readonly ZCodePersistedMessage[],
   timestamp: number,
 ): number {
   const index = messages.findIndex((message) => message.timestamp > timestamp);
@@ -3580,7 +3580,7 @@ function timestampInsertIndex(
 }
 
 function findPersistedMessageIndexById(
-  messages: readonly XCodePersistedMessage[],
+  messages: readonly ZCodePersistedMessage[],
   messageId: string,
 ): number {
   return messages.findIndex(
@@ -3588,21 +3588,21 @@ function findPersistedMessageIndexById(
   );
 }
 
-function getSnapshotGoalActiveIterationCount(snapshot: XCodeSessionStateSnapshot): number {
+function getSnapshotGoalActiveIterationCount(snapshot: ZCodeSessionStateSnapshot): number {
   const targetId = snapshot.projection.target?.targetId;
   const timeline =
     snapshot.runtime.goalVerificationTimeline?.filter(
       (item) => !targetId || item.targetId === targetId,
     ) ?? [];
-  return getXCodeGoalActiveIterationCount({
+  return getZCodeGoalActiveIterationCount({
     targetStatus: snapshot.projection.target?.status ?? null,
     timeline,
   });
 }
 
-function toXCodeDeliveryKind(
+function toZCodeDeliveryKind(
   deliveryKind: "continuous" | "bot-channel-continuous" | "replayable" | "mixed" | undefined,
-): XCodeDeliveryKind {
+): ZCodeDeliveryKind {
   return deliveryKind === "replayable" ? "web-remote-replayable" : "desktop-continuous";
 }
 
@@ -3612,7 +3612,7 @@ function backgroundTaskNotificationToolUpdatesFromInput(params: {
   originMeta: unknown;
   taskId: string;
   traceId: TraceId;
-}): Extract<XCodeStreamEvent, { type: "tool_call_update" }>[] {
+}): Extract<ZCodeStreamEvent, { type: "tool_call_update" }>[] {
   // 终态与失败原文优先取本轮 originMeta 的结构化结果，不解析 summary 文本。
   // 合并轮的每条通知各自更新自己的工具。
   return parseZCodeBackgroundTaskNotifications(params.input, params.originMeta).map((parsed) => {
@@ -3631,7 +3631,7 @@ function backgroundTaskNotificationToolUpdatesFromInput(params: {
       ...(status === "failed"
         ? { error: zcodeBackgroundTaskNotificationFailureText(parsed.notification) }
         : {}),
-      raw: attachXCodeBackgroundTaskNotificationToRaw(
+      raw: attachZCodeBackgroundTaskNotificationToRaw(
         { toolCallId: parsed.toolUseId },
         parsed.notification,
       ),
@@ -3640,15 +3640,15 @@ function backgroundTaskNotificationToolUpdatesFromInput(params: {
 }
 
 function mapMessage(
-  message: XCodeMessageWithParts,
+  message: ZCodeMessageWithParts,
   goalIteration?: number,
-  backgroundTaskNotifications?: ReadonlyMap<string, XCodeBackgroundTaskNotificationInfo>,
-): XCodePersistedMessage {
-  const tools: XCodePersistedToolCall[] = [];
-  const parts: XCodePersistedMessagePart[] = [];
+  backgroundTaskNotifications?: ReadonlyMap<string, ZCodeBackgroundTaskNotificationInfo>,
+): ZCodePersistedMessage {
+  const tools: ZCodePersistedToolCall[] = [];
+  const parts: ZCodePersistedMessagePart[] = [];
   const attachments =
     message.info.role === "user" ? mapPromptAttachmentsFromParts(message.parts) : undefined;
-  let syntheticTimeline: XCodeTimelineMeta | undefined;
+  let syntheticTimeline: ZCodeTimelineMeta | undefined;
   for (const part of message.parts) {
     if (part.type === "text") {
       // fork notice 等结构化 synthetic 消息把 timeline meta 写在 part.metadata 上；
@@ -3700,18 +3700,18 @@ function mapMessage(
 }
 
 function mapPromptAttachmentsFromParts(
-  parts: readonly XCodeMessagePart[],
-): XCodePromptAttachment[] | undefined {
+  parts: readonly ZCodeMessagePart[],
+): ZCodePromptAttachment[] | undefined {
   const attachments = parts
-    .filter((part): part is Extract<XCodeMessagePart, { type: "file" }> => part.type === "file")
+    .filter((part): part is Extract<ZCodeMessagePart, { type: "file" }> => part.type === "file")
     .map(mapPromptAttachmentFromFilePart)
-    .filter((attachment): attachment is XCodePromptAttachment => attachment !== undefined);
+    .filter((attachment): attachment is ZCodePromptAttachment => attachment !== undefined);
   return attachments.length > 0 ? attachments : undefined;
 }
 
 function mapPromptAttachmentFromFilePart(
-  part: Extract<XCodeMessagePart, { type: "file" }>,
-): XCodePromptAttachment | undefined {
+  part: Extract<ZCodeMessagePart, { type: "file" }>,
+): ZCodePromptAttachment | undefined {
   const mimeType = part.mime || "application/octet-stream";
   const metadata = asRecord(part.metadata);
   const filename = part.filename?.trim() || filenameFromPathLike(part.url) || "attachment";
@@ -3797,8 +3797,8 @@ function filenameFromPathLike(value: string): string | undefined {
 }
 
 function extractSyntheticTimelineFromTextPart(
-  part: Extract<XCodeMessagePart, { type: "text" }>,
-): XCodeTimelineMeta | undefined {
+  part: Extract<ZCodeMessagePart, { type: "text" }>,
+): ZCodeTimelineMeta | undefined {
   const metadata = part.metadata;
   if (!metadata || typeof metadata !== "object") return undefined;
   const forkContext = (metadata as Record<string, unknown>)["forkContext"];
@@ -3825,8 +3825,8 @@ function extractSyntheticTimelineFromTextPart(
 }
 
 function synthesizeCompactionTimeline(
-  part: Extract<XCodeMessagePart, { type: "compaction" }>,
-): XCodeTimelineMeta | undefined {
+  part: Extract<ZCodeMessagePart, { type: "compaction" }>,
+): ZCodeTimelineMeta | undefined {
   const metadata = asRecord(part.metadata);
   const operationId = stringValue(metadata.operationId) ?? part.partId;
   const status = timelineStatusValue(metadata.timelineStatus);
@@ -3870,14 +3870,14 @@ function synthesizeCompactionTimeline(
 }
 
 function mapToolPart(
-  part: Extract<XCodeMessagePart, { type: "tool" }>,
-  backgroundTaskNotifications?: ReadonlyMap<string, XCodeBackgroundTaskNotificationInfo>,
-): XCodePersistedToolCall {
+  part: Extract<ZCodeMessagePart, { type: "tool" }>,
+  backgroundTaskNotifications?: ReadonlyMap<string, ZCodeBackgroundTaskNotificationInfo>,
+): ZCodePersistedToolCall {
   const state = part.state;
   const taskNotification = backgroundTaskNotifications?.get(part.callId);
   // XCode Protocol 的 part.callId 是实时流和终态 snapshot 共同的工具身份。
   // 以前只保存 metadata 会丢掉 toolCallId，手机 replayable 里 result-only 临时工具就无法被终态快照覆盖。
-  const raw = attachXCodeBackgroundTaskNotificationToRaw(
+  const raw = attachZCodeBackgroundTaskNotificationToRaw(
     attachToolCallIdToRaw("metadata" in state ? (state.metadata ?? state) : state, part.callId),
     taskNotification,
   );
@@ -3934,21 +3934,21 @@ function attachToolCallIdToRaw(raw: unknown, toolCallId: string): unknown {
   };
 }
 
-function textFromParts(parts: readonly XCodeMessagePart[]): string {
-  return textFromXCodeMessageParts(parts);
+function textFromParts(parts: readonly ZCodeMessagePart[]): string {
+  return textFromZCodeMessageParts(parts);
 }
 
-function reasoningFromParts(parts: readonly XCodeMessagePart[]): string | undefined {
+function reasoningFromParts(parts: readonly ZCodeMessagePart[]): string | undefined {
   const text = parts
     .filter(
-      (part): part is Extract<XCodeMessagePart, { type: "reasoning" }> => part.type === "reasoning",
+      (part): part is Extract<ZCodeMessagePart, { type: "reasoning" }> => part.type === "reasoning",
     )
     .map((part) => part.text)
     .join("");
   return text || undefined;
 }
 
-function fromXCodeGoal(goal: unknown): XCodeTaskGoal {
+function fromZCodeGoal(goal: unknown): ZCodeTaskGoal {
   const record = asRecord(goal);
   const time = asRecord(record.time);
   const status = stringValue(record.status);
@@ -3957,7 +3957,7 @@ function fromXCodeGoal(goal: unknown): XCodeTaskGoal {
     targetID: stringValue(record.targetID) ?? stringValue(record.targetId) ?? "",
     objective: stringValue(record.objective) ?? "",
     summaryTitle: stringValue(record.summaryTitle) ?? null,
-    status: isXCodeTaskGoalStatus(status) ? status : "active",
+    status: isZCodeTaskGoalStatus(status) ? status : "active",
     tokenBudget: typeof record.tokenBudget === "number" ? record.tokenBudget : null,
     tokensUsed: numberValue(record.tokensUsed) ?? 0,
     timeUsedSeconds: numberValue(record.timeUsedSeconds) ?? 0,
@@ -3968,7 +3968,7 @@ function fromXCodeGoal(goal: unknown): XCodeTaskGoal {
   };
 }
 
-function isXCodeTaskGoalStatus(status: string | undefined): status is XCodeTaskGoal["status"] {
+function isZCodeTaskGoalStatus(status: string | undefined): status is ZCodeTaskGoal["status"] {
   return (
     status === "active" ||
     status === "paused" ||
@@ -3978,8 +3978,8 @@ function isXCodeTaskGoalStatus(status: string | undefined): status is XCodeTaskG
 }
 
 function sessionTodosToPlanSteps(
-  todos: XCodeSessionStateSnapshot["todos"],
-): XCodePlanStep[] | null {
+  todos: ZCodeSessionStateSnapshot["todos"],
+): ZCodePlanStep[] | null {
   if (!todos || todos.length === 0) {
     return null;
   }
@@ -3991,14 +3991,14 @@ function sessionTodosToPlanSteps(
 }
 
 function sessionGoalStatsToRuntime(
-  stats: XCodeSessionStateSnapshot["goalStats"],
-): XCodeTaskGoalStats | null {
+  stats: ZCodeSessionStateSnapshot["goalStats"],
+): ZCodeTaskGoalStats | null {
   return stats ? { ...stats } : null;
 }
 
 function sessionTodoGroupsToRuntime(
-  groups: XCodeSessionStateSnapshot["todoGroups"],
-): XCodeTodoGroup[] | null {
+  groups: ZCodeSessionStateSnapshot["todoGroups"],
+): ZCodeTodoGroup[] | null {
   if (!groups || groups.length === 0) {
     return null;
   }
@@ -4019,8 +4019,8 @@ function sessionTodoGroupsToRuntime(
 
 function mapStateUpdated(
   params: TaskTarget,
-  notification: XCodeStateUpdatedNotification,
-): XCodeStreamEvent[] {
+  notification: ZCodeStateUpdatedNotification,
+): ZCodeStreamEvent[] {
   const parsedSettings = zcodeSessionSettingsStateSchema.safeParse(notification.patch);
   if (!parsedSettings.success) {
     return [];
@@ -4031,8 +4031,8 @@ function mapStateUpdated(
       type: "mode_update",
       taskId: params.taskId,
       traceId,
-      currentModeId: normalizeAvailableXCodeMode(parsedSettings.data.mode.current),
-      availableModes: getXCodeAgentAvailableModes(),
+      currentModeId: normalizeAvailableZCodeMode(parsedSettings.data.mode.current),
+      availableModes: getZCodeAgentAvailableModes(),
     },
     {
       type: "glm_agent_model_state_update",
@@ -4071,13 +4071,13 @@ function mapStateUpdated(
 
 function mapSessionEvent(
   params: TaskTarget,
-  event: XCodeSessionEvent,
+  event: ZCodeSessionEvent,
   streamedTurnText: Map<string, { messageId?: string; text: string }>,
   activePromptInputId?: InputId,
-  toolProjectionMemory?: XCodeToolProjectionMemory,
-  backgroundTaskControlsByTaskKey?: Map<string, XCodeBackgroundTaskControlItem[]>,
+  toolProjectionMemory?: ZCodeToolProjectionMemory,
+  backgroundTaskControlsByTaskKey?: Map<string, ZCodeBackgroundTaskControlItem[]>,
   hasActiveApiRetry = false,
-): XCodeStreamEvent[] {
+): ZCodeStreamEvent[] {
   const protocolTraceId = event.traceId ?? generateTraceId(params.taskId);
   const payload = asRecord(event.payload);
   const inputId = stringValue(payload.inputId);
@@ -4097,7 +4097,7 @@ function mapSessionEvent(
   if (event.type === "turn.started") {
     streamedTurnText.delete(turnKey);
     const inputOrigin = asRecord(payload.intent).inputOrigin;
-    const runStartedEvent: XCodeStreamEvent = {
+    const runStartedEvent: ZCodeStreamEvent = {
       ...(inputOrigin === "desktop" || inputOrigin === "mobile" ? { inputOrigin } : {}),
       type: "task_run_started",
       taskId: params.taskId,
@@ -4255,7 +4255,7 @@ function mapSessionEvent(
   }
 
   if (event.type === "turn.completed") {
-    const events: XCodeStreamEvent[] = [];
+    const events: ZCodeStreamEvent[] = [];
     const response = stringValue(payload.response);
     // Bugfix: 只记录“本轮收到过文字”会让工具前言屏蔽最终回答兜底。
     // 在终态之前补齐当前模型消息缺少的后缀；完整正文已到达时不重复投递。
@@ -4333,8 +4333,8 @@ function maybeBuildApiRetryClearOnModelProgress(
   traceId: TraceId,
   inputId: InputId | undefined,
   payload: Record<string, unknown>,
-): Extract<XCodeStreamEvent, { type: "session_info_update" }> | null {
-  if (!hasActiveApiRetry || !isXCodeModelRetryRecoveryProgressPayload(payload)) {
+): Extract<ZCodeStreamEvent, { type: "session_info_update" }> | null {
+  if (!hasActiveApiRetry || !isZCodeModelRetryRecoveryProgressPayload(payload)) {
     return null;
   }
   // 重试请求开始不代表恢复成功，立即清会让输入栏闪烁；
@@ -4353,8 +4353,8 @@ function mapModelStreaming(
   traceId: TraceId,
   inputId: InputId | undefined,
   payload: Record<string, unknown>,
-  toolProjectionMemory?: XCodeToolProjectionMemory,
-): XCodeStreamEvent | null {
+  toolProjectionMemory?: ZCodeToolProjectionMemory,
+): ZCodeStreamEvent | null {
   const kind = stringValue(payload.kind);
   const delta = stringValue(payload.delta);
   const parentToolUseId = parentToolUseIdFromToolPayload(payload);
@@ -4393,8 +4393,8 @@ function mapToolInputStreaming(
   traceId: TraceId,
   inputId: InputId | undefined,
   payload: Record<string, unknown>,
-  toolProjectionMemory?: XCodeToolProjectionMemory,
-): XCodeStreamEvent | null {
+  toolProjectionMemory?: ZCodeToolProjectionMemory,
+): ZCodeStreamEvent | null {
   const streamingToolInputById = toolProjectionMemory?.streamingToolInputById;
   const toolNameById = toolProjectionMemory?.toolNameById;
   const kind = stringValue(payload.kind);
@@ -4441,18 +4441,18 @@ function mapToolInputStreaming(
   }
 
   if (kind === "tool_input_delta") {
-    const state = appendXCodeStreamingToolInputDelta(
+    const state = appendZCodeStreamingToolInputDelta(
       streamingToolInputById?.get(toolId),
       stringValue(payload.delta) ?? "",
     );
     streamingToolInputById?.set(toolId, state);
-    if (!shouldMaterializeXCodeStreamingToolInputPreview(state, { toolName })) {
+    if (!shouldMaterializeZCodeStreamingToolInputPreview(state, { toolName })) {
       // 性能修复：services 兼容投影曾经每个 delta 都解析累计 JSON，并把 rawInput 全量塞进 raw。
       // 这里先只维护 tombstone buffer，达到预算或控制边界再 emit，避免 host/renderer 双端 O(n²)。
       return null;
     }
-    const preview = buildXCodeStreamingToolInputPreview(state.rawInput);
-    markXCodeStreamingToolInputPreviewMaterialized(state);
+    const preview = buildZCodeStreamingToolInputPreview(state.rawInput);
+    markZCodeStreamingToolInputPreviewMaterialized(state);
     const previewToolName = toolName ?? inferStreamingToolInputToolName(preview.input);
     const previewTitle = previewToolName ?? title;
     if (previewToolName && !toolName) {
@@ -4518,7 +4518,7 @@ function mapToolInputStreaming(
     const rawInput = state?.rawInput ?? "";
     const hasCompleteInput = "input" in payload;
     const completeInput = hasCompleteInput ? payload.input : undefined;
-    const preview = buildXCodeStreamingToolInputPreview(
+    const preview = buildZCodeStreamingToolInputPreview(
       rawInput,
       hasCompleteInput ? completeInput : undefined,
     );
@@ -4528,7 +4528,7 @@ function mapToolInputStreaming(
       toolNameById?.set(toolId, previewToolName);
     }
     if ((hasCompleteInput || preview.complete) && toolProjectionMemory) {
-      finalizeXCodeToolProjectionInput(toolId, preview.input, toolProjectionMemory);
+      finalizeZCodeToolProjectionInput(toolId, preview.input, toolProjectionMemory);
     }
     streamingToolInputById?.set(toolId, {
       // 性能修复：最终 tool_call 已经持有完整 input，compat projection 不再长期保留
@@ -4639,7 +4639,7 @@ function mapCompactTimelinePayload(
   traceId: TraceId,
   inputId: InputId | undefined,
   payload: Record<string, unknown>,
-): Extract<XCodeStreamEvent, { type: "agent_message_chunk" }> | null {
+): Extract<ZCodeStreamEvent, { type: "agent_message_chunk" }> | null {
   const timeline = compactTimelineMetaFromPayload(payload, inputId);
   if (!timeline) {
     return null;
@@ -4663,13 +4663,13 @@ function mapSyntheticTimelinePartPayload(
   traceId: TraceId,
   inputId: InputId | undefined,
   payload: Record<string, unknown>,
-): Extract<XCodeStreamEvent, { type: "agent_message_chunk" }> | null {
+): Extract<ZCodeStreamEvent, { type: "agent_message_chunk" }> | null {
   const part = asRecord(payload.part);
   if (part.type !== "text") {
     return null;
   }
   const timeline = extractSyntheticTimelineFromTextPart(
-    part as Extract<XCodeMessagePart, { type: "text" }>,
+    part as Extract<ZCodeMessagePart, { type: "text" }>,
   );
   if (!timeline) {
     return null;
@@ -4691,7 +4691,7 @@ function mapSyntheticTimelinePartPayload(
 function compactTimelineMetaFromPayload(
   payload: Record<string, unknown>,
   inputId: InputId | undefined,
-): XCodeContextCompactionTimelineMeta | null {
+): ZCodeContextCompactionTimelineMeta | null {
   const operationId = stringValue(payload.operationId);
   const status = timelineStatusValue(payload.status ?? payload.timelineStatus);
   if (!operationId || !status) {
@@ -4737,7 +4737,7 @@ function compactFailureToTimelineEvent(
   traceId: TraceId,
   inputId: InputId | undefined,
   reason: string,
-): Extract<XCodeStreamEvent, { type: "agent_message_chunk" }> {
+): Extract<ZCodeStreamEvent, { type: "agent_message_chunk" }> {
   return {
     type: "agent_message_chunk",
     taskId,
@@ -4764,8 +4764,8 @@ function mapToolUpdated(
   traceId: TraceId,
   inputId: InputId | undefined,
   payload: Record<string, unknown>,
-  toolProjectionMemory?: XCodeToolProjectionMemory,
-): XCodeStreamEvent[] {
+  toolProjectionMemory?: ZCodeToolProjectionMemory,
+): ZCodeStreamEvent[] {
   const toolId = stringValue(payload.toolCallId);
   if (!toolId) {
     return [];
@@ -4773,14 +4773,14 @@ function mapToolUpdated(
   const parentToolUseId = parentToolUseIdFromToolPayload(payload);
   const memory = toolProjectionMemory ?? {};
   const toolNameById = memory.toolNameById;
-  const rememberedTool = resolveXCodeToolProjectionMetadata(payload, toolId, memory);
+  const rememberedTool = resolveZCodeToolProjectionMetadata(payload, toolId, memory);
   const rememberedToolName = rememberedTool.toolName;
   const rememberedInput = rememberedTool.hasInput ? rememberedTool.input : undefined;
   if ("input" in payload && "toolName" in payload) {
     const toolName = rememberedToolName ?? "tool";
     toolNameById?.set(toolId, toolName);
-    finalizeXCodeToolProjectionInput(toolId, payload.input, memory);
-    const toolEvent: XCodeStreamEvent = {
+    finalizeZCodeToolProjectionInput(toolId, payload.input, memory);
+    const toolEvent: ZCodeStreamEvent = {
       type: "tool_call",
       taskId,
       traceId,
@@ -4822,7 +4822,7 @@ function mapToolUpdated(
     const toolName = rememberedToolName;
     const content = normalizeToolResultContent(toolName, result);
     const status = toolResultStatus(toolName, result);
-    const toolEvent: XCodeStreamEvent = {
+    const toolEvent: ZCodeStreamEvent = {
       type: "tool_call_update",
       taskId,
       traceId,
@@ -4839,7 +4839,7 @@ function mapToolUpdated(
       raw: payload,
     };
     if (status !== "in_progress") {
-      forgetXCodeToolProjectionMetadata(toolId, memory);
+      forgetZCodeToolProjectionMetadata(toolId, memory);
     }
     const planSteps = isMainAgentToolProjectionSource(payload)
       ? extractPlanStepsFromToolOutput({
@@ -4863,7 +4863,7 @@ function mapToolUpdated(
     ];
   }
   if ("error" in payload) {
-    forgetXCodeToolProjectionMetadata(toolId, memory);
+    forgetZCodeToolProjectionMetadata(toolId, memory);
     return [
       {
         type: "tool_call_update",
@@ -4905,7 +4905,7 @@ function mapToolUpdated(
 function toolResultStatus(
   toolName: string | undefined,
   result: Record<string, unknown>,
-): Extract<XCodeStreamEvent, { type: "tool_call_update" }>["status"] {
+): Extract<ZCodeStreamEvent, { type: "tool_call_update" }>["status"] {
   if (result.success === false) {
     return "failed";
   }
@@ -5065,8 +5065,8 @@ function agentTextFromContentField(value: unknown): string | undefined {
 
 function permissionRequestToStreamEvent(
   taskId: string,
-  request: XCodePermissionRequestParams,
-): XCodePermissionRequest {
+  request: ZCodePermissionRequestParams,
+): ZCodePermissionRequest {
   return {
     type: "permission_request",
     taskId,
@@ -5083,8 +5083,8 @@ function permissionRequestToStreamEvent(
 
 function pendingPermissionToStreamEvent(
   taskId: string,
-  permission: XCodeSessionStateSnapshot["projection"]["pendingPermissions"][number],
-): XCodePermissionRequest {
+  permission: ZCodeSessionStateSnapshot["projection"]["pendingPermissions"][number],
+): ZCodePermissionRequest {
   return {
     type: "permission_request",
     taskId,
@@ -5101,8 +5101,8 @@ function pendingPermissionToStreamEvent(
 
 function userInputRequestToElicitationStreamEvent(
   taskId: string,
-  request: XCodeUserInputRequestParams,
-): XCodeStreamEvent {
+  request: ZCodeUserInputRequestParams,
+): ZCodeStreamEvent {
   const questions =
     request.questions?.map((question) => ({
       question: question.question,
@@ -5144,8 +5144,8 @@ function userInputRequestToElicitationStreamEvent(
 function userInputResponseToElicitationStreamEvent(
   taskId: string,
   requestId: string,
-  response: XCodeUserInputResponse,
-): Extract<XCodeStreamEvent, { type: "elicitation_response" }> {
+  response: ZCodeUserInputResponse,
+): Extract<ZCodeStreamEvent, { type: "elicitation_response" }> {
   return {
     type: "elicitation_response",
     taskId,
@@ -5165,8 +5165,8 @@ type PendingElicitationQuestion = {
 
 function pendingUserInputBackedPermissionToElicitationEvent(
   taskId: string,
-  permission: XCodeSessionStateSnapshot["projection"]["pendingPermissions"][number],
-): Extract<XCodeStreamEvent, { type: "elicitation_request" }> | null {
+  permission: ZCodeSessionStateSnapshot["projection"]["pendingPermissions"][number],
+): Extract<ZCodeStreamEvent, { type: "elicitation_request" }> | null {
   if (isAskUserQuestionToolName(permission.toolName)) {
     return pendingAskUserQuestionToElicitationEvent(taskId, permission);
   }
@@ -5178,8 +5178,8 @@ function pendingUserInputBackedPermissionToElicitationEvent(
 
 function pendingAskUserQuestionToElicitationEvent(
   taskId: string,
-  permission: XCodeSessionStateSnapshot["projection"]["pendingPermissions"][number],
-): Extract<XCodeStreamEvent, { type: "elicitation_request" }> | null {
+  permission: ZCodeSessionStateSnapshot["projection"]["pendingPermissions"][number],
+): Extract<ZCodeStreamEvent, { type: "elicitation_request" }> | null {
   const questions = askUserQuestionInputToElicitationQuestions(permission.input);
   if (questions.length === 0) {
     return null;
@@ -5202,8 +5202,8 @@ function pendingAskUserQuestionToElicitationEvent(
 
 function pendingExitPlanModeToElicitationEvent(
   taskId: string,
-  permission: XCodeSessionStateSnapshot["projection"]["pendingPermissions"][number],
-): Extract<XCodeStreamEvent, { type: "elicitation_request" }> {
+  permission: ZCodeSessionStateSnapshot["projection"]["pendingPermissions"][number],
+): Extract<ZCodeStreamEvent, { type: "elicitation_request" }> {
   const questions = createExitPlanModeApprovalQuestions();
   const firstQuestion = questions[0];
   const input = asRecord(permission.input);
@@ -5229,26 +5229,26 @@ function pendingExitPlanModeToElicitationEvent(
 }
 
 function setTaskBackgroundTaskControlCache(
-  cache: Map<string, XCodeBackgroundTaskControlItem[]> | undefined,
+  cache: Map<string, ZCodeBackgroundTaskControlItem[]> | undefined,
   cacheKey: string,
-  jobs: XCodeBackgroundTaskControlItem[],
+  jobs: ZCodeBackgroundTaskControlItem[],
 ) {
   cache?.set(cacheKey, jobs);
 }
 
 function updateTaskBackgroundTaskControlCacheFromPayload(
-  cache: Map<string, XCodeBackgroundTaskControlItem[]> | undefined,
+  cache: Map<string, ZCodeBackgroundTaskControlItem[]> | undefined,
   cacheKey: string,
   payload: Record<string, unknown>,
-): XCodeBackgroundTaskControlItem[] | null {
-  const parsedJobs = parseXCodeBackgroundTaskControlItems([payload]);
+): ZCodeBackgroundTaskControlItem[] | null {
+  const parsedJobs = parseZCodeBackgroundTaskControlItems([payload]);
   if (parsedJobs.length === 0) {
     return null;
   }
   if (!cache) {
     return parsedJobs;
   }
-  const nextJobs = mergeXCodeBackgroundTaskControlItems(cache.get(cacheKey) ?? [], parsedJobs);
+  const nextJobs = mergeZCodeBackgroundTaskControlItems(cache.get(cacheKey) ?? [], parsedJobs);
   cache.set(cacheKey, nextJobs);
   return nextJobs;
 }
@@ -5316,7 +5316,7 @@ function permissionPayloadToStreamEvent(
   traceId: TraceId,
   inputId: InputId | undefined,
   payload: Record<string, unknown>,
-): XCodeStreamEvent {
+): ZCodeStreamEvent {
   return {
     type: "permission_request",
     taskId,
@@ -5332,8 +5332,8 @@ function permissionPayloadToStreamEvent(
   };
 }
 
-function permissionOptionsFromPayload(payload: Record<string, unknown>): XCodePermissionOption[] {
-  return Array.isArray(payload.options) ? (payload.options as XCodePermissionOption[]) : [];
+function permissionOptionsFromPayload(payload: Record<string, unknown>): ZCodePermissionOption[] {
+  return Array.isArray(payload.options) ? (payload.options as ZCodePermissionOption[]) : [];
 }
 
 function permissionResolvedPayloadToStreamEvents(
@@ -5342,7 +5342,7 @@ function permissionResolvedPayloadToStreamEvents(
   inputId: InputId | undefined,
   payload: Record<string, unknown>,
   toolNameById?: Map<string, string>,
-): XCodeStreamEvent[] {
+): ZCodeStreamEvent[] {
   const toolCallId = stringValue(payload.toolCallId);
   const toolName =
     stringValue(payload.toolName) ?? (toolCallId ? toolNameById?.get(toolCallId) : undefined);
@@ -5372,7 +5372,7 @@ function permissionResolvedPayloadToStreamEvents(
     response: {
       decision: decision === "deny" ? "deny" : "allow",
     },
-  } as Extract<XCodeStreamEvent, { type: "permission_response" }>;
+  } as Extract<ZCodeStreamEvent, { type: "permission_response" }>;
 
   if (decision !== "deny" || !toolCallId) {
     return [permissionResponse];
@@ -5405,10 +5405,10 @@ function mapSessionInfoLikePayload(
   inputId: InputId | undefined,
   eventId: string | undefined,
   payload: Record<string, unknown>,
-  backgroundTaskControlsByTaskKey?: Map<string, XCodeBackgroundTaskControlItem[]>,
+  backgroundTaskControlsByTaskKey?: Map<string, ZCodeBackgroundTaskControlItem[]>,
   cacheKey = taskId,
-): XCodeStreamEvent[] {
-  const events: XCodeStreamEvent[] = [];
+): ZCodeStreamEvent[] {
+  const events: ZCodeStreamEvent[] = [];
   // event.taskId 是对外 session id；内部 cache 必须沿用 workspace-aware taskKey，
   // 否则 replayable snapshot seed 和后续 live update 会分裂成两份 background job 状态。
   const backgroundTaskControlCacheKey = cacheKey;
@@ -5475,16 +5475,16 @@ function mapSessionInfoLikePayload(
       target: {
         action: stringValue(payload.action) === "cleared" ? "cleared" : "set",
         source: stringValue(payload.source) === "tool" ? "tool" : "runtime",
-        target: payload.target ? fromXCodeGoal(payload.target as never) : null,
+        target: payload.target ? fromZCodeGoal(payload.target as never) : null,
         previousTarget: payload.previousTarget
-          ? fromXCodeGoal(payload.previousTarget as never)
+          ? fromZCodeGoal(payload.previousTarget as never)
           : undefined,
       },
     });
   }
   const projection = asRecord(payload.projection);
   if (Array.isArray(projection.backgroundJobs)) {
-    const jobs = parseXCodeBackgroundTaskControlItems(projection.backgroundJobs);
+    const jobs = parseZCodeBackgroundTaskControlItems(projection.backgroundJobs);
     setTaskBackgroundTaskControlCache(
       backgroundTaskControlsByTaskKey,
       backgroundTaskControlCacheKey,
@@ -5521,7 +5521,7 @@ function taskTokenUsageDeltaFromPayload(
   inputId: InputId | undefined,
   eventId: string | undefined,
   payload: Record<string, unknown>,
-): Extract<XCodeStreamEvent, { type: "task_token_usage_delta" }> | null {
+): Extract<ZCodeStreamEvent, { type: "task_token_usage_delta" }> | null {
   if (!isModelCompleteUsagePayload(payload)) {
     return null;
   }
@@ -5563,17 +5563,17 @@ function isModelCompleteUsagePayload(payload: Record<string, unknown>): boolean 
 
 function apiRetryFromSessionInfoPayload(
   payload: Record<string, unknown>,
-): XCodeApiRetryStatus | null | undefined {
+): ZCodeApiRetryStatus | null | undefined {
   if ("apiRetry" in payload) {
-    return normalizeXCodeApiRetryStatus(payload.apiRetry);
+    return normalizeZCodeApiRetryStatus(payload.apiRetry);
   }
 
-  const runtimeRetry = normalizeXCodeApiRetryStatus(asRecord(payload.runtime).apiRetry);
+  const runtimeRetry = normalizeZCodeApiRetryStatus(asRecord(payload.runtime).apiRetry);
   if (runtimeRetry !== undefined) {
     return runtimeRetry;
   }
 
-  const metaRetry = normalizeXCodeApiRetryStatus(asRecord(asRecord(payload._meta).zcode).apiRetry);
+  const metaRetry = normalizeZCodeApiRetryStatus(asRecord(asRecord(payload._meta).zcode).apiRetry);
   if (metaRetry !== undefined) {
     return metaRetry;
   }
@@ -5584,7 +5584,7 @@ function apiRetryFromSessionInfoPayload(
   );
 }
 
-function recordAgentModelNetworkTelemetry(event: XCodeSessionEvent): void {
+function recordAgentModelNetworkTelemetry(event: ZCodeSessionEvent): void {
   const observation = agentModelNetworkObservationFromEvent(event);
   if (!observation) {
     return;
@@ -5598,7 +5598,7 @@ function recordAgentModelNetworkTelemetry(event: XCodeSessionEvent): void {
 }
 
 function agentModelNetworkObservationFromEvent(
-  event: XCodeSessionEvent,
+  event: ZCodeSessionEvent,
 ): NetworkObservation | null {
   const payload = asRecord(event.payload);
   const type = stringValue(payload.type);
@@ -5683,12 +5683,12 @@ function classifyAgentModelNetworkError(
 }
 
 type ContextUsageUpdate = Pick<
-  Extract<XCodeStreamEvent, { type: "usage_update" }>,
+  Extract<ZCodeStreamEvent, { type: "usage_update" }>,
   "used" | "size" | "cost" | "cache" | "breakdown"
 >;
 
 function contextUsageFromProjection(
-  projection: XCodeSessionStateSnapshot["projection"],
+  projection: ZCodeSessionStateSnapshot["projection"],
 ): ContextUsageUpdate | null {
   if (projection.contextWindow <= 0 || projection.contextUsed <= 0) {
     return null;
@@ -5701,7 +5701,7 @@ function contextUsageFromProjection(
 }
 
 function contextUsageFromRuntime(
-  runtimeUsage: XCodeSessionStateSnapshot["runtime"]["contextUsage"] | undefined,
+  runtimeUsage: ZCodeSessionStateSnapshot["runtime"]["contextUsage"] | undefined,
 ): ContextUsageUpdate | null {
   if (!runtimeUsage || runtimeUsage.size <= 0 || runtimeUsage.used <= 0) {
     return null;
@@ -5852,7 +5852,7 @@ function contextCacheUsageFromPayload(
   };
 }
 
-function usageFromPayload(value: unknown): XCodeUsage | undefined {
+function usageFromPayload(value: unknown): ZCodeUsage | undefined {
   const usage = asRecord(value);
   if (Object.keys(usage).length === 0) {
     return undefined;
@@ -5912,7 +5912,7 @@ function booleanValue(value: unknown): boolean | undefined {
   return typeof value === "boolean" ? value : undefined;
 }
 
-function timelineStatusValue(value: unknown): XCodeTimelineStatus | undefined {
+function timelineStatusValue(value: unknown): ZCodeTimelineStatus | undefined {
   return value === "started" ||
     value === "retrying" ||
     value === "skipped" ||
@@ -5923,7 +5923,7 @@ function timelineStatusValue(value: unknown): XCodeTimelineStatus | undefined {
     : undefined;
 }
 
-function timelineTriggerValue(value: unknown): XCodeTimelineTrigger | undefined {
+function timelineTriggerValue(value: unknown): ZCodeTimelineTrigger | undefined {
   return value === "manual" ||
     value === "auto" ||
     value === "reactive" ||
@@ -5939,13 +5939,13 @@ function stringArray(value: unknown): string[] {
     : [];
 }
 
-function turnSteerSourceValue(value: unknown): XCodeTurnSteerSource | undefined {
+function turnSteerSourceValue(value: unknown): ZCodeTurnSteerSource | undefined {
   return value === "plan_approval_feedback" || value === "workflow_refine_feedback"
     ? value
     : undefined;
 }
 
-function turnSteerCommandKindValue(value: unknown): XCodeTurnSteerCommandKind | undefined {
+function turnSteerCommandKindValue(value: unknown): ZCodeTurnSteerCommandKind | undefined {
   return value === "sendGoalCommand" || value === "sendText" || value === "compact"
     ? value
     : undefined;

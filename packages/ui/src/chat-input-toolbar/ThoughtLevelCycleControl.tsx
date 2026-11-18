@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
-import { type XCodeConfigOption, type XCodeProvider } from "@zcode/shared";
+import { type ZCodeConfigOption, type ZCodeProvider } from "@zcode/shared";
 import {
   TID_CHAT_THOUGHT_LEVEL_SELECT_ITEM,
   TID_CHAT_THOUGHT_LEVEL_SELECT_TRIGGER,
@@ -10,7 +10,7 @@ import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { cn } from "@/components/lib/utils.js";
 import { Button } from "@/components/ui/button.js";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select.js";
-import type { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import type { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   isCoarseTouchDevice,
   shouldRestoreChatInputFocusAfterPickerClose,
@@ -49,10 +49,10 @@ export function ThoughtLevelCycleControl({
   composerCollapsePriority?: number;
   interactionMode?: ThoughtLevelInteractionMode;
   indicatorClassName?: string;
-  intl: ReturnType<typeof useXCodeIntl>["intl"];
+  intl: ReturnType<typeof useZCodeIntl>["intl"];
   labelVisibilityClassName?: string;
-  option: XCodeConfigOption;
-  provider?: XCodeProvider;
+  option: ZCodeConfigOption;
+  provider?: ZCodeProvider;
   showInvalidCurrentValue?: boolean;
   restoreFocusSelector?: string | null;
   shortcutLabel?: string;

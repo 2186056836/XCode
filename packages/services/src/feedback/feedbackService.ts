@@ -8,7 +8,7 @@ import type {
   FeedbackTicketDetail,
 } from "@zcode/shared";
 import {
-  buildRuntimeXCodeApiUrl,
+  buildRuntimeZCodeApiUrl,
   ZCODE_BUILD_TIME,
   ZCODE_COMMIT,
   ZCODE_VERSION,
@@ -62,7 +62,7 @@ function resolveApiBaseUrl(explicit?: string): string {
   return (
     explicit?.trim() ||
     process.env.ZCODE_FEEDBACK_API_BASE?.trim() ||
-    buildRuntimeXCodeApiUrl(process.env, "/api/v1")
+    buildRuntimeZCodeApiUrl(process.env, "/api/v1")
   );
 }
 

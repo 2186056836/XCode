@@ -1,6 +1,6 @@
 import type { ToolSearchMode } from "@zcode/contracts";
 import type { RunContext, GlobalOptions } from "@zcode/shared-types";
-import { resolveXCodeRuntimeEnv, type DynamicWorkflowMode } from "@zcode/shared";
+import { resolveZCodeRuntimeEnv, type DynamicWorkflowMode } from "@zcode/shared";
 import { createNodeClipboardImageReader } from "./clipboard-image.js";
 import { createNodeClipboardTextWriter } from "./clipboard-text.js";
 import { listSlashCommandSuggestions } from "./command-center.js";
@@ -32,7 +32,7 @@ export const runTuiCommand = async (
     const runTui = deps.runTui ?? (await loadTuiRuntime()).runTui;
     const workspaceDirectory = (deps.cwd ?? process.cwd)();
     const env = deps.env ?? process.env;
-    const developerMode = resolveXCodeRuntimeEnv(env) === "development";
+    const developerMode = resolveZCodeRuntimeEnv(env) === "development";
     const startupLocale = resolveTuiStartupLocale({
       deps,
       options,

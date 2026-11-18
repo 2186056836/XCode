@@ -1,7 +1,7 @@
 import { Box, Server, TerminalSquare } from "lucide-react";
 import type { SourceServerTransportKind } from "@zcode/shared";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   resolveRemoteConnectionPresentation,
   type RemoteConnectionPresentation,
@@ -62,7 +62,7 @@ export function RemoteConnectionKindTag({
   kind: SourceServerTransportKind;
   className?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const presentation = REMOTE_KIND_PRESENTATION[kind];
   const Icon = presentation.Icon;
   return (
@@ -91,7 +91,7 @@ export function RemoteConnectionStatusTag({
   /** 进行中操作的已知百分比，追加在状态文字后。 */
   progressPercent?: number;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const presentation = supplied ?? resolveRemoteConnectionPresentation({ state: status });
   const primaryMessageId =
     compact && !presentation.recovery ? presentation.shortMessageId : presentation.messageId;

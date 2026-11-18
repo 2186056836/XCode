@@ -1,7 +1,7 @@
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { IPlatformService } from "@zcode/shared";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { PlatformProvider } from "@/hooks/usePlatform.js";
 import { AddMarketplaceSourceDialog } from "@/settings/AddMarketplaceSourceDialog.js";
 import "@/styles.css";
@@ -55,10 +55,10 @@ function Fixture() {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <XCodeIntlProvider initialLocale={params.get("locale") === "en-US" ? "en-US" : "zh-CN"}>
+    <ZCodeIntlProvider initialLocale={params.get("locale") === "en-US" ? "en-US" : "zh-CN"}>
       <PlatformProvider platform={platform}>
         <Fixture />
       </PlatformProvider>
-    </XCodeIntlProvider>
+    </ZCodeIntlProvider>
   </StrictMode>,
 );

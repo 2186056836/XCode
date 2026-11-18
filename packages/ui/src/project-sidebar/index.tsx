@@ -57,10 +57,10 @@ import { ProjectSidebarNavigation } from "@/project-sidebar/ProjectSidebarNaviga
 import { HomeOnlyWorkspaceRows } from "@/project-sidebar/HomeOnlyWorkspaceRows.js";
 import { WorkspaceSidebarFooter } from "@/WorkspaceSidebarFooter.js";
 import { SidebarBottomActivity } from "@/sidebar-activity/SidebarBottomActivity.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useTabStoreApi } from "@/store/TabStoreProvider.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { useCodingPlanUpgradeDialog } from "@/settings/CodingPlanUpgradeDialogProvider.js";
 export { attachRemoteProjectWorkspace } from "@/project-sidebar/remote-navigation.js";
 export { useRemoteWorkspaceConnectionGate } from "@/project-sidebar/useRemoteWorkspaceConnectionGate.js";
@@ -97,9 +97,9 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     },
     [navigateToTask],
   );
-  const { intl, localePreference, setLocalePreference } = useXCodeIntl();
+  const { intl, localePreference, setLocalePreference } = useZCodeIntl();
   const tabStore = useTabStoreApi();
-  const setTheme = useXCodeStore((state) => state.setTheme);
+  const setTheme = useZCodeStore((state) => state.setTheme);
   const { openCodingPlanUpgrade } = useCodingPlanUpgradeDialog();
   const { view, setView } = preferences;
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -115,7 +115,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
   );
   // 当前任务只影响远端“创建项目”的默认设备；分组继承在点击时读，
   // 避免本地会话/草稿切换让全部项目的菜单与 Tooltip 重渲染。
-  const hasActiveRemoteTask = useXCodeSessionStore((state) =>
+  const hasActiveRemoteTask = useZCodeSessionStore((state) =>
     Boolean(
       props.workspaceIdentity &&
       state.workspaces[props.workspaceIdentity.trim() || props.workspacePath]?.activeTaskId,
@@ -151,7 +151,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
   );
   const msg = (id: string) => intl.formatMessage({ id: `project.${id}` });
   const start = async (projectId?: string, hostId?: string, taskGroupId?: string | null) => {
-    const activeTaskId = useXCodeSessionStore
+    const activeTaskId = useZCodeSessionStore
       .getState()
       .getWorkspaceState(props.workspacePath, props.workspaceIdentity).activeTaskId;
     const inheritedGroup =
@@ -164,7 +164,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
             }),
           ) ?? null)
         : view === "grouped" && !projectId
-          ? (useXCodeSessionStore
+          ? (useZCodeSessionStore
               .getState()
               .getWorkspaceState(props.workspacePath, props.workspaceIdentity).draftTaskGroupId ??
             null)

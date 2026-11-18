@@ -82,10 +82,10 @@ import {
   extractPlanStepsFromToolInput,
   extractPlanStepsFromToolOutput,
   isHighspeedProviderId,
-  isXCodeFileStreamingToolInputPreviewTool,
-  isXCodeModelRetryRecoveryProgressPayload,
+  isZCodeFileStreamingToolInputPreviewTool,
+  isZCodeModelRetryRecoveryProgressPayload,
   parseZCodeBackgroundTaskNotifications,
-  resolveXCodeBackgroundTaskControlKind,
+  resolveZCodeBackgroundTaskControlKind,
   zcodeBackgroundTaskNotificationToolUpdateStatus,
   type ZCodeParsedBackgroundTaskNotification,
 } from "@zcode/shared";
@@ -1816,7 +1816,7 @@ export class ProductProjection {
         this.guideDrainOpen = false;
         const shouldClearApiRetry =
           this.acceptsActiveModelEvent(event) &&
-          isXCodeModelRetryRecoveryProgressPayload(
+          isZCodeModelRetryRecoveryProgressPayload(
             event.payload as unknown as Record<string, unknown>,
           );
         const streamingDeltas = this.onModelStreaming(fact);
@@ -3473,7 +3473,7 @@ export class ProductProjection {
       inputText: "",
     };
     this.toolRowIdByCallId.set(toolCallId, row.rowId);
-    if (isXCodeFileStreamingToolInputPreviewTool(row.toolName)) {
+    if (isZCodeFileStreamingToolInputPreviewTool(row.toolName)) {
       this.fileToolInputPreviewByCallId.set(toolCallId, {
         lastPublishedAt: null,
         pendingAppend: "",
@@ -5191,7 +5191,7 @@ export class ProductProjection {
     if (!workId) return [];
     const prev = this.snapshot.backgroundWorks;
     const existing = prev.find((work) => work.workId === workId);
-    const legacyKind = resolveXCodeBackgroundTaskControlKind(payload);
+    const legacyKind = resolveZCodeBackgroundTaskControlKind(payload);
     // 新事件使用 runtime 的显式 taskKind；旧事件统一走 shared resolver，
     // 不能再在 reducer 内散落 Agent/Task/subagent 字符串分支。
     // "workflow" 是 workflow run（此前错标成 bash）；legacy resolver 里没有对应值，因为

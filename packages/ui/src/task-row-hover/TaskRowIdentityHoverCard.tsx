@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { Cloud, Folder, FolderGit2, GitBranch } from "lucide-react";
-import type { GitRepositorySummary, XCodeTaskMeta } from "@zcode/shared";
+import type { GitRepositorySummary, ZCodeTaskMeta } from "@zcode/shared";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card.js";
 import { cn } from "@/components/lib/utils.js";
 import { resolveGitBranchTriggerLabel } from "@/git-branch-switcher/display.js";
@@ -8,7 +8,7 @@ import {
   useBaseWorkspaceServices,
   useWorkspaceServicesResolution,
 } from "@/hooks/useWorkspaceServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { getTaskChangeSummary } from "@/lib/taskChangeSummary.js";
 import { formatWorktreeLabel } from "@/managed-worktrees/index.js";
 import { RemoteTaskDeviceLabel } from "@/remote-connection/RemoteTaskDeviceLabel.js";
@@ -140,7 +140,7 @@ function TaskRowIdentityDetails({
   workspaceLabel,
   remoteSessionId,
 }: {
-  task: XCodeTaskMeta;
+  task: ZCodeTaskMeta;
   workspaceLabel: string;
   remoteSessionId?: string;
 }) {
@@ -159,7 +159,7 @@ function LocalTaskRowIdentityDetails({
   task,
   workspaceLabel,
 }: {
-  task: XCodeTaskMeta;
+  task: ZCodeTaskMeta;
   workspaceLabel: string;
 }) {
   const services = useBaseWorkspaceServices();
@@ -181,7 +181,7 @@ function RemoteTaskRowIdentityDetails({
   workspaceLabel,
   remoteSessionId,
 }: {
-  task: XCodeTaskMeta;
+  task: ZCodeTaskMeta;
   workspaceLabel: string;
   remoteSessionId?: string;
 }) {
@@ -222,13 +222,13 @@ function TaskRowIdentityDetailsBody({
   pathNode,
   branchLabel,
 }: {
-  task: XCodeTaskMeta;
+  task: ZCodeTaskMeta;
   workspaceLabel: string;
   isRemote: boolean;
   pathNode: ReactNode;
   branchLabel: string | null;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const changeSummary = getTaskChangeSummary(task);
   const changeParts = changeSummary ? formatChangeParts(changeSummary) : CHANGE_PARTS_EMPTY;
   return (
@@ -307,11 +307,11 @@ function RawWorkspaceContextPath({ path }: { path: string }) {
 }
 
 function useGitBranchLabel(
-  task: XCodeTaskMeta,
+  task: ZCodeTaskMeta,
   services: WorkspaceServiceAccessor,
   enabled: boolean,
 ): string | null {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [summary, setSummary] = useState<GitRepositorySummary | null>(null);
   const gitWorkspacePath = task.cwd ?? task.workspacePath;
   useEffect(() => {
@@ -341,7 +341,7 @@ function useGitBranchLabel(
   });
 }
 
-function TaskRowIdentityIcon({ task }: { task: XCodeTaskMeta }) {
+function TaskRowIdentityIcon({ task }: { task: ZCodeTaskMeta }) {
   if (task.workspaceIdentity?.trim()) {
     return <Cloud aria-hidden="true" className="mt-0.5 size-4 shrink-0" />;
   }

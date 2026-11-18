@@ -5,9 +5,9 @@ import { memo, useCallback } from "react";
 import type { ManagedWorktreeCreation } from "@zcode/shared";
 import { TID_WORKTREE_CREATING_ROW } from "@zcode/shared/test-ids";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useTabStoreApi } from "@/store/TabStoreProvider.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import { useManagedWorktreeCreations } from "./useManagedWorktreeCreations.js";
 
 export const ManagedWorktreeCreatingRows = memo(function ManagedWorktreeCreatingRows({
@@ -29,10 +29,10 @@ export const ManagedWorktreeCreatingRows = memo(function ManagedWorktreeCreating
 });
 
 function CreatingRow({ creation }: { creation: ManagedWorktreeCreation }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const tabStore = useTabStoreApi();
-  const viewWorktreeCreation = useXCodeSessionStore((state) => state.viewWorktreeCreation);
-  const active = useXCodeSessionStore((state) => {
+  const viewWorktreeCreation = useZCodeSessionStore((state) => state.viewWorktreeCreation);
+  const active = useZCodeSessionStore((state) => {
     const workspace = state.getWorkspaceState(creation.workspacePath);
     return workspace.activeTaskId === null && workspace.draftWorktreeCreationId === creation.id;
   });

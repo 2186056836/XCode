@@ -2,7 +2,7 @@ import type { IPluginManagementService } from "@zcode/services";
 import {
   remoteHostIdFromWorkspaceIdentity,
   parseRemoteWorkspaceIdentity,
-  type XCodePluginScope,
+  type ZCodePluginScope,
 } from "@zcode/shared";
 import { logger } from "@/logger.js";
 import type { PluginManagementState } from "@/store/pluginManagementStore.js";
@@ -29,7 +29,7 @@ export interface PluginManagementChange {
   workspacePath: string;
   workspaceIdentity: string | null;
   authorityKey: string | null;
-  scope: XCodePluginScope;
+  scope: ZCodePluginScope;
 }
 const changeListeners = new Set<(change: PluginManagementChange) => void | Promise<void>>();
 let revision = 0;
@@ -109,7 +109,7 @@ export async function runWorkspaceOperation(
   pluginService: IPluginManagementService,
   operationId: string,
   operation: (workspace: { workspacePath: string; workspaceIdentity?: string }) => Promise<void>,
-  scope: XCodePluginScope = "user",
+  scope: ZCodePluginScope = "user",
 ): Promise<boolean> {
   const { workspacePath, workspaceIdentity, authorityKey, configScope } = get();
   if (!workspacePath) return false;
@@ -175,7 +175,7 @@ interface PluginLoadParams {
   workspacePath: string;
   workspaceIdentity: string | null;
   authorityKey: string | null;
-  configScope: XCodePluginScope | null;
+  configScope: ZCodePluginScope | null;
   pluginService: IPluginManagementService;
   fresh?: boolean;
   background?: boolean;

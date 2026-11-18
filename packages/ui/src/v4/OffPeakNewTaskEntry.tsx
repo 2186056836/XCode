@@ -15,7 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip.js";
 import { toast } from "@/components/ui/toast.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useProviderSettingsView } from "@/hooks/useProviderSettingsView.js";
 import { useOffPeakEligibility } from "@/hooks/useOffPeakEligibility.js";
 import { useServices } from "@/hooks/useServices.js";
@@ -42,7 +42,7 @@ interface OffPeakNewTaskEntryProps {
 }
 
 export function OffPeakNewTaskEntry({ onOpenAutomations }: OffPeakNewTaskEntryProps) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const { clientScenesService } = useServices();
   const { offPeak: remoteOffPeakTemplates } = useAutomationTemplates(clientScenesService);
   const offPeakTemplates = useMemo(

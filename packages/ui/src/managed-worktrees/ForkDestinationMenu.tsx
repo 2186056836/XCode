@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export function ForkDestinationMenu({
   rowId,
@@ -35,7 +35,7 @@ export function ForkDestinationMenu({
   onForkHere: () => void;
   onForkToWorktree: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const trigger = (
     <DropdownMenuTrigger asChild>
       <Button

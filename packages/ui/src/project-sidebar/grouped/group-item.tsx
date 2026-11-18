@@ -1,8 +1,8 @@
 import { SidebarNativeTooltip, ControlHintTooltip } from "@/ControlHintTooltip.js";
-import type { ProjectTask as XCodeTaskMeta } from "@/project-sidebar/contract.js";
+import type { ProjectTask as ZCodeTaskMeta } from "@/project-sidebar/contract.js";
 import type {
-  XCodeGroupedTaskViewNode,
-  XCodeTaskGroupColor,
+  ZCodeGroupedTaskViewNode,
+  ZCodeTaskGroupColor,
 } from "@/project-sidebar/grouped/types.js";
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
@@ -30,7 +30,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { isImeComposingKeyEvent } from "@/lib/imeComposition.js";
 import { EmptyGroupDropZone } from "@/project-sidebar/grouped/task-item.js";
@@ -84,17 +84,17 @@ export function GroupItem({
   activeDragGroupId,
   tooltipsDisabled,
 }: {
-  node: Extract<XCodeGroupedTaskViewNode, { type: "group" }>;
+  node: Extract<ZCodeGroupedTaskViewNode, { type: "group" }>;
   groups: TaskGroupMenuItem[];
   activeWorkspacePath: string;
   activeWorkspaceIdentity?: string;
   activeTaskId: string | null;
   mobileActiveTaskKey?: string | null;
-  getTaskRemoteSessionId: (task: XCodeTaskMeta) => string | undefined;
-  getTaskWorkspaceLabel: (task: XCodeTaskMeta) => string;
+  getTaskRemoteSessionId: (task: ZCodeTaskMeta) => string | undefined;
+  getTaskWorkspaceLabel: (task: ZCodeTaskMeta) => string;
   onSelectTask: (workspacePath: string, taskId: string, workspaceIdentity?: string) => void;
-  onCloseTask: (task: XCodeTaskMeta) => void;
-  onOpenFileTree?: (task: XCodeTaskMeta) => void;
+  onCloseTask: (task: ZCodeTaskMeta) => void;
+  onOpenFileTree?: (task: ZCodeTaskMeta) => void;
   onCreateTask: () => void;
   hasDraftTask?: boolean;
   draftTaskActive?: boolean;
@@ -102,13 +102,13 @@ export function GroupItem({
   onSelectDraftTask?: () => void;
   onCloseDraftTask?: () => void;
   onRenameGroup: (groupId: string, title: string) => void;
-  onUpdateGroupColor: (groupId: string, color: XCodeTaskGroupColor) => void;
+  onUpdateGroupColor: (groupId: string, color: ZCodeTaskGroupColor) => void;
   onUngroupGroup: (groupId: string) => void;
-  onMoveTaskToGroup: (task: XCodeTaskMeta, groupId: string | null) => void;
-  onMoveTaskToTop: (task: XCodeTaskMeta) => void;
-  onStartRenameTask: (task: XCodeTaskMeta) => void;
-  onArchiveTask: (task: XCodeTaskMeta) => void;
-  onMarkTaskAsUnread: (task: XCodeTaskMeta) => void;
+  onMoveTaskToGroup: (task: ZCodeTaskMeta, groupId: string | null) => void;
+  onMoveTaskToTop: (task: ZCodeTaskMeta) => void;
+  onStartRenameTask: (task: ZCodeTaskMeta) => void;
+  onArchiveTask: (task: ZCodeTaskMeta) => void;
+  onMarkTaskAsUnread: (task: ZCodeTaskMeta) => void;
   newGroupSetup: boolean;
   onNewGroupSetupStarted: (groupId: string) => void;
   collapsed: boolean;
@@ -117,7 +117,7 @@ export function GroupItem({
   activeDragGroupId?: string | null;
   tooltipsDisabled?: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [renaming, setRenaming] = useState(false);
   const [renameDraft, setRenameDraft] = useState(node.group.title);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
@@ -419,7 +419,7 @@ export function GroupItem({
 
   const handleGroupColorChange = useCallback(
     (color: string) => {
-      onUpdateGroupColor(node.group.id, color as XCodeTaskGroupColor);
+      onUpdateGroupColor(node.group.id, color as ZCodeTaskGroupColor);
     },
     [node.group.id, onUpdateGroupColor],
   );

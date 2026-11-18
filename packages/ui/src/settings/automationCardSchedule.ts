@@ -1,4 +1,4 @@
-import type { XCodeAutomationScheduleRule } from "@zcode/shared";
+import type { ZCodeAutomationScheduleRule } from "@zcode/shared";
 import {
   describeCron,
   describeCronBuilder,
@@ -6,7 +6,7 @@ import {
   type IntlLike,
 } from "@/settings/automationFormat.js";
 
-function scheduleRuleToBuilder(rule: XCodeAutomationScheduleRule): CronBuilderState {
+function scheduleRuleToBuilder(rule: ZCodeAutomationScheduleRule): CronBuilderState {
   return {
     frequency: "custom",
     hour: rule.hour,
@@ -27,7 +27,7 @@ function scheduleRuleToBuilder(rule: XCodeAutomationScheduleRule): CronBuilderSt
 export function describeAutomationCardSchedule(
   automation: {
     cronExpr: string;
-    scheduleRule?: XCodeAutomationScheduleRule;
+    scheduleRule?: ZCodeAutomationScheduleRule;
     recurring?: boolean;
     maxRuns?: number;
   },

@@ -5,8 +5,8 @@
 // task-realtime.ts 保留旧协议兼容接口；本文件集中定义对应的运行时 schema。
 
 import { z } from "zod";
-import type { XCodeTaskMigrationSource, XCodeTaskMode } from "./zcode-task-types-core.js";
-import { legacyXCodeProviderSchema } from "./zcode-agent-policy.js";
+import type { ZCodeTaskMigrationSource, ZCodeTaskMode } from "./zcode-task-types-core.js";
+import { legacyZCodeProviderSchema } from "./zcode-agent-policy.js";
 import { zcodePermissionResponseSchema } from "./zcode-protocol-legacy-types.js";
 // merge 冲突解决：两侧分别在相邻行新增独立 import（本分支 hook trust review
 // 决策 schema、staging telemetry error attribution schema），二者无语义交集，均保留。
@@ -26,11 +26,11 @@ const zcodeTaskModeRealtimeValues = [
   "bypassPermissions",
   "autoEdit",
   "build",
-] as const satisfies readonly XCodeTaskMode[];
+] as const satisfies readonly ZCodeTaskMode[];
 const zcodeTaskMigrationSourceRealtimeValues = [
   "claudeCode",
   "zcodeSession",
-] as const satisfies readonly XCodeTaskMigrationSource[];
+] as const satisfies readonly ZCodeTaskMigrationSource[];
 const zcodeTaskChangeSummaryRealtimeSchema = z
   .object({
     fileCount: z.number().int().nonnegative(),
@@ -59,12 +59,12 @@ const taskMetaRealtimeSchema = z.object({
   createdAt: z.number().int().nonnegative(),
   updatedAt: z.number().int().nonnegative(),
   // realtime deliver 的运行时 schema 之前把 mode 放宽成 string，
-  // schema 推导类型因此无法回到 XCodeTaskMeta，host typecheck 也就无法覆盖这条链路。
+  // schema 推导类型因此无法回到 ZCodeTaskMeta，host typecheck 也就无法覆盖这条链路。
   mode: z.enum(zcodeTaskModeRealtimeValues),
   model: z.string().optional(),
   runtimeEpoch: z.number().int().nonnegative().optional(),
   // relay payload 可能由旧版本桌面投影；历史 provider 值在此归一为 glm。
-  provider: legacyXCodeProviderSchema.optional(),
+  provider: legacyZCodeProviderSchema.optional(),
   migrationSource: z.enum(zcodeTaskMigrationSourceRealtimeValues).optional(),
   forkedFromTaskId: nonEmptyString.optional(),
   unreadAt: z.number().int().nonnegative().optional(),

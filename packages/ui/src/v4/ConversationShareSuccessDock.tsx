@@ -3,7 +3,7 @@ import { cn } from "@/components/lib/utils.js";
 import { CheckCircle2, Copy, ExternalLink, X } from "lucide-react";
 import { Input } from "@/components/ui/input.js";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { ConversationShareDisplayWarnings } from "@/store/conversationShareSelectionStore.js";
 import {
   formatConversationShareAllowedArtifacts,
@@ -44,7 +44,7 @@ export function ConversationShareSuccessDock({
     const timer = setTimeout(() => setCopied(false), 2000);
     return () => clearTimeout(timer);
   }, [copied]);
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
 
   return (
     // 分享 dock 曾在同一输入区额外叠加 popover ring、阴影和固定宽度，

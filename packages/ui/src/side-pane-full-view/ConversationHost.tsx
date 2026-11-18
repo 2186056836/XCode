@@ -49,7 +49,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   clampFloatingPosition,
   dismissFloatingAnswerBubble,
@@ -119,7 +119,7 @@ export function SidePaneFullViewConversationHost({
   onOpenConversation: () => void;
   children: ReactNode;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const isFloating = mode === "floating";
   const isMinimized = isFloating && floating === "minimized";

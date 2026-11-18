@@ -3,15 +3,15 @@ import {
   appControlCancelMethod,
   appControlCancelParamsSchema,
   type AppControlAction,
-  type XCodeProtocolRequest,
+  type ZCodeProtocolRequest,
 } from "@zcode/shared";
 import { SessionControlError } from "@zcode/session-control/contracts";
 import type { AppControlBinding, AppControlService } from "#src/app-control/contract.js";
 
 interface ReverseClient {
-  respond(id: XCodeProtocolRequest["id"], result: unknown): Promise<void>;
+  respond(id: ZCodeProtocolRequest["id"], result: unknown): Promise<void>;
   respondError(
-    id: XCodeProtocolRequest["id"],
+    id: ZCodeProtocolRequest["id"],
     error: { code: number; message: string },
   ): Promise<void>;
 }
@@ -95,7 +95,7 @@ export function createAppControlReverseRpc(options: {
     callerSessionId: string;
     callId: string;
     turnId?: string;
-    trace?: XCodeProtocolRequest["trace"];
+    trace?: ZCodeProtocolRequest["trace"];
     signal: AbortSignal;
   }) => Promise<AppControlBinding>;
   onResponseError: (error: unknown) => void;
@@ -103,7 +103,7 @@ export function createAppControlReverseRpc(options: {
   const pending = new Map<string, { controller: AbortController; binding?: AppControlBinding }>();
   let disposed = false;
   return {
-    handle(request: XCodeProtocolRequest): boolean {
+    handle(request: ZCodeProtocolRequest): boolean {
       if (request.method === appControlCancelMethod) {
         const parsed = appControlCancelParamsSchema.safeParse(request.params);
         if (!parsed.success) {

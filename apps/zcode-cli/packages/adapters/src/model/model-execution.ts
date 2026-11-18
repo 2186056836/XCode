@@ -1399,7 +1399,7 @@ export function createUpstreamRequestProfileFetch(input: {
         const retryAfter = response.headers.get("retry-after");
         if (retryAfter) {
           const headers = new Headers(response.headers);
-          headers.set("x-xcode-opencode-retry-after", retryAfter);
+          headers.set("x-zcode-opencode-retry-after", retryAfter);
           response = new Response(response.body, {
             status: response.status,
             statusText: response.statusText,

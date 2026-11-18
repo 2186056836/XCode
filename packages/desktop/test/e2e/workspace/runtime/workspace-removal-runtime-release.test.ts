@@ -41,7 +41,7 @@ describe("项目软删除与应用退出 E2E", () => {
     await waitForWorkspaceApp(active, 30000);
     await waitForRestoredProjects(workspacePaths, 30000);
     await openWorkspaceDraftFromSidebar(removable);
-    // 本例使用两个专用目录，不能调用强制等待默认 XCodeProject 的通用准备入口。
+    // 本例使用两个专用目录，不能调用强制等待默认 ZCodeProject 的通用准备入口。
     await selectUpstreamModel();
     await selectUpstreamThoughtLevel();
     await sendV4Prompt(`${MARKER}: reply exactly ${REPLY}`);

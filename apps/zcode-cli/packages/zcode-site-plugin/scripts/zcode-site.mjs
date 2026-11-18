@@ -7,7 +7,7 @@
 // 失败时 stderr 输出一行 {"error":{code,message,hint}}，退出码 1=参数或本地文件错误、2=未登录、3=超出额度或限额、4=部署失败或服务端错误。
 //
 // 鉴权（技术方案 5.8）：CLI 不持有任何登录凭证。请求发给 XCode agent 侧的官方命令端点，端点按
-// session token 认出会话，补上 XCode 身份头和 X-XCode-App-Version 后转发给 zcode-server。
+// session token 认出会话，补上 XCode 身份头和 X-ZCode-App-Version 后转发给 zcode-server。
 // 端点地址和 token 由 XCode 注入当前会话的 Bash，在普通终端里运行会按未登录退出：
 //   ZCODE_OFFICIAL_ENDPOINT        端点地址（macOS / Linux 是 UDS 路径，Windows 是命名管道）
 //   ZCODE_OFFICIAL_ENDPOINT_TOKEN  本会话的 token

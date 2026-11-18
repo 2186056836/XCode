@@ -2,10 +2,10 @@ import { assertValidAutomationScheduleRule } from "#src/session/automationCronVa
 export { InvalidAutomationScheduleRuleError } from "#src/session/automationCronValidation.js";
 import type {
   ProjectExecutionSnapshot,
-  XCodeAutomation,
-  XCodeAutomationCreateParams,
-  XCodeAutomationRun,
-  XCodeAutomationUpdateParams,
+  ZCodeAutomation,
+  ZCodeAutomationCreateParams,
+  ZCodeAutomationRun,
+  ZCodeAutomationUpdateParams,
 } from "@zcode/shared";
 import { resolveWorkspaceKey } from "@zcode/shared";
 import { AutomationRepo } from "#src/session/automationRepo.js";
@@ -76,7 +76,7 @@ export class AutomationService {
     ) => Promise<ProjectExecutionSnapshot>,
   ) {}
 
-  async create(params: XCodeAutomationCreateParams): Promise<XCodeAutomation> {
+  async create(params: ZCodeAutomationCreateParams): Promise<ZCodeAutomation> {
     const createdAt = Date.now();
     const relativeDelayMinutes = params.relativeDelayMinutes;
     if (
@@ -177,7 +177,7 @@ export class AutomationService {
   async list(scope?: {
     workspacePath?: string;
     workspaceIdentity?: string;
-  }): Promise<XCodeAutomation[]> {
+  }): Promise<ZCodeAutomation[]> {
     return this.repo.list(scope);
   }
 
@@ -192,15 +192,15 @@ export class AutomationService {
   async get(
     automationId: string,
     scope?: AutomationWorkspaceScope,
-  ): Promise<XCodeAutomation | null> {
+  ): Promise<ZCodeAutomation | null> {
     return this.repo.get(automationId, resolveScopeKey(scope));
   }
 
   async update(
     automationId: string,
-    params: XCodeAutomationUpdateParams,
+    params: ZCodeAutomationUpdateParams,
     scope?: AutomationWorkspaceScope,
-  ): Promise<XCodeAutomation | null> {
+  ): Promise<ZCodeAutomation | null> {
     const workspaceKey = resolveScopeKey(scope);
     const existing = await this.repo.get(automationId, workspaceKey);
     if (!existing) return null;
@@ -235,7 +235,7 @@ export class AutomationService {
     // 有限任务只提交 recurring=true 时，旧 maxRuns 会被 repo.update 原样保留，
     // 形成“无限循环 + 有限上限”的矛盾隐藏状态。领域层统一补 null，兼容旧客户端并原子清除旧上限；
     // 同时顺手修复历史上已经存在的同类脏数据。
-    const normalizedParams: XCodeAutomationUpdateParams = hasIntervalCarrier
+    const normalizedParams: ZCodeAutomationUpdateParams = hasIntervalCarrier
       ? forceIntervalCarrierRecurring(restParams)
       : nextRecurring &&
           restParams.maxRuns === undefined &&
@@ -245,7 +245,7 @@ export class AutomationService {
 
     const options: {
       nextRunAt?: number | null;
-      lifecycleStatus?: XCodeAutomation["lifecycleStatus"];
+      lifecycleStatus?: ZCodeAutomation["lifecycleStatus"];
       resetRetry?: boolean;
     } = {};
 
@@ -266,7 +266,7 @@ export class AutomationService {
     const effectiveDirectScheduleRule = hasDirectScheduleRule
       ? directScheduleRule
       : carrierScheduleRule;
-    const normalizedWithSchedule: XCodeAutomationUpdateParams =
+    const normalizedWithSchedule: ZCodeAutomationUpdateParams =
       effectiveDirectScheduleRule !== undefined
         ? { ...normalizedParams, scheduleRule: effectiveDirectScheduleRule }
         : normalizedParams;
@@ -402,7 +402,7 @@ export class AutomationService {
   async runNow(
     automationId: string,
     scope?: AutomationWorkspaceScope,
-  ): Promise<{ automation: XCodeAutomation; run: XCodeAutomationRun } | null> {
+  ): Promise<{ automation: ZCodeAutomation; run: ZCodeAutomationRun } | null> {
     const workspaceKey = resolveScopeKey(scope);
     const existing = await this.repo.get(automationId, workspaceKey);
     if (!existing) return null;
@@ -412,7 +412,7 @@ export class AutomationService {
   async listRuns(
     automationId: string,
     scope?: AutomationWorkspaceScope,
-  ): Promise<XCodeAutomationRun[]> {
+  ): Promise<ZCodeAutomationRun[]> {
     return this.repo.listRuns(automationId, resolveScopeKey(scope));
   }
   async deleteRun(runId: string, scope?: AutomationWorkspaceScope): Promise<void> {

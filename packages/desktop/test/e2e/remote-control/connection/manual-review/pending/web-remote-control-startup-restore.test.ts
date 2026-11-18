@@ -61,7 +61,7 @@ describe("桌面重启后自动恢复远控", () => {
     const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (!origin || !artifacts) throw new Error("缺少远控启动恢复 fixture");
 
-    // fixture 把上次启用目标写成未打开的 XCodeProject-previous；窗口只恢复 XCodeProject。
+    // fixture 把上次启用目标写成未打开的 ZCodeProject-previous；窗口只恢复 ZCodeProject。
     await waitForRemoteTrigger();
     await browser.waitUntil(async () => (await remoteStatus()).status === "running", {
       timeout: 40_000,

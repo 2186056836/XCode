@@ -7,7 +7,7 @@ import {
 } from "@zcode/contracts";
 import { resolvePath, type ConfigResult } from "@zcode/adapters/config";
 import type { AgentRuntime } from "@zcode/core";
-import type { XCodeSessionSubagentsResult } from "@zcode/shared";
+import type { ZCodeSessionSubagentsResult } from "@zcode/shared";
 import { projectSessionTranscript, type SessionTranscriptMessage } from "../session-transcript.js";
 import {
   collectSubagentChildSessionIds,
@@ -38,7 +38,7 @@ export function createSubagentObservation(deps: ObservationDeps) {
   return {
     async readSubagents(
       input: { endedCursor?: string; endedLimit?: number } = {},
-    ): Promise<XCodeSessionSubagentsResult> {
+    ): Promise<ZCodeSessionSubagentsResult> {
       const eventStore = deps.runtime.getSessionEventStore();
       const parentSession = await deps.sessionStore.getSession(deps.sessionId);
       if (!parentSession)

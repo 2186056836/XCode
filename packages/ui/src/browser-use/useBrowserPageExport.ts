@@ -6,7 +6,7 @@ import {
 } from "@/browser-use/browserPageExport.js";
 import { toast } from "@/components/ui/toast.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 
 /**
@@ -23,7 +23,7 @@ export function useBrowserPageExport({
   webview: ElectronWebviewTag | null;
 }) {
   const platform = usePlatform();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [isExporting, setIsExporting] = useState(false);
   const inFlightRef = useRef(false);
   const saveFile = platform.saveFile;

@@ -1,4 +1,4 @@
-import type { XCodeCommand, XCodeSlashCommand } from "@zcode/shared";
+import type { ZCodeCommand, ZCodeSlashCommand } from "@zcode/shared";
 
 function normalizeSlashCommandName(name: string): string {
   return name.trim().replace(/^\/+/, "");
@@ -8,7 +8,7 @@ function slashCommandKey(name: string): string {
   return normalizeSlashCommandName(name).toLowerCase();
 }
 
-function commandToSlashCommand(command: XCodeCommand): XCodeSlashCommand | null {
+function commandToSlashCommand(command: ZCodeCommand): ZCodeSlashCommand | null {
   if (!command.enabled) {
     return null;
   }
@@ -27,14 +27,14 @@ function commandToSlashCommand(command: XCodeCommand): XCodeSlashCommand | null 
 }
 
 export function mergeSlashCommandsAfterCommandRefresh(
-  currentSlashCommands: readonly XCodeSlashCommand[],
-  refreshedCommands: readonly XCodeCommand[],
-): XCodeSlashCommand[] {
+  currentSlashCommands: readonly ZCodeSlashCommand[],
+  refreshedCommands: readonly ZCodeCommand[],
+): ZCodeSlashCommand[] {
   const preservedCommands = currentSlashCommands.filter((command) => command.source !== "custom");
   const preservedNames = new Set(
     preservedCommands.map((command) => slashCommandKey(command.name)).filter(Boolean),
   );
-  const customCommands: XCodeSlashCommand[] = [];
+  const customCommands: ZCodeSlashCommand[] = [];
   const seenCustomNames = new Set<string>();
 
   for (const command of refreshedCommands) {

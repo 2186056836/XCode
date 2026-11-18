@@ -10,7 +10,7 @@ import {
   zcodeProtocolSessionMethodContracts,
 } from "@zcode/shared";
 import { listMcpServers } from "../src/zcode-protocol/mcp.js";
-import type { XCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
 
 describe("mcp protocol contracts", () => {
   it("registers mcp/list", () => {
@@ -154,7 +154,7 @@ describe("mcp/list connection revalidation", () => {
     } as unknown as McpPort;
     const context = {
       deps: { env: process.env, mcpPort },
-    } as unknown as XCodeProtocolAgentServerContext;
+    } as unknown as ZCodeProtocolAgentServerContext;
     const params = {
       mcpServers: [],
       workspace: { workspaceKey: root, workspacePath: root },
@@ -178,11 +178,11 @@ describe("mcp/list connection revalidation", () => {
   });
 });
 
-import { convertToXCodeAgentMcpServer, zcodeProtocolMcpServerSchema } from "@zcode/shared";
+import { convertToZCodeAgentMcpServer, zcodeProtocolMcpServerSchema } from "@zcode/shared";
 import { protocolMcpServersToRuntimeMcpConfig } from "../src/zcode-protocol/protocol-mcp-config.js";
 
 it("preserves workspace provenance and cwd from Host DTO to runtime; rejects arbitrary runtime source", () => {
-  const dto = convertToXCodeAgentMcpServer(
+  const dto = convertToZCodeAgentMcpServer(
     "probe",
     { type: "stdio", command: "node", cwd: "tools", args: ["server.mjs"], env: { TEST: "1" } },
     "workspace",

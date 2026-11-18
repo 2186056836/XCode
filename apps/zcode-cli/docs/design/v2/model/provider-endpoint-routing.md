@@ -68,12 +68,12 @@ GET https://zcode.z.ai/api/v1/agent/configs
         {
           "from": "https://open.bigmodel.cn/api/anthropic/v1/messages",
           "to": "https://zcode.z.ai/api/v1/ultra/anthropic/v1/messages",
-          "zcodeAuthorizationHeader": "X-Xcode-Authorization"
+          "zcodeAuthorizationHeader": "X-ZCode-Authorization"
         },
         {
           "from": "https://api.z.ai/api/anthropic/v1/messages",
           "to": "https://zcode.z.ai/api/v1/ultra-zai/anthropic/v1/messages",
-          "zcodeAuthorizationHeader": "X-Xcode-Authorization"
+          "zcodeAuthorizationHeader": "X-ZCode-Authorization"
         }
       ]
     }
@@ -84,10 +84,10 @@ GET https://zcode.z.ai/api/v1/agent/configs
 ### XCode 网关身份头
 
 mapping 条目的可选字段 `zcodeAuthorizationHeader` 表示命中该条目时向最终 XCode 网关请求附加
-登录身份。字段值大小写不敏感地必须等于 `X-XCode-Authorization`；客户端始终使用规范名称：
+登录身份。字段值大小写不敏感地必须等于 `X-ZCode-Authorization`；客户端始终使用规范名称：
 
 ```http
-X-XCode-Authorization: Bearer <zcodejwt>
+X-ZCode-Authorization: Bearer <zcodejwt>
 ```
 
 身份头仅允许发送到当前 runtime XCode origin 下的两个路径族：
@@ -178,7 +178,7 @@ ProviderEndpointRoutingPort.resolve
 - `Accept: application/json`
 - `HTTP-Referer`，跟随当前 runtime XCode endpoint origin
 - `User-Agent: XCode/<version>`
-- 有有效版本时发送 `X-XCode-App-Version`
+- 有有效版本时发送 `X-ZCode-App-Version`
 - `X-Title`，独立 CLI/TUI 为 `Z Code@cli`，桌面 stdio Agent 为 `Z Code@electron`
 - `X-Platform`、`X-Release-Channel`、`X-Client-Language`、`X-Client-Timezone`、
   `X-Os-Category` 与有效的 `X-Os-Version`

@@ -1,14 +1,14 @@
 import { useRef } from "react";
 import {
-  getXCodeBackgroundTaskControlItemElapsedMs,
-  type XCodeBackgroundTaskControlItem,
+  getZCodeBackgroundTaskControlItemElapsedMs,
+  type ZCodeBackgroundTaskControlItem,
 } from "@zcode/shared";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export function formatBackgroundTaskElapsedLabel(
   elapsedMs: number,
-  formatMessage: ReturnType<typeof useXCodeIntl>["intl"]["formatMessage"],
+  formatMessage: ReturnType<typeof useZCodeIntl>["intl"]["formatMessage"],
 ) {
   const totalSeconds = Math.max(1, Math.floor(elapsedMs / 1000));
   const minutes = Math.floor(totalSeconds / 60);
@@ -27,10 +27,10 @@ export function formatBackgroundTaskElapsedLabel(
   );
 }
 
-function createElapsedBaseline(job: XCodeBackgroundTaskControlItem) {
+function createElapsedBaseline(job: ZCodeBackgroundTaskControlItem) {
   const mountedAt = Date.now();
   return {
-    elapsedMs: getXCodeBackgroundTaskControlItemElapsedMs(job, mountedAt),
+    elapsedMs: getZCodeBackgroundTaskControlItemElapsedMs(job, mountedAt),
     key: `${job.jobId}:${job.startedAt ?? "no-start"}:${job.elapsedMs ?? "no-elapsed"}`,
     mountedAt,
   };
@@ -38,10 +38,10 @@ function createElapsedBaseline(job: XCodeBackgroundTaskControlItem) {
 
 function elapsedMsForClock(input: {
   baseline: ReturnType<typeof createElapsedBaseline>;
-  job: XCodeBackgroundTaskControlItem;
+  job: ZCodeBackgroundTaskControlItem;
   now: number;
 }) {
-  const elapsedFromJob = getXCodeBackgroundTaskControlItemElapsedMs(input.job, input.now);
+  const elapsedFromJob = getZCodeBackgroundTaskControlItemElapsedMs(input.job, input.now);
   const elapsedFromBaseline =
     input.baseline.elapsedMs + Math.max(0, input.now - input.baseline.mountedAt);
   return Math.max(elapsedFromJob, elapsedFromBaseline);
@@ -53,10 +53,10 @@ export function BackgroundTaskElapsedLabel({
   now = Date.now(),
 }: {
   className?: string;
-  job: XCodeBackgroundTaskControlItem;
+  job: ZCodeBackgroundTaskControlItem;
   now?: number;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const baselineRef = useRef<ReturnType<typeof createElapsedBaseline> | null>(null);
   const baselineKey = `${job.jobId}:${job.startedAt ?? "no-start"}:${job.elapsedMs ?? "no-elapsed"}`;
   if (!baselineRef.current || baselineRef.current.key !== baselineKey) {

@@ -5,8 +5,8 @@ import {
   type OAuthProviderId,
   type ProviderFamilyDomain,
   type ProjectAccessTokenMaterial,
-  type XCodeAccountAccess,
-  type XCodeProviderAccountAccess,
+  type ZCodeAccountAccess,
+  type ZCodeProviderAccountAccess,
   ZAI_PROVIDER_ID,
 } from "@zcode/shared";
 
@@ -30,7 +30,7 @@ export interface AccountRequestAuthMaterial {
 export interface AccountRequestAuthInput {
   providerId: string;
   modelId?: string;
-  accountAccess: XCodeProviderAccountAccess | XCodeAccountAccess;
+  accountAccess: ZCodeProviderAccountAccess | ZCodeAccountAccess;
   expectedAccountScope?: string;
   rejectedProjectTokenFingerprint?: string;
   reason: RequestVerificationReason | "off-peak" | "usage";
@@ -53,7 +53,7 @@ export interface AccountRequestAuthInput {
 
 export interface AccountAccessIdentityInput {
   providerId: string;
-  accountAccess: XCodeProviderAccountAccess | XCodeAccountAccess;
+  accountAccess: ZCodeProviderAccountAccess | ZCodeAccountAccess;
 }
 
 export class AccountRequestCredentialUnavailableError extends Error {
@@ -64,16 +64,16 @@ export class AccountRequestCredentialUnavailableError extends Error {
 }
 
 export interface AccountRequestAuthResolver {
-  resolveAccessCurrent(access: XCodeProviderAccountAccess): Promise<XCodeAccountAccess | null>;
+  resolveAccessCurrent(access: ZCodeProviderAccountAccess): Promise<ZCodeAccountAccess | null>;
   resolveCurrent(input: AccountRequestAuthInput): Promise<AccountRequestAuthMaterial>;
   assertCurrent(input: AccountAccessIdentityInput): Promise<void>;
 }
 
 interface AccountProviderRequestAuthServiceOptions {
   resolveCurrentAccountAccess(
-    access: XCodeProviderAccountAccess,
+    access: ZCodeProviderAccountAccess,
     accountIdentity?: string,
-  ): Promise<XCodeAccountAccess | null>;
+  ): Promise<ZCodeAccountAccess | null>;
   loadOAuthTokenSet(
     providerId: OAuthProviderId,
     accountRef?: string,
@@ -96,7 +96,7 @@ interface AccountProviderRequestAuthServiceOptions {
     rejectedProjectTokenFingerprint?: string,
   ): Promise<ProjectAccessTokenMaterial | null>;
   resolveTeamPlanMaterial(
-    access: Extract<XCodeAccountAccess, { planKind: "team-coding-plan" }>,
+    access: Extract<ZCodeAccountAccess, { planKind: "team-coding-plan" }>,
     rejectedProjectTokenFingerprint?: string,
   ): Promise<ProjectAccessTokenMaterial | null>;
 }
@@ -108,7 +108,7 @@ class AccountProviderRequestAuthService implements AccountRequestAuthResolver {
     this.#options = options;
   }
 
-  resolveAccessCurrent(access: XCodeProviderAccountAccess): Promise<XCodeAccountAccess | null> {
+  resolveAccessCurrent(access: ZCodeProviderAccountAccess): Promise<ZCodeAccountAccess | null> {
     return this.#options.resolveCurrentAccountAccess(access);
   }
 
@@ -176,7 +176,7 @@ class AccountProviderRequestAuthService implements AccountRequestAuthResolver {
     };
   }
 
-  async #scope(access: XCodeAccountAccess, accountRef?: string): Promise<string> {
+  async #scope(access: ZCodeAccountAccess, accountRef?: string): Promise<string> {
     const login = await this.#options.loadOAuthTokenSet(
       resolveOAuthProviderId(access.family),
       accountRef,
@@ -208,9 +208,9 @@ class AccountProviderRequestAuthService implements AccountRequestAuthResolver {
   }
 
   #resolveAccess(
-    access: XCodeProviderAccountAccess | XCodeAccountAccess,
+    access: ZCodeProviderAccountAccess | ZCodeAccountAccess,
     accountIdentity?: string,
-  ): Promise<XCodeAccountAccess | null> {
+  ): Promise<ZCodeAccountAccess | null> {
     return "mode" in access
       ? this.#options.resolveCurrentAccountAccess(access, accountIdentity)
       : Promise.resolve(access);

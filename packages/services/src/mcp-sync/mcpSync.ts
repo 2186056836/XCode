@@ -9,9 +9,9 @@ import type {
   McpSyncRemoteStatusResult,
   RemoteSyncWriteAccessResult,
   SaveCliMcpToUserDirectoryRequest,
-  XCodeAgentMcpServer,
-  XCodeMcpListMode,
-  XCodeMcpListResult,
+  ZCodeAgentMcpServer,
+  ZCodeMcpListMode,
+  ZCodeMcpListResult,
   WorkspaceMcpTrustDecision,
   ZCodeWorkspaceMcpTrustResult,
 } from "@zcode/shared";
@@ -34,9 +34,9 @@ export interface IMcpSyncService extends IDataSyncCategoryService<McpDataSyncPay
   listWorkspaceMcpServerStatuses(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-    mcpServers?: XCodeAgentMcpServer[];
-    mode?: XCodeMcpListMode;
-  }): Promise<XCodeMcpListResult>;
+    mcpServers?: ZCodeAgentMcpServer[];
+    mode?: ZCodeMcpListMode;
+  }): Promise<ZCodeMcpListResult>;
   setWorkspaceMcpTrust?(params: WorkspaceMcpTrustDecision): Promise<ZCodeWorkspaceMcpTrustResult>;
   saveMcpToUserDirectory(payload: SaveCliMcpToUserDirectoryRequest): Promise<void>;
   // ---- Legacy per-category sync API (fork UI: RemoteMcpSyncDialog) ----

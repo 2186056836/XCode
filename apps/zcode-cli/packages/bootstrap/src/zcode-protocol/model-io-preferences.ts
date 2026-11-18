@@ -1,12 +1,12 @@
 import { zcodeWorkspaceUpdateModelIoPreferencesParamsSchema } from "@zcode/shared";
-import { parseParams, type XCodeProtocolAgentServerContext } from "./server-types.js";
+import { parseParams, type ZCodeProtocolAgentServerContext } from "./server-types.js";
 
 /**
  * ModelIO 写盘策略是 App 全局偏好，但每个 resident session 持有独立 adapter。
  * 因此协议层同时缓存偏好供未来 session 继承，并立即更新已有 session，避免新旧任务行为分裂。
  */
 export async function updateModelIoPreferences(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
 ) {
   const params = parseParams(zcodeWorkspaceUpdateModelIoPreferencesParamsSchema, rawParams);

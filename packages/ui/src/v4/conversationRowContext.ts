@@ -13,7 +13,7 @@ import type { WorkflowDraftPosition, WorkflowRunCardSummary } from "@/ToolCallBl
 import type { WorkflowFillGraph } from "@/v4/workflowRunCardJoin.js";
 import type { Theme } from "@/useTheme.js";
 import type { ModelSelectionView } from "@zcode/services";
-import type { XCodeWorkflowsForRunCandidate } from "@zcode/shared";
+import type { ZCodeWorkflowsForRunCandidate } from "@zcode/shared";
 import type { ConversationAttachmentReadParams, ConversationTransport } from "@/v4/transport.js";
 import type {
   OpenPlanDetailSideTabRequest,
@@ -132,7 +132,7 @@ export interface ConversationRowRenderContext {
    * 由宿主从行窗口一遍建立。它是「模型另起名字存下的那份定义」与这次 run 之间仅有的联系
    * （模型不会用 run 名当工作流名），所以必须从转写里读。
    */
-  workflowSaveCandidatesByRunId?: ReadonlyMap<string, readonly XCodeWorkflowsForRunCandidate[]>;
+  workflowSaveCandidatesByRunId?: ReadonlyMap<string, readonly ZCodeWorkflowsForRunCandidate[]>;
   /** 会话当前模型（「配置」弹层首项「会话模型」的名字）；读不到即缺席，首项只写「会话模型」。 */
   workflowSessionModel?: { providerId: string; modelId: string };
   /**

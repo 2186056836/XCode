@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { cpus, totalmem } from "node:os";
-import { ZCODE_MCP_RESOURCE_SAMPLE_INTERVAL_MS, type XCodeMcpResourceSample } from "@zcode/shared";
+import { ZCODE_MCP_RESOURCE_SAMPLE_INTERVAL_MS, type ZCodeMcpResourceSample } from "@zcode/shared";
 import {
   createProcessProbe,
   type ProcessProbe,
@@ -31,11 +31,11 @@ export interface McpResourceProcess {
 }
 
 export interface McpResourceTelemetryOptions {
-  arch: XCodeMcpResourceSample["arch"];
-  platform: XCodeMcpResourceSample["platform"];
+  arch: ZCodeMcpResourceSample["arch"];
+  platform: ZCodeMcpResourceSample["platform"];
   now(): number;
   getProcesses(): McpResourceProcess[];
-  onResourceSamples?(samples: XCodeMcpResourceSample[]): void;
+  onResourceSamples?(samples: ZCodeMcpResourceSample[]): void;
   processProbe?: ProcessProbe;
   logicalCpuCount?: number;
   totalMemoryGb?: number;
@@ -83,7 +83,7 @@ export function createMcpResourceTelemetry(options: McpResourceTelemetryOptions)
           ? ZCODE_MCP_RESOURCE_SAMPLE_INTERVAL_MS
           : Math.max(1, sampledAt - previousAt);
       const next = new Map<string, Map<number, number>>();
-      const groups = new Map<string, XCodeMcpResourceSample>();
+      const groups = new Map<string, ZCodeMcpResourceSample>();
       const seenPids = new Set<number>();
       for (const entry of processes) {
         if (!entry.isCurrent()) continue;

@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import type { WorkflowRunState } from "@zcode/shared/zcode-protocol-v4";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { CodeViewerSource } from "@/lib/codeViewer.js";
 import { resolveFileDisplayDescriptor } from "@/lib/fileDisplay.js";
 import { ReadFileChip, type ReadSummary } from "@/ToolCallBlocks/renderers/read.js";
@@ -118,7 +118,7 @@ export const WorkflowWorkspaceCard = memo(function WorkflowWorkspaceCard({
   sessionId,
   workspacePath,
 }: WorkflowWorkspaceCardProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const format = intl.formatMessage.bind(intl);
   const { node, kind } = card;
   const { status, replayed } = workspaceCardStatus(node, run);

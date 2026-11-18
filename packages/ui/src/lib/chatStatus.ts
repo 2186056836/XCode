@@ -1,9 +1,9 @@
-import type { XCodeTaskRuntimeStatus, XCodeWorkspaceInitStatus } from "@zcode/shared";
+import type { ZCodeTaskRuntimeStatus, ZCodeWorkspaceInitStatus } from "@zcode/shared";
 
 type ChatComposerStatus = "idle" | "submitting" | "streaming" | "error";
 
 export function deriveChatComposerStatusFromTaskRuntime(
-  taskStatus: XCodeTaskRuntimeStatus,
+  taskStatus: ZCodeTaskRuntimeStatus,
 ): ChatComposerStatus {
   switch (taskStatus) {
     case "creating":
@@ -39,7 +39,7 @@ export function shouldShowChatSubmitSpinner(status: ChatComposerStatus) {
   return status === "submitting";
 }
 
-export function isChatTaskRunning(taskStatus: XCodeTaskRuntimeStatus) {
+export function isChatTaskRunning(taskStatus: ZCodeTaskRuntimeStatus) {
   // ChatView 之前用 displayedStatus 和最后一条消息角色去猜“是否正在思考”，
   // task 明明还处在 creating/restoring/streaming 时，只要消息列表暂时没跟上，shimmer 就会提前消失。
   // 这里直接对齐 task 运行态判断，和顶部 Task StatusBadge 保持同一组“运行中”状态。
@@ -49,22 +49,22 @@ export function isChatTaskRunning(taskStatus: XCodeTaskRuntimeStatus) {
 }
 
 export function deriveChatTaskStatusForMainActivity(
-  taskStatus: XCodeTaskRuntimeStatus,
+  taskStatus: ZCodeTaskRuntimeStatus,
   isMainActive: boolean,
-): XCodeTaskRuntimeStatus {
+): ZCodeTaskRuntimeStatus {
   if (taskStatus === "streaming" && !isMainActive) {
     return "completed";
   }
   return taskStatus;
 }
 
-export function canForkFromTaskRuntimeStatus(taskStatus: XCodeTaskRuntimeStatus) {
+export function canForkFromTaskRuntimeStatus(taskStatus: ZCodeTaskRuntimeStatus) {
   // 产品语义：failed/error partial 不是稳定历史边界，不能像 interrupted completed 一样分叉。
   // running 状态继续由 isChatTaskRunning 收口，避免重复维护 active turn 判断。
   return taskStatus !== "notReady" && taskStatus !== "failed" && !isChatTaskRunning(taskStatus);
 }
 
-export function shouldShowChatThinkingShimmer(taskStatus: XCodeTaskRuntimeStatus) {
+export function shouldShowChatThinkingShimmer(taskStatus: ZCodeTaskRuntimeStatus) {
   // Bugfix: restoring 只是会话恢复，不代表模型已经开始思考。
   // 这里把“任务运行中”和“需要显示正在思考 shimmer”拆开，避免恢复历史任务时出现误导性的 thinking 提示。
   return taskStatus === "creating" || taskStatus === "streaming";
@@ -72,8 +72,8 @@ export function shouldShowChatThinkingShimmer(taskStatus: XCodeTaskRuntimeStatus
 
 export function getChatSubmitLabelId(
   status: ChatComposerStatus,
-  workspaceInitStatus: XCodeWorkspaceInitStatus,
-  taskStatus: XCodeTaskRuntimeStatus,
+  workspaceInitStatus: ZCodeWorkspaceInitStatus,
+  taskStatus: ZCodeTaskRuntimeStatus,
 ) {
   if (status !== "submitting") {
     return "chat.send";

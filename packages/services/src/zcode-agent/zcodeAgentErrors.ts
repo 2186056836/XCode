@@ -3,16 +3,16 @@
 export const ZCODE_AGENT_MCP_STATUS_MODE_UNSUPPORTED_ERROR_CODE =
   "ZCODE_AGENT_MCP_STATUS_MODE_UNSUPPORTED";
 
-export class XCodeAgentMcpStatusModeUnsupportedError extends Error {
+export class ZCodeAgentMcpStatusModeUnsupportedError extends Error {
   readonly code = ZCODE_AGENT_MCP_STATUS_MODE_UNSUPPORTED_ERROR_CODE;
 
   constructor() {
     super("The connected XCode Agent does not support MCP status-only refresh");
-    this.name = "XCodeAgentMcpStatusModeUnsupportedError";
+    this.name = "ZCodeAgentMcpStatusModeUnsupportedError";
   }
 }
 
-export function isXCodeAgentMcpStatusModeUnsupportedError(error: unknown): boolean {
+export function isZCodeAgentMcpStatusModeUnsupportedError(error: unknown): boolean {
   if (!error || typeof error !== "object") {
     return false;
   }
@@ -23,7 +23,7 @@ export const ZCODE_AGENT_MODEL_SELECTION_BASIS_UNSUPPORTED_ERROR_CODE =
   "ZCODE_AGENT_MODEL_SELECTION_BASIS_UNSUPPORTED";
 
 /** 旧 CLI 不支持接纳时的选择校验；不能通过剥离依据恢复发送。 */
-export class XCodeAgentModelSelectionBasisUnsupportedError extends Error {
+export class ZCodeAgentModelSelectionBasisUnsupportedError extends Error {
   readonly code = ZCODE_AGENT_MODEL_SELECTION_BASIS_UNSUPPORTED_ERROR_CODE;
 
   constructor(cause?: unknown) {
@@ -34,7 +34,7 @@ export class XCodeAgentModelSelectionBasisUnsupportedError extends Error {
   }
 }
 
-export function isXCodeAgentModelSelectionBasisUnsupportedError(error: unknown): boolean {
+export function isZCodeAgentModelSelectionBasisUnsupportedError(error: unknown): boolean {
   return (
     !!error &&
     typeof error === "object" &&

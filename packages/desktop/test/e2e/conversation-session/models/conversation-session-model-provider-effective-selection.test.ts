@@ -271,7 +271,7 @@ describe("SR87 当前有效选择与原意图", () => {
     await clickTestIdByDom(TID_AUTOMATION_CREATE_MANUALLY);
     // 自动化有独立项目 Select；旧 Composer 的菜单入口已移除。
     await $('[data-testid="automation-project-select"]').click();
-    await $('[role="option"][data-project-name="XCodeProject"]').click();
+    await $('[role="option"][data-project-name="ZCodeProject"]').click();
     await selectRegistryProviderModelById(E2E_PLAN_NON_DEFAULT_MODEL, {
       providerId: individual,
       includePlainModelFallback: false,

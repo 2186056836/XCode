@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import {
   createCodingPlanApiKeyResolver,
   SHARED_XCODE_CREDENTIAL_KEYS,
-  type SharedXCodeCredentialStore,
+  type SharedZCodeCredentialStore,
 } from "@zcode/adapters/auth";
 import { createNodeHttpClientAdapter } from "@zcode/adapters/http";
 import { createConfig } from "@zcode/adapters/config";
@@ -16,7 +16,7 @@ import {
   type ProviderConfigLayerSnapshot,
 } from "@zcode/provider";
 import {
-  NodeXCodeBuiltinProviderConfigSource,
+  NodeZCodeBuiltinProviderConfigSource,
   ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV,
 } from "@zcode/provider-node";
 import type { ProviderFamilyDomain } from "@zcode/shared";
@@ -58,7 +58,7 @@ async function readStandaloneCodingPlanCatalog(
   if (!filePath) {
     throw new Error(`${ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV} is required for login`);
   }
-  const source = new NodeXCodeBuiltinProviderConfigSource({
+  const source = new NodeZCodeBuiltinProviderConfigSource({
     bundledFilePath: filePath,
     watch: false,
   });
@@ -120,7 +120,7 @@ export function createStandaloneAccountIdentityFromSecret(secret: string): strin
 }
 
 export async function readStandaloneAccountProviderConfigSnapshot(
-  credentialStore: Pick<SharedXCodeCredentialStore, "loadMany">,
+  credentialStore: Pick<SharedZCodeCredentialStore, "loadMany">,
   env: Readonly<Record<string, string | undefined>>,
   config?: Pick<ProviderConfigLayerSnapshot, "revision" | "providers">,
 ): Promise<AccountProviderConfigSnapshot> {
@@ -182,7 +182,7 @@ export async function readStandaloneAccountProviderConfigSnapshot(
 }
 
 export async function hasStandaloneCodingPlanAccess(
-  credentialStore: Pick<SharedXCodeCredentialStore, "loadMany">,
+  credentialStore: Pick<SharedZCodeCredentialStore, "loadMany">,
   env: Readonly<Record<string, string | undefined>>,
 ): Promise<boolean> {
   return (await readStandaloneAccountProviderConfigSnapshot(credentialStore, env)).providers
@@ -193,7 +193,7 @@ export async function hasStandaloneCodingPlanAccess(
 }
 
 export function createStandaloneProviderRuntimeHeadersPort(
-  credentialStore: Pick<SharedXCodeCredentialStore, "load" | "loadMany" | "save" | "delete">,
+  credentialStore: Pick<SharedZCodeCredentialStore, "load" | "loadMany" | "save" | "delete">,
   env: Readonly<Record<string, string | undefined>>,
   injectedResolver?: ReturnType<typeof createCodingPlanApiKeyResolver>,
 ): ProviderRuntimeHeadersPort & {

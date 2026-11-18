@@ -1,4 +1,4 @@
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 import type {
   PendingInteractionSummary,
   SessionSummary,
@@ -18,11 +18,11 @@ export interface TaskListRowActivity {
   workflowActivity?: SessionWorkflowActivity;
 }
 
-export type TaskListMetaWithActivity = XCodeTaskMeta & {
+export type TaskListMetaWithActivity = ZCodeTaskMeta & {
   [TASK_LIST_ROW_ACTIVITY_FIELD]: TaskListRowActivity;
 };
 
-export function attachTaskListRowActivity<T extends XCodeTaskMeta>(
+export function attachTaskListRowActivity<T extends ZCodeTaskMeta>(
   task: T,
   activity: TaskListRowActivity,
 ): T & TaskListMetaWithActivity {
@@ -32,13 +32,13 @@ export function attachTaskListRowActivity<T extends XCodeTaskMeta>(
   };
 }
 
-export function getTaskListRowActivity(task: XCodeTaskMeta): TaskListRowActivity | null {
+export function getTaskListRowActivity(task: ZCodeTaskMeta): TaskListRowActivity | null {
   const activity = (task as Partial<TaskListMetaWithActivity>)[TASK_LIST_ROW_ACTIVITY_FIELD];
   return activity ?? null;
 }
 
 /** 只采信 sessions-index 的实时 phase；tasks-index 残留 status=running 不能置顶历史任务。 */
-export function isTaskListRowRunning(task: XCodeTaskMeta): boolean {
+export function isTaskListRowRunning(task: ZCodeTaskMeta): boolean {
   const phase = getTaskListRowActivity(task)?.phase;
   return phase === "prewarming" || phase === "running";
 }
@@ -51,12 +51,12 @@ export function isTaskListRowRunning(task: XCodeTaskMeta): boolean {
  * 都落在按 updatedAt 排序的非运行层，随进度事件互相换位。后台 bash / 分离子代理同理。
  * 转圈图标仍只认 phase（isTaskListRowRunning），这里只决定排序层。
  */
-export function isTaskListRowActive(task: XCodeTaskMeta): boolean {
+export function isTaskListRowActive(task: ZCodeTaskMeta): boolean {
   return isTaskListRowRunning(task) || getTaskListRowActivity(task)?.hasBackgroundWork === true;
 }
 
 export function getTaskListAttention(
-  task: XCodeTaskMeta,
+  task: ZCodeTaskMeta,
 ): { kind: "permission" | "userInput"; count: number } | null {
   const summary = getTaskListRowActivity(task)?.pendingInteractions;
   if (!summary) {
@@ -73,9 +73,9 @@ export function getTaskListAttention(
 }
 
 export function mergeTaskListMembershipFields(
-  activityTask: XCodeTaskMeta,
-  membershipTask: XCodeTaskMeta,
-): XCodeTaskMeta {
+  activityTask: ZCodeTaskMeta,
+  membershipTask: ZCodeTaskMeta,
+): ZCodeTaskMeta {
   const activity = getTaskListRowActivity(activityTask);
   if (!activity) {
     return membershipTask;

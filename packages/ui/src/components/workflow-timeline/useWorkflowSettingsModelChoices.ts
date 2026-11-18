@@ -9,9 +9,9 @@
 
 import { useCallback, useMemo } from "react";
 import { completeNewModelSelection } from "@zcode/provider";
-import { ZCODE_AGENT_PROVIDER, type XCodeConfigOption } from "@zcode/shared";
+import { ZCODE_AGENT_PROVIDER, type ZCodeConfigOption } from "@zcode/shared";
 import { useModelSelectionView } from "@/hooks/useModelSelectionView.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { buildRegistryModelSelectGroups } from "@/lib/modelSelectionGroups.js";
 import { resolveModelThoughtOption } from "@/lib/modelThoughtOption.js";
 import { encodeCustomModelValue } from "@/lib/zcodeCustomModelValue.js";
@@ -45,11 +45,11 @@ export interface WorkflowSettingsModelFace {
   /** 清单读好了却找不到它：被删或停用。 */
   unavailable: boolean;
   /** 它的思考档；没有档位（或不可用）即 null。 */
-  thoughtOption: XCodeConfigOption | null;
+  thoughtOption: ZCodeConfigOption | null;
 }
 
 export function useWorkflowSettingsModelChoices(scope: WorkflowSettingsModelScope) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const format = useCallback(
     (id: string, values?: Record<string, string | number>) => intl.formatMessage({ id }, values),
     [intl],

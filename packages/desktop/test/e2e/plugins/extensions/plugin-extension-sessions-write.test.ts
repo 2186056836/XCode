@@ -331,7 +331,7 @@ describe("PLM-EXT-P3C 扩展经 ctx.sessions.* 写会话", () => {
 
     // (a) 默认工作区的项目。
     const [projects] = await runStep("projects", [
-      { name: "listProjects", input: { query: "XCodeProject" } },
+      { name: "listProjects", input: { query: "ZCodeProject" } },
     ]);
     const project = (
       projects!.ok as { projects: Array<{ project: NonNullable<SessionRef["project"]> }> }
@@ -463,7 +463,7 @@ describe("PLM-EXT-P3C 扩展经 ctx.sessions.* 写会话", () => {
 
     // (h) 渲染进程伪造 extension 来源：Host 的连接作用域拒绝，会话里不多出消息。
     evidence.forged = await callHandoffHost(
-      ServiceChannels.XCodeAgent,
+      ServiceChannels.ZCodeAgent,
       "sendConversationCommandV4",
       [
         {
@@ -604,7 +604,7 @@ describe("PLM-EXT-P3C 扩展经 ctx.sessions.* 写会话", () => {
     // (o) 宿主删除任务（与侧栏「删除」同一条路径）：之后 sendToSession 报 forbidden（项目树里找不到它）；
     // 已开着的行订阅不结束（会话仍在 CLI 里）。§18.3「大脑被删的信号」记的就是这个行为。
     const failTask = await readTask(failId);
-    await callHandoffHost(ServiceChannels.XCodeTask, "deleteTask", [
+    await callHandoffHost(ServiceChannels.ZCodeTask, "deleteTask", [
       {
         taskId: failId,
         workspacePath: failTask.workspacePath,

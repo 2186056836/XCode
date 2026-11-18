@@ -1,10 +1,10 @@
 import type { ExecutionShellSelection, SessionId } from "@zcode/contracts";
-import type { XCodeApp, XCodeAppOptions } from "../../src/app/types.js";
+import type { ZCodeApp, ZCodeAppOptions } from "../../src/app/types.js";
 
 export function createFakeApp(
-  options?: XCodeAppOptions,
-  overrides: Partial<XCodeApp> = {},
-): XCodeApp {
+  options?: ZCodeAppOptions,
+  overrides: Partial<ZCodeApp> = {},
+): ZCodeApp {
   const sessionId = options?.sessionId ?? ("sess_test" as SessionId);
   const traceId = options?.traceContext?.traceId ?? ("trace_test" as never);
   let mode = options?.runtimeConfig?.mode ?? "build";
@@ -201,11 +201,11 @@ export function createFakeApp(
     traceId,
     updateTargetStatus: async () => null,
     ...overrides,
-  } as XCodeApp;
+  } as ZCodeApp;
 }
 
 type ShellInitializationCandidate = Parameters<
-  XCodeApp["runtime"]["initializeSessionShellEnvironmentIfNeeded"]
+  ZCodeApp["runtime"]["initializeSessionShellEnvironmentIfNeeded"]
 >[0];
 
 function resolveShellInitializationCandidate(

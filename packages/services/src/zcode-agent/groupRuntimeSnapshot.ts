@@ -6,12 +6,12 @@ import {
   type SessionControl,
   type ConversationTopicWireCandidate,
 } from "@zcode/shared/zcode-protocol-v4";
-import type { IXCodeAgentService, XCodeAgentSessionTarget } from "#src/zcode-agent/zcodeAgent.js";
+import type { IZCodeAgentService, ZCodeAgentSessionTarget } from "#src/zcode-agent/zcodeAgent.js";
 
 /** Bot 控制操作临时读取 CLI 权威快照，不建立第二份输入队列。 */
 export function readBotGroupRuntimeSnapshot(
-  agent: IXCodeAgentService,
-  target: XCodeAgentSessionTarget,
+  agent: IZCodeAgentService,
+  target: ZCodeAgentSessionTarget,
 ): Promise<ConversationSnapshot> {
   return observeRuntime(agent, target, (frame) =>
     frame.payload.kind === "snapshot" ? frame.payload.snapshot : undefined,
@@ -20,8 +20,8 @@ export function readBotGroupRuntimeSnapshot(
 
 /** 只观察同一订阅的连续控制状态；停止 ACK 不是终态证据。 */
 export function waitBotGroupExecutionEnd(
-  agent: IXCodeAgentService,
-  target: XCodeAgentSessionTarget,
+  agent: IZCodeAgentService,
+  target: ZCodeAgentSessionTarget,
   executionId: string,
   signal?: AbortSignal,
 ): Promise<SessionControl> {
@@ -52,8 +52,8 @@ export function waitBotGroupExecutionEnd(
 }
 
 async function observeRuntime<T>(
-  agent: IXCodeAgentService,
-  target: XCodeAgentSessionTarget,
+  agent: IZCodeAgentService,
+  target: ZCodeAgentSessionTarget,
   select: (frame: ConversationTopicFrame) => T | undefined,
   signal?: AbortSignal,
 ): Promise<T> {

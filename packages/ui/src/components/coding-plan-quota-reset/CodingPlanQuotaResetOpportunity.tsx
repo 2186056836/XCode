@@ -6,7 +6,7 @@ import {
   formatCodingPlanQuotaResetCountdown,
   type CodingPlanQuotaResetDialogConfig,
 } from "@/components/coding-plan-quota-reset/CodingPlanQuotaResetDialog.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export type { CodingPlanQuotaResetDialogConfig } from "@/components/coding-plan-quota-reset/CodingPlanQuotaResetDialog.js";
 
@@ -34,7 +34,7 @@ export function CodingPlanQuotaResetOpportunity({
   placement?: "inline" | "tooltip";
   visible: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [remainingSeconds, setRemainingSeconds] = useState(() => getRemainingSeconds(expiresAt));
   const [uncontrolledDialogOpen, setUncontrolledDialogOpen] = useState(false);
   const resolvedDialogOpen = dialogOpen ?? uncontrolledDialogOpen;

@@ -109,7 +109,7 @@ describe("配置等待与普通聊天隔离", () => {
         expect(tools).toContain("OffPeakList");
       }
     } finally {
-      const root = join(getE2EAppDataPaths().homeDir, "XCodeProject", ".zcode-e2e", CASE_NAME);
+      const root = join(getE2EAppDataPaths().homeDir, "ZCodeProject", ".zcode-e2e", CASE_NAME);
       await mkdir(root, { recursive: true });
       await writeFile(join(root, "timing.json"), JSON.stringify(evidence, null, 2));
       console.log("SCB_TIMING", JSON.stringify(evidence));

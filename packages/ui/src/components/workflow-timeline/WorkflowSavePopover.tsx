@@ -7,11 +7,11 @@
 // 三个字段服务于两条路：填了什么，既随消息交给 XCode，也是直接保存要写下去的那一份。
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { SparkleIcon } from "lucide-react";
-import type { XCodeSavedWorkflowScope, XCodeWorkflowsSaveResult } from "@zcode/shared";
+import type { ZCodeSavedWorkflowScope, ZCodeWorkflowsSaveResult } from "@zcode/shared";
 import { Button } from "@/components/ui/button.js";
 import { Popover, PopoverAnchor, PopoverContent, PopoverTitle } from "@/components/ui/popover.js";
 import { Spinner } from "@/components/ui/spinner.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { WorkflowSaveFields, type WorkflowSaveFailure } from "./WorkflowSaveFields.js";
 import {
   initialWorkflowSaveDraft,
@@ -33,18 +33,18 @@ export interface WorkflowSavePopoverHost {
   saving: boolean;
   save: (input: {
     name: string;
-    scope: XCodeSavedWorkflowScope;
+    scope: ZCodeSavedWorkflowScope;
     meta: { description: string };
     overwrite?: boolean;
-  }) => Promise<XCodeWorkflowsSaveResult>;
-  checkNameTaken: (name: string, scope: XCodeSavedWorkflowScope) => Promise<boolean>;
+  }) => Promise<ZCodeWorkflowsSaveResult>;
+  checkNameTaken: (name: string, scope: ZCodeSavedWorkflowScope) => Promise<boolean>;
   /**
    * 把那条用户消息发出去（宿主各有各的发送路径：卡在本会话，侧板在父会话）。
    * 缺席即这条路不可达——弹层只剩细线之下的那一半。
    */
   sendLead?: (draft: WorkflowSaveDraft) => Promise<void>;
   /** 写成之后：父级据此翻成「再次运行」并播一次 aria-live。 */
-  onSaved: (saved: { name: string; scope: XCodeSavedWorkflowScope }) => void;
+  onSaved: (saved: { name: string; scope: ZCodeSavedWorkflowScope }) => void;
 }
 
 export function WorkflowSavePopover({
@@ -91,7 +91,7 @@ function WorkflowSaveForm({
   host: WorkflowSavePopoverHost;
   onClose: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const format = useCallback((id: string) => intl.formatMessage({ id }), [intl]);
   // 起点在打开那一刻定下（同「配置」弹层）：run 在弹层开着时变了，也不该把用户正在改的表单拽回去。
   const [draft, setDraft] = useState<WorkflowSaveDraft>(() =>
@@ -123,7 +123,7 @@ function WorkflowSaveForm({
     setProbe({ taken: false, shadowing: false });
     if (directSaveUnsupported || name.length === 0 || !isValidSavedWorkflowNameText(name)) return;
     let cancelled = false;
-    const other: XCodeSavedWorkflowScope = scope === "global" ? "project" : "global";
+    const other: ZCodeSavedWorkflowScope = scope === "global" ? "project" : "global";
     const timer = window.setTimeout(() => {
       void Promise.all([
         checkNameTaken(name, scope),

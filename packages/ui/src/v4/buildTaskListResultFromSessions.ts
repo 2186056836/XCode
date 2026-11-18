@@ -1,9 +1,9 @@
 // 左侧列表投影：tasks-index 决定持久行集合与 membership，sessions-index 只补实时 activity/detail。
 // 这里保持纯函数，供 Project/Timeline/Pinned/Archived/Grouped 共用同一字段权威。
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 import { matchesTaskListMembershipKind } from "@zcode/shared/zcode-protocol-v4";
 import { buildTaskEntityKey } from "@/lib/taskQueryCache.js";
-import { compareXCodeTaskListItems } from "@/lib/taskListOrdering.js";
+import { compareZCodeTaskListItems } from "@/lib/taskListOrdering.js";
 import { attachTaskListRowActivity, getTaskListRowActivity } from "@/v4/taskListRowActivity.js";
 
 export type TaskListKind = "pinned" | "archived" | "timeline" | "active";
@@ -11,9 +11,9 @@ export type TaskListSortBy = "created" | "updated";
 
 export interface BuildTaskListParams {
   /** tasks-index active/pinned/archived 三个持久分区的 task 行并集。 */
-  taskIndexItems: XCodeTaskMeta[];
+  taskIndexItems: ZCodeTaskMeta[];
   /** sessions-index 派生的会话 activity/detail；只覆盖命中的持久行。 */
-  sessions: XCodeTaskMeta[];
+  sessions: ZCodeTaskMeta[];
   kind: TaskListKind;
   /** 服务端权威 pin/archive id 集（tasks-index.sqlite 持久化）。 */
   pinnedIds: ReadonlySet<string>;
@@ -32,7 +32,7 @@ export interface BuildTaskListParams {
   /** taskId → terminal status（tasks-index 历史终态；只补冷启动 stored summary）。 */
   terminalStatusByTaskId?: ReadonlyMap<
     string,
-    Extract<XCodeTaskMeta["status"], "completed" | "error">
+    Extract<ZCodeTaskMeta["status"], "completed" | "error">
   >;
   /** taskId → 旧 task-index 手动标题；只覆盖 titleOverridden!==true 的 session meta。 */
   titleOverrideByTaskId?: ReadonlyMap<string, string>;
@@ -41,14 +41,14 @@ export interface BuildTaskListParams {
 }
 
 export interface BuildTaskListResult {
-  items: XCodeTaskMeta[];
+  items: ZCodeTaskMeta[];
   total: number;
 }
 
 function mergeTaskIndexRowWithSession(
-  taskIndexTask: XCodeTaskMeta,
-  sessionTask: XCodeTaskMeta,
-): XCodeTaskMeta {
+  taskIndexTask: ZCodeTaskMeta,
+  sessionTask: ZCodeTaskMeta,
+): ZCodeTaskMeta {
   const activity = getTaskListRowActivity(sessionTask);
   const sessionTitle = sessionTask.title.trim();
   const sessionTitleWins =
@@ -58,7 +58,7 @@ function mergeTaskIndexRowWithSession(
     sessionTask.titleOverridden === true || taskIndexTask.titleOverridden === true
       ? true
       : undefined;
-  const merged: XCodeTaskMeta = {
+  const merged: ZCodeTaskMeta = {
     ...taskIndexTask,
     title: sessionTitleWins ? sessionTask.title : taskIndexTask.title,
     titleOverridden,
@@ -78,9 +78,9 @@ function mergeTaskIndexRowWithSession(
  * 不会进入持久列表，新建短窗口由既有 optimistic/live overlay 负责。
  */
 export function mergeTaskIndexRowsWithSessions(params: {
-  taskIndexItems: XCodeTaskMeta[];
-  sessions: XCodeTaskMeta[];
-}): XCodeTaskMeta[] {
+  taskIndexItems: ZCodeTaskMeta[];
+  sessions: ZCodeTaskMeta[];
+}): ZCodeTaskMeta[] {
   const sessionByEntityKey = new Map(
     params.sessions.map((session) => [buildTaskEntityKey(session), session]),
   );
@@ -92,24 +92,24 @@ export function mergeTaskIndexRowsWithSessions(params: {
 
 /** unreadAt join：map 已加载时以 tasks-index 为准，未加载时不动原 meta，避免首帧闪烁。 */
 export function joinTaskListUnreadAt(
-  tasks: XCodeTaskMeta[],
+  tasks: ZCodeTaskMeta[],
   unreadAtByTaskId: ReadonlyMap<string, number> | undefined,
-): XCodeTaskMeta[] {
+): ZCodeTaskMeta[] {
   return joinTaskListMembershipMeta(tasks, { unreadAtByTaskId });
 }
 
 export function joinTaskListMembershipMeta(
-  tasks: XCodeTaskMeta[],
+  tasks: ZCodeTaskMeta[],
   params: {
     unreadAtByTaskId?: ReadonlyMap<string, number>;
     terminalStatusByTaskId?: ReadonlyMap<
       string,
-      Extract<XCodeTaskMeta["status"], "completed" | "error">
+      Extract<ZCodeTaskMeta["status"], "completed" | "error">
     >;
     titleOverrideByTaskId?: ReadonlyMap<string, string>;
     cronAutomationIdByTaskId?: ReadonlyMap<string, string>;
   },
-): XCodeTaskMeta[] {
+): ZCodeTaskMeta[] {
   const {
     unreadAtByTaskId,
     terminalStatusByTaskId,
@@ -189,7 +189,7 @@ export function buildTaskListResult(params: BuildTaskListParams): BuildTaskListR
     if (query && !task.title.toLocaleLowerCase().includes(query)) return false;
     return true;
   });
-  filtered.sort((a, b) => compareXCodeTaskListItems(a, b, params.sortBy));
+  filtered.sort((a, b) => compareZCodeTaskListItems(a, b, params.sortBy));
   const total = filtered.length;
   const items = params.limit === undefined ? filtered : filtered.slice(0, params.limit);
   return { items, total };

@@ -2,7 +2,7 @@ import { Fragment, type ReactNode } from "react";
 import { CircleCheckIcon, CircleXIcon, LoaderCircle } from "lucide-react";
 import { cn } from "@/components/lib/utils.js";
 import type { StepRunStatus } from "@/components/workflow-graph/types.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { RollGroup } from "./roster-model.js";
 import type { TimelinePill } from "./timeline-model.js";
 
@@ -48,7 +48,7 @@ export function WorkflowRoll({
   /** 这一站列不出行的子代理数（跑完的、还没跑的都算）；零即那一行淡字缺席。 */
   unlisted?: number;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   let index = 0;
   return (
     <div className="wf-unfold grid grid-cols-2 gap-x-2 pt-0.5" data-testid="workflow-roster-roll">

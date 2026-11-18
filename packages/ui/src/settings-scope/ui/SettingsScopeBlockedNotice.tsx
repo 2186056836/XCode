@@ -1,5 +1,5 @@
 import { LoaderCircle, WifiOff } from "lucide-react";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { SettingsScopeDevice, SettingsScopeState } from "@/settings-scope/contract.js";
 
 export type SettingsScopeBlock = "offline" | "connecting";
@@ -29,7 +29,7 @@ export function SettingsScopeBlockedNotice({
   state: SettingsScopeBlock;
   device: SettingsScopeDevice;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const name =
     device.kind === "local"
       ? intl.formatMessage({ id: "settings.scope.localDevice" })

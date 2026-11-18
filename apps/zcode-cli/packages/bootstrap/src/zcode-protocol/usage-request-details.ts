@@ -1,10 +1,10 @@
 import type { UsageStorePort } from "@zcode/contracts";
 import {
   zcodeUsageRequestDetailsParamsSchema,
-  type XCodeUsageRequestDetailsResult,
+  type ZCodeUsageRequestDetailsResult,
 } from "@zcode/shared";
 import { parseParams } from "./server-types.js";
-import type { XCodeProtocolAgentServerContext } from "./server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "./server-types.js";
 
 /**
  * 「使用详情」查询：model_usage 逐请求行视图。
@@ -16,9 +16,9 @@ import type { XCodeProtocolAgentServerContext } from "./server-types.js";
  * 设置页可见性不应等于会话内容可见性。
  */
 export async function getUsageRequestDetails(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodeUsageRequestDetailsResult> {
+): Promise<ZCodeUsageRequestDetailsResult> {
   const params = parseParams(zcodeUsageRequestDetailsParamsSchema, rawParams ?? {});
 
   // SessionStorePort 与 UsageStorePort 是分离接口，但实际 store 同时实现两者；

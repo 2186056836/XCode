@@ -24,7 +24,7 @@ import {
 } from "@/browser-use/useBrowserDesignRuntime.js";
 import { useBrowserDesignSourceWriter } from "@/browser-use/useBrowserDesignSourceWriter.js";
 import { toast } from "@/components/ui/toast.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   createWebElementContextId,
   dispatchWebElementContextAddToChat,
@@ -131,7 +131,7 @@ export function useBrowserDesignMode({
   webview: DesignRuntimeWebview | null;
   webviewGeneration: number;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const pageKey = toDesignPageKey(currentUrl);
   // 元素引用的 workspaceKey 在本地也有值，不能把它当远程身份，否则本地查询会走断连代理。
   const {

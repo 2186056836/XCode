@@ -21,9 +21,9 @@ export const zcodeProcessDiagnosticSchema = z
     occurredAt: z.number().int().nonnegative(),
   })
   .strict();
-export type XCodeProcessDiagnostic = z.infer<typeof zcodeProcessDiagnosticSchema>;
+export type ZCodeProcessDiagnostic = z.infer<typeof zcodeProcessDiagnosticSchema>;
 
-export function parseXCodeProcessDiagnostic(line: string): XCodeProcessDiagnostic | undefined {
+export function parseZCodeProcessDiagnostic(line: string): ZCodeProcessDiagnostic | undefined {
   if (
     !line.startsWith(ZCODE_PROCESS_DIAGNOSTIC_PREFIX) ||
     line.length > ZCODE_PROCESS_DIAGNOSTIC_MAX_LINE_CHARS

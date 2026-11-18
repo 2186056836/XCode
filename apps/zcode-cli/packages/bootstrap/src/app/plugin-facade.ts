@@ -2,24 +2,24 @@ import type { ConfigResult } from "@zcode/adapters/config";
 import type { PluginLoadOutcome } from "@zcode/contracts";
 import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE } from "@zcode/contracts";
 import {
-  listXCodePlugins,
-  setXCodePluginEnabled,
-  uninstallXCodeMarketplacePlugin,
+  listZCodePlugins,
+  setZCodePluginEnabled,
+  uninstallZCodeMarketplacePlugin,
 } from "../plugins.js";
 import type {
-  XCodeApp,
-  XCodeAppOptions,
-  XCodePluginSetResult,
-  XCodePluginUninstallResult,
+  ZCodeApp,
+  ZCodeAppOptions,
+  ZCodePluginSetResult,
+  ZCodePluginUninstallResult,
 } from "./types.js";
 
-type PluginFacade = Pick<XCodeApp, "listPlugins" | "setPluginEnabled" | "uninstallPlugin">;
+type PluginFacade = Pick<ZCodeApp, "listPlugins" | "setPluginEnabled" | "uninstallPlugin">;
 
 interface CreatePluginFacadeOptions {
   workspaceIdentity?: string;
   remoteSessionId?: string;
-  pluginPreparation?: XCodeAppOptions["pluginPreparation"];
-  pluginDiscovery?: XCodeAppOptions["pluginDiscovery"];
+  pluginPreparation?: ZCodeAppOptions["pluginPreparation"];
+  pluginDiscovery?: ZCodeAppOptions["pluginDiscovery"];
   configResult: ConfigResult;
   env?: NodeJS.ProcessEnv;
   officialPluginRoots?: string[];
@@ -45,9 +45,9 @@ function createPluginFacade(options: CreatePluginFacadeOptions): PluginFacade {
   });
 
   return {
-    listPlugins: async (): Promise<PluginLoadOutcome> => listXCodePlugins(commonOptions()),
-    setPluginEnabled: async (plugin: string, enabled: boolean): Promise<XCodePluginSetResult> => {
-      const result = await setXCodePluginEnabled({
+    listPlugins: async (): Promise<PluginLoadOutcome> => listZCodePlugins(commonOptions()),
+    setPluginEnabled: async (plugin: string, enabled: boolean): Promise<ZCodePluginSetResult> => {
+      const result = await setZCodePluginEnabled({
         ...commonOptions(),
         enabled,
         plugin,
@@ -58,8 +58,8 @@ function createPluginFacade(options: CreatePluginFacadeOptions): PluginFacade {
       };
       return result;
     },
-    uninstallPlugin: async (plugin: string): Promise<XCodePluginUninstallResult> => {
-      const removed = await uninstallXCodeMarketplacePlugin({
+    uninstallPlugin: async (plugin: string): Promise<ZCodePluginUninstallResult> => {
+      const removed = await uninstallZCodeMarketplacePlugin({
         ...commonOptions(),
         pluginId: plugin,
       });
@@ -83,7 +83,7 @@ function createPluginFacade(options: CreatePluginFacadeOptions): PluginFacade {
 
 export function createPluginFacadeForApp(input: {
   configResult: ConfigResult;
-  options: XCodeAppOptions;
+  options: ZCodeAppOptions;
   workingDirectory: string;
 }): PluginFacade {
   return createPluginFacade({

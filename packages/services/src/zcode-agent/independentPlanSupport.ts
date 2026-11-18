@@ -1,11 +1,11 @@
 import { zcodeProtocolMethods, zcodeRuntimeCapabilitiesSchema } from "@zcode/shared";
-import type { XCodeProtocolClient } from "./zcodeProtocolClient.js";
+import type { ZCodeProtocolClient } from "./zcodeProtocolClient.js";
 
 const checks = new WeakMap<object, Promise<void>>();
 
 /** Host 更新不代表远端 CLI 已更新；旧 CLI 会剥掉 Plan 字段，必须在发送前确认执行端。 */
 export function ensureIndependentPlanSupport(
-  client: Pick<XCodeProtocolClient, "request">,
+  client: Pick<ZCodeProtocolClient, "request">,
 ): Promise<void> {
   const cached = checks.get(client);
   if (cached) return cached;
@@ -23,7 +23,7 @@ export function ensureIndependentPlanSupport(
 }
 
 // 一个 CLI 实例只探测一次；失败时允许下次重试，旧严格 schema 一律不发新字段。
-type CapabilityClient = Pick<XCodeProtocolClient, "request">;
+type CapabilityClient = Pick<ZCodeProtocolClient, "request">;
 const discoveredCapabilities = new WeakMap<
   object,
   Promise<{ historyFirst?: boolean; pluginDiscoveryUi?: boolean; pluginExtensionSummary?: boolean }>
@@ -55,7 +55,7 @@ export async function supportsPluginExtensionSummary(client: CapabilityClient): 
 const genUiChecks = new WeakMap<object, Promise<void>>();
 /** 状态不能回退到拼接用户正文；不支持时保留草稿并拒绝发送。 */
 export function ensureGenUiContextSupport(
-  client: Pick<XCodeProtocolClient, "request">,
+  client: Pick<ZCodeProtocolClient, "request">,
 ): Promise<void> {
   const cached = genUiChecks.get(client);
   if (cached) return cached;
@@ -75,7 +75,7 @@ export function ensureGenUiContextSupport(
 const highspeedOwnerChecks = new WeakMap<object, Promise<boolean>>();
 /** 旧CLI的严格metadata不认识ownerKey；不支持时只去掉新增字段，保留发送。 */
 export function supportsHighspeedCardOwner(
-  client: Pick<XCodeProtocolClient, "request">,
+  client: Pick<ZCodeProtocolClient, "request">,
 ): Promise<boolean> {
   const existing = highspeedOwnerChecks.get(client);
   if (existing) return existing;

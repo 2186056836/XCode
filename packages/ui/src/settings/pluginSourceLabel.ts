@@ -1,4 +1,4 @@
-import type { XCodePluginMarketplaceSummary } from "@zcode/shared";
+import type { ZCodePluginMarketplaceSummary } from "@zcode/shared";
 import { DEFAULT_MARKETPLACE_ID } from "@/settings/recommendedPlugins.js";
 
 // 官方插件在 agent 侧的 source 取值；其余取值（如 inline 本地目录）一律按「内置」处理。
@@ -12,7 +12,7 @@ const MARKETPLACE_INSTALLED_SOURCE = "cache";
  */
 export function resolveMarketplaceDisplayName(
   marketplaceId: string,
-  marketplaces: readonly XCodePluginMarketplaceSummary[],
+  marketplaces: readonly ZCodePluginMarketplaceSummary[],
   claudeCodePluginsLabel: string,
 ): string {
   if (marketplaceId === DEFAULT_MARKETPLACE_ID) {
@@ -30,7 +30,7 @@ export function resolveMarketplaceDisplayName(
 export function resolvePluginSourceLabel(input: {
   source: string;
   marketplace: string;
-  marketplaces: readonly XCodePluginMarketplaceSummary[];
+  marketplaces: readonly ZCodePluginMarketplaceSummary[];
   builtinLabel: string;
   claudeCodePluginsLabel: string;
   formatFromMarketplace: (marketplaceName: string) => string;

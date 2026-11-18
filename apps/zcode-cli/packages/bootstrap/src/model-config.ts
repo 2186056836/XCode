@@ -5,8 +5,8 @@ import type {
 } from "@zcode/adapters/model";
 import type { ProviderEndpointRoutingPort } from "@zcode/contracts";
 import {
-  resolveRuntimeXCodeEnv,
-  resolveRuntimeXCodeEndpointOrigin,
+  resolveRuntimeZCodeEnv,
+  resolveRuntimeZCodeEndpointOrigin,
   ZCODE_APP_VERSION_ENV,
   ZCODE_CLIENT_LANGUAGE_ENV,
 } from "@zcode/shared";
@@ -30,7 +30,7 @@ export function createRuntimeAiSdkModelExecutionConfig(
 ): AiSdkModelExecutionConfig {
   const network = normalizeAiSdkNetworkConfig(options.network);
   return {
-    defaultHeaders: buildCliXCodeSourceHeaders(env, options),
+    defaultHeaders: buildCliZCodeSourceHeaders(env, options),
     env,
     ...(network ? { network } : {}),
     ...(options.endpointRoutingPort ? { endpointRoutingPort: options.endpointRoutingPort } : {}),
@@ -48,7 +48,7 @@ function normalizeAiSdkNetworkConfig(
   };
 }
 
-export function buildCliXCodeSourceHeaders(
+export function buildCliZCodeSourceHeaders(
   env: EnvRecord,
   options: Pick<RuntimeExecutionConfigOptions, "appVersion" | "sourceTitle"> = {},
 ): Record<string, string> {
@@ -59,11 +59,11 @@ export function buildCliXCodeSourceHeaders(
   // 线上 wire 头名必须保持官方 X-ZCode-*/ZCode 品牌（服务器风控按官方指纹校验，
   // 换肤头名/UA 会被判 unusual activity 拒单）；fork 只换符号名，不改线上头名。
   return {
-    "HTTP-Referer": resolveRuntimeXCodeEndpointOrigin(env),
+    "HTTP-Referer": resolveRuntimeZCodeEndpointOrigin(env),
     "User-Agent": `ZCode/${appVersion ?? "unknown"}`,
     ...(appVersion ? { "X-ZCode-App-Version": appVersion } : {}),
     "X-Title": `Z Code@${sourceTitle}`,
-    "X-Release-Channel": resolveRuntimeXCodeEnv(env),
+    "X-Release-Channel": resolveRuntimeZCodeEnv(env),
     "X-Client-Language": locale ?? "unknown",
     "X-Client-Timezone": timezone ?? "unknown",
     "X-ZCode-Agent": "glm",

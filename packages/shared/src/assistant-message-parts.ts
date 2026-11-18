@@ -1,4 +1,4 @@
-export type XCodeAssistantMessagePart =
+export type ZCodeAssistantMessagePart =
   | {
       type: "content";
       content: string;
@@ -13,8 +13,8 @@ export type XCodeAssistantMessagePart =
     };
 
 export function appendAssistantMessagePart(
-  parts: readonly XCodeAssistantMessagePart[] | undefined,
-  nextPart: XCodeAssistantMessagePart,
+  parts: readonly ZCodeAssistantMessagePart[] | undefined,
+  nextPart: ZCodeAssistantMessagePart,
 ) {
   const currentParts = parts ?? [];
   const lastPart = currentParts[currentParts.length - 1];
@@ -39,7 +39,7 @@ export function appendAssistantMessagePart(
   return [...currentParts, nextPart];
 }
 
-export function getLatestAssistantContentPart(parts: readonly XCodeAssistantMessagePart[]) {
+export function getLatestAssistantContentPart(parts: readonly ZCodeAssistantMessagePart[]) {
   for (let index = parts.length - 1; index >= 0; index -= 1) {
     const part = parts[index];
     if (part?.type === "content") {
@@ -49,6 +49,6 @@ export function getLatestAssistantContentPart(parts: readonly XCodeAssistantMess
   return null;
 }
 
-export function getLatestAssistantContentText(parts: readonly XCodeAssistantMessagePart[]) {
+export function getLatestAssistantContentText(parts: readonly ZCodeAssistantMessagePart[]) {
   return getLatestAssistantContentPart(parts)?.content ?? "";
 }

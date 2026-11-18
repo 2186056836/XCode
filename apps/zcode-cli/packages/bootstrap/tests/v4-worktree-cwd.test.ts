@@ -1,6 +1,6 @@
 // 受管 worktree = 会话 cwd（docs/git/worktree.md §1.1 / §9.3）集成验收：
 // 真实 git 仓库 + 真实 linked worktree（<dataBaseDir>/.zcode/worktrees/<bucket>/<repo>）+
-// 真 sqlite sessionStore + XCodeProtocolAgentServer + 真 app。
+// 真 sqlite sessionStore + ZCodeProtocolAgentServer + 真 app。
 // 覆盖：能力声明、createSession.cwd（key 属于项目、执行路径是 worktree、权限/记忆映射回源仓库）、
 // "已创建 worktree" 首轮落盘并在首个用户输入之前投影、冷恢复（Host key + 存储 cwd）、
 // forkAssistant.targetCwd（同一进程注册、追加标记、幂等）、worktreeSessionIds 冷列表。
@@ -14,7 +14,7 @@ import { createSqliteSessionStore } from "@zcode/adapters/storage";
 import {
   zcodeProtocolMethods,
   zcodeRuntimeCapabilitiesSchema,
-  type XCodeProtocolMessage,
+  type ZCodeProtocolMessage,
 } from "@zcode/shared";
 import {
   V4_METHODS,
@@ -34,9 +34,9 @@ import type {
   ModelProviderId,
   SessionId,
 } from "@zcode/contracts";
-import { XCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
+import { ZCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
 import { projectIdFromDirectory } from "../src/app/paths.js";
-import type { XCodeApp, XCodeAppOptions } from "../src/app/types.js";
+import type { ZCodeApp, ZCodeAppOptions } from "../src/app/types.js";
 import {
   createRegistryBackedTestApp,
   createTestProviderRegistry,
@@ -140,14 +140,14 @@ async function fixture(root: string) {
 
 async function bootServer(dbPath: string, dataBaseDir: string) {
   const store = await createSqliteSessionStore({ dbPath });
-  const apps: Array<{ app: XCodeApp; options: Omit<XCodeAppOptions, "providerRegistry"> }> = [];
+  const apps: Array<{ app: ZCodeApp; options: Omit<ZCodeAppOptions, "providerRegistry"> }> = [];
   const env = { ZCODE_DATA_BASE_DIR: dataBaseDir };
   const providerRegistry = createTestProviderRegistry([MODEL]);
-  const server = new XCodeProtocolAgentServer({
+  const server = new ZCodeProtocolAgentServer({
     cwd: process.cwd(),
     env,
     sessionStore: store,
-    createXCodeApp: async (options = {}) => {
+    createZCodeApp: async (options = {}) => {
       const app = await createRegistryBackedTestApp({
         ...options,
         // 内置 MCP 子进程与本用例无关，关闭避免进程握手噪声。
@@ -195,7 +195,7 @@ async function bootServer(dbPath: string, dataBaseDir: string) {
   };
 }
 
-async function requestResult(server: XCodeProtocolAgentServer, message: XCodeProtocolMessage) {
+async function requestResult(server: ZCodeProtocolAgentServer, message: ZCodeProtocolMessage) {
   const response = await server.handleMessage(message);
   if (!response || !("result" in response)) {
     throw new Error(`Expected protocol success response: ${JSON.stringify(response)}`);
@@ -203,7 +203,7 @@ async function requestResult(server: XCodeProtocolAgentServer, message: XCodePro
   return response.result;
 }
 
-function takeInitialFrame(server: XCodeProtocolAgentServer, requestId: string) {
+function takeInitialFrame(server: ZCodeProtocolAgentServer, requestId: string) {
   const messages = server.takePostResponseMessages(requestId);
   const frameMessage = messages.find(
     (message) => "method" in message && message.method === V4_NOTIFICATIONS.conversationFrame,

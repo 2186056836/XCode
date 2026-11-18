@@ -16,14 +16,14 @@ import type {
 import {
   zcodeProtocolMethods,
   zcodeProxyPoolSnapshotResultSchema,
-  type XCodeProtocolMethod,
-  type XCodeProxyPoolProtocolSnapshot,
+  type ZCodeProtocolMethod,
+  type ZCodeProxyPoolProtocolSnapshot,
 } from "@zcode/shared";
-import type { XCodeProtocolAgentServerContext } from "./server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "./server-types.js";
 
 function requireProvider(
-  snapshot: XCodeProxyPoolProtocolSnapshot,
-  method: XCodeProtocolMethod,
+  snapshot: ZCodeProxyPoolProtocolSnapshot,
+  method: ZCodeProtocolMethod,
 ): ProxyPoolProviderView {
   if (!snapshot.provider) {
     // 协议上 providerId 生效的操作必定回带该供应商详情；缺失说明 host 侧映射漏了字段，
@@ -33,12 +33,12 @@ function requireProvider(
   return snapshot.provider;
 }
 
-function toCatalog(snapshot: XCodeProxyPoolProtocolSnapshot): ProxyPoolCatalog {
+function toCatalog(snapshot: ZCodeProxyPoolProtocolSnapshot): ProxyPoolCatalog {
   return { pools: snapshot.pools, providers: snapshot.providers };
 }
 
-export function createProtocolProxyPoolPort(context: XCodeProtocolAgentServerContext): ProxyPoolPort {
-  const request = (method: XCodeProtocolMethod, params: unknown) =>
+export function createProtocolProxyPoolPort(context: ZCodeProtocolAgentServerContext): ProxyPoolPort {
+  const request = (method: ZCodeProtocolMethod, params: unknown) =>
     context.requestClient(method, params, zcodeProxyPoolSnapshotResultSchema);
 
   return {

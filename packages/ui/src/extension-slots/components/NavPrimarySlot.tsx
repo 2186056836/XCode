@@ -2,7 +2,7 @@ import { memo } from "react";
 import { TID_NAV_PRIMARY_ITEM } from "@zcode/shared/test-ids";
 import { Button } from "@/components/ui/button.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useNavPrimarySlot } from "@/extension-slots/adapters/useNavPrimarySlot.js";
 import { resolveExtensionIcon } from "@/extension-slots/components/extensionIcons.js";
 import type { NavPrimarySlotProps } from "@/extension-slots/contract.js";
@@ -18,7 +18,7 @@ const NAV_BADGE_DISPLAY_MAX = 99;
  * 只在桌面本机 Host 提供扩展门面时有内容；Web 与手机远控不渲染。
  */
 export const NavPrimarySlot = memo(function NavPrimarySlot(props: NavPrimarySlotProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const model = useNavPrimarySlot(props);
   if (!model || model.items.length === 0) return null;
   // 导航行很窄：行内只放短标签「已停止」与「重新加载」，标题才放得下；完整的「扩展已停止」在悬停说明里。

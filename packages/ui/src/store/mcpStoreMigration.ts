@@ -16,7 +16,7 @@ interface CommonMcpMigrationResult extends MigrateLegacyResult {
   changed: boolean;
 }
 
-function isXCodeAgentUserServer(server: NativeMcpServerRecord): boolean {
+function isZCodeAgentUserServer(server: NativeMcpServerRecord): boolean {
   return (
     server.source === "zcodeagentmcp" &&
     server.scope === "user" &&
@@ -24,7 +24,7 @@ function isXCodeAgentUserServer(server: NativeMcpServerRecord): boolean {
   );
 }
 
-export async function importLegacyCommonServersToXCodeAgent(
+export async function importLegacyCommonServersToZCodeAgent(
   platform: McpPlatformService | null,
   legacyServers: Record<string, McpServerConfig>,
   nativeServers: NativeMcpServerRecord[],
@@ -44,7 +44,7 @@ export async function importLegacyCommonServersToXCodeAgent(
   }
 
   const existingNames = new Set(
-    nativeServers.filter(isXCodeAgentUserServer).map((server) => server.name),
+    nativeServers.filter(isZCodeAgentUserServer).map((server) => server.name),
   );
   let importedCount = 0;
   let skippedCount = 0;
@@ -98,7 +98,7 @@ export async function importLegacyCommonServersToXCodeAgent(
   };
 }
 
-export async function migrateStoredCommonMcpToXCodeAgent(
+export async function migrateStoredCommonMcpToZCodeAgent(
   platform: McpPlatformService | null,
   nativeServers: NativeMcpServerRecord[],
   workspacePath?: string,
@@ -109,7 +109,7 @@ export async function migrateStoredCommonMcpToXCodeAgent(
   }
 
   // 旧通用 MCP 保存在 localStorage，不迁移就直接去掉 common 读取会让用户配置从设置页和运行时消失。
-  const migration = await importLegacyCommonServersToXCodeAgent(
+  const migration = await importLegacyCommonServersToZCodeAgent(
     platform,
     legacyServers,
     nativeServers,

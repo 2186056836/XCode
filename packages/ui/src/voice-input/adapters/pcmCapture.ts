@@ -9,7 +9,7 @@ const CHUNK_SAMPLES = 1600;
 
 // worklet 必须是独立脚本；用 Blob URL 加载，桌面 file:// 与开发服务器下行为一致。
 const WORKLET_SOURCE = `
-class XCodePcmCapture extends AudioWorkletProcessor {
+class ZCodePcmCapture extends AudioWorkletProcessor {
   constructor() {
     super();
     this.buffer = new Int16Array(${CHUNK_SAMPLES});
@@ -50,7 +50,7 @@ class XCodePcmCapture extends AudioWorkletProcessor {
     return true;
   }
 }
-registerProcessor("zcode-pcm-capture", XCodePcmCapture);
+registerProcessor("zcode-pcm-capture", ZCodePcmCapture);
 `;
 
 export interface PcmCaptureStats {

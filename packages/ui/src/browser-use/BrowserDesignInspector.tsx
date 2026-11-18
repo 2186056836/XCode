@@ -18,7 +18,7 @@ import { splitColor, type DesignStyleProperty } from "@/browser-use/browserDesig
 import type { BrowserDesignModeController } from "@/browser-use/useBrowserDesignMode.js";
 import { cn } from "@/components/lib/utils.js";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 // 画布右侧固定的属性面板（docs/browser-use/2026-11-03-browser-design-mode-spec.md 第五节）：
 // 上半部分是选中元素的属性（多选时显示最后点的那个，改动作用于全部选中），下半部分是页面变量。
@@ -350,7 +350,7 @@ function PageVariables({
 }
 
 export function BrowserDesignInspector({ design }: { design: BrowserDesignModeController }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const t: Translate = (id, values) => intl.formatMessage({ id }, values);
   const palette = pagePalette(design.tweakControls);
   const { selections } = design;

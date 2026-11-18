@@ -15,7 +15,7 @@ import {
   type GitBranchSwitchAssistDialogStep,
   type GitBranchSwitchAssistState,
 } from "@/git-branch-switcher/switchAssist.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { FileDisplayInline } from "@/lib/fileDisplay.js";
 import { AlertCircleIcon, GitBranchIcon, LoaderCircle } from "lucide-react";
 
@@ -38,7 +38,7 @@ export function GitBranchCreateDialog({
   onCancel,
   onSubmit,
 }: GitBranchCreateDialogProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -147,7 +147,7 @@ export function GitBranchSwitchAssistDialog({
   onCommitMessageChange,
   onSubmit,
 }: GitBranchSwitchAssistDialogProps) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const numberFormatter = new Intl.NumberFormat(locale);
   const descriptionId =
     state?.issue.code === "untracked-changes-would-be-overwritten"

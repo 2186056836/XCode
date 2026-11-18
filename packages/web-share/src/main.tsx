@@ -83,7 +83,7 @@ const getMockToken = () =>
   mockMode && window.sessionStorage.getItem("zcode:share:mock-auth") === "owner"
     ? "mock-owner-token"
     : null;
-const getAccessToken = () => getMockToken() ?? webAuthService.getXCodeJwtToken();
+const getAccessToken = () => getMockToken() ?? webAuthService.getZCodeJwtToken();
 
 function startLogin(provider: WebOAuthProviderId): void {
   if (mockMode) {

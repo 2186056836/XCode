@@ -2,12 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import { zcodeProtocolMethods, zcodeSessionMessagesResultSchema } from "@zcode/shared";
 import { createSqliteSessionStore } from "@zcode/adapters/storage";
 import { createMessageId, createPartId, createProjectId, createSessionId } from "@zcode/contracts";
-import { XCodeProtocolAgentServer } from "../../src/zcode-protocol/server.js";
-import type { XCodeAppOptions } from "../../src/app/types.js";
+import { ZCodeProtocolAgentServer } from "../../src/zcode-protocol/server.js";
+import type { ZCodeAppOptions } from "../../src/app/types.js";
 import { createFakeApp } from "../helpers/fake-zcode-app.js";
 
 const workspace = { workspacePath: "/workspace", workspaceKey: "/workspace" };
-function advertiseAppControl(server: XCodeProtocolAgentServer, enabled = true) {
+function advertiseAppControl(server: ZCodeProtocolAgentServer, enabled = true) {
   server.setNotificationSink((message) => {
     if (
       "id" in message &&
@@ -24,7 +24,7 @@ function advertiseAppControl(server: XCodeProtocolAgentServer, enabled = true) {
     }
   });
 }
-function fakeApp(options?: Omit<XCodeAppOptions, "providerRegistry">) {
+function fakeApp(options?: Omit<ZCodeAppOptions, "providerRegistry">) {
   const app = createFakeApp(options);
   app.runtime.beginShutdown = () => undefined;
   return app;
@@ -49,8 +49,8 @@ describe("production protocol session control materialization", () => {
       sizeBytes: 8,
       truncated: false,
     }));
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => ({ ...fakeApp(options), readToolResultArtifact: readArtifact }),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => ({ ...fakeApp(options), readToolResultArtifact: readArtifact }),
       cwd: workspace.workspacePath,
       sessionStore: store,
       version: "test",
@@ -227,8 +227,8 @@ describe("production protocol session control materialization", () => {
     const store = await createSqliteSessionStore({ dbPath: ":memory:" });
     const sessionId = createSessionId("read-messages-pages");
     const ids = ["first", "second", "third", "fourth"].map(createMessageId);
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: fakeApp,
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: fakeApp,
       cwd: workspace.workspacePath,
       sessionStore: store,
       version: "test",
@@ -319,8 +319,8 @@ describe("production protocol session control materialization", () => {
     const deletedId = createSessionId("read-messages-cold-deleted");
     const visible = ["cold-first", "cold-second"].map(createMessageId);
     const reminderId = createMessageId("cold-reminder");
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: fakeApp,
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: fakeApp,
       cwd: workspace.workspacePath,
       sessionStore: store,
       version: "test",
@@ -399,7 +399,7 @@ describe("production protocol session control materialization", () => {
     "nested_workflow_child",
     "selection_side_chat",
   ] as const)("binds only an authorized root kind: %s", async (taskType) => {
-    let createdOptions: XCodeAppOptions | undefined;
+    let createdOptions: ZCodeAppOptions | undefined;
     const store = await createSqliteSessionStore({ dbPath: ":memory:" });
     const sessionId = createSessionId(`control-${taskType}`);
     await store.createSession({
@@ -413,8 +413,8 @@ describe("production protocol session control materialization", () => {
       taskType,
       ...(taskType === "fork" ? { parentID: createSessionId("fork-source") } : {}),
     });
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         createdOptions = options;
         return fakeApp(options);
       },
@@ -445,9 +445,9 @@ describe("production protocol session control materialization", () => {
   it.each(["no-host", "disabled", "old-host"] as const)(
     "hides App tools when capabilities are unavailable: %s",
     async (kind) => {
-      let createdOptions: XCodeAppOptions | undefined;
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) => {
+      let createdOptions: ZCodeAppOptions | undefined;
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) => {
           createdOptions = options;
           return fakeApp(options);
         },
@@ -475,9 +475,9 @@ describe("production protocol session control materialization", () => {
   );
 
   it("does not inherit App control into a parent-linked interactive session", async () => {
-    let createdOptions: XCodeAppOptions | undefined;
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    let createdOptions: ZCodeAppOptions | undefined;
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         createdOptions = options;
         return fakeApp(options);
       },

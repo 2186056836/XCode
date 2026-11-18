@@ -26,7 +26,7 @@ import {
   SearchIcon,
   X,
 } from "lucide-react";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useRemoteConnectionEntryVisibility } from "@/hooks/useRemoteConnectionEntryVisibility.js";
 import { cn } from "@/components/lib/utils.js";
 import { getPathLeaf } from "@/lib/path.js";
@@ -234,7 +234,7 @@ export function ChatEmptyWorkspacePreviewMenu({
   /** 调用方局部替换尾部 indicator；普通会话继续使用默认 Lucide chevron。 */
   triggerIndicator?: ReactNode;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [sshDialogOpen, setSshDialogOpen] = useState(false);
   const [workspaceSearchQuery, setWorkspaceSearchQuery] = useState("");
   const showRemoteConnectionEntry = useRemoteConnectionEntryVisibility();

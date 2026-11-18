@@ -4,7 +4,7 @@ import type { Hook, PluginHookDetail, PluginScope } from "@zcode/shared";
 import { Badge } from "@/components/ui/badge.js";
 import { Button } from "@/components/ui/button.js";
 import { Switch } from "@/components/ui/switch.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { PluginInstallEmptyState } from "@/settings/PluginInstallEmptyState.js";
 import { PluginStoreAvatar } from "@/settings/PluginStoreAvatar.js";
 import type { StorePluginItem } from "@/settings/pluginStoreListing.js";
@@ -101,7 +101,7 @@ export function HooksList({
   installedEmptyTitle?: string;
   showInstalledSection?: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const groupedSections = groupHookSections(editableHooks, compatibilityHooks, pluginHooks);
   const sections: HookSection[] =
     showInstalledSection && editableHooks.length === 0
@@ -256,7 +256,7 @@ function ConfiguredHookRow({
   trustActionAvailable: boolean;
   trusting: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <HookItemFrame
       testId="configured-hook-row"
@@ -306,7 +306,7 @@ function CompatibilityHookRow({
   hook: Hook;
   onImport: (hook: Hook) => Promise<void>;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <HookItemFrame
       actions={
@@ -322,7 +322,7 @@ function CompatibilityHookRow({
 }
 
 function PluginHookItem({ hook }: { hook: PluginHookRow }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <HookItemFrame testId="plugin-hook-row" pluginIconItem={hook.pluginIconItem}>
       <HookContent

@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export type ConversationSharePermission = "private" | "link-viewer" | "link-editor";
 
@@ -33,7 +33,7 @@ export function ConversationSharePermissionPicker({
   onChange: (permission: ConversationSharePermission) => void;
   disabled?: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <div className="grid gap-1" data-testid="conversation-share-permission-picker">
       <span className="text-ui-base text-foreground-subtle">

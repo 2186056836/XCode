@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useProviderSettingsView } from "@/hooks/useProviderSettingsView.js";
 import { useServices } from "@/hooks/useServices.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { useCodingPlanEntitlements } from "@/settings/model-provider-section/useCodingPlanEntitlements.js";
 import { BUILTIN_MODEL_PROVIDER_IDS, type EnterpriseCodingPlanPricingProduct } from "@zcode/shared";
 import { buildOwnedEntryPlanList } from "@/lib/codingPlanOwnedEntryPlans.js";
@@ -19,7 +19,7 @@ export function useCodingPlanEntryPlanList(): CodingPlanEntryInventory {
   const providerSettingsView = state.status === "ready" ? state.view : null;
   const loading = state.status === "loading";
   const { oauthService, codingPlanSubscriptionService } = useServices();
-  const user = useXCodeStore((state) => state.user);
+  const user = useZCodeStore((state) => state.user);
   // 不传当前选中的团队上下文，四种 Start/个人连接分别使用已有权益缓存。
   const { entitlements, refresh } = useCodingPlanEntitlements({
     providerSettingsView,

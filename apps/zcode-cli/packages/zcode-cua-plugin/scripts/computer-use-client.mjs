@@ -396,7 +396,7 @@ function alternateAppRef(target, windowId) {
 /**
  * 只匹配语义核心「target app is not running」，不匹配后半句。
  *
- * 根因（2026-09-15，XCodeArena 151 例批次）：原本匹配的是
+ * 根因（2026-09-15，ZCodeArena 151 例批次）：原本匹配的是
  * `target app is not running and could not be launched`，而 producer 的文案早已改成
  * `target app is not running, and no installed application matched the ...`
  * （zcode-cua 的 nativeAxSource.ts）。一个逗号加改写就让下面的 alternateAppRef 备用查询

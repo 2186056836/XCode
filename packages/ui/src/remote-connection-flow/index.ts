@@ -31,7 +31,7 @@ import { useRemoteConnectionForm } from "@/hooks/useRemoteConnectionForm.js";
 import { useRemoteConnectionLogs } from "@/hooks/useRemoteConnectionLogs.js";
 import { useSourceServerManagementSnapshot } from "@/hooks/useSourceServerManagementSnapshot.js";
 import { useSourceServerOperationLogs } from "@/hooks/useSourceServerOperationLogs.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { getErrorMessage } from "@/lib/errorMessage.js";
 import { formatTaskRelativeTime } from "@/lib/taskListItemPresentation.js";
 import {
@@ -126,7 +126,7 @@ export function useRemoteConnectionFlow(options: RemoteConnectionFlowOptions) {
     !preferredSourceServerId &&
     !preferredProfileId &&
     !preferredTarget;
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const confirmDialog = useConfirmDialog();
   const acknowledgeBoundary = useRemoteBoundaryAcknowledgement();
   const cancelPendingRemoteConnection = useCancelPendingRemoteConnection();

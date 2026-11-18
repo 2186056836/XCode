@@ -3,10 +3,10 @@
  *
  * 返回当前 workspace 下 Agent 广播的可用 slash commands 列表。
  */
-import { useXCodeSessionStore, selectWorkspaceXCodeState } from "../store/zcodeSessionStore.js";
+import { useZCodeSessionStore, selectWorkspaceZCodeState } from "../store/zcodeSessionStore.js";
 
 export function useSlashCommands(workspacePath: string, workspaceIdentity?: string) {
-  return useXCodeSessionStore(
-    (state) => selectWorkspaceXCodeState(state, workspacePath, workspaceIdentity).slashCommands,
+  return useZCodeSessionStore(
+    (state) => selectWorkspaceZCodeState(state, workspacePath, workspaceIdentity).slashCommands,
   );
 }

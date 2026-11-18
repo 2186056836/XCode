@@ -1,5 +1,5 @@
 import { TID_TASK_ITEM, TID_TASK_ROW_WORKTREE_ICON, testId } from "@zcode/shared/test-ids";
-import type { ProjectTask as XCodeTaskMeta } from "@/project-sidebar/contract.js";
+import type { ProjectTask as ZCodeTaskMeta } from "@/project-sidebar/contract.js";
 import { memo, useContext, useState } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
@@ -11,7 +11,7 @@ import { cn } from "@/components/lib/utils.js";
 import { Badge } from "@/components/ui/badge.js";
 import { toast } from "@/components/ui/toast.js";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   deriveTaskLeadingIndicator,
   formatTaskRelativeTime,
@@ -63,7 +63,7 @@ function GroupedTaskRowComponent({
   dragOverlay,
   tooltipsDisabled,
 }: {
-  task: XCodeTaskMeta;
+  task: ZCodeTaskMeta;
   currentGroupId?: string;
   groups: TaskGroupMenuItem[];
   remoteSessionId?: string;
@@ -71,19 +71,19 @@ function GroupedTaskRowComponent({
   isMobileActive: boolean;
   workspaceLabel: string;
   onSelectTask: (workspacePath: string, taskId: string, workspaceIdentity?: string) => void;
-  onCloseTask: (task: XCodeTaskMeta) => void;
-  onOpenFileTree?: (task: XCodeTaskMeta) => void;
-  onMoveTaskToGroup: (task: XCodeTaskMeta, groupId: string | null) => void;
-  onMoveTaskToTop: (task: XCodeTaskMeta) => void;
-  onStartRenameTask: (task: XCodeTaskMeta) => void;
-  onArchiveTask: (task: XCodeTaskMeta) => void;
-  onMarkTaskAsUnread: (task: XCodeTaskMeta) => void;
+  onCloseTask: (task: ZCodeTaskMeta) => void;
+  onOpenFileTree?: (task: ZCodeTaskMeta) => void;
+  onMoveTaskToGroup: (task: ZCodeTaskMeta, groupId: string | null) => void;
+  onMoveTaskToTop: (task: ZCodeTaskMeta) => void;
+  onStartRenameTask: (task: ZCodeTaskMeta) => void;
+  onArchiveTask: (task: ZCodeTaskMeta) => void;
+  onMarkTaskAsUnread: (task: ZCodeTaskMeta) => void;
   dragId?: UniqueIdentifier;
   dragging?: boolean;
   dragOverlay?: boolean;
   tooltipsDisabled?: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const presentation = useContext(ProjectTaskListContext);
   const workspaceActionsDisabled = useOptionalTabStore((state) =>
     isWorkspaceReadOnly(state, task.workspacePath, task.workspaceIdentity),

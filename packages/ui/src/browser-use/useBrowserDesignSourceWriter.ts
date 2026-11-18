@@ -10,7 +10,7 @@ import {
 } from "@zcode/design-runtime";
 import { fileUrlToLocalPath, liveReloadPathKey } from "@/browser-use/useBrowserFileLiveReload.js";
 import { toast } from "@/components/ui/toast.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 
 // 属性面板写回源文件与撤销（docs/browser-use/2026-11-03-browser-design-mode-spec.md 第五节）。
@@ -83,7 +83,7 @@ export function useBrowserDesignSourceWriter({
   /** 页面上 CSS 变量的预览值归 useBrowserDesignMode 管；写成 / 撤销 / 撤回时由这里告诉它 */
   setVariablePreview: (name: string, value: string | null) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const path = designSourcePath(pageUrl);
   const undoRef = useRef<WriteEntry[]>([]);
   const redoRef = useRef<WriteEntry[]>([]);

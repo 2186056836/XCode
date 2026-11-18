@@ -59,7 +59,7 @@ export type McpOAuthConfig = McpAuthorizationCodeOAuthConfig | McpClientCredenti
  * - http：宿主在 fetch wrapper 里逐请求注入身份头，凭证从不进入插件进程；
  * - stdio：请求由插件进程自己发出，身份头随每条出站协议消息的 `_meta` 下发。
  */
-export interface XCodeOfficialMcpAuthConfig {
+export interface ZCodeOfficialMcpAuthConfig {
   type: "zcode_official";
   provider: "jwt_token";
 }
@@ -83,7 +83,7 @@ export interface McpStdioServerConfig extends McpServerConfigBase {
   args?: string[];
   cwd?: string;
   env?: Record<string, string>;
-  auth?: XCodeOfficialMcpAuthConfig;
+  auth?: ZCodeOfficialMcpAuthConfig;
   /** 宿主生成，禁止来自文件配置。 */
   official?: McpOfficialProvenance;
 }
@@ -93,7 +93,7 @@ export interface McpHttpServerConfig extends McpServerConfigBase {
   url: string;
   headers?: Record<string, string>;
   oauth?: McpOAuthConfig;
-  auth?: XCodeOfficialMcpAuthConfig;
+  auth?: ZCodeOfficialMcpAuthConfig;
   /** 宿主生成，禁止来自文件配置。 */
   official?: McpOfficialProvenance;
 }

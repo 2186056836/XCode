@@ -23,8 +23,8 @@ before(async () => {
         name: "render-boundaries-fixture",
         enforce: "pre",
         load(id) {
-          if (id.endsWith("/hooks/useXCodeSessionService.ts"))
-            return "export const useXCodeSessionService=()=>null;";
+          if (id.endsWith("/hooks/useZCodeSessionService.ts"))
+            return "export const useZCodeSessionService=()=>null;";
           if (id.endsWith("/hooks/useSettingService.ts"))
             return "export const useSettings=()=>({settings:null});";
         },

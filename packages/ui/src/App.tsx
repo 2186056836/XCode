@@ -3,8 +3,8 @@ import { PluginUiWorkspaceProvider } from "@/plugin-ui/index.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { resolveWorkspaceKey, type GitChangeSourceId, type WorkspacePurpose } from "@zcode/shared";
-import { useXCodeStore } from "@/store/StoreProvider.js";
-import { getVisibleTaskMetas, useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
+import { getVisibleTaskMetas, useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import { useTaskQueryCacheStore } from "@/store/taskQueryCacheStore.js";
 import { useAppPanels } from "@/hooks/useAppPanels.js";
 import { useGitAutoRefresh } from "@/hooks/useGitAutoRefresh.js";
@@ -18,7 +18,7 @@ import { useEnsureWorkspaceMcpLoaded } from "@/hooks/useEnsureWorkspaceMcpLoaded
 import { useTabStore, useTabStoreApi } from "@/store/TabStoreProvider.js";
 import { isWorkspaceReadOnly, isWorkspaceTab } from "@/store/tabStore.js";
 import type { TaskChatMessage as TestChatMessage } from "@/lib/taskChatMessageTypes.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useIsOfficeMode } from "@/hooks/useInterfaceMode.js";
 import { getPathLeaf } from "@/lib/path.js";
 import {
@@ -61,7 +61,7 @@ import { WorkspaceShellLayout } from "@/app-shell/WorkspaceShellLayout.js";
 import { useAppChromeState } from "@/app-shell/useAppChromeState.js";
 import { useWorkspaceSessionReload } from "@/app-shell/useWorkspaceSessionReload.js";
 import { useWorkspaceShellLifecycle } from "@/app-shell/useWorkspaceShellLifecycle.js";
-import { useWorkspaceShellXCodeState } from "@/app-shell/useWorkspaceShellXCodeState.js";
+import { useWorkspaceShellZCodeState } from "@/app-shell/useWorkspaceShellZCodeState.js";
 import { useWorkspaceMainViewSettingsExit } from "@/app-shell/useWorkspaceMainViewSettingsExit.js";
 import {
   useWorkspaceTaskNavigation,
@@ -152,7 +152,7 @@ export function App({
   const openWorkspaceShortcutLabel = useShortcutCommandLabel("openWorkspace");
   const isLinuxDesktop = Boolean(isDesktop && !isMacDesktop && !isWindowsDesktop);
   const supportsEmbeddedBrowser = explicitSupportsEmbeddedBrowser ?? Boolean(isDesktop);
-  const { intl, locale, setLocale } = useXCodeIntl();
+  const { intl, locale, setLocale } = useZCodeIntl();
   const isOfficeMode = useIsOfficeMode();
   const platform = usePlatform();
   // 命令中心「重新加载扩展」：只有桌面本机 Host 提供扩展门面时才出现。
@@ -217,15 +217,15 @@ export function App({
   const workspaceReadOnlyReason = workspaceReadOnly
     ? intl.formatMessage({ id: "workspaceSidebar.unavailableLocalDirectory" })
     : undefined;
-  const { workspaceShellXCodeState, reloadSessionDisabled } = useWorkspaceShellXCodeState(
+  const { workspaceShellZCodeState, reloadSessionDisabled } = useWorkspaceShellZCodeState(
     workspaceAbsPath,
     workspaceIdentity,
   );
-  const activeTaskId = workspaceShellXCodeState.activeTaskId;
+  const activeTaskId = workspaceShellZCodeState.activeTaskId;
   const sidePaneOwnerId = activeTaskId;
   const [summaryPanelVariantOverride, setSummaryPanelVariantOverride] =
     useState<ChatViewSummaryPanelVariant | null>(null);
-  const draftFocusVersion = workspaceShellXCodeState.draftFocusVersion;
+  const draftFocusVersion = workspaceShellZCodeState.draftFocusVersion;
   const {
     isTerminalOpen,
     setIsTerminalOpen,
@@ -294,7 +294,7 @@ export function App({
     }),
   });
   const workspaceKey = workspaceIdentity?.trim() || workspaceAbsPath;
-  const notificationEnabled = useXCodeStore((s) => s.notificationEnabled);
+  const notificationEnabled = useZCodeStore((s) => s.notificationEnabled);
   useMarketingTaskCompletionRefresh({
     workspacePath: workspaceAbsPath,
     ...(workspaceIdentity ? { workspaceIdentity } : {}),
@@ -383,8 +383,8 @@ export function App({
     workspaceAbsPath,
     workspaceIdentity,
   });
-  const theme = useXCodeStore((s) => s.theme);
-  const setTheme = useXCodeStore((s) => s.setTheme);
+  const theme = useZCodeStore((s) => s.theme);
+  const setTheme = useZCodeStore((s) => s.setTheme);
   const {
     isMacFullscreen,
     desktopWindowChromeState,
@@ -420,7 +420,7 @@ export function App({
     activeTaskId,
     workspaceRemoteSessionId,
     workspaceIdentity,
-    selectedProvider: workspaceShellXCodeState.selectedProvider,
+    selectedProvider: workspaceShellZCodeState.selectedProvider,
     intl,
   });
   const providerConfigFile = useWorkspaceProviderConfigFile(
@@ -778,7 +778,7 @@ export function App({
       targetWorkspacePurpose?: WorkspacePurpose,
       createSource?: import("@zcode/shared").SessionCreateSource,
     ) => {
-      const store = useXCodeSessionStore.getState();
+      const store = useZCodeSessionStore.getState();
       // 首次新建补全 tab 分类曾重建侧栏回调；点击时读取唯一 tab owner，避免依赖整份列表。
       const { tabs: currentTabs } = tabStoreApi.getState();
       const resolvedTargetWorkspaceIdentity =
@@ -795,7 +795,7 @@ export function App({
         return;
       }
       const targetSelectedProvider = resolveWorkspaceSwitchDraftProvider({
-        currentSelectedProvider: workspaceShellXCodeState.selectedProvider,
+        currentSelectedProvider: workspaceShellZCodeState.selectedProvider,
         targetWorkspacePath,
         targetWorkspaceIdentity: resolvedTargetWorkspaceIdentity,
         workspaces: store.workspaces,
@@ -848,7 +848,7 @@ export function App({
       activateTabByPath,
       addTab,
       tabStoreApi,
-      workspaceShellXCodeState.selectedProvider,
+      workspaceShellZCodeState.selectedProvider,
       webRemoteControlWorkspaceSwitcher,
     ],
   );
@@ -1007,7 +1007,7 @@ export function App({
   const handleSelectAdjacentConversation = useCallback(
     (direction: "previous" | "next") => {
       runVisibleWorkspaceCommand(() => {
-        const sessionState = useXCodeSessionStore.getState();
+        const sessionState = useZCodeSessionStore.getState();
         const workspaceState = sessionState.getWorkspaceState(workspaceAbsPath, workspaceIdentity);
         const fallbackTaskIds = getVisibleTaskMetas(workspaceState).map((task) => task.taskId);
         const taskQueryCacheState = useTaskQueryCacheStore.getState();
@@ -1293,7 +1293,7 @@ export function App({
             isDesktop={isDesktop}
             isMacDesktop={isMacDesktop}
             isWindowsDesktop={isWindowsDesktop}
-            workspaceShellXCodeState={workspaceShellXCodeState}
+            workspaceShellZCodeState={workspaceShellZCodeState}
             theme={theme}
             isMacFullscreen={isMacFullscreen}
             desktopWindowChromeState={desktopWindowChromeState}

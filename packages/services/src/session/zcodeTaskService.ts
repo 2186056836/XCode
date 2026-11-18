@@ -8,68 +8,68 @@ import { ServiceChannels } from "@zcode/shared";
 import type { CommandAck, CommandPayloadMap } from "@zcode/shared/zcode-protocol-v4";
 import { createServiceDescriptor } from "#src/descriptors.js";
 import type {
-  XCodeImportSessionsResult,
-  XCodeImportableSessionCandidate,
-  XCodeSessionCompactResult,
-  XCodeSessionGoalAction,
-  XCodeSessionGoalResult,
-  XCodeCodexConnectivityCheckResult,
-  XCodeSwitchAgentResult,
-  XCodeSyncTaskSessionBindingResult,
-  XCodeTaskCreateResult,
-  XCodeTaskMeta,
-  XCodeStreamEvent,
-  XCodeTaskMode,
-  XCodeConfigOption,
-  XCodeError,
-  XCodeAssistantMessageFeedback,
-  XCodePromptAttachment,
-  XCodeProvider,
-  XCodeWorkspaceEvent,
+  ZCodeImportSessionsResult,
+  ZCodeImportableSessionCandidate,
+  ZCodeSessionCompactResult,
+  ZCodeSessionGoalAction,
+  ZCodeSessionGoalResult,
+  ZCodeCodexConnectivityCheckResult,
+  ZCodeSwitchAgentResult,
+  ZCodeSyncTaskSessionBindingResult,
+  ZCodeTaskCreateResult,
+  ZCodeTaskMeta,
+  ZCodeStreamEvent,
+  ZCodeTaskMode,
+  ZCodeConfigOption,
+  ZCodeError,
+  ZCodeAssistantMessageFeedback,
+  ZCodePromptAttachment,
+  ZCodeProvider,
+  ZCodeWorkspaceEvent,
   TraceId,
-  XCodeSessionFile,
-  XCodeAgentMcpServer,
-  XCodeTaskSnapshot,
-  XCodeTaskSnapshotBody,
-  XCodeTaskSnapshotToolCallsSlice,
-  XCodeTaskSnapshotRefContent,
-  XCodeEnqueueTaskCommandResult,
-  XCodeCancelTaskCommandResult,
-  XCodeTaskClientMode,
-  XCodeTaskTokenUsageResult,
-  XCodePermissionResponse,
+  ZCodeSessionFile,
+  ZCodeAgentMcpServer,
+  ZCodeTaskSnapshot,
+  ZCodeTaskSnapshotBody,
+  ZCodeTaskSnapshotToolCallsSlice,
+  ZCodeTaskSnapshotRefContent,
+  ZCodeEnqueueTaskCommandResult,
+  ZCodeCancelTaskCommandResult,
+  ZCodeTaskClientMode,
+  ZCodeTaskTokenUsageResult,
+  ZCodePermissionResponse,
   ModelSelection,
-  XCodeBackgroundTurnAttribution,
-  XCodeAutomationBotDeliveryTarget,
+  ZCodeBackgroundTurnAttribution,
+  ZCodeAutomationBotDeliveryTarget,
 } from "@zcode/shared";
 import type {
   SessionMessageDeliveryResult,
   SessionMessageSendRequested,
 } from "#src/session/sessionMailbox.js";
 import type {
-  XCodeTaskListQuery,
-  XCodeTaskListResult,
-  XCodeTaskListSortBy,
-  XCodeTaskListWorkspaceScope,
-  XCodeWorkspaceEventSubscriptionParams,
+  ZCodeTaskListQuery,
+  ZCodeTaskListResult,
+  ZCodeTaskListSortBy,
+  ZCodeTaskListWorkspaceScope,
+  ZCodeWorkspaceEventSubscriptionParams,
 } from "#src/session/zcodeTaskListTypes.js";
 import type { JobSnapshot } from "#src/onboarding/backgroundJobRegistry.js";
 
-export interface XCodeTaskSnapshotWithEtagResult {
-  snapshot: XCodeTaskSnapshot | null;
+export interface ZCodeTaskSnapshotWithEtagResult {
+  snapshot: ZCodeTaskSnapshot | null;
   etag?: string;
   notModified?: boolean;
 }
 
 /** 同一 workspace 的固定归档删除集合；每个去重后的目标恰好属于一种结果。 */
-export interface XCodeArchivedTaskDeletionResult {
+export interface ZCodeArchivedTaskDeletionResult {
   deletedTaskIds: string[];
   skippedTaskIds: string[];
   failedTaskIds: string[];
 }
 
 /** 一次模型请求里出现的消息内容片段（文本 / 工具调用 / 工具结果 / 其他原始结构）。 */
-export type XCodeModelTrajectoryContentPart =
+export type ZCodeModelTrajectoryContentPart =
   | { kind: "text"; text: string }
   | { kind: "reasoning"; text: string }
   | { kind: "tool-call"; toolCallId?: string; toolName: string; input?: unknown }
@@ -78,13 +78,13 @@ export type XCodeModelTrajectoryContentPart =
   | { kind: "unknown"; raw: unknown };
 
 /** 单条对话消息（system / user / assistant / tool）。 */
-export interface XCodeModelTrajectoryMessage {
+export interface ZCodeModelTrajectoryMessage {
   role: string;
-  parts: XCodeModelTrajectoryContentPart[];
+  parts: ZCodeModelTrajectoryContentPart[];
 }
 
 /** model_io 记录里归一化出来的 token 用量。 */
-export interface XCodeModelTrajectoryUsage {
+export interface ZCodeModelTrajectoryUsage {
   inputTokens?: number;
   outputTokens?: number;
   totalTokens?: number;
@@ -92,15 +92,15 @@ export interface XCodeModelTrajectoryUsage {
   reasoningTokens?: number;
 }
 
-export type XCodeModelTrajectoryCallSourceKind =
+export type ZCodeModelTrajectoryCallSourceKind =
   | "main"
   | "sidecar"
   | "subagent"
   | "compact"
   | "unknown";
 
-export interface XCodeModelTrajectoryCallSource {
-  kind: XCodeModelTrajectoryCallSourceKind;
+export interface ZCodeModelTrajectoryCallSource {
+  kind: ZCodeModelTrajectoryCallSourceKind;
   querySource?: string;
 }
 
@@ -109,7 +109,7 @@ export interface XCodeModelTrajectoryCallSource {
  * request.messages 是该次请求发送给模型的完整上下文（随轮次增长），
  * response 是这次调用模型产出的新内容。
  */
-export interface XCodeModelTrajectoryRecord {
+export interface ZCodeModelTrajectoryRecord {
   requestId: string;
   attempt: number;
   startedAt: string;
@@ -117,7 +117,7 @@ export interface XCodeModelTrajectoryRecord {
   durationMs?: number;
   turnId?: string;
   traceId?: string;
-  callSource?: XCodeModelTrajectoryCallSource;
+  callSource?: ZCodeModelTrajectoryCallSource;
   model: {
     modelId?: string;
     providerId?: string;
@@ -125,15 +125,15 @@ export interface XCodeModelTrajectoryRecord {
     source?: string;
   };
   request: {
-    messages: XCodeModelTrajectoryMessage[];
+    messages: ZCodeModelTrajectoryMessage[];
     toolNames: string[];
   };
   response?: {
     finishReason?: string;
     text?: string;
     reasoningText?: string;
-    toolCalls: XCodeModelTrajectoryContentPart[];
-    usage?: XCodeModelTrajectoryUsage;
+    toolCalls: ZCodeModelTrajectoryContentPart[];
+    usage?: ZCodeModelTrajectoryUsage;
     responseId?: string;
     modelId?: string;
   };
@@ -145,11 +145,11 @@ export interface XCodeModelTrajectoryRecord {
 }
 
 /** 某个 task/session 的完整模型调用轨迹。 */
-export interface XCodeModelTrajectory {
+export interface ZCodeModelTrajectory {
   taskId: string;
   /** runtime 是否支持读取 model-io 轨迹（仅 XCode Agent 落盘 model-io）。 */
   available: boolean;
-  records: XCodeModelTrajectoryRecord[];
+  records: ZCodeModelTrajectoryRecord[];
   /** 命中的源文件绝对路径，便于排查。 */
   sourceFiles: string[];
   /** 是否因为超出上限而截断（只保留最近 N 条）。 */
@@ -157,16 +157,16 @@ export interface XCodeModelTrajectory {
 }
 
 export type {
-  XCodeTaskListKind,
-  XCodeTaskListQuery,
-  XCodeTaskListResult,
-  XCodeTaskListSortBy,
-  XCodeTaskListWorkspaceScope,
-  XCodeWorkspaceEventSubscriptionParams,
+  ZCodeTaskListKind,
+  ZCodeTaskListQuery,
+  ZCodeTaskListResult,
+  ZCodeTaskListSortBy,
+  ZCodeTaskListWorkspaceScope,
+  ZCodeWorkspaceEventSubscriptionParams,
 } from "#src/session/zcodeTaskListTypes.js";
 
 /** 一个 task 输入轮次的终态结果，供后台派发（定时任务）回写运行结果。 */
-export interface XCodeTaskTerminalOutcome {
+export interface ZCodeTaskTerminalOutcome {
   taskId: string;
   /** 对应的输入轮次 id（= sendPrompt 的 traceId/inputId），用于精确匹配某次派发。 */
   inputId?: string;
@@ -176,18 +176,18 @@ export interface XCodeTaskTerminalOutcome {
 }
 
 /** 一次输入轮次已经真正收口，session 可以安全接受下一条输入。 */
-export interface XCodeTaskReadyOutcome {
+export interface ZCodeTaskReadyOutcome {
   taskId: string;
   reason: "prompt_completed" | "prompt_failed";
 }
 
 /**
- * IXCodeTaskService — XCode task wrapper API 服务接口
+ * IZCodeTaskService — XCode task wrapper API 服务接口
  *
  * UI、remote controller 通过这层访问 task wrapper 状态；核心 session 状态由
- * XCode Agent server 维护，新功能应优先走 IXCodeSessionService。
+ * XCode Agent server 维护，新功能应优先走 IZCodeSessionService。
  */
-export interface IXCodeTaskService {
+export interface IZCodeTaskService {
   // ---- 生命周期 ----
 
   /** 检查 agent runtime 是否可用 */
@@ -197,11 +197,11 @@ export interface IXCodeTaskService {
   releaseWorkspacePreparation(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-    provider?: XCodeProvider;
+    provider?: ZCodeProvider;
   }): Promise<void>;
 
   /** Codex 草稿态预热前的网络检查，用于提前提醒 chatgpt.com 不可达 */
-  checkCodexConnectivity(): Promise<XCodeCodexConnectivityCheckResult>;
+  checkCodexConnectivity(): Promise<ZCodeCodexConnectivityCheckResult>;
 
   // ---- Task/Session 管理 ----
 
@@ -211,8 +211,8 @@ export interface IXCodeTaskService {
     additionalDirectories?: string[];
     workspacePath: string;
     workspaceIdentity?: string;
-    provider?: XCodeProvider;
-    mode?: XCodeTaskMode;
+    provider?: ZCodeProvider;
+    mode?: ZCodeTaskMode;
     /** 正式模型选择；产品提交边界固定后不再拆成 model/thoughtLevel。 */
     modelSelection?: ModelSelection;
     /** @deprecated 仅供尚未迁移的旧调用边界读取。 */
@@ -220,7 +220,7 @@ export interface IXCodeTaskService {
     /** @deprecated 仅供尚未迁移的旧调用边界读取。 */
     thoughtLevel?: string;
     forkedFromTaskId?: string;
-    mcpServers?: XCodeAgentMcpServer[];
+    mcpServers?: ZCodeAgentMcpServer[];
     /** 定时任务派发时标记所属 automation，落 tasks-index 的 cron_automation_id 并归入 cron 分组。 */
     automationId?: string;
     /** 闲时任务派发时标记所属 off-peak 任务，落 tasks-index 的 off_peak_task_id。 */
@@ -233,7 +233,7 @@ export interface IXCodeTaskService {
     /** Bot/host 使用 v4 原生 createSession 建立 draft，再配置并发送。 */
     v4Create?: boolean;
     permissionScope?: "session";
-  }): Promise<XCodeTaskCreateResult>;
+  }): Promise<ZCodeTaskCreateResult>;
 
   readBotTopicSummaries?(params: {
     taskId: string;
@@ -289,7 +289,7 @@ export interface IXCodeTaskService {
     commandId: string;
     content: string;
     conversationQuotes?: import("@zcode/shared").ConversationSelectionText[];
-    attachments?: XCodePromptAttachment[];
+    attachments?: ZCodePromptAttachment[];
     source: import("@zcode/shared").BotGroupInputSource;
   }): Promise<import("@zcode/shared/zcode-protocol-v4").CommandAck>;
 
@@ -305,20 +305,20 @@ export interface IXCodeTaskService {
       queryId?: string;
       messageId?: string;
       content: string;
-      attachments?: XCodePromptAttachment[];
+      attachments?: ZCodePromptAttachment[];
       clientId?: string;
       clientLabel?: string;
-      clientMode?: XCodeTaskClientMode;
+      clientMode?: ZCodeTaskClientMode;
       /** 当前 turn 额外隐藏的工具；与 session/automation 自带的工具隔离规则合并。 */
       toolDenylist?: string[];
       /** Bot 来源 turn 的稳定回推地址；由 BotsService 注入，模型不可控。 */
-      botDeliveryTarget?: XCodeAutomationBotDeliveryTarget;
+      botDeliveryTarget?: ZCodeAutomationBotDeliveryTarget;
       /** 标准模型选择；闲时任务同样经 Registry / ModelFactory 创建 Model。 */
       modelSelection?: CommandPayloadMap["sendText"]["modelSelection"];
       modelSelectionBasis?: CommandPayloadMap["sendText"]["modelSelectionBasis"];
       /** 单次执行约束与动态鉴权；仅 idle start-now 接受，不进入普通队列。 */
       modelExecution?: CommandPayloadMap["sendText"]["modelExecution"];
-    } & XCodeBackgroundTurnAttribution,
+    } & ZCodeBackgroundTurnAttribution,
   ): Promise<CommandAck | void>;
 
   deliverSessionMessage(
@@ -337,13 +337,13 @@ export interface IXCodeTaskService {
     queryId?: string;
     type: "send_prompt";
     content: string;
-    attachments?: XCodePromptAttachment[];
+    attachments?: ZCodePromptAttachment[];
     clientId?: string;
     clientLabel?: string;
     /** 定时任务派发经 host command queue 延后执行时也必须保留 automation 上下文。 */
     automationId?: string;
     ownerRunId?: TraceId;
-  }): Promise<XCodeEnqueueTaskCommandResult>;
+  }): Promise<ZCodeEnqueueTaskCommandResult>;
 
   promoteTaskCommand(params: {
     workspacePath: string;
@@ -351,8 +351,8 @@ export interface IXCodeTaskService {
     taskId: string;
     commandId: string;
     ownerRunId: TraceId;
-    clientMode: XCodeTaskClientMode;
-  }): Promise<XCodeEnqueueTaskCommandResult>;
+    clientMode: ZCodeTaskClientMode;
+  }): Promise<ZCodeEnqueueTaskCommandResult>;
 
   cancelTaskCommand(params: {
     workspacePath: string;
@@ -360,8 +360,8 @@ export interface IXCodeTaskService {
     taskId: string;
     commandId: string;
     ownerRunId?: TraceId;
-    clientMode: XCodeTaskClientMode;
-  }): Promise<XCodeCancelTaskCommandResult>;
+    clientMode: ZCodeTaskClientMode;
+  }): Promise<ZCodeCancelTaskCommandResult>;
 
   /** 停止当前正在进行的生成 */
   stopGeneration(params: {
@@ -381,7 +381,7 @@ export interface IXCodeTaskService {
     inputId?: string;
     instructions?: string;
     expectedRevision?: number;
-  }): Promise<XCodeSessionCompactResult>;
+  }): Promise<ZCodeSessionCompactResult>;
 
   /** 执行 agent 内建 /goal 命令；不要把 /goal 当普通正文 prompt 发送。 */
   goalSession(params: {
@@ -389,10 +389,10 @@ export interface IXCodeTaskService {
     workspacePath?: string;
     workspaceIdentity?: string;
     inputId?: string;
-    action: XCodeSessionGoalAction;
+    action: ZCodeSessionGoalAction;
     objective?: string;
     expectedRevision?: number;
-  }): Promise<XCodeSessionGoalResult>;
+  }): Promise<ZCodeSessionGoalResult>;
 
   /** 响应权限请求 */
   respondPermission(params: {
@@ -402,7 +402,7 @@ export interface IXCodeTaskService {
     runId?: TraceId;
     requestId: string;
     optionId: string;
-    response: XCodePermissionResponse;
+    response: ZCodePermissionResponse;
   }): Promise<boolean>;
 
   /** 响应用户问答请求（Elicitation） */
@@ -414,7 +414,7 @@ export interface IXCodeTaskService {
     requestId: string;
     action: "accept" | "decline" | "cancel";
     content?: Record<string, unknown>;
-    clientMode?: XCodeTaskClientMode;
+    clientMode?: ZCodeTaskClientMode;
   }): Promise<boolean>;
 
   /** 恢复已有 task（复用 workspace 级 agent 进程，如无则创建，再执行 session/load） */
@@ -423,21 +423,21 @@ export interface IXCodeTaskService {
     workspacePath: string;
     workspaceIdentity?: string;
     additionalDirectories?: string[];
-    mode?: XCodeTaskMode;
+    mode?: ZCodeTaskMode;
     model?: string;
     thoughtLevel?: string;
     /** 定时任务派发时恢复已有 targetTaskId，沿用 automation 工具面隔离。 */
     automationId?: string;
     /** 闲时续跑恢复 pre-会话时补写 off-peak 标记（新会话在 createTask 已盖章）。 */
     offPeakTaskId?: string;
-    mcpServers?: XCodeAgentMcpServer[];
-  }): Promise<XCodeTaskMeta>;
+    mcpServers?: ZCodeAgentMcpServer[];
+  }): Promise<ZCodeTaskMeta>;
 
   /** 列出 workspace 下所有已持久化的 task */
   listTasks(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-  }): Promise<XCodeTaskMeta[]>;
+  }): Promise<ZCodeTaskMeta[]>;
 
   /** 读取全局 pinned task id 列表，真相源为 tasks-index.sqlite */
   listPinnedTaskIds(): Promise<string[]>;
@@ -446,7 +446,7 @@ export interface IXCodeTaskService {
   listPinnedTasks(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-  }): Promise<XCodeTaskMeta[]>;
+  }): Promise<ZCodeTaskMeta[]>;
 
   /** 读取 workspace 下已删除 task id；供闲时绑定会话与 Bots tombstone 判断 session 是否已删除 */
   listDeletedTaskIds(params: {
@@ -474,13 +474,13 @@ export interface IXCodeTaskService {
    * 按显式 workspace scopes 查询 tasks-index，供全局搜索与 Controller 查询使用。
    * 项目侧栏的行集合来自 ProjectService；旧远端列表缓存及 Group/bootstrap 已退役。
    */
-  listTaskList(params: XCodeTaskListQuery): Promise<XCodeTaskListResult>;
+  listTaskList(params: ZCodeTaskListQuery): Promise<ZCodeTaskListResult>;
 
   /** 列出 workspace 下所有已归档 task */
   listArchivedTasks(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-  }): Promise<XCodeTaskMeta[]>;
+  }): Promise<ZCodeTaskMeta[]>;
 
   /** 读取单个 task 的本地持久化快照，用于历史任务首屏展示 */
   getTaskSnapshot(params: {
@@ -490,11 +490,11 @@ export interface IXCodeTaskService {
     messageLimit?: number;
     byteBudget?: number;
     toolLimit?: number;
-    clientMode?: XCodeTaskClientMode;
+    clientMode?: ZCodeTaskClientMode;
     resumeModelPolicy?: "task-index" | "ui-resolved-only";
     model?: string;
     thoughtLevel?: string;
-  }): Promise<XCodeTaskSnapshot | null>;
+  }): Promise<ZCodeTaskSnapshot | null>;
 
   /** 读取 task 快照并携带 ETag，支持 if-none-match 语义减少重复大包传输。 */
   getTaskSnapshotWithEtag(params: {
@@ -505,11 +505,11 @@ export interface IXCodeTaskService {
     ifNoneMatch?: string;
     byteBudget?: number;
     toolLimit?: number;
-    clientMode?: XCodeTaskClientMode;
+    clientMode?: ZCodeTaskClientMode;
     resumeModelPolicy?: "task-index" | "ui-resolved-only";
     model?: string;
     thoughtLevel?: string;
-  }): Promise<XCodeTaskSnapshotWithEtagResult>;
+  }): Promise<ZCodeTaskSnapshotWithEtagResult>;
 
   /** 按 bodyRef 读取被首屏预算裁剪的大消息完整正文。 */
   getTaskSnapshotBody(params: {
@@ -517,7 +517,7 @@ export interface IXCodeTaskService {
     workspacePath: string;
     workspaceIdentity?: string;
     refId: string;
-  }): Promise<XCodeTaskSnapshotBody | null>;
+  }): Promise<ZCodeTaskSnapshotBody | null>;
 
   /** 按 ref 读取被首屏预算裁剪的工具或文件变更完整字段。 */
   getTaskSnapshotRef(params: {
@@ -525,7 +525,7 @@ export interface IXCodeTaskService {
     workspacePath: string;
     workspaceIdentity?: string;
     refId: string;
-  }): Promise<XCodeTaskSnapshotRefContent | null>;
+  }): Promise<ZCodeTaskSnapshotRefContent | null>;
 
   /** 按 message + 下标范围补拉 tools 切片，用于远控首屏按条数裁剪后的增量加载。 */
   getTaskSnapshotToolCallsSlice(params: {
@@ -535,17 +535,17 @@ export interface IXCodeTaskService {
     messageIndex: number;
     startToolIndex: number;
     limit: number;
-  }): Promise<XCodeTaskSnapshotToolCallsSlice | null>;
+  }): Promise<ZCodeTaskSnapshotToolCallsSlice | null>;
 
   /** 读取单个 task 的轻量 meta（不包含 messages/fileChanges），用于标题/provider 等展示兜底 */
   getTaskMeta(params: {
     taskId: string;
     workspacePath: string;
     workspaceIdentity?: string;
-  }): Promise<XCodeTaskMeta | null>;
+  }): Promise<ZCodeTaskMeta | null>;
 
   /** 读取当前 active task 内存态的配置选项，不做 workspace 预热兜底 */
-  getTaskConfigOptions(params: { taskId: string }): Promise<XCodeConfigOption[]>;
+  getTaskConfigOptions(params: { taskId: string }): Promise<ZCodeConfigOption[]>;
 
   /** 读取绑定 Session 的原模型选择；不从候选菜单反推，不做有效解析或写入。 */
   getTaskModelSelection(params: { taskId: string }): Promise<ModelSelection | null>;
@@ -556,8 +556,8 @@ export interface IXCodeTaskService {
     workspacePath: string;
     workspaceIdentity?: string;
     turnIndex: number;
-    feedback: XCodeAssistantMessageFeedback | null;
-  }): Promise<XCodeSessionFile>;
+    feedback: ZCodeAssistantMessageFeedback | null;
+  }): Promise<ZCodeSessionFile>;
 
   /**
    * 补齐 task 已存在的 provider session，使其覆盖当前 canonical task 的完整对话边界。
@@ -567,9 +567,9 @@ export interface IXCodeTaskService {
     workspacePath: string;
     workspaceIdentity?: string;
     taskId: string;
-    provider: XCodeProvider;
+    provider: ZCodeProvider;
     validate?: boolean;
-  }): Promise<XCodeSyncTaskSessionBindingResult>;
+  }): Promise<ZCodeSyncTaskSessionBindingResult>;
 
   /**
    * 在同一个 task 内切换当前 active provider。
@@ -579,8 +579,8 @@ export interface IXCodeTaskService {
     workspacePath: string;
     workspaceIdentity?: string;
     taskId: string;
-    provider: XCodeProvider;
-  }): Promise<XCodeSwitchAgentResult>;
+    provider: ZCodeProvider;
+  }): Promise<ZCodeSwitchAgentResult>;
 
   /** 扫描可导入的 Claude 原生 session；可选按 workspace 过滤。 */
   scanImportableClaudeSessions(params: {
@@ -588,21 +588,21 @@ export interface IXCodeTaskService {
     workspaceIdentity?: string;
     modifiedSince?: number;
     limit?: number;
-  }): Promise<XCodeImportableSessionCandidate[]>;
+  }): Promise<ZCodeImportableSessionCandidate[]>;
 
   /** 导入选中的 Claude 原生 session，并反向生成最小 task snapshot；不传 workspacePath 时按原始 workspace 导入。 */
   importClaudeSessions(params: {
     workspacePath?: string;
     workspaceIdentity?: string;
     sessionIds: string[];
-  }): Promise<XCodeImportSessionsResult>;
+  }): Promise<ZCodeImportSessionsResult>;
 
   /** 扫描可导入的 ZCode 原生会话（只读 ~/.zcode 会话库）；与 Claude 迁移同为勾选式选择性导入。 */
   scanImportableZCodeSessions(params: {
     workspacePath?: string;
     modifiedSince?: number;
     limit?: number;
-  }): Promise<XCodeImportableSessionCandidate[]>;
+  }): Promise<ZCodeImportableSessionCandidate[]>;
 
   /** 启动会话导入后台任务：立即返回，进度/结果经 getZcodeImportStatus 轮询。 */
   importZCodeSessions(params: {
@@ -613,7 +613,7 @@ export interface IXCodeTaskService {
   getZcodeImportStatus(): Promise<JobSnapshot | null>;
 
   /** 切换 task 模式 */
-  setMode(params: { taskId: string; mode: XCodeTaskMode }): Promise<void>;
+  setMode(params: { taskId: string; mode: ZCodeTaskMode }): Promise<void>;
 
   /** 切换 configOption（模型、思考级别等），返回更新后的完整 configOptions 列表 */
   setConfigOption(params: {
@@ -621,14 +621,14 @@ export interface IXCodeTaskService {
     traceId: TraceId;
     configId: string;
     value: string;
-  }): Promise<XCodeConfigOption[]>;
+  }): Promise<ZCodeConfigOption[]>;
 
   /** 切换模型，返回服务端 authoritative configOptions */
   setModel(params: {
     taskId: string;
     traceId: TraceId;
     modelSelection: ModelSelection;
-  }): Promise<XCodeConfigOption[]>;
+  }): Promise<ZCodeConfigOption[]>;
 
   /** 定时任务派发专用：收敛模型、Think 和权限模式，并让 V4 conversation 投影同步更新。 */
   setAutomationSessionConfig(params: {
@@ -636,16 +636,16 @@ export interface IXCodeTaskService {
     traceId: TraceId;
     modelSelection: ModelSelection;
     thoughtLevel?: string;
-    mode?: XCodeTaskMode;
-  }): Promise<XCodeConfigOption[]>;
+    mode?: ZCodeTaskMode;
+  }): Promise<ZCodeConfigOption[]>;
 
   /** 1010 新增：获取 workspace + provider 对应的主配置文件路径。 */
   getWorkspaceProviderConfigFile(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-    provider?: XCodeProvider;
+    provider?: ZCodeProvider;
   }): Promise<{
-    provider: XCodeProvider;
+    provider: ZCodeProvider;
     path: string;
     exists: boolean;
   }>;
@@ -656,7 +656,7 @@ export interface IXCodeTaskService {
     workspacePath: string;
     workspaceIdentity?: string;
   }): Promise<{
-    provider: XCodeProvider | null;
+    provider: ZCodeProvider | null;
     path: string | null;
     exists: boolean;
   }>;
@@ -669,14 +669,14 @@ export interface IXCodeTaskService {
     taskId: string;
     /** 最多返回的调用条数（按时间倒序保留最近 N 条），默认 200。 */
     limit?: number;
-  }): Promise<XCodeModelTrajectory>;
+  }): Promise<ZCodeModelTrajectory>;
 
   /** 从 agent usage 数据库读取某个 task/session 的累计模型 token 用量。 */
   getTaskTokenUsage(params: {
     taskId: string;
     workspacePath: string;
     workspaceIdentity?: string;
-  }): Promise<XCodeTaskTokenUsageResult>;
+  }): Promise<ZCodeTaskTokenUsageResult>;
 
   /** 获取 task 持久化快照文件路径（统一为 {taskId}.json，软删除例外为 .deleted.json） */
   getTaskSessionFilePath(params: {
@@ -696,7 +696,7 @@ export interface IXCodeTaskService {
   restartWorkspaceProcess(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-    provider?: XCodeProvider;
+    provider?: ZCodeProvider;
     resumeTaskId?: string;
     bumpRuntimeEpoch?: boolean;
   }): Promise<void>;
@@ -733,7 +733,7 @@ export interface IXCodeTaskService {
     workspacePath: string;
     workspaceIdentity?: string;
     taskIds: string[];
-  }): Promise<XCodeArchivedTaskDeletionResult>;
+  }): Promise<ZCodeArchivedTaskDeletionResult>;
 
   /** 重命名已持久化的 task */
   renameTask(params: {
@@ -741,7 +741,7 @@ export interface IXCodeTaskService {
     workspacePath: string;
     workspaceIdentity?: string;
     title: string;
-  }): Promise<XCodeTaskMeta>;
+  }): Promise<ZCodeTaskMeta>;
 
   /** 更新 task 置顶状态 */
   setTaskPinned(params: {
@@ -749,7 +749,7 @@ export interface IXCodeTaskService {
     workspacePath: string;
     workspaceIdentity?: string;
     pinned: boolean;
-  }): Promise<XCodeTaskMeta>;
+  }): Promise<ZCodeTaskMeta>;
 
   /** 更新 task 未读状态 */
   setTaskUnread(params: {
@@ -759,46 +759,46 @@ export interface IXCodeTaskService {
     unread: boolean;
     /** 仅用于已读 compare-and-clear；缺省时保持既有无条件写入语义。 */
     expectedUnreadAt?: number;
-  }): Promise<XCodeTaskMeta>;
+  }): Promise<ZCodeTaskMeta>;
 
   /** 归档 task，使其从默认任务列表中隐藏 */
   archiveTask(params: {
     taskId: string;
     workspacePath: string;
     workspaceIdentity?: string;
-  }): Promise<XCodeTaskMeta>;
+  }): Promise<ZCodeTaskMeta>;
 
   /** 取消归档 task，使其重新回到默认任务列表 */
   unarchiveTask(params: {
     taskId: string;
     workspacePath: string;
     workspaceIdentity?: string;
-  }): Promise<XCodeTaskMeta>;
+  }): Promise<ZCodeTaskMeta>;
 
   /** 基于 source task 的会话配置新建一个空白分支，用于重新编辑某条用户输入。 */
   branchTaskFromPrompt(params: {
     workspacePath: string;
     workspaceIdentity?: string;
     sourceTaskId: string;
-  }): Promise<XCodeTaskCreateResult>;
+  }): Promise<ZCodeTaskCreateResult>;
 
   // ---- 流式事件 ----
 
   /** 订阅指定 task 的流式更新（ProxyChannel 动态事件） */
-  onDynamicStreamEvent(taskId: string): Event<XCodeStreamEvent>;
+  onDynamicStreamEvent(taskId: string): Event<ZCodeStreamEvent>;
 
   /**
    * 订阅指定 task 的终态结果（succeeded / failed / stopped）。
    * 基于 task index 的常开 session 订阅，不依赖 renderer 是否正在观看该 task，
    * 因此后台派发（如定时任务）也能可靠拿到终态。用于回写 automation_runs.outcome。
    */
-  onDynamicTaskTerminalOutcome(taskId: string): Event<XCodeTaskTerminalOutcome>;
+  onDynamicTaskTerminalOutcome(taskId: string): Event<ZCodeTaskTerminalOutcome>;
 
   /**
    * 订阅指定 task 的输入就绪边界。sendPrompt 只返回远端 ACK，不能用它判断 Agent 已空闲；
    * Host runtime 回收必须等本事件，避免关闭 workspace 时中断仍在运行的 Agent。
    */
-  onDynamicTaskReady(taskId: string): Event<XCodeTaskReadyOutcome>;
+  onDynamicTaskReady(taskId: string): Event<ZCodeTaskReadyOutcome>;
 
   /** 订阅指定 workspace + task 的流式更新，用于避免同 taskId 跨 workspace 串流。 */
   onDynamicTaskEvent(params: {
@@ -807,7 +807,7 @@ export interface IXCodeTaskService {
     taskId: string;
     clientId?: string;
     deliveryKind?: "continuous" | "bot-channel-continuous" | "replayable" | "mixed";
-  }): Event<XCodeStreamEvent>;
+  }): Event<ZCodeStreamEvent>;
 
   /**
    * 订阅 workspace 级别的异步通知（如预热阶段 Agent 推送的 slash commands、configOptions）。
@@ -815,13 +815,13 @@ export interface IXCodeTaskService {
    * 命名遵循 ProxyChannel 的 onDynamic 前缀约定，使 RPC 代理自动识别为动态事件。
    */
   onDynamicWorkspaceEvent(
-    workspace: string | XCodeWorkspaceEventSubscriptionParams,
-  ): Event<XCodeWorkspaceEvent>;
+    workspace: string | ZCodeWorkspaceEventSubscriptionParams,
+  ): Event<ZCodeWorkspaceEvent>;
 
   /** 全局错误事件 */
-  onError: Event<XCodeError>;
+  onError: Event<ZCodeError>;
 }
 
-export const IXCodeTaskService = createServiceDescriptor<IXCodeTaskService>(
-  ServiceChannels.XCodeTask,
+export const IZCodeTaskService = createServiceDescriptor<IZCodeTaskService>(
+  ServiceChannels.ZCodeTask,
 );

@@ -5,7 +5,7 @@ import type { Locale } from "@zcode/shared";
 import type { ConversationRow } from "@zcode/shared/zcode-protocol-v4";
 
 import type { MessageFileLinkTarget } from "@/components/ai-elements/message.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { CodeViewerSource } from "@/lib/codeViewer.js";
 import type { CodePreviewSettings } from "@/lib/codePreviewSettings.js";
 import type { Theme } from "@/useTheme.js";
@@ -59,7 +59,7 @@ export const ConversationShareImportNotice = memo(function ConversationShareImpo
   onOpenFileLink?: (target: MessageFileLinkTarget) => void;
   onOpenCodeViewer?: (source: CodeViewerSource) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const label = intl.formatMessage({ id: "conversationShare.import.dividerLabel" });
   return (
     <div data-conversation-share-import-notice="true" className="flex w-full flex-col">

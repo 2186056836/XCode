@@ -26,14 +26,14 @@ import {
   toZhOrEnLocale,
   ZAI_PROVIDER_ID,
 } from "@zcode/shared";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { Button } from "@/components/ui/button.js";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
 import { useModelProviders } from "@/hooks/useModelProviders.js";
 import { resolveEntitledAccountProviderAccess } from "@/lib/accountProviderAccess.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useServices } from "@/hooks/useServices.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { logger } from "@/logger.js";
 import {
   PRESET_PROVIDER_SPECS,
@@ -252,7 +252,7 @@ export function ModelProviderSection({
   pendingModelProviderTarget?: SettingsModelProviderTarget;
   onConsumePendingModelProviderTarget?: () => void;
 } = {}) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const confirmDialog = useConfirmDialog();
   const platform = usePlatform();
   const { modelSelectionService, oauthService } = useServices();
@@ -396,10 +396,10 @@ export function ModelProviderSection({
   const codingPlanStatusSyncAttemptsRef = useRef(
     new Map<string, "inFlight" | "succeeded" | "failed">(),
   );
-  const requestLoginEntry = useXCodeStore((state) => state.requestLoginEntry);
-  const setUser = useXCodeStore((state) => state.setUser);
-  const oauthError = useXCodeStore((state) => state.oauthError);
-  const setOAuthError = useXCodeStore((state) => state.setOAuthError);
+  const requestLoginEntry = useZCodeStore((state) => state.requestLoginEntry);
+  const setUser = useZCodeStore((state) => state.setUser);
+  const oauthError = useZCodeStore((state) => state.oauthError);
+  const setOAuthError = useZCodeStore((state) => state.setOAuthError);
   const {
     settings: sharedSettings,
     loading: sharedSettingsLoading,

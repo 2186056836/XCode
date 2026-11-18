@@ -1,10 +1,10 @@
 /* eslint-disable max-lines -- workspace 行任务列表需要把分片查询、缓存展示和跨端 membership 订阅保持在同一 hook 内，拆分会增加缓存一致性风险。 */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { IServiceAccessor } from "@zcode/services";
-import type { XCodeWorkspaceEvent } from "@zcode/shared";
+import type { ZCodeWorkspaceEvent } from "@zcode/shared";
 import { logger } from "@/logger.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
-import { useXCodeSessionStore, selectWorkspaceXCodeState } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore, selectWorkspaceZCodeState } from "@/store/zcodeSessionStore.js";
 import type { WorkspaceTabState } from "@/store/tabStore.js";
 import {
   buildTaskEntityKey,
@@ -33,7 +33,7 @@ import {
 } from "@/hooks/workspaceTaskListRefreshSignatures.js";
 import { shouldRefetchTaskListMembershipForWorkspaceEvent } from "@/lib/taskListRefreshPolicy.js";
 import { syncTaskUnreadFromStatusWorkspaceEvent } from "@/lib/taskStatusUnreadSync.js";
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 import { fetchTaskListMembershipSetsForEndpointsCached } from "@/lib/taskListMembershipSets.js";
 import { buildTaskListResult } from "@/v4/buildTaskListResultFromSessions.js";
 import {
@@ -68,7 +68,7 @@ interface WorkspaceTaskListEndpointShard {
 interface WorkspaceTaskListGroupResult {
   workspacePath: string;
   workspaceIdentity?: string;
-  items: XCodeTaskMeta[];
+  items: ZCodeTaskMeta[];
   total: number;
   hasMore: boolean;
   unreadTaskKeys: string[];
@@ -101,7 +101,7 @@ function updateBlockingLoadingState(
 async function buildWorkspaceGroupsFromSessions(params: {
   service: IServiceAccessor["zcodeTaskService"];
   scopes: Array<{ workspacePath: string; workspaceIdentity?: string }>;
-  sessions: XCodeTaskMeta[];
+  sessions: ZCodeTaskMeta[];
   sortBy: "created" | "updated";
   /** 差量更新：membership 只随 membershipVersion 变化，按版本缓存避免每次内容帧都重拉。 */
   membershipCacheKey: string;
@@ -162,7 +162,7 @@ async function buildWorkspaceGroupsFromSessions(params: {
  * 依赖 sessions-index 聚合层的引用稳定化：条目引用不变 = 内容等价。
  * 前后两轮 items 里引用有出入的条目所属的 workspace 才算"有变化"。
  */
-function diffChangedWorkspaceKeys(previous: XCodeTaskMeta[], next: XCodeTaskMeta[]): Set<string> {
+function diffChangedWorkspaceKeys(previous: ZCodeTaskMeta[], next: ZCodeTaskMeta[]): Set<string> {
   const changed = new Set<string>();
   const previousSet = new Set(previous);
   const nextSet = new Set(next);
@@ -226,11 +226,11 @@ export function useWorkspaceTaskLists(params: {
   const nextRequestIdRef = useRef(0);
   const rerunRequestedRef = useRef(false);
   const groupCacheRef = useRef<Map<string, WorkspaceTaskListGroup>>(new Map());
-  const taskListVersionSignature = useXCodeSessionStore((state) =>
+  const taskListVersionSignature = useZCodeSessionStore((state) =>
     buildWorkspaceTaskListVersionSignature(
       params.workspaceTabs.map((tab) => {
         const workspaceKey = buildTaskWorkspaceKey(tab.workspacePath, tab.workspaceIdentity);
-        const workspaceState = selectWorkspaceXCodeState(
+        const workspaceState = selectWorkspaceZCodeState(
           state,
           tab.workspacePath,
           tab.workspaceIdentity,
@@ -623,7 +623,7 @@ export function useWorkspaceTaskLists(params: {
   // 防环：cache 标脏会引发 re-render，若父组件每次渲染重建 workspaceTabs 数组，
   // scope 数组身份会跟着换新；这里只认「items 引用 / 归属版本」的真实变化，避免 setState 死循环。
   const lastSessionsRefreshRef = useRef<{
-    items: XCodeTaskMeta[];
+    items: ZCodeTaskMeta[];
     membershipVersion: number;
   } | null>(null);
   useEffect(() => {
@@ -678,7 +678,7 @@ export function useWorkspaceTaskLists(params: {
           ...(config.scope.workspaceIdentity
             ? { workspaceIdentity: config.scope.workspaceIdentity }
             : {}),
-        })((event: XCodeWorkspaceEvent) => {
+        })((event: ZCodeWorkspaceEvent) => {
           if (event.type !== "workspace_task_list_changed") {
             return;
           }

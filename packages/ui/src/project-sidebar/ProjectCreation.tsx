@@ -1,7 +1,7 @@
 import { captureV4ComposerDraftHandoff } from "@/v4/composer/composerDraftWorkspaceTransfer.js";
 import { useComposerClientNamespace } from "@/hooks/useServices.js";
 import { useOptionalTabStore } from "@/store/TabStoreProvider.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import { useEffect, useRef, useState } from "react";
 import { useOptionalBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { useSourceServerManagementSnapshot } from "@/hooks/useSourceServerManagementSnapshot.js";
@@ -71,7 +71,7 @@ export function ProjectCreation({
   const currentScope = useRef({ workspaceKey, activeTabId });
   currentScope.current = { workspaceKey, activeTabId };
   const [originDraft] = useState(() => {
-    const { activeTaskId, draftFocusVersion, draftProjectId } = useXCodeSessionStore
+    const { activeTaskId, draftFocusVersion, draftProjectId } = useZCodeSessionStore
       .getState()
       .getWorkspaceState(workspacePath, workspaceIdentity);
     return { workspaceKey, activeTaskId, draftFocusVersion, draftProjectId };
@@ -154,7 +154,7 @@ export function ProjectCreation({
       sidebar?.preferences.prepend(project);
     }
     await onSaved();
-    const draft = useXCodeSessionStore
+    const draft = useZCodeSessionStore
       .getState()
       .getWorkspaceState(workspacePath, workspaceIdentity);
     // 创建原来只刷新列表，草稿仍绑定旧项目；复用项目选择入口，并拒绝保存期间已失效的草稿。

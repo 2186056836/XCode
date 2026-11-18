@@ -9,7 +9,7 @@ import {
   getFeedbackSubmissionJobsSnapshot,
 } from "@/feedback/feedbackSubmissionJob.js";
 import { TabStoreProvider } from "@/store/TabStoreProvider.js";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 
 // 仅用于隔离窗口：真实表单/helper/job 调用内存服务，不创建真实工单或读取本机日志。
 const calls = { create: 0, prepare: 0, upload: [], cleanup: 0 };
@@ -76,7 +76,7 @@ function FixtureContent({ submissionJobId }) {
 function mount(submissionJobId) {
   root.render(
     createElement(
-      XCodeIntlProvider,
+      ZCodeIntlProvider,
       { initialLocale: "en-US" },
       createElement(
         TabStoreProvider,

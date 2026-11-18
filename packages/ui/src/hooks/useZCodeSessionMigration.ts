@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { XCodeImportSessionsResult, XCodeImportableSessionCandidate } from "@zcode/shared";
+import type { ZCodeImportSessionsResult, ZCodeImportableSessionCandidate } from "@zcode/shared";
 import { logger } from "@/logger.js";
-import { useXCodeTaskService } from "@/hooks/useXCodeTaskService.js";
+import { useZCodeTaskService } from "@/hooks/useZCodeTaskService.js";
 import { useTabStoreApi } from "@/store/TabStoreProvider.js";
 import { invalidateTaskQueryCacheByScopes } from "@/store/taskQueryCacheStore.js";
 import type {
@@ -28,7 +28,7 @@ export interface ZcodeImportJobSnapshot {
   finishStatus?: "success" | "error";
   progress?: number;
   total?: number;
-  result?: XCodeImportSessionsResult;
+  result?: ZCodeImportSessionsResult;
   error?: string;
 }
 
@@ -36,9 +36,9 @@ interface PersistedState {
   workspaceFilterMode: ClaudeMigrationWorkspaceFilterMode;
   range: ClaudeMigrationRange;
   limitInput: string;
-  candidates: XCodeImportableSessionCandidate[];
+  candidates: ZCodeImportableSessionCandidate[];
   selectedSessionIds: string[];
-  lastImportResult: XCodeImportSessionsResult | null;
+  lastImportResult: ZCodeImportSessionsResult | null;
 }
 
 function loadPersistedState(): PersistedState | null {
@@ -73,13 +73,13 @@ function resolveScanLimit(limitInput: string): number | undefined {
   return Math.min(parsed, MAX_SCAN_LIMIT);
 }
 
-// Host dist 类型仍按旧 IXCodeTaskService 导出；新增的 ZCode 选择性导入方法用局部断言补齐。
-type ZCodeImportCapableTaskService = ReturnType<typeof useXCodeTaskService> & {
+// Host dist 类型仍按旧 IZCodeTaskService 导出；新增的 ZCode 选择性导入方法用局部断言补齐。
+type ZCodeImportCapableTaskService = ReturnType<typeof useZCodeTaskService> & {
   scanImportableZCodeSessions(params: {
     workspacePath?: string;
     modifiedSince?: number;
     limit?: number;
-  }): Promise<XCodeImportableSessionCandidate[]>;
+  }): Promise<ZCodeImportableSessionCandidate[]>;
   importZCodeSessions(params: { sessionIds: string[] }): Promise<{ started: boolean }>;
   getZcodeImportStatus(): Promise<ZcodeImportJobSnapshot | null>;
 };
@@ -97,7 +97,7 @@ export function useZCodeSessionMigration(params: {
   workspaceIdentity?: string;
   isDesktop?: boolean;
 }) {
-  const rawTaskService = useXCodeTaskService(
+  const rawTaskService = useZCodeTaskService(
     params.workspacePath ?? undefined,
     undefined,
     params.workspaceIdentity,
@@ -113,13 +113,13 @@ export function useZCodeSessionMigration(params: {
     );
   const [range, setRange] = useState<ClaudeMigrationRange>(initial?.range ?? "30d");
   const [limitInput, setLimitInput] = useState(initial?.limitInput ?? String(DEFAULT_LIMIT));
-  const [candidates, setCandidates] = useState<XCodeImportableSessionCandidate[]>(
+  const [candidates, setCandidates] = useState<ZCodeImportableSessionCandidate[]>(
     initial?.candidates ?? [],
   );
   const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>(
     initial?.selectedSessionIds ?? [],
   );
-  const [lastImportResult, setLastImportResult] = useState<XCodeImportSessionsResult | null>(
+  const [lastImportResult, setLastImportResult] = useState<ZCodeImportSessionsResult | null>(
     initial?.lastImportResult ?? null,
   );
   const [scanError, setScanError] = useState<string | null>(null);
@@ -171,7 +171,7 @@ export function useZCodeSessionMigration(params: {
 
   // 处理导入结果（轮询到 finished 时调用）：失效缓存、让新会话进侧栏、清已处理勾选。
   const applyImportResult = useCallback(
-    (result: XCodeImportSessionsResult) => {
+    (result: ZCodeImportSessionsResult) => {
       setLastImportResult(result);
       const handledSessionIds = new Set([
         ...result.imported.map((item) => item.sessionId),
@@ -232,7 +232,7 @@ export function useZCodeSessionMigration(params: {
           pollTimerRef.current = null;
         }
         if (snap.result) {
-          applyImportResult(snap.result as XCodeImportSessionsResult);
+          applyImportResult(snap.result as ZCodeImportSessionsResult);
         } else if (snap.error) {
           setImportError(snap.error);
         }

@@ -12,7 +12,7 @@ import {
 } from "@zcode/server/remote/deployShared.js";
 import type { RemoteAssetInstaller } from "@zcode/server/remote/remoteAssetInstaller.js";
 import { buildWriteLiteralFileCommand } from "@zcode/server/remote/posixShell.js";
-import { deployDevelopmentXCodeAgentRuntime } from "@zcode/server/remote/zcodeAgentDevDeploy.js";
+import { deployDevelopmentZCodeAgentRuntime } from "@zcode/server/remote/zcodeAgentDevDeploy.js";
 import {
   buildRemoteAgentBundleWrapper,
   isRemoteAgentBundleWrapperCurrent,
@@ -36,14 +36,14 @@ import {
 
 const REMOTE_AGENT_RUNTIME_BASE = `${REMOTE_BASE}/agents`;
 
-export interface DeployXCodeAgentRuntimeOptions extends RemoteAssetDeployOptions {
+export interface DeployZCodeAgentRuntimeOptions extends RemoteAssetDeployOptions {
   platformArch: string;
   installer: RemoteAssetInstaller;
   selectedResourcePackageIds?: RemoteResourcePackageId[];
   force?: boolean;
 }
 
-function isSelectedXCodeAgentComponent(
+function isSelectedZCodeAgentComponent(
   componentId: string,
   selectedResourcePackageIds: readonly RemoteResourcePackageId[] | undefined,
 ): boolean {
@@ -53,7 +53,7 @@ function isSelectedXCodeAgentComponent(
   );
 }
 
-async function shouldSkipXCodeAgentDeploy(params: {
+async function shouldSkipZCodeAgentDeploy(params: {
   backend: IRemoteBackend;
   remoteBinaryPath: string;
   remoteBundlePath: string;
@@ -149,16 +149,16 @@ async function findMissingRemoteOfficialPluginAssetPaths(
  *
  * 生产态只用 manifest SHA 判断制品是否变化；语义版本不参与跳过决策。
  */
-export async function deployXCodeAgentRuntime(
+export async function deployZCodeAgentRuntime(
   backend: IRemoteBackend,
   env: RemoteEnvironment,
-  options: DeployXCodeAgentRuntimeOptions,
+  options: DeployZCodeAgentRuntimeOptions,
   loggers: DeployLoggers,
 ): Promise<void> {
   const provider = ZCODE_AGENT_PROVIDER;
   const runtime = ZCODE_AGENT_RUNTIME;
   const componentId = provider;
-  if (!isSelectedXCodeAgentComponent(componentId, options.selectedResourcePackageIds)) {
+  if (!isSelectedZCodeAgentComponent(componentId, options.selectedResourcePackageIds)) {
     loggers.log(`[zcode-agent-deploy] ${provider}: 未选择资源包 ${componentId}，跳过检查和部署`);
     return;
   }
@@ -182,7 +182,7 @@ export async function deployXCodeAgentRuntime(
   );
 
   if (
-    await deployDevelopmentXCodeAgentRuntime(
+    await deployDevelopmentZCodeAgentRuntime(
       backend,
       {
         runtimeVersion: runtime.version,
@@ -209,7 +209,7 @@ export async function deployXCodeAgentRuntime(
   }
 
   if (
-    await shouldSkipXCodeAgentDeploy({
+    await shouldSkipZCodeAgentDeploy({
       backend,
       remoteBinaryPath,
       remoteBundlePath,

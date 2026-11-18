@@ -86,7 +86,7 @@ MCP 的 in-band `isError: true` 在 CLI 侧算**成功执行**：`turn-tools.ts:
 ## 4. 协议契约：tool error content 里的 `error_code`
 
 > 本节已按服务端 2026-08-20 的实现修正。设计初稿曾假设标识放在 `CallToolResult._meta` 的
-> `com.xcode/mcp-unavailable` 键上；服务端最终选择把它渲染进 **tool error content 的 JSON 文本**，
+> `com.zcode/mcp-unavailable` 键上；服务端最终选择把它渲染进 **tool error content 的 JSON 文本**，
 > 客户端按后者实现。
 
 ### 4.1 形态

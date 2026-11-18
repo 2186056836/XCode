@@ -2,7 +2,7 @@ import { PenIcon } from "lucide-react";
 import { cn } from "@/components/lib/utils.js";
 import type { TimelineFill, TimelineHole } from "@/components/workflow-timeline/timeline-holes.js";
 import { workflowRunQuestionWaitedLabel } from "@/app-shell/workflowRunQuestions.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /**
  * 侧板脊线上的留白零件（docs/dynamic-workflow/presentation.md「Holes on the timeline」的「The pane」）。
@@ -42,7 +42,7 @@ export function SpineHoleLamp({
 
 /** 等待中的留白的节体（docs/dynamic-workflow/presentation.md「The pane」）：等了多久 + 「等待主代理补全」+ 主代理收到的提示语。 */
 export function HoleWaitingBody({ hole, now }: { hole: TimelineHole; now: number }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const waited = workflowRunQuestionWaitedLabel(hole.since, now, (descriptor, values) =>
     intl.formatMessage(descriptor, values),
   );
@@ -87,7 +87,7 @@ export function FillHeadingRow({
   fresh?: boolean;
   onSelect?: () => void;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   // 时间按界面语言格式化（不传 locale 会落到系统语言，例如中文系统 + 日语界面显示「下午3:00」）
   const time =
     fill.filledAt === undefined ? undefined : new Date(fill.filledAt).toLocaleTimeString(locale);

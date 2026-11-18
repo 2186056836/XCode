@@ -1,15 +1,15 @@
 import { Check, Download, LoaderCircle, TriangleAlert } from "lucide-react";
 import type {
-  XCodeImportSessionsResult,
-  XCodeImportableSessionCandidate,
-  XCodeImportedSessionSkippedItem,
+  ZCodeImportSessionsResult,
+  ZCodeImportableSessionCandidate,
+  ZCodeImportedSessionSkippedItem,
 } from "@zcode/shared";
 import type { ClaudeSessionMigrationSupportState } from "@/hooks/useClaudeSessionMigration.js";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.js";
 import { Badge } from "@/components/ui/badge.js";
 import { Button } from "@/components/ui/button.js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { cn } from "@/components/lib/utils.js";
 
 const KNOWN_REASON_MESSAGE_IDS: Record<string, string> = {
@@ -24,7 +24,7 @@ const KNOWN_REASON_MESSAGE_IDS: Record<string, string> = {
 };
 
 function getKnownReasonLabel(
-  intl: ReturnType<typeof useXCodeIntl>["intl"],
+  intl: ReturnType<typeof useZCodeIntl>["intl"],
   reason: string,
 ): string {
   const messageId = KNOWN_REASON_MESSAGE_IDS[reason];
@@ -40,9 +40,9 @@ function ImportIssuesList({
   items,
 }: {
   title: string;
-  items: XCodeImportedSessionSkippedItem[];
+  items: ZCodeImportedSessionSkippedItem[];
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   if (items.length === 0) {
     return null;
@@ -95,11 +95,11 @@ export function MigrationCandidatesCard({
   onImportSelected,
 }: {
   supportState: ClaudeSessionMigrationSupportState;
-  candidates: XCodeImportableSessionCandidate[];
+  candidates: ZCodeImportableSessionCandidate[];
   selectedSessionIds: string[];
   selectedCount: number;
   importError: string | null;
-  lastImportResult: XCodeImportSessionsResult | null;
+  lastImportResult: ZCodeImportSessionsResult | null;
   isImporting: boolean;
   dateTimeFormatter: Intl.DateTimeFormat;
   titleId?: string;
@@ -109,7 +109,7 @@ export function MigrationCandidatesCard({
   onClearSelection: () => void;
   onImportSelected: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <Card className="border border-border bg-card py-0 shadow-none">

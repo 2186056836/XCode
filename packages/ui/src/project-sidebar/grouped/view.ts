@@ -1,13 +1,13 @@
-import type { ProjectTask as XCodeTaskMeta } from "@/project-sidebar/contract.js";
+import type { ProjectTask as ZCodeTaskMeta } from "@/project-sidebar/contract.js";
 import type {
-  XCodeGroupedTaskView,
-  XCodeGroupedTaskViewNode,
+  ZCodeGroupedTaskView,
+  ZCodeGroupedTaskViewNode,
   GroupedDraftTaskPlacement,
 } from "@/project-sidebar/grouped/types.js";
 
 import { taskKey } from "@/project-sidebar/grouped/ids.js";
 
-function cloneView(view: XCodeGroupedTaskView): XCodeGroupedTaskView {
+function cloneView(view: ZCodeGroupedTaskView): ZCodeGroupedTaskView {
   return {
     nodes: view.nodes.map((node) =>
       node.type === "task" ? { ...node } : { ...node, tasks: [...node.tasks] },
@@ -15,22 +15,22 @@ function cloneView(view: XCodeGroupedTaskView): XCodeGroupedTaskView {
   };
 }
 
-function cloneNodes(view: XCodeGroupedTaskView): XCodeGroupedTaskViewNode[] {
+function cloneNodes(view: ZCodeGroupedTaskView): ZCodeGroupedTaskViewNode[] {
   return [...view.nodes];
 }
 
 function cloneGroupNode(
-  node: Extract<XCodeGroupedTaskViewNode, { type: "group" }>,
-): Extract<XCodeGroupedTaskViewNode, { type: "group" }> {
+  node: Extract<ZCodeGroupedTaskViewNode, { type: "group" }>,
+): Extract<ZCodeGroupedTaskViewNode, { type: "group" }> {
   return { ...node, tasks: [...node.tasks] };
 }
 
 function removeTaskFromView(
-  view: XCodeGroupedTaskView,
+  view: ZCodeGroupedTaskView,
   targetTaskKey: string,
 ): {
-  nextView: XCodeGroupedTaskView;
-  task: XCodeTaskMeta | null;
+  nextView: ZCodeGroupedTaskView;
+  task: ZCodeTaskMeta | null;
 } {
   const nodes = cloneNodes(view);
   for (let index = 0; index < nodes.length; index += 1) {
@@ -56,11 +56,11 @@ function removeTaskFromView(
 }
 
 function insertTaskIntoGroup(
-  view: XCodeGroupedTaskView,
-  task: XCodeTaskMeta,
+  view: ZCodeGroupedTaskView,
+  task: ZCodeTaskMeta,
   groupId: string,
   beforeTaskKey: string | null,
-): XCodeGroupedTaskView {
+): ZCodeGroupedTaskView {
   const nodes = cloneNodes(view);
   const groupIndex = nodes.findIndex((node) => node.type === "group" && node.group.id === groupId);
   const groupNode = nodes[groupIndex];
@@ -78,9 +78,9 @@ function insertTaskIntoGroup(
 }
 
 function removeTaskFromGroupedView(
-  view: XCodeGroupedTaskView,
+  view: ZCodeGroupedTaskView,
   targetTaskKey: string,
-): XCodeGroupedTaskView {
+): ZCodeGroupedTaskView {
   const nextView = cloneView(view);
   for (const node of nextView.nodes) {
     if (node.type !== "group") {
@@ -103,15 +103,15 @@ function removeTaskFromGroupedView(
 }
 
 function filterGroupedViewByTaskKeys(
-  view: XCodeGroupedTaskView,
+  view: ZCodeGroupedTaskView,
   hiddenTaskKeys: ReadonlySet<string>,
-): XCodeGroupedTaskView {
+): ZCodeGroupedTaskView {
   if (hiddenTaskKeys.size === 0) {
     return view;
   }
 
   let changed = false;
-  const nodes: XCodeGroupedTaskView["nodes"] = [];
+  const nodes: ZCodeGroupedTaskView["nodes"] = [];
   for (const node of view.nodes) {
     if (node.type === "task") {
       if (!hiddenTaskKeys.has(taskKey(node.task))) {
@@ -135,9 +135,9 @@ function filterGroupedViewByTaskKeys(
 }
 
 function findTaskInGroupedView(
-  view: XCodeGroupedTaskView,
+  view: ZCodeGroupedTaskView,
   targetTaskKey: string,
-): XCodeTaskMeta | null {
+): ZCodeTaskMeta | null {
   for (const node of view.nodes) {
     if (node.type === "task" && taskKey(node.task) === targetTaskKey) {
       return node.task;
@@ -153,9 +153,9 @@ function findTaskInGroupedView(
 }
 
 function replaceTaskInGroupedView(
-  view: XCodeGroupedTaskView,
-  nextTask: XCodeTaskMeta,
-): XCodeGroupedTaskView {
+  view: ZCodeGroupedTaskView,
+  nextTask: ZCodeTaskMeta,
+): ZCodeGroupedTaskView {
   const targetTaskKey = taskKey(nextTask);
   return {
     nodes: view.nodes.map((node) => {
@@ -170,7 +170,7 @@ function replaceTaskInGroupedView(
   };
 }
 
-function getGroupedTaskGroupIds(view: XCodeGroupedTaskView): string[] {
+function getGroupedTaskGroupIds(view: ZCodeGroupedTaskView): string[] {
   return view.nodes.flatMap((node) => (node.type === "group" ? [node.group.id] : []));
 }
 
@@ -189,7 +189,7 @@ function pruneCollapsedGroupedTaskGroupIds(
   return new Set([...collapsedGroupIds].filter((groupId) => knownGroupIds.has(groupId)));
 }
 
-function getTaskGroupIdInView(view: XCodeGroupedTaskView, targetTaskKey: string): string | null {
+function getTaskGroupIdInView(view: ZCodeGroupedTaskView, targetTaskKey: string): string | null {
   for (const node of view.nodes) {
     if (node.type !== "group") {
       continue;
@@ -205,29 +205,29 @@ type GroupedTaskLocation =
   | {
       parent: "root";
       nodeIndex: number;
-      task: XCodeTaskMeta;
+      task: ZCodeTaskMeta;
     }
   | {
       parent: "group";
       groupId: string;
       nodeIndex: number;
       taskIndex: number;
-      task: XCodeTaskMeta;
+      task: ZCodeTaskMeta;
     };
 
 type GroupedTaskInsertPosition = "before" | "after";
 
-function findTopLevelTaskIndex(view: XCodeGroupedTaskView, targetTaskKey: string): number {
+function findTopLevelTaskIndex(view: ZCodeGroupedTaskView, targetTaskKey: string): number {
   return view.nodes.findIndex(
     (node) => node.type === "task" && taskKey(node.task) === targetTaskKey,
   );
 }
 
-function findGroupIndex(view: XCodeGroupedTaskView, groupId: string): number {
+function findGroupIndex(view: ZCodeGroupedTaskView, groupId: string): number {
   return view.nodes.findIndex((node) => node.type === "group" && node.group.id === groupId);
 }
 
-function findGroupIdByTaskKey(view: XCodeGroupedTaskView, targetTaskKey: string): string | null {
+function findGroupIdByTaskKey(view: ZCodeGroupedTaskView, targetTaskKey: string): string | null {
   for (const node of view.nodes) {
     if (node.type !== "group") {
       continue;
@@ -240,7 +240,7 @@ function findGroupIdByTaskKey(view: XCodeGroupedTaskView, targetTaskKey: string)
 }
 
 function findTaskLocation(
-  view: XCodeGroupedTaskView,
+  view: ZCodeGroupedTaskView,
   targetTaskKey: string,
 ): GroupedTaskLocation | null {
   for (let nodeIndex = 0; nodeIndex < view.nodes.length; nodeIndex += 1) {
@@ -272,7 +272,7 @@ function findTaskLocation(
 }
 
 function resolveGroupedDraftTaskPlacementForTask(
-  view: XCodeGroupedTaskView,
+  view: ZCodeGroupedTaskView,
   targetTaskKey: string | null | undefined,
 ): GroupedDraftTaskPlacement {
   if (!targetTaskKey) {
@@ -285,11 +285,11 @@ function resolveGroupedDraftTaskPlacementForTask(
 }
 
 function insertTaskNearTask(
-  view: XCodeGroupedTaskView,
-  task: XCodeTaskMeta,
+  view: ZCodeGroupedTaskView,
+  task: ZCodeTaskMeta,
   overTaskKey: string,
   position: GroupedTaskInsertPosition,
-): XCodeGroupedTaskView {
+): ZCodeGroupedTaskView {
   const nodes = cloneNodes(view);
   const overLocation = findTaskLocation({ nodes }, overTaskKey);
   if (!overLocation) {
@@ -314,13 +314,13 @@ function insertTaskNearTask(
 }
 
 function moveTaskOverTask(
-  view: XCodeGroupedTaskView,
+  view: ZCodeGroupedTaskView,
   params: {
     activeTaskKey: string;
     overTaskKey: string;
     position: GroupedTaskInsertPosition;
   },
-): XCodeGroupedTaskView {
+): ZCodeGroupedTaskView {
   if (params.activeTaskKey === params.overTaskKey) {
     return view;
   }
@@ -341,11 +341,11 @@ function moveTaskOverTask(
 }
 
 function insertTaskAroundGroup(
-  view: XCodeGroupedTaskView,
-  task: XCodeTaskMeta,
+  view: ZCodeGroupedTaskView,
+  task: ZCodeTaskMeta,
   groupId: string,
   position: GroupedTaskInsertPosition,
-): XCodeGroupedTaskView {
+): ZCodeGroupedTaskView {
   const nodes = cloneNodes(view);
   const groupIndex = nodes.findIndex((node) => node.type === "group" && node.group.id === groupId);
   if (groupIndex < 0) {
@@ -356,13 +356,13 @@ function insertTaskAroundGroup(
 }
 
 function moveTaskToRootAroundGroup(
-  view: XCodeGroupedTaskView,
+  view: ZCodeGroupedTaskView,
   params: {
     activeTaskKey: string;
     groupId: string;
     position: GroupedTaskInsertPosition;
   },
-): XCodeGroupedTaskView {
+): ZCodeGroupedTaskView {
   const groupNode = view.nodes.find(
     (node) => node.type === "group" && node.group.id === params.groupId,
   );
@@ -379,12 +379,12 @@ function moveTaskToRootAroundGroup(
 }
 
 function moveTaskToGroupStart(
-  view: XCodeGroupedTaskView,
+  view: ZCodeGroupedTaskView,
   params: {
     activeTaskKey: string;
     groupId: string;
   },
-): XCodeGroupedTaskView {
+): ZCodeGroupedTaskView {
   const { nextView, task } = removeTaskFromView(view, params.activeTaskKey);
   if (!task) {
     return view;
@@ -400,12 +400,12 @@ function moveTaskToGroupStart(
 }
 
 function moveTaskToGroupEnd(
-  view: XCodeGroupedTaskView,
+  view: ZCodeGroupedTaskView,
   params: {
     activeTaskKey: string;
     groupId: string;
   },
-): XCodeGroupedTaskView {
+): ZCodeGroupedTaskView {
   const { nextView, task } = removeTaskFromView(view, params.activeTaskKey);
   if (!task) {
     return view;
@@ -423,7 +423,7 @@ function moveTaskToGroupEnd(
 }
 
 function moveGroupAroundTopLevelNode(
-  view: XCodeGroupedTaskView,
+  view: ZCodeGroupedTaskView,
   params: {
     activeGroupId: string;
     over:
@@ -437,7 +437,7 @@ function moveGroupAroundTopLevelNode(
         };
     position: GroupedTaskInsertPosition;
   },
-): XCodeGroupedTaskView {
+): ZCodeGroupedTaskView {
   if (params.over.type === "group" && params.activeGroupId === params.over.groupId) {
     return view;
   }
@@ -474,9 +474,9 @@ function moveGroupAroundTopLevelNode(
 }
 
 function getNodeIdAfterGroup(
-  view: XCodeGroupedTaskView,
+  view: ZCodeGroupedTaskView,
   groupId: string,
-): XCodeGroupedTaskViewNode | null {
+): ZCodeGroupedTaskViewNode | null {
   const groupIndex = view.nodes.findIndex(
     (node) => node.type === "group" && node.group.id === groupId,
   );
@@ -484,10 +484,10 @@ function getNodeIdAfterGroup(
 }
 
 function insertTaskBeforeTopLevelNode(
-  view: XCodeGroupedTaskView,
-  task: XCodeTaskMeta,
-  beforeNode: XCodeGroupedTaskViewNode | null,
-): XCodeGroupedTaskView {
+  view: ZCodeGroupedTaskView,
+  task: ZCodeTaskMeta,
+  beforeNode: ZCodeGroupedTaskViewNode | null,
+): ZCodeGroupedTaskView {
   const nodes = cloneNodes(view);
   const insertIndex =
     beforeNode === null
@@ -505,10 +505,10 @@ function insertTaskBeforeTopLevelNode(
 }
 
 function moveTaskByMenu(
-  view: XCodeGroupedTaskView,
-  targetTask: XCodeTaskMeta,
+  view: ZCodeGroupedTaskView,
+  targetTask: ZCodeTaskMeta,
   targetGroupId: string | null,
-): XCodeGroupedTaskView {
+): ZCodeGroupedTaskView {
   const targetTaskKey = taskKey(targetTask);
   const currentGroupId = getTaskGroupIdInView(view, targetTaskKey);
   if (currentGroupId === targetGroupId) {
@@ -529,9 +529,9 @@ function moveTaskByMenu(
 }
 
 function moveTaskToTopByMenu(
-  view: XCodeGroupedTaskView,
-  targetTask: XCodeTaskMeta,
-): XCodeGroupedTaskView {
+  view: ZCodeGroupedTaskView,
+  targetTask: ZCodeTaskMeta,
+): ZCodeGroupedTaskView {
   const targetTaskKey = taskKey(targetTask);
   const location = findTaskLocation(view, targetTaskKey);
   if (

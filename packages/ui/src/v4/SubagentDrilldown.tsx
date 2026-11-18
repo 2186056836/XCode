@@ -8,7 +8,7 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { TID_V4_SUBAGENT_DRILLDOWN, testId } from "@zcode/shared/test-ids";
 import type { ConversationRow } from "@zcode/shared/zcode-protocol-v4";
 import { ConversationRowView } from "@/v4/ConversationRowView.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { ConversationRowRenderContext } from "@/v4/conversationRowContext.js";
 import type { SessionLease } from "@/v4/sessionDataLayer.js";
 import { useConversationProjection } from "@/v4/useConversationProjection.js";
@@ -35,7 +35,7 @@ export const SubagentDrilldown = memo(function SubagentDrilldown({
   childSessionId,
   context,
 }: SubagentDrilldownProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { layer } = useV4Conversation();
   const [lease, setLease] = useState<SessionLease | null>(null);
   useEffect(() => {

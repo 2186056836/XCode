@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/popover.js";
 import { Spinner } from "@/components/ui/spinner.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type {
   ComposerVoiceInput,
   MicrophonePermissionGuide,
@@ -88,7 +88,7 @@ const VoiceInputWaveform = memo(function VoiceInputWaveform(props: {
  */
 function MicrophonePermissionGuideContent(props: { guide: MicrophonePermissionGuide }) {
   const { guide } = props;
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const restart = guide.phase === "restart-required";
   const mac = guide.os === "mac";
   return (
@@ -169,7 +169,7 @@ export const VoiceInputButton = memo(function VoiceInputButton(props: {
   subscribeLevel: ComposerVoiceInput["subscribeLevel"];
   permissionGuide: MicrophonePermissionGuide;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const title = intl.formatMessage({ id: TITLE_IDS[props.state] });
   const active = props.state !== "idle";
   const guide = props.permissionGuide;

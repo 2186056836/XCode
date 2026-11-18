@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { MarketingHero, MarketingInteractiveBundleHero } from "@zcode/shared";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 
 /**
@@ -42,7 +42,7 @@ export function MarketingHeroTicket({ hero, presentation }: { hero?: MarketingHe
 const HERO_CHANNEL = "zcode-cloud-hero-v1";
 
 function InteractiveBundleHero({ hero, presentation }: { hero: MarketingInteractiveBundleHero; presentation?: boolean }) {
-  const { locale } = useXCodeIntl();
+  const { locale } = useZCodeIntl();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [instanceId] = useState(() => `cloud-hero-${Math.random().toString(36).slice(2, 8)}`);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");

@@ -39,7 +39,7 @@ import { useRemoteBoundaryAcknowledgement } from "@/RemoteConnectionDialogConten
 import { useProjectDirectoryServices } from "@/project-sidebar/useProjectDirectoryServices.js";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { getPathLeaf } from "@/lib/path.js";
 import { RemoteProjectList } from "@/project-sidebar/RemoteProjectList.js";
 import type { IRemoteProjectService } from "@/project-sidebar/contract.js";
@@ -60,7 +60,7 @@ const DEVICE_ITEM = "pr-8 *:[span]:last:min-w-0 *:[span]:last:flex-1";
 
 /** 设备行：图标 + 名称 + 状态；状态颜色只取远程连接展示模型，在线只留圆点。 */
 function DeviceOption({ label, status }: { label: string; status?: string }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const presentation = status
     ? resolveRemoteConnectionPresentation({ state: status as RemoteConnectionStatus })
     : undefined;
@@ -133,7 +133,7 @@ export function ProjectEditor({
   onSaved(project: VirtualProject): Promise<void>;
   onDeleted?(): Promise<void>;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const sidebar = useOptionalProjectDirectory();
   const platform = useOptionalPlatform();
   const [selectedDeviceId, setSelectedDeviceId] = useState(defaultDeviceId ?? "local");

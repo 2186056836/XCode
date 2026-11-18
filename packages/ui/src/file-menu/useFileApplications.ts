@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FileApplicationInfo, FileApplicationTarget } from "@zcode/shared";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { toast } from "@/components/ui/toast.js";
 import { logger } from "@/logger.js";
 
 export function useFileApplications(target: FileApplicationTarget | null, isRemote = false) {
   const platform = usePlatform();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const key = target ? `${target.path}\u0000${target.workspaceIdentity ?? ""}` : "";
   const targetRef = useRef(target);
   targetRef.current = target;

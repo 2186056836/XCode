@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { Dialog as DialogPrimitive } from "radix-ui";
 
 import { cn } from "../lib/utils.js";
@@ -7,7 +7,7 @@ import { Button } from "./button.js";
 import { XIcon } from "lucide-react";
 
 function DialogCloseText() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return intl.formatMessage({ id: "common.close" });
 }
 

@@ -23,7 +23,7 @@ import {
   type PluginSubagentModelSelectionOverrides,
   type SubAgentConfig,
   type SubagentsListMode,
-  type XCodeProvider,
+  type ZCodeProvider,
 } from "@zcode/shared";
 import { normalizeSubagentModelSelection } from "./subagentModelSelection.js";
 import { serializeSubagentMarkdown, parseSubagentMarkdown } from "./subagentMarkdown.js";
@@ -32,7 +32,7 @@ import {
   resolveUserHomeDir,
   resolveUserSubagentRoot,
   resolveWorkspaceSubagentRoot,
-  resolveXCodeStorageRoot,
+  resolveZCodeStorageRoot,
   type SubagentStorageOptions,
 } from "./subagentStorage.js";
 import type { ISubagentsService } from "./subagents.js";
@@ -316,7 +316,7 @@ async function discoverPluginAgents(params: {
   reservedNames: Iterable<string>;
   storageOptions?: SubagentStorageOptions;
 }): Promise<PluginAgentDiscovery> {
-  const storageRoot = await resolveXCodeStorageRoot(params.storageOptions);
+  const storageRoot = await resolveZCodeStorageRoot(params.storageOptions);
   const cliStorageRoot = basename(storageRoot) === "cli" ? storageRoot : join(storageRoot, "cli");
   const pluginConfig = await readPluginConfig(params.storageOptions);
   const records = await readEnabledPluginRecords(join(cliStorageRoot, "plugins"), pluginConfig);
@@ -613,7 +613,7 @@ export function createSubagentsService(options?: SubagentsServiceOptions): ISuba
     async list(params: {
       workspacePath: string;
       workspaceIdentity?: string;
-      provider?: XCodeProvider;
+      provider?: ZCodeProvider;
       mode?: SubagentsListMode;
     }): Promise<AgentsListResult> {
       const capability = resolveCapabilities(options);
@@ -733,7 +733,7 @@ export function createSubagentsService(options?: SubagentsServiceOptions): ISuba
       await mutate(runUpdate);
     },
 
-    async getPrimaryUserAgentsDirectory(_params: { provider: XCodeProvider }): Promise<{
+    async getPrimaryUserAgentsDirectory(_params: { provider: ZCodeProvider }): Promise<{
       path: string;
     }> {
       const path = await resolveUserSubagentRoot(storageOptions);

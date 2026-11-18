@@ -17,7 +17,7 @@ import {
   DialogContent,
   DialogHeader,
 } from "@/components/ui/dialog.js";
-import { useXCodeIntl, type IntlInstance } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl, type IntlInstance } from "@/i18n/IntlProvider.js";
 import {
   RemoteSkillSyncSelectionList,
   type RemoteSkillSyncRow,
@@ -164,7 +164,7 @@ export function RemoteSkillSyncExistingFilterCheckbox({
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <label className="inline-flex h-6 cursor-pointer items-center gap-2 rounded-md px-1 text-ui-base text-foreground-subtle hover:text-foreground">
@@ -190,7 +190,7 @@ export function RemoteSkillSyncTargetRow({
   showExistingFilter: boolean;
   onShowExistingRemoteSkillsChange: (checked: boolean) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -223,7 +223,7 @@ export function RemoteSkillSyncBulkSelectionCheckbox({
   onSelectAll: () => void;
   onClearAll: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const inputRef = useRef<HTMLInputElement>(null);
   const selectionState = getRemoteSkillSyncBulkSelectionState({
     selectedCount,
@@ -263,7 +263,7 @@ export function RemoteSkillSyncBulkSelectionCheckbox({
 }
 
 export function RemoteSkillSyncDialog(props: RemoteSkillSyncDialogProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const {
     open,
     onOpenChange,

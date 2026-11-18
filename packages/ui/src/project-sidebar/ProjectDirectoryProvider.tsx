@@ -8,7 +8,7 @@ import {
 } from "@/project-sidebar/view.js";
 import { useProjectTree } from "@/project-sidebar/useProjectTree.js";
 import { useProjectSidebarPreferences } from "@/project-sidebar/useProjectSidebarPreferences.js";
-import { useXCodeStoreWithDefault } from "@/store/StoreProvider.js";
+import { useZCodeStoreWithDefault } from "@/store/StoreProvider.js";
 import { useTaskGroups } from "@/project-sidebar/useTaskGroups.js";
 import { selectSortedProjects } from "@/project-sidebar/view.js";
 
@@ -124,7 +124,7 @@ function DirectoryOwner({ children, isDesktop }: { children: ReactNode; isDeskto
   const platform = useOptionalPlatform();
   // 任务通知开关同时门控任务栏/托盘角标：关掉通知 = 连常驻提醒一起关闭
   // （同步 0 清空角标），侧栏蓝点作为应用内状态不受影响。
-  const notificationEnabled = useXCodeStoreWithDefault((state) => state.notificationEnabled, true);
+  const notificationEnabled = useZCodeStoreWithDefault((state) => state.notificationEnabled, true);
   // 角标基线（per-host，机制见 view.ts 注释与 docs/desktop/windows-taskbar-unread-badge.md）：
   // host 第一次成功读取（onlineHostIds 由读取层显式返回，含空树 host）时快照它的
   // 未读；此后角标只计基线外的新未读——用户带着历史未读开机时角标为 0，只有本次

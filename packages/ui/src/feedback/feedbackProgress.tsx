@@ -1,6 +1,6 @@
 import type { FeedbackTicketStatus } from "@zcode/shared";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /**
  * 简化的工单流转进度（用户视角）：
@@ -47,7 +47,7 @@ export function FeedbackProgress({
   status: FeedbackTicketStatus;
   assigneeDisplay?: string | null;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const formatMessage = intl.formatMessage;
   const { current, rejected } = statusToStage(status);
   const currentIdx = STAGES.findIndex((item) => item.key === current);

@@ -1,41 +1,41 @@
-export { XCodeCliLoginError } from "./auth-login-contract.js";
+export { ZCodeCliLoginError } from "./auth-login-contract.js";
 export type {
   CodingPlanProviderId,
-  LoginXCodeCliOptions,
-  LoginXCodeCliResult,
+  LoginZCodeCliOptions,
+  LoginZCodeCliResult,
   LoginBigmodelCodingPlanOptions,
   LoginBigmodelCodingPlanResult,
   ConfigureCodingPlanApiKeyOptions,
   ConfigureCodingPlanApiKeyResult,
-  LogoutXCodeCliOptions,
-  LogoutXCodeCliResult,
+  LogoutZCodeCliOptions,
+  LogoutZCodeCliResult,
 } from "./auth-login-contract.js";
 import {
-  XCodeCliLoginError,
+  ZCodeCliLoginError,
   type CodingPlanProviderId,
-  type LoginXCodeCliOptions,
-  type LoginXCodeCliResult,
+  type LoginZCodeCliOptions,
+  type LoginZCodeCliResult,
   type LoginBigmodelCodingPlanOptions,
   type LoginBigmodelCodingPlanResult,
   type ConfigureCodingPlanApiKeyOptions,
   type ConfigureCodingPlanApiKeyResult,
-  type LogoutXCodeCliOptions,
-  type LogoutXCodeCliResult,
+  type LogoutZCodeCliOptions,
+  type LogoutZCodeCliResult,
 } from "./auth-login-contract.js";
 import {
   createCodingPlanApiKeyResolver,
-  createSharedXCodeCredentialStore,
+  createSharedZCodeCredentialStore,
   createCliOAuthClient,
   createCliOAuthPollToken,
   openUrlInBrowser,
   SHARED_XCODE_CREDENTIAL_KEYS,
   type CliOAuthClient,
-  type SharedXCodeCredentialStore,
+  type SharedZCodeCredentialStore,
 } from "@zcode/adapters";
 import { createConfig } from "@zcode/adapters/config";
 import { createNodeHttpClientAdapter } from "@zcode/adapters/http";
 import type { EnvRecord } from "@zcode/adapters/model";
-import { buildXCodeEndpointUrls, resolveRuntimeXCodeEndpointOrigin } from "@zcode/shared";
+import { buildZCodeEndpointUrls, resolveRuntimeZCodeEndpointOrigin } from "@zcode/shared";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   createStandaloneAccountIdentityFromSecret,
@@ -64,9 +64,9 @@ const DEFAULT_LOGIN_TIMEOUT_MS = 5 * 60 * 1_000;
  * 再解析项目访问材料并写入凭据与默认模型。OAuth 登录不落盘派生 API Key，
  * 运行时按 `authSource: "oauth"` 用访问令牌换取请求凭据。
  */
-export async function loginXCodeCli(
-  options: LoginXCodeCliOptions = {},
-): Promise<LoginXCodeCliResult> {
+export async function loginZCodeCli(
+  options: LoginZCodeCliOptions = {},
+): Promise<LoginZCodeCliResult> {
   const env = options.env ?? process.env;
   const providerId = options.providerId ?? "zai";
   const now = options.now ?? Date.now;
@@ -77,12 +77,12 @@ export async function loginXCodeCli(
     ? AbortSignal.any([options.abortSignal, timeoutController.signal])
     : timeoutController.signal;
   const timeoutError = () =>
-    new XCodeCliLoginError("auth_timeout", "Authorization timed out. Please retry login.");
+    new ZCodeCliLoginError("auth_timeout", "Authorization timed out. Please retry login.");
   let timer = setTimeout(() => timeoutController.abort(timeoutError()), timeoutMs);
   try {
     throwIfAborted(signal);
     const pollToken = options.pollToken ?? createCliOAuthPollToken();
-    const credentialStore = options.credentialStore ?? createSharedXCodeCredentialStore({ env });
+    const credentialStore = options.credentialStore ?? createSharedZCodeCredentialStore({ env });
     // CLI 也可能与 Desktop 恢复并发：在 init 前保留代次，迟到结果不得重新填充新空库。
     const credentialGuard = await credentialStore.captureRecoveryGuard();
     const expectedSession = await credentialStore.loadOAuthSessionSnapshot();
@@ -116,7 +116,7 @@ export async function loginXCodeCli(
       createError: (code) =>
         code === "auth_timeout"
           ? timeoutError()
-          : new XCodeCliLoginError(code, "Authorization failed. Please retry login."),
+          : new ZCodeCliLoginError(code, "Authorization failed. Please retry login."),
     });
     const material = await waitWithAbort(
       resolveCodingPlanMaterial({
@@ -177,7 +177,7 @@ export async function loginXCodeCli(
         }
       });
     } catch (error) {
-      throw new XCodeCliLoginError(
+      throw new ZCodeCliLoginError(
         "credential_write_failed",
         "Login succeeded but writing credentials failed.",
         { cause: error },
@@ -198,7 +198,7 @@ export async function loginXCodeCli(
         }),
       );
     } catch (error) {
-      throw new XCodeCliLoginError(
+      throw new ZCodeCliLoginError(
         "config_update_failed",
         "Login succeeded but updating XCode config failed.",
         { cause: error },
@@ -221,7 +221,7 @@ export async function loginBigmodelCodingPlan(
   options: LoginBigmodelCodingPlanOptions = {},
 ): Promise<LoginBigmodelCodingPlanResult> {
   return {
-    ...(await loginXCodeCli({ ...options, providerId: "bigmodel" })),
+    ...(await loginZCodeCli({ ...options, providerId: "bigmodel" })),
     providerId: "bigmodel",
   };
 }
@@ -231,10 +231,10 @@ export async function configureCodingPlanApiKey(
 ): Promise<ConfigureCodingPlanApiKeyResult> {
   const apiKey = options.apiKey.trim();
   if (!apiKey) {
-    throw new XCodeCliLoginError("config_update_failed", "API key must not be empty.");
+    throw new ZCodeCliLoginError("config_update_failed", "API key must not be empty.");
   }
   const credentialStore =
-    options.credentialStore ?? createSharedXCodeCredentialStore({ env: options.env });
+    options.credentialStore ?? createSharedZCodeCredentialStore({ env: options.env });
   // 手填 Key 也可能等待配置锁；必须沿用入口代次，避免恢复后仍提交旧默认模型。
   const credentialGuard = await credentialStore.captureRecoveryGuard();
   const configPatch = await credentialGuard.run(() =>
@@ -255,17 +255,17 @@ export async function configureCodingPlanApiKey(
   };
 }
 
-function createOAuthClient(options: LoginXCodeCliOptions, env: EnvRecord): CliOAuthClient {
+function createOAuthClient(options: LoginZCodeCliOptions, env: EnvRecord): CliOAuthClient {
   return createCliOAuthClient({
     baseUrl:
-      options.baseUrl ?? buildXCodeEndpointUrls(resolveCliXCodeEndpointOrigin(env)).apiBaseUrl,
+      options.baseUrl ?? buildZCodeEndpointUrls(resolveCliZCodeEndpointOrigin(env)).apiBaseUrl,
     providerId: options.providerId ?? "zai",
     httpClient: options.httpClient ?? createDefaultHttpClient(env),
   });
 }
 
-function resolveCliXCodeEndpointOrigin(env: EnvRecord): string {
-  return resolveRuntimeXCodeEndpointOrigin(env);
+function resolveCliZCodeEndpointOrigin(env: EnvRecord): string {
+  return resolveRuntimeZCodeEndpointOrigin(env);
 }
 
 function createDefaultHttpClient(env: EnvRecord) {
@@ -310,7 +310,7 @@ async function persistStandaloneCodingPlanConnection(input: {
   readonly accountIdentity: string;
   readonly apiKey?: string;
   readonly authSource?: "oauth";
-  readonly credentialStore: SharedXCodeCredentialStore;
+  readonly credentialStore: SharedZCodeCredentialStore;
   readonly commitGuard?: (write: () => Promise<void>) => Promise<void>;
   readonly env: EnvRecord;
   readonly personalProviderConfigPath?: string;
@@ -356,20 +356,20 @@ async function persistStandaloneCodingPlanConnection(input: {
 
 export async function hasConfiguredStandaloneCodingPlan(
   options: {
-    credentialStore?: SharedXCodeCredentialStore;
+    credentialStore?: SharedZCodeCredentialStore;
     env?: EnvRecord;
   } = {},
 ): Promise<boolean> {
   const credentialStore =
-    options.credentialStore ?? createSharedXCodeCredentialStore({ env: options.env });
+    options.credentialStore ?? createSharedZCodeCredentialStore({ env: options.env });
   return hasStandaloneCodingPlanAccess(credentialStore, options.env ?? process.env);
 }
 
-export async function logoutXCodeCli(
-  options: LogoutXCodeCliOptions = {},
-): Promise<LogoutXCodeCliResult> {
+export async function logoutZCodeCli(
+  options: LogoutZCodeCliOptions = {},
+): Promise<LogoutZCodeCliResult> {
   const credentialStore =
-    options.credentialStore ?? createSharedXCodeCredentialStore({ env: options.env });
+    options.credentialStore ?? createSharedZCodeCredentialStore({ env: options.env });
   const providerIds = (await readStandaloneCodingPlanProviders(options.env ?? process.env)).map(
     ({ providerId }) => providerId,
   );

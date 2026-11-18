@@ -1,15 +1,15 @@
-import type { XCodeError, XCodeTaskMeta, TraceId } from "@zcode/shared";
+import type { ZCodeError, ZCodeTaskMeta, TraceId } from "@zcode/shared";
 import { errorAttributionSchema, type ErrorAttribution } from "@zcode/shared/zcode-protocol-v4";
 import { resolveRequestVerificationBusinessCode } from "@/lib/providerBusinessError.js";
 
-export interface XCodeUiError extends XCodeError {
+export interface ZCodeUiError extends ZCodeError {
   attribution?: ErrorAttribution;
   detail?: string;
   underlyingErrorMessage?: string;
   underlyingErrorDetail?: string;
 }
 
-interface NormalizeXCodeUiErrorOptions {
+interface NormalizeZCodeUiErrorOptions {
   fallbackCode?: string;
   fallbackMessage?: string;
   traceId?: TraceId;
@@ -189,10 +189,10 @@ function readFirstAttributionFromPaths(error: unknown): ErrorAttribution | undef
   return undefined;
 }
 
-export function normalizeXCodeUiError(
+export function normalizeZCodeUiError(
   error: unknown,
-  options: NormalizeXCodeUiErrorOptions = {},
-): XCodeUiError {
+  options: NormalizeZCodeUiErrorOptions = {},
+): ZCodeUiError {
   const candidates = collectMessageCandidates(error);
   // zcode-cli 已经把 provider/network 根因放进 detail 或 data.zcode.error，
   // 外层仍可能保留 "Internal error" 这类包装文案。主提示优先选非泛化候选，避免根因被盖住。
@@ -272,14 +272,14 @@ export function normalizeXCodeUiError(
   };
 }
 
-export function normalizeRestoredTaskFailureError(meta: XCodeTaskMeta): XCodeUiError | null {
+export function normalizeRestoredTaskFailureError(meta: ZCodeTaskMeta): ZCodeUiError | null {
   if (!meta.lastError) {
     return null;
   }
 
   // Bugfix: 手机 Web 断连恢复时可能只拿到 error snapshot，看不到断连期间的 task_error。
   // 没有服务端持久化的 lastError 时不再编造兜底文案，避免展示没有实际根因的错误。
-  return normalizeXCodeUiError(meta.lastError, {
+  return normalizeZCodeUiError(meta.lastError, {
     fallbackCode: meta.lastError.code,
     traceId: meta.lastError.traceId ?? meta.traceId,
     taskId: meta.lastError.taskId ?? meta.taskId,

@@ -8,9 +8,9 @@ import {
   ISettingService,
   ICredentialService,
   IBroadcastService,
-  IXCodeTaskService,
-  IXCodeAgentService,
-  IXCodeSessionService,
+  IZCodeTaskService,
+  IZCodeAgentService,
+  IZCodeSessionService,
   IFileWatcherService,
   IOAuthService,
   ICodingPlanSubscriptionService,
@@ -46,8 +46,8 @@ export function createRemoteConnectionServiceCollection(params: {
   parentPort: Parameters<typeof createBroadcastService>[0];
   credentialService: ICredentialService;
   apiClient: ApiClient;
-  remoteXCodeTaskService: IXCodeTaskService;
-  remoteXCodeSessionService: IXCodeSessionService;
+  remoteZCodeTaskService: IZCodeTaskService;
+  remoteZCodeSessionService: IZCodeSessionService;
   promptAttachmentTransferService: IPromptAttachmentTransferService;
 }): ServiceCollection {
   const handleOAuthProviderLogout = createOAuthProviderLogoutHandler({
@@ -72,9 +72,9 @@ export function createRemoteConnectionServiceCollection(params: {
       .register(ISettingService, createSettingService())
       .register(ICredentialService, params.credentialService)
       .register(IBroadcastService, createBroadcastService(params.parentPort))
-      .register(IXCodeTaskService, params.remoteXCodeTaskService)
-      .register(IXCodeAgentService, params.connectionServices.zcodeAgentService)
-      .register(IXCodeSessionService, params.remoteXCodeSessionService)
+      .register(IZCodeTaskService, params.remoteZCodeTaskService)
+      .register(IZCodeAgentService, params.connectionServices.zcodeAgentService)
+      .register(IZCodeSessionService, params.remoteZCodeSessionService)
       .register(IPromptAttachmentTransferService, params.promptAttachmentTransferService)
       .register(IFileWatcherService, params.connectionServices.fileWatcherService)
       .register(

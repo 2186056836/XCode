@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
 import type {
-  XCodeImportSessionsResult,
-  XCodeImportableSessionCandidate,
+  ZCodeImportSessionsResult,
+  ZCodeImportableSessionCandidate,
 } from "@zcode/shared";
 import { logger } from "@/logger.js";
-import { useXCodeTaskService } from "@/hooks/useXCodeTaskService.js";
+import { useZCodeTaskService } from "@/hooks/useZCodeTaskService.js";
 import { useTabStoreApi } from "@/store/TabStoreProvider.js";
 import { invalidateTaskQueryCacheByScopes } from "@/store/taskQueryCacheStore.js";
 
@@ -63,7 +63,7 @@ export function useClaudeSessionMigration(params: {
   workspaceIdentity?: string;
   isDesktop?: boolean;
 }) {
-  const zcodeTaskService = useXCodeTaskService(
+  const zcodeTaskService = useZCodeTaskService(
     params.workspacePath ?? undefined,
     undefined,
     params.workspaceIdentity,
@@ -73,12 +73,12 @@ export function useClaudeSessionMigration(params: {
     useState<ClaudeMigrationWorkspaceFilterMode>("all");
   const [range, setRange] = useState<ClaudeMigrationRange>("30d");
   const [limitInput, setLimitInput] = useState(String(DEFAULT_LIMIT));
-  const [candidates, setCandidates] = useState<XCodeImportableSessionCandidate[]>([]);
+  const [candidates, setCandidates] = useState<ZCodeImportableSessionCandidate[]>([]);
   const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>([]);
   const [scanError, setScanError] = useState<string | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [lastImportResult, setLastImportResult] =
-    useState<XCodeImportSessionsResult | null>(null);
+    useState<ZCodeImportSessionsResult | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 

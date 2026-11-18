@@ -8,27 +8,27 @@ import type { DraftPluginUiOpenRequest } from "@/plugin-ui/contract.js";
 import {
   buildNativeSupplierKey,
   ZCODE_AGENT_PROVIDER,
-  type XCodeApiRetryStatus,
+  type ZCodeApiRetryStatus,
   type ModelSelectionGhostReason,
   type ModelSelectionResolution,
-  type XCodeWorkspaceInitStatus,
-  type XCodeTaskRuntimeStatus,
-  type XCodeProvider,
-  type XCodeTaskMeta,
-  type XCodeContextCacheUsage,
-  type XCodeConfigOption,
-  type XCodeSlashCommand,
-  type XCodePermissionRequest,
-  type XCodeElicitationRequest,
-  type XCodeBackgroundTaskControlItem,
-  type XCodeSessionActiveTurnKind,
-  type XCodeContextUsageBreakdownItem,
+  type ZCodeWorkspaceInitStatus,
+  type ZCodeTaskRuntimeStatus,
+  type ZCodeProvider,
+  type ZCodeTaskMeta,
+  type ZCodeContextCacheUsage,
+  type ZCodeConfigOption,
+  type ZCodeSlashCommand,
+  type ZCodePermissionRequest,
+  type ZCodeElicitationRequest,
+  type ZCodeBackgroundTaskControlItem,
+  type ZCodeSessionActiveTurnKind,
+  type ZCodeContextUsageBreakdownItem,
   type InputId,
   type SessionCreateSource,
   type ManagedWorktreeCreation,
 } from "@zcode/shared";
 import type { SessionConfigState, SubmissionMode } from "@zcode/shared/zcode-protocol-v4";
-import type { XCodeUiError } from "@/lib/zcodeUiError.js";
+import type { ZCodeUiError } from "@/lib/zcodeUiError.js";
 import type {
   AutomationsNavigationTab,
   TaskNavigationHistory,
@@ -41,30 +41,30 @@ import type { MentionCategory, MentionItemData } from "@/mentions/mentionTypes.j
 // ────────────────────────────────────────────
 
 export interface WorkspaceInitState {
-  status: XCodeWorkspaceInitStatus;
+  status: ZCodeWorkspaceInitStatus;
   error: string | null;
   attempts: number;
 }
 
 export interface TaskRuntimeState {
-  status: XCodeTaskRuntimeStatus;
+  status: ZCodeTaskRuntimeStatus;
   error: string | null;
   /** 该 task 当前运行态绑定的 XCode Agent 进程 provider，用于 workspace 级进程重建 busy lock。 */
-  provider?: XCodeProvider;
+  provider?: ZCodeProvider;
   /** 当前模型上下文窗口容量；模型状态事件只更新这里，不覆盖真实 usage.used。 */
   contextWindow: number | null;
   usage: TaskUsageState | null;
-  apiRetry: XCodeApiRetryStatus | null;
+  apiRetry: ZCodeApiRetryStatus | null;
   /** Agent 明确上报的后台任务控制项；host 运行期状态，不落盘持久化。 */
-  backgroundTaskControls: XCodeBackgroundTaskControlItem[];
+  backgroundTaskControls: ZCodeBackgroundTaskControlItem[];
   /** 当前 session active turn 的类型；用于区分普通生成和 compact 维护态。 */
-  activeTurnKind?: XCodeSessionActiveTurnKind;
+  activeTurnKind?: ZCodeSessionActiveTurnKind;
   activeInputId?: InputId;
   activeInputOwnerClientId?: string;
 }
 
 export interface DraftRuntimeState {
-  status: XCodeTaskRuntimeStatus;
+  status: ZCodeTaskRuntimeStatus;
   error: string | null;
 }
 
@@ -76,9 +76,9 @@ export interface TaskUsageState {
   /** Agent 上报的累计费用 */
   cost?: { amount: number; currency: string } | null;
   /** Agent/app 协议返回的当前主轮缓存命中信息。 */
-  cache?: XCodeContextCacheUsage;
+  cache?: ZCodeContextCacheUsage;
   /** Agent 按来源估算的上下文字符量，只用于 context usage 弹窗比例展示。 */
-  breakdown?: XCodeContextUsageBreakdownItem[];
+  breakdown?: ZCodeContextUsageBreakdownItem[];
 }
 
 export interface ElicitationAnswerDraft {
@@ -97,12 +97,12 @@ export interface ElicitationFormDraft {
  * 展示态的写入方已随旧协议链路删除，读侧由 v4 conversation 投影承接。
  */
 export interface TaskUiState {
-  permissionRequest: XCodePermissionRequest | null;
-  pendingPermissionRequests: XCodePermissionRequest[];
-  elicitationRequest: XCodeElicitationRequest | null;
-  pendingElicitationRequests: XCodeElicitationRequest[];
+  permissionRequest: ZCodePermissionRequest | null;
+  pendingPermissionRequests: ZCodePermissionRequest[];
+  elicitationRequest: ZCodeElicitationRequest | null;
+  pendingElicitationRequests: ZCodeElicitationRequest[];
   elicitationFormDraftsByRequestId: Record<string, ElicitationFormDraft>;
-  error: XCodeUiError | null;
+  error: ZCodeUiError | null;
 }
 
 export type ModelSwitchStage =
@@ -147,7 +147,7 @@ export interface ComposerInitialization {
   config: ComposerInitialConfig;
 }
 
-export interface WorkspaceXCodeUIState {
+export interface WorkspaceZCodeUIState {
   /** 首次分享导入的导航参数；接收、换任务或新建后结束，不持久化。 */
   composerInitialization?: ComposerInitialization;
   /** 当前 workspace 激活中的 task */
@@ -192,7 +192,7 @@ export interface WorkspaceXCodeUIState {
   timelineBottomRequestVersion: number;
   timelineBottomRequest: TimelineBottomRequest | null;
   /** 草稿态错误需要跨页面保留，避免切走再回来后提示被本地 state 一起卸载 */
-  draftError: XCodeUiError | null;
+  draftError: ZCodeUiError | null;
   /** 模型切换中的并发保护 requestId；只允许最新请求落库 */
   modelSwitchRequestId: string | null;
   /** 模型切换是否进行中（用于禁发和工具栏 loading） */
@@ -203,15 +203,15 @@ export interface WorkspaceXCodeUIState {
   taskRuntimeByTaskId: Record<string, TaskRuntimeState>;
   /** 每个 task 自己的临时 UI 态，避免切换任务后丢失计划面板和权限弹窗 */
   taskUiByTaskId: Record<string, TaskUiState>;
-  taskConfigOptionsByTaskId: Record<string, XCodeConfigOption[]>;
+  taskConfigOptionsByTaskId: Record<string, ZCodeConfigOption[]>;
   taskConfigOptionsStatusByTaskId: Record<string, ConfigOptionsStatus>;
   /** task 未读状态的兼容缓存；真实未读状态以 task meta.unreadAt 为准 */
   taskUnreadByTaskId: Record<string, boolean>;
   /** 任务列表的乐观元数据，解决新 task 落盘前左侧列表显示慢半拍的问题 */
-  optimisticTaskListByTaskId: Record<string, XCodeTaskMeta>;
+  optimisticTaskListByTaskId: Record<string, ZCodeTaskMeta>;
   draftCreateSource: SessionCreateSource;
   /** 当前 workspace 选中的 XCode Agent provider */
-  selectedProvider: XCodeProvider;
+  selectedProvider: ZCodeProvider;
   /** 当前模型供应商选中键（native/custom/ghost） */
   selectedSupplierKey: string;
   /** 当前供应商是否为 ghost 态 */
@@ -219,23 +219,23 @@ export interface WorkspaceXCodeUIState {
   /** 当前 ghost 态来源 */
   supplierMismatchReason: ModelSelectionGhostReason | null;
   /** XCode Agent configOptions（模型、模式、思考级别等） */
-  configOptions: XCodeConfigOption[] | null;
+  configOptions: ZCodeConfigOption[] | null;
   /** configOptions 加载状态 */
   configOptionsStatus: ConfigOptionsStatus;
   /** 可用的 slash commands */
-  slashCommands: XCodeSlashCommand[];
+  slashCommands: ZCodeSlashCommand[];
   /** 任务列表版本号，每次创建/删除任务时自增，驱动 TaskList 刷新 */
   taskListVersion: number;
   /** 缓存已拉取的任务列表，避免组件 remount 时闪烁 */
-  taskListCache: XCodeTaskMeta[] | null;
+  taskListCache: ZCodeTaskMeta[] | null;
   /** 新建草稿时递增，驱动输入框在切到草稿态后主动聚焦 */
   draftFocusVersion: number;
 }
 
-export interface XCodeSessionStoreState {
+export interface ZCodeSessionStoreState {
   /** 按 workspace 维护聊天相关 UI 状态 */
-  workspaces: Record<string, WorkspaceXCodeUIState>;
-  getWorkspaceState: (workspacePath: string, workspaceIdentity?: string) => WorkspaceXCodeUIState;
+  workspaces: Record<string, WorkspaceZCodeUIState>;
+  getWorkspaceState: (workspacePath: string, workspaceIdentity?: string) => WorkspaceZCodeUIState;
 
   setActiveTaskId: (
     workspacePath: string,
@@ -303,7 +303,7 @@ export interface XCodeSessionStoreState {
   ) => void;
   startDraft: (
     workspacePath: string,
-    provider?: XCodeProvider,
+    provider?: ZCodeProvider,
     workspaceIdentity?: string,
     options?: {
       projectId?: string | null;
@@ -313,7 +313,7 @@ export interface XCodeSessionStoreState {
   ) => void;
   bindRuntimeProvider: (
     workspacePath: string,
-    provider: XCodeProvider,
+    provider: ZCodeProvider,
     workspaceIdentity?: string,
   ) => void;
   setModelSelectionResolution: (
@@ -326,7 +326,7 @@ export interface XCodeSessionStoreState {
   ) => void;
   setWorkspaceInitState: (
     workspacePath: string,
-    status: XCodeWorkspaceInitStatus,
+    status: ZCodeWorkspaceInitStatus,
     error?: string | null,
     workspaceIdentity?: string,
   ) => void;
@@ -337,17 +337,17 @@ export interface XCodeSessionStoreState {
   ) => void;
   setTaskState: (
     workspacePath: string,
-    status: XCodeTaskRuntimeStatus,
+    status: ZCodeTaskRuntimeStatus,
     error?: string | null,
     workspaceIdentity?: string,
   ) => void;
   setTaskRuntimeState: (
     workspacePath: string,
     taskId: string,
-    status: XCodeTaskRuntimeStatus,
+    status: ZCodeTaskRuntimeStatus,
     error?: string | null,
     workspaceIdentity?: string,
-    provider?: XCodeProvider,
+    provider?: ZCodeProvider,
   ) => void;
   setTaskUsage: (
     workspacePath: string,
@@ -364,13 +364,13 @@ export interface XCodeSessionStoreState {
   setTaskApiRetryStatus: (
     workspacePath: string,
     taskId: string,
-    apiRetry: XCodeApiRetryStatus | null,
+    apiRetry: ZCodeApiRetryStatus | null,
     workspaceIdentity?: string,
   ) => void;
   setTaskPermissionRequest: (
     workspacePath: string,
     taskId: string,
-    request: XCodePermissionRequest | null,
+    request: ZCodePermissionRequest | null,
     workspaceIdentity?: string,
   ) => void;
   removeTaskPermissionRequest: (
@@ -382,7 +382,7 @@ export interface XCodeSessionStoreState {
   setTaskElicitationRequest: (
     workspacePath: string,
     taskId: string,
-    request: XCodeElicitationRequest | null,
+    request: ZCodeElicitationRequest | null,
     workspaceIdentity?: string,
   ) => void;
   removeTaskElicitationRequest: (
@@ -407,12 +407,12 @@ export interface XCodeSessionStoreState {
   setTaskError: (
     workspacePath: string,
     taskId: string,
-    error: XCodeUiError | null,
+    error: ZCodeUiError | null,
     workspaceIdentity?: string,
   ) => void;
   setDraftError: (
     workspacePath: string,
-    error: XCodeUiError | null,
+    error: ZCodeUiError | null,
     workspaceIdentity?: string,
   ) => void;
   startModelSwitch: (
@@ -432,22 +432,22 @@ export interface XCodeSessionStoreState {
   setTaskConfigOptions: (
     workspacePath: string,
     taskId: string,
-    options: XCodeConfigOption[],
+    options: ZCodeConfigOption[],
     workspaceIdentity?: string,
     status?: ConfigOptionsStatus,
   ) => void;
   initializeBackgroundTaskRuntime: (
     workspacePath: string,
     params: {
-      task: XCodeTaskMeta;
-      provider: XCodeProvider;
+      task: ZCodeTaskMeta;
+      provider: ZCodeProvider;
       activeInputId: InputId;
       workspaceIdentity?: string;
     },
   ) => void;
   upsertOptimisticTaskListItem: (
     workspacePath: string,
-    task: XCodeTaskMeta,
+    task: ZCodeTaskMeta,
     workspaceIdentity?: string,
   ) => void;
   removeOptimisticTaskListItem: (
@@ -460,7 +460,7 @@ export interface XCodeSessionStoreState {
 
   setConfigOptions: (
     workspacePath: string,
-    options: XCodeConfigOption[],
+    options: ZCodeConfigOption[],
     workspaceIdentity?: string,
   ) => void;
   setConfigOptionsStatus: (
@@ -470,7 +470,7 @@ export interface XCodeSessionStoreState {
   ) => void;
   setSlashCommands: (
     workspacePath: string,
-    commands: XCodeSlashCommand[],
+    commands: ZCodeSlashCommand[],
     workspaceIdentity?: string,
   ) => void;
   setCurrentModeId: (
@@ -483,7 +483,7 @@ export interface XCodeSessionStoreState {
   /** 更新已拉取的任务列表缓存 */
   setTaskListCache: (
     workspacePath: string,
-    tasks: XCodeTaskMeta[],
+    tasks: ZCodeTaskMeta[],
     workspaceIdentity?: string,
   ) => void;
   /** 更新 task 的未读提示，控制左侧蓝点显示 */
@@ -523,7 +523,7 @@ export const DEFAULT_WORKSPACE_INIT_STATE: WorkspaceInitState = {
   attempts: 0,
 };
 
-export const FALLBACK_PROVIDER: XCodeProvider = ZCODE_AGENT_PROVIDER;
+export const FALLBACK_PROVIDER: ZCodeProvider = ZCODE_AGENT_PROVIDER;
 
 export const DEFAULT_TASK_UI_STATE: TaskUiState = {
   permissionRequest: null,
@@ -552,8 +552,8 @@ export const DEFAULT_TASK_RUNTIME_STATE: TaskRuntimeState = {
 // ────────────────────────────────────────────
 
 export function createDefaultWorkspaceState(
-  selectedProvider: XCodeProvider,
-): WorkspaceXCodeUIState {
+  selectedProvider: ZCodeProvider,
+): WorkspaceZCodeUIState {
   return {
     activeTaskId: null,
     workspaceInit: { ...DEFAULT_WORKSPACE_INIT_STATE },
@@ -591,7 +591,7 @@ export function createDefaultWorkspaceState(
 
 const DEFAULT_WORKSPACE_STATE = createDefaultWorkspaceState(FALLBACK_PROVIDER);
 
-export function getDefaultWorkspaceState(): WorkspaceXCodeUIState {
+export function getDefaultWorkspaceState(): WorkspaceZCodeUIState {
   // 单 XCode Agent 迁移后默认 provider 必须收敛到 glm。
   // 这里返回稳定引用，避免未写入 workspace bucket 的连续 selector 读取产生不同快照。
   return DEFAULT_WORKSPACE_STATE;

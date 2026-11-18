@@ -1,6 +1,6 @@
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 
-function hasOwnTaskMetaField<T extends keyof XCodeTaskMeta>(task: XCodeTaskMeta, key: T) {
+function hasOwnTaskMetaField<T extends keyof ZCodeTaskMeta>(task: ZCodeTaskMeta, key: T) {
   return Object.prototype.hasOwnProperty.call(task, key);
 }
 
@@ -9,7 +9,7 @@ function isPlaceholderTaskTitle(title: string): boolean {
   return normalizedTitle.length === 0 || normalizedTitle === "new session";
 }
 
-function resolveMergedTaskTitle(preferredTask: XCodeTaskMeta, fallbackTask: XCodeTaskMeta): string {
+function resolveMergedTaskTitle(preferredTask: ZCodeTaskMeta, fallbackTask: ZCodeTaskMeta): string {
   if (fallbackTask.titleOverridden && !preferredTask.titleOverridden) {
     return fallbackTask.title;
   }
@@ -23,9 +23,9 @@ function resolveMergedTaskTitle(preferredTask: XCodeTaskMeta, fallbackTask: XCod
 }
 
 export function mergeTaskWithOptimisticMeta(
-  task: XCodeTaskMeta,
-  optimisticTask: XCodeTaskMeta,
-): XCodeTaskMeta {
+  task: ZCodeTaskMeta,
+  optimisticTask: ZCodeTaskMeta,
+): ZCodeTaskMeta {
   const shouldKeepOptimisticTask =
     optimisticTask.updatedAt > task.updatedAt ||
     (optimisticTask.updatedAt === task.updatedAt &&
@@ -56,9 +56,9 @@ export function mergeTaskWithOptimisticMeta(
 }
 
 export function mergeTaskMetaCandidates(
-  ...candidates: Array<XCodeTaskMeta | null | undefined>
-): XCodeTaskMeta | undefined {
-  let merged: XCodeTaskMeta | undefined;
+  ...candidates: Array<ZCodeTaskMeta | null | undefined>
+): ZCodeTaskMeta | undefined {
+  let merged: ZCodeTaskMeta | undefined;
   for (const candidate of candidates) {
     if (!candidate) {
       continue;

@@ -1,12 +1,12 @@
 // v4/conversation/contextComposition 协议层集成（spec §4 第 3、5 类与协议验收）：
-// 真 sqlite sessionStore + XCodeProtocolAgentServer + 真 app。
+// 真 sqlite sessionStore + ZCodeProtocolAgentServer + 真 app。
 // 规格：apps/zcode-cli/docs/design/v2/model/context-composition.md。
 import { mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createSqliteSessionStore } from "@zcode/adapters/storage";
-import { zcodeProtocolMethods, type XCodeProtocolMessage } from "@zcode/shared";
+import { zcodeProtocolMethods, type ZCodeProtocolMessage } from "@zcode/shared";
 import {
   V4_METHODS,
   V4_NOTIFICATIONS,
@@ -16,9 +16,9 @@ import {
   type ContextCompositionChangedEvent,
 } from "@zcode/shared/zcode-protocol-v4";
 import type { SessionId } from "@zcode/contracts";
-import { XCodeProtocolAgentServer } from "../../src/zcode-protocol/server.js";
-import type { XCodeProtocolAgentServerContext } from "../../src/zcode-protocol/server-types.js";
-import type { XCodeApp } from "../../src/app/types.js";
+import { ZCodeProtocolAgentServer } from "../../src/zcode-protocol/server.js";
+import type { ZCodeProtocolAgentServerContext } from "../../src/zcode-protocol/server-types.js";
+import type { ZCodeApp } from "../../src/app/types.js";
 import {
   createRegistryBackedTestApp,
   createTestProviderRegistry,
@@ -28,15 +28,15 @@ const MODEL = { providerId: "zai", modelId: "glm-4.6", options: { reasoningLevel
 
 async function bootServer(root: string) {
   const store = await createSqliteSessionStore({ dbPath: join(root, "sessions.db") });
-  const apps: XCodeApp[] = [];
+  const apps: ZCodeApp[] = [];
   const env = { ZCODE_DATA_BASE_DIR: join(root, "data"), HOME: root };
   const providerRegistry = createTestProviderRegistry([MODEL]);
   const notifications: ContextCompositionChangedEvent[] = [];
-  const server = new XCodeProtocolAgentServer({
+  const server = new ZCodeProtocolAgentServer({
     cwd: root,
     env,
     sessionStore: store,
-    createXCodeApp: async (options = {}) => {
+    createZCodeApp: async (options = {}) => {
       const app = await createRegistryBackedTestApp({
         ...options,
         // 内置 MCP 子进程与本用例无关，关闭避免进程握手噪声。
@@ -82,7 +82,7 @@ async function bootServer(root: string) {
       });
     }
   });
-  const context = (server as unknown as { context: XCodeProtocolAgentServerContext }).context;
+  const context = (server as unknown as { context: ZCodeProtocolAgentServerContext }).context;
   return {
     server,
     store,
@@ -98,7 +98,7 @@ async function bootServer(root: string) {
   };
 }
 
-async function requestResult(server: XCodeProtocolAgentServer, message: XCodeProtocolMessage) {
+async function requestResult(server: ZCodeProtocolAgentServer, message: ZCodeProtocolMessage) {
   const response = await server.handleMessage(message);
   if (!response || !("result" in response)) {
     throw new Error(`Expected protocol success response: ${JSON.stringify(response)}`);

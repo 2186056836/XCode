@@ -21,9 +21,9 @@ import type { ITerminalService } from "./terminal/terminal.js";
 import type { ISettingService } from "./setting/setting.js";
 import type { ICredentialService } from "./credential/credential.js";
 import type { IBroadcastService } from "./broadcast/broadcast.js";
-import type { IXCodeTaskService } from "./session/zcodeTaskService.js";
-import type { IXCodeAgentService } from "./zcode-agent/zcodeAgent.js";
-import type { IXCodeSessionService } from "./zcode-session/zcodeSession.js";
+import type { IZCodeTaskService } from "./session/zcodeTaskService.js";
+import type { IZCodeAgentService } from "./zcode-agent/zcodeAgent.js";
+import type { IZCodeSessionService } from "./zcode-session/zcodeSession.js";
 import type { ICuaPermissionService } from "./cua-permission-broker/cuaPermissionService.js";
 import type { IBotsService } from "./bots/bots.js";
 import type { IFileWatcherService } from "./fileWatcher/fileWatcher.js";
@@ -89,11 +89,11 @@ export interface IServiceAccessor {
   readonly onboardingRecordService?: IOnboardingRecordService;
   readonly credentialService: ICredentialService;
   readonly broadcastService: IBroadcastService;
-  readonly zcodeTaskService: IXCodeTaskService;
+  readonly zcodeTaskService: IZCodeTaskService;
   /** 窗口 Host 聚合面；旧 server wire 或测试 double 可暂不提供。 */
   readonly windowControllerService?: IWindowControllerService;
-  readonly zcodeAgentService: IXCodeAgentService;
-  readonly zcodeSessionService: IXCodeSessionService;
+  readonly zcodeAgentService: IZCodeAgentService;
+  readonly zcodeSessionService: IZCodeSessionService;
   // CUA 是 opt-in 内测特性：local macOS host 提供，远端 等 host 没有。可选避免连锁必填。
   readonly cuaPermissionService?: ICuaPermissionService;
   readonly conversationShareService: IConversationShareService;

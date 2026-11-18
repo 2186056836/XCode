@@ -22,13 +22,13 @@ import {
 } from "@zcode/shared/test-ids";
 import { Alert, AlertDescription } from "./components/ui/alert.js";
 import { Button } from "./components/ui/button.js";
-import { XCodeAboutLogo } from "@/components/ui/XCodeAboutLogo.js";
+import { ZCodeAboutLogo } from "@/components/ui/ZCodeAboutLogo.js";
 import { useOAuth } from "./hooks/useOAuth.js";
 import { usePlatform } from "./hooks/usePlatform.js";
-import { useXCodeIntl } from "./i18n/IntlProvider.js";
+import { useZCodeIntl } from "./i18n/IntlProvider.js";
 import { LoginApiKeyForm } from "./login/LoginApiKeyForm.js";
 import { ThemeHeroVisual } from "./openWorkspacePageThemeHero.js";
-import { useXCodeStore } from "./store/StoreProvider.js";
+import { useZCodeStore } from "./store/StoreProvider.js";
 import { DesktopOverlayWindowControls } from "@/DesktopOverlayWindowControls.js";
 import { toast } from "@/components/ui/toast.js";
 import type { useCredentialStoreRecovery } from "@/hooks/useCredentials.js";
@@ -47,7 +47,7 @@ export function CredentialStoreRecovery({
 }: {
   recovery: ReturnType<typeof useCredentialStoreRecovery>;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [confirming, setConfirming] = useState(false);
   const text = (id: Parameters<typeof intl.formatMessage>[0]["id"]) => intl.formatMessage({ id });
   return (
@@ -148,7 +148,7 @@ export function resolveLoginRegionForLocale(locale: string): SingleLoginRegion {
 }
 
 export function WelcomeScreen({ onComplete, isManualOpen }: WelcomeScreenProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const platform = usePlatform();
   return (
     <main className="relative h-full min-h-dvh overflow-hidden bg-background text-foreground">
@@ -220,7 +220,7 @@ export function shouldCompleteLoginFromExistingUser(params: {
 }
 
   export function LoginPanel({ active, onComplete, isManualOpen }: LoginPanelProps) {
-    const { intl, locale, setLocalePreference } = useXCodeIntl();
+    const { intl, locale, setLocalePreference } = useZCodeIntl();
   const {
     startLogin,
     cancel,
@@ -233,14 +233,14 @@ export function shouldCompleteLoginFromExistingUser(params: {
     authorizeUrl,
     refreshProviders,
   } = useOAuth();
-  const user = useXCodeStore((s) => s.user);
-  const oauthError = useXCodeStore((s) => s.oauthError);
-  const setOAuthError = useXCodeStore((s) => s.setOAuthError);
-  const oauthSuccessSeq = useXCodeStore((s) => s.oauthSuccessSeq);
-  const lastOAuthSuccessProvider = useXCodeStore((s) => s.lastOAuthSuccessProvider);
-  const loginEntryRequest = useXCodeStore((s) => s.loginEntryRequest);
-  const clearLoginEntryRequest = useXCodeStore((s) => s.clearLoginEntryRequest);
-  const markLoginEntryAttemptStatus = useXCodeStore((s) => s.markLoginEntryAttemptStatus);
+  const user = useZCodeStore((s) => s.user);
+  const oauthError = useZCodeStore((s) => s.oauthError);
+  const setOAuthError = useZCodeStore((s) => s.setOAuthError);
+  const oauthSuccessSeq = useZCodeStore((s) => s.oauthSuccessSeq);
+  const lastOAuthSuccessProvider = useZCodeStore((s) => s.lastOAuthSuccessProvider);
+  const loginEntryRequest = useZCodeStore((s) => s.loginEntryRequest);
+  const clearLoginEntryRequest = useZCodeStore((s) => s.clearLoginEntryRequest);
+  const markLoginEntryAttemptStatus = useZCodeStore((s) => s.markLoginEntryAttemptStatus);
   const [loginMode, setLoginMode] = useState<"providers" | "apiKey">("providers");
   const [loginRegion, setLoginRegion] = useState<SingleLoginRegion>(() =>
     resolveLoginRegionForLocale(locale),
@@ -690,7 +690,7 @@ function LoginPanelLogo() {
       aria-label="XCode"
       role="img"
     >
-      <XCodeAboutLogo className="h-auto w-10" />
+      <ZCodeAboutLogo className="h-auto w-10" />
     </div>
   );
 }

@@ -6,7 +6,7 @@
 // readPluginUserOptions 的结果含敏感值，这里不打任何日志。
 //
 // 两个方法的暴露面不同：
-// - getPluginMentionItems 挂在 IXCodeAgentService 上（随 XCodeAgent 频道经 RPC 暴露），工具调用走会话的授权链。
+// - getPluginMentionItems 挂在 IZCodeAgentService 上（随 ZCodeAgent 频道经 RPC 暴露），工具调用走会话的授权链。
 // - readPluginUserOptions 只在 Window Host 进程内：zcodeAgentService 把它放进侧表，node.ts 的
 //   getPluginUserOptionsReader(services) 取出后作为依赖交给扩展网关。它不是任何已登记服务对象的属性，
 //   ProxyChannel 按属性名分派，所以任何 RPC 频道都调不到（结构上 fail-closed，不靠黑名单剥离）。
@@ -16,25 +16,25 @@ import {
   zcodePluginsReadUserOptionsParamsSchema,
   zcodePluginsReadUserOptionsResultSchema,
   zcodeProtocolMethods,
-  type XCodePluginMentionItem,
-  type XCodePluginsReadUserOptionsResult,
+  type ZCodePluginMentionItem,
+  type ZCodePluginsReadUserOptionsResult,
 } from "@zcode/shared";
-import type { XCodeAgentWorkspaceTarget } from "#src/zcode-agent/zcodeAgentPluginParams.js";
-import type { XCodeProtocolClient } from "#src/zcode-agent/zcodeProtocolClient.js";
+import type { ZCodeAgentWorkspaceTarget } from "#src/zcode-agent/zcodeAgentPluginParams.js";
+import type { ZCodeProtocolClient } from "#src/zcode-agent/zcodeProtocolClient.js";
 
 /** JSON-RPC method-not-found：旧 CLI 不认识查询方法。 */
 const METHOD_NOT_FOUND_CODE = -32601;
 
-export interface XCodeAgentReadPluginUserOptionsParams {
+export interface ZCodeAgentReadPluginUserOptionsParams {
   pluginId: string;
 }
 
 /** `supported: false`：旧 CLI 没有 plugins/readUserOptions，调用方只用非敏感值。 */
-export type XCodeAgentPluginUserOptionsResult =
-  | { supported: true; values: XCodePluginsReadUserOptionsResult["values"] }
+export type ZCodeAgentPluginUserOptionsResult =
+  | { supported: true; values: ZCodePluginsReadUserOptionsResult["values"] }
   | { supported: false };
 
-export interface XCodeAgentPluginMentionItemsParams extends XCodeAgentWorkspaceTarget {
+export interface ZCodeAgentPluginMentionItemsParams extends ZCodeAgentWorkspaceTarget {
   sessionId: string;
   pluginId: string;
   /** 插件 MCP server 上的原始工具名（清单 `target.tool`）。 */
@@ -43,28 +43,28 @@ export interface XCodeAgentPluginMentionItemsParams extends XCodeAgentWorkspaceT
 }
 
 /** `supported: false`：旧 CLI 没有 plugins/mentionItems，`@` 面板不显示这一组。 */
-export type XCodeAgentPluginMentionItemsResult =
-  | { supported: true; items: XCodePluginMentionItem[] }
+export type ZCodeAgentPluginMentionItemsResult =
+  | { supported: true; items: ZCodePluginMentionItem[] }
   | { supported: false };
 
 /** 只在 Window Host 进程内持有；不登记为服务、不挂在任何服务对象上。 */
 export interface PluginUserOptionsReader {
   readPluginUserOptions(
-    params: XCodeAgentReadPluginUserOptionsParams,
-  ): Promise<XCodeAgentPluginUserOptionsResult>;
+    params: ZCodeAgentReadPluginUserOptionsParams,
+  ): Promise<ZCodeAgentPluginUserOptionsResult>;
 }
 
 export interface PluginHostQueriesClientDeps {
   /** 插件管理面的本机 CLI：user 层设置与工作区无关，和设置页的插件管理走同一个进程。 */
-  getPluginManagementClient(): Promise<XCodeProtocolClient>;
+  getPluginManagementClient(): Promise<ZCodeProtocolClient>;
   /** existing-only：持有会话的工作区 CLI；没有运行中的 CLI 时抛 runtime-unavailable，不启动进程。 */
-  getExistingClient(target: XCodeAgentWorkspaceTarget): Promise<XCodeProtocolClient>;
+  getExistingClient(target: ZCodeAgentWorkspaceTarget): Promise<ZCodeProtocolClient>;
 }
 
 export interface PluginHostQueriesClient extends PluginUserOptionsReader {
   getPluginMentionItems(
-    params: XCodeAgentPluginMentionItemsParams,
-  ): Promise<XCodeAgentPluginMentionItemsResult>;
+    params: ZCodeAgentPluginMentionItemsParams,
+  ): Promise<ZCodeAgentPluginMentionItemsResult>;
 }
 
 export function createPluginHostQueriesClient(

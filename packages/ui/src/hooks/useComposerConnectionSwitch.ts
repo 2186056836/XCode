@@ -5,7 +5,7 @@ import {
   useWorkspaceServicesResolution,
 } from "@/hooks/useWorkspaceServices.js";
 import { useSettings } from "@/hooks/useSettingService.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { persistProviderFamilyConnection } from "@/lib/providerFamilyConnectionTransition.js";
 import {
   chooseConnectionModel,
@@ -19,7 +19,7 @@ import type { ModelSelectionView, ProviderSettingsView } from "@zcode/services";
 import {
   resolveModelProviderFamilySpecByProviderId,
   type ProviderFamilyConnectionSelection,
-  type XCodeProvider,
+  type ZCodeProvider,
 } from "@zcode/shared";
 
 export function useComposerConnectionSwitch({
@@ -39,7 +39,7 @@ export function useComposerConnectionSwitch({
 }: {
   workspacePath: string;
   workspaceIdentity?: string;
-  agentProvider: XCodeProvider;
+  agentProvider: ZCodeProvider;
   normalizedValue: string;
   currentReasoningLevel?: string;
   onSelectModel: (value: string, reasoningLevel?: string) => void | Promise<void>;
@@ -58,7 +58,7 @@ export function useComposerConnectionSwitch({
     workspaceIdentity,
   );
   const { update, refresh: refreshSettings } = useSettings({ services: base });
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const workspaceKey = workspaceIdentity?.trim() || workspacePath;
   const token = useMemo(() => ({}), [target, base, workspaceKey, scopeId]);
   const owner = useRef({ token, mounted: true });

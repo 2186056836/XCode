@@ -8,13 +8,13 @@ import {
 } from "@zcode/shared";
 import {
   protocolTraceFromTraceContext,
-  type XCodeProtocolAgentServerContext,
+  type ZCodeProtocolAgentServerContext,
 } from "./server-types.js";
 
 const RESOURCE_TIMEOUT_MS = 120_000;
 
 export function createProtocolTopicResourcePort(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
 ): TopicResourcePort {
   return {
     async reply(request, options) {

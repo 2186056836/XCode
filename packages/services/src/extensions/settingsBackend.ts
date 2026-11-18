@@ -1,5 +1,5 @@
 import type { Event, IDisposable } from "@zcode/rpc";
-import type { XCodePluginUserConfigOption } from "@zcode/shared";
+import type { ZCodePluginUserConfigOption } from "@zcode/shared";
 import {
   ExtensionError,
   type ExtensionSettings,
@@ -49,7 +49,7 @@ function describe(error: unknown): string {
 
 /** 值的类型按 userConfig 的选项类型：number 要数字，boolean 要布尔，其余（string、directory、file、未写）要字符串。 */
 function matchesOptionType(
-  option: XCodePluginUserConfigOption,
+  option: ZCodePluginUserConfigOption,
   value: ExtensionSettings["values"][string],
 ): boolean {
   if (option.type === "number") return typeof value === "number";

@@ -1,4 +1,4 @@
-import type { XCodeEnv } from "./env.js";
+import type { ZCodeEnv } from "./env.js";
 
 export const DEFAULT_XCODE_ENDPOINT_ORIGIN = "https://zcode.z.ai";
 export const TEST_XCODE_ENDPOINT_ORIGIN = "https://zcode.z.ai";
@@ -14,7 +14,7 @@ export const TEST_ZAI_OAUTH_CLIENT_ID = "client_P8X5CMWmlaRO9gyO-KSqtg";
 export const DEFAULT_WEB_REMOTE_CONTROL_RELAY_WS_URL = "wss://zcode.z.ai/api/v1/remote/ws2";
 export const WEB_REMOTE_CONTROL_V4_MIN_APP_VERSION = "3.4.0";
 
-export interface BuildXCodeEndpointUrlsOptions {
+export interface BuildZCodeEndpointUrlsOptions {
   appVersion?: string;
 }
 
@@ -60,7 +60,7 @@ function isWebRemoteControlV4AppVersion(appVersion: string | undefined): boolean
   return prereleaseIdentifiers === undefined;
 }
 
-export interface XCodeEndpointUrls {
+export interface ZCodeEndpointUrls {
   origin: string;
   apiBaseUrl: string;
   remoteUrl: string;
@@ -73,7 +73,7 @@ export interface XCodeEndpointUrls {
   zcodePlanBillingBalanceUrl: string;
 }
 
-export interface RuntimeXCodeEndpointEnv {
+export interface RuntimeZCodeEndpointEnv {
   [key: string]: string | undefined;
   ZCODE_ENV?: string;
   ZCODE_BASE_URL?: string;
@@ -106,12 +106,12 @@ export interface RuntimeZaiEndpointEnv {
 }
 
 export interface RuntimeProductEndpointEnv
-  extends RuntimeXCodeEndpointEnv, RuntimeBigModelApiEnv, RuntimeZaiEndpointEnv {}
+  extends RuntimeZCodeEndpointEnv, RuntimeBigModelApiEnv, RuntimeZaiEndpointEnv {}
 
 export interface RuntimeProductEndpointConfig {
-  zcodeEnv: XCodeEnv;
+  zcodeEnv: ZCodeEnv;
   zcodeEndpointOrigin: string;
-  zcodeEndpointUrls: XCodeEndpointUrls;
+  zcodeEndpointUrls: ZCodeEndpointUrls;
   zaiOAuthOrigin: string;
   zaiBusinessBaseUrl: string;
   zaiOAuthClientId: string;
@@ -126,16 +126,16 @@ function readRuntimeEnvValue(
   return value ? value : undefined;
 }
 
-function readRuntimeXCodeEnvScopedValue(
+function readRuntimeZCodeEnvScopedValue(
   env: Record<string, string | undefined>,
-  zcodeEnv: XCodeEnv,
+  zcodeEnv: ZCodeEnv,
   testKey: string,
   productionKey: string,
 ): string | undefined {
   return readRuntimeEnvValue(env, zcodeEnv === "production" ? productionKey : testKey);
 }
 
-export function normalizeXCodeEndpointOrigin(value: string): string {
+export function normalizeZCodeEndpointOrigin(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) {
     throw new Error("XCode endpoint origin is empty");
@@ -160,7 +160,7 @@ export function isTrustedCodingPlanWebviewOrigin(
 ): boolean {
   if (!value) return false;
   try {
-    const origin = normalizeXCodeEndpointOrigin(value);
+    const origin = normalizeZCodeEndpointOrigin(value);
     if (
       origin === DEFAULT_XCODE_ENDPOINT_ORIGIN ||
       origin === TEST_XCODE_ENDPOINT_ORIGIN ||
@@ -175,8 +175,8 @@ export function isTrustedCodingPlanWebviewOrigin(
   }
 }
 
-export function resolveXCodeEndpointOrigin(options?: {
-  env?: XCodeEnv;
+export function resolveZCodeEndpointOrigin(options?: {
+  env?: ZCodeEnv;
   envBaseOrigin?: string | null;
   overrideOrigin?: string | null;
 }): string {
@@ -184,34 +184,34 @@ export function resolveXCodeEndpointOrigin(options?: {
   const envBaseOrigin = options?.envBaseOrigin?.trim();
   if (env === "production") {
     return envBaseOrigin
-      ? normalizeXCodeEndpointOrigin(envBaseOrigin)
+      ? normalizeZCodeEndpointOrigin(envBaseOrigin)
       : DEFAULT_XCODE_ENDPOINT_ORIGIN;
   }
 
   const overrideOrigin = options?.overrideOrigin?.trim();
   if (overrideOrigin) {
-    return normalizeXCodeEndpointOrigin(overrideOrigin);
+    return normalizeZCodeEndpointOrigin(overrideOrigin);
   }
 
-  return envBaseOrigin ? normalizeXCodeEndpointOrigin(envBaseOrigin) : TEST_XCODE_ENDPOINT_ORIGIN;
+  return envBaseOrigin ? normalizeZCodeEndpointOrigin(envBaseOrigin) : TEST_XCODE_ENDPOINT_ORIGIN;
 }
 
-export function resolveRuntimeXCodeEnv(env: RuntimeXCodeEndpointEnv = {}): XCodeEnv {
+export function resolveRuntimeZCodeEnv(env: RuntimeZCodeEndpointEnv = {}): ZCodeEnv {
   // 独立 CLI / 服务测试未注入 ZCODE_ENV 时默认生产域；桌面测试包会显式下发 ZCODE_ENV=test。
   return env.ZCODE_ENV?.trim().toLowerCase() === "test" ? "test" : "production";
 }
 
-export function resolveRuntimeXCodeEndpointOrigin(
-  env: RuntimeXCodeEndpointEnv = {},
+export function resolveRuntimeZCodeEndpointOrigin(
+  env: RuntimeZCodeEndpointEnv = {},
   options?: { overrideOrigin?: string | null },
 ): string {
-  const zcodeEnv = resolveRuntimeXCodeEnv(env);
+  const zcodeEnv = resolveRuntimeZCodeEnv(env);
   const scopedBaseOrigin =
     zcodeEnv === "production"
       ? readRuntimeEnvValue(env, "ZCODE_PRODUCTION_BASE_URL")
       : readRuntimeEnvValue(env, "ZCODE_TEST_BASE_URL");
 
-  return resolveXCodeEndpointOrigin({
+  return resolveZCodeEndpointOrigin({
     env: zcodeEnv,
     envBaseOrigin:
       readRuntimeEnvValue(env, "ZCODE_BASE_URL") ??
@@ -221,15 +221,15 @@ export function resolveRuntimeXCodeEndpointOrigin(
   });
 }
 
-export function buildRuntimeXCodeEndpointUrls(
-  env: RuntimeXCodeEndpointEnv = {},
-): XCodeEndpointUrls {
-  return buildXCodeEndpointUrls(resolveRuntimeXCodeEndpointOrigin(env));
+export function buildRuntimeZCodeEndpointUrls(
+  env: RuntimeZCodeEndpointEnv = {},
+): ZCodeEndpointUrls {
+  return buildZCodeEndpointUrls(resolveRuntimeZCodeEndpointOrigin(env));
 }
 
-export function buildRuntimeXCodeApiUrl(env: RuntimeXCodeEndpointEnv = {}, path: string): string {
+export function buildRuntimeZCodeApiUrl(env: RuntimeZCodeEndpointEnv = {}, path: string): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${resolveRuntimeXCodeEndpointOrigin(env)}${normalizedPath}`;
+  return `${resolveRuntimeZCodeEndpointOrigin(env)}${normalizedPath}`;
 }
 
 export function resolveWebRemoteControlRelayWsUrl(options?: {
@@ -242,7 +242,7 @@ export function resolveWebRemoteControlRelayWsUrl(options?: {
   }
 
   const origin = new URL(
-    normalizeXCodeEndpointOrigin(options?.endpointOrigin?.trim() || DEFAULT_XCODE_ENDPOINT_ORIGIN),
+    normalizeZCodeEndpointOrigin(options?.endpointOrigin?.trim() || DEFAULT_XCODE_ENDPOINT_ORIGIN),
   );
   origin.protocol = origin.protocol === "https:" ? "wss:" : "ws:";
   origin.pathname = "/api/v1/remote/ws2";
@@ -250,7 +250,7 @@ export function resolveWebRemoteControlRelayWsUrl(options?: {
 }
 
 export function resolveBigModelApiOrigin(env: RuntimeBigModelApiEnv = {}): string {
-  const zcodeEnv = resolveRuntimeXCodeEnv(env);
+  const zcodeEnv = resolveRuntimeZCodeEnv(env);
   const scopedBaseOrigin =
     zcodeEnv === "production"
       ? readRuntimeEnvValue(env, "BIGMODEL_PRODUCTION_API_BASE_URL")
@@ -258,7 +258,7 @@ export function resolveBigModelApiOrigin(env: RuntimeBigModelApiEnv = {}): strin
   const fallbackOrigin =
     zcodeEnv === "production" ? DEFAULT_BIGMODEL_API_ORIGIN : TEST_BIGMODEL_API_ORIGIN;
 
-  return normalizeXCodeEndpointOrigin(
+  return normalizeZCodeEndpointOrigin(
     readRuntimeEnvValue(env, "BIGMODEL_API_BASE_URL") ?? scopedBaseOrigin ?? fallbackOrigin,
   );
 }
@@ -279,8 +279,8 @@ export function buildBigModelCodingPlanTeamManageUrl(env: RuntimeBigModelApiEnv 
 }
 
 export function resolveZaiOAuthOrigin(env: RuntimeZaiEndpointEnv = {}): string {
-  const zcodeEnv = resolveRuntimeXCodeEnv(env);
-  const scopedOrigin = readRuntimeXCodeEnvScopedValue(
+  const zcodeEnv = resolveRuntimeZCodeEnv(env);
+  const scopedOrigin = readRuntimeZCodeEnvScopedValue(
     env,
     zcodeEnv,
     "ZAI_TEST_OAUTH_ORIGIN",
@@ -289,14 +289,14 @@ export function resolveZaiOAuthOrigin(env: RuntimeZaiEndpointEnv = {}): string {
   const fallbackOrigin =
     zcodeEnv === "production" ? DEFAULT_ZAI_OAUTH_ORIGIN : TEST_ZAI_OAUTH_ORIGIN;
 
-  return normalizeXCodeEndpointOrigin(
+  return normalizeZCodeEndpointOrigin(
     readRuntimeEnvValue(env, "ZAI_OAUTH_ORIGIN") ?? scopedOrigin ?? fallbackOrigin,
   );
 }
 
 export function resolveZaiBusinessBaseUrl(env: RuntimeZaiEndpointEnv = {}): string {
-  const zcodeEnv = resolveRuntimeXCodeEnv(env);
-  const scopedOrigin = readRuntimeXCodeEnvScopedValue(
+  const zcodeEnv = resolveRuntimeZCodeEnv(env);
+  const scopedOrigin = readRuntimeZCodeEnvScopedValue(
     env,
     zcodeEnv,
     "ZAI_TEST_BUSINESS_BASE_URL",
@@ -305,14 +305,14 @@ export function resolveZaiBusinessBaseUrl(env: RuntimeZaiEndpointEnv = {}): stri
   const fallbackOrigin =
     zcodeEnv === "production" ? DEFAULT_ZAI_BUSINESS_BASE_URL : TEST_ZAI_BUSINESS_BASE_URL;
 
-  return normalizeXCodeEndpointOrigin(
+  return normalizeZCodeEndpointOrigin(
     readRuntimeEnvValue(env, "ZAI_BUSINESS_BASE_URL") ?? scopedOrigin ?? fallbackOrigin,
   );
 }
 
 export function resolveZaiOAuthClientId(env: RuntimeZaiEndpointEnv = {}): string {
-  const zcodeEnv = resolveRuntimeXCodeEnv(env);
-  const scopedClientId = readRuntimeXCodeEnvScopedValue(
+  const zcodeEnv = resolveRuntimeZCodeEnv(env);
+  const scopedClientId = readRuntimeZCodeEnvScopedValue(
     env,
     zcodeEnv,
     "ZAI_TEST_OAUTH_CLIENT_ID",
@@ -331,7 +331,7 @@ export function resolveZaiOAuthClientId(env: RuntimeZaiEndpointEnv = {}): string
 
 export function buildZaiOAuthUrl(origin: string, path: string): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${normalizeXCodeEndpointOrigin(origin)}${normalizedPath}`;
+  return `${normalizeZCodeEndpointOrigin(origin)}${normalizedPath}`;
 }
 
 export function buildRuntimeZaiOAuthUrl(env: RuntimeZaiEndpointEnv = {}, path: string): string {
@@ -346,13 +346,13 @@ export function buildRuntimeZaiBusinessUrl(env: RuntimeZaiEndpointEnv = {}, path
 export function resolveRuntimeProductEndpointConfig(
   env: RuntimeProductEndpointEnv = {},
 ): RuntimeProductEndpointConfig {
-  const zcodeEnv = resolveRuntimeXCodeEnv(env);
-  const zcodeEndpointOrigin = resolveRuntimeXCodeEndpointOrigin(env);
+  const zcodeEnv = resolveRuntimeZCodeEnv(env);
+  const zcodeEndpointOrigin = resolveRuntimeZCodeEndpointOrigin(env);
 
   return {
     zcodeEnv,
     zcodeEndpointOrigin,
-    zcodeEndpointUrls: buildXCodeEndpointUrls(zcodeEndpointOrigin),
+    zcodeEndpointUrls: buildZCodeEndpointUrls(zcodeEndpointOrigin),
     zaiOAuthOrigin: resolveZaiOAuthOrigin(env),
     zaiBusinessBaseUrl: resolveZaiBusinessBaseUrl(env),
     zaiOAuthClientId: resolveZaiOAuthClientId(env),
@@ -360,11 +360,11 @@ export function resolveRuntimeProductEndpointConfig(
   };
 }
 
-export function buildXCodeEndpointUrls(
+export function buildZCodeEndpointUrls(
   origin: string,
-  options: BuildXCodeEndpointUrlsOptions = {},
-): XCodeEndpointUrls {
-  const normalizedOrigin = normalizeXCodeEndpointOrigin(origin);
+  options: BuildZCodeEndpointUrlsOptions = {},
+): ZCodeEndpointUrls {
+  const normalizedOrigin = normalizeZCodeEndpointOrigin(origin);
   const parsed = new URL(normalizedOrigin);
   const wsProtocol = parsed.protocol === "https:" ? "wss:" : "ws:";
   const wsOrigin = `${wsProtocol}//${parsed.host}`;
@@ -385,7 +385,7 @@ export function buildXCodeEndpointUrls(
   };
 }
 
-export function rewriteXCodeEndpointUrl(input: string | URL, endpointOrigin: string): string | URL {
+export function rewriteZCodeEndpointUrl(input: string | URL, endpointOrigin: string): string | URL {
   const originalUrl = typeof input === "string" ? input : input.toString();
   let parsed: URL;
   try {
@@ -398,7 +398,7 @@ export function rewriteXCodeEndpointUrl(input: string | URL, endpointOrigin: str
     return input;
   }
 
-  const targetOrigin = normalizeXCodeEndpointOrigin(endpointOrigin);
+  const targetOrigin = normalizeZCodeEndpointOrigin(endpointOrigin);
   if (targetOrigin === sourceOrigin) {
     return input;
   }

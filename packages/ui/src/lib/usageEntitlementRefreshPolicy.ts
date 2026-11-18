@@ -2,15 +2,15 @@ import { isStartPlanModelProviderId } from "@zcode/shared";
 import type { IUsageStatsService } from "@zcode/services";
 import type {
   UsageEntitlementSnapshot,
-  XCodeAccountAccess,
-  XCodeProviderAccountAccess,
+  ZCodeAccountAccess,
+  ZCodeProviderAccountAccess,
 } from "@zcode/shared";
 
 export interface UsageEntitlementRequestOptions {
   invalidateBalanceCache?: boolean;
   includeSubscription: boolean;
   preferredProviderId?: string;
-  accountAccess?: XCodeProviderAccountAccess | XCodeAccountAccess;
+  accountAccess?: ZCodeProviderAccountAccess | ZCodeAccountAccess;
   allowDisabledPreferredProvider: boolean;
   requirePreferredProvider: boolean;
   allowEnvApiKey?: boolean;

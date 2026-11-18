@@ -20,7 +20,7 @@ import { toast } from "@/components/ui/toast.js";
 import { Switch } from "@/components/ui/switch.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useServices } from "@/hooks/useServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useCuaPermissionStatus } from "@/hooks/useCuaPermissionStatus.js";
 import {
   claimCuaPermissionReturnRecovery,
@@ -68,7 +68,7 @@ export function ComputerUseSection({
   remoteTarget,
   localWorkspacePath,
 }: ComputerUseSectionProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const services = useServices();
   const platform = usePlatform();
   const pluginManagementService = services.pluginManagementService;

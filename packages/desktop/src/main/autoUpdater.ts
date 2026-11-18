@@ -13,7 +13,7 @@ import {
   desktopMenuMessageIds,
   formatDesktopMenuMessage,
   getDesktopMenuMessage,
-  resolveRuntimeXCodeEndpointOrigin,
+  resolveRuntimeZCodeEndpointOrigin,
   type ElectronReleaseChannel,
   type Locale,
   type PostUpdateReleaseNotesPayload,
@@ -848,7 +848,7 @@ function applyManifestUpdateProvider(options: InitAutoUpdaterOptions): void {
     resolveXcodeJwtToken: options.resolveXcodeJwtToken,
     resolveEndpointOrigin: async () => {
       const origin = await (
-        options.resolveEndpointOrigin ?? (() => resolveRuntimeXCodeEndpointOrigin(process.env))
+        options.resolveEndpointOrigin ?? (() => resolveRuntimeZCodeEndpointOrigin(process.env))
       )();
       // 通用后端覆盖不是更新发布授权；正式包只允许既有官方 HTTPS 入口。
       if (

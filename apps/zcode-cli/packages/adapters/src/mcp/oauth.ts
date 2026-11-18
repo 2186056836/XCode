@@ -12,8 +12,8 @@ import {
   type LocalhostOAuthCallbackServer,
 } from "../auth/localhost-callback.js";
 import {
-  createSharedXCodeCredentialStore,
-  type SharedXCodeCredentialStore,
+  createSharedZCodeCredentialStore,
+  type SharedZCodeCredentialStore,
 } from "../auth/shared-credentials.js";
 import {
   deriveCredentialPair,
@@ -51,7 +51,7 @@ export type { McpOAuthAuthorizationContext };
 
 export interface McpOAuthRuntimeOptions {
   authorizationTimeoutMs?: number;
-  credentialStore?: SharedXCodeCredentialStore;
+  credentialStore?: SharedZCodeCredentialStore;
   onAuthorizationRequired?: (context: McpOAuthAuthorizationContext) => Promise<void> | void;
   openAuthorizationUrl?: (context: McpOAuthAuthorizationContext) => Promise<void> | void;
 }
@@ -78,7 +78,7 @@ export async function createMcpAuthorizationCodeOAuthSession(input: {
     callbackPath,
     state,
   });
-  const credentialStore = input.options?.credentialStore ?? createSharedXCodeCredentialStore();
+  const credentialStore = input.options?.credentialStore ?? createSharedZCodeCredentialStore();
   const keyPrefix = createCredentialKeyPrefix(input.serverName, input.serverUrl, input.config);
   const provider = new ZCodeMcpAuthorizationCodeProvider({
     adapterInstanceId: input.adapterInstanceId,
@@ -112,7 +112,7 @@ class ZCodeMcpAuthorizationCodeProvider implements OAuthClientProvider {
   private readonly adapterInstanceId?: string;
   private readonly callbackServer: LocalhostOAuthCallbackServer;
   private readonly config: McpAuthorizationCodeOAuthConfig;
-  private readonly credentialStore: SharedXCodeCredentialStore;
+  private readonly credentialStore: SharedZCodeCredentialStore;
   private readonly keyPrefix: string;
   private readonly logger?: Logger;
   private readonly onAuthorizationRequired?: (
@@ -139,7 +139,7 @@ class ZCodeMcpAuthorizationCodeProvider implements OAuthClientProvider {
     adapterInstanceId?: string;
     callbackServer: LocalhostOAuthCallbackServer;
     config: McpAuthorizationCodeOAuthConfig;
-    credentialStore: SharedXCodeCredentialStore;
+    credentialStore: SharedZCodeCredentialStore;
     keyPrefix: string;
     logger?: Logger;
     onAuthorizationRequired?: (context: McpOAuthAuthorizationContext) => Promise<void> | void;

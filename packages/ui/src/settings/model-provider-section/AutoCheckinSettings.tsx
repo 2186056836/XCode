@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.js";
 import { Switch } from "@/components/ui/switch.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /** 半点粒度的签到时间选项（与 host 侧调度器的 tick 间隔匹配）。 */
 export const AUTO_CHECKIN_TIME_OPTIONS = Array.from({ length: 48 }, (_, index) => {
@@ -47,7 +47,7 @@ export function AutoCheckinSettings({
   onBatchToggle?: (enabled: boolean) => void;
   batchRunning?: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (rows.length === 0) return null;
 
   return (

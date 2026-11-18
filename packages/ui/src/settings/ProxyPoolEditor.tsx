@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog.js";
 
-type Intl = ReturnType<typeof import("@/i18n/IntlProvider.js").useXCodeIntl>["intl"];
+type Intl = ReturnType<typeof import("@/i18n/IntlProvider.js").useZCodeIntl>["intl"];
 
 export interface PoolDraft {
   id?: string;

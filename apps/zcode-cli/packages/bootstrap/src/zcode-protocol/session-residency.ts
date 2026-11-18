@@ -8,15 +8,15 @@ import type {
   SessionResidentPoolHost,
 } from "./session-resident-pool.js";
 import type {
-  XCodeProtocolAgentServerContext,
-  XCodeProtocolSessionRecord,
+  ZCodeProtocolAgentServerContext,
+  ZCodeProtocolSessionRecord,
 } from "./server-types.js";
 import { SessionLifecycleController } from "../session-lifecycle/index.js";
 import { activateSessionRuntime, validateSessionActivationWorkspace } from "./server-operations.js";
 import { abortMcpUiToolCallsForSession, clearMcpUiAppToolsForSession } from "./mcp-ui/index.js";
 
 export function getSessionLifecycle(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
 ): SessionLifecycleController {
   return (context.sessionLifecycle ??= new SessionLifecycleController({
     exists: async (sessionId) => {
@@ -68,7 +68,7 @@ export function getSessionLifecycle(
 
 /** 条件关闭和删除复用资源释放；调用方保留自己的产品预检及软删除顺序。 */
 export function closeSessionRuntime(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   sessionId: string,
   deleted = false,
 ): Promise<void> {
@@ -78,7 +78,7 @@ export function closeSessionRuntime(
 }
 
 export function discardSessionRuntime(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   sessionId: string,
 ): Promise<void> {
   return getSessionLifecycle(context).dispose(sessionId, () =>
@@ -88,7 +88,7 @@ export function discardSessionRuntime(
 
 /** 整体退出保留原有投影收口顺序；尚未初始化完成的 app 仍由进程资源 owner 收集。 */
 export function shutdownSessionRuntime(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   sessionId: string,
 ): Promise<void> {
   return getSessionLifecycle(context).dispose(sessionId, () =>
@@ -109,7 +109,7 @@ export {
  * registry 缺席不代表已经释放，只有 owner 确认关闭成功后才能恢复新实例。
  */
 export async function deactivateSessionRecord(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   sessionId: string,
 ): Promise<void> {
   const record = context.sessions.get(sessionId);
@@ -123,7 +123,7 @@ export async function deactivateSessionRecord(
 }
 
 async function releaseSessionRecord(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   sessionId: string,
   mode: "close" | "deactivate" | "discard" | "delete" | "shutdown",
 ): Promise<void> {
@@ -244,7 +244,7 @@ async function releaseSessionRecord(
  * 彻底删除会话数据与 `session/releaseUnderDirectory` 共用同一判定。
  */
 export function readSessionBusyState(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   sessionId: string,
 ): "busy" | "idle" | null {
   const facts = createSessionResidentPoolHost(context).readResidencyFacts(sessionId);
@@ -255,7 +255,7 @@ export function readSessionBusyState(
 }
 
 export function createSessionResidentPoolHost(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
 ): SessionResidentPoolHost {
   return {
     deactivate: (sessionId) => deactivateSessionRecord(context, sessionId),
@@ -314,8 +314,8 @@ function deactivationLogContext(
 
 /** 只登记本实例的意图，绝不能在安装工具内部 await 自己这一轮的结束。 */
 export function requestPluginSessionReload(
-  context: XCodeProtocolAgentServerContext,
-  record: XCodeProtocolSessionRecord,
+  context: ZCodeProtocolAgentServerContext,
+  record: ZCodeProtocolSessionRecord,
 ): void {
   const id = record.app.sessionId;
   if (context.sessions.get(id) !== record || record.pluginReload) return;

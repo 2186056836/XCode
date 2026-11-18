@@ -19,22 +19,22 @@ import type { AccountProviderConfigSnapshot } from "@zcode/provider";
 import {
   zcodeProtocolErrorCodes,
   type AppToolSearchMode,
-  type XCodeAutomationBotDeliveryTarget,
-  type XCodeDeliveryKind,
+  type ZCodeAutomationBotDeliveryTarget,
+  type ZCodeDeliveryKind,
   type ModelSelection,
-  type XCodeModelContextBudgetStrategy,
-  type XCodeProtocolMessage,
-  type XCodeProtocolMethod,
-  type XCodeProtocolNotification,
-  type XCodeProtocolRequest,
-  type XCodeProtocolRequestId,
-  type XCodeProtocolTrace,
-  type XCodeSessionMode,
-  type XCodeSessionPersistence,
-  type XCodeWorkspaceRef,
+  type ZCodeModelContextBudgetStrategy,
+  type ZCodeProtocolMessage,
+  type ZCodeProtocolMethod,
+  type ZCodeProtocolNotification,
+  type ZCodeProtocolRequest,
+  type ZCodeProtocolRequestId,
+  type ZCodeProtocolTrace,
+  type ZCodeSessionMode,
+  type ZCodeSessionPersistence,
+  type ZCodeWorkspaceRef,
 } from "@zcode/shared";
 import type { DynamicWorkflowMode } from "@zcode/shared";
-import type { XCodeApp, XCodeAppOptions } from "../app/types.js";
+import type { ZCodeApp, ZCodeAppOptions } from "../app/types.js";
 import type { V4InteractionRegistry } from "../zcode-protocol-v4/interaction-registry.js";
 import type { ConversationV4Gateway } from "../zcode-protocol-v4/v4-gateway.js";
 import type { SessionResidentPool, SessionResidentPoolOptions } from "./session-resident-pool.js";
@@ -43,11 +43,11 @@ export interface ParamsSchema<T> {
   parse(input: unknown): T;
 }
 
-export interface XCodeProtocolAgentDependencies {
+export interface ZCodeProtocolAgentDependencies {
   pluginActivationPort?: PluginActivationPort;
-  pluginPreparation?: XCodeAppOptions["pluginPreparation"];
-  pluginDiscovery?: XCodeAppOptions["pluginDiscovery"];
-  createXCodeApp(options?: Omit<XCodeAppOptions, "providerRegistry">): XCodeApp | Promise<XCodeApp>;
+  pluginPreparation?: ZCodeAppOptions["pluginPreparation"];
+  pluginDiscovery?: ZCodeAppOptions["pluginDiscovery"];
+  createZCodeApp(options?: Omit<ZCodeAppOptions, "providerRegistry">): ZCodeApp | Promise<ZCodeApp>;
   /**
    * 每个 session record 的内存 event store 工厂。
    * 默认 turn 窗口保留策略；测试可注入 spy 或 unbounded 实现做对照。
@@ -76,17 +76,17 @@ export interface XCodeProtocolAgentDependencies {
   refreshProviderRegistry?: (reason: string) => Promise<void>;
 }
 
-export type XCodeProtocolAgentResolvedDependencies = XCodeProtocolAgentDependencies & {
+export type ZCodeProtocolAgentResolvedDependencies = ZCodeProtocolAgentDependencies & {
   createSessionEventStore(sessionId: string): SessionEventStorePort;
   workspaceHookPolicyProvider: WorkspaceHookPolicyProvider;
 };
 
-export interface XCodeProtocolEventSequenceState {
+export interface ZCodeProtocolEventSequenceState {
   lastSeq: number;
   seqBySourceEventKey: Map<string, number>;
 }
 
-export interface XCodeProtocolToolInputTransmissionState {
+export interface ZCodeProtocolToolInputTransmissionState {
   streamedToolCallIdsWithInput: Set<string>;
 }
 
@@ -117,15 +117,15 @@ export interface SessionCustomSystemMessages {
   obfuscation?: SessionJailbreakObfuscation;
 }
 
-export interface XCodeProtocolSessionRecord {
-  app: XCodeApp;
+export interface ZCodeProtocolSessionRecord {
+  app: ZCodeApp;
     /** 1010 新增：子代理运行时配置是否启用（subagents/readRuntimeConfig 的回退依据）。 */
     appControlEnabled?: boolean;
   subagentRuntimeConfigEnabled?: boolean;
   memoryEnabled: boolean;
   nativeSearchEnhancementsEnabled: boolean;
   toolSearchMode: AppToolSearchMode;
-  modelContextBudgetStrategy: XCodeModelContextBudgetStrategy;
+  modelContextBudgetStrategy: ZCodeModelContextBudgetStrategy;
   /** XCode fork：物化时固化的自定义 system 消息；fork/子会话经 inherit 分支继承。 */
   customSystemMessages?: SessionCustomSystemMessages;
   /**
@@ -138,7 +138,7 @@ export interface XCodeProtocolSessionRecord {
   /** PreFill 继承态落盘（会话在 inherit 模式下曾按全局值固定过）。 */
   prefillInheritedEnabled?: boolean;
   createdAt: number;
-  deliveryKind?: XCodeDeliveryKind;
+  deliveryKind?: ZCodeDeliveryKind;
   /**
    * 旧 session/subscribe 没有 unsubscribe RPC；只在真正 subscribe 时置位，不能用
    * 会被 session/read 写入的 deliveryKind 代替。连接结束会销毁整个 CLI 进程。
@@ -146,16 +146,16 @@ export interface XCodeProtocolSessionRecord {
   legacyStreamSubscribed?: boolean;
   eventStore: SessionEventStorePort;
   parentSessionId?: SessionId;
-  persistence: XCodeSessionPersistence;
-  protocolEventSequences: Map<string, XCodeProtocolEventSequenceState>;
-  protocolToolInputTransmissions: Map<string, XCodeProtocolToolInputTransmissionState>;
+  persistence: ZCodeSessionPersistence;
+  protocolEventSequences: Map<string, ZCodeProtocolEventSequenceState>;
+  protocolToolInputTransmissions: Map<string, ZCodeProtocolToolInputTransmissionState>;
   stateRevision: number;
   taskType?: SessionTaskType;
   traceContext: TraceContext;
   unsubscribe?: () => void;
   updatedAt: number;
   lastOutcome?: "completed" | "interrupted" | "error";
-  workspace: XCodeWorkspaceRef;
+  workspace: ZCodeWorkspaceRef;
   activeAbortController?: AbortController;
   /** 仅属于本实例；被手动关闭、删除或替换时移除。 */
   pluginReload?: { check(): void; dispose(): void };
@@ -166,26 +166,26 @@ export interface XCodeProtocolSessionRecord {
   /** 当前正在执行的闲时派发 turn；只在 turn 运行期间存在，禁止递归 OffPeakCreate。 */
   activeOffPeakTaskId?: string;
   /** 当前 Bot 入站 turn 的稳定回推地址；只允许 CronCreate 在本轮读取。 */
-  activeBotDeliveryTarget?: XCodeAutomationBotDeliveryTarget;
+  activeBotDeliveryTarget?: ZCodeAutomationBotDeliveryTarget;
   restoreWarning?: { message: string; type: string };
   /** 冷恢复候选供投影与输入接纳重校验；新的选模事件立即清除，不能跳过模型可用性校验。 */
   restoredModelSelection?: ModelSelection;
 }
 
-export interface XCodeProtocolClientRequestOptions {
+export interface ZCodeProtocolClientRequestOptions {
   signal?: AbortSignal;
   timeoutMs?: number;
-  trace?: XCodeProtocolTrace;
+  trace?: ZCodeProtocolTrace;
   reannounceIntervalMs?: number;
 }
 
-export interface XCodeProtocolAgentServerContext {
+export interface ZCodeProtocolAgentServerContext {
   /** 本 stdio Host 已确认能接收目录来源字段；随进程关闭失效，不存目录缓存。 */
   sessionDirectorySourceEnabled?: boolean;
   sessionWorkspaceRoutingEnabled?: boolean;
   /** 进程退出期间，迟到的异步物化不能重新登记 session。 */
   assertServing?: () => void;
-  deps: XCodeProtocolAgentResolvedDependencies;
+  deps: ZCodeProtocolAgentResolvedDependencies;
   logger?: Logger;
   appRuntimePreferences: {
     askUserQuestionAutoResolutionEnabled: boolean;
@@ -214,15 +214,15 @@ export interface XCodeProtocolAgentServerContext {
   sessionRequestCounts?: Map<string, number>;
   /** context 组成修订号的唯一 owner（context-composition/tracker.ts），首次使用时创建。 */
   contextCompositionTracker?: import("./context-composition/tracker.js").ContextCompositionRevisionTracker;
-  sessions: Map<string, XCodeProtocolSessionRecord>;
+  sessions: Map<string, ZCodeProtocolSessionRecord>;
   /** 仅覆盖异步创建窗口，结束即释放；输入命令仍由 CommandInbox 排队。 */
   sessionCreationIds?: Set<string>;
-  notify(notification: XCodeProtocolNotification): void;
+  notify(notification: ZCodeProtocolNotification): void;
   requestClient<T>(
-    method: XCodeProtocolMethod,
+    method: ZCodeProtocolMethod,
     params: unknown,
     resultSchema: ParamsSchema<T>,
-    options?: XCodeProtocolClientRequestOptions,
+    options?: ZCodeProtocolClientRequestOptions,
   ): Promise<T>;
 }
 
@@ -247,24 +247,24 @@ export class ProtocolRequestError extends Error {
   }
 }
 
-export function isRequest(message: XCodeProtocolMessage): message is XCodeProtocolRequest {
+export function isRequest(message: ZCodeProtocolMessage): message is ZCodeProtocolRequest {
   return "method" in message && "id" in message;
 }
 
 export function isNotification(
-  message: XCodeProtocolMessage,
-): message is XCodeProtocolNotification {
+  message: ZCodeProtocolMessage,
+): message is ZCodeProtocolNotification {
   return "method" in message && !("id" in message);
 }
 
 export function isResponse(
-  message: XCodeProtocolMessage,
-): message is { id: XCodeProtocolRequestId; result: unknown } {
+  message: ZCodeProtocolMessage,
+): message is { id: ZCodeProtocolRequestId; result: unknown } {
   return "id" in message && "result" in message;
 }
 
-export function isErrorResponse(message: XCodeProtocolMessage): message is {
-  id: XCodeProtocolRequestId;
+export function isErrorResponse(message: ZCodeProtocolMessage): message is {
+  id: ZCodeProtocolRequestId;
   error: { code: number; message: string; data?: unknown };
 } {
   return "id" in message && "error" in message;
@@ -304,7 +304,7 @@ export function parseParams<T>(schema: ParamsSchema<T>, params: unknown): T {
 }
 
 export function assertExpectedRevision(
-  record: XCodeProtocolSessionRecord,
+  record: ZCodeProtocolSessionRecord,
   expectedRevision: number | undefined,
 ): void {
   if (expectedRevision !== undefined && expectedRevision !== record.stateRevision) {
@@ -352,7 +352,7 @@ export function createProtocolTraceId(_sessionId: SessionId): TraceContext["trac
 
 export function createProtocolRootTraceContext(
   sessionId: SessionId,
-  trace?: XCodeProtocolTrace,
+  trace?: ZCodeProtocolTrace,
 ): TraceContext {
   const context = createRootTraceContext({
     sessionId,
@@ -368,7 +368,7 @@ export function createProtocolRootTraceContext(
   return context;
 }
 
-export function protocolTraceFromTraceContext(context: TraceContext): XCodeProtocolTrace {
+export function protocolTraceFromTraceContext(context: TraceContext): ZCodeProtocolTrace {
   return {
     traceId: context.traceId,
     ...(context.spanId ? { spanId: context.spanId } : {}),
@@ -379,10 +379,10 @@ export function protocolTraceFromTraceContext(context: TraceContext): XCodeProto
 }
 
 export function requireSession(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   sessionId: string,
-  options: { deliveryKind?: XCodeDeliveryKind; operation?: string } = {},
-): XCodeProtocolSessionRecord {
+  options: { deliveryKind?: ZCodeDeliveryKind; operation?: string } = {},
+): ZCodeProtocolSessionRecord {
   if (context.sessionLifecycle && !context.sessionLifecycle.isReady(sessionId)) {
     throw new ProtocolRequestError(
       zcodeProtocolErrorCodes.sessionUnavailable,
@@ -411,7 +411,7 @@ export function requireSession(
   return record;
 }
 
-export function createProtocolLogger(deps: XCodeProtocolAgentDependencies): Logger | undefined {
+export function createProtocolLogger(deps: ZCodeProtocolAgentDependencies): Logger | undefined {
   return deps.loggerFactory?.createLogger("zcode").child({
     module: "bootstrap.zcode_protocol",
   });

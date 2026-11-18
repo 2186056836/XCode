@@ -2,9 +2,9 @@
 //
 // 分层纪律（不做桥接）：
 // - 本目录是命令的原生实现：决策逻辑（steer 分流 / draft 提升 / abort 生命周期 /
-//   goal-pause barrier）在 handler 里直驱 core（XCodeApp / runtime），不经旧协议 op。
+//   goal-pause barrier）在 handler 里直驱 core（ZCodeApp / runtime），不经旧协议 op。
 // - 会话注册表仍归宿主：通过 V4CommandCoreHost 以「结构化窄视图」透传旧
-//   XCodeProtocolSessionRecord（同一对象引用，字段变更双向可见，不产生第二份注册表）。
+//   ZCodeProtocolSessionRecord（同一对象引用，字段变更双向可见，不产生第二份注册表）。
 // - 环境能力（模型就绪 / legacy 广播 / shell 解析）是注入钩子：旧协议 binder 在过渡期
 //   提供实现，与旧协议同生命周期——每个钩子都标注过渡归宿，新增钩子必须标注。
 import type {
@@ -15,7 +15,7 @@ import type {
 import type {
   DynamicWorkflowMode,
   ModelSelection,
-  XCodeAutomationBotDeliveryTarget,
+  ZCodeAutomationBotDeliveryTarget,
 } from "@zcode/shared";
 import type {
   CommandAck,
@@ -27,7 +27,7 @@ import type {
   StableForkTargetResolution,
   ConversationRowTarget,
 } from "@zcode/shared/zcode-protocol-v4";
-import type { XCodeApp } from "../../app/types.js";
+import type { ZCodeApp } from "../../app/types.js";
 import type { V4InteractionRegistry } from "../interaction-registry.js";
 import type {
   ConversationEditTarget,
@@ -64,11 +64,11 @@ export type V4StableForkTargetResolution =
   | Extract<StableForkTargetResolution, { ok: false }>;
 
 /**
- * 旧 XCodeProtocolSessionRecord 的结构化窄视图（只声明命令层需要的字段）。
+ * 旧 ZCodeProtocolSessionRecord 的结构化窄视图（只声明命令层需要的字段）。
  * 结构兼容：binder 直接把旧 record 对象透传进来；v4 自持会话注册表后由其提供同形对象。
  */
 export interface V4SessionRecordView {
-  app: XCodeApp;
+  app: ZCodeApp;
   /** 冷恢复保留的 Session 原选择；运行绑定暂不可用时仍保留，显式选模后由 owner 清除。 */
   restoredModelSelection?: ModelSelection;
   /**
@@ -89,7 +89,7 @@ export interface V4SessionRecordView {
   /** 当前正在执行的闲时派发 turn；只在 turn 运行期间存在。 */
   activeOffPeakTaskId?: string;
   /** 当前 Bot 入站 turn 的稳定回推地址；turn 结束后必须恢复。 */
-  activeBotDeliveryTarget?: XCodeAutomationBotDeliveryTarget;
+  activeBotDeliveryTarget?: ZCodeAutomationBotDeliveryTarget;
   /** 恢复失败告警：存在时拒绝新 turn（历史损坏不能静默续写）。 */
   restoreWarning?: { message: string; type: string };
   taskType?: SessionTaskType;

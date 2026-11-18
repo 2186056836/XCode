@@ -6,7 +6,7 @@ import {
 } from "@zcode/shared/extension-host";
 import { TID_EXTENSION_VIEW } from "@zcode/shared/test-ids";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   useExtensionSlotsState,
   useExtensionViewsService,
@@ -39,7 +39,7 @@ export function ExtensionViewPane({
   target,
   onOpenExternal,
 }: ExtensionViewPaneProps) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const platform = usePlatform();
   const sandbox = platform.pluginSandbox ?? null;
   const service = useExtensionsService();

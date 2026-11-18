@@ -3,36 +3,36 @@ import {
   sessionLifecycleParamsSchema,
   sessionLifecycleActivationParamsSchema,
   zcodeRuntimeCapabilitiesSchema,
-  type XCodeWorkspaceRef,
+  type ZCodeWorkspaceRef,
   sessionLifecycleSnapshotSchema,
   sessionLifecycleResultSchema,
 } from "@zcode/shared";
-import { XCodeStorageStartupGate } from "#src/zcode-agent/zcodeStorageStartupGate.js";
+import { ZCodeStorageStartupGate } from "#src/zcode-agent/zcodeStorageStartupGate.js";
 import { Emitter } from "@zcode/rpc";
 import { zcodePluginStartupDegradedSchema, zcodeProtocolNotifications } from "@zcode/shared";
 import type { IDisposable } from "@zcode/rpc";
 import type {
-  XCodeProtocolMethod,
-  XCodeProtocolNotification,
-  XCodeProtocolRequest,
-  XCodeProtocolRequestId,
-  XCodeProtocolTrace,
+  ZCodeProtocolMethod,
+  ZCodeProtocolNotification,
+  ZCodeProtocolRequest,
+  ZCodeProtocolRequestId,
+  ZCodeProtocolTrace,
 } from "@zcode/shared";
 import type { V4Method } from "@zcode/shared/zcode-protocol-v4";
 import type { z } from "zod";
-import type { XCodeProtocolTransport } from "./zcodeProtocolTransport.js";
+import type { ZCodeProtocolTransport } from "./zcodeProtocolTransport.js";
 
 /** 客户端可发的方法名：旧 zcodeProtocolMethods + v4/*（M3 起并存，M5 波次 2 收敛为 v4）。 */
-export type XCodeProtocolClientMethod = XCodeProtocolMethod | V4Method;
+export type ZCodeProtocolClientMethod = ZCodeProtocolMethod | V4Method;
 
-interface XCodeProtocolClientOptions {
+interface ZCodeProtocolClientOptions {
   requireStorageStartup?: boolean;
   requestTimeoutMs?: number;
 }
 
-export interface XCodeProtocolRequestTimeoutEvent {
-  method: XCodeProtocolClientMethod;
-  requestId: XCodeProtocolRequestId;
+export interface ZCodeProtocolRequestTimeoutEvent {
+  method: ZCodeProtocolClientMethod;
+  requestId: ZCodeProtocolRequestId;
   timeoutMs: number;
 }
 
@@ -49,41 +49,41 @@ interface PendingRequest<T> {
   cleanupAbort?: () => void;
 }
 
-interface XCodeProtocolClientRequestOptions {
+interface ZCodeProtocolClientRequestOptions {
   /** 单 session 操作超时不能擅自回收整个 workspace；后端仍持有操作，可另行查询。 */
   invalidateConnectionOnTimeout?: boolean;
   /** 观测不得参与 runtime 健康判定或业务空闲续期；默认保持业务请求语义。 */
   lifecycle?: "operation" | "observation";
   signal?: AbortSignal;
-  trace?: XCodeProtocolTrace;
+  trace?: ZCodeProtocolTrace;
   timeoutMs?: number;
 }
 
 export const DEFAULT_XCODE_PROTOCOL_REQUEST_TIMEOUT_MS = 3 * 60_000;
 
-class XCodeProtocolClientError extends Error {
+class ZCodeProtocolClientError extends Error {
   constructor(
     message: string,
     readonly code?: number,
     readonly data?: unknown,
   ) {
     super(message);
-    this.name = "XCodeProtocolClientError";
+    this.name = "ZCodeProtocolClientError";
   }
 }
 
-export class XCodeProtocolRequestTimeoutError extends Error {
+export class ZCodeProtocolRequestTimeoutError extends Error {
   constructor(
-    readonly method: XCodeProtocolClientMethod,
-    readonly requestId: XCodeProtocolRequestId,
+    readonly method: ZCodeProtocolClientMethod,
+    readonly requestId: ZCodeProtocolRequestId,
     readonly timeoutMs: number,
   ) {
     super(`XCode Protocol request timed out: ${method}`);
-    this.name = "XCodeProtocolRequestTimeoutError";
+    this.name = "ZCodeProtocolRequestTimeoutError";
   }
 }
 
-export class XCodeProtocolClient implements IDisposable {
+export class ZCodeProtocolClient implements IDisposable {
   /** 与已连接 workspace 的 CLI 生命周期 owner 通信；此入口不拉起或重启整个进程。 */
   readonly sessionLifecycle = {
     getState: (sessionId: string) =>
@@ -93,7 +93,7 @@ export class XCodeProtocolClient implements IDisposable {
         sessionLifecycleSnapshotSchema,
         { lifecycle: "observation" },
       ),
-    ensureReady: (sessionId: string, workspace?: XCodeWorkspaceRef) =>
+    ensureReady: (sessionId: string, workspace?: ZCodeWorkspaceRef) =>
       this.requestSessionActivation(
         zcodeProtocolMethods.sessionLifecycleEnsureReady,
         sessionId,
@@ -107,7 +107,7 @@ export class XCodeProtocolClient implements IDisposable {
         { invalidateConnectionOnTimeout: false },
       );
     },
-    restart: (sessionId: string, workspace?: XCodeWorkspaceRef) =>
+    restart: (sessionId: string, workspace?: ZCodeWorkspaceRef) =>
       this.requestSessionActivation(
         zcodeProtocolMethods.sessionLifecycleRestart,
         sessionId,
@@ -120,7 +120,7 @@ export class XCodeProtocolClient implements IDisposable {
       | typeof zcodeProtocolMethods.sessionLifecycleEnsureReady
       | typeof zcodeProtocolMethods.sessionLifecycleRestart,
     sessionId: string,
-    workspace?: XCodeWorkspaceRef,
+    workspace?: ZCodeWorkspaceRef,
   ) {
     if (workspace) {
       // 旧 CLI 的严格参数不接受 workspace；不能退回会丢失归属的重启，也不能重启整个进程。
@@ -142,11 +142,11 @@ export class XCodeProtocolClient implements IDisposable {
     );
   }
 
-  readonly storageStartup: XCodeStorageStartupGate;
+  readonly storageStartup: ZCodeStorageStartupGate;
   private readonly pending = new Map<string, PendingRequest<unknown>>();
-  private readonly notificationEmitter = new Emitter<XCodeProtocolNotification>();
-  private readonly requestEmitter = new Emitter<XCodeProtocolRequest>();
-  private readonly requestTimeoutEmitter = new Emitter<XCodeProtocolRequestTimeoutEvent>();
+  private readonly notificationEmitter = new Emitter<ZCodeProtocolNotification>();
+  private readonly requestEmitter = new Emitter<ZCodeProtocolRequest>();
+  private readonly requestTimeoutEmitter = new Emitter<ZCodeProtocolRequestTimeoutEvent>();
   // 业务请求归零时触发；观测完成不能给被观察进程续命。
   private readonly pendingDrainedEmitter = new Emitter<void>();
   private readonly closeEmitter = new Emitter<void>();
@@ -185,10 +185,10 @@ export class XCodeProtocolClient implements IDisposable {
   }
 
   constructor(
-    private readonly transport: XCodeProtocolTransport,
-    options?: XCodeProtocolClientOptions,
+    private readonly transport: ZCodeProtocolTransport,
+    options?: ZCodeProtocolClientOptions,
   ) {
-    this.storageStartup = new XCodeStorageStartupGate(options?.requireStorageStartup ?? false);
+    this.storageStartup = new ZCodeStorageStartupGate(options?.requireStorageStartup ?? false);
     this.requestTimeoutMs = options?.requestTimeoutMs ?? DEFAULT_XCODE_PROTOCOL_REQUEST_TIMEOUT_MS;
     this.disposables.push(
       transport.onMessage((message) => this.handleMessage(message)),
@@ -214,10 +214,10 @@ export class XCodeProtocolClient implements IDisposable {
    * unhandled 噪声暴露，属可接受取舍（仓库内 void 调用点均自带 catch）。
    */
   request<T = unknown>(
-    method: XCodeProtocolClientMethod,
+    method: ZCodeProtocolClientMethod,
     params?: unknown,
     resultSchema?: z.ZodType<T>,
-    options?: XCodeProtocolClientRequestOptions,
+    options?: ZCodeProtocolClientRequestOptions,
   ): Promise<T> {
     const requestPromise = this.requestImpl(method, params, resultSchema, options);
     void requestPromise.catch(() => undefined);
@@ -225,10 +225,10 @@ export class XCodeProtocolClient implements IDisposable {
   }
 
   private async requestImpl<T = unknown>(
-    method: XCodeProtocolClientMethod,
+    method: ZCodeProtocolClientMethod,
     params?: unknown,
     resultSchema?: z.ZodType<T>,
-    options?: XCodeProtocolClientRequestOptions,
+    options?: ZCodeProtocolClientRequestOptions,
   ): Promise<T> {
     this.assertNotDisposed();
     // 不先创建请求/启动 watchdog；只在真实 COMMIT 后进入原有协议请求生命周期。
@@ -245,7 +245,7 @@ export class XCodeProtocolClient implements IDisposable {
         const pending = this.pending.get(requestKey);
         pending?.cleanupAbort?.();
         this.deletePending(requestKey);
-        const error = new XCodeProtocolRequestTimeoutError(method, id, requestTimeoutMs);
+        const error = new ZCodeProtocolRequestTimeoutError(method, id, requestTimeoutMs);
         // 子进程仍存活但协议 event loop 已无响应时，只让单次 request 超时是不够的：
         // process manager 仍复用这个 stale client，导致后续 plugins/list 等请求连续卡在超时窗口。
         // 超时事件把“连接已不可信”的事实上抛给 owner，由 owner 负责淘汰进程。
@@ -325,18 +325,18 @@ export class XCodeProtocolClient implements IDisposable {
     return resultPromise;
   }
 
-  async notify(method: XCodeProtocolClientMethod, params?: unknown): Promise<void> {
+  async notify(method: ZCodeProtocolClientMethod, params?: unknown): Promise<void> {
     this.assertNotDisposed();
     await this.transport.send({ method, params });
   }
 
-  async respond(id: XCodeProtocolRequestId, result: unknown): Promise<void> {
+  async respond(id: ZCodeProtocolRequestId, result: unknown): Promise<void> {
     this.assertNotDisposed();
     await this.transport.send({ id, result });
   }
 
   async respondError(
-    id: XCodeProtocolRequestId,
+    id: ZCodeProtocolRequestId,
     error: { code: number; message: string; data?: unknown },
   ): Promise<void> {
     this.assertNotDisposed();
@@ -374,7 +374,7 @@ export class XCodeProtocolClient implements IDisposable {
 
     if ("result" in message && "id" in message) {
       this.resolveResponse(
-        (message as { id: XCodeProtocolRequestId; result: unknown }).id,
+        (message as { id: ZCodeProtocolRequestId; result: unknown }).id,
         (message as { result: unknown }).result,
       );
       return;
@@ -382,12 +382,12 @@ export class XCodeProtocolClient implements IDisposable {
 
     if ("error" in message && "id" in message) {
       const errorMessage = message as {
-        id: XCodeProtocolRequestId;
+        id: ZCodeProtocolRequestId;
         error: { code: number; message: string; data?: unknown };
       };
       this.rejectResponse(
         errorMessage.id,
-        new XCodeProtocolClientError(
+        new ZCodeProtocolClientError(
           errorMessage.error.message,
           errorMessage.error.code,
           errorMessage.error.data,
@@ -397,21 +397,21 @@ export class XCodeProtocolClient implements IDisposable {
     }
 
     if ("method" in message && "id" in message) {
-      this.requestEmitter.fire(message as XCodeProtocolRequest);
+      this.requestEmitter.fire(message as ZCodeProtocolRequest);
       return;
     }
 
     if ("method" in message) {
       if (
         message.method === zcodeProtocolNotifications.pluginStartupDegraded &&
-        zcodePluginStartupDegradedSchema.safeParse((message as XCodeProtocolNotification).params)
+        zcodePluginStartupDegradedSchema.safeParse((message as ZCodeProtocolNotification).params)
           .success
       ) {
         this.pluginStartupDegraded = true;
       }
       if (
         message.method === "startup/storageState" &&
-        this.storageStartup.accept((message as XCodeProtocolNotification).params)
+        this.storageStartup.accept((message as ZCodeProtocolNotification).params)
       ) {
         // 自定义/旧部署命令无法事先声明能力；首个请求可能已发出。只有首次合法启动帧
         // 能暂停这些计时器，ready 后恢复；该进程的终态不能被后续通知重新续期。
@@ -425,11 +425,11 @@ export class XCodeProtocolClient implements IDisposable {
           );
         }
       }
-      this.notificationEmitter.fire(message as XCodeProtocolNotification);
+      this.notificationEmitter.fire(message as ZCodeProtocolNotification);
     }
   }
 
-  private resolveResponse(id: XCodeProtocolRequestId, result: unknown): void {
+  private resolveResponse(id: ZCodeProtocolRequestId, result: unknown): void {
     const requestKey = String(id);
     const pending = this.pending.get(requestKey);
     if (!pending) {
@@ -451,7 +451,7 @@ export class XCodeProtocolClient implements IDisposable {
     }
   }
 
-  private rejectResponse(id: XCodeProtocolRequestId, error: Error): void {
+  private rejectResponse(id: ZCodeProtocolRequestId, error: Error): void {
     const requestKey = String(id);
     const pending = this.pending.get(requestKey);
     if (!pending) {

@@ -25,8 +25,8 @@ import {
   zcodeWorkspaceCancelGenerateTextResultSchema,
   zcodeWorkspacePresentationSchema,
   zcodeWorkspaceUpdateInteractionPreferencesResultSchema,
-  type XCodeProtocolMessage,
-  type XCodeProtocolNotification,
+  type ZCodeProtocolMessage,
+  type ZCodeProtocolNotification,
 } from "@zcode/shared";
 import {
   V4_METHODS,
@@ -72,12 +72,12 @@ import {
 } from "@zcode/provider";
 import { buildRuntimeUserEntriesFromTurn } from "../../core/src/runtime/helpers/conversation.js";
 import type { SendInputOptions } from "../src/app/types.js";
-import { XCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
-import { XCodeProtocolNdjsonConnection } from "../src/zcode-protocol/transport.js";
+import { ZCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
+import { ZCodeProtocolNdjsonConnection } from "../src/zcode-protocol/transport.js";
 import { shouldCloseSessionForExpectedPersistence } from "../src/zcode-protocol/server-operations.js";
 import type {
-  XCodeProtocolAgentServerContext,
-  XCodeProtocolSessionRecord,
+  ZCodeProtocolAgentServerContext,
+  ZCodeProtocolSessionRecord,
 } from "../src/zcode-protocol/server-types.js";
 import {
   buildSessionSnapshot,
@@ -86,9 +86,9 @@ import {
   mapSessionEvents,
   mapSessionSettings,
 } from "../src/zcode-protocol/mapper.js";
-import { createWorkspaceXCodeApp } from "../src/zcode-protocol/workspace-model-runtime.js";
+import { createWorkspaceZCodeApp } from "../src/zcode-protocol/workspace-model-runtime.js";
 import { onSessionEvent } from "../src/zcode-protocol/server-operations.js";
-import type { XCodeApp, XCodeAppOptions } from "../src/app/types.js";
+import type { ZCodeApp, ZCodeAppOptions } from "../src/app/types.js";
 import { createFakeApp } from "./helpers/fake-zcode-app.js";
 import { createApiKeyProviderConfig } from "./provider-config-fixtures.js";
 
@@ -186,10 +186,10 @@ describe("conditional session close", () => {
   });
 });
 
-describe("XCodeProtocolAgentServer", () => {
+describe("ZCodeProtocolAgentServer", () => {
   it("所有 Entry 都不再接受旧 Workspace Provider 写协议", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       version: "test-version",
     });
@@ -204,7 +204,7 @@ describe("XCodeProtocolAgentServer", () => {
           id: `retired-provider-writer-${index}`,
           method,
           params: {},
-        } as XCodeProtocolMessage),
+        } as ZCodeProtocolMessage),
       ).resolves.toMatchObject({
         id: `retired-provider-writer-${index}`,
         error: { code: -32601 },
@@ -218,8 +218,8 @@ describe("XCodeProtocolAgentServer", () => {
       reason: "managed",
       policyRevision: "test:deny:v1",
     });
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       version: "test-version",
       workspaceHookPolicyProvider: policyProvider,
@@ -246,9 +246,9 @@ describe("XCodeProtocolAgentServer", () => {
       mode: "user_decides",
       policyRevision: "test:user-decides:v1",
     });
-    let createdOptions: XCodeAppOptions | undefined;
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    let createdOptions: ZCodeAppOptions | undefined;
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         createdOptions = options;
         return createFakeApp(options);
       },
@@ -267,8 +267,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("applies strict workspace interaction preferences without creating a session", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       version: "test-version",
     });
@@ -958,7 +958,7 @@ describe("XCodeProtocolAgentServer", () => {
 
   it("emits Computer Use lifecycle metadata without a legacy deliveryKind", () => {
     const ingest = vi.fn();
-    const notify = vi.fn<(notification: XCodeProtocolNotification) => void>();
+    const notify = vi.fn<(notification: ZCodeProtocolNotification) => void>();
     const record = {
       app: { sessionId: "sess_cua_sideband" },
       updatedAt: 1_700,
@@ -1248,8 +1248,8 @@ describe("XCodeProtocolAgentServer", () => {
 
   it("logs snapshot phase timings for session create diagnostics", async () => {
     const logs: RecordedLog[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       loggerFactory: createProtocolTestLoggerFactory(logs),
       version: "test-version",
@@ -1278,8 +1278,8 @@ describe("XCodeProtocolAgentServer", () => {
   // M5 ③-3：usage query 的 v4 名字空间分派（L2）。数据访问层与旧 usage/stats、
   // session/usage 共用（usage store 聚合），这里锁定 v4 方法名可达且结果过 v4 schema。
   it("serves v4/usage/stats through the usage data access layer", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       version: "test-version",
     });
@@ -1300,8 +1300,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("serves v4/conversation/usage keyed by sessionId", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       version: "test-version",
     });
@@ -1320,8 +1320,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("三类 v4 subscribe response 只含 ACK，并把 initial 放入 request-scoped outbox", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       version: "test-version",
     });
@@ -1387,8 +1387,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("routes strict v4 connection flow control to the gateway", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       version: "test-version",
     });
@@ -1411,8 +1411,8 @@ describe("XCodeProtocolAgentServer", () => {
 
   it("routes attachment begin/chunk/commit/abort without a full-data RPC", async () => {
     const writePromptAttachment = vi.fn(async () => ({ ref: "zcode-artifact://upload/server" }));
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options, { writePromptAttachment }),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options, { writePromptAttachment }),
       cwd: workspace.workspacePath,
       version: "test-version",
     });
@@ -1493,8 +1493,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("并发 subscribe request id 的 post-response outbox 不串线", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       version: "test-version",
     });
@@ -1526,8 +1526,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("aligned resume 经真实 server/outbox/NDJSON 只写一行 ACK response", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       version: "test-version",
     });
@@ -1571,7 +1571,7 @@ describe("XCodeProtocolAgentServer", () => {
     output.on("data", (chunk: Buffer) => {
       written += chunk.toString("utf8");
     });
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       clearPostResponseMessages: () => server.clearPostResponseMessages(),
       handleMessage: (message) => server.handleMessage(message),
       input,
@@ -1601,8 +1601,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("same-sub resync 经真实 server/NDJSON 严格先 ACK 再 physical recovery", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       version: "test-version",
     });
@@ -1636,7 +1636,7 @@ describe("XCodeProtocolAgentServer", () => {
     output.on("data", (chunk: Buffer) => {
       written += chunk.toString("utf8");
     });
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       clearPostResponseMessages: () => server.clearPostResponseMessages(),
       handleMessage: (message) => server.handleMessage(message),
       input,
@@ -1674,8 +1674,8 @@ describe("XCodeProtocolAgentServer", () => {
 
   it("uses the app supplied protocol trace as the session root trace", async () => {
     const logs: RecordedLog[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       loggerFactory: createProtocolTestLoggerFactory(logs),
       version: "test-version",
@@ -1703,8 +1703,8 @@ describe("XCodeProtocolAgentServer", () => {
     const pluginRoot = join(root, "plugin");
     const connectedConfigs: Record<string, McpServerConfig>[] = [];
     const mcpPort = createProtocolListMcpPort(connectedConfigs);
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspacePath,
       mcpPort,
       version: "test-version",
@@ -1776,8 +1776,8 @@ describe("XCodeProtocolAgentServer", () => {
     const workspacePath = join(root, "workspace");
     const connectedConfigs: Record<string, McpServerConfig>[] = [];
     const mcpPort = createProtocolListMcpPort(connectedConfigs);
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspacePath,
       mcpPort,
       version: "test-version",
@@ -1867,8 +1867,8 @@ describe("XCodeProtocolAgentServer", () => {
         updatedAt: new Date(1).toISOString(),
       },
     });
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspacePath,
       mcpPort,
       version: "test-version",
@@ -1943,8 +1943,8 @@ describe("XCodeProtocolAgentServer", () => {
         updatedAt: new Date(1).toISOString(),
       },
     });
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspacePath,
       mcpPort,
       version: "test-version",
@@ -2017,8 +2017,8 @@ describe("XCodeProtocolAgentServer", () => {
     const mcpPort = createProtocolPendingAuthorizationMcpPort(connectedConfigs, (resolve) => {
       finishConnect = resolve;
     });
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspacePath,
       mcpPort,
       version: "test-version",
@@ -2072,7 +2072,7 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("cancels background bash tasks through the session protocol", async () => {
-    const notifications: XCodeProtocolNotification[] = [];
+    const notifications: ZCodeProtocolNotification[] = [];
     let cancelledTaskId: string | undefined;
     let backgroundTasks: BackgroundTaskInfo[] = [
       {
@@ -2083,8 +2083,8 @@ describe("XCodeProtocolAgentServer", () => {
         terminalId: "bg_1",
       },
     ];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         const app = createFakeApp(options);
         return {
           ...app,
@@ -2147,12 +2147,12 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("sends contiguous protocol seq for the visible session event stream", async () => {
-    const notifications: XCodeProtocolNotification[] = [];
+    const notifications: ZCodeProtocolNotification[] = [];
     const logs: RecordedLog[] = [];
-    let eventStore: XCodeAppOptions["eventStore"];
+    let eventStore: ZCodeAppOptions["eventStore"];
     let liveSink: ((event: SessionEvent) => void | Promise<void>) | undefined;
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         eventStore = options?.eventStore;
         const app = createFakeApp(options);
         return {
@@ -2309,11 +2309,11 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("omits repeated scheduled tool input after model streaming tool calls", async () => {
-    const notifications: XCodeProtocolNotification[] = [];
-    let eventStore: XCodeAppOptions["eventStore"];
+    const notifications: ZCodeProtocolNotification[] = [];
+    let eventStore: ZCodeAppOptions["eventStore"];
     let liveSink: ((event: SessionEvent) => void | Promise<void>) | undefined;
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         eventStore = options?.eventStore;
         const app = createFakeApp(options);
         return {
@@ -2452,11 +2452,11 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("coalesces streaming tool input deltas with eager and timestamp-budgeted flushes", async () => {
-    const notifications: XCodeProtocolNotification[] = [];
-    let eventStore: XCodeAppOptions["eventStore"];
+    const notifications: ZCodeProtocolNotification[] = [];
+    let eventStore: ZCodeAppOptions["eventStore"];
     let liveSink: ((event: SessionEvent) => void | Promise<void>) | undefined;
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         eventStore = options?.eventStore;
         const app = createFakeApp(options);
         return {
@@ -2580,11 +2580,11 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("coalesces text and reasoning streaming deltas after the first visible token", async () => {
-    const notifications: XCodeProtocolNotification[] = [];
-    let eventStore: XCodeAppOptions["eventStore"];
+    const notifications: ZCodeProtocolNotification[] = [];
+    let eventStore: ZCodeAppOptions["eventStore"];
     let liveSink: ((event: SessionEvent) => void | Promise<void>) | undefined;
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         eventStore = options?.eventStore;
         const app = createFakeApp(options);
         return {
@@ -2704,11 +2704,11 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("keeps separate text streaming parts in separate protocol batches", async () => {
-    const notifications: XCodeProtocolNotification[] = [];
-    let eventStore: XCodeAppOptions["eventStore"];
+    const notifications: ZCodeProtocolNotification[] = [];
+    let eventStore: ZCodeAppOptions["eventStore"];
     let liveSink: ((event: SessionEvent) => void | Promise<void>) | undefined;
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         eventStore = options?.eventStore;
         const app = createFakeApp(options);
         return {
@@ -2811,8 +2811,8 @@ describe("XCodeProtocolAgentServer", () => {
       workspaceIdentity: "ssh:example:/workspace/app",
     };
     try {
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) => createFakeApp(options),
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) => createFakeApp(options),
         cwd: importedWorkspace.workspacePath,
         sessionStore: store,
         version: "test-version",
@@ -2922,8 +2922,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("accepts an assigned fresh ID and rejects replacement of the existing runtime", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       version: "test-version",
     });
@@ -2951,8 +2951,8 @@ describe("XCodeProtocolAgentServer", () => {
     const gate = new Promise<void>((resolve) => {
       release = resolve;
     });
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: async (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: async (options) => {
         started();
         await gate;
         return createFakeApp(options);
@@ -2978,11 +2978,11 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("keeps session title generation internals out of the visible event stream", async () => {
-    const notifications: XCodeProtocolNotification[] = [];
-    let eventStore: XCodeAppOptions["eventStore"];
+    const notifications: ZCodeProtocolNotification[] = [];
+    let eventStore: ZCodeAppOptions["eventStore"];
     let liveSink: ((event: SessionEvent) => void | Promise<void>) | undefined;
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         eventStore = options?.eventStore;
         const app = createFakeApp(options);
         return {
@@ -3149,8 +3149,8 @@ describe("XCodeProtocolAgentServer", () => {
     const notifications: Array<{ method: string; params: unknown }> = [];
     let eventStore: SessionEventStore | undefined;
     let liveSink: ((event: SessionEvent) => void | Promise<void>) | undefined;
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         eventStore = options?.eventStore;
         const app = createFakeApp(options);
         return {
@@ -3282,8 +3282,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("returns direct session snapshots for create/read and wrapped subscribe results", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       version: "test-version",
     });
@@ -3326,8 +3326,8 @@ describe("XCodeProtocolAgentServer", () => {
     const store = await createSqliteSessionStore({ dbPath: ":memory:" });
     const big = "y".repeat(512 * 1024);
     try {
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) => createFakeApp(options),
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) => createFakeApp(options),
         cwd: workspace.workspacePath,
         sessionStore: store,
         version: "test-version",
@@ -3448,8 +3448,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("returns built-in slash commands for workspace and session snapshots", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       version: "test-version",
     });
@@ -3487,12 +3487,12 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("enables model streaming by default for protocol workspace apps", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
+    const createdAppOptions: ZCodeAppOptions[] = [];
 
-    await createWorkspaceXCodeApp(
+    await createWorkspaceZCodeApp(
       {
         deps: {
-          createXCodeApp: (options) => {
+          createZCodeApp: (options) => {
             createdAppOptions.push(options ?? {});
             return createFakeApp(options);
           },
@@ -3512,7 +3512,7 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("passes the opaque workspace identity into protocol app Memory config", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
+    const createdAppOptions: ZCodeAppOptions[] = [];
     const remoteWorkspace = {
       workspaceIdentity: "ssh:example:/workspace/app",
       workspaceKey: "ssh:example:/workspace/app",
@@ -3520,10 +3520,10 @@ describe("XCodeProtocolAgentServer", () => {
       remoteSessionId: "remote-session-1",
     };
 
-    await createWorkspaceXCodeApp(
+    await createWorkspaceZCodeApp(
       {
         deps: {
-          createXCodeApp: (options) => {
+          createZCodeApp: (options) => {
             createdAppOptions.push(options ?? {});
             return createFakeApp(options);
           },
@@ -3548,16 +3548,16 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("preserves unapplied zcode-plan runtime headers original failure", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
+    const createdAppOptions: ZCodeAppOptions[] = [];
     const requestClient = vi.fn(async () => ({
       headersApplied: false,
       errorMessage: "Runtime headers helper timed out after 5000ms.",
     }));
 
-    await createWorkspaceXCodeApp(
+    await createWorkspaceZCodeApp(
       {
         deps: {
-          createXCodeApp: (options) => {
+          createZCodeApp: (options) => {
             createdAppOptions.push(options ?? {});
             return createFakeApp(options);
           },
@@ -3609,7 +3609,7 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("returns per-request auth and distinct IDs for concurrent runtime header refreshes", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
+    const createdAppOptions: ZCodeAppOptions[] = [];
     const requestClient = vi.fn(async () => ({
       headersApplied: true,
       requestAuth: {
@@ -3619,10 +3619,10 @@ describe("XCodeProtocolAgentServer", () => {
       },
     }));
 
-    await createWorkspaceXCodeApp(
+    await createWorkspaceZCodeApp(
       {
         deps: {
-          createXCodeApp: (options) => {
+          createZCodeApp: (options) => {
             createdAppOptions.push(options ?? {});
             return createFakeApp(options);
           },
@@ -3697,9 +3697,9 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("injects protocol MCP servers into session runtime config", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const createdAppOptions: ZCodeAppOptions[] = [];
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         createdAppOptions.push(options);
         return createFakeApp(options);
       },
@@ -3765,9 +3765,9 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("injects protocol tool allow and deny lists into session runtime config", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const createdAppOptions: ZCodeAppOptions[] = [];
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         createdAppOptions.push(options);
         return createFakeApp(options);
       },
@@ -3792,9 +3792,9 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("远程 SSH/WSL workspace 默认禁用全部 Cron 工具并保留调用方 denylist", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const createdAppOptions: ZCodeAppOptions[] = [];
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         createdAppOptions.push(options);
         return createFakeApp(options);
       },
@@ -3831,13 +3831,13 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("reads materialization preferences once per root runtime and keeps active resumes stable", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
+    const createdAppOptions: ZCodeAppOptions[] = [];
     let nativeSearchEnabled = false;
     let toolSearchMode: "off" | "local" = "off";
     let memoryEnabled = false;
     let modelContextBudgetStrategy: "legacy" | "preflight-v1" = "legacy";
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         createdAppOptions.push(options);
         return createFakeApp(options);
       },
@@ -3891,7 +3891,7 @@ describe("XCodeProtocolAgentServer", () => {
   it("reads the latest materialization preferences for a cold resume", async () => {
     const store = await createSqliteSessionStore({ dbPath: ":memory:" });
     const sessionId = "sess_native_search_cold_resume" as SessionId;
-    const createdAppOptions: XCodeAppOptions[] = [];
+    const createdAppOptions: ZCodeAppOptions[] = [];
     try {
       await store.createSession({
         id: sessionId,
@@ -3903,8 +3903,8 @@ describe("XCodeProtocolAgentServer", () => {
         version: "test-version",
         time: { created: 1, updated: 1 },
       });
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) => {
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) => {
           createdAppOptions.push(options);
           return createFakeApp(options);
         },
@@ -3943,11 +3943,11 @@ describe("XCodeProtocolAgentServer", () => {
   ])(
     "injects pull access into advertised local and remote sessions (%s)",
     async (workspaceIdentity) => {
-      const options: XCodeAppOptions[] = [];
+      const options: ZCodeAppOptions[] = [];
       const reads: unknown[] = [];
       let content = "old";
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (input) => {
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (input) => {
           options.push(input);
           return createFakeApp(input);
         },
@@ -4016,9 +4016,9 @@ describe("XCodeProtocolAgentServer", () => {
   );
 
   it("keeps native search on but defaults Memory off when no Host client is attached", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const createdAppOptions: ZCodeAppOptions[] = [];
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         createdAppOptions.push(options);
         return createFakeApp(options);
       },
@@ -4039,9 +4039,9 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("defaults Memory off for an old Host but rejects other preference failures", async () => {
-    const oldHostOptions: XCodeAppOptions[] = [];
-    const oldHostServer = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const oldHostOptions: ZCodeAppOptions[] = [];
+    const oldHostServer = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         oldHostOptions.push(options);
         return createFakeApp(options);
       },
@@ -4073,9 +4073,9 @@ describe("XCodeProtocolAgentServer", () => {
       { error: { code: -32603, message: "setting read failed" } },
       { result: { nativeSearchEnhancementsEnabled: "invalid" } },
     ]) {
-      const createdAppOptions: XCodeAppOptions[] = [];
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) => {
+      const createdAppOptions: ZCodeAppOptions[] = [];
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) => {
           createdAppOptions.push(options);
           return createFakeApp(options);
         },
@@ -4087,7 +4087,7 @@ describe("XCodeProtocolAgentServer", () => {
           "id" in message &&
           message.method === zcodeProtocolMethods.sessionRequestRuntimePreferences
         ) {
-          void server.handleMessage({ id: message.id, ...response } as XCodeProtocolMessage);
+          void server.handleMessage({ id: message.id, ...response } as ZCodeProtocolMessage);
         }
       });
 
@@ -4104,10 +4104,10 @@ describe("XCodeProtocolAgentServer", () => {
 
   it("times out runtime preference resolution while the Host remains connected", async () => {
     vi.useFakeTimers();
-    const createdAppOptions: XCodeAppOptions[] = [];
+    const createdAppOptions: ZCodeAppOptions[] = [];
     const logs: RecordedLog[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         createdAppOptions.push(options);
         return createFakeApp(options);
       },
@@ -4154,9 +4154,9 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("defaults Memory off when an older responder omits the preference field", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const createdAppOptions: ZCodeAppOptions[] = [];
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         createdAppOptions.push(options);
         return createFakeApp(options);
       },
@@ -4179,9 +4179,9 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("settles queued Session creation when the Host disconnects during preference resolution", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const createdAppOptions: ZCodeAppOptions[] = [];
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         createdAppOptions.push(options);
         return createFakeApp(options);
       },
@@ -4194,7 +4194,7 @@ describe("XCodeProtocolAgentServer", () => {
     output.on("data", (chunk: Buffer) => {
       written += chunk.toString("utf8");
     });
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       clearPostResponseMessages: () => server.clearPostResponseMessages(),
       handleMessage: (message) => server.handleMessage(message),
       input,
@@ -4230,7 +4230,7 @@ describe("XCodeProtocolAgentServer", () => {
     const messages = written
       .trim()
       .split("\n")
-      .map((line) => JSON.parse(line) as XCodeProtocolMessage);
+      .map((line) => JSON.parse(line) as ZCodeProtocolMessage);
     expect(
       messages.filter(
         (message) =>
@@ -4261,16 +4261,16 @@ describe("XCodeProtocolAgentServer", () => {
     }));
     app.runtime.stopActiveForegroundExecution = stopActiveForegroundExecution;
     const activeAbortController = new AbortController();
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: () => app,
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: () => app,
       cwd: workspace.workspacePath,
       version: "test-version",
     });
-    const context = (server as unknown as { context: XCodeProtocolAgentServerContext }).context;
+    const context = (server as unknown as { context: ZCodeProtocolAgentServerContext }).context;
     context.sessions.set("sess_active", {
       activeAbortController,
       app,
-    } as unknown as XCodeProtocolSessionRecord);
+    } as unknown as ZCodeProtocolSessionRecord);
     const disconnectError = new Error("Core owner disconnected");
 
     server.disconnectClient(disconnectError);
@@ -4284,15 +4284,15 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("initializes the configured integrated terminal shell before the first prompt", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
+    const createdAppOptions: ZCodeAppOptions[] = [];
     const shellInitializations: unknown[] = [];
     const tempRoot = await mkdtemp(join(tmpdir(), "zcode-protocol-shell-"));
     const fakeGitBash = join(tempRoot, "bash.exe");
     await writeFile(fakeGitBash, "");
     await chmod(fakeGitBash, 0o755);
     try {
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) =>
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) =>
           createShellRecordingFakeApp(options, shellInitializations, createdAppOptions),
         cwd: workspace.workspacePath,
         platform: "win32",
@@ -4356,11 +4356,11 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("does not initialize an unavailable configured integrated terminal shell as the effective snapshot", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
+    const createdAppOptions: ZCodeAppOptions[] = [];
     const shellInitializations: unknown[] = [];
     const unavailablePath = "Z:\\Missing\\Git\\bin\\bash.exe";
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) =>
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) =>
         createShellRecordingFakeApp(options, shellInitializations, createdAppOptions),
       cwd: workspace.workspacePath,
       env: { PATH: "" },
@@ -4422,8 +4422,8 @@ describe("XCodeProtocolAgentServer", () => {
     await chmod(laterGitBash, 0o755);
     try {
       let selectedShell = initialGitBash;
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) => createShellRecordingFakeApp(options, shellInitializations),
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) => createShellRecordingFakeApp(options, shellInitializations),
         cwd: workspace.workspacePath,
         platform: "win32",
         version: "test-version",
@@ -4508,13 +4508,13 @@ describe("XCodeProtocolAgentServer", () => {
   it("initializes a deferred draft shell before accepting its first prompt", async () => {
     const tempRoot = await mkdtemp(join(tmpdir(), "zcode-protocol-shell-deferred-"));
     const laterGitBash = join(tempRoot, "later-bash.exe");
-    const createdAppOptions: XCodeAppOptions[] = [];
+    const createdAppOptions: ZCodeAppOptions[] = [];
     const shellInitializations: unknown[] = [];
     await writeFile(laterGitBash, "");
     await chmod(laterGitBash, 0o755);
     try {
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) =>
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) =>
           createShellRecordingFakeApp(options, shellInitializations, createdAppOptions),
         cwd: workspace.workspacePath,
         platform: "win32",
@@ -4573,8 +4573,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("rejects integrated terminal shell params on create, resume, and send", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
       platform: "win32",
       version: "test-version",
@@ -4634,8 +4634,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("keeps deferred draft sessions out of session/list until the first send", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
     });
 
@@ -4677,9 +4677,9 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("keeps server-owned model state and emits state update notifications", async () => {
-    const notifications: XCodeProtocolNotification[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const notifications: ZCodeProtocolNotification[] = [];
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
     });
     setTestNotificationSink(server, (notification) => notifications.push(notification));
@@ -4722,9 +4722,9 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("maps a protocol session model to structured Runtime Selection", async () => {
-    const createdAppOptions: XCodeAppOptions[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const createdAppOptions: ZCodeAppOptions[] = [];
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         createdAppOptions.push(options);
         return createFakeApp(options);
       },
@@ -4794,9 +4794,9 @@ describe("XCodeProtocolAgentServer", () => {
         tokens: { input: 12345, output: 67, reasoning: 0, cache: { read: 2345, write: 678 } },
       });
 
-      const appOptions: XCodeAppOptions[] = [];
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) => {
+      const appOptions: ZCodeAppOptions[] = [];
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) => {
           appOptions.push(options ?? {});
           return createFakeApp(options);
         },
@@ -4874,8 +4874,8 @@ describe("XCodeProtocolAgentServer", () => {
         time: { created: 1, updated: 2 },
       });
 
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) => createFakeApp(options),
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) => createFakeApp(options),
         cwd: workspace.workspacePath,
         sessionStore: store,
       });
@@ -4887,7 +4887,7 @@ describe("XCodeProtocolAgentServer", () => {
       });
 
       const record = (
-        server as unknown as { context: XCodeProtocolAgentServerContext }
+        server as unknown as { context: ZCodeProtocolAgentServerContext }
       ).context.sessions.get(sessionId);
       expect(record?.taskType).toBe("workflow_child");
     } finally {
@@ -4896,8 +4896,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("workspace presentation omits model facts", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
     });
 
@@ -4916,8 +4916,8 @@ describe("XCodeProtocolAgentServer", () => {
 
   it("通过独立协议同步 Account Config，不再从 Workspace Snapshot 反向投影", async () => {
     const syncAccountProviderConfig = vi.fn(async () => true);
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: () => createFakeApp(),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: () => createFakeApp(),
       cwd: workspace.workspacePath,
       syncAccountProviderConfig,
     });
@@ -4927,7 +4927,7 @@ describe("XCodeProtocolAgentServer", () => {
       method: zcodeProtocolMethods.providerUpdateAccountConfig,
       params: {
         revision: "account-1",
-        basedOnXCodeBuiltinRevision: "zcode-builtin:1",
+        basedOnZCodeBuiltinRevision: "zcode-builtin:1",
         states: {
           "account:zai-individual-coding-plan": {
             availability: "available",
@@ -4952,7 +4952,7 @@ describe("XCodeProtocolAgentServer", () => {
     expect(syncAccountProviderConfig).toHaveBeenCalledTimes(1);
     const snapshot = syncAccountProviderConfig.mock.calls[0]?.[0];
     expect(snapshot?.revision).toBe("account-1");
-    expect(snapshot?.basedOnXCodeBuiltinRevision).toBe("zcode-builtin:1");
+    expect(snapshot?.basedOnZCodeBuiltinRevision).toBe("zcode-builtin:1");
     expect(snapshot?.states?.["account:zai-individual-coding-plan"].current).toBe(false);
     expect(snapshot?.providers.get("account:zai-individual-coding-plan")?.toJSON()).toEqual({
       access: { type: "zhipu-account", entitled: true },
@@ -4964,8 +4964,8 @@ describe("XCodeProtocolAgentServer", () => {
     const refreshProviderRegistry = vi.fn(async (reason: string) => {
       expect(reason).toBe("before-turn");
     });
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: () => createFakeApp(),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: () => createFakeApp(),
       cwd: workspace.workspacePath,
       refreshProviderRegistry,
     });
@@ -5011,8 +5011,8 @@ describe("XCodeProtocolAgentServer", () => {
       revision: "model-runtime:first-provider-default",
       thoughtLevel: "max",
     };
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
     });
 
@@ -5031,8 +5031,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("uses app-provided thought level when creating a session", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options),
       cwd: workspace.workspacePath,
     });
 
@@ -5064,8 +5064,8 @@ describe("XCodeProtocolAgentServer", () => {
     const sendInputCompletion = new Promise<void>((resolve) => {
       resolveSendInput = resolve;
     });
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) =>
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) =>
         createFakeApp(options, {
           sendInput: async (_input, options) => {
             receivedInputId = options?.inputId;
@@ -5132,8 +5132,8 @@ describe("XCodeProtocolAgentServer", () => {
     const sendInputCalled = new Promise<void>((resolve) => {
       resolveSendInput = resolve;
     });
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) =>
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) =>
         createFakeApp(options, {
           sendInput: async (_input, sendOptions) => {
             receivedOptions = sendOptions;
@@ -5196,8 +5196,8 @@ describe("XCodeProtocolAgentServer", () => {
     const sendInputStarted = new Promise<void>((resolve) => {
       resolveSendInputStarted = resolve;
     });
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) =>
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) =>
         createFakeApp(options, {
           sendInput: async (_input, sendOptions) => {
             receivedAutomationId = sendOptions?.automationId;
@@ -5246,8 +5246,8 @@ describe("XCodeProtocolAgentServer", () => {
     const sendInputStarted = new Promise<void>((resolve) => {
       resolveSendInputStarted = resolve;
     });
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) =>
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) =>
         createFakeApp(options, {
           sendInput: async (_input, options) => {
             receivedAutomationId = options?.automationId;
@@ -5288,8 +5288,8 @@ describe("XCodeProtocolAgentServer", () => {
     let secondSendDuringCompleted: Promise<unknown> | undefined;
     let finalizationCountDuringCompleted: number | undefined;
     let activeLockDuringCompleted: AbortController | undefined;
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) =>
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) =>
         createFakeApp(options, {
           sendInput: async () => ({
             kind: "started_turn",
@@ -5306,7 +5306,7 @@ describe("XCodeProtocolAgentServer", () => {
         !secondSendDuringCompleted
       ) {
         const record = (
-          server as unknown as { context: XCodeProtocolAgentServerContext }
+          server as unknown as { context: ZCodeProtocolAgentServerContext }
         ).context.sessions.get(sessionId);
         finalizationCountDuringCompleted = record?.residencyFinalizationCount;
         activeLockDuringCompleted = record?.activeAbortController;
@@ -5357,7 +5357,7 @@ describe("XCodeProtocolAgentServer", () => {
     expect(finalizationCountDuringCompleted).toBe(1);
     await vi.waitFor(() => {
       const record = (
-        server as unknown as { context: XCodeProtocolAgentServerContext }
+        server as unknown as { context: ZCodeProtocolAgentServerContext }
       ).context.sessions.get(sessionId);
       expect(record?.residencyFinalizationCount).toBe(0);
     });
@@ -5369,8 +5369,8 @@ describe("XCodeProtocolAgentServer", () => {
     const received = new Promise<void>((resolve) => {
       resolveReceived = resolve;
     });
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) =>
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) =>
         createFakeApp(options, {
           sendInput: async (input) => {
             receivedInput = input;
@@ -5438,7 +5438,7 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("bridges protocol permission requests through server-to-client JSON-RPC", async () => {
-    const outgoing: XCodeProtocolMessage[] = [];
+    const outgoing: ZCodeProtocolMessage[] = [];
     const origin = {
       kind: "subagent",
       agentId: "agent_perm",
@@ -5450,10 +5450,10 @@ describe("XCodeProtocolAgentServer", () => {
       parentTurnId: "turn_parent_perm",
     } as const;
     let brokerResult:
-      | Awaited<ReturnType<NonNullable<XCodeAppOptions["permissionBroker"]>["requestPermission"]>>
+      | Awaited<ReturnType<NonNullable<ZCodeAppOptions["permissionBroker"]>["requestPermission"]>>
       | undefined;
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) =>
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) =>
         createFakeApp(options, {
           sendInput: async () => {
             brokerResult = await options?.permissionBroker?.requestPermission({
@@ -5539,12 +5539,12 @@ describe("XCodeProtocolAgentServer", () => {
   it("reannounces pending protocol permission requests so a later client request can be answered", async () => {
     vi.useFakeTimers();
     try {
-      const outgoing: XCodeProtocolMessage[] = [];
+      const outgoing: ZCodeProtocolMessage[] = [];
       let brokerResultPromise:
-        | ReturnType<NonNullable<XCodeAppOptions["permissionBroker"]>["requestPermission"]>
+        | ReturnType<NonNullable<ZCodeAppOptions["permissionBroker"]>["requestPermission"]>
         | undefined;
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) =>
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) =>
           createFakeApp(options, {
             sendInput: async () => {
               brokerResultPromise = options?.permissionBroker?.requestPermission({
@@ -5624,7 +5624,7 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("bridges AskUserQuestion through protocol user input requests", async () => {
-    const outgoing: XCodeProtocolMessage[] = [];
+    const outgoing: ZCodeProtocolMessage[] = [];
     const origin = {
       kind: "subagent",
       agentId: "agent_ask",
@@ -5636,7 +5636,7 @@ describe("XCodeProtocolAgentServer", () => {
       parentTurnId: "turn_parent_ask",
     } as const;
     let brokerResult:
-      | Awaited<ReturnType<NonNullable<XCodeAppOptions["permissionBroker"]>["requestPermission"]>>
+      | Awaited<ReturnType<NonNullable<ZCodeAppOptions["permissionBroker"]>["requestPermission"]>>
       | undefined;
     const askInput = {
       questions: [
@@ -5650,8 +5650,8 @@ describe("XCodeProtocolAgentServer", () => {
         },
       ],
     };
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) =>
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) =>
         createFakeApp(options, {
           sendInput: async () => {
             brokerResult = await options?.permissionBroker?.requestPermission({
@@ -5734,7 +5734,7 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("bridges ExitPlanMode approval through protocol user input requests", async () => {
-    const outgoing: XCodeProtocolMessage[] = [];
+    const outgoing: ZCodeProtocolMessage[] = [];
     const origin = {
       kind: "subagent",
       agentId: "agent_exit_plan",
@@ -5746,13 +5746,13 @@ describe("XCodeProtocolAgentServer", () => {
       parentTurnId: "turn_parent_exit_plan",
     } as const;
     let brokerResult:
-      | Awaited<ReturnType<NonNullable<XCodeAppOptions["permissionBroker"]>["requestPermission"]>>
+      | Awaited<ReturnType<NonNullable<ZCodeAppOptions["permissionBroker"]>["requestPermission"]>>
       | undefined;
     const exitPlanInput = {
       plan: "1. Change the runtime\n2. Add tests",
     };
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) =>
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) =>
         createFakeApp(options, {
           sendInput: async () => {
             brokerResult = await options?.permissionBroker?.requestPermission({
@@ -5837,15 +5837,15 @@ describe("XCodeProtocolAgentServer", () => {
   it("reannounces pending ExitPlanMode approval so a later client request can be answered", async () => {
     vi.useFakeTimers();
     try {
-      const outgoing: XCodeProtocolMessage[] = [];
+      const outgoing: ZCodeProtocolMessage[] = [];
       let brokerResultPromise:
-        | ReturnType<NonNullable<XCodeAppOptions["permissionBroker"]>["requestPermission"]>
+        | ReturnType<NonNullable<ZCodeAppOptions["permissionBroker"]>["requestPermission"]>
         | undefined;
       const exitPlanInput = {
         plan: "1. Change the runtime\n2. Add tests",
       };
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) =>
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) =>
           createFakeApp(options, {
             sendInput: async () => {
               brokerResultPromise = options?.permissionBroker?.requestPermission({
@@ -5935,8 +5935,8 @@ describe("XCodeProtocolAgentServer", () => {
   // zcode-protocol-v4/commands/handlers/fork-edit-retry.ts）；本用例收敛为 compact 单验证。
   it("runs compact through the explicit session protocol method", async () => {
     const submittedPrompts: string[] = [];
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) =>
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) =>
         createFakeApp(options, {
           submitPrompt: async (prompt) => {
             submittedPrompts.push(typeof prompt === "string" ? prompt : prompt.text);
@@ -5994,8 +5994,8 @@ describe("XCodeProtocolAgentServer", () => {
         options?.abortSignal?.addEventListener("abort", abort, { once: true });
       });
     });
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options, { submitPrompt }),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options, { submitPrompt }),
       cwd: workspace.workspacePath,
     });
     const created = zcodeSessionStateSnapshotSchema.parse(
@@ -6047,8 +6047,8 @@ describe("XCodeProtocolAgentServer", () => {
       finishReason: "length",
       usage: { inputTokens: 3, outputTokens: 256, totalTokens: 259 },
     }));
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options, { generateWorkspaceText }),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options, { generateWorkspaceText }),
       cwd: workspace.workspacePath,
     });
 
@@ -6095,8 +6095,8 @@ describe("XCodeProtocolAgentServer", () => {
       calls.push("refresh");
     });
     const testModelConnectivity = vi.fn(async () => {});
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) =>
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) =>
         createFakeApp(options, {
           testModelConnectivity: async (...args) => {
             calls.push("connectivity");
@@ -6145,8 +6145,8 @@ describe("XCodeProtocolAgentServer", () => {
   it("closes the temporary app after provider connectivity testing", async () => {
     const close = vi.fn(async () => {});
     const testModelConnectivity = vi.fn(async () => {});
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options, { close, testModelConnectivity }),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options, { close, testModelConnectivity }),
       cwd: workspace.workspacePath,
     });
 
@@ -6170,7 +6170,7 @@ describe("XCodeProtocolAgentServer", () => {
       resolveStarted = resolve;
     });
     const generateWorkspaceText = vi.fn(
-      async (...[, options]: Parameters<XCodeApp["generateWorkspaceText"]>) => {
+      async (...[, options]: Parameters<ZCodeApp["generateWorkspaceText"]>) => {
         generatedSignal = options?.abortSignal;
         resolveStarted?.();
         await new Promise<never>((_resolve, reject) => {
@@ -6180,8 +6180,8 @@ describe("XCodeProtocolAgentServer", () => {
         });
       },
     );
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options, { generateWorkspaceText }),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options, { generateWorkspaceText }),
       cwd: workspace.workspacePath,
     });
 
@@ -6222,7 +6222,7 @@ describe("XCodeProtocolAgentServer", () => {
     });
     let invocation = 0;
     const generateWorkspaceText = vi.fn(
-      async (...[, options]: Parameters<XCodeApp["generateWorkspaceText"]>) => {
+      async (...[, options]: Parameters<ZCodeApp["generateWorkspaceText"]>) => {
         invocation += 1;
         if (invocation > 1) {
           return {
@@ -6238,8 +6238,8 @@ describe("XCodeProtocolAgentServer", () => {
         });
       },
     );
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options, { generateWorkspaceText }),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options, { generateWorkspaceText }),
       cwd: workspace.workspacePath,
     });
     const params = {
@@ -6296,15 +6296,15 @@ describe("XCodeProtocolAgentServer", () => {
 
   it("closes the temporary app after draft workspace text generation", async () => {
     const close = vi.fn(async () => {});
-    const appOptions: XCodeAppOptions[] = [];
+    const appOptions: ZCodeAppOptions[] = [];
     const generateWorkspaceText = vi.fn(async () => ({
       text: "fix(git): generate message",
       selection: { providerId: "custom-openai", modelId: "backup-model" },
       finishReason: "stop",
     }));
     const providerRegistry = createProtocolTestProviderRegistry();
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         const effectiveOptions = { ...options, providerRegistry };
         appOptions.push(effectiveOptions);
         return createFakeApp(effectiveOptions, { close, generateWorkspaceText });
@@ -6335,8 +6335,8 @@ describe("XCodeProtocolAgentServer", () => {
 
   it("drops duplicate compact requests while the same session is compacting", async () => {
     const submitPrompt = vi.fn();
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         const app = createFakeApp(options);
         return {
           ...app,
@@ -6380,11 +6380,11 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("runs goal through target APIs instead of submitPrompt", async () => {
-    let target: Awaited<ReturnType<NonNullable<XCodeApp["readTarget"]>>> = null;
+    let target: Awaited<ReturnType<NonNullable<ZCodeApp["readTarget"]>>> = null;
     const submitPrompt = vi.fn();
     const continueActiveTarget = vi.fn(async () => ({ response: "continued" }) as never);
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         const app = createFakeApp(options);
         return {
           ...app,
@@ -6438,7 +6438,7 @@ describe("XCodeProtocolAgentServer", () => {
             target = { ...target, status, time: { ...target.time, updated: 3 } };
             return target;
           },
-        } satisfies XCodeApp;
+        } satisfies ZCodeApp;
       },
       cwd: workspace.workspacePath,
     });
@@ -6526,8 +6526,8 @@ describe("XCodeProtocolAgentServer", () => {
       targetID: "goal_running",
       time: { created: 1, updated: 1 },
     }));
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => createFakeApp(options, { sendInput, setTarget }),
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => createFakeApp(options, { sendInput, setTarget }),
     });
     const created = zcodeSessionStateSnapshotSchema.parse(
       await requestResult(server, {
@@ -6570,8 +6570,8 @@ describe("XCodeProtocolAgentServer", () => {
 
   it("allows session goal pause to stop a running prompt", async () => {
     const abortReasons: string[] = [];
-    let target: Awaited<ReturnType<NonNullable<XCodeApp["readTarget"]>>> = null;
-    const sendInput = vi.fn<XCodeApp["sendInput"]>(
+    let target: Awaited<ReturnType<NonNullable<ZCodeApp["readTarget"]>>> = null;
+    const sendInput = vi.fn<ZCodeApp["sendInput"]>(
       async (_input, options) =>
         await new Promise<never>((_resolve, reject) => {
           const signal = options.abortSignal;
@@ -6587,8 +6587,8 @@ describe("XCodeProtocolAgentServer", () => {
           signal.addEventListener("abort", rejectFromAbort, { once: true });
         }),
     );
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         const app = createFakeApp(options, { sendInput });
         target = {
           objective: "Pause current goal immediately",
@@ -6626,7 +6626,7 @@ describe("XCodeProtocolAgentServer", () => {
             target = { ...target, status, time: { ...target.time, updated: 3 } };
             return target;
           },
-        } satisfies XCodeApp;
+        } satisfies ZCodeApp;
       },
     });
     const created = zcodeSessionStateSnapshotSchema.parse(
@@ -6675,14 +6675,14 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("pauses an active goal when session stop cancels goal continuation", async () => {
-    const notifications: XCodeProtocolNotification[] = [];
+    const notifications: ZCodeProtocolNotification[] = [];
     const abortReasons: string[] = [];
     let resolveContinuationStarted!: () => void;
     const continuationStarted = new Promise<void>((resolve) => {
       resolveContinuationStarted = resolve;
     });
-    let target: Awaited<ReturnType<NonNullable<XCodeApp["readTarget"]>>> = null;
-    const continueActiveTarget = vi.fn<XCodeApp["continueActiveTarget"]>(
+    let target: Awaited<ReturnType<NonNullable<ZCodeApp["readTarget"]>>> = null;
+    const continueActiveTarget = vi.fn<ZCodeApp["continueActiveTarget"]>(
       async (options) =>
         await new Promise<never>((_resolve, reject) => {
           const signal = options?.abortSignal;
@@ -6699,8 +6699,8 @@ describe("XCodeProtocolAgentServer", () => {
           signal?.addEventListener("abort", rejectFromAbort, { once: true });
         }),
     );
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         const app = createFakeApp(options, { continueActiveTarget });
         return {
           ...app,
@@ -6745,7 +6745,7 @@ describe("XCodeProtocolAgentServer", () => {
             target = { ...target, status, time: { ...target.time, updated: 3 } };
             return target;
           },
-        } satisfies XCodeApp;
+        } satisfies ZCodeApp;
       },
       cwd: workspace.workspacePath,
     });
@@ -6792,8 +6792,8 @@ describe("XCodeProtocolAgentServer", () => {
   });
 
   it("includes persisted goal and todos in protocol snapshots", async () => {
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: (options) => {
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: (options) => {
         const app = createFakeApp(options);
         const persistedTarget = {
           objective: "Restore parser goal",
@@ -7607,11 +7607,11 @@ describe("XCodeProtocolAgentServer", () => {
   it("forks sessions and lets selection children inherit parent runtime preferences", async () => {
     const store = await createSqliteSessionStore({ dbPath: ":memory:" });
     const forkTargets: Array<{ targetCheckpointId?: string; targetMessageId?: string }> = [];
-    const createdAppOptions: XCodeAppOptions[] = [];
+    const createdAppOptions: ZCodeAppOptions[] = [];
     const selectionChildId = "sess_selection_runtime_preferences" as SessionId;
     try {
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) => {
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) => {
           createdAppOptions.push(options);
           const app = createFakeApp(options);
           return {
@@ -7682,7 +7682,7 @@ describe("XCodeProtocolAgentServer", () => {
               }),
             updateTargetStatus: async (status) =>
               await store.updateTargetStatus({ sessionID: app.sessionId, status }),
-          } satisfies XCodeApp;
+          } satisfies ZCodeApp;
         },
         cwd: workspace.workspacePath,
         sessionStore: store,
@@ -7871,8 +7871,8 @@ describe("XCodeProtocolAgentServer", () => {
       await saveSyntheticForkNotice(store, sessionId, "msg_fork_notice" as MessageId, 6);
       await saveCompactSummary(store, sessionId, "msg_compact_summary" as MessageId, 7);
 
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) =>
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) =>
           createFakeApp(options, {
             forkFromCheckpoint: async (target) => {
               forkTargets.push({
@@ -8128,7 +8128,7 @@ function messageTexts(
   );
 }
 
-async function requestResult(server: XCodeProtocolAgentServer, message: XCodeProtocolMessage) {
+async function requestResult(server: ZCodeProtocolAgentServer, message: ZCodeProtocolMessage) {
   const response = await server.handleMessage(message);
   if (!response || !("result" in response)) {
     throw new Error(`Expected protocol success response: ${JSON.stringify(response)}`);
@@ -8137,8 +8137,8 @@ async function requestResult(server: XCodeProtocolAgentServer, message: XCodePro
 }
 
 function setTestNotificationSink(
-  server: XCodeProtocolAgentServer,
-  sink: Parameters<XCodeProtocolAgentServer["setNotificationSink"]>[0],
+  server: ZCodeProtocolAgentServer,
+  sink: Parameters<ZCodeProtocolAgentServer["setNotificationSink"]>[0],
 ): void {
   server.setNotificationSink((message) => {
     if (
@@ -8156,7 +8156,7 @@ function setTestNotificationSink(
 }
 
 function attachSessionRuntimePreferencesResponder(
-  server: XCodeProtocolAgentServer,
+  server: ZCodeProtocolAgentServer,
   resolvePreferences: (scope: "runtime-materialization" | "user-execution") => {
     nativeSearchEnhancementsEnabled: boolean;
     toolSearchMode?: "auto" | "local" | "off";
@@ -8175,8 +8175,8 @@ function attachSessionRuntimePreferencesResponder(
           path: string;
         };
   },
-): XCodeProtocolMessage[] {
-  const requests: XCodeProtocolMessage[] = [];
+): ZCodeProtocolMessage[] {
+  const requests: ZCodeProtocolMessage[] = [];
   server.setNotificationSink((message) => {
     if (
       "id" in message &&
@@ -8408,7 +8408,7 @@ function createProtocolPendingAuthorizationMcpPort(
 }
 
 type ShellInitializationCandidate = Parameters<
-  XCodeApp["runtime"]["initializeSessionShellEnvironmentIfNeeded"]
+  ZCodeApp["runtime"]["initializeSessionShellEnvironmentIfNeeded"]
 >[0];
 
 function resolveShellInitializationCandidate(
@@ -8418,10 +8418,10 @@ function resolveShellInitializationCandidate(
 }
 
 function createShellRecordingFakeApp(
-  options: XCodeAppOptions,
+  options: ZCodeAppOptions,
   shellInitializations: unknown[],
-  createdAppOptions?: XCodeAppOptions[],
-): XCodeApp {
+  createdAppOptions?: ZCodeAppOptions[],
+): ZCodeApp {
   createdAppOptions?.push(options);
   const app = createFakeApp(options);
   let effectiveShellSelection = options.runtimeConfig?.bashShellSelection;

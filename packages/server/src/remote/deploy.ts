@@ -9,7 +9,7 @@ import {
   type RemoteResourcePackageSelection,
 } from "@zcode/shared";
 import type { IRemoteBackend, RemoteEnvironment } from "./backend.js";
-import { deployXCodeAgentRuntime } from "./zcodeAgentDeploy.js";
+import { deployZCodeAgentRuntime } from "./zcodeAgentDeploy.js";
 import {
   deployNodePtyPrebuilds,
   deployNodeRuntime,
@@ -289,7 +289,7 @@ export async function deployServer(
           { log, logWarn },
         );
       }
-      await deployXCodeAgentRuntime(
+      await deployZCodeAgentRuntime(
         backend,
         env,
         {
@@ -371,7 +371,7 @@ export async function deployServer(
     log("all uploads complete");
 
     // 部署 XCode Agent runtime 到远程，历史资源包选择已在入口统一忽略。
-    await deployXCodeAgentRuntime(
+    await deployZCodeAgentRuntime(
       backend,
       env,
       {

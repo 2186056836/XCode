@@ -44,7 +44,7 @@ const mockCdnDir = join(desktopDir, "mock-cdn");
 const version = require(join(rootDir, "package.json")).version;
 const ZCODE_AGENT_RUNTIME = {
   glm: {
-    version: readXCodeAgentRuntimeVersion(),
+    version: readZCodeAgentRuntimeVersion(),
   },
 };
 const releaseDir = join(mockCdnDir, "releases", version);
@@ -182,7 +182,7 @@ const remoteOfficialPluginRequiredPaths = [
   "packages/node-repl-host/.zcode-plugin/plugin.json",
 ];
 
-function readXCodeAgentRuntimeVersion() {
+function readZCodeAgentRuntimeVersion() {
   const runtimeSourcePath = join(rootDir, "packages/shared/src/zcode-agent-runtime.ts");
   const runtimeSource = readFileSync(runtimeSourcePath, "utf8");
   const match = runtimeSource.match(/version:\s*["']([^"']+)["']/);

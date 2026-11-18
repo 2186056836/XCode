@@ -21,7 +21,7 @@ import { ChevronRightIcon, EyeIcon } from "lucide-react";
 import {
   zcodeProviderRuntimeHeadersErrorCode,
   type HighspeedMessageMeta,
-  type XCodeApiRetryStatus,
+  type ZCodeApiRetryStatus,
 } from "@zcode/shared";
 import {
   TID_CHAT_ASSISTANT_HISTORY_CONTENT,
@@ -53,7 +53,7 @@ import {
   readOffPeakCreateTaskSummary,
   type OffPeakCreateTaskSummary,
 } from "@/ToolCallBlocks/renderers/offpeak-create.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { HighspeedShareDialog } from "@/highspeed/HighspeedShareNoticeCard.js";
 import { isHighspeedShareEligible } from "@/highspeed/highspeedShare.js";
 import {
@@ -199,7 +199,7 @@ function HighspeedOutputFooter({
   );
 }
 
-function toRetryStatus(apiRetry: ApiRetryState): XCodeApiRetryStatus {
+function toRetryStatus(apiRetry: ApiRetryState): ZCodeApiRetryStatus {
   const attempt = Math.max(1, Math.floor(apiRetry.attempt));
   // v4 maxAttempts 包含首次请求，而展示口径是重试次数；直接展示会把
   // 默认 10 次重试写成 1/11。
@@ -223,7 +223,7 @@ function TurnChatLoadingSlot({
   eligible: boolean;
   initialElapsedMs: number;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const retryStatus = useMemo(() => (apiRetry ? toRetryStatus(apiRetry) : null), [apiRetry]);
   // 配置读取尚未发出模型请求，首次恢复就显示进度，避免用户误以为消息已发送。
   // 其余前两次短暂恢复对用户等价于普通加载；保留 apiRetry 运行态，但只在
@@ -293,7 +293,7 @@ function ConversationAssistantWorkContent({
   assistantCodeCommentProjectionEnabled?: boolean;
   historyContainer?: { chunkKey: string; open: boolean };
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const summaryBoundary = useContext(SummaryGroupBoundaryContext);
   const groups = useMemo(() => groupConsecutiveAssistantSummaries(items), [items]);
   const groupKeys = useContinuousGroupKeys(groups, (group) => ({
@@ -559,7 +559,7 @@ function AssistantHistoryStatus({
   sourceCommandIds: readonly string[];
   collapsible?: boolean;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const topicInterrupted = useBotTopicInterruption(sourceCommandIds);
   const durationLabel = formatConversationWorkDuration(
     segment.workStatus?.durationMs,
@@ -1229,7 +1229,7 @@ function ConversationTurnGroupImpl({
   topClearedByTimeline = false,
 }: ConversationTurnGroupProps) {
   const isOfficeMode = useIsOfficeMode();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const visibleUserRows = useMemo(() => unit.visibleUserInputs, [unit.visibleUserInputs]);
   const sourceCommandId = unit.header?.sourceCommandId ?? visibleUserRows[0]?.sourceCommandId;
   const selectHighspeed = useShallow(getHighspeedTurnDependencies);

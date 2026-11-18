@@ -1,7 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { Spinner } from "@/components/ui/spinner.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export function ConversationShareLinkRow({
   isPublic,
@@ -16,7 +16,7 @@ export function ConversationShareLinkRow({
   onOpen: () => void;
   onCopy: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <div className="flex flex-col gap-2 px-2 pb-2">

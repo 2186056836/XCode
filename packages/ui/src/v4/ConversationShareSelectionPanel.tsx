@@ -6,7 +6,7 @@ import { cn } from "@/components/lib/utils.js";
 import { Button } from "@/components/ui/button.js";
 import { Checkbox } from "@/components/ui/checkbox.js";
 import { ScrollArea } from "@/components/ui/scroll-area.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { resolveConversationShareSelectionPanelMotion } from "@/v4/conversationShareModeMotion.js";
 import {
   CONVERSATION_SHARE_SELECTION_PANEL_CENTER_Y_PROPERTY,
@@ -49,7 +49,7 @@ function ConversationShareSelectionPanelImpl({
   selectedCount = selectedRowIds.size,
   preflight,
 }: ConversationShareSelectionPanelProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const prefersReducedMotion = useReducedMotion() === true;
   const motionConfig = resolveConversationShareSelectionPanelMotion(prefersReducedMotion);
   const panelRef = useRef<HTMLElement>(null);

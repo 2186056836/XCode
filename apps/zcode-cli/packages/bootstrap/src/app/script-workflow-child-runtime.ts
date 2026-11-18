@@ -38,11 +38,11 @@ import {
 } from "@zcode/contracts";
 import { collectDisabledPaths } from "../skill-command-overrides.js";
 import { parseProviderQualifiedModelSelection } from "./provider-registry-selection.js";
-import type { XCodeAppOptions } from "./types.js";
+import type { ZCodeAppOptions } from "./types.js";
 
 export interface ScriptWorkflowAgentRuntimeDeps {
   agentTelemetry: AgentExecutionTelemetryPort;
-  appOptions: XCodeAppOptions;
+  appOptions: ZCodeAppOptions;
   appVersion: string;
   artifactStore?: ToolArtifactStorePort;
   configResult: ConfigResult;

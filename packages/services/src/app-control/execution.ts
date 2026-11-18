@@ -19,7 +19,7 @@ import type { ProjectDirectories, ProjectTask } from "#src/project/contract.js";
 import type { AppControlServiceDependencies } from "#src/app-control/contract.js";
 import { getAppControlBinding } from "#src/app-control/context.js";
 import { observeAppConversation } from "#src/app-control/observation.js";
-import { withTrustedXCodeAgentV4Connection } from "#src/zcode-agent/zcodeAgentConnectionScope.js";
+import { withTrustedZCodeAgentV4Connection } from "#src/zcode-agent/zcodeAgentConnectionScope.js";
 
 export function appControlCommandId(context: AppTrustedContext, requestId: string): string {
   return `app-control-${createHash("sha256")
@@ -174,7 +174,7 @@ export function createAppExecutionPorts(
   ) {
     const binding = getAppControlBinding(context);
     return deps.agent.sendConversationCommandV4(
-      withTrustedXCodeAgentV4Connection(
+      withTrustedZCodeAgentV4Connection(
         { ...target, ...(projectId !== undefined ? { projectId } : {}), envelope },
         { connectionId: binding.connectionId, clientMode: "desktop-continuous" },
       ),

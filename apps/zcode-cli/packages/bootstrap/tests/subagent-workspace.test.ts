@@ -9,7 +9,7 @@ import { createTestAgentRuntime } from "../../core/tests/test-agent-runtime.js";
 import { createTestModelFactory } from "../../core/tests/test-runtime-model.js";
 import { createTestSessionEventStore } from "../../core/tests/test-event-store.js";
 import { listSessions } from "../src/zcode-protocol/server-operations.js";
-import type { XCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
 
 it.each([false, true])(
   "Bash cd before Agent preserves durable workspace (remote=%s)",
@@ -113,7 +113,7 @@ it.each([false, true])(
           deps: { sessionStore: store },
           sessionDirectorySourceEnabled: true,
           sessions: new Map(),
-        } as XCodeProtocolAgentServerContext,
+        } as ZCodeProtocolAgentServerContext,
         { workspace, sessionIds: [child!.id] },
       );
       expect(result.sessions).toEqual([
@@ -143,7 +143,7 @@ it("keeps legacy paths readable and unchanged across resume, old-writer updates 
         deps: { sessionStore: store },
         sessionDirectorySourceEnabled: true,
         sessions: new Map(),
-      } as XCodeProtocolAgentServerContext,
+      } as ZCodeProtocolAgentServerContext,
       { sessionIds: [sessionId], workspace },
     );
   try {

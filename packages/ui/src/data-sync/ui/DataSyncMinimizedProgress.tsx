@@ -2,7 +2,7 @@ import { createPortal } from "react-dom";
 import { Minus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /** 非模态状态条始终挂在窗口根部，不受设置页滚动容器或页面卸载影响。 */
 export function DataSyncMinimizedProgress(props: {
@@ -12,7 +12,7 @@ export function DataSyncMinimizedProgress(props: {
   finished: boolean;
   onRestore(): void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const status = props.pushing
     ? "remoteSync.minimized.pushing"
     : props.failed
@@ -45,7 +45,7 @@ export function DataSyncMinimizedProgress(props: {
 }
 
 export function DataSyncMinimizeButton(props: { pushing: boolean; onMinimize(): void }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const label = intl.formatMessage({ id: "remoteSync.dialog.minimize" });
   return (
     <Button

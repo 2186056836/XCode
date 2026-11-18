@@ -201,7 +201,7 @@ import {
   resolveOfficialPluginRoots,
 } from "../src/app/bundled-plugins.js";
 import { OFFICIAL_PLUGIN_DEFINITIONS } from "../src/app/official-plugin-definitions.js";
-import { resolveXCodePlugins } from "../src/plugins.js";
+import { resolveZCodePlugins } from "../src/plugins.js";
 
 const OFFICIAL_CACHE_ROOT = join("cache", "zcode-plugins-official");
 const BROWSER_CACHE_SUFFIX = join(OFFICIAL_CACHE_ROOT, "browser-use", "0.5.1");
@@ -296,7 +296,7 @@ describe("bundled official plugin cache resilience", () => {
   it("shares a startup deadline and keeps timeout degradation until a new owner", async () => {
     vi.useFakeTimers();
     const preparation = createOfficialPluginPreparation({ startupTimeoutMs: 3_000 });
-    const late = Promise.withResolvers<Awaited<ReturnType<typeof resolveXCodePlugins>>>();
+    const late = Promise.withResolvers<Awaited<ReturnType<typeof resolveZCodePlugins>>>();
     const success = {
       commandRoots: [],
       diagnostics: [],
@@ -348,13 +348,13 @@ describe("bundled official plugin cache resilience", () => {
       pluginPreparation: preparation,
       pluginDiscovery: { discoverPlugins },
     };
-    const first = resolveXCodePlugins(options);
+    const first = resolveZCodePlugins(options);
     await vi.advanceTimersByTimeAsync(3_000);
     expect((await first).diagnostics).toEqual([
       expect.objectContaining({ code: "plugin_startup_timeout" }),
     ]);
     seed.reject(new Error("late seed failure"));
-    await resolveXCodePlugins(options);
+    await resolveZCodePlugins(options);
     expect(prepare).toHaveBeenCalledOnce();
     expect(discoverPlugins).not.toHaveBeenCalled();
     await preparation.dispose();
@@ -724,7 +724,7 @@ describe("bundled official plugin cache resilience", () => {
 
     await expect(
       (async () =>
-        await resolveXCodePlugins({
+        await resolveZCodePlugins({
           logger,
           pluginStorageRoot: storageRoot,
           skipUserConfig: true,
@@ -866,10 +866,10 @@ describe("bundled official plugin cache resilience", () => {
     process.argv[1] = join(entrypointRoot, "zcode.cjs");
     const logger = createLogger();
 
-    let outcome!: ReturnType<typeof resolveXCodePlugins>;
+    let outcome!: ReturnType<typeof resolveZCodePlugins>;
     await expect(
       (async () => {
-        outcome = await resolveXCodePlugins({
+        outcome = await resolveZCodePlugins({
           logger,
           pluginStorageRoot: storageRoot,
           skipUserConfig: true,
@@ -983,7 +983,7 @@ describe("bundled official plugin cache resilience", () => {
     const logger = createLogger();
     faults.seedLockHeldTargetSuffixes = [BROWSER_CACHE_SUFFIX];
 
-    const outcome = await resolveXCodePlugins({
+    const outcome = await resolveZCodePlugins({
       logger,
       pluginStorageRoot: storageRoot,
       skipUserConfig: true,
@@ -1063,7 +1063,7 @@ describe("bundled official plugin cache resilience", () => {
 
     await expect(
       (async () =>
-        await resolveXCodePlugins({
+        await resolveZCodePlugins({
           logger,
           pluginStorageRoot: storageRoot,
           skipUserConfig: true,

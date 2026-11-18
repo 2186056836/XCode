@@ -41,7 +41,7 @@ import {
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useFileContextActions } from "@/hooks/useFileContextActions.js";
 import { useWorkspaceOpenInEditorTarget } from "@/hooks/useWorkspaceOpenInEditorTarget.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { persistLastSelectedEditorId } from "@/lib/editorPreference.js";
 import type { CodeViewerSource } from "@/lib/codeViewer.js";
 import { getFileManagerLabel } from "@/workspace-file-tree/helpers.js";
@@ -96,7 +96,7 @@ export function OpenSplitButton({
   stopPropagation = false,
   renderCard,
 }: OpenSplitButtonProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const platform = usePlatform();
 
   const previewSource = target.type === "file" ? target.previewSource : undefined;
@@ -538,7 +538,7 @@ function OpenSplitButtonDropdownActions({
   canOpenWith: boolean;
   reveal?: { label: string; onSelect: () => void };
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const fileActions = useFileContextActions();
   const revealItem = reveal ? (
     <DropdownMenuItem onSelect={reveal.onSelect}>

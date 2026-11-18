@@ -48,7 +48,7 @@ import { useTabPersistence, type WorkspacePersistenceGate } from "@/hooks/useTab
 import { runAliyunCaptcha } from "@/hooks/useMarketingTouchCampaign.js";
 import { useTokenRefresh } from "@/hooks/useTokenRefresh.js";
 import { useWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { SSHDialog } from "@/SSHDialog.js";
 import { SettingsPage } from "@/SettingsPage.js";
 import { setPendingSettingsSectionIntent } from "@/lib/settingsNavigation.js";
@@ -71,9 +71,9 @@ import {
   shouldShowRootStartupLoading,
   shouldOpenFallbackWorkspaceAfterCreate,
 } from "@/lib/rootStartupGate.js";
-import { StoreProvider, useXCodeStore } from "@/store/StoreProvider.js";
+import { StoreProvider, useZCodeStore } from "@/store/StoreProvider.js";
 import { setMcpStorePlatform } from "@/store/mcpStore.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import { TabStoreProvider, useTabStore, useTabStoreApi } from "@/store/TabStoreProvider.js";
 import { isSettingsTab, isWorkspaceTab, type WorkspaceTabState } from "@/store/tabStore.js";
 import { logger } from "@/logger.js";
@@ -270,21 +270,21 @@ function RootInner({
   // 工作区级 ServiceProvider 内（远程 Host 的 accessor），由它们取数会拿到另一台 Host 的答案。
   useDynamicWorkflowAvailabilityLoader(services.codingPlanSubscriptionService);
 
-  const { intl, locale, localeResolved } = useXCodeIntl();
+  const { intl, locale, localeResolved } = useZCodeIntl();
   const handleRemoteConnectionTargetChange = useSourceServerUpdateNotifications({
     enabled: isDesktop === true,
     management: services.sourceServerManagementService,
   });
-  const theme = useXCodeStore((state) => state.theme);
-  const user = useXCodeStore((state) => state.user);
-  const isRestoringOAuthSession = useXCodeStore((state) => state.isRestoringOAuthSession);
+  const theme = useZCodeStore((state) => state.theme);
+  const user = useZCodeStore((state) => state.user);
+  const isRestoringOAuthSession = useZCodeStore((state) => state.isRestoringOAuthSession);
   useWebRemoteControlAuthSync(platform, services.oauthService, user?.id, isRestoringOAuthSession);
-  const setUser = useXCodeStore((state) => state.setUser);
-  const setIsRestoringOAuthSession = useXCodeStore((state) => state.setIsRestoringOAuthSession);
-  const setOAuthError = useXCodeStore((state) => state.setOAuthError);
-  const oauthPollingActive = useXCodeStore((state) => state.oauthPollingActive);
-  const setOAuthPollingActive = useXCodeStore((state) => state.setOAuthPollingActive);
-  const markOAuthSuccess = useXCodeStore((state) => state.markOAuthSuccess);
+  const setUser = useZCodeStore((state) => state.setUser);
+  const setIsRestoringOAuthSession = useZCodeStore((state) => state.setIsRestoringOAuthSession);
+  const setOAuthError = useZCodeStore((state) => state.setOAuthError);
+  const oauthPollingActive = useZCodeStore((state) => state.oauthPollingActive);
+  const setOAuthPollingActive = useZCodeStore((state) => state.setOAuthPollingActive);
+  const markOAuthSuccess = useZCodeStore((state) => state.markOAuthSuccess);
   const {
     settings: appSettings,
     refresh: refreshAppSettings,
@@ -304,7 +304,7 @@ function RootInner({
     );
   const [providerFamilyDomainMigrationComplete, setProviderFamilyDomainMigrationComplete] =
     useState(false);
-  const loginEntryRequest = useXCodeStore((state) => state.loginEntryRequest);
+  const loginEntryRequest = useZCodeStore((state) => state.loginEntryRequest);
   const rootModelSelectionRead = useModelSelectionServiceView(services.modelSelectionService);
   const rootModelSelectionView =
     rootModelSelectionRead.state.status === "ready" ? rootModelSelectionRead.state.view : null;
@@ -754,7 +754,7 @@ function RootInner({
       projectId?: string | null;
     }) => {
       // 桌面重连只恢复连接，不得把已选会话覆盖成草稿；手机仍沿用 replayable 入口。
-      const selectedTask = useXCodeSessionStore
+      const selectedTask = useZCodeSessionStore
         .getState()
         .getWorkspaceState(workspacePath, workspaceIdentity).activeTaskId;
       if (!isDesktop || !restoreSelection || !selectedTask) {
@@ -909,7 +909,7 @@ function RootInner({
         // 再打开首屏门禁，避免 Composer 按未归类范围读取并预热同目录的项目草稿。
         for (const tab of tabStoreApi.getState().tabs) {
           if (!isWorkspaceTab(tab)) continue;
-          const workspace = useXCodeSessionStore
+          const workspace = useZCodeSessionStore
             .getState()
             .getWorkspaceState(tab.workspacePath, tab.workspaceIdentity);
           if (workspace.activeTaskId || workspace.draftProjectId !== undefined) continue;
@@ -925,7 +925,7 @@ function RootInner({
             V4_DRAFT_SCOPE_ROOT,
             scope,
           );
-          useXCodeSessionStore
+          useZCodeSessionStore
             .getState()
             .startDraft(tab.workspacePath, undefined, tab.workspaceIdentity, {
               projectId: scope.projectId,

@@ -61,7 +61,7 @@ export async function startProjectPointerDrag(selector: string) {
  * 老 workspace 首次迁移成「同名单 root 项目」：项目名 = 目录 basename
  * （与 packages/services/src/project-storage/migrate-projects.ts 同规则），
  * 项目 `<section>` 带 data-project-id / data-project-name。这里统一按项目名定位，
- * E2E 夹具的 workspace basename 彼此唯一（XCodeProject、PassiveWorkspace-01…）。
+ * E2E 夹具的 workspace basename 彼此唯一（ZCodeProject、PassiveWorkspace-01…）。
  */
 export function projectNameForWorkspace(workspacePath: string): string {
   return (

@@ -3,7 +3,7 @@ import type {
   GitDiffResult,
   GitFileChange,
   Locale,
-  XCodeWorkspaceGenerateTextParams,
+  ZCodeWorkspaceGenerateTextParams,
 } from "@zcode/shared";
 import type { ServiceLogger } from "#src/logger/serviceLogger.js";
 
@@ -24,17 +24,17 @@ export interface GitCommitMessageCurrentModelProvider {
   readCurrentModel(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-  }): Promise<XCodeWorkspaceGenerateTextParams["selection"] | null>;
+  }): Promise<ZCodeWorkspaceGenerateTextParams["selection"] | null>;
 }
 
 export interface GitCommitMessageTextGenerator {
   generateText(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-    selection: XCodeWorkspaceGenerateTextParams["selection"];
+    selection: ZCodeWorkspaceGenerateTextParams["selection"];
     prompt: string;
     querySource: string;
-  }): Promise<{ text: string; selection: XCodeWorkspaceGenerateTextParams["selection"] }>;
+  }): Promise<{ text: string; selection: ZCodeWorkspaceGenerateTextParams["selection"] }>;
 }
 
 export interface GitCommitMessageGeneratorOptions {
@@ -120,7 +120,7 @@ export class GitCommitMessageGenerator {
   private async resolveCurrentModel(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-  }): Promise<XCodeWorkspaceGenerateTextParams["selection"]> {
+  }): Promise<ZCodeWorkspaceGenerateTextParams["selection"]> {
     const currentModel = await this.options.currentModelProvider.readCurrentModel({
       workspacePath: params.workspacePath,
       workspaceIdentity: params.workspaceIdentity,
@@ -147,7 +147,7 @@ export class GitCommitMessageGenerator {
   private async complete(params: {
     workspacePath: string;
     workspaceIdentity?: string;
-    selection: XCodeWorkspaceGenerateTextParams["selection"];
+    selection: ZCodeWorkspaceGenerateTextParams["selection"];
     prompt: string;
   }): Promise<string> {
     try {

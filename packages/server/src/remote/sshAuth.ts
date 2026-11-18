@@ -1,5 +1,5 @@
 import type { ConnectConfig } from "ssh2";
-import type { PublicXCodeErrorCode } from "@zcode/shared";
+import type { PublicZCodeErrorCode } from "@zcode/shared";
 
 export const SSH_READY_TIMEOUT_MS = 60_000;
 export const SSH_KEEPALIVE_INTERVAL_MS = 15_000;
@@ -114,7 +114,7 @@ export function normalizeSSHConnectError(
           "SSH 认证失败：服务器在密码之后还要求额外验证（例如动态口令），当前不支持，请改用私钥或 SSH agent 登录",
           { cause: error },
         ),
-        { code: "remote-authentication-unsupported" satisfies PublicXCodeErrorCode },
+        { code: "remote-authentication-unsupported" satisfies PublicZCodeErrorCode },
       );
     }
     return authenticationError("SSH 认证失败：请检查用户名、密码或私钥配置", error);
@@ -163,6 +163,6 @@ export function normalizeSSHConnectError(
 function authenticationError(message: string, cause: unknown): Error {
   // 认证发生在懒连接的 probe 内；在仍有 ssh2 结构化原因的边界定码，避免被归成预检失败。
   return Object.assign(new Error(message, { cause }), {
-    code: "remote-authentication-failed" satisfies PublicXCodeErrorCode,
+    code: "remote-authentication-failed" satisfies PublicZCodeErrorCode,
   });
 }

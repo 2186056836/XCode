@@ -7,12 +7,12 @@ import {
   ZCODE_PROTOCOL_NAME,
   ZCODE_PROTOCOL_VERSION,
   zcodeSessionStateSnapshotSchema,
-  type XCodeSessionStateSnapshot,
+  type ZCodeSessionStateSnapshot,
 } from "@zcode/shared";
 import { getLegacyTaskSessionSnapshotPath, setDataBaseDir } from "../src/paths.js";
 import { parseLegacyTaskSessionFile } from "../src/session/legacyTaskSessionFile.js";
 import { TaskIndexRepo } from "../src/session/taskIndexRepo.js";
-import { createXCodeTaskServiceAdapter } from "../src/zcode-agent/zcodeTaskServiceAdapter.js";
+import { createZCodeTaskServiceAdapter } from "../src/zcode-agent/zcodeTaskServiceAdapter.js";
 
 for (const clientMode of ["desktop-continuous", "web-remote-replayable"] as const) {
   test(`previously imported Claude history becomes a real session for ${clientMode}`, async () => {
@@ -48,12 +48,12 @@ for (const clientMode of ["desktop-continuous", "web-remote-replayable"] as cons
     await writeFile(path, content);
     const taskIndexRepo = new TaskIndexRepo(join(dir, "tasks.sqlite"));
     await taskIndexRepo.syncTaskMeta({ meta });
-    type Options = Parameters<typeof createXCodeTaskServiceAdapter>[0];
+    type Options = Parameters<typeof createZCodeTaskServiceAdapter>[0];
     type CreateInput = Parameters<Options["zcodeAgentService"]["createSession"]>[0];
     const created: CreateInput[] = [];
-    let session: XCodeSessionStateSnapshot | undefined;
+    let session: ZCodeSessionStateSnapshot | undefined;
     const disposable = () => ({ dispose() {} });
-    const service = createXCodeTaskServiceAdapter({
+    const service = createZCodeTaskServiceAdapter({
       taskIndexRepo,
       zcodeAgentService: {
         async resumeSession() {

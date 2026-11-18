@@ -547,7 +547,7 @@ declare global {
       /** 同步标题栏亮暗色 */
       setTitleBarTheme(theme: DesktopTitleBarTheme): Promise<void>;
       /** 读取开发态 stdio tap proxy 开关状态 */
-      getXCodeStdioTapDevState?(): Promise<import("@zcode/shared").XCodeStdioTapDevState>;
+      getZCodeStdioTapDevState?(): Promise<import("@zcode/shared").ZCodeStdioTapDevState>;
     };
   }
 }

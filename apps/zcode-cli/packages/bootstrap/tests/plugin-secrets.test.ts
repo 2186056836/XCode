@@ -24,18 +24,18 @@ import { createConfig } from "@zcode/adapters/config";
 import type { Logger } from "@zcode/contracts";
 import { zcodePluginsListResultSchema } from "@zcode/shared";
 import { resolveStartupPlugins } from "../src/app/startup-marks.js";
-import type { XCodeAppOptions } from "../src/app/types.js";
+import type { ZCodeAppOptions } from "../src/app/types.js";
 import {
-  configureXCodePlugin,
-  installXCodeMarketplacePlugin,
-  resetXCodePluginConfig,
-  resolveXCodePlugins,
-  uninstallXCodeMarketplacePlugin,
+  configureZCodePlugin,
+  installZCodeMarketplacePlugin,
+  resetZCodePluginConfig,
+  resolveZCodePlugins,
+  uninstallZCodeMarketplacePlugin,
 } from "../src/plugins.js";
 import { StartupTimer } from "../src/startup-logging.js";
 import { configurePlugin, listPlugins } from "../src/zcode-protocol/plugins.js";
 import { readPluginUserOptions } from "../src/zcode-protocol/plugin-user-options.js";
-import type { XCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
 
 const PLUGIN_NAME = "secret-plugin";
 const PLUGIN_ID = `${PLUGIN_NAME}@inline`;
@@ -52,7 +52,7 @@ afterAll(async () => {
 describe("plugin sensitive option storage", () => {
   it("1. stores a configured sensitive key only in the private file", async () => {
     await withFixture(async (fixture) => {
-      await configureXCodePlugin({
+      await configureZCodePlugin({
         ...fixture.userOptions(),
         options: { region: "eu", token: "s3cret-user" },
         pluginId: PLUGIN_ID,
@@ -76,7 +76,7 @@ describe("plugin sensitive option storage", () => {
     await withFixture(async (fixture) => {
       await fixture.writeUserConfig({ [PLUGIN_ID]: { token: "legacy-secret" } });
 
-      const before = await resolveXCodePlugins(fixture.userOptions());
+      const before = await resolveZCodePlugins(fixture.userOptions());
       expect(authorizationHeader(before.mcpServers[API_SERVER])).toBe("Bearer legacy-secret");
       // 不在启动时迁移：只读解析不创建私有文件，也不改写 config.json。
       expect(existsSync(fixture.secretsPath)).toBe(false);
@@ -85,7 +85,7 @@ describe("plugin sensitive option storage", () => {
       });
 
       // 只保存普通键：UI 不回传敏感值，旧明文仍要在这次保存里迁走。
-      await configureXCodePlugin({
+      await configureZCodePlugin({
         ...fixture.userOptions(),
         options: { region: "eu" },
         pluginId: PLUGIN_ID,
@@ -97,7 +97,7 @@ describe("plugin sensitive option storage", () => {
       const userConfigText = await readFile(fixture.userConfigPath, "utf8");
       expect(userConfigText).not.toContain("legacy-secret");
       expect(JSON.parse(userConfigText).plugins.options[PLUGIN_ID]).toEqual({ region: "eu" });
-      const after = await resolveXCodePlugins(fixture.userOptions());
+      const after = await resolveZCodePlugins(fixture.userOptions());
       expect(authorizationHeader(after.mcpServers[API_SERVER])).toBe("Bearer legacy-secret");
     });
   });
@@ -122,7 +122,7 @@ describe("plugin sensitive option storage", () => {
           workingDirectory: fixture.root,
         }),
         env: {},
-        options: { pluginStorageRoot: fixture.pluginStorageRoot } as XCodeAppOptions,
+        options: { pluginStorageRoot: fixture.pluginStorageRoot } as ZCodeAppOptions,
         startupTimer: createNoopStartupTimer(),
         workingDirectory: fixture.root,
       });
@@ -143,13 +143,13 @@ describe("plugin sensitive option storage", () => {
       await mkdir(join(repositoryRoot, ".git"), { recursive: true });
       await mkdir(nestedRoot, { recursive: true });
 
-      await configureXCodePlugin({
+      await configureZCodePlugin({
         ...fixture.userOptions(repositoryRoot),
         options: { token: "outer-secret" },
         pluginId: PLUGIN_ID,
         scope: "workspace",
       });
-      await configureXCodePlugin({
+      await configureZCodePlugin({
         ...fixture.userOptions(nestedRoot),
         options: { token: "inner-secret" },
         pluginId: PLUGIN_ID,
@@ -169,20 +169,20 @@ describe("plugin sensitive option storage", () => {
         expect(JSON.parse(workspaceConfig).plugins.options[PLUGIN_ID]).toEqual({});
       }
 
-      const nested = await resolveXCodePlugins(fixture.userOptions(nestedRoot));
+      const nested = await resolveZCodePlugins(fixture.userOptions(nestedRoot));
       expect(authorizationHeader(nested.mcpServers[API_SERVER])).toBe("Bearer inner-secret");
-      const outer = await resolveXCodePlugins(fixture.userOptions(repositoryRoot));
+      const outer = await resolveZCodePlugins(fixture.userOptions(repositoryRoot));
       expect(authorizationHeader(outer.mcpServers[API_SERVER])).toBe("Bearer outer-secret");
 
       // 清掉最内层的值后回落到外层 workspace 的私有值。
-      await configureXCodePlugin({
+      await configureZCodePlugin({
         ...fixture.userOptions(nestedRoot),
         clearOptionKeys: ["token"],
         options: {},
         pluginId: PLUGIN_ID,
         scope: "workspace",
       });
-      const fallback = await resolveXCodePlugins(fixture.userOptions(nestedRoot));
+      const fallback = await resolveZCodePlugins(fixture.userOptions(nestedRoot));
       expect(authorizationHeader(fallback.mcpServers[API_SERVER])).toBe("Bearer outer-secret");
       expect((await readJson(fixture.secretsPath)).workspaces).toEqual({
         [repositoryRoot]: { [PLUGIN_ID]: { token: "outer-secret" } },
@@ -195,7 +195,7 @@ describe("plugin sensitive option storage", () => {
     const userConfigPath = join(FAKE_HOME, ".zcode", "cli", "config.json");
     const secretsPath = join(FAKE_HOME, ".zcode", "cli", SECRETS_FILE);
     const pluginRoot = join(root, PLUGIN_NAME);
-    const context = {} as XCodeProtocolAgentServerContext;
+    const context = {} as ZCodeProtocolAgentServerContext;
     const workspace = { workspacePath: root, workspaceKey: root };
     try {
       await writePluginManifest(pluginRoot);
@@ -233,12 +233,12 @@ describe("plugin sensitive option storage", () => {
 
   it("6. removes private entries on reset and on uninstall", async () => {
     await withFixture(async (fixture) => {
-      await configureXCodePlugin({
+      await configureZCodePlugin({
         ...fixture.userOptions(),
         options: { token: "user-secret" },
         pluginId: PLUGIN_ID,
       });
-      await configureXCodePlugin({
+      await configureZCodePlugin({
         ...fixture.userOptions(),
         options: { token: "workspace-secret" },
         pluginId: PLUGIN_ID,
@@ -246,7 +246,7 @@ describe("plugin sensitive option storage", () => {
       });
 
       // workspace「恢复继承」只删启用覆盖，与 config.json 同语义：workspace 私有值保留。
-      await resetXCodePluginConfig({
+      await resetZCodePluginConfig({
         ...fixture.userOptions(),
         pluginId: PLUGIN_ID,
         scope: "workspace",
@@ -254,7 +254,7 @@ describe("plugin sensitive option storage", () => {
       expect((await readJson(fixture.secretsPath)).workspaces).toEqual({
         [fixture.root]: { [PLUGIN_ID]: { token: "workspace-secret" } },
       });
-      await resetXCodePluginConfig({ ...fixture.userOptions(), pluginId: PLUGIN_ID });
+      await resetZCodePluginConfig({ ...fixture.userOptions(), pluginId: PLUGIN_ID });
       expect((await readJson(fixture.secretsPath)).user).toEqual({});
 
       const marketplacePluginId = "hello@lazy-market";
@@ -274,7 +274,7 @@ describe("plugin sensitive option storage", () => {
         }),
       );
 
-      const removed = await uninstallXCodeMarketplacePlugin({
+      const removed = await uninstallZCodeMarketplacePlugin({
         ...fixture.userOptions(),
         pluginId: marketplacePluginId,
       });
@@ -293,7 +293,7 @@ describe("plugin sensitive option storage", () => {
       const corrupt = '{"version":1,"user":{"secret-plugin@inline":{"token":"corrupt-secret"';
       await writeTestFile(fixture.secretsPath, corrupt);
 
-      const outcome = await resolveXCodePlugins(fixture.userOptions());
+      const outcome = await resolveZCodePlugins(fixture.userOptions());
 
       const diagnostic = outcome.diagnostics.find(
         (item) => item.code === "plugin_secrets_unreadable",
@@ -312,7 +312,7 @@ describe("plugin sensitive option storage", () => {
       expect(await readFile(join(fixture.root, backups[0] ?? ""), "utf8")).toBe(corrupt);
 
       // 下一次保存把损坏文件替换成有效内容，备份留着。
-      await configureXCodePlugin({
+      await configureZCodePlugin({
         ...fixture.userOptions(),
         options: { token: "fresh-secret" },
         pluginId: PLUGIN_ID,
@@ -323,7 +323,7 @@ describe("plugin sensitive option storage", () => {
         workspaces: {},
       });
       expect(existsSync(join(fixture.root, backups[0] ?? ""))).toBe(true);
-      const healed = await resolveXCodePlugins(fixture.userOptions());
+      const healed = await resolveZCodePlugins(fixture.userOptions());
       expect(healed.diagnostics.some((item) => item.code === "plugin_secrets_unreadable")).toBe(
         false,
       );
@@ -427,7 +427,7 @@ async function installMarketplacePlugin(fixture: Fixture): Promise<void> {
     join(marketplaceRoot, "plugins", "hello", ".claude-plugin", "plugin.json"),
     JSON.stringify({ name: "hello", userConfig: { token: { sensitive: true } } }),
   );
-  await installXCodeMarketplacePlugin({
+  await installZCodeMarketplacePlugin({
     ...fixture.userOptions(),
     marketplace: "lazy-market",
     pluginName: "hello",

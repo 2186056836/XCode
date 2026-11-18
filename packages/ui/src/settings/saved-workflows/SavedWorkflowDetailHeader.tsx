@@ -4,7 +4,7 @@ import {
   TID_WORKFLOW_DETAIL_RUN,
   TID_WORKFLOW_ACTION_DELETE,
   TID_WORKFLOW_ACTION_MOVE,
-  type XCodeSavedWorkflowEntry,
+  type ZCodeSavedWorkflowEntry,
 } from "@zcode/shared";
 import { testId } from "@zcode/shared/test-ids";
 import { Button } from "@/components/ui/button.js";
@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   AutomationMoreHorizontalIcon,
   AutomationRunNowIcon,
@@ -27,7 +27,7 @@ interface SavedWorkflowDetailHeaderProps {
   /** 标题旁的归属小标：项目名，全局档为「全局」。 */
   projectLabel: string;
   description: string;
-  entry: XCodeSavedWorkflowEntry | undefined;
+  entry: ZCodeSavedWorkflowEntry | undefined;
   busy: boolean;
   onRun: () => void;
   onRevise: () => void;
@@ -52,7 +52,7 @@ export function SavedWorkflowDetailHeader({
   onMove,
   onDelete,
 }: SavedWorkflowDetailHeaderProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex min-w-0 flex-col gap-1.5">

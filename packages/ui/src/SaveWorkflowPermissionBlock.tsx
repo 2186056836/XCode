@@ -1,6 +1,6 @@
 import { ChevronRightIcon, Save } from "lucide-react";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { XCodePermissionRequest } from "@zcode/shared";
+import type { ZCodePermissionRequest } from "@zcode/shared";
 import { CodeBlock } from "@/components/ai-elements/code-block.js";
 import {
   Collapsible,
@@ -14,7 +14,7 @@ import {
   SaveWorkflowOverwriteBadge,
   type WorkflowArgDeclaration,
 } from "@/ToolCallBlocks/renderers/save-workflow.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 const NO_VALUE_PLACEHOLDER = "—";
 // 实参表折叠时显示的行数：8 行在笔记本高度的窗口里还能让脚本开关留在第一屏。
@@ -28,7 +28,7 @@ const DISCLOSURE_BUTTON_CLASS =
  * 窗口一宽就会出现点了什么也多不出来的空开关，所以量 scrollHeight 而不是猜。
  */
 function ClampedText({ text }: { text: string }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const textRef = useRef<HTMLSpanElement>(null);
   const [expanded, setExpanded] = useState(false);
   const [clipped, setClipped] = useState(false);
@@ -118,7 +118,7 @@ function MetadataRow({
  * 降到一个字符，自动表格布局随即把「string」挤成两行。
  */
 function WorkflowArgsTable({ args }: { args: readonly WorkflowArgDeclaration[] }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   const headers = [
     intl.formatMessage({ id: "chat.permission.workflow.save.args.name" }),
@@ -201,8 +201,8 @@ function WorkflowArgsTable({ args }: { args: readonly WorkflowArgDeclaration[] }
  * 指针下的内框吃掉、到底后再交给外层，内框还比外层可视区高，读起来乱成一团。现在长的部分靠折叠
  * 变短（说明 4 行、实参 8 行、脚本默认收起），展开只是把同一个滚动区变长。
  */
-export function SaveWorkflowPermissionBlock({ request }: { request: XCodePermissionRequest }) {
-  const { intl } = useXCodeIntl();
+export function SaveWorkflowPermissionBlock({ request }: { request: ZCodePermissionRequest }) {
+  const { intl } = useZCodeIntl();
 
   const input = readSaveWorkflowInput(request.raw);
   const [scriptOpen, setScriptOpen] = useState(false);

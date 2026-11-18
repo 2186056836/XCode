@@ -14,7 +14,7 @@ import { CodingPlanUsageNotice } from "@/chat-input-toolbar/CodingPlanUsageNotic
 import { CodingPlanQuotaResetOpportunity } from "@/components/coding-plan-quota-reset/CodingPlanQuotaResetOpportunity.js";
 import { buildCodingPlanQuotaResetDialogConfig } from "@/components/coding-plan-quota-reset/buildCodingPlanQuotaResetDialogConfig.js";
 import { useCodingPlanQuotaResetUi } from "@/hooks/useCodingPlanQuotaResetUi.js";
-import type { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import type { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   findCodingPlanQuotaLimit,
   formatQuotaRemainingPercentage,
@@ -182,7 +182,7 @@ export function ChatCodingPlanUsageRemainingPanel({
   onQuotaResetDialogOpenChange,
 }: {
   config: ChatCodingPlanUsageRemainingConfig;
-  intl: ReturnType<typeof useXCodeIntl>["intl"];
+  intl: ReturnType<typeof useZCodeIntl>["intl"];
   locale: string;
   quotaResetDialogOpen?: boolean;
   separated?: boolean;

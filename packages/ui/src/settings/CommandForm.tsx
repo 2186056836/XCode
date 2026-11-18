@@ -3,7 +3,7 @@ import { Trash2 } from "lucide-react";
 import { type CommandAgentSource, type CommandConfig, type UserCommand } from "@zcode/shared";
 import { Button } from "@/components/ui/button.js";
 import { Input } from "@/components/ui/input.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { SettingsFormTextarea } from "@/settings/SettingsFormTextarea.js";
 import { SettingsFormActions } from "@/settings/SettingsFormActions.js";
 import { PluginScopeMenu } from "@/settings/PluginScopeMenu.js";
@@ -30,7 +30,7 @@ function CommandScopeMenu({
   workspaceTabs: ConfigWorkspaceTarget[];
   onChange: (scopeKey: string) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const scopeLabel = intl.formatMessage({ id: "settings.scope.label" });
 
   return (
@@ -69,7 +69,7 @@ export function CommandForm({
   onDelete,
   saving,
 }: CommandFormProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const supportsArgumentHint = true;
   const initialName = initial?.name?.replace(/^\//, "") ?? "";
   const [name, setName] = useState(initialName);

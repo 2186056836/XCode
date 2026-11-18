@@ -24,22 +24,22 @@ import {
   OFFICIAL_PLUGIN_DEFINITIONS,
 } from "../src/app/official-plugin-definitions.js";
 import { createPluginFacadeForApp } from "../src/app/plugin-facade.js";
-import type { XCodeAppOptions } from "../src/app/types.js";
+import type { ZCodeAppOptions } from "../src/app/types.js";
 import {
-  configureXCodePlugin,
-  describeXCodePlugin,
+  configureZCodePlugin,
+  describeZCodePlugin,
   enrichCachedClaudeMarketplaceIconsForOverview,
-  getXCodePluginsOverview,
-  installXCodeMarketplacePlugin,
-  listXCodePlugins,
-  resolveXCodePlugins,
-  resetXCodePluginConfig,
+  getZCodePluginsOverview,
+  installZCodeMarketplacePlugin,
+  listZCodePlugins,
+  resolveZCodePlugins,
+  resetZCodePluginConfig,
   resolveMarketplaceRefreshTargetIds,
   restoreBuiltinPlugin,
-  setXCodePluginEnabled,
-  uninstallXCodeMarketplacePlugin,
-  updateXCodePluginMarketplace,
-  validateXCodePlugin,
+  setZCodePluginEnabled,
+  uninstallZCodeMarketplacePlugin,
+  updateZCodePluginMarketplace,
+  validateZCodePlugin,
   isWorkspacePluginConfigPath,
 } from "../src/plugins.js";
 import { StartupTimer } from "../src/startup-logging.js";
@@ -162,7 +162,7 @@ describe("XCode plugins", () => {
       });
       const facade = createPluginFacadeForApp({
         configResult,
-        options: options as XCodeAppOptions,
+        options: options as ZCodeAppOptions,
         workingDirectory: root,
       });
       await facade.listPlugins();
@@ -274,7 +274,7 @@ describe("XCode plugins", () => {
             },
           }),
         );
-        const outcome = await resolveXCodePlugins({
+        const outcome = await resolveZCodePlugins({
           env: {},
           pluginStorageRoot: join(root, "plugins"),
           userConfigPath,
@@ -311,7 +311,7 @@ describe("XCode plugins", () => {
           plugins: { enabledPlugins: { "documents@zcode-plugins-official": false } },
         }),
       );
-      const outcome = await resolveXCodePlugins({
+      const outcome = await resolveZCodePlugins({
         env: {},
         pluginStorageRoot: join(root, "plugins"),
         userConfigPath,
@@ -353,7 +353,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const outcome = await listXCodePlugins({
+      const outcome = await listZCodePlugins({
         env: {},
         pluginStorageRoot,
         skipUserConfig: true,
@@ -440,7 +440,7 @@ describe("XCode plugins", () => {
       );
       await writeTestFile(join(pluginRoot, "skills", "demo", "SKILL.md"), "# demo");
 
-      await installXCodeMarketplacePlugin({
+      await installZCodeMarketplacePlugin({
         marketplace: "lazy-market",
         pluginName: "demo",
         pluginStorageRoot,
@@ -465,7 +465,7 @@ describe("XCode plugins", () => {
       }
       await writeFile(manifestPath, JSON.stringify(manifest));
 
-      const overview = await getXCodePluginsOverview({
+      const overview = await getZCodePluginsOverview({
         pluginStorageRoot,
         userConfigPath: configPath,
         workingDirectory: root,
@@ -538,7 +538,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const overview = await getXCodePluginsOverview({
+      const overview = await getZCodePluginsOverview({
         pluginStorageRoot,
         userConfigPath: configPath,
         workingDirectory: root,
@@ -606,7 +606,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const overview = await getXCodePluginsOverview({
+      const overview = await getZCodePluginsOverview({
         pluginStorageRoot,
         userConfigPath: configPath,
         workingDirectory: root,
@@ -635,7 +635,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const overview = await getXCodePluginsOverview({
+      const overview = await getZCodePluginsOverview({
         pluginStorageRoot,
         userConfigPath,
         workingDirectory: root,
@@ -657,7 +657,7 @@ describe("XCode plugins", () => {
         userConfigPath,
         JSON.stringify({ plugins: { enabled: true, suppressedBuiltins: [documentsId] } }),
       );
-      const overview = await getXCodePluginsOverview({
+      const overview = await getZCodePluginsOverview({
         pluginStorageRoot,
         userConfigPath,
         workingDirectory: root,
@@ -679,7 +679,7 @@ describe("XCode plugins", () => {
 
     try {
       const pluginStorageRoot = join(root, "plugins");
-      const overview = await getXCodePluginsOverview({
+      const overview = await getZCodePluginsOverview({
         env: {},
         pluginStorageRoot,
         skipUserConfig: true,
@@ -780,7 +780,7 @@ describe("XCode plugins", () => {
       await writeTestFile(join(pluginRoot, "agents", "judge.md"), "---\nname: judge\n---\n");
 
       const configPath = join(root, "config.json");
-      const result = await installXCodeMarketplacePlugin({
+      const result = await installZCodeMarketplacePlugin({
         marketplace: "lazy-market",
         pluginName: "hello",
         pluginStorageRoot,
@@ -796,7 +796,7 @@ describe("XCode plugins", () => {
         // 安装即默认启用：新装插件应直接 enabled，无需再手动开。
         enabled: true,
       });
-      const overview = await getXCodePluginsOverview({
+      const overview = await getZCodePluginsOverview({
         pluginStorageRoot,
         userConfigPath: configPath,
         workingDirectory: root,
@@ -873,10 +873,10 @@ describe("XCode plugins", () => {
           "tsx",
           "--input-type=module",
           "-e",
-          `const { installXCodeMarketplacePlugin } = await import(process.argv[1]);
+          `const { installZCodeMarketplacePlugin } = await import(process.argv[1]);
           const options = JSON.parse(process.argv[2]);
           process.stdout.write("ready\\n");
-          const result = await installXCodeMarketplacePlugin(options);
+          const result = await installZCodeMarketplacePlugin(options);
           if (result.installedPlugins.length !== 1) throw new Error(JSON.stringify(result));`,
           new URL("../src/plugins.ts", import.meta.url).href,
           JSON.stringify({
@@ -986,7 +986,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const result = await installXCodeMarketplacePlugin({
+      const result = await installZCodeMarketplacePlugin({
         marketplace: "zip-lazy-market",
         pluginName: "hello-zip",
         pluginStorageRoot,
@@ -1009,7 +1009,7 @@ describe("XCode plugins", () => {
         existsSync(join(result.installedPlugins[0]?.installPath ?? "", "agents", "judge.md")),
       ).toBe(true);
 
-      const overviewResult = await getXCodePluginsOverview({
+      const overviewResult = await getZCodePluginsOverview({
         pluginStorageRoot,
         userConfigPath: configPath,
         workingDirectory: root,
@@ -1068,7 +1068,7 @@ describe("XCode plugins", () => {
           }),
         );
 
-        const result = await installXCodeMarketplacePlugin({
+        const result = await installZCodeMarketplacePlugin({
           marketplace: "lazy-market",
           pluginName: "hello",
           pluginStorageRoot,
@@ -1078,7 +1078,7 @@ describe("XCode plugins", () => {
 
         expect(result.installedPlugins[0]?.id).toBe("hello@lazy-market");
         if (scope === "user") expect(result.installedPlugins[0]?.enabled).toBe(false);
-        const { plugins } = await resolveXCodePlugins({
+        const { plugins } = await resolveZCodePlugins({
           pluginStorageRoot,
           projectConfigPath,
           userConfigPath: configPath,
@@ -1125,7 +1125,7 @@ describe("XCode plugins", () => {
       );
       await writeTestFile(join(pluginRoot, "skills", "hello", "SKILL.md"), "# hello");
 
-      const installed = await installXCodeMarketplacePlugin({
+      const installed = await installZCodeMarketplacePlugin({
         marketplace: "lazy-market",
         pluginName: "hello",
         pluginStorageRoot,
@@ -1152,7 +1152,7 @@ describe("XCode plugins", () => {
       await mkdir(dataDir, { recursive: true });
       await writeTestFile(join(dataDir, "generated-commands", "demo.md"), "# demo");
 
-      const removed = await uninstallXCodeMarketplacePlugin({
+      const removed = await uninstallZCodeMarketplacePlugin({
         pluginId: "hello@lazy-market",
         pluginStorageRoot,
         userConfigPath: configPath,
@@ -1230,7 +1230,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const removed = await uninstallXCodeMarketplacePlugin({
+      const removed = await uninstallZCodeMarketplacePlugin({
         pluginId,
         pluginStorageRoot,
         userConfigPath,
@@ -1293,7 +1293,7 @@ describe("XCode plugins", () => {
         JSON.stringify({ plugins: { suppressedBuiltins: [pluginId] } }),
       );
 
-      await uninstallXCodeMarketplacePlugin({
+      await uninstallZCodeMarketplacePlugin({
         pluginId,
         pluginStorageRoot,
         userConfigPath,
@@ -1329,7 +1329,7 @@ describe("XCode plugins", () => {
       );
 
       // Seed first so its cache exists.
-      await resolveXCodePlugins({
+      await resolveZCodePlugins({
         pluginStorageRoot,
         userConfigPath,
         workingDirectory: root,
@@ -1337,7 +1337,7 @@ describe("XCode plugins", () => {
       const cacheDir = join(pluginStorageRoot, OFFICIAL_SKILL_CREATOR_PLUGIN_CACHE_PATH);
       await stat(cacheDir);
 
-      const removed = await uninstallXCodeMarketplacePlugin({
+      const removed = await uninstallZCodeMarketplacePlugin({
         pluginId: SKILL_CREATOR_PLUGIN_ID,
         pluginStorageRoot,
         userConfigPath,
@@ -1351,7 +1351,7 @@ describe("XCode plugins", () => {
       expect(config.plugins.options?.[SKILL_CREATOR_PLUGIN_ID]).toBeUndefined();
 
       // Re-resolve: Runtime stays gone, but Catalog/cache remain readable for detail/restore.
-      const outcome = await resolveXCodePlugins({
+      const outcome = await resolveZCodePlugins({
         pluginStorageRoot,
         userConfigPath,
         workingDirectory: root,
@@ -1359,7 +1359,7 @@ describe("XCode plugins", () => {
       expect(outcome.plugins.find((p) => p.id === SKILL_CREATOR_PLUGIN_ID)).toBeUndefined();
       await expect(stat(cacheDir)).resolves.toBeDefined();
 
-      const detail = await describeXCodePlugin({
+      const detail = await describeZCodePlugin({
         pluginName: "skill-creator",
         marketplace: "zcode-plugins-official",
         pluginStorageRoot,
@@ -1373,7 +1373,7 @@ describe("XCode plugins", () => {
 
       // Double-uninstall is idempotent: an already-suppressed built-in is not resolved,
       // so it falls through to the marketplace path and returns null without throwing.
-      const second = await uninstallXCodeMarketplacePlugin({
+      const second = await uninstallZCodeMarketplacePlugin({
         pluginId: SKILL_CREATOR_PLUGIN_ID,
         pluginStorageRoot,
         userConfigPath,
@@ -1403,7 +1403,7 @@ describe("XCode plugins", () => {
       });
       const facade = createPluginFacadeForApp({
         configResult,
-        options: { env: {}, pluginStorageRoot } as XCodeAppOptions,
+        options: { env: {}, pluginStorageRoot } as ZCodeAppOptions,
         workingDirectory: root,
       });
 
@@ -1459,7 +1459,7 @@ describe("XCode plugins", () => {
         const restore =
           entry !== "install"
             ? restoreBuiltinPlugin({ ...options, pluginId: SKILL_CREATOR_PLUGIN_ID })
-            : installXCodeMarketplacePlugin({
+            : installZCodeMarketplacePlugin({
                 ...options,
                 marketplace: "zcode-plugins-official",
                 pluginName: "skill-creator",
@@ -1491,7 +1491,7 @@ describe("XCode plugins", () => {
       );
 
       // Suppressed: not present.
-      let outcome = await resolveXCodePlugins({
+      let outcome = await resolveZCodePlugins({
         pluginStorageRoot,
         userConfigPath,
         workingDirectory: root,
@@ -1508,7 +1508,7 @@ describe("XCode plugins", () => {
       const config = JSON.parse(await readFile(userConfigPath, "utf8"));
       expect(config.plugins.suppressedBuiltins ?? []).not.toContain(SKILL_CREATOR_PLUGIN_ID);
 
-      outcome = await resolveXCodePlugins({
+      outcome = await resolveZCodePlugins({
         pluginStorageRoot,
         userConfigPath,
         workingDirectory: root,
@@ -1536,13 +1536,13 @@ describe("XCode plugins", () => {
       );
 
       // 先写入完整 Catalog/cache，模拟详情页仍可见但 Runtime 被抑制的状态。
-      await resolveXCodePlugins({
+      await resolveZCodePlugins({
         pluginStorageRoot,
         userConfigPath,
         workingDirectory: root,
       });
 
-      const result = await installXCodeMarketplacePlugin({
+      const result = await installZCodeMarketplacePlugin({
         marketplace: "zcode-plugins-official",
         pluginName: "skill-creator",
         pluginStorageRoot,
@@ -1594,7 +1594,7 @@ describe("XCode plugins", () => {
         "# Document Skills\n",
       );
 
-      await resolveXCodePlugins({
+      await resolveZCodePlugins({
         pluginStorageRoot,
         userConfigPath,
         workingDirectory: root,
@@ -1614,7 +1614,7 @@ describe("XCode plugins", () => {
       entry!.version = "1.0.0";
       await writeFile(manifestPath, JSON.stringify(manifest));
 
-      const result = await installXCodeMarketplacePlugin({
+      const result = await installZCodeMarketplacePlugin({
         marketplace: "zcode-plugins-official",
         pluginName: "documents",
         pluginStorageRoot,
@@ -1638,7 +1638,7 @@ describe("XCode plugins", () => {
     const pluginStorageRoot = join(root, "plugins");
 
     try {
-      const removed = await uninstallXCodeMarketplacePlugin({
+      const removed = await uninstallZCodeMarketplacePlugin({
         pluginId: "missing@lazy-market",
         pluginStorageRoot,
         skipUserConfig: true,
@@ -1668,7 +1668,7 @@ describe("XCode plugins", () => {
         },
       ]);
 
-      const diagnostics = await validateXCodePlugin({
+      const diagnostics = await validateZCodePlugin({
         marketplace: "offline-market",
         pluginName: "hello",
         pluginStorageRoot,
@@ -1715,12 +1715,12 @@ describe("XCode plugins", () => {
         },
       ]);
 
-      const update = await updateXCodePluginMarketplace({
+      const update = await updateZCodePluginMarketplace({
         marketplace: "offline-market",
         pluginStorageRoot,
         workingDirectory: root,
       });
-      const overview = await getXCodePluginsOverview({
+      const overview = await getZCodePluginsOverview({
         pluginStorageRoot,
         skipUserConfig: true,
         workingDirectory: root,
@@ -1789,7 +1789,7 @@ describe("XCode plugins", () => {
       ]);
       vi.stubEnv("PATH", join(root, "no-system-git"));
 
-      const result = await installXCodeMarketplacePlugin({
+      const result = await installZCodeMarketplacePlugin({
         marketplace: "private-market",
         pluginName: "private-plugin",
         pluginStorageRoot,
@@ -1881,7 +1881,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const outcome = await resolveXCodePlugins({
+      const outcome = await resolveZCodePlugins({
         env: {},
         pluginStorageRoot,
         userConfigPath: configPath,
@@ -1944,7 +1944,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const outcome = await resolveXCodePlugins({
+      const outcome = await resolveZCodePlugins({
         env: {},
         pluginStorageRoot,
         userConfigPath: configPath,
@@ -2031,7 +2031,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const outcome = await resolveXCodePlugins({
+      const outcome = await resolveZCodePlugins({
         env: {},
         pluginStorageRoot,
         userConfigPath: configPath,
@@ -2132,14 +2132,14 @@ describe("XCode plugins", () => {
         }),
       );
 
-      await configureXCodePlugin({
+      await configureZCodePlugin({
         options: { region: "us-east-1" },
         pluginId,
         pluginStorageRoot,
         userConfigPath,
         workingDirectory: root,
       });
-      await configureXCodePlugin({
+      await configureZCodePlugin({
         options: { token: "secret" },
         pluginId,
         pluginStorageRoot,
@@ -2164,14 +2164,14 @@ describe("XCode plugins", () => {
       expect(reloadedConfig.config.plugins.dirs).toEqual([pluginRoot]);
       expect(
         (
-          await resolveXCodePlugins({
+          await resolveZCodePlugins({
             configResult: reloadedConfig,
             pluginStorageRoot,
             workingDirectory: root,
           })
         ).plugins.map((plugin) => plugin.id),
       ).toContain(pluginId);
-      await configureXCodePlugin({
+      await configureZCodePlugin({
         options: { region: "eu-west-1" },
         pluginId,
         pluginStorageRoot,
@@ -2180,7 +2180,7 @@ describe("XCode plugins", () => {
         userConfigPath,
         workingDirectory: root,
       });
-      await setXCodePluginEnabled({
+      await setZCodePluginEnabled({
         enabled: true,
         plugin: pluginId,
         pluginStorageRoot,
@@ -2189,7 +2189,7 @@ describe("XCode plugins", () => {
         userConfigPath,
         workingDirectory: root,
       });
-      await configureXCodePlugin({
+      await configureZCodePlugin({
         clearOptionKeys: ["token"],
         options: {},
         pluginId,
@@ -2242,7 +2242,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const result = await setXCodePluginEnabled({
+      const result = await setZCodePluginEnabled({
         enabled: true,
         plugin: pluginId,
         pluginStorageRoot,
@@ -2296,7 +2296,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      await setXCodePluginEnabled({
+      await setZCodePluginEnabled({
         enabled: true,
         plugin: pluginId,
         pluginStorageRoot: join(root, "plugins"),
@@ -2351,7 +2351,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      await resetXCodePluginConfig({
+      await resetZCodePluginConfig({
         pluginId,
         scope: "workspace",
         projectConfigPath: workspaceConfigPath,
@@ -2422,7 +2422,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const beforeRefresh = await getXCodePluginsOverview({
+      const beforeRefresh = await getZCodePluginsOverview({
         env: {},
         pluginStorageRoot,
         userConfigPath,
@@ -2446,7 +2446,7 @@ describe("XCode plugins", () => {
       ) as { marketplaces: Array<{ id: string }> };
       expect(knownBeforeRefresh.marketplaces.some((item) => item.id === marketplaceId)).toBe(false);
 
-      const dryRun = await installXCodeMarketplacePlugin({
+      const dryRun = await installZCodeMarketplacePlugin({
         dryRun: true,
         env: {},
         marketplace: marketplaceId,
@@ -2458,7 +2458,7 @@ describe("XCode plugins", () => {
       expect(dryRun.diagnostics).toEqual([]);
       expect(existsSync(join(pluginStorageRoot, "marketplaces", marketplaceId))).toBe(false);
 
-      const refreshed = await updateXCodePluginMarketplace({
+      const refreshed = await updateZCodePluginMarketplace({
         env: {},
         marketplace: marketplaceId,
         pluginStorageRoot,
@@ -2473,7 +2473,7 @@ describe("XCode plugins", () => {
         existsSync(join(pluginStorageRoot, "marketplaces", marketplaceId, "marketplace.json")),
       ).toBe(true);
 
-      const afterRefresh = await getXCodePluginsOverview({
+      const afterRefresh = await getZCodePluginsOverview({
         env: {},
         pluginStorageRoot,
         userConfigPath,
@@ -2488,7 +2488,7 @@ describe("XCode plugins", () => {
         ]),
       );
 
-      const installed = await installXCodeMarketplacePlugin({
+      const installed = await installZCodeMarketplacePlugin({
         env: {},
         marketplace: marketplaceId,
         pluginName,
@@ -2556,7 +2556,7 @@ describe("XCode plugins", () => {
         workingDirectory: root,
       });
       expect(configResult.config.plugins?.extraKnownMarketplaces?.[marketplaceId]).toBeUndefined();
-      const overview = await getXCodePluginsOverview({
+      const overview = await getZCodePluginsOverview({
         env: {},
         pluginStorageRoot: join(root, "plugins"),
         userConfigPath: join(root, "user-config.json"),
@@ -2588,7 +2588,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const overview = await getXCodePluginsOverview({
+      const overview = await getZCodePluginsOverview({
         env: {},
         pluginStorageRoot: join(root, "plugins"),
         userConfigPath,
@@ -2629,7 +2629,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const overview = await getXCodePluginsOverview({
+      const overview = await getZCodePluginsOverview({
         env: {},
         pluginStorageRoot,
         userConfigPath,
@@ -2693,7 +2693,7 @@ describe("XCode plugins", () => {
         }),
       );
 
-      const result = await updateXCodePluginMarketplace({
+      const result = await updateZCodePluginMarketplace({
         env: {},
         marketplace: marketplaceId,
         pluginStorageRoot,
@@ -2710,7 +2710,7 @@ describe("XCode plugins", () => {
           severity: "error",
         }),
       ]);
-      const installResult = await installXCodeMarketplacePlugin({
+      const installResult = await installZCodeMarketplacePlugin({
         env: {},
         marketplace: marketplaceId,
         pluginName: "demo",
@@ -2777,7 +2777,7 @@ describe("XCode plugins", () => {
       const controller = new AbortController();
       controller.abort();
 
-      const result = await updateXCodePluginMarketplace({
+      const result = await updateZCodePluginMarketplace({
         abortSignal: controller.signal,
         env: {},
         marketplace: marketplaceId,
@@ -2818,7 +2818,7 @@ describe("XCode plugins", () => {
         cliStorageRoot: join(root, "cli"),
         configResult,
         env: {},
-        options: { pluginStorageRoot } as XCodeAppOptions,
+        options: { pluginStorageRoot } as ZCodeAppOptions,
         startupTimer: createNoopStartupTimer(),
         workingDirectory: root,
       });

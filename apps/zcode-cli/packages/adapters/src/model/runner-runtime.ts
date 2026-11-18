@@ -7,7 +7,7 @@ import type {
   ModelTextRequest,
   TraceContext,
 } from "@zcode/contracts";
-import type { XCodeProviderAccountAccess } from "@zcode/shared";
+import type { ZCodeProviderAccountAccess } from "@zcode/shared";
 import type { AiSdkResolvedModel } from "./model-execution.js";
 
 export type AiSdkGenerateTextOptions = Parameters<typeof aiGenerateText>[0];
@@ -16,7 +16,7 @@ export type AiSdkStreamTextOptions = Parameters<typeof aiStreamText>[0];
 export type AiSdkStreamTextResult = ReturnType<typeof aiStreamText>;
 export type ResolvedAiSdkModel = AiSdkResolvedModel & {
   properties: ModelProperties;
-  accountAccess?: XCodeProviderAccountAccess;
+  accountAccess?: ZCodeProviderAccountAccess;
 };
 
 export interface AiSdkModelRuntime {
@@ -30,7 +30,7 @@ export interface AiSdkModelTextRequest extends ModelTextRequest {
   // Start Plan 的账号鉴权材料按 attempt 刷新；adapter 内部 retry 也是真实模型请求，
   // 必须在每个 attempt 发送前给 core/host 一个刷新机会。
   refreshRuntimeHeadersBeforeAttempt?: (input: {
-    accountAccess?: XCodeProviderAccountAccess;
+    accountAccess?: ZCodeProviderAccountAccess;
     expectedAccountScope?: string;
     rejectedProjectTokenFingerprint?: string;
     attempt: number;

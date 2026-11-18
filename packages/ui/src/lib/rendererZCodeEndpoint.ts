@@ -1,7 +1,7 @@
 import {
-  buildRuntimeXCodeEndpointUrls,
+  buildRuntimeZCodeEndpointUrls,
   ZCODE_ENV,
-  type RuntimeXCodeEndpointEnv,
+  type RuntimeZCodeEndpointEnv,
 } from "@zcode/shared";
 
 interface RendererImportMetaEnv {
@@ -14,9 +14,9 @@ function readRendererImportMetaEnv(): RendererImportMetaEnv {
     {}) as RendererImportMetaEnv;
 }
 
-export function createRendererXCodeEndpointEnv(
+export function createRendererZCodeEndpointEnv(
   env: RendererImportMetaEnv = readRendererImportMetaEnv(),
-): RuntimeXCodeEndpointEnv {
+): RuntimeZCodeEndpointEnv {
   return {
     ZCODE_ENV,
     // UI 侧的 zcode-plan 占位 provider 以前只看 ZCODE_ENV，
@@ -26,6 +26,6 @@ export function createRendererXCodeEndpointEnv(
   };
 }
 
-export const RENDERER_XCODE_ENDPOINT_URLS = buildRuntimeXCodeEndpointUrls(
-  createRendererXCodeEndpointEnv(),
+export const RENDERER_XCODE_ENDPOINT_URLS = buildRuntimeZCodeEndpointUrls(
+  createRendererZCodeEndpointEnv(),
 );

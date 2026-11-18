@@ -24,7 +24,7 @@ import {
   type SpineJoint,
   type SpineSection,
 } from "@/app-shell/workflowRunSpine.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /** 开口接头行的主轨朝行外伸出的长度（卡上的 TAIL）。 */
 const SPINE_STUB_PX = 4;
@@ -291,7 +291,7 @@ export function AvatarCluster({
 
 /** 轮次：`⟳ n`，只在回边两端且至少跑过一轮时在场（与卡上同一条规则）。 */
 export function Rounds({ station }: { station: TimelineStation }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (!station.onLoop || station.rounds === 0) return null;
   return (
     <span
@@ -344,7 +344,7 @@ export function useWorkflowActorModelLabels(
   actors: readonly { siteId: string; ordinal: number; model?: string }[] | undefined,
   providerName: ((providerId: string) => string | undefined) | undefined,
 ): ReadonlyMap<string, { name: string; canonical: string }> {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return useMemo(
     () =>
       workflowActorModelLabels(actors, {

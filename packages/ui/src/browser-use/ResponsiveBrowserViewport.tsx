@@ -25,7 +25,7 @@ import {
   type ResizeHandleDirections,
 } from "@/browser-use/ResponsiveBrowserResizeHandles.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 
 export const DEFAULT_RESPONSIVE_BROWSER_VIEWPORT_SIZE = {
@@ -91,7 +91,7 @@ export function ResponsiveBrowserViewport({
   viewportSize: BrowserViewportSize;
   zoom: BrowserViewportZoom;
 }): React.JSX.Element {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const viewportSizeRef = useRef<BrowserViewportSize>(viewportSize);
   const rendererScaleRef = useRef(1);

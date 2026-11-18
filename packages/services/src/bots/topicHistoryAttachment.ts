@@ -1,13 +1,13 @@
 import { createHash } from "node:crypto";
 import { PROTOCOL_V4_LIMITS } from "@zcode/shared/zcode-protocol-v4";
-import type { BotTopicHistoryBatch, XCodePromptFileAttachment } from "@zcode/shared";
+import type { BotTopicHistoryBatch, ZCodePromptFileAttachment } from "@zcode/shared";
 
 /** 历史正文只写一份附件；服务端归档用于权限和检查点，不再生成模型隐藏消息。 */
 export function createTopicHistoryAttachment(
   batch: BotTopicHistoryBatch,
   inputId: string,
   title: string,
-): XCodePromptFileAttachment | undefined {
+): ZCodePromptFileAttachment | undefined {
   if (!batch.messages.length && !batch.hasGap) return undefined;
   const identity = createHash("sha256").update(inputId).digest("hex").slice(0, 16);
   const date = (time: number) => new Date(time).toISOString();

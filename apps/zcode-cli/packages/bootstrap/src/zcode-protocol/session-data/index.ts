@@ -8,7 +8,7 @@ import {
   type V4SessionDataPurgeResult,
 } from "@zcode/shared/zcode-protocol-v4";
 import { deactivateSessionRecord, readSessionBusyState } from "../session-residency.js";
-import { parseParams, type XCodeProtocolAgentServerContext } from "../server-types.js";
+import { parseParams, type ZCodeProtocolAgentServerContext } from "../server-types.js";
 import type { SessionDataHost } from "./contract.js";
 
 export type { SessionDataHost } from "./contract.js";
@@ -129,7 +129,7 @@ export async function purgeSessionDataWith(
   return result;
 }
 
-function hostFromContext(context: XCodeProtocolAgentServerContext): SessionDataHost {
+function hostFromContext(context: ZCodeProtocolAgentServerContext): SessionDataHost {
   const store = context.deps.sessionStore;
   const files = context.deps.sessionDataFiles;
   if (
@@ -155,7 +155,7 @@ function hostFromContext(context: XCodeProtocolAgentServerContext): SessionDataH
 }
 
 export async function measureSessionData(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
 ): Promise<V4SessionDataMeasureResult> {
   return measureSessionDataWith(
@@ -165,7 +165,7 @@ export async function measureSessionData(
 }
 
 export async function purgeSessionData(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
 ): Promise<V4SessionDataPurgeResult> {
   const params = parseParams(v4SessionDataParamsSchema, rawParams);

@@ -585,7 +585,7 @@ async function createHistoryTask(
   // 空 createSession 是草稿，正式任务前置走公开历史导入，不发送模型请求。
   const call = remote ? callRemoteFixture : callHandoffHost;
   const snapshot = await call<{ session: { sessionId: string } }>(
-    ServiceChannels.XCodeAgent,
+    ServiceChannels.ZCodeAgent,
     "createSession",
     [
       {
@@ -603,7 +603,7 @@ async function createHistoryTask(
     ],
   );
   const taskId = snapshot.session.sessionId;
-  await call(ServiceChannels.XCodeTask, "resumeTask", [
+  await call(ServiceChannels.ZCodeTask, "resumeTask", [
     {
       taskId,
       workspacePath: target.workspacePath,

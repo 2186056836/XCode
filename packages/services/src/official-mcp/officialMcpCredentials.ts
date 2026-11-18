@@ -20,8 +20,8 @@ import {
   zcodeProviderAccountAccessSchema,
   type OfficialAuthConsumerKind,
   type OfficialMcpAuthFailureReason,
-  type XCodeAccountAccess,
-  type XCodeProviderAccountAccess,
+  type ZCodeAccountAccess,
+  type ZCodeProviderAccountAccess,
 } from "@zcode/shared";
 import {
   isSameOAuthAccountMaterial,
@@ -93,7 +93,7 @@ export interface OfficialMcpCredentialResolveOptions {
 
 export interface OfficialMcpCredentialResolverDeps {
   accountRequestAuthService: {
-    resolveAccessCurrent(access: XCodeProviderAccountAccess): Promise<XCodeAccountAccess | null>;
+    resolveAccessCurrent(access: ZCodeProviderAccountAccess): Promise<ZCodeAccountAccess | null>;
   };
   getRegistryRevision(): number | null;
   loadOAuthIdentityMaterial(): Promise<OAuthIdentityMaterial | null>;
@@ -137,7 +137,7 @@ type SelectedPlan = {
 
 type SelectedProvider = {
   providerId: string;
-  access: XCodeProviderAccountAccess;
+  access: ZCodeProviderAccountAccess;
 };
 
 function fail(reason: OfficialMcpAuthFailureReason): {
@@ -169,7 +169,7 @@ function resolveSelectedProvider(
 
 function resolveSelectedPlan(
   selectedProvider: SelectedProvider,
-  access: XCodeAccountAccess | null,
+  access: ZCodeAccountAccess | null,
 ): { ok: true; plan: SelectedPlan } | { ok: false; reason: OfficialMcpAuthFailureReason } {
   if (
     !access ||

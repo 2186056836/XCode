@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button.js";
 import { toast } from "@/components/ui/toast.js";
 import { useStorageUsage } from "./useStorageUsage.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { formatBytes } from "@/resource-manager/resourceUsageView.js";
 import { formatDateTime } from "@/settings/automationFormat.js";
@@ -43,7 +43,7 @@ export function StorageSection({
   /** tab 是否处于激活态：激活才扫描，切走即取消 */
   active: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { snapshot, scanning, rescan, clean } = useStorageUsage({ bridge, enabled: active });
   const [selectedGroupKey, setSelectedGroupKey] = useState<string | null>(null);
   const [detailCategory, setDetailCategory] = useState<StorageCategoryId | null>(null);

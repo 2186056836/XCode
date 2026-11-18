@@ -1,6 +1,6 @@
-import type { XCodeApp } from "../app/types.js";
+import type { ZCodeApp } from "../app/types.js";
 
-const modelConfigMutationTails = new WeakMap<XCodeApp, Promise<void>>();
+const modelConfigMutationTails = new WeakMap<ZCodeApp, Promise<void>>();
 
 /**
  * 同一个 session App 的模型配置只有一个串行化临界区。
@@ -11,7 +11,7 @@ const modelConfigMutationTails = new WeakMap<XCodeApp, Promise<void>>();
  * operation，不污染后续 tail。WeakMap 不延长 session 生命周期。
  */
 export async function runSessionModelConfigMutation<T>(
-  app: XCodeApp,
+  app: ZCodeApp,
   operation: () => Promise<T>,
 ): Promise<T> {
   const previousTail = modelConfigMutationTails.get(app) ?? Promise.resolve();

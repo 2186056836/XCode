@@ -11,10 +11,10 @@ import {
   zcodeSessionStateSnapshotSchema,
 } from "@zcode/shared";
 import { TaskIndexRepo } from "../src/session/taskIndexRepo.js";
-import { createXCodeTaskServiceAdapter } from "../src/zcode-agent/zcodeTaskServiceAdapter.js";
+import { createZCodeTaskServiceAdapter } from "../src/zcode-agent/zcodeTaskServiceAdapter.js";
 import {
   getLegacyTaskSessionSnapshotPath,
-  getXCodeDataRootDir,
+  getZCodeDataRootDir,
   setDataBaseDir,
 } from "../src/paths.js";
 import { createMemoryService } from "../src/memory/memoryService.js";
@@ -38,7 +38,7 @@ test("current Project Memory catalog and files remain readable", async () => {
   try {
     const workspaceId = "example-0123456789abcdef";
     const memoryRoot = join(
-      getXCodeDataRootDir(),
+      getZCodeDataRootDir(),
       "cli",
       "memories",
       "projects",
@@ -106,8 +106,8 @@ test("missing sessions report the owner error even when a valid ACP snapshot exi
   await writeFile(path, content);
   const ownerError = new Error(`Session not found: ${meta.taskId}`);
   const disposable = () => ({ dispose() {} });
-  type Options = Parameters<typeof createXCodeTaskServiceAdapter>[0];
-  const service = createXCodeTaskServiceAdapter({
+  type Options = Parameters<typeof createZCodeTaskServiceAdapter>[0];
+  const service = createZCodeTaskServiceAdapter({
     zcodeAgentService: {
       async resumeSession() {
         throw ownerError;
@@ -175,11 +175,11 @@ test("current session recovery preserves Desktop and replayable projections", as
     messages: [],
     slashCommands: [{ name: "compact", description: "Compact" }],
   });
-  type Options = Parameters<typeof createXCodeTaskServiceAdapter>[0];
+  type Options = Parameters<typeof createZCodeTaskServiceAdapter>[0];
   const disposable = () => ({ dispose() {} });
   const resumed: unknown[] = [];
   const indexed: unknown[] = [];
-  const service = createXCodeTaskServiceAdapter({
+  const service = createZCodeTaskServiceAdapter({
     zcodeAgentService: {
       async resumeSession(params: unknown) {
         resumed.push(params);

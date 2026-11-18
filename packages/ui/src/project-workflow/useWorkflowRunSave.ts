@@ -10,8 +10,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   resolveWorkspaceKey,
-  type XCodeSavedWorkflowEntry,
-  type XCodeSavedWorkflowScope,
+  type ZCodeSavedWorkflowEntry,
+  type ZCodeSavedWorkflowScope,
 } from "@zcode/shared";
 import { useWorkspaceServicesResolution } from "@/hooks/useWorkspaceServices.js";
 import {
@@ -117,7 +117,7 @@ export function useWorkflowRunSave(host: WorkflowRunSaveHost): WorkflowRunSaveCo
   );
 
   const checkNameTaken = useCallback(
-    async (name: string, scope: XCodeSavedWorkflowScope) => {
+    async (name: string, scope: ZCodeSavedWorkflowScope) => {
       try {
         const result = await agentService.getSavedWorkflow({ ...target, name, scope });
         return result.ok;
@@ -135,7 +135,7 @@ export function useWorkflowRunSave(host: WorkflowRunSaveHost): WorkflowRunSaveCo
   });
   const launch = useCallback(
     async (
-      entry: XCodeSavedWorkflowEntry,
+      entry: ZCodeSavedWorkflowEntry,
       args: Record<string, unknown>,
       launchTarget?: WorkflowRunSaveTarget,
     ) => {

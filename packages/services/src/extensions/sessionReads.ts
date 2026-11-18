@@ -29,10 +29,10 @@ import {
   type ConversationTopicWireCandidate,
 } from "@zcode/shared/zcode-protocol-v4";
 import type { ServiceLogger } from "#src/logger/serviceLogger.js";
-import type { IXCodeAgentService, XCodeAgentWorkspaceTarget } from "#src/zcode-agent/zcodeAgent.js";
+import type { IZCodeAgentService, ZCodeAgentWorkspaceTarget } from "#src/zcode-agent/zcodeAgent.js";
 import {
-  createXCodeAgentConnectionScope,
-  type XCodeAgentConnectionScope,
+  createZCodeAgentConnectionScope,
+  type ZCodeAgentConnectionScope,
 } from "#src/zcode-agent/zcodeAgentConnectionScope.js";
 import type {
   CapabilityCallContext,
@@ -56,8 +56,8 @@ import type { SessionsBackend } from "#src/extensions/sessionsBackend.js";
 // 列表泵在 sessionListPump.ts，与连接无关（读的是 Window Host 控制器投影）。
 
 export interface SessionReadsDeps {
-  /** 连接作用域的底座：Window Host 的 IXCodeAgentService（只在本进程内）。 */
-  agent: IXCodeAgentService | undefined;
+  /** 连接作用域的底座：Window Host 的 IZCodeAgentService（只在本进程内）。 */
+  agent: IZCodeAgentService | undefined;
   /** 解析会话目标走 facade（客户端类调用方，与 readSession 同一份授权与代际检查）。 */
   sessions: SessionsBackend;
   /** Window Host 控制器的任务投影；缺省时列表订阅报 unavailable。 */
@@ -76,7 +76,7 @@ export interface SessionReadsDeps {
 
 /** 一次性读取的结果：会话目标与当前交互（§17.12，回答与切换前的检查用）。 */
 export interface SessionInteractionsRead {
-  target: XCodeAgentWorkspaceTarget & { sessionId: string };
+  target: ZCodeAgentWorkspaceTarget & { sessionId: string };
   event: SessionInteractionsEvent;
 }
 
@@ -112,7 +112,7 @@ export interface SessionReads {
   dispose(): void;
 }
 
-type Target = XCodeAgentWorkspaceTarget & { sessionId: string };
+type Target = ZCodeAgentWorkspaceTarget & { sessionId: string };
 
 interface Registration {
   pluginId: string;
@@ -148,7 +148,7 @@ interface Mirror {
 
 interface Connection {
   gen: number;
-  scope: XCodeAgentConnectionScope;
+  scope: ZCodeAgentConnectionScope;
   ready: Promise<void>;
   /** 每个工作区一条帧流与一条会话生命周期流，按 topic 分给镜像。 */
   workspaces: Map<string, IDisposable[]>;
@@ -156,7 +156,7 @@ interface Connection {
 }
 
 const jsonBytes = (value: unknown) => Buffer.byteLength(JSON.stringify(value));
-const workspaceKeyOf = (target: XCodeAgentWorkspaceTarget) =>
+const workspaceKeyOf = (target: ZCodeAgentWorkspaceTarget) =>
   target.workspaceIdentity?.trim() || target.workspacePath;
 const describe = (error: unknown) =>
   isExtensionError(error)
@@ -185,7 +185,7 @@ export function createSessionReads(deps: SessionReadsDeps): SessionReads {
     releaseConnection("replaced");
     const agent = deps.agent;
     const connectionId = `extension-host:${gen}`;
-    const scope = createXCodeAgentConnectionScope(agent, {
+    const scope = createZCodeAgentConnectionScope(agent, {
       connectionId,
       clientMode: "web-remote-replayable",
     });
@@ -234,10 +234,10 @@ export function createSessionReads(deps: SessionReadsDeps): SessionReads {
   };
 
   /** 每个工作区只挂一次帧流与生命周期流；按 topic 交给镜像。 */
-  const watchWorkspace = (current: Connection, target: XCodeAgentWorkspaceTarget) => {
+  const watchWorkspace = (current: Connection, target: ZCodeAgentWorkspaceTarget) => {
     const key = workspaceKeyOf(target);
     if (current.workspaces.has(key)) return;
-    const workspace: XCodeAgentWorkspaceTarget = {
+    const workspace: ZCodeAgentWorkspaceTarget = {
       workspacePath: target.workspacePath,
       ...(target.workspaceIdentity ? { workspaceIdentity: target.workspaceIdentity } : {}),
     };

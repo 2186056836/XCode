@@ -2,9 +2,9 @@ import { readFile } from "node:fs/promises";
 import { arch as readOsArch, homedir, release as readOsRelease } from "node:os";
 import { join } from "node:path";
 import {
-  buildXCodeSourceHeadersFromContext,
-  resolveRuntimeXCodeEndpointOrigin,
-  resolveRuntimeXCodeEnv,
+  buildZCodeSourceHeadersFromContext,
+  resolveRuntimeZCodeEndpointOrigin,
+  resolveRuntimeZCodeEnv,
   ZCODE_APP_VERSION_ENV,
 } from "@zcode/shared";
 import {
@@ -26,17 +26,17 @@ export async function createProviderEndpointRoutingSourceHeaders(
 ): Promise<Record<string, string>> {
   const env = options.env ?? process.env;
   const deviceMid = await readExistingDeviceMid(resolveTelemetryStateFile(env));
-  return buildXCodeSourceHeadersFromContext({
+  return buildZCodeSourceHeadersFromContext({
     appVersion: env[ZCODE_APP_VERSION_ENV] ?? options.appVersion,
     arch: readOsArch(),
     // 与模型请求同一取值规则：先认 Desktop 下发的界面语言，再回落 Intl。
     clientLanguage: resolveClientLanguageForHeaders(env) ?? "unknown",
     clientTimezone: resolveClientTimezone(),
     deviceMid,
-    endpointOrigin: resolveRuntimeXCodeEndpointOrigin(env),
+    endpointOrigin: resolveRuntimeZCodeEndpointOrigin(env),
     osVersion: readOsRelease(),
     platform: process.platform,
-    releaseChannel: resolveRuntimeXCodeEnv(env),
+    releaseChannel: resolveRuntimeZCodeEnv(env),
     sourceTitle: options.sourceTitle ?? "cli",
   });
 }

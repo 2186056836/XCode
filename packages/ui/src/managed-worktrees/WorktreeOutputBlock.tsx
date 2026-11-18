@@ -2,7 +2,7 @@
 import { ChevronRightIcon, FolderGit2Icon, LoaderCircle, TriangleAlertIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export function WorktreeOutputBlock({
   title,
@@ -22,7 +22,7 @@ export function WorktreeOutputBlock({
   /** 卡片底部的操作区（创建失败时的按钮）。 */
   children?: ReactNode;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [expanded, setExpanded] = useState(defaultExpanded);
   const hasOutput = output.trim().length > 0;
   return (

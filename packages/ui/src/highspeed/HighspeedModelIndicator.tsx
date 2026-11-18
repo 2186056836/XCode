@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "motion/react";
 import lightningIconUrl from "@/assets/highspeed/lightning.svg";
 import { cn } from "@/components/lib/utils.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 const HIGHSPEED_MODEL_TRANSITION = {
   duration: 0.4,
@@ -21,7 +21,7 @@ export function HighspeedModelIndicator({
   /** 仅 draw 新命中时播放翻页入场；切回或恢复时直接呈现静止标识。 */
   animateEntrance: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const reducedMotion = useReducedMotion();
   const label = `${model.trim()} HighSpeed`;
   const originalModelLabel = intl.formatMessage(

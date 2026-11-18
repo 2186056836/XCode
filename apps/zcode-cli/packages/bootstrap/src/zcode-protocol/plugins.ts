@@ -13,43 +13,43 @@ import {
   zcodePluginsValidateParamsSchema,
   zcodePluginsDescribeParamsSchema,
   zcodePluginsRestoreBuiltinParamsSchema,
-  type XCodeAvailablePluginSummary,
-  type XCodeInstalledPluginSummary,
-  type XCodePluginComponentGroup,
-  type XCodePluginDiagnostic,
-  type XCodePluginInfo,
-  type XCodePluginExtensionSummary,
-  type XCodePluginMarketplaceSummary,
-  type XCodePluginStoreListing,
-  type XCodePluginsConfigureResult,
-  type XCodePluginsDescribeResult,
-  type XCodePluginsInstallResult,
-  type XCodePluginsListResult,
-  type XCodePluginsMarketplaceMutationResult,
-  type XCodePluginsOverviewResult,
-  type XCodePluginsRestoreBuiltinResult,
-  type XCodePluginsSetEnabledResult,
-  type XCodePluginsUninstallResult,
-  type XCodePluginsValidateResult,
+  type ZCodeAvailablePluginSummary,
+  type ZCodeInstalledPluginSummary,
+  type ZCodePluginComponentGroup,
+  type ZCodePluginDiagnostic,
+  type ZCodePluginInfo,
+  type ZCodePluginExtensionSummary,
+  type ZCodePluginMarketplaceSummary,
+  type ZCodePluginStoreListing,
+  type ZCodePluginsConfigureResult,
+  type ZCodePluginsDescribeResult,
+  type ZCodePluginsInstallResult,
+  type ZCodePluginsListResult,
+  type ZCodePluginsMarketplaceMutationResult,
+  type ZCodePluginsOverviewResult,
+  type ZCodePluginsRestoreBuiltinResult,
+  type ZCodePluginsSetEnabledResult,
+  type ZCodePluginsUninstallResult,
+  type ZCodePluginsValidateResult,
   isUserFacingPlugin,
 } from "@zcode/shared";
 import type { PluginDiagnostic, PluginMetadata } from "@zcode/contracts";
 import {
-  addXCodePluginMarketplace,
-  configureXCodePlugin,
-  describeXCodePlugin,
+  addZCodePluginMarketplace,
+  configureZCodePlugin,
+  describeZCodePlugin,
   enrichCachedClaudeMarketplaceIconsForOverview,
-  getXCodePluginsOverview,
-  installXCodeMarketplacePlugin,
-  removeXCodePluginMarketplace,
-  resolveXCodePluginConfigWithSecrets,
-  resolveXCodePlugins,
-  resetXCodePluginConfig,
+  getZCodePluginsOverview,
+  installZCodeMarketplacePlugin,
+  removeZCodePluginMarketplace,
+  resolveZCodePluginConfigWithSecrets,
+  resolveZCodePlugins,
+  resetZCodePluginConfig,
   restoreBuiltinPlugin as restoreBuiltinPluginCore,
-  setXCodePluginEnabled,
-  uninstallXCodeMarketplacePlugin,
-  updateXCodePluginMarketplace,
-  validateXCodePlugin,
+  setZCodePluginEnabled,
+  uninstallZCodeMarketplacePlugin,
+  updateZCodePluginMarketplace,
+  validateZCodePlugin,
 } from "../plugins.js";
 import { listInstalledPluginRecords } from "@zcode/adapters/plugins";
 import { withPluginStorageLock } from "../lib/plugin-storage-lock.js";
@@ -60,10 +60,10 @@ import {
   resolvePath,
   type ConfigResult,
 } from "@zcode/adapters/config";
-import { parseParams, type XCodeProtocolAgentServerContext } from "./server-types.js";
+import { parseParams, type ZCodeProtocolAgentServerContext } from "./server-types.js";
 
-// 把 CLI 的 PluginMetadata 投影成协议可序列化的 XCodePluginInfo (只保留 UI 需要的字段)。
-function toPluginInfo(plugin: PluginMetadata, configResult?: ConfigResult): XCodePluginInfo {
+// 把 CLI 的 PluginMetadata 投影成协议可序列化的 ZCodePluginInfo (只保留 UI 需要的字段)。
+function toPluginInfo(plugin: PluginMetadata, configResult?: ConfigResult): ZCodePluginInfo {
   const configuredOptions = Object.fromEntries(
     Object.entries(plugin.configuredOptions ?? {}).filter(
       ([key]) => plugin.userConfig?.[key]?.sensitive !== true,
@@ -150,7 +150,7 @@ function resolveInlinePluginRootSource(
 }
 
 async function createPluginConfigView(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   workspacePath: string,
   configScope: "user" | "workspace" | undefined,
 ): Promise<ConfigResult> {
@@ -167,7 +167,7 @@ async function createPluginConfigView(
 function createMissingConfiguredPluginInfos(
   configResult: ConfigResult,
   discoveredPluginIds: ReadonlySet<string>,
-): XCodePluginInfo[] {
+): ZCodePluginInfo[] {
   const configuredPluginIds = new Set([
     ...Object.keys(configResult.config.plugins.enabledPlugins),
     ...Object.keys(configResult.config.plugins.options),
@@ -212,7 +212,7 @@ export function normalizePluginRootForComparison(
   return platform === "win32" ? resolvedRoot.replaceAll("\\", "/").toLowerCase() : resolvedRoot;
 }
 
-function toPluginDiagnostic(diagnostic: PluginDiagnostic): XCodePluginDiagnostic {
+function toPluginDiagnostic(diagnostic: PluginDiagnostic): ZCodePluginDiagnostic {
   return {
     code: diagnostic.code,
     message: diagnostic.message,
@@ -222,14 +222,14 @@ function toPluginDiagnostic(diagnostic: PluginDiagnostic): XCodePluginDiagnostic
 }
 
 export async function listPlugins(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodePluginsListResult> {
+): Promise<ZCodePluginsListResult> {
   const params = parseParams(zcodePluginsListParamsSchema, rawParams);
   context.deps?.pluginPreparation?.signal.throwIfAborted();
   // optionSources 要包含已迁进私有文件的敏感键（值仍过滤），否则设置页的 scope 标记与
   // 「清除」按钮会在迁移后消失；所以投影用叠加私有文件后的配置视图。
-  const configResult = await resolveXCodePluginConfigWithSecrets({
+  const configResult = await resolveZCodePluginConfigWithSecrets({
     configResult: await createPluginConfigView(
       context,
       params.workspace.workspacePath,
@@ -237,7 +237,7 @@ export async function listPlugins(
     ),
     workingDirectory: params.workspace.workspacePath,
   });
-  const outcome = await resolveXCodePlugins({
+  const outcome = await resolveZCodePlugins({
     pluginPreparation: context.deps?.pluginPreparation,
     pluginDiscovery: context.deps?.pluginDiscovery,
     workspaceIdentity: params.workspace.workspaceIdentity,
@@ -262,13 +262,13 @@ export async function listPlugins(
 }
 
 export async function setPluginEnabled(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   abortSignal?: AbortSignal,
-): Promise<XCodePluginsSetEnabledResult> {
+): Promise<ZCodePluginsSetEnabledResult> {
   const params = parseParams(zcodePluginsSetEnabledParamsSchema, rawParams);
   abortSignal?.throwIfAborted();
-  const result = await setXCodePluginEnabled({
+  const result = await setZCodePluginEnabled({
     abortSignal,
     pluginPreparation: context.deps?.pluginPreparation,
     pluginDiscovery: context.deps?.pluginDiscovery,
@@ -292,16 +292,16 @@ export async function setPluginEnabled(
 }
 
 export async function getPluginsOverview(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodePluginsOverviewResult> {
+): Promise<ZCodePluginsOverviewResult> {
   const params = parseParams(zcodePluginsOverviewParamsSchema, rawParams);
   context.deps?.pluginPreparation?.signal.throwIfAborted();
   enrichCachedClaudeMarketplaceIconsForOverview({
     logger: context.logger,
     workingDirectory: params.workspace.workspacePath,
   });
-  const overview = await getXCodePluginsOverview({
+  const overview = await getZCodePluginsOverview({
     pluginPreparation: context.deps?.pluginPreparation,
     pluginDiscovery: context.deps?.pluginDiscovery,
     workspaceIdentity: params.workspace.workspaceIdentity,
@@ -336,12 +336,12 @@ export async function getPluginsOverview(
 }
 
 export async function addPluginMarketplace(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   abortSignal?: AbortSignal,
-): Promise<XCodePluginsMarketplaceMutationResult> {
+): Promise<ZCodePluginsMarketplaceMutationResult> {
   const params = parseParams(zcodePluginsMarketplaceAddParamsSchema, rawParams);
-  const marketplace = await addXCodePluginMarketplace({
+  const marketplace = await addZCodePluginMarketplace({
     abortSignal,
     dryRun: params.dryRun,
     logger: context.logger,
@@ -352,11 +352,11 @@ export async function addPluginMarketplace(
 }
 
 export async function removePluginMarketplace(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodePluginsMarketplaceMutationResult> {
+): Promise<ZCodePluginsMarketplaceMutationResult> {
   const params = parseParams(zcodePluginsMarketplaceRemoveParamsSchema, rawParams);
-  await removeXCodePluginMarketplace({
+  await removeZCodePluginMarketplace({
     logger: context.logger,
     marketplace: params.marketplace,
     workingDirectory: params.workspace.workspacePath,
@@ -365,12 +365,12 @@ export async function removePluginMarketplace(
 }
 
 export async function updatePluginMarketplace(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   abortSignal?: AbortSignal,
-): Promise<XCodePluginsMarketplaceMutationResult> {
+): Promise<ZCodePluginsMarketplaceMutationResult> {
   const params = parseParams(zcodePluginsMarketplaceUpdateParamsSchema, rawParams);
-  const result = await updateXCodePluginMarketplace({
+  const result = await updateZCodePluginMarketplace({
     abortSignal,
     logger: context.logger,
     marketplace: params.marketplace,
@@ -383,12 +383,12 @@ export async function updatePluginMarketplace(
 }
 
 export async function installPlugin(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   abortSignal?: AbortSignal,
-): Promise<XCodePluginsInstallResult> {
+): Promise<ZCodePluginsInstallResult> {
   const params = parseParams(zcodePluginsInstallParamsSchema, rawParams);
-  const result = await installXCodeMarketplacePlugin({
+  const result = await installZCodeMarketplacePlugin({
     pluginPreparation: context.deps?.pluginPreparation,
     pluginDiscovery: context.deps?.pluginDiscovery,
     workspaceIdentity: params.workspace.workspaceIdentity,
@@ -409,11 +409,11 @@ export async function installPlugin(
 }
 
 export async function uninstallPlugin(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodePluginsUninstallResult> {
+): Promise<ZCodePluginsUninstallResult> {
   const params = parseParams(zcodePluginsUninstallParamsSchema, rawParams);
-  const removed = await uninstallXCodeMarketplacePlugin({
+  const removed = await uninstallZCodeMarketplacePlugin({
     pluginPreparation: context.deps?.pluginPreparation,
     pluginDiscovery: context.deps?.pluginDiscovery,
     workspaceIdentity: params.workspace.workspaceIdentity,
@@ -432,9 +432,9 @@ export async function uninstallPlugin(
 }
 
 export async function updatePlugin(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodePluginsInstallResult> {
+): Promise<ZCodePluginsInstallResult> {
   const params = parseParams(zcodePluginsUpdateParamsSchema, rawParams);
   const pluginStorageRoot = resolvePluginStorageRoot(params.workspace.workspacePath);
   // 在同一把写锁内选择待更新记录，避免把等锁期间卸载的插件重新装回去。
@@ -444,15 +444,15 @@ export async function updatePlugin(
       if (params.marketplace) return record.marketplace === params.marketplace;
       return true;
     });
-    const installedPlugins: XCodeInstalledPluginSummary[] = [];
+    const installedPlugins: ZCodeInstalledPluginSummary[] = [];
     const dependencyClosure: string[] = [];
-    // 聚合每条记录重装产生的诊断：installXCodeMarketplacePlugin 失败时不抛错，而是返回
+    // 聚合每条记录重装产生的诊断：installZCodeMarketplacePlugin 失败时不抛错，而是返回
     // CLI 形态的 PluginDiagnostic（见其错误分支的 toMarketplaceInstallDiagnostic），
-    // 这里逐条经协议侧 toPluginDiagnostic 投影成 XCodePluginDiagnostic 回传，
+    // 这里逐条经协议侧 toPluginDiagnostic 投影成 ZCodePluginDiagnostic 回传，
     // 让失败的重装显式暴露，而不是静默"成功"。
-    const diagnostics: XCodePluginDiagnostic[] = [];
+    const diagnostics: ZCodePluginDiagnostic[] = [];
     for (const record of installed) {
-      const result = await installXCodeMarketplacePlugin({
+      const result = await installZCodeMarketplacePlugin({
         pluginStorageRoot: lock.root,
         pluginStorageLock: lock,
         pluginPreparation: context.deps?.pluginPreparation,
@@ -476,9 +476,9 @@ export async function updatePlugin(
 // 恢复一个被抑制（"卸载"）的内置插件：清除 suppressedBuiltins 标记并立即重新 seed。
 // bootstrap 侧的同名函数被别名为 restoreBuiltinPluginCore，避免与本协议处理器重名。
 export async function restoreBuiltinPlugin(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodePluginsRestoreBuiltinResult> {
+): Promise<ZCodePluginsRestoreBuiltinResult> {
   const params = parseParams(zcodePluginsRestoreBuiltinParamsSchema, rawParams);
   await restoreBuiltinPluginCore({
     pluginPreparation: context.deps?.pluginPreparation,
@@ -493,11 +493,11 @@ export async function restoreBuiltinPlugin(
 }
 
 export async function configurePlugin(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodePluginsConfigureResult> {
+): Promise<ZCodePluginsConfigureResult> {
   const params = parseParams(zcodePluginsConfigureParamsSchema, rawParams);
-  await configureXCodePlugin({
+  await configureZCodePlugin({
     pluginPreparation: context.deps?.pluginPreparation,
     pluginDiscovery: context.deps?.pluginDiscovery,
     workspaceIdentity: params.workspace.workspaceIdentity,
@@ -514,11 +514,11 @@ export async function configurePlugin(
 }
 
 export async function resetPluginConfig(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodePluginsConfigureResult> {
+): Promise<ZCodePluginsConfigureResult> {
   const params = parseParams(zcodePluginsResetConfigParamsSchema, rawParams);
-  await resetXCodePluginConfig({
+  await resetZCodePluginConfig({
     logger: context.logger,
     pluginId: params.pluginId,
     scope: params.scope,
@@ -528,11 +528,11 @@ export async function resetPluginConfig(
 }
 
 export async function validatePlugin(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodePluginsValidateResult> {
+): Promise<ZCodePluginsValidateResult> {
   const params = parseParams(zcodePluginsValidateParamsSchema, rawParams);
-  const diagnostics = await validateXCodePlugin({
+  const diagnostics = await validateZCodePlugin({
     logger: context.logger,
     marketplace: params.marketplace,
     pluginName: params.pluginName,
@@ -551,18 +551,18 @@ export async function validatePlugin(
 }
 
 export async function describePlugin(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodePluginsDescribeResult> {
+): Promise<ZCodePluginsDescribeResult> {
   const params = parseParams(zcodePluginsDescribeParamsSchema, rawParams);
   // 已安装目录、已缓存 manifest 与临时 source 解析都不持锁；只有懒加载 manifest 写入进锁。
-  const result = await describeXCodePlugin({
+  const result = await describeZCodePlugin({
     logger: context.logger,
     marketplace: params.marketplace,
     pluginName: params.pluginName,
     workingDirectory: params.workspace.workspacePath,
   });
-  const components: XCodePluginComponentGroup[] = result.components.map((group) => ({
+  const components: ZCodePluginComponentGroup[] = result.components.map((group) => ({
     kind: group.kind,
     items: group.items.map((item) => ({
       name: item.name,
@@ -586,8 +586,8 @@ function toMarketplaceSummary(input: {
   pluginCount: number;
   isOfficial?: boolean;
   featured?: string[];
-  refreshFailure?: XCodePluginMarketplaceSummary["refreshFailure"];
-}): XCodePluginMarketplaceSummary {
+  refreshFailure?: ZCodePluginMarketplaceSummary["refreshFailure"];
+}): ZCodePluginMarketplaceSummary {
   return {
     id: input.id,
     name: input.name,
@@ -603,7 +603,7 @@ function toMarketplaceSummary(input: {
 
 /** 按请求把 CLI 内部的扩展摘要并进 listing；不要求时原样返回（摘要不进线）。 */
 function withExtensionSummary<
-  T extends { listing?: XCodePluginStoreListing; extensionSummary?: XCodePluginExtensionSummary },
+  T extends { listing?: ZCodePluginStoreListing; extensionSummary?: ZCodePluginExtensionSummary },
 >(plugin: T, include: boolean): T {
   if (!include || !plugin.extensionSummary) return plugin;
   return { ...plugin, listing: { ...plugin.listing, extensionSummary: plugin.extensionSummary } };
@@ -617,8 +617,8 @@ function toAvailablePluginSummary(input: {
   version?: string;
   installed: boolean;
   componentTypes?: string[];
-  listing?: XCodeAvailablePluginSummary["listing"];
-}): XCodeAvailablePluginSummary {
+  listing?: ZCodeAvailablePluginSummary["listing"];
+}): ZCodeAvailablePluginSummary {
   return {
     id: input.id,
     name: input.name,
@@ -642,11 +642,11 @@ function toInstalledPluginSummary(input: {
   installPath?: string;
   installedAt?: string;
   componentTypes?: string[];
-  hookDetails?: XCodeInstalledPluginSummary["hookDetails"];
+  hookDetails?: ZCodeInstalledPluginSummary["hookDetails"];
   updateStatus?: "none" | "update-available" | "version-changed";
   latestVersion?: string;
-  listing?: XCodeInstalledPluginSummary["listing"];
-}): XCodeInstalledPluginSummary {
+  listing?: ZCodeInstalledPluginSummary["listing"];
+}): ZCodeInstalledPluginSummary {
   return {
     id: input.id,
     name: input.name,

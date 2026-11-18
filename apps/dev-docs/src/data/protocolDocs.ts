@@ -98,7 +98,7 @@ export const concepts: Concept[] = [
     lifecycle:
       "UI task 列表、缓存、导航和本地持久化使用；进入 XCode Protocol 时必须找到对应 sessionId。",
     owner: "app/ui",
-    source: "packages/shared/src/zcode-task-types.ts#XCodeTaskMeta",
+    source: "packages/shared/src/zcode-task-types.ts#ZCodeTaskMeta",
     related: ["sessionId", "workspaceKey", "activeInputId"],
   },
   {
@@ -188,7 +188,7 @@ export const concepts: Concept[] = [
     summary: "消息主键，标识 user/assistant message。",
     lifecycle: "消息创建时生成；message upsert/remove、part、snapshot 都围绕它组织。",
     owner: "agent runtime",
-    source: "packages/shared/src/zcode-protocol/index.ts#XCodeMessageInfo",
+    source: "packages/shared/src/zcode-protocol/index.ts#ZCodeMessageInfo",
     related: ["partId", "sessionId", "turnId"],
   },
   {
@@ -198,7 +198,7 @@ export const concepts: Concept[] = [
     summary: "消息内部 part 的主键，用于 text、reasoning、tool、patch、compaction 等细粒度更新。",
     lifecycle: "part.started/upserted/delta/remove 时使用。",
     owner: "agent runtime",
-    source: "packages/shared/src/zcode-protocol/index.ts#XCodeMessagePart",
+    source: "packages/shared/src/zcode-protocol/index.ts#ZCodeMessagePart",
     related: ["messageId", "toolCallId"],
   },
   {
@@ -208,7 +208,7 @@ export const concepts: Concept[] = [
     summary: "工具调用主键，用于工具状态、权限请求和 active tool projection。",
     lifecycle: "工具 scheduled/started/progress/result/error 流程中保持稳定。",
     owner: "agent runtime",
-    source: "packages/shared/src/zcode-protocol/index.ts#XCodeActiveToolCall",
+    source: "packages/shared/src/zcode-protocol/index.ts#ZCodeActiveToolCall",
     related: ["partId", "permissionRequest"],
   },
   {
@@ -273,7 +273,7 @@ export const concepts: Concept[] = [
     summary: "真实文件路径，只用于文件读写、命令 cwd、Git 操作和路径展示。",
     lifecycle: "本地 workspace 通常直接使用；远程 workspace 不能只靠它做身份判等。",
     owner: "app/host",
-    source: "packages/shared/src/zcode-protocol/index.ts#XCodeWorkspaceRef",
+    source: "packages/shared/src/zcode-protocol/index.ts#ZCodeWorkspaceRef",
     related: ["workspaceIdentity", "workspaceKey"],
   },
   {
@@ -394,14 +394,14 @@ export const structures: StructureDoc[] = [
         meaning:
           "App 产品层任务 ID。迁移期仍存在，但 XCode Agent 路径进入协议时要找到对应 sessionId。",
         owner: "app/ui",
-        source: "XCodeTaskMeta",
+        source: "ZCodeTaskMeta",
         conceptIds: ["taskId", "sessionId"],
       },
     ],
   },
   {
     id: "zcode-session-send",
-    title: "XCodeSessionSendParams",
+    title: "ZCodeSessionSendParams",
     path: "packages/shared/src/zcode-protocol/index.ts",
     purpose: "`session/send` 的参数结构。它只提交输入并立即 ACK，结果通过事件流返回。",
     oldShape: "{ sessionId, clientMessageId?, content, attachments?, expectedRevision? }",
@@ -544,7 +544,7 @@ export const structures: StructureDoc[] = [
   },
   {
     id: "zcode-stream-event",
-    title: "XCodeStreamEvent / TaskStreamMirrorableEvent",
+    title: "ZCodeStreamEvent / TaskStreamMirrorableEvent",
     path: "packages/shared/src/zcode-task-types.ts",
     purpose: "Host 到 renderer 的实时事件结构。现在同时携带 traceId 和可选 inputId。",
     oldShape: "每个 stream event 只有 traceId；UI 把它当 run id 使用。",
@@ -558,7 +558,7 @@ export const structures: StructureDoc[] = [
         required: "required",
         meaning: "事件类型，如 agent_message_chunk、tool_call、task_complete、task_error。",
         owner: "host/runtime",
-        source: "XCodeStreamEvent",
+        source: "ZCodeStreamEvent",
         conceptIds: ["taskRuntimeState"],
       },
       {
@@ -567,7 +567,7 @@ export const structures: StructureDoc[] = [
         required: "required",
         meaning: "UI task 归属，用于找到对应消息列表、runtime state 和 task cache。",
         owner: "app/host",
-        source: "XCodeStreamEvent",
+        source: "ZCodeStreamEvent",
         conceptIds: ["taskId"],
       },
       {
@@ -576,7 +576,7 @@ export const structures: StructureDoc[] = [
         required: "required",
         meaning: "观测 trace。日志、调试、链路排查使用，不再做 prompt 终态收口。",
         owner: "host/runtime",
-        source: "XCodeStreamEvent",
+        source: "ZCodeStreamEvent",
         conceptIds: ["traceId"],
       },
       {
@@ -585,7 +585,7 @@ export const structures: StructureDoc[] = [
         required: "optional",
         meaning: "事件所属用户输入。terminal complete/error 优先用它与 activeInputId 比较。",
         owner: "host/runtime echoes",
-        source: "TaskStreamMirrorableEvent & XCodeStreamEvent",
+        source: "TaskStreamMirrorableEvent & ZCodeStreamEvent",
         conceptIds: ["inputId", "activeInputId"],
       },
       {
@@ -594,7 +594,7 @@ export const structures: StructureDoc[] = [
         required: "optional",
         meaning: "子 agent 或工具嵌套关系；null 表示主 agent 正文或主 agent 工具调用。",
         owner: "agent runtime",
-        source: "XCodeStreamEvent / TaskStreamMirrorableEvent",
+        source: "ZCodeStreamEvent / TaskStreamMirrorableEvent",
         conceptIds: ["toolCallId"],
       },
       {
@@ -603,7 +603,7 @@ export const structures: StructureDoc[] = [
         required: "optional",
         meaning: "XCode message upsert 主键；synthetic timeline 消息也用它做稳定更新。",
         owner: "agent runtime",
-        source: "XCodeStreamEvent",
+        source: "ZCodeStreamEvent",
         conceptIds: ["messageId"],
       },
       {
@@ -612,7 +612,7 @@ export const structures: StructureDoc[] = [
         required: "optional",
         meaning: "工具调用 ID；tool_call 与 tool_call_update 共享。",
         owner: "agent runtime",
-        source: "XCodeStreamEvent tool update",
+        source: "ZCodeStreamEvent tool update",
         conceptIds: ["toolCallId"],
       },
       {
@@ -621,7 +621,7 @@ export const structures: StructureDoc[] = [
         required: "optional",
         meaning: "task_complete 的结束原因。",
         owner: "agent runtime",
-        source: "XCodeTaskComplete",
+        source: "ZCodeTaskComplete",
         conceptIds: ["inputId"],
       },
       {
@@ -630,7 +630,7 @@ export const structures: StructureDoc[] = [
         required: "optional",
         meaning: "task_error 的可读错误正文；远控恢复依赖它展示失败原因。",
         owner: "agent runtime",
-        source: "XCodeTaskError",
+        source: "ZCodeTaskError",
         conceptIds: ["inputId"],
       },
     ],
@@ -665,7 +665,7 @@ export const structures: StructureDoc[] = [
       },
       {
         name: "provider",
-        type: "XCodeProvider",
+        type: "ZCodeProvider",
         required: "optional",
         meaning: "该 task 当前绑定的 legacy provider，用于 workspace 级兼容投影和 busy lock。",
         owner: "renderer store",
@@ -683,7 +683,7 @@ export const structures: StructureDoc[] = [
       },
       {
         name: "apiRetry",
-        type: "XCodeApiRetryStatus | null",
+        type: "ZCodeApiRetryStatus | null",
         required: "required",
         meaning: "模型 API 重试状态，展示网络/限流恢复进度。",
         owner: "renderer store",
@@ -805,7 +805,7 @@ export const structures: StructureDoc[] = [
       },
       {
         name: "session",
-        type: "XCodeSessionInfo",
+        type: "ZCodeSessionInfo",
         required: "required",
         meaning:
           "session 基本信息：sessionId、workspace、parent、kind、title、mode、status、model、target、时间戳。",
@@ -815,7 +815,7 @@ export const structures: StructureDoc[] = [
       },
       {
         name: "settings",
-        type: "XCodeSessionSettingsState",
+        type: "ZCodeSessionSettingsState",
         required: "required",
         meaning: "server-authoritative 模型、思考深度、模式和权限规则状态。",
         owner: "agent server",
@@ -824,7 +824,7 @@ export const structures: StructureDoc[] = [
       },
       {
         name: "projection",
-        type: "XCodeSessionProjection",
+        type: "ZCodeSessionProjection",
         required: "required",
         meaning:
           "运行投影：status、currentTurnId、pendingPermissions、activeToolCalls、target、lastError 等。",
@@ -834,7 +834,7 @@ export const structures: StructureDoc[] = [
       },
       {
         name: "runtime",
-        type: "XCodeSessionRuntimeState",
+        type: "ZCodeSessionRuntimeState",
         required: "required",
         meaning: "eventSeq、stateRevision、deliveryKind、activeTurnId、pendingRequestIds。",
         owner: "agent server",
@@ -843,7 +843,7 @@ export const structures: StructureDoc[] = [
       },
       {
         name: "messages",
-        type: "XCodeMessageWithParts[]",
+        type: "ZCodeMessageWithParts[]",
         required: "required",
         meaning: "可渲染消息及 part 列表。UI 从这里恢复 transcript。",
         owner: "agent server",
@@ -854,7 +854,7 @@ export const structures: StructureDoc[] = [
   },
   {
     id: "workspace-ref",
-    title: "XCodeWorkspaceRef",
+    title: "ZCodeWorkspaceRef",
     path: "packages/shared/src/zcode-protocol/index.ts",
     purpose: "协议层 workspace 身份结构，分清执行路径和身份隔离。",
     newShape: "{ workspacePath, workspaceIdentity?, workspaceKey }",

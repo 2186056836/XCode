@@ -20,8 +20,8 @@ import { DefaultRuntimeConfig } from "@zcode/contracts";
 import { createSessionFacade } from "../src/app/session-facade.js";
 import { getPluginMentionItems } from "../src/zcode-protocol/plugin-mention-items.js";
 import type {
-  XCodeProtocolAgentServerContext,
-  XCodeProtocolSessionRecord,
+  ZCodeProtocolAgentServerContext,
+  ZCodeProtocolSessionRecord,
 } from "../src/zcode-protocol/server-types.js";
 
 const SESSION_ID = "sess_mention";
@@ -37,7 +37,7 @@ const MAX_ITEMS = 50;
 const MAX_INSERT_TEXT = 4000;
 
 interface Stub {
-  context: XCodeProtocolAgentServerContext;
+  context: ZCodeProtocolAgentServerContext;
   callTool: ReturnType<typeof vi.fn>;
   debug: ReturnType<typeof vi.fn>;
 }
@@ -81,13 +81,13 @@ function createStub(input: {
         toolName === TOOL ? (visibility[serverName] ?? null) : null,
       callMcpToolForUi: callTool,
     },
-  } as unknown as XCodeProtocolSessionRecord;
+  } as unknown as ZCodeProtocolSessionRecord;
   return {
     context: {
       deps: {},
       logger,
       sessions: new Map([[SESSION_ID, record]]),
-    } as unknown as XCodeProtocolAgentServerContext,
+    } as unknown as ZCodeProtocolAgentServerContext,
     callTool,
     debug,
   };

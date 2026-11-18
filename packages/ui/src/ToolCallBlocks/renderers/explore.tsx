@@ -7,7 +7,7 @@ import { resolveToolCallIdentity } from "@/lib/toolIdentity.js";
 import type { ToolCallBlockRenderContext } from "@/ToolCallBlocks/shared.js";
 import { type ReactNode } from "react";
 import type { TaskChatToolCallTreeNode } from "@/lib/toolCallTree.js";
-import type { XCodePlanStep } from "@zcode/shared";
+import type { ZCodePlanStep } from "@zcode/shared";
 
 type IntlLike = {
   formatMessage: (descriptor: { id: string }, values?: Record<string, string>) => string;
@@ -53,7 +53,7 @@ function renderChildActionKindPrefix(actionKindLabel: string | null, content: Re
 
 function readTodoPlanFromToolCall(
   childToolCall: ToolCallBlockRenderContext["toolCallNode"]["toolCall"],
-): XCodePlanStep[] | null {
+): ZCodePlanStep[] | null {
   return (
     extractPlanStepsFromToolOutput({
       title: childToolCall.title,

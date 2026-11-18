@@ -1,26 +1,26 @@
-import type { XCodeSessionEvent } from "@zcode/shared";
+import type { ZCodeSessionEvent } from "@zcode/shared";
 
 const MAX_TRACKED_SESSION_EVENT_IDS = 10_000;
 
-export interface XCodeSessionEventGap {
+export interface ZCodeSessionEventGap {
   expectedSeq: number;
   receivedSeq: number;
 }
 
-export interface XCodeSessionEventOrderResult {
+export interface ZCodeSessionEventOrderResult {
   duplicate?: boolean;
-  gap?: XCodeSessionEventGap;
-  readyEvents: XCodeSessionEvent[];
+  gap?: ZCodeSessionEventGap;
+  readyEvents: ZCodeSessionEvent[];
 }
 
-export interface XCodeSessionEventOrderGate {
+export interface ZCodeSessionEventOrderGate {
   clearPendingAfterGap(): void;
-  getGap(): XCodeSessionEventGap | undefined;
-  markSnapshotSeq(seq: number, options?: { preservePendingEvents?: boolean }): XCodeSessionEvent[];
-  push(event: XCodeSessionEvent): XCodeSessionEventOrderResult;
+  getGap(): ZCodeSessionEventGap | undefined;
+  markSnapshotSeq(seq: number, options?: { preservePendingEvents?: boolean }): ZCodeSessionEvent[];
+  push(event: ZCodeSessionEvent): ZCodeSessionEventOrderResult;
   releasePendingAfterGap(options?: {
-    preserve?: (event: XCodeSessionEvent) => boolean;
-  }): XCodeSessionEvent[];
+    preserve?: (event: ZCodeSessionEvent) => boolean;
+  }): ZCodeSessionEvent[];
 }
 
 function rememberBoundedId(ids: Set<string>, order: string[], id: string): boolean {
@@ -38,17 +38,17 @@ function rememberBoundedId(ids: Set<string>, order: string[], id: string): boole
   return true;
 }
 
-export function createXCodeSessionEventOrderGate(): XCodeSessionEventOrderGate {
+export function createZCodeSessionEventOrderGate(): ZCodeSessionEventOrderGate {
   const deliveredEventIds = new Set<string>();
   const deliveredEventIdOrder: string[] = [];
-  const pendingEvents = new Map<number, XCodeSessionEvent>();
+  const pendingEvents = new Map<number, ZCodeSessionEvent>();
   let nextSeq: number | null = null;
 
-  const drainReadyEvents = (): XCodeSessionEvent[] => {
+  const drainReadyEvents = (): ZCodeSessionEvent[] => {
     if (nextSeq === null) {
       return [];
     }
-    const readyEvents: XCodeSessionEvent[] = [];
+    const readyEvents: ZCodeSessionEvent[] = [];
     while (nextSeq !== null) {
       const event = pendingEvents.get(nextSeq);
       if (!event) {
@@ -61,7 +61,7 @@ export function createXCodeSessionEventOrderGate(): XCodeSessionEventOrderGate {
     return readyEvents;
   };
 
-  const currentGap = (): XCodeSessionEventGap | undefined => {
+  const currentGap = (): ZCodeSessionEventGap | undefined => {
     if (nextSeq === null || pendingEvents.size === 0) {
       return undefined;
     }
@@ -111,7 +111,7 @@ export function createXCodeSessionEventOrderGate(): XCodeSessionEventOrderGate {
       return drainReadyEvents();
     },
 
-    push(event: XCodeSessionEvent) {
+    push(event: ZCodeSessionEvent) {
       if (event.seq <= 0) {
         return { readyEvents: [event] };
       }

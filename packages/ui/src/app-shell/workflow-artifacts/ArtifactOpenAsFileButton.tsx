@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu.js";
 import { toast } from "@/components/ui/toast.js";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { persistLastSelectedEditorId } from "@/lib/editorPreference.js";
 import { sortInstalledEditorsForOpenWith } from "@/lib/openWithEditors.js";
 import { logger } from "@/logger.js";
@@ -71,7 +71,7 @@ function OpenAsFileSplitButton({
   onReveal,
   platform,
 }: ArtifactOpenAsFileButtonProps & { platform: MaterializeCapablePlatform }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [editors, setEditors] = useState<EditorInfo[] | null>(null);
 
   // 一版一个副本路径：同一版再打开不再把最多 20 MiB 的字节重传一遍 IPC。存的是 promise，

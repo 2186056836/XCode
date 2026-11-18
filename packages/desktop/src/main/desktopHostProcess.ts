@@ -23,7 +23,7 @@ import {
   type TaskRealtimeHostDeliveryKind,
   type WorkspacePurpose,
   CREDENTIAL_KEY_SHARE_UNAVAILABLE_ERROR_CODE,
-  formatXCodeHostProcessName,
+  formatZCodeHostProcessName,
   HostMessageTypes,
   hostResponseMessageSchema,
   HostResponseTypes,
@@ -276,7 +276,7 @@ export function spawnHostProcess(
     "--no-warnings",
   ];
   const child = electronUtilityProcess.fork(hostModulePath, [], {
-    serviceName: formatXCodeHostProcessName(label),
+    serviceName: formatZCodeHostProcessName(label),
     execArgv,
     env: {
       ...buildHostProcessEnv(dependencies.hostProcessLocalEnv),

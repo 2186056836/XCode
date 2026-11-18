@@ -26,7 +26,7 @@ import {
 import { useFeedbackSubmissionCopy } from "@/feedback/feedbackSubmissionCopy.js";
 import { startSimplifiedFeedbackSubmission } from "@/feedback/feedbackSubmitSubmission.js";
 import { getErrorMessage } from "@/lib/errorMessage.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useFeedbackStore } from "@/feedback/feedbackStore.js";
 import { toast } from "@/components/ui/toast.js";
 
@@ -41,7 +41,7 @@ export const FeatureRequestDialog = memo(function FeatureRequestDialogComponent(
   const open = useFeedbackStore((state) => state.featureRequestOpen);
   const close = useFeedbackStore((state) => state.close);
   const openTickets = useFeedbackStore((state) => state.openTickets);
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const formatMessage = useCallback(
     (id: string, values?: Record<string, string>) => intl.formatMessage({ id }, values),
     [intl],

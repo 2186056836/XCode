@@ -8,7 +8,7 @@ import { remoteHostLabel } from "@/project-sidebar/RemoteHostSection.js";
 import { RemoteConnectionProgressSection } from "@/project-sidebar/RemoteConnectionProgressSection.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   formatRemoteProjectConnectionAddress,
   resolveRemoteConnectionPresentation,
@@ -43,7 +43,7 @@ export function ProjectIdentityHoverCard({
   onOpenDeviceSettings?: () => void;
   children: ReactElement;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const scope = useHoverCardScope(undefined);
   const popperScope = usePopperScope(scope.__scopeHoverCard);
   const trigger = useRef<HTMLAnchorElement>(null);

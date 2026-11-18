@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, type KeyboardEvent } from "react";
 import { XlsxViewer, setWasmSource, type XlsxViewerController } from "@extend-ai/react-xlsx";
 import xlsxWasmUrl from "@extend-ai/react-xlsx/duke_sheets_wasm_bg.wasm?url";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { installDocumentLinkSafety, sanitizeDocumentHref } from "@/lib/officeFilePreview.js";
 import { logger } from "@/logger.js";
 
@@ -137,7 +137,7 @@ export function PreviewPaneOfficeXlsxContent({
   sourcePath: string;
 }) {
   const viewerRef = useRef<HTMLDivElement | null>(null);
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const sheetTabsLabel = intl.formatMessage({ id: "codeViewer.excel.sheetTabs" });
   const handleOpenLink = useCallback(
     (href: string) => {

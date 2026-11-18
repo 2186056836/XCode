@@ -8,7 +8,7 @@ import {
 // @zcode/provider 闭包，导致 web-share 构建失败，因此直接依赖纯词表模块。
 import { thoughtLevelLabelId } from "@/chat-input-toolbar/thoughtLevelLabels.js";
 import { useToolPresentationCapabilities } from "@/ToolCallBlocks/presentationCapabilities.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { ToolSnapshotFieldNotice } from "@/ToolCallBlocks/ToolSnapshotFieldNotice.js";
 import { FallbackToolCallBlock } from "@/ToolCallBlocks/renderers/fallback.js";
 import { readToolResultDisplay } from "@/ToolCallBlocks/toolResultDisplay.js";
@@ -253,7 +253,7 @@ function groupModelsByProvider(models: ListModelsEntryView[]): ListModelsGroup[]
  * providerId 一个字符都不上屏。
  */
 export function ListModelsToolCallBlock(context: ToolCallBlockRenderContext) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { toolCall } = context.toolCallNode;
   const providerName = useToolPresentationCapabilities().modelProviderName;
 

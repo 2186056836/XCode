@@ -47,7 +47,7 @@ describe("node_repl MCP server", () => {
     runtimeScope: "main" | "subagent" = "main",
     turnId = "turn-1",
   ) => ({
-    "com.xcode/request-context": {
+    "com.zcode/request-context": {
       runtime_scope: runtimeScope,
       session_id: sessionId,
       turn_id: turnId,
@@ -755,8 +755,8 @@ describe("node_repl MCP server", () => {
     });
     // CUA broker 要求 workspace 信息，缺了会在调用 runtime 之前拒绝。
     const callMeta = {
-      "com.xcode/request-context": {
-        ...requestMeta("runtime-use-session")["com.xcode/request-context"],
+      "com.zcode/request-context": {
+        ...requestMeta("runtime-use-session")["com.zcode/request-context"],
         workspace_path: "/workspace",
       },
     };

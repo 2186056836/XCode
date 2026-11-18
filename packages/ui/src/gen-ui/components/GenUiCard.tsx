@@ -19,7 +19,7 @@ import {
   DialogPortal,
 } from "@/components/ui/dialog.js";
 import { Textarea } from "@/components/ui/textarea.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useGenUi } from "@/hooks/useGenUi.js";
 import { EMPTY_GEN_UI_SNAPSHOT, type GenUiCardTarget, type GenUiPage } from "../contract.js";
 import { TweakPanel } from "./TweakPanel.js";
@@ -70,7 +70,7 @@ export function GenUiCard({
   target: GenUiCardTarget;
   reference: GenUiReference;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const label = (id: string) => intl.formatMessage({ id: `genUi.${id}` });
   const [expanded, setExpanded] = useState(false),
     [tweaks, setTweaks] = useState(false),

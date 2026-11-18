@@ -1,5 +1,5 @@
 import {
-  getCapturedXCodeCuaBrokerCredentials,
+  getCapturedZCodeCuaBrokerCredentials,
   ZCODE_CUA_OFFICIAL_PLUGIN_ID,
   ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
   ZCODE_PLUGIN_ID_ENV_KEY,
@@ -35,7 +35,7 @@ export function computeOfficialCuaServerNames(
   servers: Record<string, McpServerConfig>,
   trustedServerNames: ReadonlySet<string>,
 ): Set<string> {
-  const expectedAuthority = getCapturedXCodeCuaBrokerCredentials().pluginAuthority;
+  const expectedAuthority = getCapturedZCodeCuaBrokerCredentials().pluginAuthority;
   const names = new Set<string>();
   if (!expectedAuthority) return names;
 

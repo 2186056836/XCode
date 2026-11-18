@@ -48,7 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select.js";
 import type { ISettingsSyncService } from "@zcode/services";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 
 type ImportStep = "selection" | "importing" | "complete";
@@ -184,7 +184,7 @@ function getImportResults(
   );
 }
 
-function formatAgentName(agent: string, intl: ReturnType<typeof useXCodeIntl>["intl"]): string {
+function formatAgentName(agent: string, intl: ReturnType<typeof useZCodeIntl>["intl"]): string {
   switch (agent) {
     case "claudeCode":
       return intl.formatMessage({ id: "settingsSync.agent.claudeCode" });
@@ -239,7 +239,7 @@ const IMPORT_MODE_ORDER: SettingsSyncImportMode[] = ["symlink", "copy"];
 
 function formatSourceRootScope(
   scope: SettingsSyncSourceScope,
-  intl: ReturnType<typeof useXCodeIntl>["intl"],
+  intl: ReturnType<typeof useZCodeIntl>["intl"],
   resourceCategory: ImportResourceCategory,
 ): string {
   return intl.formatMessage({ id: `settings.${resourceCategory}.import.scope.${scope}` });
@@ -501,7 +501,7 @@ function ExternalAgentImportDialog({
   onOpenChange,
   onImported,
 }: CategorizedExternalAgentImportDialogProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [step, setStep] = useState<ImportStep>("selection");
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<SettingsSyncImportResult | null>(null);
@@ -730,7 +730,7 @@ export function ExternalAgentImportSelectionPanel({
   state: ExternalAgentImportCategoryState;
   workspacePath: string | null | undefined;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
       <div className="flex shrink-0 items-center justify-between gap-3">
@@ -840,7 +840,7 @@ function ImportModeSelect({
   importMode: SettingsSyncImportMode;
   onImportModeChange: (importMode: SettingsSyncImportMode) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <div className="flex items-center gap-1 text-ui-base text-foreground-subtle">
       <Select
@@ -903,7 +903,7 @@ function ImportTargetDropdownButton({
   onTargetScopeChange: (targetScope: SettingsSyncSourceScope) => void;
   onImport: (targetScope: SettingsSyncSourceScope) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const hasWorkspaceTarget = Boolean(workspacePath);
   const canImportToTarget = targetScope === "global" || hasWorkspaceTarget;
   const activeTargetLabelId =
@@ -961,7 +961,7 @@ function ImportTargetScopeSelect({
   workspacePath: string | null | undefined;
   onTargetScopeChange: (targetScope: SettingsSyncSourceScope) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const hasWorkspaceTarget = Boolean(workspacePath);
   return (
     <Select
@@ -997,7 +997,7 @@ function ImportStatsSummary({
   category: ImportResourceCategory;
   result: SettingsSyncImportResult | null;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-surface px-3 py-2 text-ui-xs text-foreground-subtle">
       <ImportStat
@@ -1032,7 +1032,7 @@ function ImportResultList({
   category: ImportResourceCategory;
   results: ImportItemResult[];
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <div className="space-y-2">
       <div className="text-ui-base font-medium text-foreground">
@@ -1091,7 +1091,7 @@ function ImportStatusBadge({
   category: ImportResourceCategory;
   result: ImportItemResult;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const label = intl.formatMessage({
     id:
       result.status === "imported"
@@ -1137,7 +1137,7 @@ function SourceScopeSelect({
   activeScope: SettingsSyncSourceScope;
   onActiveScopeChange: (scope: SettingsSyncSourceScope) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <Select
       value={activeScope}
@@ -1185,7 +1185,7 @@ function ImportSelectionList({
   onSetResourceSelection: (keys: string[], checked: boolean) => void;
   onToggleExpanded: (key: string) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const selected = useMemo(() => new Set(selectedKeys), [selectedKeys]);
   const expanded = useMemo(() => new Set(expandedSourceKeys), [expandedSourceKeys]);
   const scopes = useMemo(

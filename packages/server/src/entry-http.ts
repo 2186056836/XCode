@@ -4,15 +4,15 @@ import {
   getAppConfigDir,
 } from "@zcode/services/node";
 import {
-  materializeBundledXCodeBuiltinProviderConfig,
-  readBundledXCodeBuiltinProviderConfig,
-} from "./bundledXCodeBuiltinProviderConfig.js";
+  materializeBundledZCodeBuiltinProviderConfig,
+  readBundledZCodeBuiltinProviderConfig,
+} from "./bundledZCodeBuiltinProviderConfig.js";
 import { createHttpServer, resolveHttpServerId } from "./http.js";
 
 async function main(): Promise<void> {
-  const zcodeBuiltinProviderConfigFilePath = await materializeBundledXCodeBuiltinProviderConfig({
+  const zcodeBuiltinProviderConfigFilePath = await materializeBundledZCodeBuiltinProviderConfig({
     environmentConfigRoot: getAppConfigDir(),
-    content: readBundledXCodeBuiltinProviderConfig(),
+    content: readBundledZCodeBuiltinProviderConfig(),
   });
   const port = Number(process.env["PORT"]) || 3030;
   const host = process.env["ZCODE_SERVER_HOST"]?.trim() || process.env["HOST"]?.trim() || undefined;

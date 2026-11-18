@@ -27,7 +27,7 @@ import {
   type WorkflowRunActionRejection,
 } from "@/app-shell/workflowRunActionRejection.js";
 import { useWorkflowSubagentModelProviderName } from "@/hooks/useWorkflowSubagentModelProviderName.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type {
   OpenScopedWorkflowActorSessionSideTabRequest,
   OpenScopedWorkflowArtifactSideTabRequest,
@@ -78,7 +78,7 @@ const WorkflowRunContent = memo(function WorkflowRunContent({
   /** 脊线上的脚本行 → 脚本 transcript tab，落到那一站。 */
   onOpenWorkflowWorkspace?: (request: OpenScopedWorkflowWorkspaceSideTabRequest) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { layer, sendCommand } = useV4Conversation();
   const [lease, setLease] = useState<SessionLease | null>(null);
 

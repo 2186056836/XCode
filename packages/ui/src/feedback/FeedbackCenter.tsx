@@ -9,7 +9,7 @@ import { FeedbackBackgroundUploadIndicator } from "@/feedback/FeedbackBackground
 import { ArrowLeftIcon, XIcon } from "lucide-react";
 import type { IFeedbackService } from "@zcode/services";
 import type { IPlatformService } from "@zcode/shared";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { memo } from "react";
 
 export const FeedbackCenter = memo(function FeedbackCenterComponent({
@@ -27,7 +27,7 @@ export const FeedbackCenter = memo(function FeedbackCenterComponent({
   const setTab = useFeedbackStore((state) => state.setTab);
   const close = useFeedbackStore((state) => state.close);
   const openTickets = useFeedbackStore((state) => state.openTickets);
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const titleId =
     tab === "tickets" ? "feedback.center.ticketsTitle" : "feedback.center.submitTitle";
 

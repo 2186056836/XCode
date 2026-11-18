@@ -1,10 +1,10 @@
 import { formatJson } from "@zcode/core";
 import type { GlobalOptions, JsonValue, RunContext } from "@zcode/shared-types";
 import type {
-  SetXCodePluginEnabledResult,
-  XCodeAvailablePluginData,
-  XCodeInstalledPluginData,
-  XCodeMarketplaceSummaryData,
+  SetZCodePluginEnabledResult,
+  ZCodeAvailablePluginData,
+  ZCodeInstalledPluginData,
+  ZCodeMarketplaceSummaryData,
 } from "@zcode/bootstrap";
 import type { PluginDiagnostic, PluginListItem, PluginListOutcome } from "./plugins-command-shared.js";
 
@@ -44,7 +44,7 @@ export function formatHumanPluginList(outcome: PluginListOutcome, options: Globa
   return `${lines.join("\n")}\n`;
 }
 
-export function formatHumanAvailableList(plugins: readonly XCodeAvailablePluginData[]): string {
+export function formatHumanAvailableList(plugins: readonly ZCodeAvailablePluginData[]): string {
   if (plugins.length === 0) return "No plugins available from configured marketplaces.\n";
   const lines = [`Available plugins (${plugins.length})`];
   for (const plugin of plugins) {
@@ -56,7 +56,7 @@ export function formatHumanAvailableList(plugins: readonly XCodeAvailablePluginD
 }
 
 export function formatHumanMarketplaceList(
-  marketplaces: readonly XCodeMarketplaceSummaryData[],
+  marketplaces: readonly ZCodeMarketplaceSummaryData[],
 ): string {
   if (marketplaces.length === 0) return "No marketplaces configured.\n";
   const lines = [`Marketplaces (${marketplaces.length})`];
@@ -79,20 +79,20 @@ function formatMarketplaceSource(source: Record<string, unknown>): string {
   return locator ? `${kind} ${locator}` : kind;
 }
 
-export function formatHumanPluginSet(result: SetXCodePluginEnabledResult): string {
+export function formatHumanPluginSet(result: SetZCodePluginEnabledResult): string {
   const verb = result.enabled ? "Enabled" : "Disabled";
   return `${verb} plugin ${result.plugin.id} in ${result.path}\n`;
 }
 
 export function formatHumanPluginUninstall(
-  removed: XCodeInstalledPluginData | null,
+  removed: ZCodeInstalledPluginData | null,
   target: string,
 ): string {
   if (!removed) return `Plugin not installed: ${target}\n`;
   return `Uninstalled plugin ${removed.id}\n`;
 }
 
-export const formatPluginSetJson = (result: SetXCodePluginEnabledResult): string =>
+export const formatPluginSetJson = (result: SetZCodePluginEnabledResult): string =>
   formatJson({
     enabled: result.enabled,
     path: result.path,
@@ -127,7 +127,7 @@ export function formatPluginJson(
   };
 }
 
-export function formatAvailablePluginJson(plugin: XCodeAvailablePluginData) {
+export function formatAvailablePluginJson(plugin: ZCodeAvailablePluginData) {
   return {
     id: plugin.id,
     installed: plugin.installed,
@@ -139,7 +139,7 @@ export function formatAvailablePluginJson(plugin: XCodeAvailablePluginData) {
   };
 }
 
-export function formatInstalledPluginJson(plugin: XCodeInstalledPluginData) {
+export function formatInstalledPluginJson(plugin: ZCodeInstalledPluginData) {
   return {
     enabled: plugin.enabled,
     id: plugin.id,
@@ -154,7 +154,7 @@ export function formatInstalledPluginJson(plugin: XCodeInstalledPluginData) {
   };
 }
 
-export function formatMarketplaceJson(marketplace: XCodeMarketplaceSummaryData) {
+export function formatMarketplaceJson(marketplace: ZCodeMarketplaceSummaryData) {
   return {
     id: marketplace.id,
     isOfficial: marketplace.isOfficial,

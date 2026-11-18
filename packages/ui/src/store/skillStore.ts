@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import {
-  normalizeAgentProviderToXCodeAgent,
+  normalizeAgentProviderToZCodeAgent,
   ZCODE_AGENT_PROVIDER,
-  type XCodeProvider,
+  type ZCodeProvider,
   type SkillSummary,
   type SkillsCapability,
 } from "@zcode/shared";
@@ -16,22 +16,22 @@ interface SkillStoreState {
   workspaceIdentity: string | null;
   loadedWorkspacePath: string | null;
   loadedWorkspaceIdentity: string | null;
-  provider: XCodeProvider;
-  loadedProvider: XCodeProvider | null;
+  provider: ZCodeProvider;
+  loadedProvider: ZCodeProvider | null;
   skills: SkillSummary[];
   capability: SkillsCapability | null;
   loading: boolean;
   error: string | null;
   initialize: (
     workspacePath: string,
-    providerOrSkillsService: XCodeProvider | ISkillsService,
+    providerOrSkillsService: ZCodeProvider | ISkillsService,
     maybeSkillsService?: ISkillsService,
     workspaceIdentity?: string,
   ) => Promise<void>;
   refresh: (skillsService: ISkillsService, workspaceIdentity?: string) => Promise<void>;
   setEnabled: (
     skillId: string,
-    providerOrEnabled: XCodeProvider | boolean,
+    providerOrEnabled: ZCodeProvider | boolean,
     scopeOrSkillsService: SkillSummary["scope"] | ISkillsService,
     enabledOrSkillsService?: boolean | ISkillsService,
     maybeSkillsService?: ISkillsService,
@@ -44,7 +44,7 @@ let activeSkillProjectionKey: string | null = null;
 let loadedSkillServiceAuthorityId: number | null = null;
 function getSkillLoadKey(
   workspacePath: string,
-  provider: XCodeProvider,
+  provider: ZCodeProvider,
   skillsService: ISkillsService,
   workspaceIdentity?: string,
 ): string {
@@ -53,7 +53,7 @@ function getSkillLoadKey(
 
 function loadSkillsOnce(
   workspacePath: string,
-  provider: XCodeProvider,
+  provider: ZCodeProvider,
   skillsService: ISkillsService,
   workspaceIdentity?: string,
   options: { bypassCache?: boolean } = {},
@@ -90,13 +90,13 @@ export const useSkillStore = create<SkillStoreState>((set, get) => ({
   error: null,
   async initialize(
     workspacePath: string,
-    providerOrSkillsService: XCodeProvider | ISkillsService,
+    providerOrSkillsService: ZCodeProvider | ISkillsService,
     maybeSkillsService?: ISkillsService,
     workspaceIdentity?: string,
   ) {
     const currentState = get();
     const hasProvider = typeof providerOrSkillsService === "string";
-    const provider = normalizeAgentProviderToXCodeAgent(
+    const provider = normalizeAgentProviderToZCodeAgent(
       hasProvider ? providerOrSkillsService : ZCODE_AGENT_PROVIDER,
     );
     const skillsService = hasProvider ? maybeSkillsService : providerOrSkillsService;
@@ -178,7 +178,7 @@ export const useSkillStore = create<SkillStoreState>((set, get) => ({
     }
     const workspaceIdentityFromState =
       workspaceIdentity?.trim() || get().workspaceIdentity || undefined;
-    const provider = normalizeAgentProviderToXCodeAgent(get().provider);
+    const provider = normalizeAgentProviderToZCodeAgent(get().provider);
     const serviceAuthorityId = getServiceAuthorityId(skillsService);
     const projectionKey = `${serviceAuthorityId}::${workspaceIdentityFromState || workspacePath}::${provider}`;
     activeSkillProjectionKey = projectionKey;
@@ -235,7 +235,7 @@ export const useSkillStore = create<SkillStoreState>((set, get) => ({
   },
   async setEnabled(
     skillId: string,
-    providerOrEnabled: XCodeProvider | boolean,
+    providerOrEnabled: ZCodeProvider | boolean,
     scopeOrSkillsService: SkillSummary["scope"] | ISkillsService,
     enabledOrSkillsService?: boolean | ISkillsService,
     maybeSkillsService?: ISkillsService,
@@ -248,7 +248,7 @@ export const useSkillStore = create<SkillStoreState>((set, get) => ({
     const workspaceIdentityFromState =
       workspaceIdentity?.trim() || get().workspaceIdentity || undefined;
     const legacyCall = typeof providerOrEnabled === "boolean";
-    const provider = normalizeAgentProviderToXCodeAgent(
+    const provider = normalizeAgentProviderToZCodeAgent(
       legacyCall ? get().provider : providerOrEnabled,
     );
     const scope = legacyCall ? undefined : (scopeOrSkillsService as SkillSummary["scope"]);

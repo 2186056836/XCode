@@ -7,7 +7,7 @@ import { extractDisallowedToolsArgs, parseGlobalArgs } from "./arguments.js";
 import { createNodeLoggerFactory } from "@zcode/adapters";
 import { getRuntimeInfo, type PresentationSurface } from "@zcode/core";
 import { color, formatJson, supportsColor } from "@zcode/core";
-import { getXCodeCopy, isUiLocale, type UiLocale } from "@zcode/i18n";
+import { getZCodeCopy, isUiLocale, type UiLocale } from "@zcode/i18n";
 import type { RunContext, GlobalOptions, GlobalOutputFormat } from "@zcode/shared-types";
 import {
   applyCliRuntimeEnvSanitization,
@@ -137,7 +137,7 @@ const normalizeOutputFormat = (value: string | undefined): GlobalOutputFormat | 
 const normalizeLocaleOption = (value: string | undefined): UiLocale | undefined => {
   if (value === undefined) return undefined;
   if (isUiLocale(value)) return value;
-  throw new Error(getXCodeCopy().cli.errors.localeUnsupported(value));
+  throw new Error(getZCodeCopy().cli.errors.localeUnsupported(value));
 };
 
 const normalizePromptMode = (value: string | undefined): CliPermissionMode | undefined => {
@@ -249,7 +249,7 @@ const runDoctor = (ctx: RunContext, options: GlobalOptions, workingDirectory: st
   return 0;
 };
 
-const runXCodeProtocolCommand = async (
+const runZCodeProtocolCommand = async (
   ctx: RunContext,
   options: GlobalOptions,
   deps: RunDependencies,
@@ -280,7 +280,7 @@ const runXCodeProtocolCommand = async (
     }
 
     const runProtocolAgent =
-      deps.runXCodeProtocolAgent ?? (await loadBootstrapModule()).runXCodeProtocolAgent;
+      deps.runZCodeProtocolAgent ?? (await loadBootstrapModule()).runZCodeProtocolAgent;
     await runProtocolAgent({
       lifecycle: deps.protocolLifecycle,
       cwd: workingDirectory,
@@ -607,7 +607,7 @@ export const run = async (ctx: RunContext, deps: RunDependencies = {}): Promise<
       return 0;
     case "agent-server":
     case "app-server":
-      return await runXCodeProtocolCommand(
+      return await runZCodeProtocolCommand(
         ctx,
         options,
         commandDeps,

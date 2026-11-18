@@ -1,20 +1,20 @@
 import { create } from "zustand";
-import type { XCodeTaskMeta } from "@zcode/shared";
-import type { IXCodeTaskService } from "@zcode/services";
+import type { ZCodeTaskMeta } from "@zcode/shared";
+import type { IZCodeTaskService } from "@zcode/services";
 import { logger } from "@/logger.js";
 import { buildTaskWorkspaceKey } from "@/lib/taskQueryCache.js";
 import { getRemoteWorkspaceSession } from "@/store/remoteWorkspaceSessionStore.js";
 
 interface RemotePinnedTaskState {
-  itemsByWorkspaceKey: Record<string, XCodeTaskMeta[]>;
+  itemsByWorkspaceKey: Record<string, ZCodeTaskMeta[]>;
   loadingByWorkspaceKey: Record<string, boolean>;
   errorByWorkspaceKey: Record<string, string>;
   refreshWorkspace: (params: {
     workspacePath: string;
     workspaceIdentity?: string;
-    zcodeTaskService: Pick<IXCodeTaskService, "listPinnedTasks">;
+    zcodeTaskService: Pick<IZCodeTaskService, "listPinnedTasks">;
   }) => Promise<void>;
-  upsertTask: (task: XCodeTaskMeta) => void;
+  upsertTask: (task: ZCodeTaskMeta) => void;
   removeTask: (workspacePath: string, taskId: string, workspaceIdentity?: string) => void;
   clearWorkspace: (workspacePath: string, workspaceIdentity?: string) => void;
 }
@@ -23,7 +23,7 @@ function getWorkspaceKey(workspacePath: string, workspaceIdentity?: string): str
   return buildTaskWorkspaceKey(workspacePath, workspaceIdentity);
 }
 
-function sortPinnedTasks(tasks: XCodeTaskMeta[]): XCodeTaskMeta[] {
+function sortPinnedTasks(tasks: ZCodeTaskMeta[]): ZCodeTaskMeta[] {
   return [...tasks].sort((left, right) => {
     if (right.updatedAt !== left.updatedAt) {
       return right.updatedAt - left.updatedAt;

@@ -4,7 +4,7 @@ import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible.js"
 import { Button } from "@/components/ui/button.js";
 import { cn } from "@/components/lib/utils.js";
 import { CheckIcon, CopyIcon } from "lucide-react";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   Tooltip,
   TooltipContent,
@@ -102,7 +102,7 @@ function ToolLayoutComponent({
   renderContent,
   summaryAction,
 }: ToolLayoutProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const resolvedPersistOpenKey = persistOpenKey ?? toolId;
   const [isOpen, setIsOpen] = useState(
     () => toolLayoutOpenState.get(resolvedPersistOpenKey) ?? false,

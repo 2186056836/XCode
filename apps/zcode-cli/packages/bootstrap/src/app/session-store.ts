@@ -117,7 +117,7 @@ export async function openStartupSessionStore(
   return store;
 }
 
-export async function openStartupXCodeProtocolSessionStore(
+export async function openStartupZCodeProtocolSessionStore(
   configResult: ConfigResult,
   startupTimer: StartupTimer,
 ): Promise<SqliteSessionStore> {

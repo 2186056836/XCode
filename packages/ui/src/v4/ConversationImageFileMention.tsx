@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { ImagePreviewDialog } from "@/components/ai-elements/image-preview-dialog.js";
 import { cn } from "@/components/lib/utils.js";
 import { useImageFilePreview, type ImageFilePreviewContext } from "@/hooks/useImageFilePreview.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export function ConversationImageFileMention({
   href,
@@ -18,7 +18,7 @@ export function ConversationImageFileMention({
   children: ReactNode;
 }) {
   const preview = useImageFilePreview(href, context);
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (!preview.available) return <span className={className}>{children}</span>;
   return (
     <>

@@ -1,5 +1,5 @@
 import type { CollaborationMode, ModelUsageSummary, TodoItem, TurnId } from "@zcode/contracts";
-import { getXCodeCopy } from "@zcode/i18n";
+import { getZCodeCopy } from "@zcode/i18n";
 import React from "react";
 import { validContextUsage } from "./app-event-data.js";
 import type {
@@ -50,7 +50,7 @@ type TuiApplyResultInput = {
 export function useTuiApplyResult(input: TuiApplyResultInput) {
   return React.useCallback(
     (result: TuiSubmitPromptResult, preserveTurnState = false) => {
-      const resultCopy = getXCodeCopy(result.locale ?? input.fallback.locale).tui;
+      const resultCopy = getZCodeCopy(result.locale ?? input.fallback.locale).tui;
       input.setMode(result.mode ?? input.fallback.mode);
       input.setModel(result.model ?? input.fallback.model);
       if (result.locale) input.setLocale(result.locale);

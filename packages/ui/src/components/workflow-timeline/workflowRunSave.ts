@@ -2,7 +2,7 @@
 // 「Saving the run, and running it again」）：名字规则、落点预览、交给 XCode 的那条消息。
 //
 // 与组件分文件的理由同 globalWorkflowGroupHelpers：这些判定没有 React，也该能被单独测。
-import type { XCodeSavedWorkflowScope } from "@zcode/shared";
+import type { ZCodeSavedWorkflowScope } from "@zcode/shared";
 
 /**
  * 名字的合法形状，与 agent 侧 `isValidSavedWorkflowName`（@zcode/contracts）**逐字相同**。
@@ -23,14 +23,14 @@ export function isValidSavedWorkflowNameText(name: string): boolean {
  * 落点预览。项目档写相对路径（用户在自己的仓库里看到的就是它），全局档写 `~` 开头的家目录路径
  * ——那是 **agent 机器**的家目录，远程项目因此根本不给全局档这个选项。
  */
-export function savedWorkflowPathPreview(scope: XCodeSavedWorkflowScope, name: string): string {
+export function savedWorkflowPathPreview(scope: ZCodeSavedWorkflowScope, name: string): string {
   const file = `${name}.dwf.ts`;
   return scope === "global" ? `~/.zcode/workflows/${file}` : `.zcode/workflows/${file}`;
 }
 
 export interface WorkflowSaveDraft {
   name: string;
-  scope: XCodeSavedWorkflowScope;
+  scope: ZCodeSavedWorkflowScope;
   description: string;
 }
 
@@ -43,7 +43,7 @@ export interface WorkflowSaveDraft {
  */
 export function initialWorkflowSaveDraft(input: {
   runName?: string;
-  scope?: XCodeSavedWorkflowScope;
+  scope?: ZCodeSavedWorkflowScope;
 }): WorkflowSaveDraft {
   const runName = input.runName?.trim() ?? "";
   return {
@@ -70,7 +70,7 @@ export function buildWorkflowSaveRequestPrompt(input: {
   runId: string;
   runName?: string;
   name: string;
-  scope: XCodeSavedWorkflowScope;
+  scope: ZCodeSavedWorkflowScope;
   description: string;
 }): string {
   const name = input.name.trim();

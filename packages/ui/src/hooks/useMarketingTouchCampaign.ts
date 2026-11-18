@@ -15,9 +15,9 @@ import type {
   MarketingTouchResponse,
 } from "@zcode/shared";
 import { useOptionalServices } from "@/hooks/useServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useTabStore } from "@/store/TabStoreProvider.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { setPendingSettingsSection } from "@/lib/settingsNavigation.js";
 import { logger } from "@/logger.js";
 
@@ -121,7 +121,7 @@ export function useMarketingTouchCampaign() {
   const codingPlanService = (baseCodingPlanService as
     | (NonNullable<typeof baseCodingPlanService> & CodingPlanMarketingCapableService)
     | undefined);
-  const { locale, intl } = useXCodeIntl();
+  const { locale, intl } = useZCodeIntl();
   const openSettingsTab = useTabStore((state) => state.openSettingsTab);
 
   const [state, setState] = useState<MarketingTouchCampaignState>({
@@ -143,7 +143,7 @@ export function useMarketingTouchCampaign() {
   /** 已自动弹出的 popup campaign（本会话去重；换号即作废）。 */
   const popupOpenedRef = useRef(new Set<string>());
   /** 激活账号 id：领取卡片的关闭/领取标记按账号隔离，换号立即重查。 */
-  const activeUserId = useXCodeStore((state) => state.user?.id ?? null);
+  const activeUserId = useZCodeStore((state) => state.user?.id ?? null);
   const activeUserIdRef = useRef(activeUserId);
 
   const report = useCallback(

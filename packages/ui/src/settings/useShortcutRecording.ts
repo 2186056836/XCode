@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { ShortcutCommandId } from "@zcode/shared";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { checkShortcutBindingConflict, isSamePhysicalBinding } from "@/shortcuts/conflicts.js";
 import { formatShortcutBindingLabel } from "@/shortcuts/label.js";
 import { recordShortcutBinding, type EffectiveShortcutBindings } from "@/shortcuts/bindings.js";
@@ -36,7 +36,7 @@ export function useShortcutRecording({
   appendBinding,
   replaceBindingAt,
 }: UseShortcutRecordingOptions): void {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   useEffect(() => {
     if (!recording) {

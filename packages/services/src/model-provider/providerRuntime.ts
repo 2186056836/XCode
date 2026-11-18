@@ -91,12 +91,12 @@ export class ProviderRuntime {
     this.configService = this.#configRuntime.configService;
     const accountSource: RefreshableProviderSource<AccountProviderConfigSnapshot> =
       dependencies.accountSource ?? new EmptyAccountProviderConfigSource(this.configService);
-    this.#disposeBuiltinRecovery = this.#configRuntime.onDidCheckXCodeBuiltin(async () => {
+    this.#disposeBuiltinRecovery = this.#configRuntime.onDidCheckZCodeBuiltin(async () => {
       const [config, account] = await Promise.all([
         this.configService.read(),
         accountSource.read(),
       ]);
-      if (!this.#disposed && config.zcodeBuiltinRevision !== account.basedOnXCodeBuiltinRevision) {
+      if (!this.#disposed && config.zcodeBuiltinRevision !== account.basedOnZCodeBuiltinRevision) {
         await accountSource.refresh?.("builtin-account-recovery");
       }
     });
@@ -192,7 +192,7 @@ function createSettingsMutationTarget(
     refresh: (reason) => registryService.refresh(reason),
     refreshSources: async (reason) => {
       const [builtinResult, accountResult] = await Promise.allSettled([
-        configRuntime.refreshXCodeBuiltin({ force: true }),
+        configRuntime.refreshZCodeBuiltin({ force: true }),
         accountSource.refresh?.(reason) ?? Promise.resolve(),
       ]);
       // 远端更新失败不代表本地配置不可用；此前统一抛错会让套餐切换回滚，

@@ -282,8 +282,8 @@ export class WebAuthService {
     return this.repo.getSessionRevision();
   }
 
-  getXCodeJwtToken(): string | null {
-    return this.repo.loadXCodeJwtToken();
+  getZCodeJwtToken(): string | null {
+    return this.repo.loadZCodeJwtToken();
   }
 
   /** 设备页账号行的展示资料；只读，不参与登录判断。 */

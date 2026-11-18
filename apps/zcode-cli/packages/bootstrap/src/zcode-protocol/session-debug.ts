@@ -10,7 +10,7 @@ import {
   zcodeTaskNetworkDebugStatusFromPayload,
   type SessionDebugSnapshot,
 } from "@zcode/shared";
-import { requireSession, type XCodeProtocolAgentServerContext } from "./server-types.js";
+import { requireSession, type ZCodeProtocolAgentServerContext } from "./server-types.js";
 
 type SessionRecord = { app: { sessionId: string } };
 interface Observation {
@@ -152,7 +152,7 @@ export function readSessionDebug(record: SessionRecord): SessionDebugSnapshot {
 }
 
 export function querySessionDebug(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
 ): SessionDebugSnapshot {
   const params = sessionDebugParamsSchema.parse(rawParams);

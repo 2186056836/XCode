@@ -3,29 +3,29 @@ import type { ManagedWorktreeCreation, SessionCreateSource } from "@zcode/shared
 /* eslint-disable max-lines -- workspace 级状态动作集中在同一 slice，先保持收口便于维护。 */
 import {
   buildNativeSupplierKey,
-  normalizeAgentProviderToXCodeAgent,
-  type XCodeConfigOption,
+  normalizeAgentProviderToZCodeAgent,
+  type ZCodeConfigOption,
   type ModelSelectionResolution,
-  type XCodeProvider,
-  type XCodeSlashCommand,
-  type XCodeTaskMeta,
-  type XCodeTaskRuntimeStatus,
-  type XCodeWorkspaceInitStatus,
+  type ZCodeProvider,
+  type ZCodeSlashCommand,
+  type ZCodeTaskMeta,
+  type ZCodeTaskRuntimeStatus,
+  type ZCodeWorkspaceInitStatus,
 } from "@zcode/shared";
 import { persistLastSelectedAgentProvider } from "@/lib/zcodeProviderPreference.js";
 import { areConfigOptionsEquivalent } from "@/lib/configOptionsEquality.js";
-import type { XCodeUiError } from "@/lib/zcodeUiError.js";
+import type { ZCodeUiError } from "@/lib/zcodeUiError.js";
 import { pushNavEntry } from "@/lib/taskNavigationHistory.js";
 import { notifyTaskNavigationCommitted } from "@/store/zcodeSessionStoreNavigation.js";
 import { resolveTaskRestorePreloadConfigOptions } from "@/lib/taskModelRecovery.js";
 import type {
-  XCodeSessionStoreState,
+  ZCodeSessionStoreState,
   ComposerInitialConfig,
   ComposerInitialization,
   ConfigOptionsStatus,
   ComposerMentionPrefill,
   ModelSwitchStage,
-  WorkspaceXCodeUIState,
+  WorkspaceZCodeUIState,
 } from "@/store/zcodeSessionStoreTypes.js";
 import {
   getTaskMeta,
@@ -36,12 +36,12 @@ import {
 
 type SetFn = (
   partial:
-    | XCodeSessionStoreState
-    | Partial<XCodeSessionStoreState>
-    | ((state: XCodeSessionStoreState) => XCodeSessionStoreState | Partial<XCodeSessionStoreState>),
+    | ZCodeSessionStoreState
+    | Partial<ZCodeSessionStoreState>
+    | ((state: ZCodeSessionStoreState) => ZCodeSessionStoreState | Partial<ZCodeSessionStoreState>),
 ) => void;
 
-function normalizeThoughtLevelConfigOption(option: XCodeConfigOption): XCodeConfigOption {
+function normalizeThoughtLevelConfigOption(option: ZCodeConfigOption): ZCodeConfigOption {
   if (
     option.type !== "select" ||
     (option.id !== "thought_level" && option.category !== "thought_level")
@@ -60,25 +60,25 @@ function normalizeThoughtLevelConfigOption(option: XCodeConfigOption): XCodeConf
   return { ...option, currentValue: fallbackValue };
 }
 
-function normalizeConfigOptions(options: XCodeConfigOption[]): XCodeConfigOption[] {
+function normalizeConfigOptions(options: ZCodeConfigOption[]): ZCodeConfigOption[] {
   return options.map(normalizeThoughtLevelConfigOption);
 }
 
-function cloneConfigOptions(options: readonly XCodeConfigOption[]): XCodeConfigOption[] {
+function cloneConfigOptions(options: readonly ZCodeConfigOption[]): ZCodeConfigOption[] {
   return options.map((option) => ({
     ...option,
     options: option.options?.map((entry) => ({ ...entry })),
   }));
 }
 
-function isModeConfigOption(option: XCodeConfigOption): boolean {
+function isModeConfigOption(option: ZCodeConfigOption): boolean {
   return option.category === "mode" && option.type === "select";
 }
 
 function createFallbackModeOption(params: {
   currentModeId: string;
-  options?: NonNullable<XCodeConfigOption["options"]>;
-}): XCodeConfigOption {
+  options?: NonNullable<ZCodeConfigOption["options"]>;
+}): ZCodeConfigOption {
   const options = params.options?.length
     ? params.options
     : [{ value: params.currentModeId, name: params.currentModeId }];
@@ -93,9 +93,9 @@ function createFallbackModeOption(params: {
 }
 
 function replaceModeConfigOption(
-  currentOptions: XCodeConfigOption[] | null,
-  nextModeOption: XCodeConfigOption | null,
-): XCodeConfigOption[] | null {
+  currentOptions: ZCodeConfigOption[] | null,
+  nextModeOption: ZCodeConfigOption | null,
+): ZCodeConfigOption[] | null {
   const options = currentOptions ?? [];
   const modeIndex = options.findIndex(isModeConfigOption);
   if (modeIndex === -1) {
@@ -120,9 +120,9 @@ function replaceModeConfigOption(
 }
 
 function updateCurrentModeConfigOption(
-  currentOptions: XCodeConfigOption[] | null,
+  currentOptions: ZCodeConfigOption[] | null,
   modeId: string | null,
-): XCodeConfigOption[] | null {
+): ZCodeConfigOption[] | null {
   const options = currentOptions ?? [];
   const existingModeOption = options.find(isModeConfigOption);
   if (!modeId) {
@@ -152,9 +152,9 @@ function updateCurrentModeConfigOption(
 }
 
 function updateActiveTaskConfigOptions(
-  current: WorkspaceXCodeUIState,
-  updater: (options: XCodeConfigOption[] | null) => XCodeConfigOption[] | null,
-): Pick<WorkspaceXCodeUIState, "taskConfigOptionsByTaskId"> | null {
+  current: WorkspaceZCodeUIState,
+  updater: (options: ZCodeConfigOption[] | null) => ZCodeConfigOption[] | null,
+): Pick<WorkspaceZCodeUIState, "taskConfigOptionsByTaskId"> | null {
   const activeTaskId = current.activeTaskId;
   if (!activeTaskId) {
     return null;
@@ -179,9 +179,9 @@ function updateActiveTaskConfigOptions(
 }
 
 function resolveActiveTaskConfigOptionsOnSwitch(
-  current: WorkspaceXCodeUIState,
+  current: WorkspaceZCodeUIState,
   taskId: string,
-): { configOptions: XCodeConfigOption[]; status: ConfigOptionsStatus } | null {
+): { configOptions: ZCodeConfigOption[]; status: ConfigOptionsStatus } | null {
   const cachedTaskConfigOptions = current.taskConfigOptionsByTaskId[taskId];
   if (cachedTaskConfigOptions) {
     return {
@@ -537,7 +537,7 @@ export function createWorkspaceSlice(set: SetFn) {
 
     startDraft: (
       workspacePath: string,
-      provider?: XCodeProvider,
+      provider?: ZCodeProvider,
       workspaceIdentity?: string,
       options?: {
         projectId?: string | null;
@@ -546,7 +546,7 @@ export function createWorkspaceSlice(set: SetFn) {
       },
     ) => {
       const normalizedProvider = provider
-        ? normalizeAgentProviderToXCodeAgent(provider)
+        ? normalizeAgentProviderToZCodeAgent(provider)
         : undefined;
       if (normalizedProvider) {
         persistLastSelectedAgentProvider(normalizedProvider);
@@ -557,7 +557,7 @@ export function createWorkspaceSlice(set: SetFn) {
           state,
           workspacePath,
           (current) => {
-            const nextSelectedProvider = normalizeAgentProviderToXCodeAgent(
+            const nextSelectedProvider = normalizeAgentProviderToZCodeAgent(
               normalizedProvider ?? current.selectedProvider,
             );
             const shouldResetSupplierForDraftProvider =
@@ -649,7 +649,7 @@ export function createWorkspaceSlice(set: SetFn) {
 
     bindRuntimeProvider: (
       workspacePath: string,
-      provider: XCodeProvider,
+      provider: ZCodeProvider,
       workspaceIdentity?: string,
     ) =>
       set((state) =>
@@ -658,7 +658,7 @@ export function createWorkspaceSlice(set: SetFn) {
           workspacePath,
           (current) => ({
             ...current,
-            selectedProvider: normalizeAgentProviderToXCodeAgent(provider),
+            selectedProvider: normalizeAgentProviderToZCodeAgent(provider),
           }),
           workspaceIdentity,
         ),
@@ -689,7 +689,7 @@ export function createWorkspaceSlice(set: SetFn) {
 
     setWorkspaceInitState: (
       workspacePath: string,
-      status: XCodeWorkspaceInitStatus,
+      status: ZCodeWorkspaceInitStatus,
       error?: string | null,
       workspaceIdentity?: string,
     ) => {
@@ -733,7 +733,7 @@ export function createWorkspaceSlice(set: SetFn) {
 
     setTaskState: (
       workspacePath: string,
-      status: XCodeTaskRuntimeStatus,
+      status: ZCodeTaskRuntimeStatus,
       error?: string | null,
       workspaceIdentity?: string,
     ) => {
@@ -755,7 +755,7 @@ export function createWorkspaceSlice(set: SetFn) {
 
     setDraftError: (
       workspacePath: string,
-      error: XCodeUiError | null,
+      error: ZCodeUiError | null,
       workspaceIdentity?: string,
     ) => {
       set((state) =>
@@ -847,7 +847,7 @@ export function createWorkspaceSlice(set: SetFn) {
 
     setConfigOptions: (
       workspacePath: string,
-      options: XCodeConfigOption[],
+      options: ZCodeConfigOption[],
       workspaceIdentity?: string,
     ) => {
       set((state) => {
@@ -894,7 +894,7 @@ export function createWorkspaceSlice(set: SetFn) {
 
     setSlashCommands: (
       workspacePath: string,
-      commands: XCodeSlashCommand[],
+      commands: ZCodeSlashCommand[],
       workspaceIdentity?: string,
     ) => {
       set((state) =>
@@ -957,7 +957,7 @@ export function createWorkspaceSlice(set: SetFn) {
 
     setTaskListCache: (
       workspacePath: string,
-      tasks: XCodeTaskMeta[],
+      tasks: ZCodeTaskMeta[],
       workspaceIdentity?: string,
     ) => {
       set((state) =>

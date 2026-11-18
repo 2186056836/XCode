@@ -14,12 +14,12 @@ import type {
 import {
   zcodeProviderAccountSnapshotResultSchema,
   zcodeProtocolMethods,
-  type XCodeProtocolMethod,
+  type ZCodeProtocolMethod,
 } from "@zcode/shared";
-import type { XCodeProtocolAgentServerContext } from "./server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "./server-types.js";
 
 export function createProtocolProviderAccountPort(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
 ): ProviderAccountPort {
   const request = (params: unknown) =>
     context.requestClient(

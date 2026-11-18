@@ -8,8 +8,8 @@
 // 纪律：additive 演进——新增 topic / 新增可选字段合法，改已有字段形状不合法。
 import { z } from "zod";
 
-// 与 host 侧 XCodeConfigSelectValue（zcode-task-types-core）结构对齐：
-// syncer 转发 workspace_config_options_update 时零映射直通，下游 useXCodeConfig 消费面不改。
+// 与 host 侧 ZCodeConfigSelectValue（zcode-task-types-core）结构对齐：
+// syncer 转发 workspace_config_options_update 时零映射直通，下游 useZCodeConfig 消费面不改。
 export const workspaceConfigSelectValueSchema = z.object({
   value: z.string(),
   name: z.string(),
@@ -25,7 +25,7 @@ export const workspaceConfigSelectValueSchema = z.object({
 });
 export type WorkspaceConfigSelectValue = z.infer<typeof workspaceConfigSelectValueSchema>;
 
-// 与 host 侧 XCodeConfigOption 结构对齐（id: model / mode / thought_level / 自定义）。
+// 与 host 侧 ZCodeConfigOption 结构对齐（id: model / mode / thought_level / 自定义）。
 export const workspaceConfigOptionSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -37,7 +37,7 @@ export const workspaceConfigOptionSchema = z.object({
 });
 export type WorkspaceConfigOption = z.infer<typeof workspaceConfigOptionSchema>;
 
-// slash 命令目录（workspace 级；与 host 侧 XCodeSlashCommand 对齐）。
+// slash 命令目录（workspace 级；与 host 侧 ZCodeSlashCommand 对齐）。
 export const workspaceSlashCommandSchema = z.object({
   name: z.string(),
   description: z.string(),

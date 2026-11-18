@@ -3,8 +3,8 @@ import { useCallback, useMemo, useRef, type CSSProperties, type ReactNode } from
 import type {
   GitChangeSourceId,
   GitRepositorySummary,
-  XCodeProvider,
-  XCodeTaskChangeSummary,
+  ZCodeProvider,
+  ZCodeTaskChangeSummary,
 } from "@zcode/shared";
 import type { CodeViewerSource } from "@/lib/codeViewer.js";
 import type { AssistantPreviewCardsAutoOpenRequest } from "@/lib/assistantPreviewCards.js";
@@ -70,7 +70,7 @@ export interface V4WorkspaceChatAreaProps {
   /** primary pane 绑定的 CLI session（既有选择态 activeTaskId）；null = draft。 */
   sessionId: string | null;
   activeSelectionSideChatSessionId?: string | null;
-  provider?: XCodeProvider;
+  provider?: ZCodeProvider;
   /** primary pane createSession/fork 后接入既有选择路径（handleSelectTask）。 */
   onSessionCreated?: (sessionId: string, origin?: "draft-promotion") => void;
   /** primary pane 会话删除后回 draft（shell 起新草稿）。 */
@@ -86,7 +86,7 @@ export interface V4WorkspaceChatAreaProps {
   gitDirtyFileCount?: number;
   gitWorktreeReviewSourceId?: GitChangeSourceId | null;
   gitWorktreeChangeSummary?: { added: number; removed: number } | null;
-  activeTaskChangeSummary?: XCodeTaskChangeSummary | null;
+  activeTaskChangeSummary?: ZCodeTaskChangeSummary | null;
   summaryPanelVariantOverride?: ChatViewSummaryPanelVariant | null;
   onSummaryPanelVariantOverrideChange?: (variant: ChatViewSummaryPanelVariant | null) => void;
   onRefreshGit?: () => void;

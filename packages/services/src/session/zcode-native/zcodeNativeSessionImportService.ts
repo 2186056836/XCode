@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { XCodeImportSessionsResult, XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeImportSessionsResult, ZCodeTaskMeta } from "@zcode/shared";
 import { generateTraceId, ZCODE_AGENT_PROVIDER } from "@zcode/shared";
 import { createServiceLogger } from "#src/logger/serviceLogger.js";
 import { getConversationWorkspaceDir } from "#src/paths.js";
@@ -36,7 +36,7 @@ function mapZcodeWorkspacePath(raw: string | null): string {
   return path;
 }
 
-function buildZcodeTaskMeta(row: ZcodeSessionRow): XCodeTaskMeta {
+function buildZcodeTaskMeta(row: ZcodeSessionRow): ZCodeTaskMeta {
   return {
     taskId: row.id,
     traceId: generateTraceId(row.id),
@@ -59,10 +59,10 @@ function yieldToEventLoop(): Promise<void> {
 }
 
 function markAllFailed(
-  result: XCodeImportSessionsResult,
+  result: ZCodeImportSessionsResult,
   sessionIds: readonly string[],
   reason: string,
-): XCodeImportSessionsResult {
+): ZCodeImportSessionsResult {
   for (const sessionId of sessionIds) {
     result.failed.push({ provider: "zcode", sessionId, reason });
   }
@@ -77,14 +77,14 @@ function markAllFailed(
 export async function importZcodeNativeSessions(params: {
   taskIndexRepo: TaskIndexRepo;
   sessionIds: string[];
-  onTaskImported: (meta: XCodeTaskMeta) => void;
+  onTaskImported: (meta: ZCodeTaskMeta) => void;
   /** 每个会话处理完回调一次（0 基索引 + 总数），供后台任务注册表上报进度。 */
   onProgress?: (processed: number, total: number) => void;
-}): Promise<XCodeImportSessionsResult> {
+}): Promise<ZCodeImportSessionsResult> {
   const normalizedSessionIds = [
     ...new Set(params.sessionIds.map((item) => item.trim()).filter(Boolean)),
   ];
-  const result: XCodeImportSessionsResult = { imported: [], skipped: [], failed: [] };
+  const result: ZCodeImportSessionsResult = { imported: [], skipped: [], failed: [] };
   if (normalizedSessionIds.length === 0) {
     return result;
   }

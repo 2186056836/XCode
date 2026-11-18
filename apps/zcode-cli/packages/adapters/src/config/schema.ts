@@ -288,7 +288,7 @@ export const hooksSchema = z
   })
   .strict();
 
-export const XCodeConfigFileSchema = z
+export const ZCodeConfigFileSchema = z
   .object({
     $schema: z.string().optional(),
     modelStream: modelStreamSchema.optional(),
@@ -312,7 +312,7 @@ export const XCodeConfigFileSchema = z
 
 // 项目曾复用用户配置 schema，可改写代理、CA 和插件存储根目录。只开放扩展声明，
 // 在校验前剔除运行参数，防止新增用户字段自动向项目开放，也避免无效的禁用字段拖垮 MCP/Hook。
-const projectConfigFileSchema = XCodeConfigFileSchema.pick({
+const projectConfigFileSchema = ZCodeConfigFileSchema.pick({
   mcp: true,
   hooks: true,
   skill: true,
@@ -334,7 +334,7 @@ const projectConfigFileSchema = XCodeConfigFileSchema.pick({
   })
   .strip();
 
-export type XCodeConfigFile = z.infer<typeof XCodeConfigFileSchema>;
+export type ZCodeConfigFile = z.infer<typeof ZCodeConfigFileSchema>;
 
 type SkillCommandOverrideMap = Record<string, { enable?: boolean }>;
 
@@ -418,7 +418,7 @@ export function parseConfigFileToRuntimePatchWithDiagnostics(
 ): ParseConfigFileResult {
   const diagnostics: ConfigDiagnostic[] = [];
   const normalized = normalizeConfigFileInput(value, diagnostics);
-  const parsed = (scope === "project" ? projectConfigFileSchema : XCodeConfigFileSchema).parse(
+  const parsed = (scope === "project" ? projectConfigFileSchema : ZCodeConfigFileSchema).parse(
     normalized,
   );
   return {
@@ -427,7 +427,7 @@ export function parseConfigFileToRuntimePatchWithDiagnostics(
   };
 }
 
-function parsedConfigFileToRuntimePatch(parsed: XCodeConfigFile): RuntimeConfigPatch {
+function parsedConfigFileToRuntimePatch(parsed: ZCodeConfigFile): RuntimeConfigPatch {
   const config: RuntimeConfigPatch = {};
   if (parsed.modelStream) config.modelStream = parsed.modelStream;
 
@@ -456,7 +456,7 @@ function parsedConfigFileToRuntimePatch(parsed: XCodeConfigFile): RuntimeConfigP
 }
 
 function normalizePluginConfig(
-  plugins: XCodeConfigFile["plugins"],
+  plugins: ZCodeConfigFile["plugins"],
 ): NonNullable<RuntimeConfigPatch["plugins"]> {
   if (!plugins) return {};
   const enabledPlugins = plugins.enabledPlugins ? { ...plugins.enabledPlugins } : undefined;
@@ -557,7 +557,7 @@ function readPositiveNumber(value: unknown): number | undefined {
 }
 
 function parseSkillsRuntimeConfig(
-  skills: XCodeConfigFile["skills"],
+  skills: ZCodeConfigFile["skills"],
 ): RuntimeConfigPatch["skills"] | undefined {
   if (!skills) return undefined;
   const next: NonNullable<RuntimeConfigPatch["skills"]> = {};
@@ -571,7 +571,7 @@ function parseSkillsRuntimeConfig(
 }
 
 function parseSkillOverridesFromPluralSkills(
-  skills: XCodeConfigFile["skills"],
+  skills: ZCodeConfigFile["skills"],
 ): SkillCommandOverrideMap | undefined {
   if (!skills) return undefined;
   const overrides: SkillCommandOverrideMap = {};

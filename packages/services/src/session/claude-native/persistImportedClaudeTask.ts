@@ -1,6 +1,6 @@
 import { mkdir, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import type { XCodeSessionFile } from "@zcode/shared";
+import type { ZCodeSessionFile } from "@zcode/shared";
 import { getLegacyTaskSessionSnapshotPath } from "#src/paths.js";
 import {
   parseLegacyTaskSessionFile,
@@ -9,7 +9,7 @@ import {
 
 const TASK_SEARCH_TEXT_MAX_CHARS = 200_000;
 
-export function buildSearchableTextFromMessages(messages: XCodeSessionFile["messages"]): string {
+export function buildSearchableTextFromMessages(messages: ZCodeSessionFile["messages"]): string {
   const parts: string[] = [];
   let total = 0;
   for (const message of messages) {

@@ -3,7 +3,7 @@ import type { ToolCallCreateWorkflowDisplay } from "@zcode/shared/zcode-protocol
 import { CodeBlock, CodeBlockHeader } from "@/components/ai-elements/code-block.js";
 import { cn } from "@/components/lib/utils.js";
 import { DRAFT_FEEDBACK_DOT } from "@/components/workflow-graph/run-status-presentation.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { WorkflowDraftPosition } from "@/ToolCallBlocks/shared.js";
 import {
   formatWorkflowFeedbackTooltip,
@@ -52,7 +52,7 @@ export function useWorkflowDraftRowSlots({
   diagnostics,
   saved,
 }: WorkflowDraftRowInput): WorkflowDraftRowSlots {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const ordinal = workflowDraftOrdinalShown(draft, { compileErrors, inFlight });
   const inFlightOrdinal = workflowDraftOrdinalShown(draft, { compileErrors: false, inFlight });
   const inFlightOrdinalText =
@@ -162,7 +162,7 @@ export function workflowDraftOrdinalShown(
 }
 
 export function WorkflowDraftOrdinal({ ordinal }: { ordinal: number }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <span className="shrink-0 whitespace-nowrap tabular-nums" data-testid="workflow-draft-ordinal">
       {intl.formatMessage(

@@ -18,7 +18,7 @@ import type {
   MigrateLegacyCommonMcpResult,
   SaveCliMcpToUserDirectoryRequest,
 } from "./mcp.js";
-import type { XCodeProvider } from "./zcode-task-types-core.js";
+import type { ZCodeProvider } from "./zcode-task-types-core.js";
 import type { MarketingTouchSnapshot } from "./marketingTouch.js";
 import type { SessionWorkflowActivity } from "./zcode-protocol-v4/sessions-index-workflow-activity.js";
 import type { WebRemoteControlRpcTransportPayload } from "./web-remote-control-rpc-transport.js";
@@ -694,7 +694,7 @@ export interface WebRemoteControlTaskTarget {
   workspaceKind: "local" | "remote";
   createdAt: number;
   updatedAt: number;
-  provider?: XCodeProvider;
+  provider?: ZCodeProvider;
   unreadAt?: number;
 }
 

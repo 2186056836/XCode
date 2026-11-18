@@ -11,11 +11,11 @@ import {
   boundPluginLocalizedText,
   pluginInstallRequestPayloadSchema,
 } from "@zcode/shared/zcode-protocol-v4";
-import type { XCodeProtocolAgentServerContext } from "./server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "./server-types.js";
 
 /** 先登记再发布；卡片动作只认 install，未知/迟到应答绝不能批准。 */
 export async function confirmPluginInstall(
-  server: XCodeProtocolAgentServerContext,
+  server: ZCodeProtocolAgentServerContext,
   plugin: PluginDiscoveryCandidate,
   reason: string,
   context: PluginDiscoveryContext,

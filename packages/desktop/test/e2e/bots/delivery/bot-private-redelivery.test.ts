@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import type { IXCodeTaskService } from "@zcode/services";
-import type { BotProvider, XCodeStreamEvent } from "@zcode/shared";
+import type { IZCodeTaskService } from "@zcode/services";
+import type { BotProvider, ZCodeStreamEvent } from "@zcode/shared";
 import {
   createBotModelSelectionView,
   createBotsServiceHarness,
@@ -10,7 +10,7 @@ import {
   type RecordedRequest,
 } from "#e2e/bots/helpers/bots-service-harness";
 
-type Prompt = Parameters<IXCodeTaskService["sendPrompt"]>[0];
+type Prompt = Parameters<IZCodeTaskService["sendPrompt"]>[0];
 type Harness = ReturnType<typeof createBotsServiceHarness>;
 type InboundAttachments = Parameters<Harness["service"]["handleInboundMessage"]>[0]["attachments"];
 
@@ -125,8 +125,8 @@ function setupProvider(provider: BotProvider) {
       type: "task_run_started",
       startedAt: Date.now(),
       inputOrigin: "desktop",
-    } as XCodeStreamEvent);
-    await emit({ ...base, type: "task_complete", stopReason: "end_turn" } as XCodeStreamEvent);
+    } as ZCodeStreamEvent);
+    await emit({ ...base, type: "task_complete", stopReason: "end_turn" } as ZCodeStreamEvent);
   };
   return {
     h,

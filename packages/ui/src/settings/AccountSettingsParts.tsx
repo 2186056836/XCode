@@ -6,7 +6,7 @@
  */
 import { useState } from "react";
 import type { MarketingClaimAllAccountResult } from "@/lib/marketingClaimAll.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs.js";
 import {
   ProviderAccountRotationControl,
@@ -144,7 +144,7 @@ export function ClaimAllResultsPanel({
 }: {
   results: readonly MarketingClaimAllAccountResult[];
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <ul className="flex flex-col gap-1.5 border-t border-border pt-3 text-sm">
       {results.map((result) => (

@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog.js";
 import { Input } from "@/components/ui/input.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import type { ModelConfigObject } from "@zcode/provider";
 import type { UpstreamModelEntry, UpstreamModelListResult } from "@zcode/shared";
@@ -218,7 +218,7 @@ export function UpstreamModelsImportDialog({
     }>,
   ) => Promise<{ added: number; failed: number; failedModelIds: readonly string[] }>;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [phase, setPhase] = useState<FetchPhase>("idle");
   const [models, setModels] = useState<readonly string[]>([]);
   const [entriesById, setEntriesById] = useState<ReadonlyMap<string, UpstreamModelEntry>>(

@@ -1,7 +1,7 @@
 import type {
-  XCodeProvider,
-  XCodeTaskMeta,
-  XCodeTaskChangeSummary,
+  ZCodeProvider,
+  ZCodeTaskMeta,
+  ZCodeTaskChangeSummary,
   EditorInfo,
   GitRepositorySummary,
   RemoteTarget,
@@ -100,16 +100,16 @@ export function WorkspaceHeader({
   localWorkspacePath?: string;
   projectName: string;
   activeTaskTitle: string;
-  activeTaskChangeSummary?: XCodeTaskChangeSummary | null;
+  activeTaskChangeSummary?: ZCodeTaskChangeSummary | null;
   hasUpdateReady: boolean;
   activeTaskId: string | null;
   user?: UserInfo | null;
   activeTraceId: string | null;
   activeSessionId: string | null;
-  activeTaskProvider: XCodeProvider | null;
-  resolvedActiveTaskMeta?: XCodeTaskMeta | null;
+  activeTaskProvider: ZCodeProvider | null;
+  resolvedActiveTaskMeta?: ZCodeTaskMeta | null;
   sessionLogPath: string | null;
-  nativeSessionLogProvider: XCodeProvider | null;
+  nativeSessionLogProvider: ZCodeProvider | null;
   nativeSessionLogPath: string | null;
   nativeSessionLogExists: boolean;
   nativeSessionLogLoading: boolean;
@@ -137,7 +137,7 @@ export function WorkspaceHeader({
   toggleSidePaneShortcutLabel?: string;
   onReloadSession: (options?: {
     resumeTaskId?: string | null;
-    provider?: XCodeProvider | null;
+    provider?: ZCodeProvider | null;
   }) => void | Promise<void>;
   reloadSessionDisabled?: boolean;
   reloadSessionPending?: boolean;

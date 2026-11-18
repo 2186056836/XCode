@@ -1,7 +1,7 @@
 import { PenIcon } from "lucide-react";
 import type { WorkflowRunState } from "@zcode/shared/zcode-protocol-v4";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { TimelineHole } from "./timeline-holes.js";
 
 /**
@@ -31,7 +31,7 @@ export function HoleFillMark({ className, holeId }: { className?: string; holeId
 
 /** 站头右侧的「等待补全」：警示色、不换行；只在 run 停在这处留白上时出现。 */
 export function HoleWaitingMeta({ hole }: { hole: TimelineHole | undefined }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (hole?.state !== "waiting") return null;
   return (
     <span
@@ -68,7 +68,7 @@ export function HolesWaitingChip({
   onOpen?: () => void;
   testId?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (count <= 0) return null;
   const label = intl.formatMessage(
     {

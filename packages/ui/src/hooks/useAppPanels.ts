@@ -1,11 +1,11 @@
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import { clearBrowserRecentVisitsForTask } from "@/store/browserRecentVisitsStore.js";
 
 import { forgetWorkspaceConversation } from "@/v4/workspaceConnectionRegistry.js";
 import type { IDisposable } from "@zcode/rpc";
 import type {
   IWindowControllerService,
-  IXCodeTaskService,
+  IZCodeTaskService,
   WindowHostTasksRemovedSignal,
 } from "@zcode/services";
 import { useOptionalTabStore } from "@/store/TabStoreProvider.js";
@@ -137,7 +137,7 @@ import { useRemoteWorkspaceSessionStore } from "@/store/remoteWorkspaceSessionSt
 function subscribeTasksRemoved(
   params: {
     windowControllerService?: IWindowControllerService;
-    zcodeTaskService?: IXCodeTaskService;
+    zcodeTaskService?: IZCodeTaskService;
     workspacePath: string;
     workspaceIdentity?: string;
   },
@@ -1716,7 +1716,7 @@ export function useAppPanels(options: {
                 taskId,
               );
             }
-            useXCodeSessionStore
+            useZCodeSessionStore
               .getState()
               .removeTaskState(signal.workspacePath, taskId, signal.workspaceIdentity);
             forgetWorkspaceConversation(signal, taskId);

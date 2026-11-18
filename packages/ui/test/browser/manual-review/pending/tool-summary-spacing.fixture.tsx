@@ -24,7 +24,7 @@ import { createRoot } from "react-dom/client";
 import { ToolPresentation } from "@/ToolCallBlocks/ToolPresentation.js";
 import { ToolPresentationCapabilitiesProvider } from "@/ToolCallBlocks/presentationCapabilities.js";
 import { TooltipProvider } from "@/components/ui/tooltip.js";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import type { TaskChatToolCallTreeNode } from "@/lib/toolCallTree.js";
 import "@/styles.css";
 
@@ -331,7 +331,7 @@ function CrossGroupPreview() {
   return (
     <main className="min-h-dvh bg-background text-foreground">
       {params.has("bash") && (
-        <XCodeIntlProvider initialLocale={params.get("locale") === "en-US" ? "en-US" : "zh-CN"}>
+        <ZCodeIntlProvider initialLocale={params.get("locale") === "en-US" ? "en-US" : "zh-CN"}>
           <section data-bash-standalone>
             <ToolPresentation
               toolCallNode={tool(
@@ -342,7 +342,7 @@ function CrossGroupPreview() {
               )}
             />
           </section>
-        </XCodeIntlProvider>
+        </ZCodeIntlProvider>
       )}
       <nav className="flex flex-wrap gap-4 p-4 text-ui-base">
         <button
@@ -408,7 +408,7 @@ function ScrollPreview() {
   const [count, setCount] = useState(20);
   const [extra, setExtra] = useState(false);
   return (
-    <XCodeIntlProvider initialLocale="en-US">
+    <ZCodeIntlProvider initialLocale="en-US">
       <TooltipProvider>
         <main
           data-scroll-parent
@@ -444,7 +444,7 @@ function ScrollPreview() {
           </Reasoning>
         </main>
       </TooltipProvider>
-    </XCodeIntlProvider>
+    </ZCodeIntlProvider>
   );
 }
 if (params.has("scroll")) {
@@ -457,7 +457,7 @@ if (params.has("scroll")) {
   );
 } else {
   createRoot(document.getElementById("root")!).render(
-    <XCodeIntlProvider initialLocale={params.get("locale") === "en-US" ? "en-US" : "zh-CN"}>
+    <ZCodeIntlProvider initialLocale={params.get("locale") === "en-US" ? "en-US" : "zh-CN"}>
       <TooltipProvider>
         <ToolPresentationCapabilitiesProvider value={{ readonly: true }}>
           <main
@@ -497,6 +497,6 @@ if (params.has("scroll")) {
           </main>
         </ToolPresentationCapabilitiesProvider>
       </TooltipProvider>
-    </XCodeIntlProvider>,
+    </ZCodeIntlProvider>,
   );
 }

@@ -1,11 +1,11 @@
 import {
-  buildXCodeEndpointUrls,
+  buildZCodeEndpointUrls,
   clientConfigReadOptionsSchema,
   parseClientConfigSnapshot,
-  resolveOptionalXCodeAuthorization,
+  resolveOptionalZCodeAuthorization,
   type ApiClient,
   type ClientConfigSnapshot,
-  type XCodeJwtTokenResolver,
+  type ZCodeJwtTokenResolver,
 } from "@zcode/shared";
 import type { IClientConfigService } from "./clientConfig.js";
 
@@ -28,7 +28,7 @@ interface CacheEntry {
 export function createClientConfigService(dependencies: {
   apiClient: ApiClient;
   resolveRequestContext: () => RequestContext | Promise<RequestContext>;
-  resolveXcodeJwtToken?: XCodeJwtTokenResolver;
+  resolveXcodeJwtToken?: ZCodeJwtTokenResolver;
 }): IClientConfigService {
   const entries = new Map<string, CacheEntry>();
 
@@ -73,12 +73,12 @@ export function createClientConfigService(dependencies: {
     async getSnapshot(options = {}) {
       const { forceRefresh } = clientConfigReadOptionsSchema.parse(options);
       const context = await dependencies.resolveRequestContext();
-      const authorization = await resolveOptionalXCodeAuthorization(
+      const authorization = await resolveOptionalZCodeAuthorization(
         dependencies.resolveXcodeJwtToken,
       );
       const url = new URL(
         "/api/v1/client/configs",
-        buildXCodeEndpointUrls(context.endpointOrigin).origin,
+        buildZCodeEndpointUrls(context.endpointOrigin).origin,
       );
       url.searchParams.set("app_version", context.appVersion);
       url.searchParams.set("platform", context.platform);

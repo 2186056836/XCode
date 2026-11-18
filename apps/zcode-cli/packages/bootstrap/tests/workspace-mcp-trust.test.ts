@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
 import { createConfig } from "@zcode/adapters/config";
 import {
-  convertToXCodeAgentMcpServer,
+  convertToZCodeAgentMcpServer,
   type McpServerConfig as HostMcpServerConfig,
 } from "@zcode/shared";
 import type { McpPort } from "@zcode/contracts";
@@ -523,7 +523,7 @@ it.each(["environment", "windows-command", "isolation"])(
       const review = (await f.authority.inspect()).probe;
       expect(review).toBeDefined();
       await f.authority.decide("probe", review!.declarationDigest, true);
-      const dto = convertToXCodeAgentMcpServer("probe", raw, "workspace")!;
+      const dto = convertToZCodeAgentMcpServer("probe", raw, "workspace")!;
       const runtime = protocolMcpServersToRuntimeMcpConfig([dto])!.servers.probe!;
       if (variant === "environment")
         expect(runtime).toMatchObject({ env: { EXAMPLE_TOKEN: "fake-value" } });

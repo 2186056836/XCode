@@ -6,7 +6,7 @@ import type {
   PromptAttachmentStageResult,
   PromptAttachmentTransferProgress,
 } from "@zcode/services";
-import type { XCodePromptAttachment } from "@zcode/shared";
+import type { ZCodePromptAttachment } from "@zcode/shared";
 import {
   cleanupRemotePromptAttachment,
   cleanupStaleRemotePromptAttachments,
@@ -103,13 +103,13 @@ export function createRemotePromptAttachmentTransferService(
       try {
         if (previous) await cleanupRecord(params.operationId, previous);
         if (!isCurrent()) throw canceled();
-        const attachment: XCodePromptAttachment = {
+        const attachment: ZCodePromptAttachment = {
           kind: params.mime.startsWith("image/") ? "image" : "file",
           filename: params.fileName,
           localPath: params.localPath,
           mimeType: params.mime,
           sizeBytes: params.sizeBytes ?? 0,
-        } as XCodePromptAttachment;
+        } as ZCodePromptAttachment;
         const workspaceKey = params.workspaceIdentity?.trim() || params.workspacePath;
         const materialized = await materializeRemotePromptAttachments(
           {

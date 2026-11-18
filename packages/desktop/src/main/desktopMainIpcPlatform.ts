@@ -1,7 +1,7 @@
 import { decorateRequestSecurityLogArgs } from "./request-security-edition/index.js";
 /* eslint-disable max-lines -- 桌面平台 IPC 集中装配，拆散会让权限边界更难审计；行数随平台能力增长。 */
 import { BrowserWindow, dialog, ipcMain, nativeTheme } from "electron";
-import { readXCodeStdioTapDevState } from "@zcode/services/node";
+import { readZCodeStdioTapDevState } from "@zcode/services/node";
 import {
   DesktopCommandIds,
   appSettingsPatchSchema,
@@ -217,7 +217,7 @@ export function registerPlatformIpcHandlers(options: {
   });
   registerResourceManagerStorageIpc();
   registerResourceManagerNetworkIpc();
-  ipcMain.handle(PlatformChannels.GetXCodeStdioTapDevState, () => readXCodeStdioTapDevState());
+  ipcMain.handle(PlatformChannels.GetZCodeStdioTapDevState, () => readZCodeStdioTapDevState());
   ipcMain.on(PlatformChannels.OpenResourceManager, () => {
     openResourceManager();
   });

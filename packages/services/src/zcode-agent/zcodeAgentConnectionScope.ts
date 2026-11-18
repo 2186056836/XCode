@@ -16,19 +16,19 @@ import {
   type WorkspaceConfigTopicWireCandidate,
 } from "@zcode/shared/zcode-protocol-v4";
 import type {
-  IXCodeAgentService,
-  XCodeAgentConversationResyncParams,
-  XCodeAgentConversationUnsubscribeParams,
-  XCodeAgentRuntimePolicy,
-  XCodeAgentWorkspaceTarget,
+  IZCodeAgentService,
+  ZCodeAgentConversationResyncParams,
+  ZCodeAgentConversationUnsubscribeParams,
+  ZCodeAgentRuntimePolicy,
+  ZCodeAgentWorkspaceTarget,
 } from "./zcodeAgent.js";
 import { isRemoteInputPredictionEnabled } from "./inputPredictionSwitch.js";
 
-export type XCodeAgentV4ClientMode = "desktop-continuous" | "web-remote-replayable";
+export type ZCodeAgentV4ClientMode = "desktop-continuous" | "web-remote-replayable";
 
-export interface XCodeAgentV4ConnectionContext {
+export interface ZCodeAgentV4ConnectionContext {
   connectionId: string;
-  clientMode: XCodeAgentV4ClientMode;
+  clientMode: ZCodeAgentV4ClientMode;
   role?: "terminal-client" | "trusted-host-relay";
   /**
    * 这条连接的 clientHello 声明了认得 `workflowRun.*` 键级增量。与 `clientMode` 同族：
@@ -44,21 +44,21 @@ const TRUSTED_CONNECTION_FIELD = "__zcodeTrustedV4Connection";
 const TRUSTED_UNSUBSCRIBE_ROUTE_FIELD = "__zcodeTrustedV4UnsubscribeRoute";
 
 type TrustedConnectionCarrier = {
-  [TRUSTED_CONNECTION_FIELD]?: XCodeAgentV4ConnectionContext;
+  [TRUSTED_CONNECTION_FIELD]?: ZCodeAgentV4ConnectionContext;
 };
 
-export interface TrustedXCodeAgentV4UnsubscribeRoute {
+export interface TrustedZCodeAgentV4UnsubscribeRoute {
   topic: string;
   connectionId: string;
 }
 
 type TrustedUnsubscribeRouteCarrier = {
-  [TRUSTED_UNSUBSCRIBE_ROUTE_FIELD]?: TrustedXCodeAgentV4UnsubscribeRoute;
+  [TRUSTED_UNSUBSCRIBE_ROUTE_FIELD]?: TrustedZCodeAgentV4UnsubscribeRoute;
 };
 
-export function readTrustedXCodeAgentV4UnsubscribeRoute(
+export function readTrustedZCodeAgentV4UnsubscribeRoute(
   value: unknown,
-): TrustedXCodeAgentV4UnsubscribeRoute | null {
+): TrustedZCodeAgentV4UnsubscribeRoute | null {
   if (typeof value !== "object" || value === null) return null;
   const route = (value as TrustedUnsubscribeRouteCarrier)[TRUSTED_UNSUBSCRIBE_ROUTE_FIELD];
   if (!route || typeof route.topic !== "string" || typeof route.connectionId !== "string") {
@@ -71,9 +71,9 @@ export function readTrustedXCodeAgentV4UnsubscribeRoute(
  * 该字段只在 host facade → base/remote service proxy 之间传递；facade 会覆盖所有
  * UI 入参中的同名字段，因此 renderer/mobile 不能伪造可信连接模式。
  */
-export function readTrustedXCodeAgentV4Connection(
+export function readTrustedZCodeAgentV4Connection(
   value: unknown,
-): XCodeAgentV4ConnectionContext | null {
+): ZCodeAgentV4ConnectionContext | null {
   if (typeof value !== "object" || value === null) return null;
   const context = (value as TrustedConnectionCarrier)[TRUSTED_CONNECTION_FIELD];
   if (!context || typeof context.connectionId !== "string") return null;
@@ -95,7 +95,7 @@ export function readTrustedXCodeAgentV4Connection(
 
 function withTrustedConnection<T extends object>(
   value: T,
-  context: XCodeAgentV4ConnectionContext,
+  context: ZCodeAgentV4ConnectionContext,
 ): T {
   const forwarded: Record<string, unknown> = {
     ...(value as unknown as Record<string, unknown>),
@@ -117,7 +117,7 @@ function withTrustedConnection<T extends object>(
 
 function withTrustedUnsubscribeRoute<T extends object>(
   value: T,
-  route: TrustedXCodeAgentV4UnsubscribeRoute,
+  route: TrustedZCodeAgentV4UnsubscribeRoute,
 ): T {
   const forwarded = {
     ...(value as unknown as Record<string, unknown>),
@@ -141,11 +141,11 @@ function carriesExtensionInputSource(envelope: { type: string; payload: unknown 
   return false;
 }
 
-function workspaceKey(target: XCodeAgentWorkspaceTarget): string {
+function workspaceKey(target: ZCodeAgentWorkspaceTarget): string {
   return target.workspaceIdentity?.trim() || target.workspacePath;
 }
 
-function workspaceTarget(target: XCodeAgentWorkspaceTarget): XCodeAgentWorkspaceTarget {
+function workspaceTarget(target: ZCodeAgentWorkspaceTarget): ZCodeAgentWorkspaceTarget {
   return {
     workspacePath: target.workspacePath,
     ...(target.workspaceIdentity ? { workspaceIdentity: target.workspaceIdentity } : {}),
@@ -160,14 +160,14 @@ interface OwnedSubscription {
   subscriptionId: string;
   topic: string;
   connectionId: string;
-  clientMode: XCodeAgentV4ClientMode;
-  target: XCodeAgentWorkspaceTarget;
+  clientMode: ZCodeAgentV4ClientMode;
+  target: ZCodeAgentWorkspaceTarget;
 }
 
 interface ConnectionFlowRoute {
   key: string;
-  target: XCodeAgentWorkspaceTarget;
-  connection: XCodeAgentV4ConnectionContext;
+  target: ZCodeAgentWorkspaceTarget;
+  connection: ZCodeAgentV4ConnectionContext;
 }
 
 type RoutedTopicFrame =
@@ -177,7 +177,7 @@ type RoutedTopicFrame =
 
 interface PendingOwnership {
   kind: SubscriptionKind;
-  target: XCodeAgentWorkspaceTarget;
+  target: ZCodeAgentWorkspaceTarget;
   topic: string;
   frames: RoutedTopicFrame[];
   stagedBytes: number;
@@ -219,11 +219,11 @@ function frameBytes(frame: RoutedTopicFrame): number {
   return new TextEncoder().encode(JSON.stringify(frame)).byteLength;
 }
 
-function deliveryProfileFor(clientMode: XCodeAgentV4ClientMode): HelloMessage["deliveryProfile"] {
+function deliveryProfileFor(clientMode: ZCodeAgentV4ClientMode): HelloMessage["deliveryProfile"] {
   return clientMode === "desktop-continuous" ? "continuous" : "replayable";
 }
 
-function createHello(context: XCodeAgentV4ConnectionContext): HelloMessage {
+function createHello(context: ZCodeAgentV4ConnectionContext): HelloMessage {
   const continuous = context.clientMode === "desktop-continuous";
   return {
     kind: "hello",
@@ -254,18 +254,18 @@ function createHello(context: XCodeAgentV4ConnectionContext): HelloMessage {
   };
 }
 
-export interface XCodeAgentConnectionScope {
-  readonly service: IXCodeAgentService;
+export interface ZCodeAgentConnectionScope {
+  readonly service: IZCodeAgentService;
   /** MessagePort/transport sideband only；不是 UI-facing RPC。 */
   setTransportFlowState(state: V4ConnectionFlowState): Promise<void>;
   dispose(): Promise<void>;
 }
 
 /** 为单个 host/server RPC attachment 建立可信 V4 facade。 */
-export function createXCodeAgentConnectionScope(
-  base: IXCodeAgentService,
-  context: XCodeAgentV4ConnectionContext,
-): XCodeAgentConnectionScope {
+export function createZCodeAgentConnectionScope(
+  base: IZCodeAgentService,
+  context: ZCodeAgentV4ConnectionContext,
+): ZCodeAgentConnectionScope {
   assertConnectionId(context.connectionId);
   const role = context.role ?? "terminal-client";
   const owned = new Map<string, OwnedSubscription>();
@@ -291,8 +291,8 @@ export function createXCodeAgentConnectionScope(
   /** attachment 曾触及的 workspace route 留到 port dispose，保证无 subscription 也能 trusted closed。 */
   const attachmentFlowRoutes = new Map<string, ConnectionFlowRoute>();
 
-  const forwardedConnection = (params: unknown): XCodeAgentV4ConnectionContext => {
-    const downstream = readTrustedXCodeAgentV4Connection(params);
+  const forwardedConnection = (params: unknown): ZCodeAgentV4ConnectionContext => {
+    const downstream = readTrustedZCodeAgentV4Connection(params);
     if (role === "trusted-host-relay" && downstream) {
       assertConnectionId(downstream.connectionId);
       return {
@@ -324,16 +324,16 @@ export function createXCodeAgentConnectionScope(
   };
   const routeKey = (
     kind: SubscriptionKind,
-    target: XCodeAgentWorkspaceTarget,
+    target: ZCodeAgentWorkspaceTarget,
     topic: string,
     subscriptionId: string,
     connectionId: string,
   ) => `${kind}\0${workspaceKey(target)}\0${topic}\0${subscriptionId}\0${connectionId}`;
-  const ownershipKey = (kind: SubscriptionKind, target: XCodeAgentWorkspaceTarget, topic: string) =>
+  const ownershipKey = (kind: SubscriptionKind, target: ZCodeAgentWorkspaceTarget, topic: string) =>
     `${kind}\0${workspaceKey(target)}\0${topic}`;
-  const routedEventKey = (kind: SubscriptionKind, target: XCodeAgentWorkspaceTarget) =>
+  const routedEventKey = (kind: SubscriptionKind, target: ZCodeAgentWorkspaceTarget) =>
     `${kind}\0${workspaceKey(target)}`;
-  const flowRouteKey = (target: XCodeAgentWorkspaceTarget, connectionId: string) =>
+  const flowRouteKey = (target: ZCodeAgentWorkspaceTarget, connectionId: string) =>
     `${workspaceKey(target)}\0${connectionId}`;
   const flowRouteForEntry = (entry: OwnedSubscription): ConnectionFlowRoute => ({
     key: flowRouteKey(entry.target, entry.connectionId),
@@ -341,7 +341,7 @@ export function createXCodeAgentConnectionScope(
     connection: {
       connectionId: entry.connectionId,
       clientMode: entry.clientMode,
-    } satisfies XCodeAgentV4ConnectionContext,
+    } satisfies ZCodeAgentV4ConnectionContext,
   });
   const currentFlowRoutes = () => {
     const routes = new Map<string, ConnectionFlowRoute>(attachmentFlowRoutes);
@@ -404,9 +404,9 @@ export function createXCodeAgentConnectionScope(
   };
   const findBySubscription = (
     kind: SubscriptionKind,
-    target: XCodeAgentWorkspaceTarget,
+    target: ZCodeAgentWorkspaceTarget,
     subscriptionId: string,
-    expectedRoute: TrustedXCodeAgentV4UnsubscribeRoute | null,
+    expectedRoute: TrustedZCodeAgentV4UnsubscribeRoute | null,
   ): OwnedSubscription | null => {
     const expectedWorkspaceKey = workspaceKey(target);
     const matches = [...owned.values()].filter(
@@ -424,7 +424,7 @@ export function createXCodeAgentConnectionScope(
   };
   const ownsFrame = (
     kind: SubscriptionKind,
-    target: XCodeAgentWorkspaceTarget,
+    target: ZCodeAgentWorkspaceTarget,
     frame: { subscriptionId: string; topic: string },
   ) => {
     const expectedWorkspaceKey = workspaceKey(target);
@@ -438,9 +438,9 @@ export function createXCodeAgentConnectionScope(
   };
   const forwardedUnsubscribeRoute = (
     params: unknown,
-  ): TrustedXCodeAgentV4UnsubscribeRoute | null => {
+  ): TrustedZCodeAgentV4UnsubscribeRoute | null => {
     if (role !== "trusted-host-relay") return null;
-    const downstream = readTrustedXCodeAgentV4UnsubscribeRoute(params);
+    const downstream = readTrustedZCodeAgentV4UnsubscribeRoute(params);
     if (!downstream) return null;
     assertConnectionId(downstream.connectionId);
     return {
@@ -450,7 +450,7 @@ export function createXCodeAgentConnectionScope(
   };
   const beginPendingOwnership = (
     kind: SubscriptionKind,
-    target: XCodeAgentWorkspaceTarget,
+    target: ZCodeAgentWorkspaceTarget,
     topic: string,
   ): PendingOwnership => {
     const pending: PendingOwnership = {
@@ -500,7 +500,7 @@ export function createXCodeAgentConnectionScope(
   };
   const routeIncomingFrame = (
     kind: SubscriptionKind,
-    target: XCodeAgentWorkspaceTarget,
+    target: ZCodeAgentWorkspaceTarget,
     frame: RoutedTopicFrame,
     emitter: Emitter<RoutedTopicFrame>,
   ): void => {
@@ -514,7 +514,7 @@ export function createXCodeAgentConnectionScope(
   };
   const routedEvent = <T extends RoutedTopicFrame>(
     kind: SubscriptionKind,
-    target: XCodeAgentWorkspaceTarget,
+    target: ZCodeAgentWorkspaceTarget,
     source: Event<T>,
   ): Event<T> => {
     const key = routedEventKey(kind, target);
@@ -544,9 +544,9 @@ export function createXCodeAgentConnectionScope(
   };
   const unsubscribeBase = (
     entry: OwnedSubscription,
-    runtimePolicy?: XCodeAgentRuntimePolicy,
+    runtimePolicy?: ZCodeAgentRuntimePolicy,
   ): Promise<void> => {
-    const params: XCodeAgentConversationUnsubscribeParams = {
+    const params: ZCodeAgentConversationUnsubscribeParams = {
       ...entry.target,
       subscriptionId: entry.subscriptionId,
       ...(runtimePolicy ? { runtimePolicy } : {}),
@@ -566,7 +566,7 @@ export function createXCodeAgentConnectionScope(
   };
   const unsubscribeOwnedEntry = async (
     entry: OwnedSubscription,
-    runtimePolicy?: XCodeAgentRuntimePolicy,
+    runtimePolicy?: ZCodeAgentRuntimePolicy,
   ): Promise<void> => {
     forget(entry);
     try {
@@ -577,7 +577,7 @@ export function createXCodeAgentConnectionScope(
       await unsubscribeBase(entry, runtimePolicy);
     }
   };
-  const resyncBase = (entry: OwnedSubscription, params: XCodeAgentConversationResyncParams) => {
+  const resyncBase = (entry: OwnedSubscription, params: ZCodeAgentConversationResyncParams) => {
     const forwarded = withTrustedUnsubscribeRoute(params, {
       topic: entry.topic,
       connectionId: entry.connectionId,
@@ -591,7 +591,7 @@ export function createXCodeAgentConnectionScope(
         return base.resyncWorkspaceConfigV4(forwarded);
     }
   };
-  const resyncOwned = (kind: SubscriptionKind, params: XCodeAgentConversationResyncParams) => {
+  const resyncOwned = (kind: SubscriptionKind, params: ZCodeAgentConversationResyncParams) => {
     assertReady();
     const entry = findBySubscription(
       kind,
@@ -700,7 +700,7 @@ export function createXCodeAgentConnectionScope(
         invalidateWorkspaceRuntime(restarted, nextGeneration);
       });
 
-  const overrides: Partial<IXCodeAgentService> = {
+  const overrides: Partial<IZCodeAgentService> = {
     onDynamicSessionLifecycle(params) {
       return (listener) =>
         base.onDynamicSessionLifecycle(params)((snapshot) => {
@@ -747,7 +747,7 @@ export function createXCodeAgentConnectionScope(
       if (role !== "trusted-host-relay") {
         throw new Error("fault.connection.flowControlForbidden");
       }
-      const downstream = readTrustedXCodeAgentV4Connection(params);
+      const downstream = readTrustedZCodeAgentV4Connection(params);
       if (!downstream) throw new Error("fault.connection.flowControlUntrusted");
       const forwarded = forwardedConnection(params);
       const ownsRoute =
@@ -935,7 +935,7 @@ export function createXCodeAgentConnectionScope(
       assertOpen();
       // 可信 clientMode 来自 host attachment；Web/mobile/relay 即使能读权威对话态，
       // 也不能借共享 workspace emitter 安装生产 telemetry reporter。
-      const downstream = readTrustedXCodeAgentV4Connection(params);
+      const downstream = readTrustedZCodeAgentV4Connection(params);
       const relayDesktopDownstream =
         role === "trusted-host-relay" && downstream?.clientMode === "desktop-continuous";
       if (
@@ -1146,4 +1146,4 @@ export function createXCodeAgentConnectionScope(
 }
 
 // Share RPC 复用同一内部 carrier 写入规则，不能复制一套连接身份拼装。
-export { withTrustedConnection as withTrustedXCodeAgentV4Connection };
+export { withTrustedConnection as withTrustedZCodeAgentV4Connection };

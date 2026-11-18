@@ -10,7 +10,7 @@ import {
   createLegacyCredentialCipher,
   migrateCredentialRecord,
 } from "@zcode/shared/credential-security";
-import { createSharedXCodeCredentialStore } from "../src/auth/shared-credentials.js";
+import { createSharedZCodeCredentialStore } from "../src/auth/shared-credentials.js";
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -51,13 +51,13 @@ describe("system credential security", () => {
       await writeFile(fixture.file, JSON.stringify({ token: old.encrypt("old-file-identity") }));
       const env = explicit ? { ZCODE_CREDENTIAL_SECRET_FILE: path } : {};
       const cipher = await createLegacyServerCredentialCipher({ filePath: fixture.file, env });
-      const candidate = createSharedXCodeCredentialStore({ filePath: fixture.file, cipher });
+      const candidate = createSharedZCodeCredentialStore({ filePath: fixture.file, cipher });
       expect(await candidate.load("token")).toBe("old-file-identity");
       await candidate.save("token", "still-readable-by-old-owner");
       expect(old.decrypt(JSON.parse(await readFile(fixture.file, "utf8")).token)).toBe(
         "still-readable-by-old-owner",
       );
-      const current = createSharedXCodeCredentialStore({
+      const current = createSharedZCodeCredentialStore({
         filePath: fixture.file,
         cipher: await createServerCredentialCipher({ filePath: fixture.file, env }),
       });
@@ -78,13 +78,13 @@ describe("system credential security", () => {
     await writeFile(fixture.file, JSON.stringify({ token: legacy.encrypt("before-update") }));
     await prepareServerCredentialStorage(options);
     const cipher = await createLegacyServerCredentialCipher(options);
-    const candidate = createSharedXCodeCredentialStore({ filePath: fixture.file, cipher });
+    const candidate = createSharedZCodeCredentialStore({ filePath: fixture.file, cipher });
     expect(await candidate.load("token")).toBe("before-update");
     await candidate.save("token", "candidate-update");
     expect(legacy.decrypt(JSON.parse(await readFile(fixture.file, "utf8")).token)).toBe(
       "candidate-update",
     );
-    const modern = createSharedXCodeCredentialStore({
+    const modern = createSharedZCodeCredentialStore({
       filePath: fixture.file,
       cipher: await createServerCredentialCipher(options),
     });
@@ -107,14 +107,14 @@ describe("system credential security", () => {
     );
     // 另一程序迟到放入文件时，也不能改变已经固定的 OS 来源。
     await writeFile(join(fixture.file, "..", "credential-secret"), "x".repeat(40), { mode: 0o600 });
-    const store = createSharedXCodeCredentialStore({ filePath: fixture.file, cipher: first });
+    const store = createSharedZCodeCredentialStore({ filePath: fixture.file, cipher: first });
     await store.save("token", "os-before-first-write");
     const reopened = await createServerCredentialCipher({
       ...options,
       keyStore: { ...fixture.keyStore },
     });
     expect(
-      await createSharedXCodeCredentialStore({ filePath: fixture.file, cipher: reopened }).load(
+      await createSharedZCodeCredentialStore({ filePath: fixture.file, cipher: reopened }).load(
         "token",
       ),
     ).toBe("os-before-first-write");
@@ -124,15 +124,15 @@ describe("system credential security", () => {
     const fixture = await setup();
     await prepareServerCredentialStorage({ filePath: fixture.file, env: {} });
     const cipher = await createServerCredentialCipher({ filePath: fixture.file, env: {} });
-    await createSharedXCodeCredentialStore({ filePath: fixture.file, cipher }).save(
+    await createSharedZCodeCredentialStore({ filePath: fixture.file, cipher }).save(
       "token",
       "shared-remote-value",
     );
-    const cli = createSharedXCodeCredentialStore({ filePath: fixture.file, env: {} });
+    const cli = createSharedZCodeCredentialStore({ filePath: fixture.file, env: {} });
     expect(await cli.load("token")).toBe("shared-remote-value");
     // 新 KeyStore 模拟冷进程，不能复用 Server 的进程内缓存来掩盖默认文件发现缺口。
     let systemReads = 0;
-    const cold = createSharedXCodeCredentialStore({
+    const cold = createSharedZCodeCredentialStore({
       filePath: fixture.file,
       cipher: createSystemCredentialCipher({
         filePath: fixture.file,
@@ -152,7 +152,7 @@ describe("system credential security", () => {
     expect(systemReads).toBe(0);
     await cli.save("token", "cli-updated-value");
     expect(
-      await createSharedXCodeCredentialStore({ filePath: fixture.file, cipher }).load("token"),
+      await createSharedZCodeCredentialStore({ filePath: fixture.file, cipher }).load("token"),
     ).toBe("cli-updated-value");
   });
   it("prepares one private remote key concurrently and migrates fallback v1 without losing identity", async () => {
@@ -182,7 +182,7 @@ describe("system credential security", () => {
       },
     };
     const cipher = await createServerCredentialCipher({ ...options, keyStore });
-    const store = createSharedXCodeCredentialStore({ filePath: fixture.file, cipher });
+    const store = createSharedZCodeCredentialStore({ filePath: fixture.file, cipher });
     for (const [key, value] of Object.entries(original)) expect(await store.load(key)).toBe(value);
     const migrated = JSON.parse(await readFile(fixture.file, "utf8"));
     expect(Object.values(migrated).every((value) => String(value).startsWith("enc:v2:env:"))).toBe(
@@ -190,7 +190,7 @@ describe("system credential security", () => {
     );
     await prepareServerCredentialStorage(options);
     expect(await readFile(secretPath, "utf8")).toBe(secret);
-    const reopened = createSharedXCodeCredentialStore({
+    const reopened = createSharedZCodeCredentialStore({
       filePath: fixture.file,
       cipher: await createServerCredentialCipher({ ...options, keyStore }),
     });
@@ -238,7 +238,7 @@ describe("system credential security", () => {
       },
     };
     const first = await createServerCredentialCipher({ filePath: fixture.file, env: {}, keyStore });
-    const store = createSharedXCodeCredentialStore({ filePath: fixture.file, cipher: first });
+    const store = createSharedZCodeCredentialStore({ filePath: fixture.file, cipher: first });
     await store.updateMany({ "oauth:session_revision": "server-session", token: "server-token" });
     const second = await createServerCredentialCipher({
       filePath: fixture.file,
@@ -246,7 +246,7 @@ describe("system credential security", () => {
       keyStore,
     });
     expect(
-      await createSharedXCodeCredentialStore({ filePath: fixture.file, cipher: second }).load(
+      await createSharedZCodeCredentialStore({ filePath: fixture.file, cipher: second }).load(
         "token",
       ),
     ).toBe("server-token");
@@ -295,11 +295,11 @@ describe("system credential security", () => {
         });
         await writeFile(fixture.file, JSON.stringify({ token: old.encrypt("legacy-value") }));
         const env = { ZCODE_CREDENTIAL_SECRET: secret };
-        const store = createSharedXCodeCredentialStore({ filePath: fixture.file, env });
+        const store = createSharedZCodeCredentialStore({ filePath: fixture.file, env });
         expect(await store.load("token"), `${source}/${secret.length}`).toBe("legacy-value");
         expect(JSON.parse(await readFile(fixture.file, "utf8")).token).toMatch(/^enc:v2:env:/);
         expect(
-          await createSharedXCodeCredentialStore({ filePath: fixture.file, env }).load("token"),
+          await createSharedZCodeCredentialStore({ filePath: fixture.file, env }).load("token"),
         ).toBe("legacy-value");
       }
     }
@@ -311,13 +311,13 @@ describe("system credential security", () => {
     const env = { ZCODE_CREDENTIAL_SECRET_FILE: secretPath };
     const cipher = createSystemCredentialCipher({ filePath: fixture.file, env });
     await cipher.initialize();
-    const store = createSharedXCodeCredentialStore({ filePath: fixture.file, cipher });
+    const store = createSharedZCodeCredentialStore({ filePath: fixture.file, cipher });
     await store.updateMany({
       "oauth:session_revision": "headless-revision",
       token: "headless-value",
     });
     expect(
-      await createSharedXCodeCredentialStore({ filePath: fixture.file, env }).load("token"),
+      await createSharedZCodeCredentialStore({ filePath: fixture.file, env }).load("token"),
     ).toBe("headless-value");
     expect(JSON.parse(await readFile(fixture.file, "utf8")).token).toMatch(/^enc:v2:env:/);
   });
@@ -447,7 +447,7 @@ describe("system credential security", () => {
         unused: "enc:v1:broken",
       }),
     );
-    const store = createSharedXCodeCredentialStore({ filePath: fixture.file, cipher });
+    const store = createSharedZCodeCredentialStore({ filePath: fixture.file, cipher });
     const snapshot = await store.loadMany(["zcodejwttoken", "oauth:active_provider"]);
     expect(snapshot.zcodejwttoken).toBe("old-token");
     const disk = JSON.parse(await readFile(fixture.file, "utf8"));

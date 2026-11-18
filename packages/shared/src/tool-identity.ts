@@ -39,9 +39,9 @@ export const ZCODE_KNOWN_TOOL_NAMES = [
   "submit_result",
 ] as const;
 
-export type XCodeKnownToolName = (typeof ZCODE_KNOWN_TOOL_NAMES)[number];
+export type ZCodeKnownToolName = (typeof ZCODE_KNOWN_TOOL_NAMES)[number];
 
-export type XCodeToolFamily =
+export type ZCodeToolFamily =
   | "file-read"
   | "file-write"
   | "shell"
@@ -58,7 +58,7 @@ export type XCodeToolFamily =
   | "node-repl"
   | "workflow";
 
-const TOOL_FAMILY_BY_NAME: Record<XCodeKnownToolName, XCodeToolFamily> = {
+const TOOL_FAMILY_BY_NAME: Record<ZCodeKnownToolName, ZCodeToolFamily> = {
   Read: "file-read",
   Write: "file-write",
   Edit: "file-write",
@@ -96,13 +96,13 @@ const TOOL_FAMILY_BY_NAME: Record<XCodeKnownToolName, XCodeToolFamily> = {
   submit_result: "workflow",
 };
 
-const TOOL_NAME_BY_LOWER = new Map<string, XCodeKnownToolName>(
+const TOOL_NAME_BY_LOWER = new Map<string, ZCodeKnownToolName>(
   ZCODE_KNOWN_TOOL_NAMES.map((toolName) => [toolName.toLowerCase(), toolName]),
 );
 
-export function normalizeXCodeToolName(
+export function normalizeZCodeToolName(
   value: string | null | undefined,
-): XCodeKnownToolName | null {
+): ZCodeKnownToolName | null {
   const normalized = value?.trim();
   if (!normalized) {
     return null;
@@ -111,20 +111,20 @@ export function normalizeXCodeToolName(
   return TOOL_NAME_BY_LOWER.get(normalized.toLowerCase()) ?? null;
 }
 
-export function getXCodeToolFamilyForName(
+export function getZCodeToolFamilyForName(
   value: string | null | undefined,
-): XCodeToolFamily | null {
-  const toolName = normalizeXCodeToolName(value);
+): ZCodeToolFamily | null {
+  const toolName = normalizeZCodeToolName(value);
   return toolName ? TOOL_FAMILY_BY_NAME[toolName] : null;
 }
 
-export function isXCodeToolFamily(
+export function isZCodeToolFamily(
   value: string | null | undefined,
-  family: XCodeToolFamily,
+  family: ZCodeToolFamily,
 ): boolean {
-  return getXCodeToolFamilyForName(value) === family;
+  return getZCodeToolFamilyForName(value) === family;
 }
 
-export function isXCodeFileContentWriteToolName(value: string | null | undefined): boolean {
-  return normalizeXCodeToolName(value) === "Write";
+export function isZCodeFileContentWriteToolName(value: string | null | undefined): boolean {
+  return normalizeZCodeToolName(value) === "Write";
 }

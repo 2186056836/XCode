@@ -2,8 +2,8 @@
 // membership，sessions-index 只在后续投影中补充实时 activity/detail。
 // unread 同为组织态（setTaskUnread 写 tasks-index），与 pin/archive 同类，
 // 不进冻结的 sessions-index schema；这里平行拉取 unreadAt map，列表构建时 join。
-import type { IXCodeTaskService } from "@zcode/services";
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { IZCodeTaskService } from "@zcode/services";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 import { buildTaskEntityKey } from "@/lib/taskQueryCache.js";
 
 export interface TaskListMembershipScope {
@@ -12,14 +12,14 @@ export interface TaskListMembershipScope {
 }
 
 export type TaskListMembershipService = Pick<
-  IXCodeTaskService,
+  IZCodeTaskService,
   "listPinnedTaskIds" | "listArchivedTasks" | "listTasks" | "listPinnedTasks"
 > &
-  Partial<Pick<IXCodeTaskService, "listDeletedTaskIds">>;
+  Partial<Pick<IZCodeTaskService, "listDeletedTaskIds">>;
 
 export interface TaskListMembershipSets {
   /** tasks-index 三个持久分区（active/pinned/archived）的完整 task 行并集。 */
-  taskIndexItems: XCodeTaskMeta[];
+  taskIndexItems: ZCodeTaskMeta[];
   pinnedIds: Set<string>;
   archivedIds: Set<string>;
   /** tasks-index 持久删除 tombstone；优先于所有列表 kind。 */
@@ -27,7 +27,7 @@ export interface TaskListMembershipSets {
   /** taskId → unreadAt（tasks-index 组织态；sessions-index 不携带，join 用）。 */
   unreadAtByTaskId: Map<string, number>;
   /** taskId → terminal status（tasks-index 历史终态；用于冷启动 stored summary 补红点）。 */
-  terminalStatusByTaskId: Map<string, Extract<XCodeTaskMeta["status"], "completed" | "error">>;
+  terminalStatusByTaskId: Map<string, Extract<ZCodeTaskMeta["status"], "completed" | "error">>;
   /**
    * taskId → 旧 task-index 手动标题。
    *
@@ -144,7 +144,7 @@ async function listWithAvailability<T>(
   }
 }
 
-function collectUnreadAt(unreadAtByTaskId: Map<string, number>, tasks: XCodeTaskMeta[]): void {
+function collectUnreadAt(unreadAtByTaskId: Map<string, number>, tasks: ZCodeTaskMeta[]): void {
   for (const task of tasks) {
     if (typeof task.unreadAt === "number") {
       unreadAtByTaskId.set(task.taskId, task.unreadAt);
@@ -154,7 +154,7 @@ function collectUnreadAt(unreadAtByTaskId: Map<string, number>, tasks: XCodeTask
 
 function collectTerminalStatuses(
   terminalStatusByTaskId: TaskListMembershipSets["terminalStatusByTaskId"],
-  tasks: XCodeTaskMeta[],
+  tasks: ZCodeTaskMeta[],
 ): void {
   for (const task of tasks) {
     if (task.status === "completed" || task.status === "error") {
@@ -165,7 +165,7 @@ function collectTerminalStatuses(
 
 function collectTitleOverrides(
   titleOverrideByTaskId: Map<string, string>,
-  tasks: XCodeTaskMeta[],
+  tasks: ZCodeTaskMeta[],
 ): void {
   for (const task of tasks) {
     if (task.titleOverridden === true && task.title.trim().length > 0) {
@@ -176,7 +176,7 @@ function collectTitleOverrides(
 
 function collectCronAutomationIds(
   cronAutomationIdByTaskId: Map<string, string>,
-  tasks: XCodeTaskMeta[],
+  tasks: ZCodeTaskMeta[],
 ): void {
   for (const task of tasks) {
     if (task.cronAutomationId) {
@@ -185,8 +185,8 @@ function collectCronAutomationIds(
   }
 }
 
-function mergeTaskIndexItems(lists: XCodeTaskMeta[][]): XCodeTaskMeta[] {
-  const itemByEntityKey = new Map<string, XCodeTaskMeta>();
+function mergeTaskIndexItems(lists: ZCodeTaskMeta[][]): ZCodeTaskMeta[] {
+  const itemByEntityKey = new Map<string, ZCodeTaskMeta>();
   for (const task of lists.flat()) {
     itemByEntityKey.set(buildTaskEntityKey(task), task);
   }
@@ -357,7 +357,7 @@ export async function fetchTaskListMembershipSetsForEndpoints(
     titleOverrideByTaskId: new Map<string, string>(),
     cronAutomationIdByTaskId: new Map<string, string>(),
   };
-  const taskIndexItemByEntityKey = new Map<string, XCodeTaskMeta>();
+  const taskIndexItemByEntityKey = new Map<string, ZCodeTaskMeta>();
   for (const result of results) {
     for (const task of result.taskIndexItems) {
       taskIndexItemByEntityKey.set(buildTaskEntityKey(task), task);

@@ -34,13 +34,13 @@ export interface PluginCommand extends Omit<CommandInfo, "filePath"> {
   filePath: string;
 }
 
-export type XCodeCommand = UserCommand | PluginCommand;
+export type ZCodeCommand = UserCommand | PluginCommand;
 
-export function isUserCommand(command: XCodeCommand): command is UserCommand {
+export function isUserCommand(command: ZCodeCommand): command is UserCommand {
   return command.source === "user";
 }
 
-export function isPluginCommand(command: XCodeCommand): command is PluginCommand {
+export function isPluginCommand(command: ZCodeCommand): command is PluginCommand {
   return command.source === "plugin";
 }
 
@@ -60,7 +60,7 @@ export interface CommandsCapability {
 }
 
 export interface CommandsListResult {
-  commands: XCodeCommand[];
+  commands: ZCodeCommand[];
   userCommands: UserCommand[];
   pluginCommands: PluginCommand[];
   capability: CommandsCapability;

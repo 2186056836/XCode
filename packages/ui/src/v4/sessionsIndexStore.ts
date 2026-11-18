@@ -10,7 +10,7 @@ import {
   type SessionsIndexTopicFrame,
   type TopicFrameDeliveryKind,
 } from "@zcode/shared/zcode-protocol-v4";
-import { isXCodeFileLockTimeoutError } from "@zcode/shared";
+import { isZCodeFileLockTimeoutError } from "@zcode/shared";
 import { ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE } from "@zcode/services";
 import { logger } from "@/logger.js";
 import type { SessionsIndexTransport } from "@/v4/agentSessionsIndexTransport.js";
@@ -41,7 +41,7 @@ const TRANSIENT_SUBSCRIBE_RETRY_DELAYS_MS = [250, 1_000, 3_000] as const;
 const ERROR_RECOVERY_RETRY_DELAYS_MS = [5_000, 15_000, 60_000] as const;
 
 function isTransientSubscribeError(error: unknown): boolean {
-  if (isXCodeFileLockTimeoutError(error)) {
+  if (isZCodeFileLockTimeoutError(error)) {
     return true;
   }
   const code =

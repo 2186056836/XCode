@@ -92,7 +92,7 @@ export function createHostCommandEnvelope<T extends CommandType>(
 }
 
 /** v4 命令被服务端否决（rejected/stale/failed）。code 供调用方结构化分流，不匹配错误文案。 */
-export class XCodeV4CommandRejectedError extends Error {
+export class ZCodeV4CommandRejectedError extends Error {
   readonly code = "ZCODE_V4_COMMAND_REJECTED";
 
   constructor(
@@ -105,7 +105,7 @@ export class XCodeV4CommandRejectedError extends Error {
         `${ack.reasonCode ? ` (${ack.reasonCode})` : ""}` +
         `${ack.message ? `: ${ack.message}` : ""} — ${contextMessage}`,
     );
-    this.name = "XCodeV4CommandRejectedError";
+    this.name = "ZCodeV4CommandRejectedError";
   }
 }
 
@@ -123,7 +123,7 @@ export function assertV4CommandAckOk(
   if (ack.status === "accepted" || ack.status === "duplicate" || ack.status === "noop") {
     return ack;
   }
-  throw new XCodeV4CommandRejectedError(commandType, ack, contextMessage);
+  throw new ZCodeV4CommandRejectedError(commandType, ack, contextMessage);
 }
 
 /**
@@ -165,7 +165,7 @@ export async function sendHostCasCommandV4<T extends CommandType>(input: {
     }
     return assertV4CommandAckOk(input.type, ack, input.contextMessage);
   }
-  throw new XCodeV4CommandRejectedError(
+  throw new ZCodeV4CommandRejectedError(
     input.type,
     lastAck ?? {
       commandId: "",

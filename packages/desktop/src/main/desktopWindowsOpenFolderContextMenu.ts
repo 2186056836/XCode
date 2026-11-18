@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { toZhOrEnLocale, type Locale } from "@zcode/shared";
 
-const MENU_KEY_NAME = "XCode.OpenInXCode";
+const MENU_KEY_NAME = "XCode.OpenInZCode";
 const DIRECTORY_MENU_KEY = `HKCU\\Software\\Classes\\Directory\\shell\\${MENU_KEY_NAME}`;
 const DRIVE_MENU_KEY = `HKCU\\Software\\Classes\\Drive\\shell\\${MENU_KEY_NAME}`;
 // 系统右键菜单只内置中英；其它界面语言用英文。

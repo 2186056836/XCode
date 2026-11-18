@@ -20,9 +20,9 @@ import {
   type CancellationToken,
 } from "@zcode/rpc";
 import {
-  createXCodeAgentConnectionScope,
+  createZCodeAgentConnectionScope,
   IProviderProvisioningTargetService,
-  IXCodeAgentService,
+  IZCodeAgentService,
   IConversationShareService,
   ServiceCollection,
 } from "@zcode/services";
@@ -117,7 +117,7 @@ function exposeWebSocket(
   const server = workspaceIdentityMapper
     ? new SourceServerWorkspaceIdentityChannelServer(loggedServer, workspaceIdentityMapper)
     : loggedServer;
-  const agentService = services.getOptional(IXCodeAgentService);
+  const agentService = services.getOptional(IZCodeAgentService);
   const reverseClient =
     clientMode === "desktop-continuous" && resourcePeers ? new ChannelClient(protocol) : undefined;
   const rawResourceChannel = reverseClient?.getChannel(TOPIC_RESOURCE_RELAY_CHANNEL);
@@ -152,14 +152,14 @@ function exposeWebSocket(
         : ("terminal-client" as const),
   };
   const scope = agentService
-    ? createXCodeAgentConnectionScope(
+    ? createZCodeAgentConnectionScope(
         peer ? peer.wrapAgent(agentService) : agentService,
         connectionContext,
       )
     : undefined;
   const overrides = new Map<string, unknown>();
   if (scope) {
-    overrides.set(IXCodeAgentService.channelName, scope.service);
+    overrides.set(IZCodeAgentService.channelName, scope.service);
   }
   const shareService = services.getOptional(IConversationShareService);
   if (shareService) {

@@ -161,7 +161,7 @@ export async function createProjectDirectoryFixture(artifacts) {
           ...bind("window", "window-project", windowProject, projectMethods),
           ...bind("window", "window-remote-projects", windowRemote, remoteMethods),
           ...bind("window", "window-project-changes", windowChanges, ["getCapabilities"]),
-          [`${ServiceChannels.XCodeTask}:getTaskMeta`]: (input) =>
+          [`${ServiceChannels.ZCodeTask}:getTaskMeta`]: (input) =>
             tasks.find((task) => task.taskId === input.taskId) ?? null,
         },
         events: {

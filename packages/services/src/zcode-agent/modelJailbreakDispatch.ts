@@ -21,7 +21,7 @@ import {
   zcodeProtocolMethods,
   type CustomSystemMessagesSettings,
   type CustomPersonaTemplate,
-  type XCodeModelJailbreakProtocolSnapshot,
+  type ZCodeModelJailbreakProtocolSnapshot,
 } from "@zcode/shared";
 
 /**
@@ -46,7 +46,7 @@ export interface ModelJailbreakSettingStore {
 }
 
 export type ModelJailbreakDispatchResult =
-  | { ok: true; snapshot: XCodeModelJailbreakProtocolSnapshot }
+  | { ok: true; snapshot: ZCodeModelJailbreakProtocolSnapshot }
   | { ok: false; message: string; data?: unknown };
 
 export const MODEL_JAILBREAK_METHODS: ReadonlySet<string> = new Set([
@@ -63,7 +63,7 @@ export function isModelJailbreakProtocolMethod(method: string): boolean {
 
 function buildState(
   settings: CustomSystemMessagesSettings | undefined,
-): XCodeModelJailbreakProtocolSnapshot["state"] {
+): ZCodeModelJailbreakProtocolSnapshot["state"] {
   const cliPrefix = settings?.cliPrefix?.trim() ?? "";
   // 当前身份提示词与某个模板正文逐字相同时，认为「套用了该模板」。
   const applied = cliPrefix

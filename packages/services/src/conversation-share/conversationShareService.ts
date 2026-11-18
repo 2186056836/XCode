@@ -24,7 +24,7 @@ import {
   type ConversationPreviewArtifactCandidate,
   localizeConversationShareUrl,
   resolveConversationShareTtlOptions,
-  resolveRuntimeXCodeEndpointOrigin,
+  resolveRuntimeZCodeEndpointOrigin,
   toZhOrEnLocale,
 } from "@zcode/shared";
 import {
@@ -35,12 +35,12 @@ import {
 import {
   PROTOCOL_V4_LIMITS,
   ZCODE_ATTACHMENT_FAULT_CODES,
-  readXCodeAttachmentFaultCode,
+  readZCodeAttachmentFaultCode,
 } from "@zcode/shared/zcode-protocol-v4";
 import { Emitter } from "@zcode/rpc";
 
-import type { IXCodeAgentService } from "../zcode-agent/zcodeAgent.js";
-import type { IXCodeSessionService } from "#src/zcode-session/zcodeSession.js";
+import type { IZCodeAgentService } from "../zcode-agent/zcodeAgent.js";
+import type { IZCodeSessionService } from "#src/zcode-session/zcodeSession.js";
 import { getConversationWorkspaceDir } from "#src/paths.js";
 import { createServiceLogger, type ServiceLogger } from "#src/logger/serviceLogger.js";
 import {
@@ -191,7 +191,7 @@ export interface ConversationShareServiceOptions {
   confirmPollTimeoutMs?: number;
   now?: () => number;
   sleep?: (delayMs: number) => Promise<void>;
-  zcodeSessionService?: Pick<IXCodeSessionService, "createSession" | "listSessions">;
+  zcodeSessionService?: Pick<IZCodeSessionService, "createSession" | "listSessions">;
   download?: (url: string, init?: { signal?: AbortSignal }) => Promise<Response>;
   /** 单个 artifact 下载的超时（含读 body）；缺省 120s。 */
   downloadTimeoutMs?: number;
@@ -203,7 +203,7 @@ export interface ConversationShareServiceOptions {
 
 type ConversationShareAgentService = ShareWorkflowReader &
   Pick<
-    IXCodeAgentService,
+    IZCodeAgentService,
     | "conversationRowsRangeV4"
     | "conversationFileChangesV4"
     | "conversationAttachmentReadV4"
@@ -530,7 +530,7 @@ function allowedArtifactFor(
  * 仅在 fault 码缺席时保留一条 errno 文本兜底，用于尚未带结构化码的旧 zcode-cli。
  */
 function isDefiniteMissingAttachment(error: unknown): boolean {
-  const faultCode = readXCodeAttachmentFaultCode(error);
+  const faultCode = readZCodeAttachmentFaultCode(error);
   if (faultCode) {
     return (
       faultCode === ZCODE_ATTACHMENT_FAULT_CODES.shareStatNotFound ||
@@ -542,7 +542,7 @@ function isDefiniteMissingAttachment(error: unknown): boolean {
 }
 
 function isAttachmentAuthorizationError(error: unknown): boolean {
-  const faultCode = readXCodeAttachmentFaultCode(error);
+  const faultCode = readZCodeAttachmentFaultCode(error);
   if (faultCode) {
     return (
       faultCode === ZCODE_ATTACHMENT_FAULT_CODES.shareStatNotAuthorized ||
@@ -557,7 +557,7 @@ function isAttachmentAuthorizationError(error: unknown): boolean {
 
 /** 附件体积超出协议/通道可承载范围：选择阶段就应作为确定阻断呈现。 */
 function isAttachmentTooLargeError(error: unknown): boolean {
-  const faultCode = readXCodeAttachmentFaultCode(error);
+  const faultCode = readZCodeAttachmentFaultCode(error);
   return (
     faultCode === ZCODE_ATTACHMENT_FAULT_CODES.shareStatTooLarge ||
     faultCode === ZCODE_ATTACHMENT_FAULT_CODES.previewTooLarge
@@ -692,7 +692,7 @@ export class ConversationShareService implements IConversationShareService {
     Emitter<ConversationShareImportProgress>
   >();
   private readonly zcodeSessionService?: Pick<
-    IXCodeSessionService,
+    IZCodeSessionService,
     "createSession" | "listSessions"
   >;
   private readonly download: (url: string, init?: { signal?: AbortSignal }) => Promise<Response>;
@@ -737,12 +737,12 @@ export class ConversationShareService implements IConversationShareService {
       options.conversationWorkspaceRoot ?? getConversationWorkspaceDir();
     // 兜底写死生产站 https://zcode.z.ai/cn/share，于是测试环境（API base 走
     // 配置的 XCode origin）导入后回链仍指向生产站，点分割线打开的是另一个环境的分享。
-    // 改用与 API base 同一个环境解析器（buildRuntimeXCodeApiUrl 也走它），保证同环境。
+    // 改用与 API base 同一个环境解析器（buildRuntimeZCodeApiUrl 也走它），保证同环境。
     // 优先级不变：显式 option > ZCODE_CONVERSATION_SHARE_WEB_URL > 按环境推导。
     this.shareWebUrl = (
       options.shareWebUrl ??
       process.env.ZCODE_CONVERSATION_SHARE_WEB_URL ??
-      `${resolveRuntimeXCodeEndpointOrigin(process.env)}/cn/share`
+      `${resolveRuntimeZCodeEndpointOrigin(process.env)}/cn/share`
     ).replace(/\/+$/u, "");
     this.importIndexPath = join(this.conversationWorkspaceRoot, ".zcode-share-imports.json");
     this.logger = options.logger ?? createServiceLogger("conversation-share");

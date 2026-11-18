@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
-  decodeXCodeBuiltinRelease,
+  decodeZCodeBuiltinRelease,
   NodePersonalProviderConfigRepository,
 } from "@zcode/provider-node";
 import {
@@ -29,7 +29,7 @@ describe("Todo149 OpenCode Go 模板创建", () => {
     const builtinPath =
       process.env.ZCODE_BUILTIN_PROVIDER_CONFIG_FILE?.trim() ||
       resolve(process.cwd(), "../../config/provider/zcode-builtin.json");
-    const release = decodeXCodeBuiltinRelease(JSON.parse(await readFile(builtinPath, "utf8")));
+    const release = decodeZCodeBuiltinRelease(JSON.parse(await readFile(builtinPath, "utf8")));
     const repository = new NodePersonalProviderConfigRepository({
       filePath: getE2EAppDataPaths().configFile,
       pollingIntervalMs: false,

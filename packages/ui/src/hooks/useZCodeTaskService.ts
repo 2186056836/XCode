@@ -1,21 +1,21 @@
 import { useServices } from "@/hooks/useServices.js";
 import { useWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
-import type { IXCodeTaskService } from "@zcode/services";
-import type { XCodeTaskSnapshot } from "@zcode/shared";
+import type { IZCodeTaskService } from "@zcode/services";
+import type { ZCodeTaskSnapshot } from "@zcode/shared";
 import { uiMemoryDiagnosticsRegistry } from "@/lib/memoryDiagnostics.js";
 
-type GetTaskSnapshotParams = Parameters<IXCodeTaskService["getTaskSnapshot"]>[0];
-type GetTaskSnapshotResult = Promise<XCodeTaskSnapshot | null>;
-type GetTaskSnapshotWithEtagParams = Parameters<IXCodeTaskService["getTaskSnapshotWithEtag"]>[0];
+type GetTaskSnapshotParams = Parameters<IZCodeTaskService["getTaskSnapshot"]>[0];
+type GetTaskSnapshotResult = Promise<ZCodeTaskSnapshot | null>;
+type GetTaskSnapshotWithEtagParams = Parameters<IZCodeTaskService["getTaskSnapshotWithEtag"]>[0];
 
-const zcodeTaskServiceProxyCache = new WeakMap<IXCodeTaskService, IXCodeTaskService>();
+const zcodeTaskServiceProxyCache = new WeakMap<IZCodeTaskService, IZCodeTaskService>();
 const snapshotInflightRequestsByService = new WeakMap<
-  IXCodeTaskService,
+  IZCodeTaskService,
   Map<string, GetTaskSnapshotResult>
 >();
 const snapshotCacheByService = new WeakMap<
-  IXCodeTaskService,
-  Map<string, { etag: string; snapshot: XCodeTaskSnapshot }>
+  IZCodeTaskService,
+  Map<string, { etag: string; snapshot: ZCodeTaskSnapshot }>
 >();
 const SNAPSHOT_CACHE_STORAGE_KEY = "zcode-task-snapshot-cache:v1";
 const SNAPSHOT_CACHE_MAX_ENTRY_BYTES = 256 * 1024;
@@ -24,7 +24,7 @@ const SNAPSHOT_CACHE_MAX_ENTRIES = 20;
 type PersistedSnapshotCacheEntry = {
   key: string;
   etag: string;
-  snapshot: XCodeTaskSnapshot;
+  snapshot: ZCodeTaskSnapshot;
   updatedAt: number;
   sizeBytes: number;
 };
@@ -32,7 +32,7 @@ let persistedSnapshotCacheLoaded = false;
 const persistedSnapshotCache = new Map<string, PersistedSnapshotCacheEntry>();
 // 内存诊断计数器：WeakMap 无法枚举，记住最近一个
 // service 的内存缓存（renderer 内实际只有一个 task service 实例）。
-let latestSnapshotCache: Map<string, { etag: string; snapshot: XCodeTaskSnapshot }> | undefined;
+let latestSnapshotCache: Map<string, { etag: string; snapshot: ZCodeTaskSnapshot }> | undefined;
 uiMemoryDiagnosticsRegistry.register("taskSnapshotCache", () => ({
   entries: latestSnapshotCache?.size ?? 0,
   persisted: persistedSnapshotCache.size,
@@ -62,7 +62,7 @@ export function buildSnapshotDedupeKey(params: GetTaskSnapshotParams): string {
 }
 
 function getOrCreateSnapshotInflightMap(
-  service: IXCodeTaskService,
+  service: IZCodeTaskService,
 ): Map<string, GetTaskSnapshotResult> {
   if (!service || typeof service !== "object") {
     return new Map();
@@ -77,8 +77,8 @@ function getOrCreateSnapshotInflightMap(
 }
 
 function getOrCreateSnapshotCacheMap(
-  service: IXCodeTaskService,
-): Map<string, { etag: string; snapshot: XCodeTaskSnapshot }> {
+  service: IZCodeTaskService,
+): Map<string, { etag: string; snapshot: ZCodeTaskSnapshot }> {
   if (!service || typeof service !== "object") {
     return new Map();
   }
@@ -87,7 +87,7 @@ function getOrCreateSnapshotCacheMap(
     latestSnapshotCache = existing;
     return existing;
   }
-  const created = new Map<string, { etag: string; snapshot: XCodeTaskSnapshot }>();
+  const created = new Map<string, { etag: string; snapshot: ZCodeTaskSnapshot }>();
   snapshotCacheByService.set(service, created);
   latestSnapshotCache = created;
   return created;
@@ -186,7 +186,7 @@ function readPersistedSnapshotEntry(key: string) {
 function writePersistedSnapshotEntry(
   key: string,
   etag: string,
-  snapshot: XCodeTaskSnapshot,
+  snapshot: ZCodeTaskSnapshot,
 ): void {
   ensurePersistedSnapshotCacheLoaded();
   const serializedSnapshot = JSON.stringify(snapshot);
@@ -216,7 +216,7 @@ function deletePersistedSnapshotEntry(key: string): void {
   flushPersistedSnapshotCache();
 }
 
-function createXCodeTaskServiceProxy(service: IXCodeTaskService): IXCodeTaskService {
+function createZCodeTaskServiceProxy(service: IZCodeTaskService): IZCodeTaskService {
   const inflight = getOrCreateSnapshotInflightMap(service);
   const snapshotCache = getOrCreateSnapshotCacheMap(service);
 
@@ -300,11 +300,11 @@ function createXCodeTaskServiceProxy(service: IXCodeTaskService): IXCodeTaskServ
 }
 
 /** 获取 XCode task wrapper 服务实例 */
-export function useXCodeTaskService(
+export function useZCodeTaskService(
   workspacePath?: string,
   preferredRemoteSessionId?: string | null,
   workspaceIdentity?: string | null,
-): IXCodeTaskService {
+): IZCodeTaskService {
   // XCode task 服务按 workspace 身份解析，保证所有 task RPC 都落到对应的 host。
   // useWorkspaceServices 内部自带 unscoped 回退（workspacePath 为空时等价 useServices），
   // 无条件调用以满足 rules-of-hooks（1112 起 react/rules-of-hooks 升级为 error）。
@@ -317,7 +317,7 @@ export function useXCodeTaskService(
   if (cachedProxy) {
     return cachedProxy;
   }
-  const nextProxy = createXCodeTaskServiceProxy(rawService);
+  const nextProxy = createZCodeTaskServiceProxy(rawService);
   zcodeTaskServiceProxyCache.set(rawService, nextProxy);
   return nextProxy;
 }

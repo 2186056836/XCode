@@ -3,7 +3,7 @@ import { DirectoryBrowser } from "@/DirectoryBrowser.js";
 import { Button } from "@/components/ui/button.js";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog.js";
 import { useOptionalBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import {
   buildServerRemoteWorkspaceIdentity,
@@ -34,7 +34,7 @@ export function ChatRemoteFolderSelection({
   onCreateTask: ProjectSidebarProps["onCreateTask"];
   onClose(): void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const management = useOptionalBaseWorkspaceServices()?.sourceServerManagementService;
   const sidebar = useProjectDirectory();
   const hostId = remoteHostIdFromWorkspaceIdentity(

@@ -4,7 +4,7 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu.js";
 import { DefaultFileApplicationLabel } from "@/file-menu/DefaultFileApplicationLabel.js";
 import { FileApplicationIcon } from "@/file-menu/FileApplicationIcon.js";
 import { FileApplicationSubmenu } from "@/file-menu/FileApplicationSubmenu.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 interface ApplicationChoice {
   id: string;
@@ -29,7 +29,7 @@ export function FileApplicationChoices<T extends ApplicationChoice>({
   onSelect: (application: T) => void;
   onOpenDefault?: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const ordered = useMemo(() => {
     const unique = new Map<string, T>();
     for (const application of applications)

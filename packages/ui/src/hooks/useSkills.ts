@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { XCodeSkillReferenceCatalogEntry } from "@zcode/shared";
+import type { ZCodeSkillReferenceCatalogEntry } from "@zcode/shared";
 import { useWorkspaceServicesResolution } from "@/hooks/useWorkspaceServices.js";
 import { logger } from "@/logger.js";
 
 export interface ConversationSkillCatalogState {
-  skills: XCodeSkillReferenceCatalogEntry[];
+  skills: ZCodeSkillReferenceCatalogEntry[];
   authority: "session" | "workspace" | null;
   loading: boolean;
   error: string | null;

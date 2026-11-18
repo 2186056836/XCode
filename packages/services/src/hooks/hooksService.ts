@@ -30,9 +30,9 @@ import { updateJsonObjectFile } from "#src/fs/atomicFileUtils.js";
 import {
   fromLegacyHooksConfig,
   fromProjectSnapshot,
-  fromUserXCodeSource,
+  fromUserZCodeSource,
   resolveNextRootEnabled,
-  toXCodeHooksEvents,
+  toZCodeHooksEvents,
   type LegacyHooksConfig,
 } from "./workspaceHookSettingsModel.js";
 
@@ -58,7 +58,7 @@ const HOOK_EVENTS: readonly HookEvent[] = [
   "Stop",
 ];
 
-interface XCodeConfigFile {
+interface ZCodeConfigFile {
   hooks?: WorkspaceHooksConfig;
   [key: string]: unknown;
 }
@@ -117,7 +117,7 @@ async function readJsonFile<T>(filePath: string): Promise<T | null> {
   }
 }
 
-async function readUserXCodeSource(): Promise<WorkspaceHookSourceInput | undefined> {
+async function readUserZCodeSource(): Promise<WorkspaceHookSourceInput | undefined> {
   const path = getConfigPath("zcode");
   const config = await readJsonFile<Record<string, unknown>>(path);
   const parsed = workspaceHooksConfigSchema.safeParse(config?.hooks);
@@ -240,10 +240,10 @@ async function loadHooksImpl(
 }> {
   const workspacePath = resolve(params.workspacePath);
   if (params.scope === "user") {
-    const userSource = await readUserXCodeSource();
+    const userSource = await readUserZCodeSource();
     const runtimeRoot = resolveWorkspaceHookRuntimeRoot([userSource?.hooks]);
     const hooks = [
-      ...fromUserXCodeSource({
+      ...fromUserZCodeSource({
         source: userSource,
         runtimeRoot,
         workspacePath,
@@ -264,7 +264,7 @@ async function loadHooksImpl(
   );
   const [{ sources: projectSources }, userSource] = await Promise.all([
     readWorkspaceHookProjectSources({ workingDirectory: workspacePath }),
-    readUserXCodeSource(),
+    readUserZCodeSource(),
   ]);
   const runtimeRoot = resolveWorkspaceHookRuntimeRoot([
     userSource?.hooks,
@@ -288,7 +288,7 @@ async function loadHooksImpl(
     }),
     ...(await loadLegacyHooksFromLocation("agents", workspacePath)),
     ...(await loadLegacyHooksFromLocation("claude", workspacePath)),
-    ...fromUserXCodeSource({
+    ...fromUserZCodeSource({
       source: userSource,
       runtimeRoot,
       workspacePath,
@@ -310,19 +310,19 @@ async function loadHooksImpl(
  * config.json 里的 MCP、插件等其他配置会被冲掉。
  * 修法：改用 updateJsonObjectFile——文件损坏时报错不写，写前重读，只改 hooks 字段，原子替换。
  */
-async function writeXCodeHooksConfig(
+async function writeZCodeHooksConfig(
   workspacePath: string | undefined,
   hooks: Hook[],
 ): Promise<void> {
   await updateJsonObjectFile(getConfigPath("zcode", workspacePath), (current) => {
-    const existingConfig = current as XCodeConfigFile;
+    const existingConfig = current as ZCodeConfigFile;
     const enabled = resolveNextRootEnabled(existingConfig.hooks?.enabled, hooks);
     return {
       ...existingConfig,
       hooks: {
         ...existingConfig.hooks,
         ...(enabled !== undefined ? { enabled } : {}),
-        events: toXCodeHooksEvents(hooks),
+        events: toZCodeHooksEvents(hooks),
       },
     };
   });
@@ -348,9 +348,9 @@ async function saveHooksImpl(params: {
       (!hook.configuredState ||
         resolve(hook.configuredState.sourcePath) === currentProjectConfigPath),
   );
-  await writeXCodeHooksConfig(undefined, userHooks);
+  await writeZCodeHooksConfig(undefined, userHooks);
   if (params.scope !== "user") {
-    await writeXCodeHooksConfig(params.workspacePath, projectHooks);
+    await writeZCodeHooksConfig(params.workspacePath, projectHooks);
   }
 }
 

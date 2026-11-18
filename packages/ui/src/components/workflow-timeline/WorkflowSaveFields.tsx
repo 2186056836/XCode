@@ -4,7 +4,7 @@
 // 与弹层壳分文件只为守住 400 行的门；这里不持有任何状态，全部由 WorkflowSavePopover 传进来。
 import type { RefObject } from "react";
 import { FolderIcon, GlobeIcon } from "lucide-react";
-import type { XCodeSavedWorkflowScope } from "@zcode/shared";
+import type { ZCodeSavedWorkflowScope } from "@zcode/shared";
 import { Button } from "@/components/ui/button.js";
 import { Input } from "@/components/ui/input.js";
 import {
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select.js";
 import { Spinner } from "@/components/ui/spinner.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { SettingsFormTextarea } from "@/settings/SettingsFormTextarea.js";
 import { SAVED_WORKFLOW_NAME_MAX_CHARS, type WorkflowSaveDraft } from "./workflowRunSave.js";
 
@@ -58,7 +58,7 @@ export function WorkflowSaveFields({
   taken: boolean;
   update: (next: Partial<WorkflowSaveDraft>) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const format = (id: string, values?: Record<string, string>) =>
     intl.formatMessage({ id }, values);
   return (
@@ -112,7 +112,7 @@ export function WorkflowSaveFields({
         </span>
         <Select
           disabled={scopeLocked || saving}
-          onValueChange={(value) => update({ scope: value as XCodeSavedWorkflowScope })}
+          onValueChange={(value) => update({ scope: value as ZCodeSavedWorkflowScope })}
           value={draft.scope}
         >
           <SelectTrigger className="w-full" data-testid="workflow-save-scope">
@@ -189,11 +189,11 @@ function WorkflowSaveConsequence({
 }: {
   failure: WorkflowSaveFailure | undefined;
   pathPreview: string;
-  scope: XCodeSavedWorkflowScope;
+  scope: ZCodeSavedWorkflowScope;
   shadowing: boolean;
   taken: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const format = (id: string, values?: Record<string, string>) =>
     intl.formatMessage({ id }, values);
   // 遮蔽那一句借 SaveWorkflow 卡的原词（它本身不带句号），句号随语言由词条补上。

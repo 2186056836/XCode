@@ -3,7 +3,7 @@ import type {
   McpServerConfig,
   McpSource,
   NativeMcpServerRecord,
-  XCodeMcpServer,
+  ZCodeMcpServer,
 } from "@zcode/shared";
 
 export const MCP_CONFIG_KEY = "zcode-mcp-config";
@@ -99,8 +99,8 @@ export function buildServerList(
   nativeServers: NativeMcpServerRecord[],
   enabledStates: Record<string, boolean>,
   deletedPreload: Set<string>,
-  existingServers: XCodeMcpServer[],
-): XCodeMcpServer[] {
+  existingServers: ZCodeMcpServer[],
+): ZCodeMcpServer[] {
   const existingById = new Map(existingServers.map((s) => [s.id, s]));
 
   function makeServer(
@@ -108,12 +108,12 @@ export function buildServerList(
     name: string,
     serverConfig: McpServerConfig,
     source: McpSource,
-    scope: XCodeMcpServer["scope"],
+    scope: ZCodeMcpServer["scope"],
     enabledBySource?: boolean,
     projectPath?: string,
-    file?: XCodeMcpServer["file"],
-    location?: XCodeMcpServer["location"],
-  ): XCodeMcpServer {
+    file?: ZCodeMcpServer["file"],
+    location?: ZCodeMcpServer["location"],
+  ): ZCodeMcpServer {
     const prev = existingById.get(serverId);
     const configChanged = prev ? !isSameMcpServerConfig(prev.config, serverConfig) : true;
     return {
@@ -136,7 +136,7 @@ export function buildServerList(
     };
   }
 
-  const servers: XCodeMcpServer[] = [];
+  const servers: ZCodeMcpServer[] = [];
 
   for (const server of nativeServers) {
     const serverId = makeServerId(server.source, server.name, server.projectPath, server.location?.source);
@@ -164,7 +164,7 @@ function isSameMcpServerConfig(left: McpServerConfig, right: McpServerConfig): b
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-export function getServerPriority(server: XCodeMcpServer): number {
+export function getServerPriority(server: ZCodeMcpServer): number {
   if (server.scope === "workspace") return 2;
   if (server.scope === "user") return 1;
   return 0;

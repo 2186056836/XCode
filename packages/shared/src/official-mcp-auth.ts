@@ -254,7 +254,7 @@ export interface CreateOfficialMcpTrustedOriginRegistryOptions {
   /** 本地自测开关原始值（逗号分隔的 loopback origin），通常来自 env。 */
   devTrustedOriginsRaw?: string | undefined;
   /** 当前 XCode API origin 的解析器；两侧必须用等价口径，否则会一侧放行一侧拒绝。 */
-  resolveXCodeApiOrigin: () => string | undefined | Promise<string | undefined>;
+  resolveZCodeApiOrigin: () => string | undefined | Promise<string | undefined>;
 }
 
 export function createOfficialMcpTrustedOriginRegistry(
@@ -264,7 +264,7 @@ export function createOfficialMcpTrustedOriginRegistry(
     async isTrusted({ origin, pluginId }) {
       let zcodeApiOrigin: string | undefined;
       try {
-        zcodeApiOrigin = await options.resolveXCodeApiOrigin();
+        zcodeApiOrigin = await options.resolveZCodeApiOrigin();
       } catch {
         // 解析失败按不可信处理，绝不因为拿不到 origin 就放行。
         return { detail: "zcode_origin_unresolved", trusted: false };

@@ -3,7 +3,7 @@ import { isRemoteWorkspaceIdentity } from "@zcode/shared";
 import { toast } from "@/components/ui/toast.js";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
 import { useOptionalServices } from "@/hooks/useServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import {
   documentViewerInstance,
@@ -27,7 +27,7 @@ export function useOpenSlotSurface(
   const platform = useOptionalPlatform();
   const bridge = useOptionalServices()?.pluginUiBridgeService;
   const openPluginUi = useOpenPluginUi();
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const paneTarget = usePluginUiPaneTarget({
     workspacePath: shell.workspacePath,
     workspaceIdentity: shell.workspaceIdentity,

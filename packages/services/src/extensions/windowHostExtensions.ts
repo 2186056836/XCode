@@ -50,7 +50,7 @@ import type { IPluginManagementService } from "#src/plugins/pluginManagement.js"
 import type { IModelSelectionService } from "#src/model-provider/providerFacadeServices.js";
 import type { PluginMutationSucceededEvent } from "#src/plugins/pluginManagementService.js";
 import type { PluginUserOptionsReader } from "#src/zcode-agent/pluginHostQueriesClient.js";
-import type { IXCodeAgentService } from "#src/zcode-agent/zcodeAgent.js";
+import type { IZCodeAgentService } from "#src/zcode-agent/zcodeAgent.js";
 import type { AppControlServiceHandle } from "#src/app-control/contract.js";
 import { createServiceLogger } from "#src/logger/serviceLogger.js";
 import {
@@ -100,7 +100,7 @@ export interface WindowHostExtensionsDeps {
    * 数据泵的来源：context 组成与生成速率都由 CLI 产生（§3.4）；会话读连接以它为底座建连接作用域（§17.5）。
    * 只在本进程内传递。
    */
-  agent: IXCodeAgentService;
+  agent: IZCodeAgentService;
   /** Window Host 控制器的任务投影（会话列表泵，§17.5）：只在本进程内传递。缺省时列表订阅报 unavailable。 */
   taskRows?: ExtensionTaskRowsSource;
   /** 扩展视图的沙箱登记（Host → Main）。缺省时扩展视图不可用。 */

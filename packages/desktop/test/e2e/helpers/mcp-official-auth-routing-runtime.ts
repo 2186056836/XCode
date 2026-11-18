@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { setTimeout as pause } from "node:timers/promises";
 import { createOfficialMcpTrustedOriginRegistry } from "@zcode/shared";
-import { createXCodeAgentService, getDataBaseDir, setDataBaseDir } from "@zcode/services/node";
+import { createZCodeAgentService, getDataBaseDir, setDataBaseDir } from "@zcode/services/node";
 import {
   getTasksIndexDatabasePath,
   prepareTasksIndexStorage,
@@ -44,7 +44,7 @@ export async function runOfficialMcpRoutingRuntime(artifactDir: string): Promise
   const exited: number[] = [];
   try {
     await prepareTasksIndexStorage(getTasksIndexDatabasePath(), () => {});
-    const service = createXCodeAgentService({
+    const service = createZCodeAgentService({
       mcpStatusIdleTimeoutMs: 1_000,
       commandResolver: ({ workspacePath }) => ({
         command: process.execPath,
@@ -63,7 +63,7 @@ export async function runOfficialMcpRoutingRuntime(artifactDir: string): Promise
       }),
       officialMcpTrustedOrigins: createOfficialMcpTrustedOriginRegistry({
         devTrustedOriginsRaw: origin,
-        resolveXCodeApiOrigin: () => "https://example.com",
+        resolveZCodeApiOrigin: () => "https://example.com",
       }),
       officialMcpAuthHeadersResolver: {
         async resolveHeaders(request) {

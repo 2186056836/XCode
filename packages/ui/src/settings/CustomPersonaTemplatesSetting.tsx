@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea.js";
 import { toast } from "@/components/ui/toast.js";
 import { useSettings } from "@/hooks/useSettingService.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { SettingsGroupCard, SettingsRow } from "@/settings/SettingsPageParts.js";
 
@@ -44,7 +44,7 @@ function clonePrefill(
 }
 
 export function CustomPersonaTemplatesSetting() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { settings, update } = useSettings();
   const templates = settings?.customPersonaTemplates ?? [];
   const [open, setOpen] = useState(false);

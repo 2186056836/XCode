@@ -12,10 +12,10 @@ import { useOnboardingRecordService } from "@/hooks/useOnboardingRecordService.j
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useEffectiveShortcutBindings } from "@/shortcuts/useShortcutBindings.js";
 import { matchesShortcutBinding } from "@/shortcuts/bindings.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { Button } from "@/components/ui/button.js";
 import { Checkbox } from "@/components/ui/checkbox.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import type { InterfaceMode } from "@/lib/interfaceMode.js";
 import { logger } from "@/logger.js";
 import { DesktopWindowControls } from "@/DesktopWindowControls.js";
@@ -52,21 +52,21 @@ export function OccupationOnboarding({
   const platform = usePlatform();
   const onboardingRecord = useOnboardingRecordService();
   const shortcutBindings = useEffectiveShortcutBindings();
-  const requested = useXCodeStore((state) => state.newUserOnboardingOpen);
-  const setRequested = useXCodeStore((state) => state.setNewUserOnboardingOpen);
+  const requested = useZCodeStore((state) => state.newUserOnboardingOpen);
+  const setRequested = useZCodeStore((state) => state.setNewUserOnboardingOpen);
   // 登录态变化（useRootOAuthEffects 登录成功后 setUser）时按 userId 重新判定是否触发引导。
-  const userId = useXCodeStore((state) => state.user?.id) ?? null;
-  const { intl } = useXCodeIntl();
+  const userId = useZCodeStore((state) => state.user?.id) ?? null;
+  const { intl } = useZCodeIntl();
   const t = (key: string) => intl.formatMessage({ id: `occupationOnboarding.${key}` });
   const [occupation, setOccupation] = useState<OccupationValue | null>("developer");
-  const savedInterfaceMode = useXCodeStore((state) => state.interfaceMode);
-  const setInterfaceMode = useXCodeStore((state) => state.setInterfaceMode);
+  const savedInterfaceMode = useZCodeStore((state) => state.interfaceMode);
+  const setInterfaceMode = useZCodeStore((state) => state.setInterfaceMode);
   const applyInterfaceMode = useSetInterfaceModeWithTelemetry(platform, "app.onboarding");
   // mode 为 null 表示模式页被"跳过"（跳过是显式答案，记录里保留 null 而非兜底值）。
   const [mode, setMode] = useState<InterfaceMode | null>(savedInterfaceMode);
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const preferences = step === 2;
-  const requestOnboardingDialog = useXCodeStore((state) => state.requestOnboardingDialog);
+  const requestOnboardingDialog = useZCodeStore((state) => state.requestOnboardingDialog);
   const [migration, setMigration] = useState(false);
   const [memory, setMemory] = useState(savedInterfaceMode === "office");
   const [suggestions, setSuggestions] = useState(savedInterfaceMode === "office");

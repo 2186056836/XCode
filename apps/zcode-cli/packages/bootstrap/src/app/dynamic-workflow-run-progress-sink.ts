@@ -24,7 +24,7 @@ interface DynamicWorkflowRunProgressSinkDeps {
  *
  * 事件必须落在**发起该 run 的那个会话**里。今天这是按构造成立的 1:1：
  *
- *   XCodeApp ──1:1── AgentRuntime ──1:1── sessionId        （create-app：`new AgentRuntime(sessionId, …)`）
+ *   ZCodeApp ──1:1── AgentRuntime ──1:1── sessionId        （create-app：`new AgentRuntime(sessionId, …)`）
  *        └──1:1── run service（本 app 内建，端口不外借）
  *   CreateWorkflow handler 提交时带 `parentSessionId = context.sessionId`
  *

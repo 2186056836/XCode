@@ -513,7 +513,7 @@ describe("PLM-EXT-JARVISHOST Jarvis 要的宿主能力", () => {
       return { path: tabs.activeWorkspacePath!, identity: tabs.activeWorkspaceIdentity };
     });
     const created = await callHandoffHost<{ session: { sessionId: string } }>(
-      ServiceChannels.XCodeAgent,
+      ServiceChannels.ZCodeAgent,
       "createSession",
       [
         {
@@ -533,7 +533,7 @@ describe("PLM-EXT-JARVISHOST Jarvis 要的宿主能力", () => {
     );
     const secondSessionId = created.session.sessionId;
     evidence.secondSessionId = secondSessionId;
-    await callHandoffHost(ServiceChannels.XCodeTask, "resumeTask", [
+    await callHandoffHost(ServiceChannels.ZCodeTask, "resumeTask", [
       { taskId: secondSessionId, workspacePath: workspace.path },
     ]);
     await selectV4TaskById(secondSessionId, 30000);

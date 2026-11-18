@@ -11,7 +11,7 @@ const pluginOptionValueSchema = z.union([z.string(), z.number(), z.boolean()]);
  * 错误里不带选项值。
  */
 export const zcodePluginQueryErrorDataSchema = z.object({ code: nonEmptyString }).strict();
-export type XCodePluginQueryErrorData = z.infer<typeof zcodePluginQueryErrorDataSchema>;
+export type ZCodePluginQueryErrorData = z.infer<typeof zcodePluginQueryErrorDataSchema>;
 
 // ── plugins/readUserOptions ──
 // 本插件 user 层的有效值（清单默认值 ⊕ user 层选项，含敏感值）。只给 App 的扩展 settings 能力用。
@@ -23,13 +23,13 @@ export const ZCODE_PLUGIN_READ_USER_OPTIONS_ERROR_CODES = {
 export const zcodePluginsReadUserOptionsParamsSchema = z
   .object({ pluginId: nonEmptyString })
   .strict();
-export type XCodePluginsReadUserOptionsParams = z.infer<
+export type ZCodePluginsReadUserOptionsParams = z.infer<
   typeof zcodePluginsReadUserOptionsParamsSchema
 >;
 export const zcodePluginsReadUserOptionsResultSchema = z
   .object({ values: z.record(z.string(), pluginOptionValueSchema) })
   .strict();
-export type XCodePluginsReadUserOptionsResult = z.infer<
+export type ZCodePluginsReadUserOptionsResult = z.infer<
   typeof zcodePluginsReadUserOptionsResultSchema
 >;
 
@@ -60,7 +60,7 @@ export const ZCODE_PLUGIN_MENTION_ERROR_CODES = {
   toolFailed: "plugin_mention_tool_failed",
   resultInvalid: "plugin_mention_result_invalid",
 } as const;
-export type XCodePluginMentionErrorCode =
+export type ZCodePluginMentionErrorCode =
   (typeof ZCODE_PLUGIN_MENTION_ERROR_CODES)[keyof typeof ZCODE_PLUGIN_MENTION_ERROR_CODES];
 
 export const zcodePluginMentionItemSchema = z
@@ -73,7 +73,7 @@ export const zcodePluginMentionItemSchema = z
     insertText: z.string().min(1).max(ZCODE_PLUGIN_MENTION_LIMITS.insertTextMaxChars),
   })
   .strict();
-export type XCodePluginMentionItem = z.infer<typeof zcodePluginMentionItemSchema>;
+export type ZCodePluginMentionItem = z.infer<typeof zcodePluginMentionItemSchema>;
 export const zcodePluginMentionItemsSchema = z
   .array(zcodePluginMentionItemSchema)
   .max(ZCODE_PLUGIN_MENTION_LIMITS.maxItems);
@@ -88,8 +88,8 @@ export const zcodePluginsMentionItemsParamsSchema = z
     query: z.string().max(ZCODE_PLUGIN_MENTION_LIMITS.queryMaxChars),
   })
   .strict();
-export type XCodePluginsMentionItemsParams = z.infer<typeof zcodePluginsMentionItemsParamsSchema>;
+export type ZCodePluginsMentionItemsParams = z.infer<typeof zcodePluginsMentionItemsParamsSchema>;
 export const zcodePluginsMentionItemsResultSchema = z
   .object({ items: zcodePluginMentionItemsSchema })
   .strict();
-export type XCodePluginsMentionItemsResult = z.infer<typeof zcodePluginsMentionItemsResultSchema>;
+export type ZCodePluginsMentionItemsResult = z.infer<typeof zcodePluginsMentionItemsResultSchema>;

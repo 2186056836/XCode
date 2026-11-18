@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 type FileRewindPreviewFile =
   | V4ConversationFileRewindPreviewResult["safeFiles"][number]
@@ -37,7 +37,7 @@ interface ConversationFileRewindDialogProps {
   onConversationOnly?: () => void;
 }
 
-function formatReason(reason: string, intl: ReturnType<typeof useXCodeIntl>["intl"]) {
+function formatReason(reason: string, intl: ReturnType<typeof useZCodeIntl>["intl"]) {
   const fallbackReasonKey = "chat.changeSummary.rewindDialog.reason.unsupportedCheckpoint";
   const keyByReason: Record<string, string> = {
     bash_ignored: "chat.changeSummary.rewindDialog.reason.bashIgnored",
@@ -57,7 +57,7 @@ function PreviewFileList({
   files: readonly FileRewindPreviewFile[];
   type: "safe" | "unsafe" | "ignored";
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (files.length === 0) return null;
   return (
     <div className="grid gap-1">
@@ -93,7 +93,7 @@ export function ConversationFileRewindDialog({
   variant = "fileRewind",
   onConversationOnly,
 }: ConversationFileRewindDialogProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const safeCount = preview?.safeFiles.length ?? 0;
   const unsafeCount = preview?.unsafeFiles.length ?? 0;
   const ignoredCount = preview?.ignoredFiles.length ?? 0;
@@ -233,7 +233,7 @@ export function FileRewindLockedHint({
   triggerTestId: string;
   children: ReactNode;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (!locked) return <>{children}</>;
   return (
     <ControlHintTooltip title={intl.formatMessage({ id: "chat.changeSummary.rewindLocked" })}>

@@ -135,7 +135,7 @@ describe("node_repl host and browser-use runtime bundles", () => {
         expect(client.getNegotiatedProtocolVersion()).toBe("2026-07-28");
         expect(listed.tools.map((tool) => tool.name).sort()).toEqual(["js"]);
         const meta = {
-          "com.xcode/request-context": {
+          "com.zcode/request-context": {
             runtime_scope: "main",
             session_id: "bundle-session",
           },
@@ -219,7 +219,7 @@ describe("node_repl host and browser-use runtime bundles", () => {
             timeout_ms: 10_000,
           },
           _meta: {
-            "com.xcode/request-context": { runtime_scope: "main", session_id: "bundle-session" },
+            "com.zcode/request-context": { runtime_scope: "main", session_id: "bundle-session" },
           },
         });
 

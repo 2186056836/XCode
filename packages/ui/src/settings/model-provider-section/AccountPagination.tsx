@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /** 默认每页账号数。账号行带额度块与代理选择器，一页 5 条能让列表与操作在同一屏内。 */
 export const ACCOUNT_PAGE_SIZE = 5;
@@ -79,7 +79,7 @@ export function AccountPaginationBar({
   onChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [draft, setDraft] = useState(String(page));
 
   useEffect(() => {

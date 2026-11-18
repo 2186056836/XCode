@@ -644,7 +644,7 @@ describe("Upstream replay server", () => {
     tempDirs.push(tempDir);
     const fixturePath = join(tempDir, "fixture.json");
     const artifactPath = join(tempDir, "artifact.json");
-    const runtimeRoot = "C:/e2e-home/XCodeProject/.zcode-e2e";
+    const runtimeRoot = "C:/e2e-home/ZCodeProject/.zcode-e2e";
     await writeFile(
       fixturePath,
       JSON.stringify(

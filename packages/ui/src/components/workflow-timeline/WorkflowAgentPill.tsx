@@ -8,7 +8,7 @@ import {
   TerminalIcon,
 } from "lucide-react";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { LaneClass, StepRunStatus } from "@/components/workflow-graph/types.js";
 import { WorkflowAgentFace, agentColor } from "@/components/workflow-timeline/WorkflowAgentFace.js";
 
@@ -62,7 +62,7 @@ export function LaneGlyph({
 
 /** 状态标记：转圈 / 对勾 / 叉；`pending` 与 undefined 没有标记。状态变化时新标记弹入；可打开的药丸悬停时它让位给 ↗。 */
 export function PillStatusMark({ status }: { status: StepRunStatus | undefined }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (status === undefined || status === "pending") return null;
   const label = intl.formatMessage({ id: `chat.toolCall.workflow.graph.status.${status}` });
   return (
@@ -133,7 +133,7 @@ export function WorkflowAgentPill({
   /** `row`（24 px、静止时没有底色、悬停才成药丸）给侧板名单的两列；缺省 32 px。 */
   size?: "md" | "row";
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const tinted = laneClass === "agent";
   const completedAgent = tinted && status === "done";
   // 有延迟的入场要 backwards 填充：等待期间保持起始帧，否则药丸先满显再闪一下重新进场。

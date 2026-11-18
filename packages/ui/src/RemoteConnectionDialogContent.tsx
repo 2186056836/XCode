@@ -33,7 +33,7 @@ import { REMOTE_KIND_PRESENTATION } from "@/remote-connection/RemoteConnectionTa
 import { Button } from "@/components/ui/button.js";
 import { Input } from "@/components/ui/input.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useOptionalBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
 import { useConfirmDialogStore } from "@/store/confirmDialogStore.js";
@@ -54,7 +54,7 @@ export function useRemoteBoundaryAcknowledgement() {
   const settingService = useOptionalBaseWorkspaceServices()?.settingService;
   const syncAppSettings = useOptionalPlatform()?.syncAppSettings;
   const confirm = useConfirmDialog();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return useCallback(
     async (isCurrent: () => boolean, onBlocked?: () => void): Promise<boolean> => {
       if (!settingService) return isCurrent();
@@ -245,7 +245,7 @@ export function RemoteConnectionSettingsStep({
   onClearSelectedSshConfigAlias: () => void;
   onConnect: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const formRef = useRef<HTMLFormElement | null>(null);
   // 设置入口提供类型切换与「从 SSH config 导入」；项目/聊天入口由上一屏选好类型（RDUX-27）。
   const addingDevice = Boolean(availableKinds && onKindChange);
@@ -479,7 +479,7 @@ export function RemoteConnectionDirectoryStep({
   quickOpenPaths?: Array<string | { path: string; label?: string }>;
   quickOpenEntries?: Array<{ path: string; label?: string }>;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [navigationRevision, setNavigationRevision] = useState(0);
   const [directoryReady, setDirectoryReady] = useState(false);
   const [localPath, setLocalPath] = useState("");

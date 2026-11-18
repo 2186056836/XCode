@@ -1,10 +1,10 @@
 import type {
-  XCodeProtocolError,
-  XCodeProtocolMessage,
-  XCodeProtocolNotification,
-  XCodeProtocolRequest,
-  XCodeProtocolRequestId,
-  XCodeProtocolResponse,
+  ZCodeProtocolError,
+  ZCodeProtocolMessage,
+  ZCodeProtocolNotification,
+  ZCodeProtocolRequest,
+  ZCodeProtocolRequestId,
+  ZCodeProtocolResponse,
 } from "@zcode/shared";
 import {
   networkCaptureControlSchema,
@@ -15,15 +15,15 @@ import {
 import { V4_METHODS } from "@zcode/shared/zcode-protocol-v4";
 import type { Logger } from "@zcode/contracts";
 
-type XCodeProtocolOutgoingMessage =
-  | XCodeProtocolError
-  | XCodeProtocolNotification
-  | XCodeProtocolRequest
-  | XCodeProtocolResponse;
+type ZCodeProtocolOutgoingMessage =
+  | ZCodeProtocolError
+  | ZCodeProtocolNotification
+  | ZCodeProtocolRequest
+  | ZCodeProtocolResponse;
 
-type XCodeProtocolMessageHandler = (
-  message: XCodeProtocolMessage,
-) => Promise<XCodeProtocolOutgoingMessage | undefined>;
+type ZCodeProtocolMessageHandler = (
+  message: ZCodeProtocolMessage,
+) => Promise<ZCodeProtocolOutgoingMessage | undefined>;
 
 const PROTOCOL_EOF_DRAIN_MS = 100;
 // 生命周期由 session owner 自己串行化。若排在长请求后，查询看不到 starting/stopping，
@@ -72,24 +72,24 @@ const MCP_APP_CONCURRENT_METHODS = new Set<string>([
   zcodeProtocolMethods.mcpUiResolveAppToolCall,
 ]);
 
-interface XCodeProtocolNdjsonConnectionOptions {
+interface ZCodeProtocolNdjsonConnectionOptions {
   signal?: AbortSignal;
   clearPostResponseMessages?: () => void;
-  handleMessage: XCodeProtocolMessageHandler;
+  handleMessage: ZCodeProtocolMessageHandler;
   input: NodeJS.ReadableStream;
   logger?: Logger;
   onTransportClosed?: (error: Error) => void;
   output: NodeJS.WritableStream;
   takePostResponseMessages?: (
-    requestId: XCodeProtocolRequestId,
-  ) => readonly XCodeProtocolOutgoingMessage[];
-  takePostResponseBatch?: (requestId: XCodeProtocolRequestId) => {
-    readonly messages: readonly XCodeProtocolOutgoingMessage[];
+    requestId: ZCodeProtocolRequestId,
+  ) => readonly ZCodeProtocolOutgoingMessage[];
+  takePostResponseBatch?: (requestId: ZCodeProtocolRequestId) => {
+    readonly messages: readonly ZCodeProtocolOutgoingMessage[];
     commit(): boolean;
   } | null;
 }
 
-export class XCodeProtocolNdjsonConnection {
+export class ZCodeProtocolNdjsonConnection {
   private buffer = "";
   private processing: Promise<void> = Promise.resolve();
   private readonly presentationReads = new Set<Promise<void>>();
@@ -102,7 +102,7 @@ export class XCodeProtocolNdjsonConnection {
   private draining = false;
   private drainTimer?: ReturnType<typeof setTimeout>;
 
-  constructor(private readonly options: XCodeProtocolNdjsonConnectionOptions) {
+  constructor(private readonly options: ZCodeProtocolNdjsonConnectionOptions) {
     this.closedPromise = new Promise((resolve, reject) => {
       this.resolveClosed = resolve;
       this.rejectClosed = reject;
@@ -123,7 +123,7 @@ export class XCodeProtocolNdjsonConnection {
     return this.closedPromise;
   }
 
-  send(message: XCodeProtocolOutgoingMessage): void {
+  send(message: ZCodeProtocolOutgoingMessage): void {
     if (this.terminal) return;
     // 观测可丢弃，不能在 stdout 背压时无界积压或挤占业务协议输出。
     if (
@@ -302,7 +302,7 @@ export class XCodeProtocolNdjsonConnection {
       });
   }
 
-  private decodeLine(line: string): XCodeProtocolMessage | null {
+  private decodeLine(line: string): ZCodeProtocolMessage | null {
     let decoded: unknown;
     try {
       decoded = JSON.parse(line);
@@ -328,7 +328,7 @@ export class XCodeProtocolNdjsonConnection {
     return parsed.data;
   }
 
-  private shouldBypassProcessingQueue(message: XCodeProtocolMessage): boolean {
+  private shouldBypassProcessingQueue(message: ZCodeProtocolMessage): boolean {
     // 模型任务占住串行队列时，停止/取消请求必须仍能进入 server，
     // 才能把底层 AbortSignal 传给真实模型请求。控制面只旁路当前执行，普通请求仍保持串行。
     return (
@@ -340,7 +340,7 @@ export class XCodeProtocolNdjsonConnection {
     );
   }
 
-  private async handleMessage(message: XCodeProtocolMessage): Promise<void> {
+  private async handleMessage(message: ZCodeProtocolMessage): Promise<void> {
     if (this.terminal) return;
     const response = await this.options.handleMessage(message);
     if (response) {

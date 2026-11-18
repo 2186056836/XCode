@@ -5,13 +5,13 @@
 // treemappingActivity / codeViewer / toolDisplay / toolError / app-shell 测试注入通道。
 // 旧消息拼装运行时（zcodeChatMessages.ts）删除后，这里是该类型面的唯一事实源。
 import type {
-  XCodeAssistantMessagePart,
-  XCodeAssistantMessageFeedback,
-  XCodePromptAttachment,
-  XCodeTimelineMeta,
-  XCodeTaskSnapshotBodyRef,
-  XCodeTaskSnapshotToolFieldRef,
-  XCodeTaskSnapshotToolSlice,
+  ZCodeAssistantMessagePart,
+  ZCodeAssistantMessageFeedback,
+  ZCodePromptAttachment,
+  ZCodeTimelineMeta,
+  ZCodeTaskSnapshotBodyRef,
+  ZCodeTaskSnapshotToolFieldRef,
+  ZCodeTaskSnapshotToolSlice,
 } from "@zcode/shared";
 
 export interface TaskChatToolCall {
@@ -32,12 +32,12 @@ export interface TaskChatToolCall {
   error?: string;
   raw?: unknown;
   /** 工具大字段被快照预算裁剪后的引用；用于按需回填该工具的完整 input/output/raw。 */
-  snapshotRefs?: XCodeTaskSnapshotToolFieldRef[];
+  snapshotRefs?: ZCodeTaskSnapshotToolFieldRef[];
   /** tool call 首次进入当前消息流的本地时间，仅用于识别长时间运行中的工具调用。 */
   startedAt?: number;
 }
 
-export type TaskChatMessagePart = XCodeAssistantMessagePart;
+export type TaskChatMessagePart = ZCodeAssistantMessagePart;
 
 export interface TaskModelChangeUiTimeline {
   type: "model_change";
@@ -71,8 +71,8 @@ export interface TaskChatMessage {
   /** assistant 是否以主动停止/中断结束；用于 UI 抑制 latest 区误判为“自然完成”。 */
   interrupted?: boolean;
   /** 用户对 assistant 回复的本地反馈；只做展示/持久化，不进入后续模型上下文。 */
-  feedback?: XCodeAssistantMessageFeedback;
-  attachments?: XCodePromptAttachment[];
+  feedback?: ZCodeAssistantMessageFeedback;
+  attachments?: ZCodePromptAttachment[];
   toolCalls?: TaskChatToolCall[];
   thought?: string;
   /**
@@ -84,13 +84,13 @@ export interface TaskChatMessage {
   /** 该消息所属的对话轮次，用于关联 per-turn 文件变更摘要和回滚 */
   turnIndex?: number;
   /** 大消息首屏 preview 的完整正文引用。存在时 UI 必须把正文视为未完整加载。 */
-  bodyRefs?: XCodeTaskSnapshotBodyRef[];
+  bodyRefs?: ZCodeTaskSnapshotBodyRef[];
   /** tools 被按条数切片返回时的游标信息；用于“查看更多工具调用”补拉。 */
-  toolSlice?: XCodeTaskSnapshotToolSlice;
+  toolSlice?: ZCodeTaskSnapshotToolSlice;
   /** 是否仍在流式输出，仅用于当前运行期 UI 恢复，不参与持久化 */
   streaming?: boolean;
   /** XCode Agent synthetic timeline 消息，不参与 assistant 正文、工具调用和 fork。 */
-  syntheticTimeline?: XCodeTimelineMeta;
+  syntheticTimeline?: ZCodeTimelineMeta;
   /** UI-only synthetic timeline 消息，不进入协议快照或本地历史。 */
   uiTimeline?: TaskUiTimelineMeta;
   /** XCode CLI turn steering 状态标记，仅用于用户消息展示。 */

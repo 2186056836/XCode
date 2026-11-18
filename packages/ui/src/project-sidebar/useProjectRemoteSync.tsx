@@ -12,7 +12,7 @@ import {
   useDataSyncEntry,
   type DataSyncEntryCategory,
 } from "@/data-sync/index.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useOptionalTabStore } from "@/store/TabStoreProvider.js";
 import { isWorkspaceTab } from "@/store/tabStore.js";
 
@@ -43,7 +43,7 @@ export function useProjectRemoteSync(directory: RemoteProjectDirectory) {
         ),
     ),
   );
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   // ProjectSidebarNode 按属性浅比较做 memo；actions 换引用会让任务活动重绘所有项目节点。
   const { available, open } = entry;
   const actions = useCallback(

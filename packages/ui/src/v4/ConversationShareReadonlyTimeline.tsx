@@ -92,7 +92,7 @@ import {
   DEFAULT_CODE_PREVIEW_SETTINGS,
   type CodePreviewSettings,
 } from "@/lib/codePreviewSettings.js";
-import { XCodeIntlProvider, useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider, useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { Theme } from "@/useTheme.js";
 import { FileDisplayIcon, resolveFileDisplayDescriptor } from "@/lib/fileDisplay.js";
 import { formatAttachmentSize } from "@/lib/chatAttachmentMetadata.js";
@@ -274,7 +274,7 @@ export const ConversationTimelineMarkerDivider = memo(function ConversationTimel
   /** fork 跳父会话；只读页不传。 */
   onNavigateToRow?: (sessionId: string, rowId: number) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const marker = row.marker;
   const view = useMemo((): {
     icon: ReactNode;
@@ -575,7 +575,7 @@ const AssistantTextPresentation = memo(function AssistantTextPresentation({
           streaming={false}
           theme={theme}
           codePreviewSettings={codePreviewSettings}
-          renderXCodeFileCitations={false}
+          renderZCodeFileCitations={false}
           onOpenExternalUrl={onOpenExternalUrl}
         >
           {markdown}
@@ -687,7 +687,7 @@ const ArtifactPresentation = memo(function ArtifactPresentation({
   url?: string;
   previewLabel: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const artifactOpenContext = useContext(ArtifactOpenContext);
   const OpenAction = artifactOpenContext?.openAction;
   // 与 AssistantPreviewCards 保持同一视觉：44px 图标底板 + 真实文件类型图标 + 中粗标题 + 类型副标题。
@@ -849,7 +849,7 @@ function ReadonlyAssistantWorkItems({
   /** 传入时作为外层过程收纳的内容渲染；与 App 一样只在确有可见工作项时才挂载收纳容器。 */
   historyOpen?: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const summaryBoundary = useContext(SummaryGroupBoundaryContext);
   const items = useMemo(
     () => buildAssistantWorkRenderItems(rows, { messageStreamShowReasoning: true }),
@@ -955,7 +955,7 @@ function ReadonlyHistoryStatus({
   open: boolean;
   locale: Locale;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const duration = formatConversationWorkDuration(segment.workStatus?.durationMs, intl, locale);
   const label =
     segment.workStatus?.state === "interrupted"
@@ -1199,9 +1199,9 @@ function ReadonlyTurn({
 
 export function ConversationShareReadonlyTimeline(props: ConversationShareReadonlyTimelineProps) {
   return (
-    <XCodeIntlProvider initialLocale={props.locale ?? "zh-CN"}>
+    <ZCodeIntlProvider initialLocale={props.locale ?? "zh-CN"}>
       <ConversationShareReadonlyTimelineContent {...props} />
-    </XCodeIntlProvider>
+    </ZCodeIntlProvider>
   );
 }
 
@@ -1222,7 +1222,7 @@ function ConversationShareReadonlyTimelineContent({
   artifactOpenAction,
   unsupportedRowCount = 0,
 }: ConversationShareReadonlyTimelineProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const rowsById = new Map(rows.map((row) => [row.rowId, row] as const));
   const allBlocks = decodeConversationShareContentBlocks(contentBlocks).filter((block) => {
     const row = rowsById.get(block.fallback_row_id);

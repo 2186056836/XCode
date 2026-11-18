@@ -2,7 +2,7 @@ import { memo } from "react";
 import { TID_EXTENSION_COMPOSER_STATUS } from "@zcode/shared/test-ids";
 import { Button } from "@/components/ui/button.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { resolveLocalizedText } from "@/extension-slots/domain/slotSelectors.js";
 import { useComposerStatusSlot } from "@/extension-slots/adapters/useExtensionSlots.js";
 import { resolveExtensionIcon } from "@/extension-slots/components/extensionIcons.js";
@@ -31,7 +31,7 @@ function ComposerStatusItem({
   entry: ExtensionSlotEntry;
   runCommand: (commandId: string) => void;
 }) {
-  const { locale } = useXCodeIntl();
+  const { locale } = useZCodeIntl();
   const { item, value } = entry;
   const Icon = resolveExtensionIcon(item.icon);
   const title = resolveLocalizedText(item.title, locale);

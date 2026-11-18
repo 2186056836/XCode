@@ -1,7 +1,7 @@
 import { spawn, execFile } from "node:child_process";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
-import type { DockerConnectOptions, PublicXCodeErrorCode } from "@zcode/shared";
+import type { DockerConnectOptions, PublicZCodeErrorCode } from "@zcode/shared";
 import type {
   IRemoteBackend,
   RemoteEnvironment,
@@ -292,7 +292,7 @@ export class DockerBackend implements IRemoteBackend {
               ? `当前系统未检测到可用的 Docker 环境：${detail}`
               : "当前系统未检测到可用的 Docker 环境",
           ),
-          { code: "remote-connection-unknown" satisfies PublicXCodeErrorCode },
+          { code: "remote-connection-unknown" satisfies PublicZCodeErrorCode },
         );
       });
     }

@@ -7,7 +7,7 @@
 //   fresh facts 二次校验、waitForDeactivation 闸门和失败隔离。
 // - 执行面单元（stub context）：内存摘除在同一同步片完成（unsubscribe → gateway 去激活 →
 //   sessions.delete），app.close 后置异步；重复调用幂等。
-// - 集成（真 sqlite + XCodeProtocolAgentServer + binder）：subscribe → unsubscribe →
+// - 集成（真 sqlite + ZCodeProtocolAgentServer + binder）：subscribe → unsubscribe →
 //   容量 rebalance 去激活 → sessions-index 订阅者收不到 session.removed → 再订阅冷恢复出完整
 //   snapshot；再激活闸门在 app.close 收尾完成前挂住并发 subscribe。
 import { mkdtemp, rm } from "node:fs/promises";
@@ -25,7 +25,7 @@ import type {
   SessionId,
   WorkspaceId,
 } from "@zcode/contracts";
-import { zcodeProtocolMethods, type XCodeProtocolMessage } from "@zcode/shared";
+import { zcodeProtocolMethods, type ZCodeProtocolMessage } from "@zcode/shared";
 import {
   V4_METHODS,
   conversationTopic,
@@ -51,13 +51,13 @@ import {
   runWithSessionResidencyFinalization,
 } from "../src/zcode-protocol/session-residency.js";
 import type {
-  XCodeProtocolAgentDependencies,
-  XCodeProtocolAgentServerContext,
-  XCodeProtocolSessionRecord,
+  ZCodeProtocolAgentDependencies,
+  ZCodeProtocolAgentServerContext,
+  ZCodeProtocolSessionRecord,
 } from "../src/zcode-protocol/server-types.js";
-import { XCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
+import { ZCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
 import { createFakeApp } from "./helpers/fake-zcode-app.js";
-import type { XCodeApp } from "../src/app/types.js";
+import type { ZCodeApp } from "../src/app/types.js";
 
 // ── 常驻池单元（fake host）──────────────────────────────────────────────────
 
@@ -341,7 +341,7 @@ describe("SessionResidentPool", () => {
   });
 
   it("protocol finalization lease 支持嵌套且 release 幂等", () => {
-    const record: Pick<XCodeProtocolSessionRecord, "residencyFinalizationCount"> = {};
+    const record: Pick<ZCodeProtocolSessionRecord, "residencyFinalizationCount"> = {};
     const releaseFirst = acquireSessionResidencyFinalization(record);
     const releaseSecond = acquireSessionResidencyFinalization(record);
 
@@ -354,7 +354,7 @@ describe("SessionResidentPool", () => {
   });
 
   it("protocol finalization runner 在同步抛错与异步 reject 后都释放 lease", async () => {
-    const record: Pick<XCodeProtocolSessionRecord, "residencyFinalizationCount"> = {};
+    const record: Pick<ZCodeProtocolSessionRecord, "residencyFinalizationCount"> = {};
 
     await expect(
       runWithSessionResidencyFinalization(record, () => {
@@ -517,8 +517,8 @@ describe("SessionResidentPool", () => {
 // ── 执行面单元（stub context）───────────────────────────────────────────────
 
 interface ExecutorHarness {
-  context: XCodeProtocolAgentServerContext;
-  record: XCodeProtocolSessionRecord;
+  context: ZCodeProtocolAgentServerContext;
+  record: ZCodeProtocolSessionRecord;
   calls: string[];
   releaseClose(): void;
 }
@@ -548,7 +548,7 @@ function makeExecutorHarness(sessionId: string): ExecutorHarness {
       calls.push("unsubscribe");
     },
     updatedAt: 0,
-  } as unknown as XCodeProtocolSessionRecord;
+  } as unknown as ZCodeProtocolSessionRecord;
   const context = {
     notify: () => {},
     sessions: new Map([[sessionId, record]]),
@@ -558,7 +558,7 @@ function makeExecutorHarness(sessionId: string): ExecutorHarness {
         calls.push(`gateway.deactivateSession:${id}`);
       },
     },
-  } as unknown as XCodeProtocolAgentServerContext;
+  } as unknown as ZCodeProtocolAgentServerContext;
   return { context, record, calls, releaseClose: () => releaseClose() };
 }
 
@@ -687,7 +687,7 @@ const WORKSPACE_PATH = "/workspace/idle-deactivation";
 const SESSION_ID = "sess_idle_deactivate" as SessionId;
 type TestSessionStore = Awaited<ReturnType<typeof createSqliteSessionStore>>;
 
-async function requestResult(server: XCodeProtocolAgentServer, message: XCodeProtocolMessage) {
+async function requestResult(server: ZCodeProtocolAgentServer, message: ZCodeProtocolMessage) {
   const response = await server.handleMessage(message);
   if (!response || !("result" in response)) {
     throw new Error(`Expected protocol success response: ${JSON.stringify(response)}`);
@@ -767,24 +767,24 @@ async function seedPersistedSession(dbPath: string): Promise<void> {
 }
 
 interface IntegrationHarness {
-  server: XCodeProtocolAgentServer;
+  server: ZCodeProtocolAgentServer;
   store: TestSessionStore;
-  createdApps: XCodeApp[];
-  sessions: Map<string, XCodeProtocolSessionRecord>;
+  createdApps: ZCodeApp[];
+  sessions: Map<string, ZCodeProtocolSessionRecord>;
 }
 
 async function bootServer(
   dbPath: string,
   options: {
-    appOverrides?: Partial<XCodeApp>;
-    onApp?: (app: XCodeApp) => void;
+    appOverrides?: Partial<ZCodeApp>;
+    onApp?: (app: ZCodeApp) => void;
     poolOptions?: SessionResidentPoolOptions;
   } = {},
 ): Promise<IntegrationHarness> {
   const store = await createSqliteSessionStore({ dbPath });
-  const createdApps: XCodeApp[] = [];
-  const server = new XCodeProtocolAgentServer({
-    createXCodeApp: (appOptions) => {
+  const createdApps: ZCodeApp[] = [];
+  const server = new ZCodeProtocolAgentServer({
+    createZCodeApp: (appOptions) => {
       const app = createFakeApp(appOptions, options.appOverrides ?? {});
       createdApps.push(app);
       options.onApp?.(app);
@@ -798,7 +798,7 @@ async function bootServer(
     },
     sessionStore: store,
   });
-  const sessions = (server as unknown as { context: XCodeProtocolAgentServerContext }).context
+  const sessions = (server as unknown as { context: ZCodeProtocolAgentServerContext }).context
     .sessions;
   return { server, store, createdApps, sessions };
 }
@@ -806,7 +806,7 @@ async function bootServer(
 // subscribe response 严格 ACK-only；initial snapshot 走 request-scoped post-response
 // outbox（response line 之后的 owned notification），此处解析出来一并返回。
 async function subscribeConversation(
-  server: XCodeProtocolAgentServer,
+  server: ZCodeProtocolAgentServer,
   requestId: string,
   connectionId: string,
 ) {
@@ -1006,19 +1006,19 @@ describe("session resident pool（集成：真 sqlite + server + binder）", () 
 // ── server 装配层配置回退 ──────────────────────────────────────────────────
 
 describe("SessionResidentPool 配置回退", () => {
-  function makeServer(deps: Partial<XCodeProtocolAgentDependencies>) {
-    return new XCodeProtocolAgentServer({
-      createXCodeApp: (appOptions) => createFakeApp(appOptions, {}),
+  function makeServer(deps: Partial<ZCodeProtocolAgentDependencies>) {
+    return new ZCodeProtocolAgentServer({
+      createZCodeApp: (appOptions) => createFakeApp(appOptions, {}),
       cwd: WORKSPACE_PATH,
       ...deps,
     });
   }
 
-  function contextOf(server: XCodeProtocolAgentServer) {
-    return (server as unknown as { context: XCodeProtocolAgentServerContext }).context;
+  function contextOf(server: ZCodeProtocolAgentServer) {
+    return (server as unknown as { context: ZCodeProtocolAgentServerContext }).context;
   }
 
-  function addIdleResident(context: XCodeProtocolAgentServerContext, sessionId: string) {
+  function addIdleResident(context: ZCodeProtocolAgentServerContext, sessionId: string) {
     context.sessions.set(sessionId, {
       app: {
         close: async () => {},
@@ -1027,7 +1027,7 @@ describe("SessionResidentPool 配置回退", () => {
       legacyStreamSubscribed: false,
       persistence: "immediate",
       updatedAt: 0,
-    } as unknown as XCodeProtocolSessionRecord);
+    } as unknown as ZCodeProtocolSessionRecord);
   }
 
   it("legacy sessionResidentTargetCount 只表达 low-water，不塌掉迟滞窗口", () => {
@@ -1167,7 +1167,7 @@ describe("session lifecycle protocol", () => {
     const record = harness.sessions.get(sessionId)!;
     const close = vi.spyOn(record.app, "close");
     const state = await getSessionLifecycle(
-      (harness.server as unknown as { context: XCodeProtocolAgentServerContext }).context,
+      (harness.server as unknown as { context: ZCodeProtocolAgentServerContext }).context,
     ).getState(sessionId);
     const appsBefore = harness.createdApps.length;
     for (const workspaceIdentity of [
@@ -1203,7 +1203,7 @@ describe("session lifecycle protocol", () => {
 
   it("settles the inbox after goal pause failure and preserves the failed stage", async () => {
     await call(harness, "session/lifecycle/ensureReady");
-    const context = (harness.server as unknown as { context: XCodeProtocolAgentServerContext })
+    const context = (harness.server as unknown as { context: ZCodeProtocolAgentServerContext })
       .context;
     const record = harness.sessions.get(SESSION_ID)!;
     record.app.readTarget = vi.fn().mockResolvedValue({ status: "active" });

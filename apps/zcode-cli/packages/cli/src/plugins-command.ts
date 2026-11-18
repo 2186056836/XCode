@@ -1,6 +1,6 @@
 import { formatJson } from "@zcode/core";
 import type { GlobalOptions, RunContext } from "@zcode/shared-types";
-import type { SetXCodePluginEnabledResult, XCodePluginInstallData } from "@zcode/bootstrap";
+import type { SetZCodePluginEnabledResult, ZCodePluginInstallData } from "@zcode/bootstrap";
 import {
   formatAvailablePluginJson,
   formatDiagnosticJson,
@@ -217,7 +217,7 @@ async function runPluginsUpdateCommand(
 function reportInstallOutcome(
   ctx: RunContext,
   options: GlobalOptions,
-  result: XCodePluginInstallData,
+  result: ZCodePluginInstallData,
   pluginId: string,
 ): number {
   const failed = hasErrors(result.diagnostics);
@@ -294,7 +294,7 @@ async function runPluginsDisableCommand(
   const setPluginEnabled = await resolveDep(deps, "setPluginEnabled");
   const entries: Array<{
     plugin: PluginListItem;
-    result?: SetXCodePluginEnabledResult;
+    result?: SetZCodePluginEnabledResult;
     error?: string;
   }> = [];
   for (const plugin of (await listPlugins(base)).plugins) {

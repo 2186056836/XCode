@@ -325,7 +325,7 @@ type TurnStartedConversationTelemetryFact = Extract<
   ConversationTelemetryFactBase,
   { kind: "turn.started" }
 > &
-  import("../zcode-task-types-core.js").XCodeBackgroundTurnAttribution;
+  import("../zcode-task-types-core.js").ZCodeBackgroundTurnAttribution;
 
 export type ConversationTelemetryFact =
   | Exclude<ConversationTelemetryFactBase, { kind: "turn.started" }>

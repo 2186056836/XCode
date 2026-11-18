@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import type { ICodingPlanSubscriptionService, IXCodeAgentService } from "@zcode/services";
+import type { ICodingPlanSubscriptionService, IZCodeAgentService } from "@zcode/services";
 import type { DynamicWorkflowMode } from "@zcode/shared";
 import { logger } from "@/logger.js";
 import {
@@ -45,7 +45,7 @@ export function useDynamicWorkflowAvailabilityLoader(
 export function useDynamicWorkflowUserModeSync(params: {
   settingsLoaded: boolean;
   userMode: DynamicWorkflowMode | undefined;
-  zcodeAgentService: Pick<IXCodeAgentService, "syncDynamicWorkflowUserMode">;
+  zcodeAgentService: Pick<IZCodeAgentService, "syncDynamicWorkflowUserMode">;
   codingPlanSubscriptionService: ICodingPlanSubscriptionService;
 }): void {
   const { settingsLoaded, userMode, zcodeAgentService, codingPlanSubscriptionService } = params;

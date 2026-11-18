@@ -16,14 +16,14 @@ import {
 import {
   isDiscoverableOfficialPlugin,
   ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
-  type XCodeWorkspaceRef,
+  type ZCodeWorkspaceRef,
 } from "@zcode/shared";
 import {
-  getXCodePluginsOverview,
-  resolveXCodePlugins,
-  installXCodeMarketplacePlugin,
-  setXCodePluginEnabled,
-  updateXCodePluginMarketplace,
+  getZCodePluginsOverview,
+  resolveZCodePlugins,
+  installZCodeMarketplacePlugin,
+  setZCodePluginEnabled,
+  updateZCodePluginMarketplace,
 } from "../plugins.js";
 import { getCliStorageRoot, getPluginStorageRoot } from "../app/paths.js";
 import { type PluginStorageLock, withPluginStorageLock } from "../lib/plugin-storage-lock.js";
@@ -32,8 +32,8 @@ import { officialPluginCatalogRefresh } from "../plugin-discovery/refresh.js";
 import { requestPluginSessionReload } from "./session-residency.js";
 import { confirmPluginInstall } from "./plugin-install-interaction.js";
 import type {
-  XCodeProtocolAgentServerContext,
-  XCodeProtocolSessionRecord,
+  ZCodeProtocolAgentServerContext,
+  ZCodeProtocolSessionRecord,
 } from "./server-types.js";
 
 const DESCRIPTION_LIMIT = 4_000;
@@ -41,11 +41,11 @@ const boundText = (value?: string) => value?.slice(0, DESCRIPTION_LIMIT);
 
 /** 发现、安装与会话初始化使用同一 Host 身份及插件准备缓存。 */
 export function createProtocolPluginDiscoveryPort(
-  server: XCodeProtocolAgentServerContext,
-  workspace: XCodeWorkspaceRef,
+  server: ZCodeProtocolAgentServerContext,
+  workspace: ZCodeWorkspaceRef,
   sessionId: string,
   activationPort?: PluginActivationPort,
-  owner?: () => XCodeProtocolSessionRecord | undefined,
+  owner?: () => ZCodeProtocolSessionRecord | undefined,
 ): PluginDiscoveryPort {
   const options = {
     workingDirectory: workspace.workspacePath,
@@ -66,13 +66,13 @@ export function createProtocolPluginDiscoveryPort(
     pluginStorageLock?: PluginStorageLock,
   ): Promise<PluginDiscoveryCandidate[]> {
     const configResult = await createConfigWithPluginMigrations(options);
-    const overview = await getXCodePluginsOverview({
+    const overview = await getZCodePluginsOverview({
       ...options,
       configResult,
       pluginStorageRoot: storageRoot,
       pluginStorageLock,
     });
-    const outcome = await resolveXCodePlugins({
+    const outcome = await resolveZCodePlugins({
       ...options,
       configResult,
       pluginStorageRoot: storageRoot,
@@ -136,14 +136,14 @@ export function createProtocolPluginDiscoveryPort(
     list: () => catalog(),
     resolve,
     refresh: async (request) => {
-      const lastUpdated = (await getXCodePluginsOverview(options)).marketplaces.find(
+      const lastUpdated = (await getZCodePluginsOverview(options)).marketplaces.find(
         (market) => market.id === ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
       )?.lastUpdated;
       return officialPluginCatalogRefresh.ensure(
         storageRoot,
         lastUpdated,
         async (signal) => {
-          const result = await updateXCodePluginMarketplace({
+          const result = await updateZCodePluginMarketplace({
             ...options,
             pluginStorageRoot: storageRoot,
             marketplace: ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
@@ -168,7 +168,7 @@ export function createProtocolPluginDiscoveryPort(
           if (current.action !== expected.action || current.scope !== expected.scope)
             throw new Error("plugin_state_changed");
           if (current.action === "install") {
-            const result = await installXCodeMarketplacePlugin({
+            const result = await installZCodeMarketplacePlugin({
               ...options,
               pluginStorageRoot: lock.root,
               pluginStorageLock: lock,
@@ -184,7 +184,7 @@ export function createProtocolPluginDiscoveryPort(
           }
           try {
             // 旧流程只写用户安装，工作区残留 false 会压过它；确认现在同时授权当前工作区启用。
-            await setXCodePluginEnabled({
+            await setZCodePluginEnabled({
               ...options,
               pluginStorageRoot: lock.root,
               pluginStorageLock: lock,
@@ -221,7 +221,7 @@ export function createProtocolPluginDiscoveryPort(
           if (record) requestPluginSessionReload(server, record);
         }
       }
-      const plugin = (await resolveXCodePlugins(options)).plugins.find(
+      const plugin = (await resolveZCodePlugins(options)).plugins.find(
         (entry) => entry.id === pluginId,
       );
       if (plugin && !plugin.enabled) return "disabled";

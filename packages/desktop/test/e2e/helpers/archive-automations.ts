@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { AutomationRepo } from "@zcode/services/node";
-import type { XCodeAutomation, XCodeAutomationCreateParams } from "@zcode/shared";
+import type { ZCodeAutomation, ZCodeAutomationCreateParams } from "@zcode/shared";
 
 /** 使用真实任务库建立关联；日程远于验收窗口，不让后台 tick 改写对照数据。 */
 export async function seedArchiveAutomations(target: { workspacePath?: string; taskId: string }) {
@@ -21,7 +21,7 @@ export async function seedArchiveAutomations(target: { workspacePath?: string; t
     database.close();
   }
   const repo = new AutomationRepo(join(home, ".zcode/v2/tasks-index.sqlite"));
-  const records: XCodeAutomation[] = [];
+  const records: ZCodeAutomation[] = [];
   try {
     for (const kind of [
       "first",
@@ -32,7 +32,7 @@ export async function seedArchiveAutomations(target: { workspacePath?: string; t
       "unbound",
       "other-identity",
     ]) {
-      const input: XCodeAutomationCreateParams = {
+      const input: ZCodeAutomationCreateParams = {
         title: `E2E_ARCHIVE_${kind}`,
         workspacePath,
         targetTaskId: kind === "unbound" ? undefined : target.taskId,

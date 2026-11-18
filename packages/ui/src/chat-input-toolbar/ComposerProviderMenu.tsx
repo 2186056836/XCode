@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, LoaderCircle } from "lucide-react";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { ModelSelectGroup } from "@/ModelConfigSelect.js";
 import { ProviderLogo } from "@/settings/model-provider-section/ProviderLogo.js";
 import {
@@ -61,7 +61,7 @@ export function ComposerProviderMenu({
   children: ReactNode;
   error?: string | null;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const narrow = useSyncExternalStore(subscribe, snapshot, () => false);
   const [open, setOpen] = useState(false);
   // 切换失败后回到对应操作区域，避免错误藏在已关闭的 Provider 子菜单。

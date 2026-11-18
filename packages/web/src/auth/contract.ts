@@ -14,7 +14,7 @@ export interface WebAuthContract {
   logout(): Promise<void>;
   restoreCachedSession(): Promise<UserInfo | null>;
   restoreCachedSessionState(): OAuthCachedSessionRestoreResult;
-  getXCodeJwtToken(): string | null;
+  getZCodeJwtToken(): string | null;
   getSessionRevision(): string | null;
   getActiveAccount(): {
     displayName: string;

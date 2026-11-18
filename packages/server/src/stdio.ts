@@ -8,8 +8,8 @@ import {
   type ISocket,
 } from "@zcode/rpc";
 import {
-  IXCodeAgentService,
-  createXCodeAgentConnectionScope,
+  IZCodeAgentService,
+  createZCodeAgentConnectionScope,
   type ServiceCollection,
 } from "@zcode/services";
 
@@ -69,9 +69,9 @@ export function createStdioServer(
   const channelServer = new ChannelServer(protocol, "stdio");
   const reverseClient = onReverseClientReady ? new ChannelClient(protocol) : undefined;
   if (reverseClient) onReverseClientReady?.(reverseClient);
-  const agentService = services.getOptional(IXCodeAgentService);
+  const agentService = services.getOptional(IZCodeAgentService);
   const connectionScope = agentService
-    ? createXCodeAgentConnectionScope(agentService, {
+    ? createZCodeAgentConnectionScope(agentService, {
         connectionId: `server-stdio-${randomUUID()}`,
         clientMode: "desktop-continuous",
         role: "trusted-host-relay",
@@ -80,7 +80,7 @@ export function createStdioServer(
   services.exposeOnChannelServer(
     channelServer,
     connectionScope
-      ? new Map([[IXCodeAgentService.channelName, connectionScope.service]])
+      ? new Map([[IZCodeAgentService.channelName, connectionScope.service]])
       : new Map(),
   );
   let stopPromise: Promise<void> | undefined;

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button.js";
 import { RemoteConnectionStatusTag } from "@/remote-connection/RemoteConnectionTags.js";
 import { Cloud } from "lucide-react";
 import type { WorkspaceTabState } from "@/store/tabStore.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { cn } from "@/components/lib/utils.js";
 import {
   formatRemoteConnectionDescription,
@@ -29,7 +29,7 @@ export function RemoteProjectConnectionDetails({
   onEdit?: () => void;
   onManage?: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const color = presentation.foreground;
   const state = presentation.status;
   return (

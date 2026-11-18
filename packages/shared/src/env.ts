@@ -1,8 +1,8 @@
-import type { XCodeRuntimeEnv } from "./runtimeEnv.js";
+import type { ZCodeRuntimeEnv } from "./runtimeEnv.js";
 
-export type XCodeEnv = "test" | "production";
-/** 安装包身份：决定应用名、app id、Electron 数据目录与更新策略；与后端环境 `XCodeEnv` 是两个轴。 */
-export type XCodeProductFlavor = "production" | "preview";
+export type ZCodeEnv = "test" | "production";
+/** 安装包身份：决定应用名、app id、Electron 数据目录与更新策略；与后端环境 `ZCodeEnv` 是两个轴。 */
+export type ZCodeProductFlavor = "production" | "preview";
 export type ArmsRumEnv = "local" | "prod";
 
 // 非构建环境（如 e2e 测试的 mocha）下 define 不存在，用 typeof 检查 + fallback 避免 ReferenceError
@@ -12,11 +12,11 @@ declare const __ZCODE_ARMS_RUM_ENDPOINT__: string;
 declare const __ZCODE_TELEMETRY_REPORT_ENDPOINT__: string;
 declare const __ZCODE_AUTO_UPDATE_ENABLED__: boolean;
 
-export function normalizeXCodeEnv(value: string | undefined): XCodeEnv {
+export function normalizeZCodeEnv(value: string | undefined): ZCodeEnv {
   return value?.trim().toLowerCase() === "production" ? "production" : "test";
 }
 
-export const ZCODE_ENV = normalizeXCodeEnv(
+export const ZCODE_ENV = normalizeZCodeEnv(
   typeof __ZCODE_ENV__ !== "undefined" ? __ZCODE_ENV__ : undefined,
 );
 
@@ -25,10 +25,10 @@ export const ZCODE_ENV = normalizeXCodeEnv(
  * 桌面构建通过 `ZCODE_PREVIEW_IDENTITY=1` 显式注入 preview，得到连接生产后端的 Preview 包；
  * 未注入 define 的 bundle（web、CLI、测试）沿用旧的单轴语义。
  */
-export function normalizeXCodeProductFlavor(
+export function normalizeZCodeProductFlavor(
   value: string | undefined,
-  zcodeEnv: XCodeEnv,
-): XCodeProductFlavor {
+  zcodeEnv: ZCodeEnv,
+): ZCodeProductFlavor {
   const normalized = value?.trim().toLowerCase();
   if (normalized === "production" || normalized === "preview") {
     return normalized;
@@ -36,7 +36,7 @@ export function normalizeXCodeProductFlavor(
   return zcodeEnv === "production" ? "production" : "preview";
 }
 
-export const ZCODE_PRODUCT_FLAVOR = normalizeXCodeProductFlavor(
+export const ZCODE_PRODUCT_FLAVOR = normalizeZCodeProductFlavor(
   typeof __ZCODE_PRODUCT_FLAVOR__ !== "undefined" ? __ZCODE_PRODUCT_FLAVOR__ : undefined,
   ZCODE_ENV,
 );
@@ -72,6 +72,6 @@ export const ZCODE_AUTO_UPDATE_ENABLED: boolean =
   typeof __ZCODE_AUTO_UPDATE_ENABLED__ !== "undefined" ? __ZCODE_AUTO_UPDATE_ENABLED__ : false;
 
 /** 将本地运行态与编译期 ZCODE_ENV 映射为 ARMS 控制台识别的上报环境标签 */
-export function mapXCodeEnvToArmsRumEnv(runtimeEnv: XCodeRuntimeEnv): ArmsRumEnv {
+export function mapZCodeEnvToArmsRumEnv(runtimeEnv: ZCodeRuntimeEnv): ArmsRumEnv {
   return runtimeEnv !== "development" && ZCODE_ENV === "production" ? "prod" : "local";
 }

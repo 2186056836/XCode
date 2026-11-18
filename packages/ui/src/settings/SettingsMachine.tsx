@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { parseRemoteWorkspaceIdentity, type SourceServerRecord } from "@zcode/shared";
 import type { WorkspaceTabState } from "@/store/tabStore.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 type SettingsTarget = Partial<
   Pick<WorkspaceTabState, "workspaceIdentity" | "remoteTarget" | "remoteSessionId">
@@ -47,7 +47,7 @@ export function SettingsMachinesProvider({
 
 export function useSettingsMachineLabel() {
   const servers = useContext(SettingsMachinesContext);
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (target?: SettingsTarget | null, sourceServerId?: string | null) => {
     const parsed = parseRemoteWorkspaceIdentity(target?.workspaceIdentity ?? "");
     const sourceId = sourceServerId ?? parsed?.sourceServerId;

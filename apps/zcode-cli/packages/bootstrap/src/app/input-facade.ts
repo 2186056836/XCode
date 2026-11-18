@@ -16,11 +16,11 @@ import {
   normalizePromptInput,
   projectInputHistoryAttachments,
 } from "./prompt-input.js";
-import type { PrepareUserExecutionBoundary, SubmitPromptOptions, XCodeApp } from "./types.js";
+import type { PrepareUserExecutionBoundary, SubmitPromptOptions, ZCodeApp } from "./types.js";
 import type { CliDefaultSelection } from "./cli-default-selection.js";
 
 type InputFacade = Pick<
-  XCodeApp,
+  ZCodeApp,
   | "continueActiveTarget"
   | "enqueueDeferredInput"
   | "recordInputHistory"

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile, rm } from "node:fs/promises";
-import type { IXCodeTaskService } from "@zcode/services";
+import type { IZCodeTaskService } from "@zcode/services";
 import {
   createBotsServiceHarness,
   createFeishuConfig,
@@ -9,8 +9,8 @@ import {
   type RecordedRequest,
 } from "#e2e/bots/helpers/bots-service-harness";
 
-type Prompt = Parameters<IXCodeTaskService["sendPrompt"]>[0];
-type GroupInput = Parameters<NonNullable<IXCodeTaskService["submitBotGroupInput"]>>[0];
+type Prompt = Parameters<IZCodeTaskService["sendPrompt"]>[0];
+type GroupInput = Parameters<NonNullable<IZCodeTaskService["submitBotGroupInput"]>>[0];
 
 describe("BOT-E2E-AT-01 large Bot attachments", () => {
   for (const provider of ["feishu", "lark"] as const) {

@@ -1,7 +1,7 @@
 import type { ModelJailbreakObfuscationTier } from "@zcode/shared";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.js";
 import { useSettings } from "@/hooks/useSettingService.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { SettingsGroupCard, SettingsRow } from "@/settings/SettingsPageParts.js";
 
 /**
@@ -12,7 +12,7 @@ import { SettingsGroupCard, SettingsRow } from "@/settings/SettingsPageParts.js"
  * 模型的 user 文本（UI/历史原文不变）。
  */
 export function JailbreakObfuscationSetting() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { settings, update } = useSettings();
   const obfuscation = settings?.customSystemMessages?.obfuscation ?? {};
   const enabled = obfuscation.enabled === true;

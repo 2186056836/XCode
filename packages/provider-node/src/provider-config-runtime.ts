@@ -3,15 +3,15 @@ import {
   type ProviderConfigLayerSnapshot,
   type ProviderConfigLayerUpdate,
 } from "@zcode/provider";
-import { NodeXCodeBuiltinProviderConfigSource } from "./zcode-builtin-provider-config-source.js";
+import { NodeZCodeBuiltinProviderConfigSource } from "./zcode-builtin-provider-config-source.js";
 import {
-  EndpointScopedXCodeBuiltinSource,
-  type EndpointScopedXCodeBuiltinSourceOptions,
+  EndpointScopedZCodeBuiltinSource,
+  type EndpointScopedZCodeBuiltinSourceOptions,
 } from "./endpoint-scoped-zcode-builtin-source.js";
 import {
-  XCodeBuiltinRemoteSynchronizer,
-  type XCodeBuiltinRemoteSynchronizerOptions,
-  type XCodeBuiltinRefreshResult,
+  ZCodeBuiltinRemoteSynchronizer,
+  type ZCodeBuiltinRemoteSynchronizerOptions,
+  type ZCodeBuiltinRefreshResult,
 } from "./zcode-builtin-remote-synchronizer.js";
 import {
   NodePersonalProviderConfigRepository,
@@ -21,12 +21,12 @@ import {
 export interface NodeProviderConfigRuntimeOptions {
   readonly zcodeBuiltinFilePath: string;
   readonly zcodeBuiltinActiveFilePath?: string;
-  readonly zcodeBuiltinRemote?: Omit<XCodeBuiltinRemoteSynchronizerOptions, "source">;
+  readonly zcodeBuiltinRemote?: Omit<ZCodeBuiltinRemoteSynchronizerOptions, "source">;
   readonly zcodeBuiltinEnvironment?: Omit<
-    EndpointScopedXCodeBuiltinSourceOptions,
+    EndpointScopedZCodeBuiltinSourceOptions,
     "bundledFilePath"
   >;
-  readonly onXCodeBuiltinRefreshError?: (error: unknown) => void;
+  readonly onZCodeBuiltinRefreshError?: (error: unknown) => void;
   readonly onPersonalConfigRecovery?: (event: PersonalProviderConfigRecoveryEvent) => void;
   readonly onPersonalConfigPollingError?: (error: unknown) => void;
   readonly personalFilePath: string;
@@ -41,10 +41,10 @@ export interface NodeProviderConfigRuntimeOptions {
 export class NodeProviderConfigRuntime {
   readonly configService: ProviderConfigService;
   readonly #zcodeBuiltinSource:
-    | NodeXCodeBuiltinProviderConfigSource
-    | EndpointScopedXCodeBuiltinSource;
+    | NodeZCodeBuiltinProviderConfigSource
+    | EndpointScopedZCodeBuiltinSource;
   readonly #personalRepository: NodePersonalProviderConfigRepository;
-  readonly #remoteSynchronizer?: XCodeBuiltinRemoteSynchronizer;
+  readonly #remoteSynchronizer?: ZCodeBuiltinRemoteSynchronizer;
   readonly #onRemoteRefreshError?: (error: unknown) => void;
   #startPromise: Promise<void> | null = null;
   #disposed = false;
@@ -54,24 +54,24 @@ export class NodeProviderConfigRuntime {
 
   constructor(options: NodeProviderConfigRuntimeOptions) {
     this.#zcodeBuiltinSource = options.zcodeBuiltinEnvironment
-      ? new EndpointScopedXCodeBuiltinSource({
+      ? new EndpointScopedZCodeBuiltinSource({
           bundledFilePath: options.zcodeBuiltinFilePath,
           ...options.zcodeBuiltinEnvironment,
         })
-      : new NodeXCodeBuiltinProviderConfigSource({
+      : new NodeZCodeBuiltinProviderConfigSource({
           bundledFilePath: options.zcodeBuiltinFilePath,
           activeFilePath: options.zcodeBuiltinActiveFilePath,
           watch: options.watch,
         });
     this.#remoteSynchronizer =
       options.zcodeBuiltinRemote &&
-      this.#zcodeBuiltinSource instanceof NodeXCodeBuiltinProviderConfigSource
-        ? new XCodeBuiltinRemoteSynchronizer({
+      this.#zcodeBuiltinSource instanceof NodeZCodeBuiltinProviderConfigSource
+        ? new ZCodeBuiltinRemoteSynchronizer({
             source: this.#zcodeBuiltinSource,
             ...options.zcodeBuiltinRemote,
           })
         : undefined;
-    this.#onRemoteRefreshError = options.onXCodeBuiltinRefreshError;
+    this.#onRemoteRefreshError = options.onZCodeBuiltinRefreshError;
     this.#personalRepository = new NodePersonalProviderConfigRepository({
       filePath: options.personalFilePath,
       onRecovery: options.onPersonalConfigRecovery,
@@ -89,8 +89,8 @@ export class NodeProviderConfigRuntime {
     });
   }
 
-  resolveXCodeBuiltinActiveFilePath(): Promise<string> {
-    return this.#zcodeBuiltinSource instanceof NodeXCodeBuiltinProviderConfigSource
+  resolveZCodeBuiltinActiveFilePath(): Promise<string> {
+    return this.#zcodeBuiltinSource instanceof NodeZCodeBuiltinProviderConfigSource
       ? Promise.resolve(this.#zcodeBuiltinSource.activeFilePath)
       : this.#zcodeBuiltinSource.resolveActiveFilePath();
   }
@@ -100,7 +100,7 @@ export class NodeProviderConfigRuntime {
   }
 
   /** Environment 同一周期检查中恢复未对齐依赖，不被下载 TTL 或失败挡住。 */
-  onDidCheckXCodeBuiltin(listener: () => Promise<void>): () => void {
+  onDidCheckZCodeBuiltin(listener: () => Promise<void>): () => void {
     this.#checkListeners.add(listener);
     return () => this.#checkListeners.delete(listener);
   }
@@ -114,7 +114,7 @@ export class NodeProviderConfigRuntime {
       // Managed Worker 无下载配置也无恢复 owner，不建立周期任务。
       if (
         this.#remoteSynchronizer ||
-        this.#zcodeBuiltinSource instanceof EndpointScopedXCodeBuiltinSource ||
+        this.#zcodeBuiltinSource instanceof EndpointScopedZCodeBuiltinSource ||
         this.#checkListeners.size > 0
       ) {
         this.#checkTimer = setInterval(() => {
@@ -130,9 +130,9 @@ export class NodeProviderConfigRuntime {
     return startPromise;
   }
 
-  refreshXCodeBuiltin(options?: { readonly force?: boolean }): Promise<XCodeBuiltinRefreshResult> {
+  refreshZCodeBuiltin(options?: { readonly force?: boolean }): Promise<ZCodeBuiltinRefreshResult> {
     if (this.#disposed) return Promise.resolve("disposed");
-    if (this.#zcodeBuiltinSource instanceof EndpointScopedXCodeBuiltinSource) {
+    if (this.#zcodeBuiltinSource instanceof EndpointScopedZCodeBuiltinSource) {
       return this.#zcodeBuiltinSource.refresh(options);
     }
     return this.#remoteSynchronizer?.refresh(options) ?? Promise.resolve("skipped");
@@ -142,7 +142,7 @@ export class NodeProviderConfigRuntime {
     if (this.#disposed) return Promise.resolve();
     if (this.#checkInFlight) return this.#checkInFlight;
     const check = Promise.allSettled([
-      this.refreshXCodeBuiltin(),
+      this.refreshZCodeBuiltin(),
       ...[...this.#checkListeners].map((listener) => Promise.resolve().then(listener)),
     ])
       .then((results) => {

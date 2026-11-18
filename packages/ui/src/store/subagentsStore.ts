@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import {
-  normalizeAgentProviderToXCodeAgent,
+  normalizeAgentProviderToZCodeAgent,
   ZCODE_AGENT_PROVIDER,
-  type XCodeProvider,
+  type ZCodeProvider,
   type AgentSummary,
   type AgentsCapability,
   type SubAgentConfig,
@@ -24,8 +24,8 @@ interface SubagentsStoreState {
   workspaceIdentity: string | null;
   loadedWorkspacePath: string | null;
   loadedWorkspaceIdentity: string | null;
-  provider: XCodeProvider;
-  loadedProvider: XCodeProvider | null;
+  provider: ZCodeProvider;
+  loadedProvider: ZCodeProvider | null;
   agents: AgentSummary[];
   capability: AgentsCapability | null;
   loading: boolean;
@@ -34,7 +34,7 @@ interface SubagentsStoreState {
   operatingAgentId: string | null;
   initialize: (
     workspacePath: string,
-    providerOrSubagentsService: XCodeProvider | ISubagentsService,
+    providerOrSubagentsService: ZCodeProvider | ISubagentsService,
     maybeSubagentsService?: ISubagentsService,
     workspaceIdentity?: string,
   ) => Promise<void>;
@@ -47,7 +47,7 @@ interface SubagentsStoreState {
   ) => Promise<void>;
   createAgent: (
     config: SubAgentConfig,
-    provider: XCodeProvider,
+    provider: ZCodeProvider,
     subagentsService: ISubagentsService,
     workspaceIdentity?: string,
   ) => Promise<AgentSummary | null>;
@@ -55,7 +55,7 @@ interface SubagentsStoreState {
     agentId: string,
     config: SubAgentConfig,
     oldFilePath: string | undefined,
-    provider: XCodeProvider,
+    provider: ZCodeProvider,
     subagentsService: ISubagentsService,
     workspaceIdentity?: string,
   ) => Promise<AgentSummary | null>;
@@ -83,13 +83,13 @@ export const useSubagentsStore = create<SubagentsStoreState>((set, get) => ({
   operatingAgentId: null,
   async initialize(
     workspacePath: string,
-    providerOrSubagentsService: XCodeProvider | ISubagentsService,
+    providerOrSubagentsService: ZCodeProvider | ISubagentsService,
     maybeSubagentsService?: ISubagentsService,
     workspaceIdentity?: string,
   ) {
     const currentState = get();
     const hasProvider = typeof providerOrSubagentsService === "string";
-    const provider = normalizeAgentProviderToXCodeAgent(
+    const provider = normalizeAgentProviderToZCodeAgent(
       hasProvider ? providerOrSubagentsService : ZCODE_AGENT_PROVIDER,
     );
     const subagentsService = hasProvider ? maybeSubagentsService : providerOrSubagentsService;
@@ -168,7 +168,7 @@ export const useSubagentsStore = create<SubagentsStoreState>((set, get) => ({
     }
     const workspaceIdentityFromState =
       workspaceIdentity?.trim() || get().workspaceIdentity || undefined;
-    const provider = normalizeAgentProviderToXCodeAgent(get().provider);
+    const provider = normalizeAgentProviderToZCodeAgent(get().provider);
     const serviceAuthorityId = getServiceAuthorityId(subagentsService);
     const hasCachedAgents =
       get().agents.length > 0 && loadedSubagentsServiceAuthorityId === serviceAuthorityId;
@@ -246,7 +246,7 @@ export const useSubagentsStore = create<SubagentsStoreState>((set, get) => ({
   },
   async createAgent(
     config: SubAgentConfig,
-    provider: XCodeProvider,
+    provider: ZCodeProvider,
     subagentsService: ISubagentsService,
     workspaceIdentity?: string,
   ) {
@@ -260,7 +260,7 @@ export const useSubagentsStore = create<SubagentsStoreState>((set, get) => ({
     try {
       const result = await subagentsService.createAgent({
         config,
-        provider: normalizeAgentProviderToXCodeAgent(provider),
+        provider: normalizeAgentProviderToZCodeAgent(provider),
       });
       await get().refresh(subagentsService, workspaceIdentityFromState);
       return result.agent;
@@ -277,7 +277,7 @@ export const useSubagentsStore = create<SubagentsStoreState>((set, get) => ({
     agentId: string,
     config: SubAgentConfig,
     oldFilePath: string | undefined,
-    provider: XCodeProvider,
+    provider: ZCodeProvider,
     subagentsService: ISubagentsService,
     workspaceIdentity?: string,
   ) {
@@ -293,7 +293,7 @@ export const useSubagentsStore = create<SubagentsStoreState>((set, get) => ({
         agentId,
         config,
         oldFilePath,
-        provider: normalizeAgentProviderToXCodeAgent(provider),
+        provider: normalizeAgentProviderToZCodeAgent(provider),
       });
       await get().refresh(subagentsService, workspaceIdentityFromState);
       return result.agent;

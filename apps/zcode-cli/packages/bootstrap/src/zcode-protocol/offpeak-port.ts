@@ -3,11 +3,11 @@ import {
   zcodeOffPeakCreateResultSchema,
   zcodeOffPeakListResultSchema,
   zcodeProtocolMethods,
-  type XCodeOffPeakTaskProtocolSnapshot,
+  type ZCodeOffPeakTaskProtocolSnapshot,
 } from "@zcode/shared";
 import type {
-  XCodeProtocolAgentServerContext,
-  XCodeProtocolSessionRecord,
+  ZCodeProtocolAgentServerContext,
+  ZCodeProtocolSessionRecord,
 } from "./server-types.js";
 
 export const OFF_PEAK_CREATE_FROM_OFF_PEAK_RUN_ERROR =
@@ -32,8 +32,8 @@ const OFF_PEAK_TERMINAL_STATUSES = new Set(["completed", "failed", "cancelled"])
  * - 不冻结会话标题：绑定的是用户的工作会话，标题不该被任务改写。
  */
 export function createProtocolOffPeakPort(
-  context: XCodeProtocolAgentServerContext,
-  resolveOwnSession?: () => XCodeProtocolSessionRecord | undefined,
+  context: ZCodeProtocolAgentServerContext,
+  resolveOwnSession?: () => ZCodeProtocolSessionRecord | undefined,
 ): OffPeakPort {
   // 共享连接不能借用首个工作区；包括只有 automationId 或空参数的列表请求。
   const requestClient: typeof context.requestClient = (...args) => {
@@ -112,7 +112,7 @@ export function createProtocolOffPeakPort(
   };
 }
 
-function toOffPeakTaskSummary(input: XCodeOffPeakTaskProtocolSnapshot): OffPeakTaskSummary {
+function toOffPeakTaskSummary(input: ZCodeOffPeakTaskProtocolSnapshot): OffPeakTaskSummary {
   return {
     offPeakTaskId: input.offPeakTaskId,
     title: input.title,

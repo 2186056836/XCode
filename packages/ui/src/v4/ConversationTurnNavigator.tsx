@@ -8,7 +8,7 @@ import {
 } from "@zcode/shared/test-ids";
 import { cn } from "@/components/lib/utils.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   createConversationTurnNavigatorItemsSelector,
   type ConversationTurnNavigatorItem,
@@ -58,7 +58,7 @@ function ConversationTurnNavigatorImpl({
   isHydratingDirectory = false,
   onJumpToQuery,
 }: ConversationTurnNavigatorProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const prefersReducedMotion = usePrefersReducedMotion();
   const [interactionItemIndex, setInteractionItemIndex] = useState<number | undefined>(undefined);
   const selectItems = useMemo(() => createConversationTurnNavigatorItemsSelector(), []);
@@ -209,7 +209,7 @@ const ConversationTurnNavigatorItemView = memo(function ConversationTurnNavigato
   onInteractionChange: (index: number | undefined) => void;
   onJumpToQuery: ConversationTurnNavigatorProps["onJumpToQuery"];
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const visualState = resolveConversationTurnNavigatorBarVisualState({
     itemIndex: 0,
     visualFocusItemIndex: visualDistance,

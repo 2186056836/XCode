@@ -1,7 +1,7 @@
 import type { BrowserWindow, NativeImage } from "electron";
 import {
   DEFAULT_XCODE_ENDPOINT_ORIGIN,
-  buildXCodeEndpointUrls,
+  buildZCodeEndpointUrls,
   type Locale,
 } from "@zcode/shared";
 
@@ -53,7 +53,7 @@ export function resolveArchitectureDownloadUrl(
   endpointOrigin = DEFAULT_XCODE_ENDPOINT_ORIGIN,
 ): string {
   // 与 changelog 等外链保持一致，按应用语言分流到官网下载页。
-  const origin = buildXCodeEndpointUrls(endpointOrigin).origin;
+  const origin = buildZCodeEndpointUrls(endpointOrigin).origin;
   return locale === "zh-CN" ? `${origin}/cn` : `${origin}/en`;
 }
 

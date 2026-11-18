@@ -5,8 +5,8 @@
  * 以及所有按 task 粒度的只读访问器和独立选择器。
  */
 import type {
-  XCodeTaskRuntimeStatus,
-  XCodeTaskMeta,
+  ZCodeTaskRuntimeStatus,
+  ZCodeTaskMeta,
 } from "@zcode/shared";
 import { mergeTaskWithOptimisticMeta } from "@/lib/zcodeTaskMetaMerge.js";
 import {
@@ -15,10 +15,10 @@ import {
   DEFAULT_TASK_RUNTIME_STATE,
   createDefaultWorkspaceState,
   getDefaultWorkspaceState,
-  type XCodeSessionStoreState,
+  type ZCodeSessionStoreState,
   type WorkspaceInitState,
   type TaskRuntimeState,
-  type WorkspaceXCodeUIState,
+  type WorkspaceZCodeUIState,
 } from "./zcodeSessionStoreTypes.js";
 
 // ────────────────────────────────────────────
@@ -41,7 +41,7 @@ function copyTaskRecordEntries<T>(
 }
 
 function collectIdentityTaskIds(
-  baseState: WorkspaceXCodeUIState,
+  baseState: WorkspaceZCodeUIState,
   workspaceIdentity: string,
 ): Set<string> {
   const normalizedIdentity = workspaceIdentity.trim();
@@ -60,9 +60,9 @@ function collectIdentityTaskIds(
 }
 
 function createIdentityWorkspaceStateSeed(
-  baseState: WorkspaceXCodeUIState | undefined,
+  baseState: WorkspaceZCodeUIState | undefined,
   workspaceIdentity?: string,
-): WorkspaceXCodeUIState {
+): WorkspaceZCodeUIState {
   if (!baseState) {
     return createDefaultWorkspaceState(getDefaultWorkspaceState().selectedProvider);
   }
@@ -118,10 +118,10 @@ function createIdentityWorkspaceStateSeed(
 }
 
 export function getWorkspaceState(
-  state: XCodeSessionStoreState,
+  state: ZCodeSessionStoreState,
   workspacePath: string,
   workspaceIdentity?: string,
-): WorkspaceXCodeUIState {
+): WorkspaceZCodeUIState {
   const baseState = state.workspaces[workspacePath] ?? getDefaultWorkspaceState();
   const workspaceKey = resolveWorkspaceStateKey(workspacePath, workspaceIdentity);
   if (workspaceKey === workspacePath) {
@@ -140,11 +140,11 @@ export function getWorkspaceState(
 }
 
 export function updateWorkspaceState(
-  state: XCodeSessionStoreState,
+  state: ZCodeSessionStoreState,
   workspacePath: string,
-  updater: (current: WorkspaceXCodeUIState) => WorkspaceXCodeUIState,
+  updater: (current: WorkspaceZCodeUIState) => WorkspaceZCodeUIState,
   workspaceIdentity?: string,
-): Pick<XCodeSessionStoreState, "workspaces"> {
+): Pick<ZCodeSessionStoreState, "workspaces"> {
   const workspaceKey = resolveWorkspaceStateKey(workspacePath, workspaceIdentity);
   const current =
     workspaceKey === workspacePath
@@ -185,19 +185,19 @@ export function updateWorkspaceState(
 // ────────────────────────────────────────────
 
 export function getTaskRuntimeState(
-  workspaceState: WorkspaceXCodeUIState,
+  workspaceState: WorkspaceZCodeUIState,
   taskId: string,
 ): TaskRuntimeState {
   return workspaceState.taskRuntimeByTaskId[taskId] ?? DEFAULT_TASK_RUNTIME_STATE;
 }
 
 interface WorkspaceDisplayedTaskState {
-  taskStatus: XCodeTaskRuntimeStatus;
+  taskStatus: ZCodeTaskRuntimeStatus;
   taskError: string | null;
 }
 
 export function getWorkspaceDisplayedTaskState(
-  workspaceState: WorkspaceXCodeUIState,
+  workspaceState: WorkspaceZCodeUIState,
 ): WorkspaceDisplayedTaskState {
   if (!workspaceState.activeTaskId) {
     return {
@@ -213,12 +213,12 @@ export function getWorkspaceDisplayedTaskState(
   };
 }
 
-export function getTaskUiState(workspaceState: WorkspaceXCodeUIState, taskId: string) {
+export function getTaskUiState(workspaceState: WorkspaceZCodeUIState, taskId: string) {
   return workspaceState.taskUiByTaskId[taskId] ?? DEFAULT_TASK_UI_STATE;
 }
 
 export function hasTaskPendingPermissionRequest(
-  workspaceState: WorkspaceXCodeUIState,
+  workspaceState: WorkspaceZCodeUIState,
   taskId: string,
 ): boolean {
   const taskUiState = getTaskUiState(workspaceState, taskId);
@@ -227,7 +227,7 @@ export function hasTaskPendingPermissionRequest(
 }
 
 export function hasTaskPendingHumanInterventionRequest(
-  workspaceState: WorkspaceXCodeUIState,
+  workspaceState: WorkspaceZCodeUIState,
   taskId: string,
 ): boolean {
   const taskUiState = getTaskUiState(workspaceState, taskId);
@@ -240,10 +240,10 @@ export function hasTaskPendingHumanInterventionRequest(
 
 export function getTaskMeta(
   workspaceState:
-    | WorkspaceXCodeUIState
-    | Partial<Pick<WorkspaceXCodeUIState, "optimisticTaskListByTaskId" | "taskListCache">>,
+    | WorkspaceZCodeUIState
+    | Partial<Pick<WorkspaceZCodeUIState, "optimisticTaskListByTaskId" | "taskListCache">>,
   taskId: string,
-): XCodeTaskMeta | null {
+): ZCodeTaskMeta | null {
   const optimisticTask = workspaceState.optimisticTaskListByTaskId?.[taskId];
   const cachedTask = workspaceState.taskListCache?.find((task) => task.taskId === taskId) ?? null;
 
@@ -260,10 +260,10 @@ export function getTaskMeta(
 
 export function getVisibleTaskMetas(
   workspaceState:
-    | WorkspaceXCodeUIState
-    | Partial<Pick<WorkspaceXCodeUIState, "optimisticTaskListByTaskId" | "taskListCache">>,
-): XCodeTaskMeta[] {
-  const taskById = new Map<string, XCodeTaskMeta>();
+    | WorkspaceZCodeUIState
+    | Partial<Pick<WorkspaceZCodeUIState, "optimisticTaskListByTaskId" | "taskListCache">>,
+): ZCodeTaskMeta[] {
+  const taskById = new Map<string, ZCodeTaskMeta>();
 
   for (const task of workspaceState.taskListCache ?? []) {
     taskById.set(task.taskId, task);
@@ -278,15 +278,15 @@ export function getVisibleTaskMetas(
 
 export function getTaskUnreadIndicator(
   workspaceState:
-    | WorkspaceXCodeUIState
+    | WorkspaceZCodeUIState
     | Partial<
         Pick<
-          WorkspaceXCodeUIState,
+          WorkspaceZCodeUIState,
           "optimisticTaskListByTaskId" | "taskListCache" | "taskUnreadByTaskId"
         >
       >,
   taskId: string,
-  fallbackTask?: Pick<XCodeTaskMeta, "unreadAt">,
+  fallbackTask?: Pick<ZCodeTaskMeta, "unreadAt">,
 ): boolean {
   const storedTask = getTaskMeta(workspaceState, taskId);
   // IDE 升级或重启后，任务列表会先从 query cache 恢复，而 session store 尚未水合；
@@ -301,8 +301,8 @@ export function getTaskUnreadIndicator(
 // Standalone selector functions
 // ────────────────────────────────────────────
 
-export function selectWorkspaceXCodeState(
-  state: XCodeSessionStoreState,
+export function selectWorkspaceZCodeState(
+  state: ZCodeSessionStoreState,
   workspacePath: string,
   workspaceIdentity?: string,
 ) {
@@ -310,7 +310,7 @@ export function selectWorkspaceXCodeState(
 }
 
 export function getWorkspaceInitState(
-  workspaceState: Pick<WorkspaceXCodeUIState, "workspaceInit">,
+  workspaceState: Pick<WorkspaceZCodeUIState, "workspaceInit">,
 ): WorkspaceInitState {
   return workspaceState.workspaceInit ?? DEFAULT_WORKSPACE_INIT_STATE;
 }

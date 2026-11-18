@@ -1,7 +1,7 @@
 import { createBotProjectFixture } from "#e2e/bots/helpers/bots-service-harness";
 import { readFile } from "node:fs/promises";
 
-import type { BotsConfigFile, BotsStateFile, XCodeStreamEvent } from "@zcode/shared";
+import type { BotsConfigFile, BotsStateFile, ZCodeStreamEvent } from "@zcode/shared";
 import { createBotsService } from "@zcode/services/node";
 import { createBotModelSelectionView } from "#e2e/bots/helpers/bots-service-harness";
 import { resolveE2ERuntimePath } from "#e2e/helpers/e2e-runtime-paths";
@@ -13,7 +13,7 @@ type LifecycleFixture = {
   classification: "synthetic";
   syntheticReason: string;
   prompt: string;
-  events: Array<Record<string, unknown> & { type: XCodeStreamEvent["type"] }>;
+  events: Array<Record<string, unknown> & { type: ZCodeStreamEvent["type"] }>;
   expectedTimeline: string[];
   forbiddenCardMarkers: string[];
 };
@@ -53,7 +53,7 @@ describe("BOT-E2E-SC-01 Feishu streaming card lifecycle", () => {
     const sendPromptCalls: unknown[] = [];
     const subscriptions: Array<{
       params: Record<string, unknown>;
-      listener: (event: XCodeStreamEvent) => Promise<void> | void;
+      listener: (event: ZCodeStreamEvent) => Promise<void> | void;
     }> = [];
 
     const zcodeTaskService = {
@@ -99,7 +99,7 @@ describe("BOT-E2E-SC-01 Feishu streaming card lifecycle", () => {
       stopGeneration: async () => undefined,
       onDynamicTaskEvent:
         (params: Record<string, unknown>) =>
-        (listener: (event: XCodeStreamEvent) => Promise<void> | void) => {
+        (listener: (event: ZCodeStreamEvent) => Promise<void> | void) => {
           subscriptions.push({ params, listener });
           return { dispose() {} };
         },
@@ -186,7 +186,7 @@ describe("BOT-E2E-SC-01 Feishu streaming card lifecycle", () => {
         ...fixture.events[index],
         taskId: "task-e2e-bot-streaming-card",
         traceId: `trace-e2e-bot-${index}`,
-      } as XCodeStreamEvent;
+      } as ZCodeStreamEvent;
       await listener?.(event);
     }
 

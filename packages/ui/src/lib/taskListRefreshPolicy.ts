@@ -1,4 +1,4 @@
-import type { XCodeWorkspaceTaskListChanged } from "@zcode/shared";
+import type { ZCodeWorkspaceTaskListChanged } from "@zcode/shared";
 
 export type TaskListMembershipWorkspaceEventReason =
   | "task_archived"
@@ -8,7 +8,7 @@ export type TaskListMembershipWorkspaceEventReason =
 
 export type TaskMetaWorkspaceEventSyncMode = "insert-active" | "preserve-membership";
 
-const TASK_META_INCREMENTAL_REASONS = new Set<XCodeWorkspaceTaskListChanged["reason"]>([
+const TASK_META_INCREMENTAL_REASONS = new Set<ZCodeWorkspaceTaskListChanged["reason"]>([
   "user_message_saved",
   "assistant_message_saved",
   "task_status_changed",
@@ -22,13 +22,13 @@ const TASK_META_INCREMENTAL_REASONS = new Set<XCodeWorkspaceTaskListChanged["rea
   "task_title_changed",
 ]);
 
-const OPTIMISTIC_TASK_LIST_REASONS = new Set<XCodeWorkspaceTaskListChanged["reason"]>([
+const OPTIMISTIC_TASK_LIST_REASONS = new Set<ZCodeWorkspaceTaskListChanged["reason"]>([
   "task_meta_changed",
   "task_model_changed",
   "task_title_changed",
 ]);
 
-const TASK_LIST_MEMBERSHIP_REASONS = new Set<XCodeWorkspaceTaskListChanged["reason"]>([
+const TASK_LIST_MEMBERSHIP_REASONS = new Set<ZCodeWorkspaceTaskListChanged["reason"]>([
   "task_archived",
   "task_unarchived",
   "task_pinned",
@@ -36,7 +36,7 @@ const TASK_LIST_MEMBERSHIP_REASONS = new Set<XCodeWorkspaceTaskListChanged["reas
 ]);
 
 export function isTaskListMembershipWorkspaceEvent<
-  T extends Pick<XCodeWorkspaceTaskListChanged, "reason">,
+  T extends Pick<ZCodeWorkspaceTaskListChanged, "reason">,
 >(
   event: T,
 ): event is T & {
@@ -46,7 +46,7 @@ export function isTaskListMembershipWorkspaceEvent<
 }
 
 export function isTaskListDeletionWorkspaceEvent(
-  event: Pick<XCodeWorkspaceTaskListChanged, "reason">,
+  event: Pick<ZCodeWorkspaceTaskListChanged, "reason">,
 ): boolean {
   return event.reason === "task_deleted";
 }
@@ -61,7 +61,7 @@ export function isTaskListDeletionWorkspaceEvent(
  * 里，切一次模型会全局 bump membershipVersion，所有列表实例连带重拉归属。
  */
 export function shouldRefetchTaskListMembershipForWorkspaceEvent(
-  event: Pick<XCodeWorkspaceTaskListChanged, "reason">,
+  event: Pick<ZCodeWorkspaceTaskListChanged, "reason">,
 ): boolean {
   // delete 后 sessions-index 仍可能继续发布保留在 CLI store 的 session；
   // task_deleted 必须换代 deleted tombstone join，不能只做一次 query cache 移除。
@@ -76,7 +76,7 @@ export function shouldRefetchTaskListMembershipForWorkspaceEvent(
 }
 
 export function shouldRefreshTaskListForWorkspaceEvent(
-  event: Pick<XCodeWorkspaceTaskListChanged, "reason" | "taskId" | "taskMeta">,
+  event: Pick<ZCodeWorkspaceTaskListChanged, "reason" | "taskId" | "taskMeta">,
 ): boolean {
   // Bugfix: 发送、停止、归档和元数据保存已经通过乐观 task cache / snapshot meta 增量写回。
   // 如果这里继续把 realtime invalidation 当成整表查询信号，左侧 task 会在这些操作时闪一下。
@@ -100,7 +100,7 @@ export function shouldRefreshTaskListForWorkspaceEvent(
 }
 
 export function getTaskMetaWorkspaceEventSyncMode(
-  event: Pick<XCodeWorkspaceTaskListChanged, "reason" | "taskMeta">,
+  event: Pick<ZCodeWorkspaceTaskListChanged, "reason" | "taskMeta">,
 ): TaskMetaWorkspaceEventSyncMode | null {
   if (!event.taskMeta) {
     return null;
@@ -117,9 +117,9 @@ export function getTaskMetaWorkspaceEventSyncMode(
 }
 
 export function shouldApplyTaskMetaFromWorkspaceEvent(
-  event: Pick<XCodeWorkspaceTaskListChanged, "reason" | "taskMeta">,
-): event is Pick<XCodeWorkspaceTaskListChanged, "reason"> & {
-  taskMeta: NonNullable<XCodeWorkspaceTaskListChanged["taskMeta"]>;
+  event: Pick<ZCodeWorkspaceTaskListChanged, "reason" | "taskMeta">,
+): event is Pick<ZCodeWorkspaceTaskListChanged, "reason"> & {
+  taskMeta: NonNullable<ZCodeWorkspaceTaskListChanged["taskMeta"]>;
 } {
   return Boolean(getTaskMetaWorkspaceEventSyncMode(event));
 }

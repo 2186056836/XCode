@@ -17,7 +17,7 @@ import { confirmPluginInstall } from "../src/zcode-protocol/plugin-install-inter
 import { V4InteractionRegistry } from "../src/zcode-protocol-v4/interaction-registry.js";
 import { ConversationTopicPublisher } from "../src/zcode-protocol-v4/conversation-topic-publisher.js";
 import { ProductProjection } from "../src/zcode-protocol-v4/product-projection.js";
-import type { XCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
 
 const plugin = {
   pluginId: "mail@zcode-plugins-official",
@@ -54,7 +54,7 @@ function setup() {
     projection,
     events,
     emitEvent,
-    server: { v4Interactions: registry } as XCodeProtocolAgentServerContext,
+    server: { v4Interactions: registry } as ZCodeProtocolAgentServerContext,
   };
 }
 describe("plugin installation interaction", () => {

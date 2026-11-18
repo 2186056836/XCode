@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog.js";
 import { Textarea } from "@/components/ui/textarea.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { formatPluginDisplayName } from "../domain/pluginDisplayName.js";
 import {
   getCurrentPluginUiFollowUpRequest,
@@ -25,7 +25,7 @@ export const TID_PLUGIN_UI_FOLLOW_UP_SEND = "plugin-ui-follow-up-send";
  * 无用户手势时插件代发消息的确认框。prompt 可编辑；挂在 RootShell，与 ConfirmDialogHost 并列。
  */
 export function PluginUiFollowUpDialogHost() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const request = useSyncExternalStore(
     subscribePluginUiFollowUpRequests,
     getCurrentPluginUiFollowUpRequest,

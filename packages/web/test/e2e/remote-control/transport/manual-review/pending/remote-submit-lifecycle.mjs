@@ -270,7 +270,7 @@ async function scenario({ width, theme, locale, remote }) {
         createDeviceSwitchDesktopBridge(socket, bridge, {
           locale,
           theme,
-          events: { [`${ServiceChannels.XCodeAgent}:onDynamicConversationFrame`]: frames.event },
+          events: { [`${ServiceChannels.ZCodeAgent}:onDynamicConversationFrame`]: frames.event },
           responses: {
             [`${ServiceChannels.OnboardingRecord}:shouldOnboard`]: false,
             [`${ServiceChannels.SettingsSync}:getFirstRunPromptState`]: { handled: true },
@@ -288,8 +288,8 @@ async function scenario({ width, theme, locale, remote }) {
               projectId: project.id,
               workspacePath,
             },
-            [`${ServiceChannels.XCodeTask}:getTaskMeta`]: task,
-            [`${ServiceChannels.XCodeAgent}:helloConversationV4`]: {
+            [`${ServiceChannels.ZCodeTask}:getTaskMeta`]: task,
+            [`${ServiceChannels.ZCodeAgent}:helloConversationV4`]: {
               kind: "hello",
               protocolVersion: V4_WIRE_PROTOCOL_VERSION,
               connectionId: bridge.bridgeSessionId,
@@ -304,8 +304,8 @@ async function scenario({ width, theme, locale, remote }) {
                 compression: "none",
               },
             },
-            [`${ServiceChannels.XCodeAgent}:initializeConversationV4`]: null,
-            [`${ServiceChannels.XCodeAgent}:subscribeConversationV4`]: () => {
+            [`${ServiceChannels.ZCodeAgent}:initializeConversationV4`]: null,
+            [`${ServiceChannels.ZCodeAgent}:subscribeConversationV4`]: () => {
               const subscriptionId = `sub-${bridge.bridgeSessionId}`;
               snapshots.set(bridge.bridgeSessionId, () => {
                 const frame = taskSnapshotFrame(taskId, subscriptionId);
@@ -321,11 +321,11 @@ async function scenario({ width, theme, locale, remote }) {
               });
               return { ack: { subscriptionId, mode: "snapshot", logEpoch: "e2e" } };
             },
-            [`${ServiceChannels.XCodeAgent}:unsubscribeConversationV4`]: null,
-            [`${ServiceChannels.XCodeAgent}:conversationWorkflowRunsV4`]: { runs: [] },
-            [`${ServiceChannels.XCodeAgent}:conversationPlansV4`]: { plans: [] },
-            [`${ServiceChannels.XCodeAgent}:queryConversationCommandsV4`]: { results: [] },
-            [`${ServiceChannels.XCodeAgent}:sendConversationCommandV4`]: ({ envelope }) => {
+            [`${ServiceChannels.ZCodeAgent}:unsubscribeConversationV4`]: null,
+            [`${ServiceChannels.ZCodeAgent}:conversationWorkflowRunsV4`]: { runs: [] },
+            [`${ServiceChannels.ZCodeAgent}:conversationPlansV4`]: { plans: [] },
+            [`${ServiceChannels.ZCodeAgent}:queryConversationCommandsV4`]: { results: [] },
+            [`${ServiceChannels.ZCodeAgent}:sendConversationCommandV4`]: ({ envelope }) => {
               traffic.commands.push(envelope);
               return {
                 commandId: envelope.commandId,

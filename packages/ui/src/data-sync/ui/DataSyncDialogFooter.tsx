@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button.js";
 import type { DataSyncCategoryAdapter } from "@/data-sync/app/categories.js";
 import type { DataSyncCategoryView } from "@/data-sync/app/useDataSyncDialog.js";
 import type { DataSyncCategoryId } from "@/data-sync/contract.js";
-import type { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import type { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
-type FormatMessage = ReturnType<typeof useXCodeIntl>["intl"]["formatMessage"];
+type FormatMessage = ReturnType<typeof useZCodeIntl>["intl"]["formatMessage"];
 
 export function DialogFooterBar(props: {
   providersTab: boolean;

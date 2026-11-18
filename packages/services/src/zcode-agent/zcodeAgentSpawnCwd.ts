@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
 
 /** 只选择执行目录，不捕获数据库错误；无可用备用目录时保留原路径供正常启动报错。 */
-export async function resolveXCodeAgentSpawnCwd(
+export async function resolveZCodeAgentSpawnCwd(
   options: { requestedCwd: string; workspacePath: string; spawnFallbackCwd?: string },
   probe: (path: string) => Promise<{ isDirectory(): boolean }> = stat,
 ): Promise<{ cwd: string; usedFallback: boolean; cwdExists: boolean }> {

@@ -134,11 +134,11 @@ try {
               locale,
               theme,
               events: {
-                [`${ServiceChannels.XCodeAgent}:onDynamicConversationFrame`]: frames.event,
+                [`${ServiceChannels.ZCodeAgent}:onDynamicConversationFrame`]: frames.event,
               },
               responses: {
                 [`${ServiceChannels.SettingsSync}:getFirstRunPromptState`]: { handled: true },
-                [`${ServiceChannels.XCodeAgent}:helloConversationV4`]: {
+                [`${ServiceChannels.ZCodeAgent}:helloConversationV4`]: {
                   kind: "hello",
                   protocolVersion: V4_WIRE_PROTOCOL_VERSION,
                   connectionId: bridge.bridgeSessionId,
@@ -153,17 +153,17 @@ try {
                     compression: "none",
                   },
                 },
-                [`${ServiceChannels.XCodeAgent}:initializeConversationV4`]: null,
+                [`${ServiceChannels.ZCodeAgent}:initializeConversationV4`]: null,
                 [`${ServiceChannels.Project}:readTree`]: (params) => ({
                   projects: projects.filter((p) => p.hostId === (params?.hostId || "local")),
                   tasks: tasks.filter((t) => t.hostId === (params?.hostId || "local")),
                 }),
                 [`${ServiceChannels.RemoteProjects}:readDirectory`]: directory,
                 [`${ServiceChannels.RemoteProjects}:refreshEntry`]: null,
-                [`${ServiceChannels.XCodeTask}:getTaskMeta`]: (input) =>
+                [`${ServiceChannels.ZCodeTask}:getTaskMeta`]: (input) =>
                   tasks.find((t) => t.taskId === input.taskId) ?? null,
-                [`${ServiceChannels.XCodeAgent}:getSessionLifecycle`]: null,
-                [`${ServiceChannels.XCodeAgent}:subscribeConversationV4`]: (input) => {
+                [`${ServiceChannels.ZCodeAgent}:getSessionLifecycle`]: null,
+                [`${ServiceChannels.ZCodeAgent}:subscribeConversationV4`]: (input) => {
                   traffic.subscriptions.push({
                     workspacePath: input.workspacePath,
                     workspaceIdentity: input.workspaceIdentity,
@@ -181,9 +181,9 @@ try {
                     },
                   };
                 },
-                [`${ServiceChannels.XCodeAgent}:unsubscribeConversationV4`]: null,
-                [`${ServiceChannels.XCodeAgent}:conversationWorkflowRunsV4`]: { runs: [] },
-                [`${ServiceChannels.XCodeAgent}:conversationPlansV4`]: { plans: [] },
+                [`${ServiceChannels.ZCodeAgent}:unsubscribeConversationV4`]: null,
+                [`${ServiceChannels.ZCodeAgent}:conversationWorkflowRunsV4`]: { runs: [] },
+                [`${ServiceChannels.ZCodeAgent}:conversationPlansV4`]: { plans: [] },
               },
             }),
           );

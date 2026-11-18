@@ -182,7 +182,7 @@ class V4BackgroundWorkCancelRejectedError extends Error {
 
 /**
  * cancelBackgroundWork：workId ≡ 旧 taskId 直传 core。
- * - cancelBackgroundTask 是 XCodeApp 可选能力：不存在 → 抛能力不支持（见上）。
+ * - cancelBackgroundTask 是 ZCodeApp 可选能力：不存在 → 抛能力不支持（见上）。
  * - core 回 `reason`（不存在 / 已终结 / 类型不支持）→ 以 `fault.command.backgroundWorkCancelRejected.<reason>`
  *   的 reasonCode 回 ACK；真取消了或返回值缺席（stub 宿主）才是 accepted。
  * - 不需要 legacy 广播：BackgroundTask*（Started/Updated/Completed）生命周期事件

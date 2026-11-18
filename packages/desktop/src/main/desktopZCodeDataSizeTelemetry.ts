@@ -1,15 +1,15 @@
 import armsRum from "@arms/rum-electron";
 import type { ArmsRumEnv, FinalArmsCustomEventPayload } from "@zcode/shared";
 
-import type { XCodeDataSizeScanResult } from "./zcodeDataSizeScanner.js";
+import type { ZCodeDataSizeScanResult } from "./zcodeDataSizeScanner.js";
 import {
-  readXCodeDataSizeTelemetryState,
-  writeXCodeDataSizeTelemetryState,
-  type XCodeDataSizeTelemetryState,
+  readZCodeDataSizeTelemetryState,
+  writeZCodeDataSizeTelemetryState,
+  type ZCodeDataSizeTelemetryState,
 } from "./zcodeDataSizeTelemetryState.js";
-import { scanXCodeDataDirectoryInWorker } from "./zcodeDataSizeWorkerClient.js";
+import { scanZCodeDataDirectoryInWorker } from "./zcodeDataSizeWorkerClient.js";
 
-export type { XCodeDataSizeTelemetryState } from "./zcodeDataSizeTelemetryState.js";
+export type { ZCodeDataSizeTelemetryState } from "./zcodeDataSizeTelemetryState.js";
 
 const ZCODE_DATA_SIZE_SCAN_MAX_DURATION_MS = 30_000;
 const ZCODE_DATA_SIZE_SCAN_MAX_FILES = 200_000;
@@ -24,7 +24,7 @@ const ZCODE_DATA_SIZE_ABORTED_RETRY_MS = 30 * 60 * 1000;
 const ZCODE_DATA_SIZE_FAILURE_RETRY_MS = 6 * 60 * 60 * 1000;
 const ZCODE_DATA_SIZE_ACTIVITY_POLL_MS = 1_000;
 
-interface XCodeDataSizeTelemetryTiming {
+interface ZCodeDataSizeTelemetryTiming {
   abortedRetryMs: number;
   activityPollMs: number;
   dailyIntervalMs: number;
@@ -37,7 +37,7 @@ interface XCodeDataSizeTelemetryTiming {
   startupMinDelayMs: number;
 }
 
-const DEFAULT_TIMING: XCodeDataSizeTelemetryTiming = {
+const DEFAULT_TIMING: ZCodeDataSizeTelemetryTiming = {
   abortedRetryMs: ZCODE_DATA_SIZE_ABORTED_RETRY_MS,
   activityPollMs: ZCODE_DATA_SIZE_ACTIVITY_POLL_MS,
   dailyIntervalMs: ZCODE_DATA_SIZE_DAILY_INTERVAL_MS,
@@ -50,22 +50,22 @@ const DEFAULT_TIMING: XCodeDataSizeTelemetryTiming = {
   startupMinDelayMs: ZCODE_DATA_SIZE_STARTUP_MIN_DELAY_MS,
 };
 
-interface XCodeDataSizeTelemetryLogger {
+interface ZCodeDataSizeTelemetryLogger {
   info: (...args: unknown[]) => void;
   warn: (...args: unknown[]) => void;
 }
 
-interface XCodeDataSizeTelemetrySchedulerDependencies {
+interface ZCodeDataSizeTelemetrySchedulerDependencies {
   deviceMid: string;
   getSystemIdleTimeSeconds: () => number;
   isAppBackground: () => boolean;
-  isXCodeBusy: () => boolean;
-  logger: XCodeDataSizeTelemetryLogger;
-  readState: () => Promise<XCodeDataSizeTelemetryState | null>;
-  report: (result: XCodeDataSizeScanResult) => Promise<void> | void;
-  scan: (options: { signal: AbortSignal }) => Promise<XCodeDataSizeScanResult>;
-  timing?: Partial<XCodeDataSizeTelemetryTiming>;
-  writeState: (state: XCodeDataSizeTelemetryState) => Promise<void>;
+  isZCodeBusy: () => boolean;
+  logger: ZCodeDataSizeTelemetryLogger;
+  readState: () => Promise<ZCodeDataSizeTelemetryState | null>;
+  report: (result: ZCodeDataSizeScanResult) => Promise<void> | void;
+  scan: (options: { signal: AbortSignal }) => Promise<ZCodeDataSizeScanResult>;
+  timing?: Partial<ZCodeDataSizeTelemetryTiming>;
+  writeState: (state: ZCodeDataSizeTelemetryState) => Promise<void>;
 }
 
 function normalizeOsCategory(platform: NodeJS.Platform): string {
@@ -89,7 +89,7 @@ function stringifyProperties(
   );
 }
 
-function buildXCodeDataSizeArmsPayload(params: {
+function buildZCodeDataSizeArmsPayload(params: {
   context: {
     appVersion: string;
     armsEnv: ArmsRumEnv;
@@ -97,7 +97,7 @@ function buildXCodeDataSizeArmsPayload(params: {
     deviceMid: string;
     platform: NodeJS.Platform;
   };
-  result: XCodeDataSizeScanResult;
+  result: ZCodeDataSizeScanResult;
 }): FinalArmsCustomEventPayload {
   const eventName = "perf_resource_zcode_data_size";
   return {
@@ -149,15 +149,15 @@ function unrefTimer(timer: ReturnType<typeof setTimeout> | ReturnType<typeof set
   }
 }
 
-function createXCodeDataSizeTelemetryScheduler(
-  dependencies: XCodeDataSizeTelemetrySchedulerDependencies,
+function createZCodeDataSizeTelemetryScheduler(
+  dependencies: ZCodeDataSizeTelemetrySchedulerDependencies,
 ): { start: () => Promise<void>; stop: () => void } {
   const timing = { ...DEFAULT_TIMING, ...dependencies.timing };
   let scheduledTimer: ReturnType<typeof setTimeout> | null = null;
   let activityTimer: ReturnType<typeof setInterval> | null = null;
   let activeAbortController: AbortController | null = null;
   let idleWaitingSince: number | null = null;
-  let persistedState: XCodeDataSizeTelemetryState | null = null;
+  let persistedState: ZCodeDataSizeTelemetryState | null = null;
   let stopped = true;
 
   function clearScheduledTimer(): void {
@@ -202,7 +202,7 @@ function createXCodeDataSizeTelemetryScheduler(
 
   function collectionEligibilityLost(relaxedIdle: boolean): boolean {
     try {
-      return dependencies.isXCodeBusy() || (!relaxedIdle && !isPreferredIdleWindow());
+      return dependencies.isZCodeBusy() || (!relaxedIdle && !isPreferredIdleWindow());
     } catch {
       return true;
     }
@@ -218,7 +218,7 @@ function createXCodeDataSizeTelemetryScheduler(
     }
   }
 
-  async function reserveReport(reservedAt: number): Promise<XCodeDataSizeTelemetryState | null> {
+  async function reserveReport(reservedAt: number): Promise<ZCodeDataSizeTelemetryState | null> {
     const previousState = persistedState;
     const reservation = { ...previousState, reportReservedAt: reservedAt };
     // Bug 根因：旧实现先发送再落盘，落盘失败后重启会再次发送，绕过 24 小时限流。
@@ -229,7 +229,7 @@ function createXCodeDataSizeTelemetryScheduler(
   }
 
   async function rollbackReportReservation(
-    previousState: XCodeDataSizeTelemetryState | null,
+    previousState: ZCodeDataSizeTelemetryState | null,
   ): Promise<void> {
     try {
       const restoredState = previousState ?? {};
@@ -322,7 +322,7 @@ function createXCodeDataSizeTelemetryScheduler(
     const now = Date.now();
     idleWaitingSince ??= now;
     const relaxedIdle = now - idleWaitingSince >= timing.idleWaitFallbackMs;
-    if (dependencies.isXCodeBusy()) {
+    if (dependencies.isZCodeBusy()) {
       schedule(timing.idlePollMs);
       return;
     }
@@ -334,7 +334,7 @@ function createXCodeDataSizeTelemetryScheduler(
   }
 
   async function initializeFromPersistedState(): Promise<void> {
-    let state: XCodeDataSizeTelemetryState | null;
+    let state: ZCodeDataSizeTelemetryState | null;
     try {
       state = await dependencies.readState();
     } catch (error) {
@@ -390,27 +390,27 @@ function createXCodeDataSizeTelemetryScheduler(
   };
 }
 
-let desktopScheduler: ReturnType<typeof createXCodeDataSizeTelemetryScheduler> | null = null;
+let desktopScheduler: ReturnType<typeof createZCodeDataSizeTelemetryScheduler> | null = null;
 
-export function registerDesktopXCodeDataSizeTelemetry(options: {
-  context: Parameters<typeof buildXCodeDataSizeArmsPayload>[0]["context"];
+export function registerDesktopZCodeDataSizeTelemetry(options: {
+  context: Parameters<typeof buildZCodeDataSizeArmsPayload>[0]["context"];
   getSystemIdleTimeSeconds: () => number;
   isAppBackground: () => boolean;
-  isXCodeBusy: () => boolean;
-  logger: XCodeDataSizeTelemetryLogger;
+  isZCodeBusy: () => boolean;
+  logger: ZCodeDataSizeTelemetryLogger;
   rootPath: string;
   stateFile: string;
 }): void {
-  stopDesktopXCodeDataSizeTelemetry();
-  desktopScheduler = createXCodeDataSizeTelemetryScheduler({
+  stopDesktopZCodeDataSizeTelemetry();
+  desktopScheduler = createZCodeDataSizeTelemetryScheduler({
     deviceMid: options.context.deviceMid,
     getSystemIdleTimeSeconds: options.getSystemIdleTimeSeconds,
     isAppBackground: options.isAppBackground,
-    isXCodeBusy: options.isXCodeBusy,
+    isZCodeBusy: options.isZCodeBusy,
     logger: options.logger,
-    readState: () => readXCodeDataSizeTelemetryState(options.stateFile),
+    readState: () => readZCodeDataSizeTelemetryState(options.stateFile),
     report: (result) => {
-      const payload = buildXCodeDataSizeArmsPayload({ context: options.context, result });
+      const payload = buildZCodeDataSizeArmsPayload({ context: options.context, result });
       armsRum.sendCustom({
         group: payload.group,
         name: payload.name,
@@ -420,7 +420,7 @@ export function registerDesktopXCodeDataSizeTelemetry(options: {
       });
     },
     scan: ({ signal }) =>
-      scanXCodeDataDirectoryInWorker(
+      scanZCodeDataDirectoryInWorker(
         {
           maxDurationMs: ZCODE_DATA_SIZE_SCAN_MAX_DURATION_MS,
           maxFiles: ZCODE_DATA_SIZE_SCAN_MAX_FILES,
@@ -428,14 +428,14 @@ export function registerDesktopXCodeDataSizeTelemetry(options: {
         },
         signal,
       ),
-    writeState: (state) => writeXCodeDataSizeTelemetryState(options.stateFile, state),
+    writeState: (state) => writeZCodeDataSizeTelemetryState(options.stateFile, state),
   });
   void desktopScheduler.start().catch((error) => {
     options.logger.warn("[zcode-data-size] scheduler start failed", error);
   });
 }
 
-export function stopDesktopXCodeDataSizeTelemetry(): void {
+export function stopDesktopZCodeDataSizeTelemetry(): void {
   desktopScheduler?.stop();
   desktopScheduler = null;
 }

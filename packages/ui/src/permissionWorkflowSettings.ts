@@ -8,7 +8,7 @@
 // 三件事——改过的设置存在哪、哪些选项带着它走、Shift+Tab 从选项列表回到设置控件。
 
 import { useCallback, useState } from "react";
-import type { XCodePermissionOption } from "@zcode/shared";
+import type { ZCodePermissionOption } from "@zcode/shared";
 import type { WorkflowAskSettingsContent } from "@/components/workflow-timeline/workflowAskSettings.js";
 import { getPermissionOptionDisplayKind } from "@/lib/permissionRequest.js";
 
@@ -46,7 +46,7 @@ export function usePermissionWorkflowSettings(requestId: string) {
 }
 
 /** 设置只随放行应答走：拒绝什么都不启动，Refine 的下一个窗带着模型改过的调用重来。 */
-export function isWorkflowSettingsCarrier(option: XCodePermissionOption): boolean {
+export function isWorkflowSettingsCarrier(option: ZCodePermissionOption): boolean {
   const kind = getPermissionOptionDisplayKind(option.kind);
   return kind === "allowOnce" || kind === "allowAlways";
 }

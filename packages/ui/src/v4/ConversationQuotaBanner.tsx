@@ -8,7 +8,7 @@ import {
 } from "@/CodingPlanBillingDiscount.js";
 import { Button } from "@/components/ui/button.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type {
   SessionQuotaBannerKind,
   SessionQuotaBannerState,
@@ -67,7 +67,7 @@ export function ConversationQuotaBanner({
   onDismiss: () => void;
   onShown?: () => void;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const bannerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!onShown || !state.visible || !bannerRef.current) return;

@@ -2,7 +2,7 @@ import { XIcon } from "lucide-react";
 import type { MarketingTouchDelivery } from "@zcode/shared";
 import { Button } from "@/components/ui/button.js";
 import { MarketingHeroTicket } from "@/marketing/MarketingHeroTicket.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /**
  * Marketing Touch 横幅卡片（对齐官方 Wnn）。
@@ -22,7 +22,7 @@ export function MarketingCampaignBanner({
   onOpen: (delivery: MarketingTouchDelivery) => void;
   onClose: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const background = delivery.banner?.background;
   const title = delivery.campaign?.dialog?.title?.trim();
   const description = delivery.campaign?.dialog?.description?.text?.trim();

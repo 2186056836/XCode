@@ -174,7 +174,7 @@ async function holdTaskMeta(taskId: string) {
       };
       window.__sct03TaskMetaProbe = probe;
     },
-    ServiceChannels.XCodeTask,
+    ServiceChannels.ZCodeTask,
     taskId,
   );
 }
@@ -191,7 +191,7 @@ async function waitForRealTaskMeta(taskId: string, phase: string) {
   const reader = new BufferReader(VSBuffer.wrap(Uint8Array.from(request)));
   const header = deserialize(reader) as [number, number, string, string];
   const args = deserialize(reader);
-  expect(header).toEqual([100, expect.any(Number), ServiceChannels.XCodeTask, "getTaskMeta"]);
+  expect(header).toEqual([100, expect.any(Number), ServiceChannels.ZCodeTask, "getTaskMeta"]);
   expect(args).toEqual([expect.objectContaining({ workspacePath: DEFAULT_WORKSPACE, taskId })]);
   const probeId = -9400 - header[1];
   const wireRequest = new BufferWriter();

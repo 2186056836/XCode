@@ -74,7 +74,7 @@ describe(`${CASE_MARKER}: Desktop SSH 产物分享`, () => {
     // 根因：API Key 登录没有 OAuth user；假 JWT 又会触发真实控制面的 401。
     // 沿用 live-team 的显式凭据导入，WDIO 为这个独立用例固定匹配的生产控制面。
     const imported = await importLiveBigModelCredentials(CASE_MARKER);
-    const defaultWorkspace = resolve(getE2EAppDataPaths().homeDir, "XCodeProject");
+    const defaultWorkspace = resolve(getE2EAppDataPaths().homeDir, "ZCodeProject");
     await mkdir(defaultWorkspace, { recursive: true });
     await seedSettings({
       providerFamilyDomain: "bigmodel",

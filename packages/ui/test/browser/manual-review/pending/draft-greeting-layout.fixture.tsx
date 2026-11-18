@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ConversationDraftEmptyState } from "@/v4/ConversationDraftEmptyState.js";
-import { XCodeIntlProvider, useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider, useZCodeIntl } from "@/i18n/IntlProvider.js";
 import "@/styles.css";
 
 const params = new URLSearchParams(location.search);
@@ -10,7 +10,7 @@ document.documentElement.className = `${theme} theme-zai-${theme}`;
 const compact = params.has("compact");
 
 function Fixture() {
-  const { locale, setLocale } = useXCodeIntl();
+  const { locale, setLocale } = useZCodeIntl();
   const [revision, setRevision] = useState(0);
   return (
     <main className="min-h-dvh bg-background p-4 text-ui-base text-foreground">
@@ -36,7 +36,7 @@ function Fixture() {
 }
 
 createRoot(document.getElementById("root")!).render(
-  <XCodeIntlProvider initialLocale={params.get("locale") === "en-US" ? "en-US" : "zh-CN"}>
+  <ZCodeIntlProvider initialLocale={params.get("locale") === "en-US" ? "en-US" : "zh-CN"}>
     <Fixture />
-  </XCodeIntlProvider>,
+  </ZCodeIntlProvider>,
 );

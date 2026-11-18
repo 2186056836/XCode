@@ -3,11 +3,11 @@
 import {
   BUILTIN_MODEL_PROVIDER_IDS,
   resolveOffPeakProviderId,
-  buildRuntimeXCodeApiUrl,
+  buildRuntimeZCodeApiUrl,
   type OffPeakCodingPlanKind,
   type OffPeakCodingPlanSupport,
   type OffPeakCodingPlanUnsupportedReason,
-  type XCodeAccountAccess,
+  type ZCodeAccountAccess,
 } from "@zcode/shared";
 import { isOffPeakMockEnabled, startOffPeakMockGateway } from "./offPeakMockGateway.js";
 import type { ServiceLogger } from "../logger/serviceLogger.js";
@@ -83,7 +83,7 @@ interface OffPeakCredentialResolverDeps {
   accountRequestAuthService: IAccountRequestAuthService;
   resolveAccountProvider(): Promise<{
     readonly providerId: string;
-    readonly access: XCodeAccountAccess;
+    readonly access: ZCodeAccountAccess;
     readonly baseURL?: string;
   } | null>;
   env?: NodeJS.ProcessEnv;
@@ -339,7 +339,7 @@ export function createOffPeakOriginResolver(deps: {
       if (!originPromise) {
         originPromise = (async () => {
           if (!isOffPeakMockEnabled(env)) {
-            return new URL(buildRuntimeXCodeApiUrl(env, "/")).origin;
+            return new URL(buildRuntimeZCodeApiUrl(env, "/")).origin;
           }
           const gateway = await startOffPeakMockGateway({
             logger: deps.logger,

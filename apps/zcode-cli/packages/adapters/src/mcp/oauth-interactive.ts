@@ -13,7 +13,7 @@ import {
   createLocalhostOAuthCallbackServer,
   type LocalhostOAuthCallbackServer,
 } from "../auth/localhost-callback.js";
-import type { SharedXCodeCredentialStore } from "../auth/shared-credentials.js";
+import type { SharedZCodeCredentialStore } from "../auth/shared-credentials.js";
 import {
   loadCanonicalCredentials,
   publishCanonicalCredentials,
@@ -50,7 +50,7 @@ export type McpInteractiveAuthorizationOutcome =
 export interface McpInteractiveAuthorizationInput {
   adapterInstanceId?: string;
   config: McpAuthorizationCodeOAuthConfig;
-  credentialStore: SharedXCodeCredentialStore;
+  credentialStore: SharedZCodeCredentialStore;
   fetchFn?: FetchLike;
   /** 403 step-up：unionScope 是 requiredScope 的严格超集时，refresh 无法扩权，必须强制重新授权。 */
   forceReauthorization?: boolean;
@@ -258,7 +258,7 @@ class InteractiveAuthorizationProvider implements OAuthClientProvider {
   private readonly baselineGeneration?: string;
   private readonly callbackServer: LocalhostOAuthCallbackServer;
   private readonly config: McpAuthorizationCodeOAuthConfig;
-  private readonly credentialStore: SharedXCodeCredentialStore;
+  private readonly credentialStore: SharedZCodeCredentialStore;
   private readonly keyPrefix: string;
   private readonly logger?: Logger;
   private readonly onAuthorizationRequired?: (
@@ -283,7 +283,7 @@ class InteractiveAuthorizationProvider implements OAuthClientProvider {
     baselineGeneration?: string;
     callbackServer: LocalhostOAuthCallbackServer;
     config: McpAuthorizationCodeOAuthConfig;
-    credentialStore: SharedXCodeCredentialStore;
+    credentialStore: SharedZCodeCredentialStore;
     keyPrefix: string;
     logger?: Logger;
     onAuthorizationRequired?: (context: McpOAuthAuthorizationContext) => Promise<void> | void;

@@ -1,6 +1,6 @@
 import type { WebZaiOAuthProviderConfig } from "./zaiWebOAuthProvider.js";
 import {
-  buildXCodeEndpointUrls,
+  buildZCodeEndpointUrls,
   DEFAULT_XCODE_ENDPOINT_ORIGIN,
   resolveBigModelApiOrigin,
 } from "@zcode/shared";
@@ -44,7 +44,7 @@ function buildBigModelAuthorizeUrl(origin: string | undefined): string {
 
 export function createWebZaiOAuthConfig(env: WebImportMetaEnv = {}): WebZaiOAuthConfig {
   const devOrigin = env.VITE_DEV_ORIGIN?.trim().replace(/\/$/, "");
-  const zcodeEndpointUrls = buildXCodeEndpointUrls(
+  const zcodeEndpointUrls = buildZCodeEndpointUrls(
     env.VITE_XCODE_BASE_URL?.trim() ||
       env.VITE_XCODE_ENDPOINT_ORIGIN?.trim() ||
       DEFAULT_XCODE_ENDPOINT_ORIGIN,

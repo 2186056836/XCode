@@ -6,7 +6,7 @@ import {
   testId,
 } from "@zcode/shared/test-ids";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { formatBytes } from "@/resource-manager/resourceUsageView.js";
 import { storageCategoryTitleId, type StorageLegendItem } from "./storageCategoryPresentation.js";
 
@@ -25,7 +25,7 @@ export function StorageDiskCard({
   selectable: boolean;
   onSelect: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const label =
     group.volume?.mountPoint ?? intl.formatMessage({ id: "resourceManager.storage.disk" });
   const body = (

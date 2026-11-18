@@ -78,7 +78,7 @@ import { Event } from '@zcode/rpc';
 import { ServiceProvider } from '@/hooks/useServices.js';
 import { PlatformProvider } from '@/hooks/usePlatform.js';
 import { StoreProvider } from '@/store/StoreProvider.js';
-import { XCodeIntlProvider } from '@/i18n/IntlProvider.js';
+import { ZCodeIntlProvider } from '@/i18n/IntlProvider.js';
 import { OccupationOnboarding } from '@/onboarding/OccupationOnboarding.js';
 import '@/styles.css';
 const h = React.createElement;
@@ -94,7 +94,7 @@ function Fixture() {
     h('button', {onClick: open}, '新建远程任务'),
     bridge && h(ServiceProvider, {key: bridge.id, services: bridge.services},
       h(PlatformProvider, {platform}, h(StoreProvider, {broadcastService: broadcast},
-        h(XCodeIntlProvider, null,
+        h(ZCodeIntlProvider, null,
           h(OccupationOnboarding, null, h('div', {'data-testid': 'task-draft', 'data-bridge-id': bridge.id}, '远程任务草稿')))))));
 }
 createRoot(document.getElementById('root')).render(h(Fixture));

@@ -86,7 +86,7 @@ describe("createSitesApi", () => {
       redirect: "manual",
       headers: {
         ...headers,
-        "X-XCode-App-Version": "3.16.2",
+        "X-ZCode-App-Version": "3.16.2",
         "Content-Type": "application/json",
       },
     });

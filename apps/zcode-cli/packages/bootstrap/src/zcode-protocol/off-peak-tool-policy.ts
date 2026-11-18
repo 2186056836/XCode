@@ -1,5 +1,5 @@
 import { zcodeWorkspaceUpdateOffPeakToolPolicyParamsSchema } from "@zcode/shared";
-import { parseParams, type XCodeProtocolAgentServerContext } from "./server-types.js";
+import { parseParams, type ZCodeProtocolAgentServerContext } from "./server-types.js";
 
 /**
  * Off-Peak 工具面门禁为灰度有效且本地 workspace。共享池只包含本地 workspace，支持条件一致；
@@ -8,7 +8,7 @@ import { parseParams, type XCodeProtocolAgentServerContext } from "./server-type
  * 只影响之后创建/恢复的 record；已活跃 record 的工具面不回收（与灰度中途翻转策略一致）。
  */
 export async function updateOffPeakToolPolicy(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
 ) {
   const params = parseParams(zcodeWorkspaceUpdateOffPeakToolPolicyParamsSchema, rawParams);

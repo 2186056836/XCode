@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select.js";
 import { SettingsSearchInput } from "@/settings/SettingsSearchInput.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   buildArchiveGroups,
   buildArchiveProjectOptions,
@@ -29,7 +29,7 @@ export function ArchiveManagement() {
   );
 }
 function ArchiveManagementContent() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const msg = (id: string) => intl.formatMessage({ id: `archives.${id}` });
   const state = useArchiveManagement();
   const sortId = useId();

@@ -7,7 +7,7 @@ import type {
   TuiSubmitPromptResult,
 } from "@zcode/tui";
 import type { SupportedLocale, UiLocale } from "@zcode/i18n";
-import type { ModelSelection, XCodeModelOption } from "@zcode/shared";
+import type { ModelSelection, ZCodeModelOption } from "@zcode/shared";
 import type { DynamicWorkflowMode } from "@zcode/shared";
 import type {
   BackgroundTaskCancelResult,
@@ -32,7 +32,7 @@ export type SwitchableCommandCenterMode = Extract<
   "plan" | "build" | "edit" | "yolo" | "guarded"
 >;
 
-export type CommandCenterModelOption = XCodeModelOption;
+export type CommandCenterModelOption = ZCodeModelOption;
 
 export type CommandCenterLocaleResult = {
   configPath?: string;

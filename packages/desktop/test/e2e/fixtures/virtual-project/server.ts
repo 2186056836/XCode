@@ -4,7 +4,7 @@ import { join, basename, resolve } from "node:path";
 import {
   IProjectService,
   IProviderProvisioningTargetService,
-  IXCodeAgentService,
+  IZCodeAgentService,
   ISourceServerWorkspaceService,
 } from "@zcode/services";
 import { createServerHostServices, disposeServiceResourcesAndWait } from "@zcode/services/node";
@@ -36,7 +36,7 @@ provisioning.apply = async (envelope) => {
     process.stderr.write(`E2E_VP_PROVIDER_FAILURE ${result.errorMessage}\n`);
   return result;
 };
-const agentService = services.get(IXCodeAgentService);
+const agentService = services.get(IZCodeAgentService);
 const sendCommand = agentService.sendConversationCommandV4.bind(agentService);
 agentService.sendConversationCommandV4 = async (params) => {
   if (params.envelope.type === "createSession")

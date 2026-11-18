@@ -2,7 +2,7 @@ import { posix } from "node:path";
 import type { CustomPublishOptions, PackageFileInfo } from "builder-util-runtime";
 import {
   DEFAULT_XCODE_ENDPOINT_ORIGIN,
-  normalizeXCodeEndpointOrigin,
+  normalizeZCodeEndpointOrigin,
   toBearerAuthorization,
   type ElectronReleaseChannel,
 } from "@zcode/shared";
@@ -85,7 +85,7 @@ export function buildElectronManifestUrl(options: {
 }): URL {
   const url = options.manifestUrl?.trim()
     ? new URL(options.manifestUrl.trim())
-    : new URL(ELECTRON_MANIFEST_API_PATH, normalizeXCodeEndpointOrigin(options.endpointOrigin));
+    : new URL(ELECTRON_MANIFEST_API_PATH, normalizeZCodeEndpointOrigin(options.endpointOrigin));
   url.searchParams.set("platform", options.platform);
   if (options.deviceMid?.trim()) {
     url.searchParams.set("device_mid", options.deviceMid.trim());
@@ -198,7 +198,7 @@ export class ManifestUpdateProvider extends Provider<UpdateInfo> {
     this.linuxExtensions = getLinuxUpdateExtensions(updater);
     this.releasePlatform = options.releasePlatform?.trim() || getElectronReleasePlatform();
     this.resolveBaseUrl = new URL(
-      normalizeXCodeEndpointOrigin(options.endpointOrigin ?? DEFAULT_XCODE_ENDPOINT_ORIGIN),
+      normalizeZCodeEndpointOrigin(options.endpointOrigin ?? DEFAULT_XCODE_ENDPOINT_ORIGIN),
     );
   }
 
@@ -264,7 +264,7 @@ export class ManifestUpdateProvider extends Provider<UpdateInfo> {
       (await this.options.resolveEndpointOrigin?.()) ??
       this.options.endpointOrigin ??
       DEFAULT_XCODE_ENDPOINT_ORIGIN;
-    return normalizeXCodeEndpointOrigin(resolved);
+    return normalizeZCodeEndpointOrigin(resolved);
   }
 
   private async resolveReleaseChannel(): Promise<ElectronReleaseChannel> {

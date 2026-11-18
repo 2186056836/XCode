@@ -10,7 +10,7 @@ import {
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ModelTextResult } from "@zcode/contracts";
-import { ZCODE_RUNTIME_ENV_KEY, normalizeXCodeRuntimeEnv } from "@zcode/shared";
+import { ZCODE_RUNTIME_ENV_KEY, normalizeZCodeRuntimeEnv } from "@zcode/shared";
 import { redactAnthropicRequestMetadata } from "./anthropic-request-metadata.js";
 import type { EnvRecord } from "./model-execution.js";
 import { sanitizeModelIODebugRecord } from "./runner-debug-redaction.js";
@@ -472,7 +472,7 @@ async function settleModelIOValueWithTimeout<T>(
 
 // 归一化 ZCODE_RUNTIME_ENV；未设置时返回 undefined,由调用方按生产处理。
 function normalizeRuntimeEnv(env: EnvRecord): string | undefined {
-  return normalizeXCodeRuntimeEnv(env[ZCODE_RUNTIME_ENV_KEY]);
+  return normalizeZCodeRuntimeEnv(env[ZCODE_RUNTIME_ENV_KEY]);
 }
 
 function writeModelIODebugRecord(

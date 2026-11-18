@@ -9,8 +9,8 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ConfirmDialogHost } from "@/ConfirmDialog.js";
 import { PermissionDialog } from "@/PermissionDialog.js";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
-import { isLocale, type XCodePermissionRequest } from "@zcode/shared";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { isLocale, type ZCodePermissionRequest } from "@zcode/shared";
 import "@/styles.css";
 import { pendingCommandRegistry } from "@/v4/pendingCommandRegistry.js";
 import type { CommandAck } from "@zcode/shared/zcode-protocol-v4";
@@ -20,7 +20,7 @@ const scopeGate = Promise.withResolvers<void>();
 document.documentElement.classList.add(
   params.get("theme") === "light" ? "theme-zai-light" : "theme-zai-dark",
 );
-const request: XCodePermissionRequest = {
+const request: ZCodePermissionRequest = {
   type: "permission_request",
   taskId: "s",
   traceId: "trace",
@@ -180,7 +180,7 @@ function Fixture() {
   );
 }
 createRoot(document.getElementById("root")!).render(
-  <XCodeIntlProvider initialLocale={isLocale(requestedLocale) ? requestedLocale : "zh-CN"}>
+  <ZCodeIntlProvider initialLocale={isLocale(requestedLocale) ? requestedLocale : "zh-CN"}>
     {params.has("grant") ? <MobileProjectApproval /> : <Fixture />}
-  </XCodeIntlProvider>,
+  </ZCodeIntlProvider>,
 );

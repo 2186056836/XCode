@@ -2,7 +2,7 @@ import { delimiter, dirname } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UnauthorizedError } from "@modelcontextprotocol/client";
 import { ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY } from "@zcode/shared";
-import type { SharedXCodeCredentialStore } from "../src/auth/shared-credentials.js";
+import type { SharedZCodeCredentialStore } from "../src/auth/shared-credentials.js";
 
 const {
   capturedClientInfo,
@@ -303,7 +303,7 @@ describe("createMcpAdapter", () => {
         arguments: { code: "1 + 1" },
         name: "js",
         _meta: {
-          "com.xcode/request-context": {
+          "com.zcode/request-context": {
             parent_span_id: "parent-1",
             runtime_scope: "subagent",
             session_id: "session-1",
@@ -341,7 +341,7 @@ describe("createMcpAdapter", () => {
 
     const meta = clientCallToolMock.mock.calls.at(-1)?.[0]._meta;
     expect(meta).toMatchObject({ root_session_id: "session-1", session_id: "subagent-1" });
-    expect(meta["com.xcode/request-context"]).toMatchObject({
+    expect(meta["com.zcode/request-context"]).toMatchObject({
       root_session_id: "session-1",
       session_id: "subagent-1",
     });
@@ -1214,7 +1214,7 @@ describe("createMcpAdapter", () => {
       type: "http",
       url: "https://mcp.example.test",
       headers: {
-        "X-XCode": "1",
+        "X-ZCode": "1",
       },
       oauth: {
         type: "client_credentials",
@@ -1251,7 +1251,7 @@ describe("createMcpAdapter", () => {
       };
     };
 
-    expect(httpOptions.requestInit?.headers).toEqual({ "X-XCode": "1" });
+    expect(httpOptions.requestInit?.headers).toEqual({ "X-ZCode": "1" });
     expect(httpOptions.authProvider?.clientInformation()).toEqual({
       client_id: "http-client",
       client_secret: "http-secret",
@@ -1784,7 +1784,7 @@ describe("createMcpAdapter", () => {
       loadMany: vi.fn(async () => {
         throw credentialError;
       }),
-    } as unknown as SharedXCodeCredentialStore;
+    } as unknown as SharedZCodeCredentialStore;
     clientConnectMock.mockRejectedValue(new UnauthorizedError());
     const adapter = createMcpAdapter({
       mcpOAuth: {

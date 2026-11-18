@@ -20,7 +20,7 @@ import {
   type LexicalChatInputHandle,
   type UserInputPresence,
 } from "@/LexicalChatInput.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { AppSlashCommand } from "@/slashCommandHelpers.js";
 import {
   hasWorkspaceFileDragPayload,
@@ -171,7 +171,7 @@ export function ChatPromptEditor({
   /** 额外挂进编辑器的 Lexical 插件（透传 LexicalChatInput）。 */
   extraPlugins?: ReactNode;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const isInline = layout === "inline";
   const toolbarRef = useComposerToolbarFit({ iconOnly: isInline });
   const internalInputApiRef = useRef<LexicalChatInputHandle | null>(null);

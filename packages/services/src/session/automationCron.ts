@@ -1,5 +1,5 @@
 import { Cron } from "croner";
-import type { XCodeAutomation, XCodeAutomationScheduleRule } from "@zcode/shared";
+import type { ZCodeAutomation, ZCodeAutomationScheduleRule } from "@zcode/shared";
 import { isValidCronExpr } from "#src/session/automationCronValidation.js";
 
 export { isValidCronExpr } from "#src/session/automationCronValidation.js";
@@ -13,7 +13,7 @@ const ONE_SHOT_STALE_TARGET_WINDOW_MS = 30 * 60 * 1_000;
 const FIXED_CALENDAR_CRON = /^\d+\s+\d+\s+\d+\s+\d+\s+\*$/;
 
 /** 用于判断直接提交的 scheduleRule 是否仅更新展示字段，比较时忽略 anchorAt。 */
-export function scheduleRuleDefinition(rule: XCodeAutomationScheduleRule): string {
+export function scheduleRuleDefinition(rule: ZCodeAutomationScheduleRule): string {
   return JSON.stringify([
     rule.unit,
     rule.interval,
@@ -42,7 +42,7 @@ export class StaleOneShotAutomationScheduleError extends Error {
  * （如 delayMinutes 落成的 minute 规则）推导出新的执行承诺。
  */
 export function isOneShotAutomation(
-  automation: Pick<XCodeAutomation, "recurring" | "maxRuns">,
+  automation: Pick<ZCodeAutomation, "recurring" | "maxRuns">,
 ): boolean {
   return !automation.recurring && (automation.maxRuns ?? 1) <= 1;
 }
@@ -69,7 +69,7 @@ export function computeNextRunAt(cronExpr: string, from?: number): number | null
 export function buildRelativeDelaySchedule(
   delayMinutes: number,
   from = Date.now(),
-): Pick<XCodeAutomation, "cronExpr" | "scheduleRule"> {
+): Pick<ZCodeAutomation, "cronExpr" | "scheduleRule"> {
   const target = new Date(from + delayMinutes * 60 * 1_000);
   return {
     cronExpr: `${target.getMinutes()} ${target.getHours()} ${target.getDate()} ${target.getMonth() + 1} *`,
@@ -88,7 +88,7 @@ export function buildRelativeDelaySchedule(
  * 仅允许小于一分钟的工具调用跨分钟误差立即补执行，已经陈旧的目标必须拒绝并重新计算。
  */
 export function computeInitialAutomationNextRunAt(
-  automation: Pick<XCodeAutomation, "cronExpr" | "recurring" | "scheduleRule">,
+  automation: Pick<ZCodeAutomation, "cronExpr" | "recurring" | "scheduleRule">,
   from = Date.now(),
 ): number | null {
   const nextRunAt = computeAutomationNextRunAt(automation, from);
@@ -131,7 +131,7 @@ function firstWeekdayOfMonth(year: number, month: number, weekday: number): Date
 
 /** 自定义重复规则的下一次运行；所有计算都使用本地日历时间。 */
 export function computeScheduleRuleNextRunAt(
-  rule: XCodeAutomationScheduleRule,
+  rule: ZCodeAutomationScheduleRule,
   from = Date.now(),
 ): number | null {
   const interval = Math.max(1, Math.floor(rule.interval));
@@ -223,7 +223,7 @@ export function computeScheduleRuleNextRunAt(
 export function inferMinuteIntervalScheduleRule(
   cronExpr: string,
   anchorAt: number,
-): XCodeAutomationScheduleRule | undefined {
+): ZCodeAutomationScheduleRule | undefined {
   const match = /^\*\/([1-9]\d*)\s+\*\s+\*\s+\*\s+\*$/.exec(cronExpr.trim());
   if (!match) return undefined;
   return {
@@ -289,11 +289,11 @@ function parseCronFields(cronExpr: string): {
  * months=锚点月份），保证调度引擎仍可计算下一轮，不静默返回 null。
  */
 export function buildIntervalScheduleRule(
-  intervalUnit: XCodeAutomationScheduleRule["unit"],
+  intervalUnit: ZCodeAutomationScheduleRule["unit"],
   interval: number,
   cronExpr: string,
   anchorAt: number,
-): XCodeAutomationScheduleRule {
+): ZCodeAutomationScheduleRule {
   const fields = parseCronFields(cronExpr);
   const anchor = new Date(anchorAt);
   const minute = fields.minute ?? anchor.getMinutes();
@@ -341,7 +341,7 @@ export function buildIntervalScheduleRule(
 }
 
 export function computeAutomationNextRunAt(
-  automation: Pick<XCodeAutomation, "cronExpr" | "scheduleRule">,
+  automation: Pick<ZCodeAutomation, "cronExpr" | "scheduleRule">,
   from?: number,
 ): number | null {
   return automation.scheduleRule

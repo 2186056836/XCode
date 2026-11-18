@@ -4,7 +4,7 @@ export * from "../app-control/contract.js";
 import { appControlProtocol, appControlCancelMethod } from "../app-control/contract.js";
 // Bot 反向回复的名字解析/待澄清结果与 App、CLI 使用同一严格 schema。
 export { channelReplyRequestSchema, channelReplyResultSchema } from "../channel-mention.js";
-export { zcodeProtocolTraceSchema, type XCodeProtocolTrace } from "./trace.js";
+export { zcodeProtocolTraceSchema, type ZCodeProtocolTrace } from "./trace.js";
 // 扩展进程 P2 的插件只读查询（plugins/readUserOptions、plugins/mentionItems）。
 export * from "./plugin-host-queries/contract.js";
 import {
@@ -77,8 +77,8 @@ export const zcodeTopicResourceCancelParamsSchema = z
   .object({ requestId: z.string().min(1).max(256), taskId: z.string().min(1).max(256) })
   .strict();
 export const zcodeTopicResourceCancelResultSchema = z.object({ cancelled: z.boolean() }).strict();
-export type XCodeTopicResourceReadParams = z.infer<typeof zcodeTopicResourceReadParamsSchema>;
-export type XCodeTopicResourceReadResult = z.infer<typeof zcodeTopicResourceReadResultSchema>;
+export type ZCodeTopicResourceReadParams = z.infer<typeof zcodeTopicResourceReadParamsSchema>;
+export type ZCodeTopicResourceReadResult = z.infer<typeof zcodeTopicResourceReadResultSchema>;
 export { activeWorkSummarySchema, type ActiveWorkSummary } from "../zcode-protocol-v4/snapshot.js";
 // browser-use 命令/结果契约单一来源：agent 构造、协议校验和 main executor 共用同一 schema。
 import {
@@ -415,7 +415,7 @@ const zcodeToolResultObjectSchema = jsonObjectSchema.superRefine((result, contex
 });
 
 export const zcodeProtocolRequestIdSchema = z.union([z.string(), z.number().int()]);
-export type XCodeProtocolRequestId = z.infer<typeof zcodeProtocolRequestIdSchema>;
+export type ZCodeProtocolRequestId = z.infer<typeof zcodeProtocolRequestIdSchema>;
 
 // 远程历史附件仅通过现有连接的私有反向频道传输，单块保持在 RPC 帧预算内。
 export const TOPIC_RESOURCE_RELAY_CHUNK_BYTES = 384 * 1024;
@@ -428,7 +428,7 @@ export const zcodeTopicResourceRelayRequestSchema = zcodeTopicResourceReadParams
     trace: zcodeProtocolTraceSchema.optional(),
   })
   .strict();
-export type XCodeTopicResourceRelayRequest = z.infer<typeof zcodeTopicResourceRelayRequestSchema>;
+export type ZCodeTopicResourceRelayRequest = z.infer<typeof zcodeTopicResourceRelayRequestSchema>;
 export const zcodeTopicResourceRelayKeySchema = zcodeTopicResourceCancelParamsSchema;
 export const zcodeTopicResourceRelayChunkRequestSchema = zcodeTopicResourceRelayKeySchema
   .extend({
@@ -462,7 +462,7 @@ export const zcodeProtocolRequestSchema = z
     trace: zcodeProtocolTraceSchema.optional(),
   })
   .strict();
-export type XCodeProtocolRequest = z.infer<typeof zcodeProtocolRequestSchema>;
+export type ZCodeProtocolRequest = z.infer<typeof zcodeProtocolRequestSchema>;
 
 export const zcodeProtocolNotificationSchema = z
   .object({
@@ -471,7 +471,7 @@ export const zcodeProtocolNotificationSchema = z
     trace: zcodeProtocolTraceSchema.optional(),
   })
   .strict();
-export type XCodeProtocolNotification = z.infer<typeof zcodeProtocolNotificationSchema>;
+export type ZCodeProtocolNotification = z.infer<typeof zcodeProtocolNotificationSchema>;
 
 export const zcodeProtocolResponseSchema = z
   .object({
@@ -479,7 +479,7 @@ export const zcodeProtocolResponseSchema = z
     result: z.unknown(),
   })
   .strict();
-export type XCodeProtocolResponse = z.infer<typeof zcodeProtocolResponseSchema>;
+export type ZCodeProtocolResponse = z.infer<typeof zcodeProtocolResponseSchema>;
 
 export const zcodeProtocolErrorSchema = z
   .object({
@@ -493,7 +493,7 @@ export const zcodeProtocolErrorSchema = z
       .strict(),
   })
   .strict();
-export type XCodeProtocolError = z.infer<typeof zcodeProtocolErrorSchema>;
+export type ZCodeProtocolError = z.infer<typeof zcodeProtocolErrorSchema>;
 
 export const zcodeProtocolMessageSchema = z.union([
   zcodeProtocolRequestSchema,
@@ -501,7 +501,7 @@ export const zcodeProtocolMessageSchema = z.union([
   zcodeProtocolResponseSchema,
   zcodeProtocolErrorSchema,
 ]);
-export type XCodeProtocolMessage = z.infer<typeof zcodeProtocolMessageSchema>;
+export type ZCodeProtocolMessage = z.infer<typeof zcodeProtocolMessageSchema>;
 
 export const zcodeProtocolNotifications = {
   pluginStartupDegraded: "startup/pluginsDegraded",
@@ -539,7 +539,7 @@ export const zcodeStorageStartupStateSchema = z
     if (state.phase === "failed" && !state.errorCode)
       context.addIssue({ code: "custom", message: "failed requires errorCode" });
   });
-export type XCodeStorageStartupState = z.infer<typeof zcodeStorageStartupStateSchema>;
+export type ZCodeStorageStartupState = z.infer<typeof zcodeStorageStartupStateSchema>;
 
 const zcodeMcpTelemetryPlatformSchema = z.enum([
   "aix",
@@ -625,7 +625,7 @@ export const zcodeMcpTelemetryEventSchema = z.discriminatedUnion("kind", [
     })
     .strict(),
 ]);
-export type XCodeMcpTelemetryEvent = z.infer<typeof zcodeMcpTelemetryEventSchema>;
+export type ZCodeMcpTelemetryEvent = z.infer<typeof zcodeMcpTelemetryEventSchema>;
 
 /** MCP 每五分钟只探测一次，周期由生产者与设备总量过期判据共用。 */
 export const ZCODE_MCP_RESOURCE_SAMPLE_INTERVAL_MS = 5 * 60_000;
@@ -647,7 +647,7 @@ export const zcodeMcpResourceSampleSchema = z
     totalMemoryGb: z.number().int().nonnegative().max(1_048_576),
   })
   .strict();
-export type XCodeMcpResourceSample = z.infer<typeof zcodeMcpResourceSampleSchema>;
+export type ZCodeMcpResourceSample = z.infer<typeof zcodeMcpResourceSampleSchema>;
 // 通知输入有界；main 另按每个上报窗口的 32 个 MCP 分组执行事件额度。
 export const zcodeMcpResourceSamplesSchema = z.array(zcodeMcpResourceSampleSchema).max(1_024);
 
@@ -670,7 +670,7 @@ export const zcodeToolExecResourceSchema = z
     systemFreeMemoryKb: z.number().finite().nonnegative(),
   })
   .strict();
-export type XCodeToolExecResource = z.infer<typeof zcodeToolExecResourceSchema>;
+export type ZCodeToolExecResource = z.infer<typeof zcodeToolExecResourceSchema>;
 
 export const zcodeProcessResourceSampleSchema = z
   .object({
@@ -733,7 +733,7 @@ export const zcodeProcessResourceSampleSchema = z
       .optional(),
   })
   .strict();
-export type XCodeProcessResourceSample = z.infer<typeof zcodeProcessResourceSampleSchema>;
+export type ZCodeProcessResourceSample = z.infer<typeof zcodeProcessResourceSampleSchema>;
 
 export const zcodeProcessChildProcessesParamsSchema = z.object({}).strict();
 export const zcodeProcessChildProcessSchema = z
@@ -750,19 +750,19 @@ export const zcodeProcessChildProcessesResultSchema = z
     processes: z.array(zcodeProcessChildProcessSchema).max(10_000),
   })
   .strict();
-export type XCodeProcessChildProcess = z.infer<typeof zcodeProcessChildProcessSchema>;
-export type XCodeProcessChildProcessesResult = z.infer<
+export type ZCodeProcessChildProcess = z.infer<typeof zcodeProcessChildProcessSchema>;
+export type ZCodeProcessChildProcessesResult = z.infer<
   typeof zcodeProcessChildProcessesResultSchema
 >;
 
-export type XCodeDeliveryKind = z.infer<typeof zcodeDeliveryKindSchema>;
+export type ZCodeDeliveryKind = z.infer<typeof zcodeDeliveryKindSchema>;
 // TurnStarted 与持久 message 必须共用同一来源词表；否则 live event 能通过而 cold
 // message 在 app/agent 边界被拒绝，造成 continuous/replayable 语义分叉。
 // 持久消息与输入沿用同一 source schema；agent_listing_delta 只作 provider context，不触发新 turn。
 const zcodeTurnInputSourceSchema = legacyXcodeSyntheticUserMessageSourceSchema;
 export const zcodeSessionPersistenceSchema = z.enum(["immediate", "deferred"]);
-export type XCodeSessionPersistence = z.infer<typeof zcodeSessionPersistenceSchema>;
-export type XCodeWorkspaceRef = z.infer<typeof zcodeWorkspaceRefSchema>;
+export type ZCodeSessionPersistence = z.infer<typeof zcodeSessionPersistenceSchema>;
+export type ZCodeWorkspaceRef = z.infer<typeof zcodeWorkspaceRefSchema>;
 export const zcodePermissionOptionSchema = z
   .object({
     optionId: nonEmptyString,
@@ -832,7 +832,7 @@ export const zcodeProtocolMcpServerSchema = z.union([
     })
     .strict(),
 ]);
-export type XCodeProtocolMcpServer = z.infer<typeof zcodeProtocolMcpServerSchema>;
+export type ZCodeProtocolMcpServer = z.infer<typeof zcodeProtocolMcpServerSchema>;
 
 export const zcodeMcpServerStatusKindSchema = z.enum([
   "connecting",
@@ -914,10 +914,10 @@ export const zcodeMcpServerStatusSnapshotSchema = z
       .optional(),
   })
   .strict();
-export type XCodeMcpServerStatusSnapshot = z.infer<typeof zcodeMcpServerStatusSnapshotSchema>;
+export type ZCodeMcpServerStatusSnapshot = z.infer<typeof zcodeMcpServerStatusSnapshotSchema>;
 
 export const zcodeMcpListModeSchema = z.enum(["connect", "status"]);
-export type XCodeMcpListMode = z.infer<typeof zcodeMcpListModeSchema>;
+export type ZCodeMcpListMode = z.infer<typeof zcodeMcpListModeSchema>;
 
 export const zcodeMcpListParamsSchema = z
   .object({
@@ -931,7 +931,7 @@ export const zcodeMcpListResultSchema = z
     statuses: z.record(z.string(), zcodeMcpServerStatusSnapshotSchema),
   })
   .strict();
-export type XCodeMcpListResult = z.infer<typeof zcodeMcpListResultSchema>;
+export type ZCodeMcpListResult = z.infer<typeof zcodeMcpListResultSchema>;
 
 // 插件 UI：UI 发起的 MCP 资源读取与工具调用，
 // 按 pluginId 限定 server 归属，agent 侧 fail closed。
@@ -977,7 +977,7 @@ export const zcodeMcpResourceContentSchema = z
 export const zcodeMcpReadResourceResultSchema = z
   .object({ contents: z.array(zcodeMcpResourceContentSchema) })
   .strict();
-export type XCodeMcpReadResourceResult = z.infer<typeof zcodeMcpReadResourceResultSchema>;
+export type ZCodeMcpReadResourceResult = z.infer<typeof zcodeMcpReadResourceResultSchema>;
 
 /**
  * 插件页面发起的 `resources/read` 代理。
@@ -996,7 +996,7 @@ export const zcodeMcpUiResourceContentSchema = z
 export const zcodeMcpUiReadResourceResultSchema = z
   .object({ contents: z.array(zcodeMcpUiResourceContentSchema) })
   .strict();
-export type XCodeMcpUiReadResourceResult = z.infer<typeof zcodeMcpUiReadResourceResultSchema>;
+export type ZCodeMcpUiReadResourceResult = z.infer<typeof zcodeMcpUiReadResourceResultSchema>;
 
 export const zcodeMcpUiSamplingParamsSchema = z
   .object({
@@ -1028,7 +1028,7 @@ export const zcodeMcpUiCancelCallParamsSchema = z
   .strict();
 export type ZCodeMcpUiCancelCallParams = z.infer<typeof zcodeMcpUiCancelCallParamsSchema>;
 export const zcodeMcpUiCancelCallResultSchema = z.object({ cancelled: z.boolean() }).strict();
-export type XCodeMcpUiCancelCallResult = z.infer<typeof zcodeMcpUiCancelCallResultSchema>;
+export type ZCodeMcpUiCancelCallResult = z.infer<typeof zcodeMcpUiCancelCallResultSchema>;
 /** 页面发起的 resources/list、resources/templates/list、subscribe、unsubscribe 代理。 */
 export const zcodeMcpUiListResourcesParamsSchema = z
   .object({ ...zcodeMcpUiPluginScopeShape, cursor: nonEmptyString.max(2048).optional() })
@@ -1051,7 +1051,7 @@ export const zcodeMcpUiListResourcesResultSchema = z
     nextCursor: z.string().optional(),
   })
   .strict();
-export type XCodeMcpUiListResourcesResult = z.infer<typeof zcodeMcpUiListResourcesResultSchema>;
+export type ZCodeMcpUiListResourcesResult = z.infer<typeof zcodeMcpUiListResourcesResultSchema>;
 export const zcodeMcpUiListResourceTemplatesResultSchema = z
   .object({
     resourceTemplates: z.array(
@@ -1068,7 +1068,7 @@ export const zcodeMcpUiListResourceTemplatesResultSchema = z
     nextCursor: z.string().optional(),
   })
   .strict();
-export type XCodeMcpUiListResourceTemplatesResult = z.infer<
+export type ZCodeMcpUiListResourceTemplatesResult = z.infer<
   typeof zcodeMcpUiListResourceTemplatesResultSchema
 >;
 /** 订阅者身份 = 会话 + 沙箱作用域 + 实例代际（initId）；dispose 只退订本代际，新实例不受影响。 */
@@ -1105,7 +1105,7 @@ export type ZCodeMcpUiRegisterAppToolsParams = z.infer<
 export const zcodeMcpUiRegisterAppToolsResultSchema = z
   .object({ tools: z.array(z.object({ name: z.string(), modelName: z.string() }).strict()) })
   .strict();
-export type XCodeMcpUiRegisterAppToolsResult = z.infer<
+export type ZCodeMcpUiRegisterAppToolsResult = z.infer<
   typeof zcodeMcpUiRegisterAppToolsResultSchema
 >;
 export const zcodeMcpUiUnregisterAppToolsParamsSchema = z
@@ -1117,7 +1117,7 @@ export type ZCodeMcpUiUnregisterAppToolsParams = z.infer<
 export const zcodeMcpUiUnregisterAppToolsResultSchema = z
   .object({ removed: z.number().int().nonnegative() })
   .strict();
-export type XCodeMcpUiUnregisterAppToolsResult = z.infer<
+export type ZCodeMcpUiUnregisterAppToolsResult = z.infer<
   typeof zcodeMcpUiUnregisterAppToolsResultSchema
 >;
 export const zcodeMcpUiClaimAppToolCallParamsSchema = z
@@ -1130,7 +1130,7 @@ export type ZCodeMcpUiClaimAppToolCallParams = z.infer<
   typeof zcodeMcpUiClaimAppToolCallParamsSchema
 >;
 export const zcodeMcpUiAppToolAcceptedResultSchema = z.object({ accepted: z.boolean() }).strict();
-export type XCodeMcpUiAppToolAcceptedResult = z.infer<typeof zcodeMcpUiAppToolAcceptedResultSchema>;
+export type ZCodeMcpUiAppToolAcceptedResult = z.infer<typeof zcodeMcpUiAppToolAcceptedResultSchema>;
 export const zcodeMcpUiResolveAppToolCallParamsSchema = z
   .object({
     ...zcodeMcpUiAppToolInstanceShape,
@@ -1156,7 +1156,7 @@ export const zcodeMcpUiCallToolResultSchema = z
     _meta: z.record(z.string(), z.unknown()).optional(),
   })
   .strict();
-export type XCodeMcpUiCallToolResult = z.infer<typeof zcodeMcpUiCallToolResultSchema>;
+export type ZCodeMcpUiCallToolResult = z.infer<typeof zcodeMcpUiCallToolResultSchema>;
 
 export const zcodeSessionImportMessageSchema = z
   .object({
@@ -1165,7 +1165,7 @@ export const zcodeSessionImportMessageSchema = z
     timestamp: timestampMsSchema.optional(),
   })
   .strict();
-export type XCodeSessionImportMessage = z.infer<typeof zcodeSessionImportMessageSchema>;
+export type ZCodeSessionImportMessage = z.infer<typeof zcodeSessionImportMessageSchema>;
 
 export const zcodeSessionImportHistorySchema = z.discriminatedUnion("source", [
   z
@@ -1206,7 +1206,7 @@ export const zcodeSessionImportHistorySchema = z.discriminatedUnion("source", [
     })
     .strict(),
 ]);
-export type XCodeSessionImportHistory = z.infer<typeof zcodeSessionImportHistorySchema>;
+export type ZCodeSessionImportHistory = z.infer<typeof zcodeSessionImportHistorySchema>;
 
 export const zcodeThoughtLevelOptionSchema = z
   .object({
@@ -1221,13 +1221,13 @@ export const zcodeModelReasoningOptionsSchema = z
     defaultLevel: nonEmptyString.optional(),
   })
   .strict();
-export type XCodeModelReasoningOptions = z.infer<typeof zcodeModelReasoningOptionsSchema>;
+export type ZCodeModelReasoningOptions = z.infer<typeof zcodeModelReasoningOptionsSchema>;
 
 export const zcodeModelFormatPropertiesSchema = completeModelPropertiesDataSchema.pick({
   inputFormat: true,
   outputFormat: true,
 });
-export type XCodeModelFormatProperties = z.infer<typeof zcodeModelFormatPropertiesSchema>;
+export type ZCodeModelFormatProperties = z.infer<typeof zcodeModelFormatPropertiesSchema>;
 
 export const zcodeModelOptionSchema = z
   .object({
@@ -1242,7 +1242,7 @@ export const zcodeModelOptionSchema = z
     disabledReason: z.string().optional(),
   })
   .strict();
-export type XCodeModelOption = z.infer<typeof zcodeModelOptionSchema>;
+export type ZCodeModelOption = z.infer<typeof zcodeModelOptionSchema>;
 
 export const zcodeAccountAccessSchema = z.discriminatedUnion("planKind", [
   z
@@ -1270,7 +1270,7 @@ export const zcodeAccountAccessSchema = z.discriminatedUnion("planKind", [
     })
     .strict(),
 ]);
-export type XCodeAccountAccess = z.infer<typeof zcodeAccountAccessSchema>;
+export type ZCodeAccountAccess = z.infer<typeof zcodeAccountAccessSchema>;
 
 /** Active Model 固定的账号访问类别；当前商品和 Team scope 由账号服务在请求期解析。 */
 export const zcodeProviderAccountAccessSchema = z
@@ -1289,11 +1289,11 @@ export const zcodeProviderAccountAccessSchema = z
     entitled: z.boolean(),
   })
   .strict();
-export type XCodeProviderAccountAccess = z.infer<typeof zcodeProviderAccountAccessSchema>;
+export type ZCodeProviderAccountAccess = z.infer<typeof zcodeProviderAccountAccessSchema>;
 
-export type XCodeSessionMode = z.infer<typeof zcodeSessionModeSchema>;
-export type XCodeSessionKind = z.infer<typeof zcodeSessionKindSchema>;
-export type XCodeSessionGoal = z.infer<typeof zcodeSessionGoalSchema>;
+export type ZCodeSessionMode = z.infer<typeof zcodeSessionModeSchema>;
+export type ZCodeSessionKind = z.infer<typeof zcodeSessionKindSchema>;
+export type ZCodeSessionGoal = z.infer<typeof zcodeSessionGoalSchema>;
 
 export const zcodeSessionTodoItemSchema = z
   .object({
@@ -1313,9 +1313,9 @@ export const zcodeSessionGoalStatsSchema = z
     iterationCount: z.number().int().nonnegative(),
   })
   .strict();
-export type XCodeSessionGoalStats = z.infer<typeof zcodeSessionGoalStatsSchema>;
-export type XCodeSessionGoalVerification = z.infer<typeof zcodeSessionGoalVerificationSchema>;
-export type XCodeSessionGoalVerificationTimeline = z.infer<
+export type ZCodeSessionGoalStats = z.infer<typeof zcodeSessionGoalStatsSchema>;
+export type ZCodeSessionGoalVerification = z.infer<typeof zcodeSessionGoalVerificationSchema>;
+export type ZCodeSessionGoalVerificationTimeline = z.infer<
   typeof zcodeSessionGoalVerificationTimelineSchema
 >;
 
@@ -1330,7 +1330,7 @@ export const zcodeSessionTodoGroupSchema = z
     todos: z.array(zcodeSessionTodoItemSchema),
   })
   .strict();
-export type XCodeSessionTodoGroup = z.infer<typeof zcodeSessionTodoGroupSchema>;
+export type ZCodeSessionTodoGroup = z.infer<typeof zcodeSessionTodoGroupSchema>;
 
 export const zcodeSessionSettingsStateSchema = z
   .object({
@@ -1380,7 +1380,7 @@ export const zcodeSessionSettingsStateSchema = z
       .optional(),
   })
   .strict();
-export type XCodeSessionSettingsState = z.infer<typeof zcodeSessionSettingsStateSchema>;
+export type ZCodeSessionSettingsState = z.infer<typeof zcodeSessionSettingsStateSchema>;
 export const zcodePendingPermissionSchema = z
   .object({
     requestId: nonEmptyString,
@@ -1394,7 +1394,7 @@ export const zcodePendingPermissionSchema = z
     requestedAt: timestampMsSchema,
   })
   .strict();
-export type XCodePendingPermission = z.infer<typeof zcodePendingPermissionSchema>;
+export type ZCodePendingPermission = z.infer<typeof zcodePendingPermissionSchema>;
 
 export const zcodeActiveToolCallSchema = z
   .object({
@@ -1404,7 +1404,7 @@ export const zcodeActiveToolCallSchema = z
     startedAt: timestampMsSchema.optional(),
   })
   .strict();
-export type XCodeActiveToolCall = z.infer<typeof zcodeActiveToolCallSchema>;
+export type ZCodeActiveToolCall = z.infer<typeof zcodeActiveToolCallSchema>;
 
 export const zcodeSessionProjectionSchema = z
   .object({
@@ -1432,8 +1432,8 @@ export const zcodeSessionProjectionSchema = z
       .optional(),
   })
   .strict();
-export type XCodeSessionProjection = z.infer<typeof zcodeSessionProjectionSchema>;
-export type XCodeToolState = z.infer<typeof zcodeToolStateSchema>;
+export type ZCodeSessionProjection = z.infer<typeof zcodeSessionProjectionSchema>;
+export type ZCodeToolState = z.infer<typeof zcodeToolStateSchema>;
 export const zcodeSlashCommandSchema = z
   .object({
     name: nonEmptyString,
@@ -1442,8 +1442,8 @@ export const zcodeSlashCommandSchema = z
     source: z.enum(["builtin", "custom"]).optional(),
   })
   .strict();
-export type XCodeSessionApiRetryStatus = z.infer<typeof zcodeSessionApiRetryStatusSchema>;
-export type XCodeSessionContextUsage = z.infer<typeof zcodeSessionContextUsageSchema>;
+export type ZCodeSessionApiRetryStatus = z.infer<typeof zcodeSessionApiRetryStatusSchema>;
+export type ZCodeSessionContextUsage = z.infer<typeof zcodeSessionContextUsageSchema>;
 export const zcodeModelStreamingKindSchema = z.enum([
   "start",
   "finish",
@@ -1491,7 +1491,7 @@ export const zcodeSessionStateSnapshotSchema = z
     slashCommands: z.array(zcodeSlashCommandSchema).optional(),
   })
   .strict();
-export type XCodeSessionStateSnapshot = z.infer<typeof zcodeSessionStateSnapshotSchema>;
+export type ZCodeSessionStateSnapshot = z.infer<typeof zcodeSessionStateSnapshotSchema>;
 
 export const zcodeEventEnvelopeSchema = z
   .object({
@@ -1555,7 +1555,7 @@ export const zcodeComputerUseOperationEventSchema = z.discriminatedUnion("kind",
   zcodeComputerUseToolStartedEventSchema,
   zcodeComputerUseSessionClosedEventSchema,
 ]);
-export type XCodeComputerUseOperationEvent = z.infer<typeof zcodeComputerUseOperationEventSchema>;
+export type ZCodeComputerUseOperationEvent = z.infer<typeof zcodeComputerUseOperationEventSchema>;
 
 export const zcodeSessionEventTypeSchema = z.enum([
   "session.created",
@@ -1584,7 +1584,7 @@ export const zcodeSessionEventTypeSchema = z.enum([
   "rewind.triggered",
   "streamRecovery.updated",
 ]);
-export type XCodeSessionEventType = z.infer<typeof zcodeSessionEventTypeSchema>;
+export type ZCodeSessionEventType = z.infer<typeof zcodeSessionEventTypeSchema>;
 
 export const zcodeProtocolErrorDetailSchema = z
   .object({
@@ -1910,7 +1910,7 @@ export const zcodeSessionClosedEventPayloadSchema = z
   })
   .strict();
 
-function zcodeSessionEventEnvelopeFor<T extends XCodeSessionEventType>(
+function zcodeSessionEventEnvelopeFor<T extends ZCodeSessionEventType>(
   type: T,
   payload: z.ZodTypeAny,
 ) {
@@ -1947,7 +1947,7 @@ export const zcodeSessionEventSchema = z.discriminatedUnion("type", [
   zcodeSessionEventEnvelopeFor("rewind.triggered", jsonObjectSchema),
   zcodeSessionEventEnvelopeFor("streamRecovery.updated", jsonObjectSchema),
 ]);
-export type XCodeSessionEvent = z.infer<typeof zcodeSessionEventSchema>;
+export type ZCodeSessionEvent = z.infer<typeof zcodeSessionEventSchema>;
 
 export const zcodeSessionEventsResultSchema = z
   .object({
@@ -1970,7 +1970,7 @@ export const zcodeStateUpdatedNotificationSchema = z
     patch: z.unknown(),
   })
   .strict();
-export type XCodeStateUpdatedNotification = z.infer<typeof zcodeStateUpdatedNotificationSchema>;
+export type ZCodeStateUpdatedNotification = z.infer<typeof zcodeStateUpdatedNotificationSchema>;
 
 export const zcodeSessionSubscribeParamsSchema = z
   .object({
@@ -1980,7 +1980,7 @@ export const zcodeSessionSubscribeParamsSchema = z
     includeSnapshot: z.boolean().default(false),
   })
   .strict();
-export type XCodeSessionSubscribeParams = z.infer<typeof zcodeSessionSubscribeParamsSchema>;
+export type ZCodeSessionSubscribeParams = z.infer<typeof zcodeSessionSubscribeParamsSchema>;
 
 export const zcodeSessionSubscribeResultSchema = z
   .object({
@@ -2012,12 +2012,12 @@ const zcodeSessionSubagentBaseSchema = z
 export const zcodeSessionRunningSubagentSchema = zcodeSessionSubagentBaseSchema.extend({
   status: z.enum(["running", "waiting", "blocked"]),
 });
-export type XCodeSessionRunningSubagent = z.infer<typeof zcodeSessionRunningSubagentSchema>;
+export type ZCodeSessionRunningSubagent = z.infer<typeof zcodeSessionRunningSubagentSchema>;
 
 export const zcodeSessionEndedSubagentSchema = zcodeSessionSubagentBaseSchema.extend({
   status: z.enum(["success", "failed", "cancelled", "lost"]),
 });
-export type XCodeSessionEndedSubagent = z.infer<typeof zcodeSessionEndedSubagentSchema>;
+export type ZCodeSessionEndedSubagent = z.infer<typeof zcodeSessionEndedSubagentSchema>;
 
 export const zcodeSessionSubagentsResultSchema = z
   .object({
@@ -2033,7 +2033,7 @@ export const zcodeSessionSubagentsResultSchema = z
       .strict(),
   })
   .strict();
-export type XCodeSessionSubagentsResult = z.infer<typeof zcodeSessionSubagentsResultSchema>;
+export type ZCodeSessionSubagentsResult = z.infer<typeof zcodeSessionSubagentsResultSchema>;
 /** 服务端 feature key 的取值域在协议里的 zod 形态（packages/shared/src/dynamic-workflow-feature.ts）。 */
 export const zcodeDynamicWorkflowModeSchema = z.enum(DYNAMIC_WORKFLOW_MODES);
 
@@ -2063,7 +2063,7 @@ export const zcodeSessionCreateParamsSchema = z
     dynamicWorkflowMode: zcodeDynamicWorkflowModeSchema.optional(),
   })
   .strict();
-export type XCodeSessionCreateParams = z.infer<typeof zcodeSessionCreateParamsSchema>;
+export type ZCodeSessionCreateParams = z.infer<typeof zcodeSessionCreateParamsSchema>;
 
 export const zcodeSessionResumeParamsSchema = z
   .object({
@@ -2083,7 +2083,7 @@ export const zcodeSessionResumeParamsSchema = z
     dynamicWorkflowMode: zcodeDynamicWorkflowModeSchema.optional(),
   })
   .strict();
-export type XCodeSessionResumeParams = z.infer<typeof zcodeSessionResumeParamsSchema>;
+export type ZCodeSessionResumeParams = z.infer<typeof zcodeSessionResumeParamsSchema>;
 
 export const zcodeSessionListParamsSchema = z
   .object({
@@ -2092,7 +2092,7 @@ export const zcodeSessionListParamsSchema = z
     limit: z.number().int().positive().optional(),
   })
   .strict();
-export type XCodeSessionListParams = z.infer<typeof zcodeSessionListParamsSchema>;
+export type ZCodeSessionListParams = z.infer<typeof zcodeSessionListParamsSchema>;
 
 export const zcodeSessionSubagentsParamsSchema = z
   .object({
@@ -2101,7 +2101,7 @@ export const zcodeSessionSubagentsParamsSchema = z
     endedLimit: z.number().int().positive().max(100).default(20),
   })
   .strict();
-export type XCodeSessionSubagentsParams = z.infer<typeof zcodeSessionSubagentsParamsSchema>;
+export type ZCodeSessionSubagentsParams = z.infer<typeof zcodeSessionSubagentsParamsSchema>;
 
 export const zcodeUsageStatsParamsSchema = z
   .object({
@@ -2129,7 +2129,7 @@ export const zcodeTaskTokenUsageResultSchema = z
     inputBaselineBySource: z.record(z.string(), z.number().int().nonnegative()),
   })
   .strict();
-export type XCodeTaskTokenUsageResult = z.infer<typeof zcodeTaskTokenUsageResultSchema>;
+export type ZCodeTaskTokenUsageResult = z.infer<typeof zcodeTaskTokenUsageResultSchema>;
 
 export const zcodeSessionReadParamsSchema = z
   .object({
@@ -2142,7 +2142,7 @@ export const zcodeSessionReadParamsSchema = z
     contentProfile: z.enum(["full", "index"]).optional(),
   })
   .strict();
-export type XCodeSessionReadParams = z.infer<typeof zcodeSessionReadParamsSchema>;
+export type ZCodeSessionReadParams = z.infer<typeof zcodeSessionReadParamsSchema>;
 
 export const zcodeSessionMessagesParamsSchema = z
   .object({
@@ -2153,7 +2153,7 @@ export const zcodeSessionMessagesParamsSchema = z
     direction: z.enum(["forward", "backward"]).optional(),
   })
   .strict();
-export type XCodeSessionMessagesParams = z.infer<typeof zcodeSessionMessagesParamsSchema>;
+export type ZCodeSessionMessagesParams = z.infer<typeof zcodeSessionMessagesParamsSchema>;
 
 export const zcodeSessionEventsParamsSchema = z
   .object({
@@ -2162,13 +2162,13 @@ export const zcodeSessionEventsParamsSchema = z
     limit: z.number().int().positive().optional(),
   })
   .strict();
-export type XCodeSessionEventsParams = z.infer<typeof zcodeSessionEventsParamsSchema>;
+export type ZCodeSessionEventsParams = z.infer<typeof zcodeSessionEventsParamsSchema>;
 
 export const zcodeSessionRuntimePreferencesScopeSchema = z.enum([
   "runtime-materialization",
   "user-execution",
 ]);
-export type XCodeSessionRuntimePreferencesScope = z.infer<
+export type ZCodeSessionRuntimePreferencesScope = z.infer<
   typeof zcodeSessionRuntimePreferencesScopeSchema
 >;
 
@@ -2192,7 +2192,7 @@ export const zcodeSessionRequestRuntimePreferencesParamsSchema = z
     directorySessionId: nonEmptyString.optional(),
   })
   .strict();
-export type XCodeSessionRequestRuntimePreferencesParams = z.infer<
+export type ZCodeSessionRequestRuntimePreferencesParams = z.infer<
   typeof zcodeSessionRequestRuntimePreferencesParamsSchema
 >;
 
@@ -2200,7 +2200,7 @@ export const DEFAULT_XCODE_MODEL_CONTEXT_BUDGET_STRATEGY = "preflight-v1" as con
 
 // 3.12.2：legacy 仅为旧协议接收兼容；Runtime 一律归一为上面的共享默认策略。
 export const zcodeModelContextBudgetStrategySchema = z.enum(["legacy", "preflight-v1"]);
-export type XCodeModelContextBudgetStrategy = z.infer<typeof zcodeModelContextBudgetStrategySchema>;
+export type ZCodeModelContextBudgetStrategy = z.infer<typeof zcodeModelContextBudgetStrategySchema>;
 
 export const zcodeSessionRuntimePreferencesResultSchema = z
   .object({
@@ -2219,7 +2219,7 @@ export const zcodeSessionRuntimePreferencesResultSchema = z
     ),
   })
   .strict();
-export type XCodeSessionRuntimePreferencesResult = z.infer<
+export type ZCodeSessionRuntimePreferencesResult = z.infer<
   typeof zcodeSessionRuntimePreferencesResultSchema
 >;
 
@@ -2233,7 +2233,7 @@ export const zcodeBrowserAmbientContextSchema = z
     currentUrl: z.string().trim().min(1).max(4096).optional(),
   })
   .strict();
-export type XCodeBrowserAmbientContext = z.infer<typeof zcodeBrowserAmbientContextSchema>;
+export type ZCodeBrowserAmbientContext = z.infer<typeof zcodeBrowserAmbientContextSchema>;
 
 export const zcodeSessionSendParamsSchema = z
   .object({
@@ -2284,7 +2284,7 @@ export const zcodeSessionSendResultSchema = z
     stateRevision: z.number().int().nonnegative(),
   })
   .strict();
-export type XCodeSessionSendResult = z.infer<typeof zcodeSessionSendResultSchema>;
+export type ZCodeSessionSendResult = z.infer<typeof zcodeSessionSendResultSchema>;
 
 export const zcodeSessionHistoryTargetSchema = z.discriminatedUnion("kind", [
   z
@@ -2311,7 +2311,7 @@ export const zcodeSessionHistoryTargetSchema = z.discriminatedUnion("kind", [
     })
     .strict(),
 ]);
-export type XCodeSessionHistoryTarget = z.infer<typeof zcodeSessionHistoryTargetSchema>;
+export type ZCodeSessionHistoryTarget = z.infer<typeof zcodeSessionHistoryTargetSchema>;
 
 export const zcodeSessionForkParamsSchema = z
   .object({
@@ -2322,7 +2322,7 @@ export const zcodeSessionForkParamsSchema = z
     expectedRevision: z.number().int().nonnegative().optional(),
   })
   .strict();
-export type XCodeSessionForkParams = z.infer<typeof zcodeSessionForkParamsSchema>;
+export type ZCodeSessionForkParams = z.infer<typeof zcodeSessionForkParamsSchema>;
 
 export const zcodeSessionForkResultSchema = z
   .object({
@@ -2334,7 +2334,7 @@ export const zcodeSessionForkResultSchema = z
     snapshot: zcodeSessionStateSnapshotSchema,
   })
   .strict();
-export type XCodeSessionForkResult = z.infer<typeof zcodeSessionForkResultSchema>;
+export type ZCodeSessionForkResult = z.infer<typeof zcodeSessionForkResultSchema>;
 
 export const zcodeSessionCompactParamsSchema = z
   .object({
@@ -2344,7 +2344,7 @@ export const zcodeSessionCompactParamsSchema = z
     expectedRevision: z.number().int().nonnegative().optional(),
   })
   .strict();
-export type XCodeSessionCompactParams = z.infer<typeof zcodeSessionCompactParamsSchema>;
+export type ZCodeSessionCompactParams = z.infer<typeof zcodeSessionCompactParamsSchema>;
 
 export const zcodeSessionCompactResultSchema = z
   .object({
@@ -2360,7 +2360,7 @@ export const zcodeSessionCompactResultSchema = z
       .optional(),
   })
   .strict();
-export type XCodeSessionCompactResult = z.infer<typeof zcodeSessionCompactResultSchema>;
+export type ZCodeSessionCompactResult = z.infer<typeof zcodeSessionCompactResultSchema>;
 
 export const zcodeSessionGoalActionSchema = z.enum([
   "show",
@@ -2370,7 +2370,7 @@ export const zcodeSessionGoalActionSchema = z.enum([
   "resume",
   "clear",
 ]);
-export type XCodeSessionGoalAction = z.infer<typeof zcodeSessionGoalActionSchema>;
+export type ZCodeSessionGoalAction = z.infer<typeof zcodeSessionGoalActionSchema>;
 
 export const zcodeSessionGoalParamsSchema = z
   .object({
@@ -2381,7 +2381,7 @@ export const zcodeSessionGoalParamsSchema = z
     expectedRevision: z.number().int().nonnegative().optional(),
   })
   .strict();
-export type XCodeSessionGoalParams = z.infer<typeof zcodeSessionGoalParamsSchema>;
+export type ZCodeSessionGoalParams = z.infer<typeof zcodeSessionGoalParamsSchema>;
 
 export const zcodeSessionGoalResultSchema = z
   .object({
@@ -2390,7 +2390,7 @@ export const zcodeSessionGoalResultSchema = z
     startedTurn: z.boolean().optional(),
   })
   .strict();
-export type XCodeSessionGoalResult = z.infer<typeof zcodeSessionGoalResultSchema>;
+export type ZCodeSessionGoalResult = z.infer<typeof zcodeSessionGoalResultSchema>;
 
 export const zcodeSessionStopParamsSchema = z
   .object({
@@ -2442,7 +2442,7 @@ export const zcodeSessionCancelBackgroundTaskParamsSchema = z
     taskId: nonEmptyString,
   })
   .strict();
-export type XCodeSessionCancelBackgroundTaskParams = z.infer<
+export type ZCodeSessionCancelBackgroundTaskParams = z.infer<
   typeof zcodeSessionCancelBackgroundTaskParamsSchema
 >;
 
@@ -2455,7 +2455,7 @@ export const zcodeSessionCancelBackgroundTaskResultSchema = z
     taskId: nonEmptyString,
   })
   .strict();
-export type XCodeSessionCancelBackgroundTaskResult = z.infer<
+export type ZCodeSessionCancelBackgroundTaskResult = z.infer<
   typeof zcodeSessionCancelBackgroundTaskResultSchema
 >;
 
@@ -2467,7 +2467,7 @@ export const zcodeSessionSetModelParamsSchema = z
     persistAsWorkspaceLastUsed: z.boolean().default(true),
   })
   .strict();
-export type XCodeSessionSetModelParams = z.infer<typeof zcodeSessionSetModelParamsSchema>;
+export type ZCodeSessionSetModelParams = z.infer<typeof zcodeSessionSetModelParamsSchema>;
 
 export const zcodeSessionSetThoughtLevelParamsSchema = z
   .object({
@@ -2477,7 +2477,7 @@ export const zcodeSessionSetThoughtLevelParamsSchema = z
     persistAsWorkspaceLastUsed: z.boolean().default(true),
   })
   .strict();
-export type XCodeSessionSetThoughtLevelParams = z.infer<
+export type ZCodeSessionSetThoughtLevelParams = z.infer<
   typeof zcodeSessionSetThoughtLevelParamsSchema
 >;
 
@@ -2488,7 +2488,7 @@ export const zcodeSessionSetModeParamsSchema = z
     expectedRevision: z.number().int().nonnegative().optional(),
   })
   .strict();
-export type XCodeSessionSetModeParams = z.infer<typeof zcodeSessionSetModeParamsSchema>;
+export type ZCodeSessionSetModeParams = z.infer<typeof zcodeSessionSetModeParamsSchema>;
 
 export const zcodeSessionCloseParamsSchema = z
   .object({
@@ -2496,13 +2496,13 @@ export const zcodeSessionCloseParamsSchema = z
     expectedPersistence: zcodeSessionPersistenceSchema.optional(),
   })
   .strict();
-export type XCodeSessionCloseParams = z.infer<typeof zcodeSessionCloseParamsSchema>;
+export type ZCodeSessionCloseParams = z.infer<typeof zcodeSessionCloseParamsSchema>;
 export const zcodeSessionCloseResultSchema = z
   .object({
     closed: z.boolean().optional(),
   })
   .strict();
-export type XCodeSessionCloseResult = z.infer<typeof zcodeSessionCloseResultSchema>;
+export type ZCodeSessionCloseResult = z.infer<typeof zcodeSessionCloseResultSchema>;
 /**
  * 卸载 cwd 位于 directory 内的全部驻留会话；任一会话忙时全部不卸载（docs/git/worktree.md §8.3）。
  * 随 worktreeCwd 能力提供。
@@ -2510,13 +2510,13 @@ export type XCodeSessionCloseResult = z.infer<typeof zcodeSessionCloseResultSche
 export const zcodeSessionReleaseUnderDirectoryParamsSchema = z
   .object({ directory: nonEmptyString })
   .strict();
-export type XCodeSessionReleaseUnderDirectoryParams = z.infer<
+export type ZCodeSessionReleaseUnderDirectoryParams = z.infer<
   typeof zcodeSessionReleaseUnderDirectoryParamsSchema
 >;
 export const zcodeSessionReleaseUnderDirectoryResultSchema = z
   .object({ released: z.array(nonEmptyString), busy: z.array(nonEmptyString) })
   .strict();
-export type XCodeSessionReleaseUnderDirectoryResult = z.infer<
+export type ZCodeSessionReleaseUnderDirectoryResult = z.infer<
   typeof zcodeSessionReleaseUnderDirectoryResultSchema
 >;
 export const zcodeWorkspaceReadPresentationParamsSchema = z
@@ -2529,7 +2529,7 @@ export const zcodeWorkspacePresentationSchema = z
     slashCommands: z.array(zcodeSlashCommandSchema),
   })
   .strict();
-export type XCodeWorkspacePresentation = z.infer<typeof zcodeWorkspacePresentationSchema>;
+export type ZCodeWorkspacePresentation = z.infer<typeof zcodeWorkspacePresentationSchema>;
 const workspaceHookSha256DigestSchema = z.string().regex(/^[a-f0-9]{64}$/u);
 export const zcodeWorkspaceHookTrustGrantParamsSchema = z
   .object({
@@ -2538,7 +2538,7 @@ export const zcodeWorkspaceHookTrustGrantParamsSchema = z
     hookDeclarationDigest: workspaceHookSha256DigestSchema,
   })
   .strict();
-export type XCodeWorkspaceHookTrustGrantParams = z.infer<
+export type ZCodeWorkspaceHookTrustGrantParams = z.infer<
   typeof zcodeWorkspaceHookTrustGrantParamsSchema
 >;
 export const zcodeWorkspaceHookTrustGrantReasonCodeSchema = z.enum([
@@ -2549,7 +2549,7 @@ export const zcodeWorkspaceHookTrustGrantReasonCodeSchema = z.enum([
   "workspace_hooks_trust_store_corrupt",
   "workspace_hooks_config_unreadable",
 ]);
-export type XCodeWorkspaceHookTrustGrantReasonCode = z.infer<
+export type ZCodeWorkspaceHookTrustGrantReasonCode = z.infer<
   typeof zcodeWorkspaceHookTrustGrantReasonCodeSchema
 >;
 export const zcodeWorkspaceHookTrustGrantResultSchema = z
@@ -2558,7 +2558,7 @@ export const zcodeWorkspaceHookTrustGrantResultSchema = z
     reasonCode: zcodeWorkspaceHookTrustGrantReasonCodeSchema.optional(),
   })
   .strict();
-export type XCodeWorkspaceHookTrustGrantResult = z.infer<
+export type ZCodeWorkspaceHookTrustGrantResult = z.infer<
   typeof zcodeWorkspaceHookTrustGrantResultSchema
 >;
 const zcodeWorkspaceModelToolCallSchema = z
@@ -2638,12 +2638,12 @@ export const zcodeWorkspaceGenerateTextResultSchema = z
       .optional(),
   })
   .strict();
-export type XCodeWorkspaceGenerateTextParams = z.infer<
+export type ZCodeWorkspaceGenerateTextParams = z.infer<
   typeof zcodeWorkspaceGenerateTextParamsSchema
 >;
-export type XCodeWorkspaceModelMessage = z.infer<typeof zcodeWorkspaceModelMessageSchema>;
-export type XCodeWorkspaceModelTool = z.infer<typeof zcodeWorkspaceModelToolSchema>;
-export type XCodeWorkspaceGenerateTextResult = z.infer<
+export type ZCodeWorkspaceModelMessage = z.infer<typeof zcodeWorkspaceModelMessageSchema>;
+export type ZCodeWorkspaceModelTool = z.infer<typeof zcodeWorkspaceModelToolSchema>;
+export type ZCodeWorkspaceGenerateTextResult = z.infer<
   typeof zcodeWorkspaceGenerateTextResultSchema
 >;
 export const zcodeWorkspaceCancelGenerateTextParamsSchema = z
@@ -2662,17 +2662,17 @@ export const zcodeProviderTestModelConnectivityParamsSchema = z
 export const zcodeProviderTestModelConnectivityResultSchema = z
   .object({ success: z.literal(true) })
   .strict();
-export type XCodeProviderTestModelConnectivityParams = z.infer<
+export type ZCodeProviderTestModelConnectivityParams = z.infer<
   typeof zcodeProviderTestModelConnectivityParamsSchema
 >;
-export type XCodeProviderTestModelConnectivityResult = z.infer<
+export type ZCodeProviderTestModelConnectivityResult = z.infer<
   typeof zcodeProviderTestModelConnectivityResultSchema
 >;
 
 export const zcodeProviderUpdateAccountConfigParamsSchema = z
   .object({
     revision: nonEmptyString,
-    basedOnXCodeBuiltinRevision: nonEmptyString,
+    basedOnZCodeBuiltinRevision: nonEmptyString,
     // Provider Config 的字段校验由 @zcode/provider 负责；协议层只约束可传输信封。
     providers: z.record(z.string(), z.unknown()),
     // 账号状态与 Overlay 必须一起传递，否则 Worker 会丢失非当前套餐的执行门禁。
@@ -2699,7 +2699,7 @@ export const zcodeProviderUpdateAccountConfigResultSchema = z
     status: z.enum(["received", "unchanged"]),
   })
   .strict();
-export type XCodeProviderUpdateAccountConfigResult = z.infer<
+export type ZCodeProviderUpdateAccountConfigResult = z.infer<
   typeof zcodeProviderUpdateAccountConfigResultSchema
 >;
 /** Worker 从所属 Environment 的正式 Config Store 重建进程内 Provider Registry。 */
@@ -2716,7 +2716,7 @@ export const zcodeProviderRefreshRegistryResultSchema = z
 export type ZCodeProviderRefreshRegistryParams = z.infer<
   typeof zcodeProviderRefreshRegistryParamsSchema
 >;
-export type XCodeProviderRefreshRegistryResult = z.infer<
+export type ZCodeProviderRefreshRegistryResult = z.infer<
   typeof zcodeProviderRefreshRegistryResultSchema
 >;
 export const zcodeInteractionPreferencesSchema = z
@@ -2724,7 +2724,7 @@ export const zcodeInteractionPreferencesSchema = z
     askUserQuestionAutoResolutionEnabled: z.boolean(),
   })
   .strict();
-export type XCodeInteractionPreferences = z.infer<typeof zcodeInteractionPreferencesSchema>;
+export type ZCodeInteractionPreferences = z.infer<typeof zcodeInteractionPreferencesSchema>;
 
 export const zcodeWorkspaceUpdateInteractionPreferencesParamsSchema = z
   .object({
@@ -2732,7 +2732,7 @@ export const zcodeWorkspaceUpdateInteractionPreferencesParamsSchema = z
     preferences: zcodeInteractionPreferencesSchema,
   })
   .strict();
-export type XCodeWorkspaceUpdateInteractionPreferencesParams = z.infer<
+export type ZCodeWorkspaceUpdateInteractionPreferencesParams = z.infer<
   typeof zcodeWorkspaceUpdateInteractionPreferencesParamsSchema
 >;
 
@@ -2743,7 +2743,7 @@ export const zcodeWorkspaceUpdateInteractionPreferencesResultSchema = z
     snoozedInteractionCount: z.number().int().nonnegative(),
   })
   .strict();
-export type XCodeWorkspaceUpdateInteractionPreferencesResult = z.infer<
+export type ZCodeWorkspaceUpdateInteractionPreferencesResult = z.infer<
   typeof zcodeWorkspaceUpdateInteractionPreferencesResultSchema
 >;
 
@@ -2752,7 +2752,7 @@ export const zcodeModelIoPreferencesSchema = z
     fullRetentionEnabled: z.boolean(),
   })
   .strict();
-export type XCodeModelIoPreferences = z.infer<typeof zcodeModelIoPreferencesSchema>;
+export type ZCodeModelIoPreferences = z.infer<typeof zcodeModelIoPreferencesSchema>;
 
 export const zcodeWorkspaceUpdateModelIoPreferencesParamsSchema = z
   .object({
@@ -2760,7 +2760,7 @@ export const zcodeWorkspaceUpdateModelIoPreferencesParamsSchema = z
     preferences: zcodeModelIoPreferencesSchema,
   })
   .strict();
-export type XCodeWorkspaceUpdateModelIoPreferencesParams = z.infer<
+export type ZCodeWorkspaceUpdateModelIoPreferencesParams = z.infer<
   typeof zcodeWorkspaceUpdateModelIoPreferencesParamsSchema
 >;
 
@@ -2771,7 +2771,7 @@ export const zcodeWorkspaceUpdateModelIoPreferencesResultSchema = z
     updatedSessionCount: z.number().int().nonnegative(),
   })
   .strict();
-export type XCodeWorkspaceUpdateModelIoPreferencesResult = z.infer<
+export type ZCodeWorkspaceUpdateModelIoPreferencesResult = z.infer<
   typeof zcodeWorkspaceUpdateModelIoPreferencesResultSchema
 >;
 
@@ -2781,7 +2781,7 @@ export const zcodeWorkspaceUpdateOffPeakToolPolicyParamsSchema = z
     enabled: z.boolean(),
   })
   .strict();
-export type XCodeWorkspaceUpdateOffPeakToolPolicyParams = z.infer<
+export type ZCodeWorkspaceUpdateOffPeakToolPolicyParams = z.infer<
   typeof zcodeWorkspaceUpdateOffPeakToolPolicyParamsSchema
 >;
 
@@ -2791,7 +2791,7 @@ export const zcodeWorkspaceUpdateOffPeakToolPolicyResultSchema = z
     enabled: z.boolean(),
   })
   .strict();
-export type XCodeWorkspaceUpdateOffPeakToolPolicyResult = z.infer<
+export type ZCodeWorkspaceUpdateOffPeakToolPolicyResult = z.infer<
   typeof zcodeWorkspaceUpdateOffPeakToolPolicyResultSchema
 >;
 
@@ -2805,7 +2805,7 @@ export const zcodeWorkspaceUpdateDynamicWorkflowPolicyParamsSchema = z
     mode: zcodeDynamicWorkflowModeSchema.optional(),
   })
   .strict();
-export type XCodeWorkspaceUpdateDynamicWorkflowPolicyParams = z.infer<
+export type ZCodeWorkspaceUpdateDynamicWorkflowPolicyParams = z.infer<
   typeof zcodeWorkspaceUpdateDynamicWorkflowPolicyParamsSchema
 >;
 
@@ -2815,7 +2815,7 @@ export const zcodeWorkspaceUpdateDynamicWorkflowPolicyResultSchema = z
     enabled: z.boolean(),
   })
   .strict();
-export type XCodeWorkspaceUpdateDynamicWorkflowPolicyResult = z.infer<
+export type ZCodeWorkspaceUpdateDynamicWorkflowPolicyResult = z.infer<
   typeof zcodeWorkspaceUpdateDynamicWorkflowPolicyResultSchema
 >;
 
@@ -2833,7 +2833,7 @@ export const zcodePermissionRequestParamsSchema = z
     options: z.array(zcodePermissionOptionSchema).min(1),
   })
   .strict();
-export type XCodePermissionRequestParams = z.infer<typeof zcodePermissionRequestParamsSchema>;
+export type ZCodePermissionRequestParams = z.infer<typeof zcodePermissionRequestParamsSchema>;
 
 /** Agent 请求 app 枚举当前 workspace/session 可达且已完成握手的 browser backend。 */
 export const zcodeBrowserListParamsSchema = z
@@ -2849,10 +2849,10 @@ export const zcodeBrowserListParamsSchema = z
     sessionContext: browserSessionContextKindSchema,
   })
   .strict();
-export type XCodeBrowserListParams = z.infer<typeof zcodeBrowserListParamsSchema>;
+export type ZCodeBrowserListParams = z.infer<typeof zcodeBrowserListParamsSchema>;
 
 export const zcodeBrowserListResultSchema = browserBackendListResultSchema;
-export type XCodeBrowserListResult = z.infer<typeof zcodeBrowserListResultSchema>;
+export type ZCodeBrowserListResult = z.infer<typeof zcodeBrowserListResultSchema>;
 
 /** Agent 把一条 browser-use 命令发送给 app 执行。 */
 export const zcodeBrowserExecuteParamsSchema = z
@@ -2872,12 +2872,12 @@ export const zcodeBrowserExecuteParamsSchema = z
     command: browserCommandSchema,
   })
   .strict();
-export type XCodeBrowserExecuteParams = z.infer<typeof zcodeBrowserExecuteParamsSchema>;
+export type ZCodeBrowserExecuteParams = z.infer<typeof zcodeBrowserExecuteParamsSchema>;
 
 // browser command result 是 app/agent 的同源协议结果；其中 duplicate_request_id 用于在真正维护
 // pending/running 生命周期的边界拒绝 correlation key 冲突，不能依赖上游 UUID 概率保证。
 export const zcodeBrowserExecuteResultSchema = browserCommandResultSchema;
-export type XCodeBrowserExecuteResult = z.infer<typeof zcodeBrowserExecuteResultSchema>;
+export type ZCodeBrowserExecuteResult = z.infer<typeof zcodeBrowserExecuteResultSchema>;
 
 export const zcodeUserInputOptionSchema = z
   .object({
@@ -2895,7 +2895,7 @@ export const zcodeUserInputQuestionSchema = z
     multiSelect: z.boolean().optional(),
   })
   .strict();
-export type XCodeUserInputQuestion = z.infer<typeof zcodeUserInputQuestionSchema>;
+export type ZCodeUserInputQuestion = z.infer<typeof zcodeUserInputQuestionSchema>;
 
 export const zcodeUserInputRequestParamsSchema = z
   .object({
@@ -2911,7 +2911,7 @@ export const zcodeUserInputRequestParamsSchema = z
     schema: z.unknown().optional(),
   })
   .strict();
-export type XCodeUserInputRequestParams = z.infer<typeof zcodeUserInputRequestParamsSchema>;
+export type ZCodeUserInputRequestParams = z.infer<typeof zcodeUserInputRequestParamsSchema>;
 
 export const zcodeUserInputResponseSchema = z
   .object({
@@ -2920,7 +2920,7 @@ export const zcodeUserInputResponseSchema = z
     reason: z.string().optional(),
   })
   .strict();
-export type XCodeUserInputResponse = z.infer<typeof zcodeUserInputResponseSchema>;
+export type ZCodeUserInputResponse = z.infer<typeof zcodeUserInputResponseSchema>;
 
 export const zcodeProviderRuntimeHeadersRequestReasonSchema = z.enum(requestVerificationReasons);
 export const zcodeProviderRuntimeHeadersRequestParamsSchema = z
@@ -2954,7 +2954,7 @@ export const zcodeProviderRuntimeHeadersRequestParamsSchema = z
     reason: zcodeProviderRuntimeHeadersRequestReasonSchema,
   })
   .strict();
-export type XCodeProviderRuntimeHeadersRequestParams = z.infer<
+export type ZCodeProviderRuntimeHeadersRequestParams = z.infer<
   typeof zcodeProviderRuntimeHeadersRequestParamsSchema
 >;
 
@@ -2966,7 +2966,7 @@ export const zcodeProviderRuntimeHeadersCancelledSchema = z
     workspace: zcodeWorkspaceRefSchema,
   })
   .strict();
-export type XCodeProviderRuntimeHeadersCancelled = z.infer<
+export type ZCodeProviderRuntimeHeadersCancelled = z.infer<
   typeof zcodeProviderRuntimeHeadersCancelledSchema
 >;
 
@@ -3030,7 +3030,7 @@ export const zcodeProviderRuntimeHeadersResponseSchema = z.discriminatedUnion("h
     })
     .strict(),
 ]);
-export type XCodeProviderRuntimeHeadersResponse = z.infer<
+export type ZCodeProviderRuntimeHeadersResponse = z.infer<
   typeof zcodeProviderRuntimeHeadersResponseSchema
 >;
 
@@ -3069,7 +3069,7 @@ export const zcodeOfficialMcpAuthHeadersRequestParamsSchema = z
       });
     }
   });
-export type XCodeOfficialMcpAuthHeadersRequestParams = z.infer<
+export type ZCodeOfficialMcpAuthHeadersRequestParams = z.infer<
   typeof zcodeOfficialMcpAuthHeadersRequestParamsSchema
 >;
 
@@ -3098,16 +3098,16 @@ export const zcodeOfficialMcpAuthHeadersResponseSchema = z.discriminatedUnion("o
     })
     .strict(),
 ]);
-export type XCodeOfficialMcpAuthHeadersResponse = z.infer<
+export type ZCodeOfficialMcpAuthHeadersResponse = z.infer<
   typeof zcodeOfficialMcpAuthHeadersResponseSchema
 >;
 
 // ── Plugin management (list + enable/disable) ──
 // 镜像 @zcode/contracts 的 PluginMetadata, 仅保留 UI 需要的可序列化字段。
 export const zcodePluginOptionValueSchema = z.union([z.string(), z.number(), z.boolean()]);
-export type XCodePluginOptionValue = z.infer<typeof zcodePluginOptionValueSchema>;
+export type ZCodePluginOptionValue = z.infer<typeof zcodePluginOptionValueSchema>;
 export const zcodePluginScopeSchema = z.enum(["user", "workspace"]);
-export type XCodePluginScope = z.infer<typeof zcodePluginScopeSchema>;
+export type ZCodePluginScope = z.infer<typeof zcodePluginScopeSchema>;
 export const zcodePluginHookDetailSchema = z
   .object({
     event: nonEmptyString,
@@ -3134,12 +3134,12 @@ export const zcodePluginUserConfigOptionSchema = z
     type: z.enum(["string", "number", "boolean", "directory", "file"]).optional(),
   })
   .strict();
-export type XCodePluginUserConfigOption = z.infer<typeof zcodePluginUserConfigOptionSchema>;
+export type ZCodePluginUserConfigOption = z.infer<typeof zcodePluginUserConfigOptionSchema>;
 
 // 组件类型与详情弹窗/市场详情共用的分组顺序保持一致：agent / command / skill / hook / mcp。
 // 注意：这三个 schema 必须定义在 zcodePluginInfoSchema 之前，因为后者（.strict()）的 components 字段引用了它们。
 export const zcodePluginComponentKindSchema = z.enum(["agent", "command", "skill", "hook", "mcp"]);
-export type XCodePluginComponentKind = z.infer<typeof zcodePluginComponentKindSchema>;
+export type ZCodePluginComponentKind = z.infer<typeof zcodePluginComponentKindSchema>;
 
 export const zcodePluginComponentItemSchema = z
   .object({
@@ -3154,7 +3154,7 @@ export const zcodePluginComponentGroupSchema = z
     items: z.array(zcodePluginComponentItemSchema),
   })
   .strict();
-export type XCodePluginComponentGroup = z.infer<typeof zcodePluginComponentGroupSchema>;
+export type ZCodePluginComponentGroup = z.infer<typeof zcodePluginComponentGroupSchema>;
 
 export const zcodePluginUiSurfaceSchema = z
   .object({
@@ -3169,7 +3169,7 @@ export const zcodePluginUiSurfaceSchema = z
     availability: z.literal("session"),
   })
   .strict();
-export type XCodePluginUiSurface = z.infer<typeof zcodePluginUiSurfaceSchema>;
+export type ZCodePluginUiSurface = z.infer<typeof zcodePluginUiSurfaceSchema>;
 
 export const zcodePluginInfoSchema = z
   .object({
@@ -3208,7 +3208,7 @@ export const zcodePluginInfoSchema = z
     optionSources: z.record(z.string(), zcodePluginScopeSchema).optional(),
   })
   .strict();
-export type XCodePluginInfo = z.infer<typeof zcodePluginInfoSchema>;
+export type ZCodePluginInfo = z.infer<typeof zcodePluginInfoSchema>;
 
 export const zcodePluginDiagnosticSchema = z
   .object({
@@ -3218,7 +3218,7 @@ export const zcodePluginDiagnosticSchema = z
     pluginId: z.string().optional(),
   })
   .strict();
-export type XCodePluginDiagnostic = z.infer<typeof zcodePluginDiagnosticSchema>;
+export type ZCodePluginDiagnostic = z.infer<typeof zcodePluginDiagnosticSchema>;
 
 export const zcodePluginsListParamsSchema = z
   .object({
@@ -3232,7 +3232,7 @@ export const zcodePluginsListResultSchema = z
     diagnostics: z.array(zcodePluginDiagnosticSchema),
   })
   .strict();
-export type XCodePluginsListResult = z.infer<typeof zcodePluginsListResultSchema>;
+export type ZCodePluginsListResult = z.infer<typeof zcodePluginsListResultSchema>;
 
 // ── 插件 UI 面板入口──
 // 工作区级只读投影：已启用插件清单 `ui.surfaces[]` 的合法条目；插件启停后 host 重新拉取。
@@ -3245,7 +3245,7 @@ export type ZCodePluginsListUiSurfacesParams = z.infer<
 export const zcodePluginsListUiSurfacesResultSchema = z
   .object({ surfaces: z.array(zcodePluginUiSurfaceSchema) })
   .strict();
-export type XCodePluginsListUiSurfacesResult = z.infer<
+export type ZCodePluginsListUiSurfacesResult = z.infer<
   typeof zcodePluginsListUiSurfacesResultSchema
 >;
 
@@ -3279,7 +3279,7 @@ export const zcodePluginReferenceCatalogEntrySchema = z
     subagentNames: z.array(nonEmptyString).default([]),
   })
   .strict();
-export type XCodePluginReferenceCatalogEntry = z.infer<
+export type ZCodePluginReferenceCatalogEntry = z.infer<
   typeof zcodePluginReferenceCatalogEntrySchema
 >;
 
@@ -3291,7 +3291,7 @@ export const zcodePluginsReferenceCatalogParamsSchema = z
     sessionId: nonEmptyString.optional(),
   })
   .strict();
-export type XCodePluginsReferenceCatalogParams = z.infer<
+export type ZCodePluginsReferenceCatalogParams = z.infer<
   typeof zcodePluginsReferenceCatalogParamsSchema
 >;
 export const zcodePluginsReferenceCatalogResultSchema = z
@@ -3300,7 +3300,7 @@ export const zcodePluginsReferenceCatalogResultSchema = z
     plugins: z.array(zcodePluginReferenceCatalogEntrySchema),
   })
   .strict();
-export type XCodePluginsReferenceCatalogResult = z.infer<
+export type ZCodePluginsReferenceCatalogResult = z.infer<
   typeof zcodePluginsReferenceCatalogResultSchema
 >;
 
@@ -3319,7 +3319,7 @@ export const zcodeSkillReferenceCatalogEntrySchema = z
     pluginName: nonEmptyString.optional(),
   })
   .strict();
-export type XCodeSkillReferenceCatalogEntry = z.infer<typeof zcodeSkillReferenceCatalogEntrySchema>;
+export type ZCodeSkillReferenceCatalogEntry = z.infer<typeof zcodeSkillReferenceCatalogEntrySchema>;
 
 export const zcodeSkillsReferenceCatalogParamsSchema = z
   .object({
@@ -3329,7 +3329,7 @@ export const zcodeSkillsReferenceCatalogParamsSchema = z
     sessionId: nonEmptyString.optional(),
   })
   .strict();
-export type XCodeSkillsReferenceCatalogParams = z.infer<
+export type ZCodeSkillsReferenceCatalogParams = z.infer<
   typeof zcodeSkillsReferenceCatalogParamsSchema
 >;
 export const zcodeSkillsReferenceCatalogResultSchema = z
@@ -3338,7 +3338,7 @@ export const zcodeSkillsReferenceCatalogResultSchema = z
     skills: z.array(zcodeSkillReferenceCatalogEntrySchema),
   })
   .strict();
-export type XCodeSkillsReferenceCatalogResult = z.infer<
+export type ZCodeSkillsReferenceCatalogResult = z.infer<
   typeof zcodeSkillsReferenceCatalogResultSchema
 >;
 
@@ -3348,7 +3348,7 @@ export type XCodeSkillsReferenceCatalogResult = z.infer<
 // saved-workflow.ts 逐字对齐——依赖方向是 contracts → shared，所以这里结构化地再声明一遍，
 // 而不是 import；两边的 strict 形状由 bootstrap 侧的协议测试互相钉住。
 export const zcodeSavedWorkflowArgTypeSchema = z.enum(["string", "number", "boolean", "json"]);
-export type XCodeSavedWorkflowArgType = z.infer<typeof zcodeSavedWorkflowArgTypeSchema>;
+export type ZCodeSavedWorkflowArgType = z.infer<typeof zcodeSavedWorkflowArgTypeSchema>;
 export const zcodeSavedWorkflowArgDeclarationSchema = z
   .object({
     type: zcodeSavedWorkflowArgTypeSchema,
@@ -3357,14 +3357,14 @@ export const zcodeSavedWorkflowArgDeclarationSchema = z
     default: z.unknown().optional(),
   })
   .strict();
-export type XCodeSavedWorkflowArgDeclaration = z.infer<
+export type ZCodeSavedWorkflowArgDeclaration = z.infer<
   typeof zcodeSavedWorkflowArgDeclarationSchema
 >;
 export const zcodeSavedWorkflowArgsDeclarationSchema = z.record(
   z.string(),
   zcodeSavedWorkflowArgDeclarationSchema,
 );
-export type XCodeSavedWorkflowArgsDeclaration = z.infer<
+export type ZCodeSavedWorkflowArgsDeclaration = z.infer<
   typeof zcodeSavedWorkflowArgsDeclarationSchema
 >;
 export const zcodeSavedWorkflowMetaSchema = z
@@ -3374,10 +3374,10 @@ export const zcodeSavedWorkflowMetaSchema = z
     args: zcodeSavedWorkflowArgsDeclarationSchema.optional(),
   })
   .strict();
-export type XCodeSavedWorkflowMeta = z.infer<typeof zcodeSavedWorkflowMetaSchema>;
+export type ZCodeSavedWorkflowMeta = z.infer<typeof zcodeSavedWorkflowMetaSchema>;
 // 作用域两档：项目档落 `<cwd>/.xcode/workflows/`、全局档落 agent 机器的 `~/.xcode/workflows/`。作用域由文件所在目录推得，frontmatter 不存 scope。
 export const zcodeSavedWorkflowScopeSchema = z.enum(["project", "global"]);
-export type XCodeSavedWorkflowScope = z.infer<typeof zcodeSavedWorkflowScopeSchema>;
+export type ZCodeSavedWorkflowScope = z.infer<typeof zcodeSavedWorkflowScopeSchema>;
 export const zcodeSavedWorkflowEntrySchema = z
   .object({
     name: nonEmptyString,
@@ -3388,11 +3388,11 @@ export const zcodeSavedWorkflowEntrySchema = z
     path: nonEmptyString,
   })
   .strict();
-export type XCodeSavedWorkflowEntry = z.infer<typeof zcodeSavedWorkflowEntrySchema>;
+export type ZCodeSavedWorkflowEntry = z.infer<typeof zcodeSavedWorkflowEntrySchema>;
 export const zcodeSavedWorkflowInvalidEntrySchema = z
   .object({ path: nonEmptyString, reason: nonEmptyString })
   .strict();
-export type XCodeSavedWorkflowInvalidEntry = z.infer<typeof zcodeSavedWorkflowInvalidEntrySchema>;
+export type ZCodeSavedWorkflowInvalidEntry = z.infer<typeof zcodeSavedWorkflowInvalidEntrySchema>;
 /** 名字非法 / 未找到 / frontmatter 坏 / 读错——与 core store 的 resolve 失败四态逐字对应。 */
 export const zcodeSavedWorkflowFailureReasonSchema = z.enum([
   "invalid_name",
@@ -3400,7 +3400,7 @@ export const zcodeSavedWorkflowFailureReasonSchema = z.enum([
   "parse_error",
   "read_error",
 ]);
-export type XCodeSavedWorkflowFailureReason = z.infer<typeof zcodeSavedWorkflowFailureReasonSchema>;
+export type ZCodeSavedWorkflowFailureReason = z.infer<typeof zcodeSavedWorkflowFailureReasonSchema>;
 const zcodeSavedWorkflowFailureSchema = z
   .object({
     ok: z.literal(false),
@@ -3417,7 +3417,7 @@ export const zcodeWorkflowsListParamsSchema = z
     scope: zcodeSavedWorkflowScopeSchema.optional(),
   })
   .strict();
-export type XCodeWorkflowsListParams = z.infer<typeof zcodeWorkflowsListParamsSchema>;
+export type ZCodeWorkflowsListParams = z.infer<typeof zcodeWorkflowsListParamsSchema>;
 export const zcodeWorkflowsListResultSchema = z
   .object({
     workflows: z.array(zcodeSavedWorkflowEntrySchema),
@@ -3426,7 +3426,7 @@ export const zcodeWorkflowsListResultSchema = z
     dir: nonEmptyString,
   })
   .strict();
-export type XCodeWorkflowsListResult = z.infer<typeof zcodeWorkflowsListResultSchema>;
+export type ZCodeWorkflowsListResult = z.infer<typeof zcodeWorkflowsListResultSchema>;
 
 export const zcodeWorkflowsGetParamsSchema = z
   .object({
@@ -3436,7 +3436,7 @@ export const zcodeWorkflowsGetParamsSchema = z
     scope: zcodeSavedWorkflowScopeSchema.optional(),
   })
   .strict();
-export type XCodeWorkflowsGetParams = z.infer<typeof zcodeWorkflowsGetParamsSchema>;
+export type ZCodeWorkflowsGetParams = z.infer<typeof zcodeWorkflowsGetParamsSchema>;
 export const zcodeWorkflowsGetResultSchema = z.union([
   z
     .object({
@@ -3451,7 +3451,7 @@ export const zcodeWorkflowsGetResultSchema = z.union([
     .strict(),
   zcodeSavedWorkflowFailureSchema,
 ]);
-export type XCodeWorkflowsGetResult = z.infer<typeof zcodeWorkflowsGetResultSchema>;
+export type ZCodeWorkflowsGetResult = z.infer<typeof zcodeWorkflowsGetResultSchema>;
 
 export const zcodeWorkflowsUpdateMetaParamsSchema = z
   .object({
@@ -3462,12 +3462,12 @@ export const zcodeWorkflowsUpdateMetaParamsSchema = z
     scope: zcodeSavedWorkflowScopeSchema.optional(),
   })
   .strict();
-export type XCodeWorkflowsUpdateMetaParams = z.infer<typeof zcodeWorkflowsUpdateMetaParamsSchema>;
+export type ZCodeWorkflowsUpdateMetaParams = z.infer<typeof zcodeWorkflowsUpdateMetaParamsSchema>;
 export const zcodeWorkflowsUpdateMetaResultSchema = z.union([
   z.object({ ok: z.literal(true), path: nonEmptyString }).strict(),
   zcodeSavedWorkflowFailureSchema,
 ]);
-export type XCodeWorkflowsUpdateMetaResult = z.infer<typeof zcodeWorkflowsUpdateMetaResultSchema>;
+export type ZCodeWorkflowsUpdateMetaResult = z.infer<typeof zcodeWorkflowsUpdateMetaResultSchema>;
 
 export const zcodeWorkflowsDeleteParamsSchema = z
   .object({
@@ -3477,12 +3477,12 @@ export const zcodeWorkflowsDeleteParamsSchema = z
     scope: zcodeSavedWorkflowScopeSchema.optional(),
   })
   .strict();
-export type XCodeWorkflowsDeleteParams = z.infer<typeof zcodeWorkflowsDeleteParamsSchema>;
+export type ZCodeWorkflowsDeleteParams = z.infer<typeof zcodeWorkflowsDeleteParamsSchema>;
 export const zcodeWorkflowsDeleteResultSchema = z.union([
   z.object({ ok: z.literal(true), path: nonEmptyString }).strict(),
   zcodeSavedWorkflowFailureSchema,
 ]);
-export type XCodeWorkflowsDeleteResult = z.infer<typeof zcodeWorkflowsDeleteResultSchema>;
+export type ZCodeWorkflowsDeleteResult = z.infer<typeof zcodeWorkflowsDeleteResultSchema>;
 
 export const ZCODE_WORKFLOWS_RUNS_MAX_LIMIT = 50;
 export const zcodeWorkflowsRunsParamsSchema = z
@@ -3497,7 +3497,7 @@ export const zcodeWorkflowsRunsParamsSchema = z
     scope: zcodeSavedWorkflowScopeSchema.optional(),
   })
   .strict();
-export type XCodeWorkflowsRunsParams = z.infer<typeof zcodeWorkflowsRunsParamsSchema>;
+export type ZCodeWorkflowsRunsParams = z.infer<typeof zcodeWorkflowsRunsParamsSchema>;
 // 三终态词汇：errored = 脚本之错，stopped = 被停下（可恢复）。
 export const zcodeSavedWorkflowRunStatusSchema = z.enum([
   "pending",
@@ -3506,7 +3506,7 @@ export const zcodeSavedWorkflowRunStatusSchema = z.enum([
   "errored",
   "stopped",
 ]);
-export type XCodeSavedWorkflowRunStatus = z.infer<typeof zcodeSavedWorkflowRunStatusSchema>;
+export type ZCodeSavedWorkflowRunStatus = z.infer<typeof zcodeSavedWorkflowRunStatusSchema>;
 export const zcodeSavedWorkflowRunStopReasonSchema = z.enum([
   "user",
   "model",
@@ -3552,7 +3552,7 @@ export const zcodeSavedWorkflowRunSchema = z
       .optional(),
   })
   .strict();
-export type XCodeSavedWorkflowRun = z.infer<typeof zcodeSavedWorkflowRunSchema>;
+export type ZCodeSavedWorkflowRun = z.infer<typeof zcodeSavedWorkflowRunSchema>;
 export const zcodeWorkflowsRunsResultSchema = z
   .object({
     runs: z.array(zcodeSavedWorkflowRunSchema),
@@ -3560,7 +3560,7 @@ export const zcodeWorkflowsRunsResultSchema = z
     truncated: z.literal(true).optional(),
   })
   .strict();
-export type XCodeWorkflowsRunsResult = z.infer<typeof zcodeWorkflowsRunsResultSchema>;
+export type ZCodeWorkflowsRunsResult = z.infer<typeof zcodeWorkflowsRunsResultSchema>;
 
 // workflows/move：把本机全局根的同名文件搬到 `workspace` 项目根。**只此一向**：项目→全局不是搬文件而是模型的概括（「提升为
 // 全局」在该项目开新会话、经 SaveWorkflow 另存），所以没有 `to` 参数。同机同用户，rename 优先、EXDEV
@@ -3572,7 +3572,7 @@ export const zcodeWorkflowsMoveParamsSchema = z
     name: nonEmptyString,
   })
   .strict();
-export type XCodeWorkflowsMoveParams = z.infer<typeof zcodeWorkflowsMoveParamsSchema>;
+export type ZCodeWorkflowsMoveParams = z.infer<typeof zcodeWorkflowsMoveParamsSchema>;
 export const zcodeWorkflowsMoveResultSchema = z.union([
   z
     .object({
@@ -3594,7 +3594,7 @@ export const zcodeWorkflowsMoveResultSchema = z.union([
     })
     .strict(),
 ]);
-export type XCodeWorkflowsMoveResult = z.infer<typeof zcodeWorkflowsMoveResultSchema>;
+export type ZCodeWorkflowsMoveResult = z.infer<typeof zcodeWorkflowsMoveResultSchema>;
 
 // ── 从一次 run 保存工作流（docs/dynamic-workflow/transcript-and-notifications.md「Saving the
 // run, and running it again」）──
@@ -3652,7 +3652,7 @@ export const zcodeWorkflowsSaveResultSchema = z.union([
     })
     .strict(),
 ]);
-export type XCodeWorkflowsSaveResult = z.infer<typeof zcodeWorkflowsSaveResultSchema>;
+export type ZCodeWorkflowsSaveResult = z.infer<typeof zcodeWorkflowsSaveResultSchema>;
 
 // ── 一次 run 对应哪个已保存工作流 ──
 // 完成卡的「已保存」芯片与「再次运行」都问这一个问题，而答案**推导得来、不记在卡上**：重开
@@ -3663,7 +3663,7 @@ export type XCodeWorkflowsSaveResult = z.infer<typeof zcodeWorkflowsSaveResultSc
 export const zcodeWorkflowsForRunCandidateSchema = z
   .object({ name: nonEmptyString, scope: zcodeSavedWorkflowScopeSchema.optional() })
   .strict();
-export type XCodeWorkflowsForRunCandidate = z.infer<typeof zcodeWorkflowsForRunCandidateSchema>;
+export type ZCodeWorkflowsForRunCandidate = z.infer<typeof zcodeWorkflowsForRunCandidateSchema>;
 /** 候选上界：一次 run 在一段对话里被存过的次数远小于它。 */
 export const ZCODE_WORKFLOWS_FOR_RUN_MAX_CANDIDATES = 8;
 export const zcodeWorkflowsForRunParamsSchema = z
@@ -3687,7 +3687,7 @@ export const zcodeWorkflowsForRunResultSchema = z
     runArgs: z.record(z.string(), z.unknown()).optional(),
   })
   .strict();
-export type XCodeWorkflowsForRunResult = z.infer<typeof zcodeWorkflowsForRunResultSchema>;
+export type ZCodeWorkflowsForRunResult = z.infer<typeof zcodeWorkflowsForRunResultSchema>;
 
 // 推荐 Prompt 的可信插件解析：UI 不拆解 stableId，也不从旧目录快照推断可安装性。
 export const zcodePluginSuggestedReferenceStatusSchema = z.enum([
@@ -3697,7 +3697,7 @@ export const zcodePluginSuggestedReferenceStatusSchema = z.enum([
   "conflict",
   "unavailable",
 ]);
-export type XCodePluginSuggestedReferenceStatus = z.infer<
+export type ZCodePluginSuggestedReferenceStatus = z.infer<
   typeof zcodePluginSuggestedReferenceStatusSchema
 >;
 export const zcodePluginOperationStateSchema = z.enum([
@@ -3710,14 +3710,14 @@ export const zcodePluginOperationStateSchema = z.enum([
   "complete",
   "failed",
 ]);
-export type XCodePluginOperationState = z.infer<typeof zcodePluginOperationStateSchema>;
+export type ZCodePluginOperationState = z.infer<typeof zcodePluginOperationStateSchema>;
 export const zcodePluginOperationProgressNotificationSchema = z
   .object({
     operationId: nonEmptyString,
     state: z.literal("refreshing"),
   })
   .strict();
-export type XCodePluginOperationProgressNotification = z.infer<
+export type ZCodePluginOperationProgressNotification = z.infer<
   typeof zcodePluginOperationProgressNotificationSchema
 >;
 export const zcodePluginsResolveSuggestedReferenceParamsSchema = z
@@ -3729,7 +3729,7 @@ export const zcodePluginsResolveSuggestedReferenceParamsSchema = z
     deliveryKind: zcodeDeliveryKindSchema,
   })
   .strict();
-export type XCodePluginsResolveSuggestedReferenceParams = z.infer<
+export type ZCodePluginsResolveSuggestedReferenceParams = z.infer<
   typeof zcodePluginsResolveSuggestedReferenceParamsSchema
 >;
 export const zcodePluginsSetEnabledParamsSchema = z
@@ -3747,7 +3747,7 @@ export const zcodePluginsSetEnabledResultSchema = z
     enabled: z.boolean(),
   })
   .strict();
-export type XCodePluginsSetEnabledResult = z.infer<typeof zcodePluginsSetEnabledResultSchema>;
+export type ZCodePluginsSetEnabledResult = z.infer<typeof zcodePluginsSetEnabledResultSchema>;
 
 /**
  * 目录条目的扩展摘要（docs/plugins/plugin-publishing.md §4.2–4.3）：插件要求的插件 API 版本范围与
@@ -3760,7 +3760,7 @@ export const zcodePluginExtensionSummarySchema = z
     grants: z.array(z.string()),
   })
   .strict();
-export type XCodePluginExtensionSummary = z.infer<typeof zcodePluginExtensionSummarySchema>;
+export type ZCodePluginExtensionSummary = z.infer<typeof zcodePluginExtensionSummarySchema>;
 
 // 商店信息（Store Listing）：目录条目携带的展示性元数据（显示名/icon/分类/作者/链接/hero/
 // 示例提示词），全部可选，UI 缺失时按降级矩阵处理（字母头像/隐藏区块/省略信息行）。
@@ -3794,7 +3794,7 @@ export const zcodePluginStoreListingSchema = z
     extensionSummary: zcodePluginExtensionSummarySchema.optional(),
   })
   .strict();
-export type XCodePluginStoreListing = z.infer<typeof zcodePluginStoreListingSchema>;
+export type ZCodePluginStoreListing = z.infer<typeof zcodePluginStoreListingSchema>;
 
 export const zcodePluginsResolveSuggestedReferenceResultSchema = z
   .object({
@@ -3820,7 +3820,7 @@ export const zcodePluginsResolveSuggestedReferenceResultSchema = z
       });
     }
   });
-export type XCodePluginsResolveSuggestedReferenceResult = z.infer<
+export type ZCodePluginsResolveSuggestedReferenceResult = z.infer<
   typeof zcodePluginsResolveSuggestedReferenceResultSchema
 >;
 
@@ -3845,7 +3845,7 @@ export const zcodePluginMarketplaceSummarySchema = z
       .optional(),
   })
   .strict();
-export type XCodePluginMarketplaceSummary = z.infer<typeof zcodePluginMarketplaceSummarySchema>;
+export type ZCodePluginMarketplaceSummary = z.infer<typeof zcodePluginMarketplaceSummarySchema>;
 
 export const zcodeAvailablePluginSummarySchema = z
   .object({
@@ -3859,7 +3859,7 @@ export const zcodeAvailablePluginSummarySchema = z
     listing: zcodePluginStoreListingSchema.optional(),
   })
   .strict();
-export type XCodeAvailablePluginSummary = z.infer<typeof zcodeAvailablePluginSummarySchema>;
+export type ZCodeAvailablePluginSummary = z.infer<typeof zcodeAvailablePluginSummarySchema>;
 
 export const zcodeInstalledPluginSummarySchema = z
   .object({
@@ -3879,7 +3879,7 @@ export const zcodeInstalledPluginSummarySchema = z
     listing: zcodePluginStoreListingSchema.optional(),
   })
   .strict();
-export type XCodeInstalledPluginSummary = z.infer<typeof zcodeInstalledPluginSummarySchema>;
+export type ZCodeInstalledPluginSummary = z.infer<typeof zcodeInstalledPluginSummarySchema>;
 
 export const zcodePluginsOverviewParamsSchema = z
   .object({
@@ -3904,7 +3904,7 @@ export const zcodePluginsOverviewResultSchema = z
       .strict(),
   })
   .strict();
-export type XCodePluginsOverviewResult = z.infer<typeof zcodePluginsOverviewResultSchema>;
+export type ZCodePluginsOverviewResult = z.infer<typeof zcodePluginsOverviewResultSchema>;
 
 export const zcodePluginsMarketplaceAddParamsSchema = z
   .object({
@@ -3934,7 +3934,7 @@ export const zcodePluginsMarketplaceMutationResultSchema = z
     diagnostics: z.array(zcodePluginDiagnosticSchema).optional(),
   })
   .strict();
-export type XCodePluginsMarketplaceMutationResult = z.infer<
+export type ZCodePluginsMarketplaceMutationResult = z.infer<
   typeof zcodePluginsMarketplaceMutationResultSchema
 >;
 
@@ -3953,7 +3953,7 @@ export const zcodePluginsCancelOperationParamsSchema = z
     operationId: nonEmptyString,
   })
   .strict();
-export type XCodePluginsCancelOperationParams = z.infer<
+export type ZCodePluginsCancelOperationParams = z.infer<
   typeof zcodePluginsCancelOperationParamsSchema
 >;
 
@@ -3963,7 +3963,7 @@ export const zcodePluginsCancelOperationResultSchema = z
     cancelled: z.boolean(),
   })
   .strict();
-export type XCodePluginsCancelOperationResult = z.infer<
+export type ZCodePluginsCancelOperationResult = z.infer<
   typeof zcodePluginsCancelOperationResultSchema
 >;
 export const zcodePluginsUninstallParamsSchema = z
@@ -3982,7 +3982,7 @@ export const zcodePluginsInstallResultSchema = z
     diagnostics: z.array(zcodePluginDiagnosticSchema),
   })
   .strict();
-export type XCodePluginsInstallResult = z.infer<typeof zcodePluginsInstallResultSchema>;
+export type ZCodePluginsInstallResult = z.infer<typeof zcodePluginsInstallResultSchema>;
 
 export const zcodePluginsUninstallResultSchema = z
   .object({
@@ -3990,7 +3990,7 @@ export const zcodePluginsUninstallResultSchema = z
     diagnostics: z.array(zcodePluginDiagnosticSchema),
   })
   .strict();
-export type XCodePluginsUninstallResult = z.infer<typeof zcodePluginsUninstallResultSchema>;
+export type ZCodePluginsUninstallResult = z.infer<typeof zcodePluginsUninstallResultSchema>;
 
 export const zcodePluginsUpdateParamsSchema = z
   .object({
@@ -4011,7 +4011,7 @@ export const zcodePluginsRestoreBuiltinResultSchema = z
     diagnostics: z.array(zcodePluginDiagnosticSchema),
   })
   .strict();
-export type XCodePluginsRestoreBuiltinResult = z.infer<
+export type ZCodePluginsRestoreBuiltinResult = z.infer<
   typeof zcodePluginsRestoreBuiltinResultSchema
 >;
 
@@ -4031,7 +4031,7 @@ export const zcodePluginsConfigureResultSchema = z
     diagnostics: z.array(zcodePluginDiagnosticSchema),
   })
   .strict();
-export type XCodePluginsConfigureResult = z.infer<typeof zcodePluginsConfigureResultSchema>;
+export type ZCodePluginsConfigureResult = z.infer<typeof zcodePluginsConfigureResultSchema>;
 
 export const zcodePluginsResetConfigParamsSchema = z
   .object({
@@ -4040,7 +4040,7 @@ export const zcodePluginsResetConfigParamsSchema = z
     scope: zcodePluginScopeSchema.optional(),
   })
   .strict();
-export type XCodePluginsResetConfigParams = z.infer<typeof zcodePluginsResetConfigParamsSchema>;
+export type ZCodePluginsResetConfigParams = z.infer<typeof zcodePluginsResetConfigParamsSchema>;
 
 export const zcodePluginsValidateParamsSchema = z
   .object({
@@ -4063,7 +4063,7 @@ export const zcodePluginsValidateResultSchema = z
       .strict(),
   })
   .strict();
-export type XCodePluginsValidateResult = z.infer<typeof zcodePluginsValidateResultSchema>;
+export type ZCodePluginsValidateResult = z.infer<typeof zcodePluginsValidateResultSchema>;
 
 // plugins/describe：按需枚举单个插件的组件「名称 + 描述」。
 // 已安装插件读本地缓存目录；未安装候选按需解析/临时 clone 源后枚举再清理。
@@ -4090,7 +4090,7 @@ export const zcodePluginsDescribeResultSchema = z
       .optional(),
   })
   .strict();
-export type XCodePluginsDescribeResult = z.infer<typeof zcodePluginsDescribeResultSchema>;
+export type ZCodePluginsDescribeResult = z.infer<typeof zcodePluginsDescribeResultSchema>;
 
 export const zcodeAutomationScheduleRuleSchema = z
   .object({
@@ -4106,7 +4106,7 @@ export const zcodeAutomationScheduleRuleSchema = z
     monthlyMode: z.enum(["date", "weekday"]).optional(),
   })
   .strict();
-export type XCodeAutomationScheduleRuleProtocol = z.infer<typeof zcodeAutomationScheduleRuleSchema>;
+export type ZCodeAutomationScheduleRuleProtocol = z.infer<typeof zcodeAutomationScheduleRuleSchema>;
 
 /** 会话侧长间隔周期 carrier 的 unit 枚举（与 scheduleRule.unit 同集）。 */
 export const zcodeAutomationIntervalUnitSchema = z.enum([
@@ -4139,7 +4139,7 @@ export const zcodeAutomationProtocolSchema = z
     scheduleRule: zcodeAutomationScheduleRuleSchema.optional(),
   })
   .strict();
-export type XCodeAutomationProtocol = z.infer<typeof zcodeAutomationProtocolSchema>;
+export type ZCodeAutomationProtocol = z.infer<typeof zcodeAutomationProtocolSchema>;
 
 export const zcodeAutomationCreateParamsSchema = z
   .object({
@@ -4178,12 +4178,12 @@ export const zcodeAutomationCreateParamsSchema = z
     message: "intervalUnit is a recurring carrier and cannot combine with maxRuns",
     path: ["maxRuns"],
   });
-export type XCodeAutomationCreateProtocolParams = z.infer<typeof zcodeAutomationCreateParamsSchema>;
+export type ZCodeAutomationCreateProtocolParams = z.infer<typeof zcodeAutomationCreateParamsSchema>;
 
 export const zcodeAutomationCreateResultSchema = z
   .object({ automation: zcodeAutomationProtocolSchema })
   .strict();
-export type XCodeAutomationCreateProtocolResult = z.infer<typeof zcodeAutomationCreateResultSchema>;
+export type ZCodeAutomationCreateProtocolResult = z.infer<typeof zcodeAutomationCreateResultSchema>;
 
 export const zcodeAutomationUpdateParamsSchema = z
   .object({
@@ -4237,40 +4237,40 @@ export const zcodeAutomationUpdateParamsSchema = z
       path: ["maxRuns"],
     },
   );
-export type XCodeAutomationUpdateProtocolParams = z.infer<typeof zcodeAutomationUpdateParamsSchema>;
+export type ZCodeAutomationUpdateProtocolParams = z.infer<typeof zcodeAutomationUpdateParamsSchema>;
 export const zcodeAutomationUpdateResultSchema = z
   .object({ automation: zcodeAutomationProtocolSchema })
   .strict();
-export type XCodeAutomationUpdateProtocolResult = z.infer<typeof zcodeAutomationUpdateResultSchema>;
+export type ZCodeAutomationUpdateProtocolResult = z.infer<typeof zcodeAutomationUpdateResultSchema>;
 
 export const zcodeAutomationListParamsSchema = z
   .object({ workspace: zcodeWorkspaceRefSchema.optional() })
   .strict();
-export type XCodeAutomationListProtocolParams = z.infer<typeof zcodeAutomationListParamsSchema>;
+export type ZCodeAutomationListProtocolParams = z.infer<typeof zcodeAutomationListParamsSchema>;
 export const zcodeAutomationListResultSchema = z
   .object({ automations: z.array(zcodeAutomationProtocolSchema) })
   .strict();
-export type XCodeAutomationListProtocolResult = z.infer<typeof zcodeAutomationListResultSchema>;
+export type ZCodeAutomationListProtocolResult = z.infer<typeof zcodeAutomationListResultSchema>;
 
 export const zcodeAutomationCheckTaskBindingParamsSchema = z
   .object({ workspace: zcodeWorkspaceRefSchema.optional(), targetTaskId: nonEmptyString })
   .strict();
-export type XCodeAutomationCheckTaskBindingProtocolParams = z.infer<
+export type ZCodeAutomationCheckTaskBindingProtocolParams = z.infer<
   typeof zcodeAutomationCheckTaskBindingParamsSchema
 >;
 export const zcodeAutomationCheckTaskBindingResultSchema = z
   .object({ bound: z.boolean() })
   .strict();
-export type XCodeAutomationCheckTaskBindingProtocolResult = z.infer<
+export type ZCodeAutomationCheckTaskBindingProtocolResult = z.infer<
   typeof zcodeAutomationCheckTaskBindingResultSchema
 >;
 
 export const zcodeAutomationDeleteParamsSchema = z
   .object({ workspace: zcodeWorkspaceRefSchema.optional(), automationId: nonEmptyString })
   .strict();
-export type XCodeAutomationDeleteProtocolParams = z.infer<typeof zcodeAutomationDeleteParamsSchema>;
+export type ZCodeAutomationDeleteProtocolParams = z.infer<typeof zcodeAutomationDeleteParamsSchema>;
 export const zcodeAutomationDeleteResultSchema = z.object({ deleted: z.boolean() }).strict();
-export type XCodeAutomationDeleteProtocolResult = z.infer<typeof zcodeAutomationDeleteResultSchema>;
+export type ZCodeAutomationDeleteProtocolResult = z.infer<typeof zcodeAutomationDeleteResultSchema>;
 
 // 执行轮自暂停（CronPauseSelf）：automationId 来自 CLI loop state，Host 只在当前 workspace
 // 内做条件暂停（active 且 enabled 才转 paused）并回报是否生效。
@@ -4292,7 +4292,7 @@ export const zcodeOffPeakPermissionModeSchema = z.enum([
   "yolo",
   "guarded",
 ]);
-export type XCodeOffPeakProtocolPermissionMode = z.infer<typeof zcodeOffPeakPermissionModeSchema>;
+export type ZCodeOffPeakProtocolPermissionMode = z.infer<typeof zcodeOffPeakPermissionModeSchema>;
 
 export const zcodeOffPeakCreateParamsSchema = z
   .object({
@@ -4306,7 +4306,7 @@ export const zcodeOffPeakCreateParamsSchema = z
     boundSessionId: nonEmptyString.optional(),
   })
   .strict();
-export type XCodeOffPeakCreateProtocolParams = z.infer<typeof zcodeOffPeakCreateParamsSchema>;
+export type ZCodeOffPeakCreateProtocolParams = z.infer<typeof zcodeOffPeakCreateParamsSchema>;
 
 // 协议侧任务快照：轮尾卡片与 OffPeakList 的最小字段面。
 // 不暴露 serverTicketId（跨边界禁带）。
@@ -4320,7 +4320,7 @@ export const zcodeOffPeakTaskSnapshotSchema = z
     createdAt: z.number().int().nonnegative(),
   })
   .strict();
-export type XCodeOffPeakTaskProtocolSnapshot = z.infer<typeof zcodeOffPeakTaskSnapshotSchema>;
+export type ZCodeOffPeakTaskProtocolSnapshot = z.infer<typeof zcodeOffPeakTaskSnapshotSchema>;
 
 // 失败分类跨协议保真（镜像 shared OffPeakTaskCreateResult 的判别联合，错误不降级为字符串）。
 // model 白名单预校失败复用 client_validation 分类 + errorCode "model_not_allowed"，不扩分类枚举。
@@ -4343,16 +4343,16 @@ export const zcodeOffPeakCreateResultSchema = z.discriminatedUnion("ok", [
     })
     .strict(),
 ]);
-export type XCodeOffPeakCreateProtocolResult = z.infer<typeof zcodeOffPeakCreateResultSchema>;
+export type ZCodeOffPeakCreateProtocolResult = z.infer<typeof zcodeOffPeakCreateResultSchema>;
 
 export const zcodeOffPeakListParamsSchema = z
   .object({ workspace: zcodeWorkspaceRefSchema.optional() })
   .strict();
-export type XCodeOffPeakListProtocolParams = z.infer<typeof zcodeOffPeakListParamsSchema>;
+export type ZCodeOffPeakListProtocolParams = z.infer<typeof zcodeOffPeakListParamsSchema>;
 export const zcodeOffPeakListResultSchema = z
   .object({ tasks: z.array(zcodeOffPeakTaskSnapshotSchema) })
   .strict();
-export type XCodeOffPeakListProtocolResult = z.infer<typeof zcodeOffPeakListResultSchema>;
+export type ZCodeOffPeakListProtocolResult = z.infer<typeof zcodeOffPeakListResultSchema>;
 
 // Session 运行实例生命周期；不同于 session/stop（停止生成）。
 export const sessionLifecycleParamsSchema = z.object({ sessionId: z.string().min(1) }).strict();
@@ -4570,7 +4570,7 @@ export const zcodeProtocolMethods = {
   usageRequestDetails: "usage/requestDetails",
 } as const;
 
-export type XCodeProtocolMethod = (typeof zcodeProtocolMethods)[keyof typeof zcodeProtocolMethods];
+export type ZCodeProtocolMethod = (typeof zcodeProtocolMethods)[keyof typeof zcodeProtocolMethods];
 
 export const zcodeProtocolEmptyResultSchema = z.object({}).strict();
 
@@ -4666,10 +4666,10 @@ export const zcodeProtocolSessionMethodContracts = {
     result: zcodeBrowserExecuteResultSchema,
   },
 } as const satisfies Partial<
-  Record<XCodeProtocolMethod, { params: z.ZodTypeAny; result: z.ZodTypeAny }>
+  Record<ZCodeProtocolMethod, { params: z.ZodTypeAny; result: z.ZodTypeAny }>
 >;
 
-export type XCodeProtocolSessionMethodContract =
+export type ZCodeProtocolSessionMethodContract =
   (typeof zcodeProtocolSessionMethodContracts)[keyof typeof zcodeProtocolSessionMethodContracts];
 
 // 启动入口的独立存储命令与严格结果 schema，和 CLI 共用一份契约。
@@ -4774,11 +4774,11 @@ export const zcodeUsageRequestDetailsResultSchema = z.object({
   models: z.array(z.string()),
 });
 
-export type XCodeUsageRequestDetailsParams = z.infer<
+export type ZCodeUsageRequestDetailsParams = z.infer<
   typeof zcodeUsageRequestDetailsParamsSchema
 >;
 
-export type XCodeUsageRequestDetailsResult = z.infer<
+export type ZCodeUsageRequestDetailsResult = z.infer<
   typeof zcodeUsageRequestDetailsResultSchema
 >;
 
@@ -4843,7 +4843,7 @@ export const zcodeSessionSetPersonaParamsSchema = z
     expectedRevision: z.number().int().nonnegative().optional(),
   })
 
-export type XCodeSessionSetPersonaParams = z.infer<typeof zcodeSessionSetPersonaParamsSchema>;
+export type ZCodeSessionSetPersonaParams = z.infer<typeof zcodeSessionSetPersonaParamsSchema>;
 
 export const zcodeSessionPrefillModeSchema = z.enum(["inherit", "on", "off"]);
 
@@ -4854,11 +4854,7 @@ export const zcodeSessionSetPrefillParamsSchema = z
     expectedRevision: z.number().int().nonnegative().optional(),
   })
 
-export type XCodeSessionSetPrefillParams = z.infer<typeof zcodeSessionSetPrefillParamsSchema>;
-
-export type XCodeProviderRefreshRegistryParams = z.infer<
-  typeof zcodeProviderRefreshRegistryParamsSchema
->;
+export type ZCodeSessionSetPrefillParams = z.infer<typeof zcodeSessionSetPrefillParamsSchema>;
 
 export const zcodeProxyPoolEntrySchema = z
   .object({
@@ -4873,7 +4869,7 @@ export const zcodeProxyPoolEntrySchema = z
     strictProxy: z.boolean().optional(),
   })
 
-export type XCodeProxyPoolProtocolEntry = z.infer<typeof zcodeProxyPoolEntrySchema>;
+export type ZCodeProxyPoolProtocolEntry = z.infer<typeof zcodeProxyPoolEntrySchema>;
 
 export const zcodeProxyPoolAccountSchema = z
   .object({
@@ -4923,7 +4919,7 @@ export const zcodePetControlResultSchema = z
     behaviorState: z.string(),
   })
 
-export type XCodePetControlResult = z.infer<typeof zcodePetControlResultSchema>;
+export type ZCodePetControlResult = z.infer<typeof zcodePetControlResultSchema>;
 
 export const zcodeProxyPoolSnapshotResultSchema = z
   .object({
@@ -4933,12 +4929,12 @@ export const zcodeProxyPoolSnapshotResultSchema = z
     test: zcodeProxyPoolTestOutcomeSchema.optional(),
   })
 
-export type XCodeProxyPoolProtocolSnapshot = z.infer<typeof zcodeProxyPoolSnapshotResultSchema>;
+export type ZCodeProxyPoolProtocolSnapshot = z.infer<typeof zcodeProxyPoolSnapshotResultSchema>;
 
 export const zcodeProxyPoolListParamsSchema = z
   .object({ providerId: nonEmptyString.optional() })
 
-export type XCodeProxyPoolListProtocolParams = z.infer<typeof zcodeProxyPoolListParamsSchema>;
+export type ZCodeProxyPoolListProtocolParams = z.infer<typeof zcodeProxyPoolListParamsSchema>;
 
 export const zcodeProxyPoolSaveParamsSchema = z
   .object({
@@ -4950,16 +4946,16 @@ export const zcodeProxyPoolSaveParamsSchema = z
     strictProxy: z.boolean().optional(),
   })
 
-export type XCodeProxyPoolSaveProtocolParams = z.infer<typeof zcodeProxyPoolSaveParamsSchema>;
+export type ZCodeProxyPoolSaveProtocolParams = z.infer<typeof zcodeProxyPoolSaveParamsSchema>;
 
 export const zcodeProxyPoolDeleteParamsSchema = z.object({ poolId: nonEmptyString }).strict();
 
-export type XCodeProxyPoolDeleteProtocolParams = z.infer<typeof zcodeProxyPoolDeleteParamsSchema>;
+export type ZCodeProxyPoolDeleteProtocolParams = z.infer<typeof zcodeProxyPoolDeleteParamsSchema>;
 
 export const zcodeProxyPoolSetActiveParamsSchema = z
   .object({ poolId: nonEmptyString, isActive: z.boolean() })
 
-export type XCodeProxyPoolSetActiveProtocolParams = z.infer<
+export type ZCodeProxyPoolSetActiveProtocolParams = z.infer<
   typeof zcodeProxyPoolSetActiveParamsSchema
 >;
 
@@ -4970,7 +4966,7 @@ export const zcodeProxyPoolTestParamsSchema = z
     testUrl: nonEmptyString.optional(),
   })
 
-export type XCodeProxyPoolTestProtocolParams = z.infer<typeof zcodeProxyPoolTestParamsSchema>;
+export type ZCodeProxyPoolTestProtocolParams = z.infer<typeof zcodeProxyPoolTestParamsSchema>;
 
 export const zcodeProxyPoolBindParamsSchema = z
   .object({
@@ -4979,19 +4975,19 @@ export const zcodeProxyPoolBindParamsSchema = z
     poolId: nonEmptyString.nullable(),
   })
 
-export type XCodeProxyPoolBindProtocolParams = z.infer<typeof zcodeProxyPoolBindParamsSchema>;
+export type ZCodeProxyPoolBindProtocolParams = z.infer<typeof zcodeProxyPoolBindParamsSchema>;
 
 export const zcodeProxyPoolApplyToAllParamsSchema = z
   .object({ providerId: nonEmptyString, poolId: nonEmptyString.nullable() })
 
-export type XCodeProxyPoolApplyToAllProtocolParams = z.infer<
+export type ZCodeProxyPoolApplyToAllProtocolParams = z.infer<
   typeof zcodeProxyPoolApplyToAllParamsSchema
 >;
 
 export const zcodeProxyPoolDistributeParamsSchema = z
   .object({ providerId: nonEmptyString, poolIds: z.array(nonEmptyString) })
 
-export type XCodeProxyPoolDistributeProtocolParams = z.infer<
+export type ZCodeProxyPoolDistributeProtocolParams = z.infer<
   typeof zcodeProxyPoolDistributeParamsSchema
 >;
 
@@ -5028,7 +5024,7 @@ export const zcodeModelJailbreakSnapshotResultSchema = z
       .optional(),
   })
 
-export type XCodeModelJailbreakProtocolSnapshot = z.infer<
+export type ZCodeModelJailbreakProtocolSnapshot = z.infer<
   typeof zcodeModelJailbreakSnapshotResultSchema
 >;
 
@@ -5050,28 +5046,28 @@ export const zcodeProviderAccountSnapshotResultSchema = z
     accounts: z.array(zcodeProviderAccountViewSchema),
   })
 
-export type XCodeProviderAccountProtocolSnapshot = z.infer<
+export type ZCodeProviderAccountProtocolSnapshot = z.infer<
   typeof zcodeProviderAccountSnapshotResultSchema
 >;
 
 export const zcodeModelJailbreakSetPromptParamsSchema = z
   .object({ prompt: z.string().max(65535) })
 
-export type XCodeModelJailbreakSetPromptProtocolParams = z.infer<
+export type ZCodeModelJailbreakSetPromptProtocolParams = z.infer<
   typeof zcodeModelJailbreakSetPromptParamsSchema
 >;
 
 export const zcodeModelJailbreakApplyTemplateParamsSchema = z
   .object({ templateId: nonEmptyString })
 
-export type XCodeModelJailbreakApplyTemplateProtocolParams = z.infer<
+export type ZCodeModelJailbreakApplyTemplateProtocolParams = z.infer<
   typeof zcodeModelJailbreakApplyTemplateParamsSchema
 >;
 
 export const zcodeModelJailbreakSetPrefillParamsSchema = z
   .object({ messages: z.array(zcodeModelJailbreakPrefillMessageSchema).max(50) })
 
-export type XCodeModelJailbreakSetPrefillProtocolParams = z.infer<
+export type ZCodeModelJailbreakSetPrefillProtocolParams = z.infer<
   typeof zcodeModelJailbreakSetPrefillParamsSchema
 >;
 
@@ -5081,6 +5077,6 @@ export const zcodeModelJailbreakSetObfuscationParamsSchema = z
     tier: z.enum(["light", "standard", "heavy"]).optional(),
   })
 
-export type XCodeModelJailbreakSetObfuscationProtocolParams = z.infer<
+export type ZCodeModelJailbreakSetObfuscationProtocolParams = z.infer<
   typeof zcodeModelJailbreakSetObfuscationParamsSchema
 >;

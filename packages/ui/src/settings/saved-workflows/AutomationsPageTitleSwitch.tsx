@@ -2,7 +2,7 @@ import { useCallback, type KeyboardEvent } from "react";
 import { TID_AUTOMATIONS_PAGE_TAB } from "@zcode/shared";
 import { testId } from "@zcode/shared/test-ids";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /** 自动化页的两个顶级标签。 */
 export type AutomationsPageTab = "automation" | "workflow";
@@ -23,7 +23,7 @@ export function AutomationsPageTitle({
   value: AutomationsPageTab;
   onValueChange: (tab: AutomationsPageTab) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (!workflowTabEnabled) {
     // 字号与切换态同源：30/34 页面标题层级，切换在不在场不该改变标题的视觉层级。
     return (
@@ -47,7 +47,7 @@ export function AutomationsPageTitleSwitch({
   value: AutomationsPageTab;
   onValueChange: (tab: AutomationsPageTab) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;

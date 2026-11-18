@@ -19,7 +19,7 @@ import {
   TID_CHAT_ERROR_HOOK_ICON,
 } from "@zcode/shared/test-ids";
 import { AnchorIcon, CopyIcon, InfoIcon, RocketIcon, SettingsIcon, X } from "lucide-react";
-import { useXCodeIntl } from "./i18n/IntlProvider.js";
+import { useZCodeIntl } from "./i18n/IntlProvider.js";
 import type { IntlInstance } from "./i18n/IntlProvider.js";
 import { Button } from "./components/ui/button.js";
 import {
@@ -39,7 +39,7 @@ import {
   resolveOffPeakTicketExpiredBusinessCode,
   resolveRequestVerificationBusinessCode,
 } from "@/lib/providerBusinessError.js";
-import type { XCodeUiError } from "@/lib/zcodeUiError.js";
+import type { ZCodeUiError } from "@/lib/zcodeUiError.js";
 
 const HISTORICAL_MODEL_UNAVAILABLE_MESSAGES = [
   "历史任务使用的模型已不可用",
@@ -73,11 +73,11 @@ const MODEL_CONFIG_MISSING_CODES = new Set([
 const MODEL_NOT_IN_REGISTRY_CODES = new Set(["provider_not_found", "model_not_found"]);
 
 /** 投影错误是否只是「会话模型不在 Registry」这一事实的 Core 侧表达。 */
-export function isModelNotInRegistryError(error: Pick<XCodeUiError, "code">): boolean {
+export function isModelNotInRegistryError(error: Pick<ZCodeUiError, "code">): boolean {
   return Boolean(error.code && MODEL_NOT_IN_REGISTRY_CODES.has(error.code));
 }
 
-function isModelConfigMissingError(error: Pick<XCodeUiError, "code" | "message">): boolean {
+function isModelConfigMissingError(error: Pick<ZCodeUiError, "code" | "message">): boolean {
   // Bugfix: 桌面端发送前 registry 为空时，agent 会退回 CLI config 并抛 Model config is missing。
   // 真实原因是“当前没有可用模型”，不能把 CLI 配置路径直接暴露给桌面用户。
   // 这里只按结构化 code 识别，避免 UNKNOWN/SEND_FAILED 等包装错误的可读 message
@@ -107,7 +107,7 @@ function parseClaudeUnknownCommandMessage(message: string): {
 export type ChatErrorBannerModelConfigTarget = "local" | "remote";
 
 export function resolveChatErrorBannerDisplayMessage(
-  error: XCodeUiError,
+  error: ZCodeUiError,
   intl: IntlInstance,
   modelConfigTarget: ChatErrorBannerModelConfigTarget = "local",
 ): string {
@@ -172,7 +172,7 @@ export function resolveChatErrorBannerDisplayMessage(
 }
 
 export function shouldSuppressChatErrorBanner(
-  error: Pick<XCodeUiError, "code" | "message">,
+  error: Pick<ZCodeUiError, "code" | "message">,
 ): boolean {
   // 只有历史恢复残留的模型不可用提示才隐藏；当前发送/草稿报错需要展示，
   // 否则 registry 移除模型后用户会看到“请求没返回”而没有任何可操作反馈。
@@ -194,7 +194,7 @@ export function ChatErrorBanner({
   onReconnect,
   remoteKind,
 }: {
-  error: XCodeUiError;
+  error: ZCodeUiError;
   onReconnect?: () => void;
   remoteKind?: string;
   onRetry?: () => void;
@@ -205,7 +205,7 @@ export function ChatErrorBanner({
   onOpenUpgrade?: () => void;
   modelConfigTarget?: ChatErrorBannerModelConfigTarget;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const openFeedbackSubmit = useFeedbackStore((state) => state.openSubmit);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const actionButtonClassName = "shrink-0";

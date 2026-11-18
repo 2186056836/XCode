@@ -13,7 +13,7 @@ describe("虚拟项目升级顺序", () => {
   it("VP28：仅迁移旧设置保留的项目，历史任务不建项目，刷新保留", async function () {
     this.timeout(90_000);
     await waitForWorkspaceApp(DEFAULT_WORKSPACE, 45_000);
-    const expected = ["XCodeProject", MIGRATED_REMOTE_NAME, ...SAVED_PROJECT_NAMES];
+    const expected = ["ZCodeProject", MIGRATED_REMOTE_NAME, ...SAVED_PROJECT_NAMES];
     const readNames = () =>
       browser.execute(() =>
         [...document.querySelectorAll('[data-testid="project-section"] [data-project-name]')].map(
@@ -66,7 +66,7 @@ describe("虚拟项目升级顺序", () => {
             .get(`e2e-order-${name}`),
         ).toEqual({
           project_id: null,
-          workspace_path: join(home, "XCodeProject", ".zcode-e2e", "project-upgrade-order", name),
+          workspace_path: join(home, "ZCodeProject", ".zcode-e2e", "project-upgrade-order", name),
           title: `E2E_ORDER_${name}`,
           archived,
           deleted,

@@ -4,7 +4,7 @@ import { MessageResponse, type MessageFileLinkTarget } from "@/components/ai-ele
 import { ToolInput, ToolOutput } from "@/components/ai-elements/tool.js";
 import { useToolPresentationCapabilities } from "@/ToolCallBlocks/presentationCapabilities.js";
 import { logger } from "@/logger.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type {
   CodeViewerSource,
   ImageCodeViewerSource,
@@ -134,7 +134,7 @@ function InlineCodeContent({
 
 function InlineImageContent({ preview }: { preview: ImageCodeViewerSource }) {
   const { readMediaPreview, resourceUrl } = useToolPresentationCapabilities();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const directSrc = resourceUrl?.(preview.path);
   const [result, setResult] = useState<{
     path: string;
@@ -207,7 +207,7 @@ function InlinePlanResult({
   onOpenFileLink?: (target: MessageFileLinkTarget) => void;
   onOpenBrowserUrl?: (url: string) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <div className="space-y-3 rounded-xl border border-outline/60 bg-muted/15 p-3">

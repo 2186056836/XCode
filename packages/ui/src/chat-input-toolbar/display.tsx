@@ -8,10 +8,10 @@ import {
 } from "react";
 import {
   zcodeProviderRuntimeHeadersErrorCode,
-  type XCodeApiRetryStatus,
-  type XCodeConfigOption,
-  type XCodeConfigSelectValue,
-  type XCodeProvider,
+  type ZCodeApiRetryStatus,
+  type ZCodeConfigOption,
+  type ZCodeConfigSelectValue,
+  type ZCodeProvider,
 } from "@zcode/shared";
 import {
   TID_CHAT_MODE_SELECT_ITEM,
@@ -33,7 +33,7 @@ import {
   shouldRestoreChatInputFocusAfterPickerClose,
 } from "@/lib/pickerFocus.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import {
   ChevronDownIcon,
@@ -64,7 +64,7 @@ type ConfigSelectTriggerVariant = ComponentProps<
  * 系统事件误当成用户选择（如 Automations 编辑页仅打开详情就被标记未保存修改）。
  * 用户只能点到已渲染的 option，值域外的选择回调一律丢弃。 */
 export function isConfigSelectValueInOptions(
-  option: XCodeConfigOption,
+  option: ZCodeConfigOption,
   value: string,
 ): boolean {
   return option.options?.some((entry) => String(entry.value) === value) ?? false;
@@ -80,7 +80,7 @@ const HIGH_PERMISSION_MODE_VALUES = new Set([
 ]);
 
 function getConfigSelectTriggerTestId(
-  option: XCodeConfigOption,
+  option: ZCodeConfigOption,
 ): string | undefined {
   if (option.category === "thought_level") {
     return TID_CHAT_THOUGHT_LEVEL_SELECT_TRIGGER;
@@ -94,8 +94,8 @@ function getConfigSelectTriggerTestId(
 }
 
 function getConfigSelectItemTestId(
-  option: XCodeConfigOption,
-  entry: XCodeConfigSelectValue,
+  option: ZCodeConfigOption,
+  entry: ZCodeConfigSelectValue,
 ): string | undefined {
   if (option.category === "thought_level") {
     return testId(TID_CHAT_THOUGHT_LEVEL_SELECT_ITEM, entry.value);
@@ -138,8 +138,8 @@ export function ChatApiRetryStatus({
   intl,
   locale,
 }: {
-  apiRetry: XCodeApiRetryStatus | null;
-  intl: ReturnType<typeof useXCodeIntl>["intl"];
+  apiRetry: ZCodeApiRetryStatus | null;
+  intl: ReturnType<typeof useZCodeIntl>["intl"];
   locale: string;
 }) {
   const retryLabel = useMemo(() => {
@@ -189,9 +189,9 @@ export function ChatApiRetryStatus({
 }
 
 export function getModeOptionDisplayLabel(
-  intl: ReturnType<typeof useXCodeIntl>["intl"],
-  provider: XCodeProvider | undefined,
-  entry: Pick<XCodeConfigSelectValue, "name" | "value">,
+  intl: ReturnType<typeof useZCodeIntl>["intl"],
+  provider: ZCodeProvider | undefined,
+  entry: Pick<ZCodeConfigSelectValue, "name" | "value">,
 ): string {
   const labelMessageId = getModeOptionLabelMessageId(provider, entry);
   if (!labelMessageId) {
@@ -202,8 +202,8 @@ export function getModeOptionDisplayLabel(
 }
 
 export function getModeOptionLabelMessageId(
-  provider: XCodeProvider | undefined,
-  entry: Pick<XCodeConfigSelectValue, "value">,
+  provider: ZCodeProvider | undefined,
+  entry: Pick<ZCodeConfigSelectValue, "value">,
 ): string | null {
   if (!provider) {
     return null;
@@ -213,8 +213,8 @@ export function getModeOptionLabelMessageId(
 }
 
 export function getModeOptionDescriptionMessageId(
-  provider: XCodeProvider | undefined,
-  entry: Pick<XCodeConfigSelectValue, "value">,
+  provider: ZCodeProvider | undefined,
+  entry: Pick<ZCodeConfigSelectValue, "value">,
 ): string | null {
   if (!provider) {
     return null;
@@ -224,10 +224,10 @@ export function getModeOptionDescriptionMessageId(
 }
 
 export function getConfigOptionEntryLabel(
-  intl: ReturnType<typeof useXCodeIntl>["intl"],
-  provider: XCodeProvider | undefined,
-  option: XCodeConfigOption,
-  entry: XCodeConfigSelectValue,
+  intl: ReturnType<typeof useZCodeIntl>["intl"],
+  provider: ZCodeProvider | undefined,
+  option: ZCodeConfigOption,
+  entry: ZCodeConfigSelectValue,
 ): string {
   if (option.category === "mode") {
     return getModeOptionDisplayLabel(intl, provider, entry);
@@ -237,10 +237,10 @@ export function getConfigOptionEntryLabel(
 }
 
 export function getConfigOptionEntryDescription(
-  intl: ReturnType<typeof useXCodeIntl>["intl"],
-  provider: XCodeProvider | undefined,
-  option: XCodeConfigOption,
-  entry: XCodeConfigSelectValue,
+  intl: ReturnType<typeof useZCodeIntl>["intl"],
+  provider: ZCodeProvider | undefined,
+  option: ZCodeConfigOption,
+  entry: ZCodeConfigSelectValue,
 ): string | undefined {
   if (option.category !== "mode") {
     return entry.description;
@@ -300,7 +300,7 @@ export function ConfigSelect({
   provider,
   restoreFocusSelector = '[data-testid="chat-input"]',
 }: {
-  option: XCodeConfigOption;
+  option: ZCodeConfigOption;
   onValueChange: (value: string) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -314,10 +314,10 @@ export function ConfigSelect({
   triggerSize?: ConfigSelectTriggerSize;
   leadingIcon?: LucideIcon;
   labelVisibilityClassName?: string;
-  provider?: XCodeProvider;
+  provider?: ZCodeProvider;
   restoreFocusSelector?: string | null;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   // 注意：handleContentKeyDown 必须在 early return 之前调用。
   // 之前 `if (option.type !== "select" ...) return null` 写在 useCallback 之前，

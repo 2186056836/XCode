@@ -1,15 +1,15 @@
 import { useMemo } from "react";
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 import type { WorkspaceTabState } from "@/store/tabStore.js";
 import { buildTaskEntityKey, buildTaskWorkspaceKey } from "@/lib/taskQueryCache.js";
-import { compareXCodeTaskListItems } from "@/lib/taskListOrdering.js";
+import { compareZCodeTaskListItems } from "@/lib/taskListOrdering.js";
 import { mergeTaskWithOptimisticMeta } from "@/lib/zcodeTaskMetaMerge.js";
-import { selectWorkspaceXCodeState, useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { selectWorkspaceZCodeState, useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import { mergeTaskListMembershipFields } from "@/v4/taskListRowActivity.js";
 
 export interface WorkspaceOptimisticTaskOverlay {
   activeTaskId: string | null;
-  tasks: XCodeTaskMeta[];
+  tasks: ZCodeTaskMeta[];
 }
 
 type WorkspaceTaskListSortBy = "created" | "updated";
@@ -21,12 +21,12 @@ interface WorkspaceOptimisticScope {
 }
 
 export function mergeWorkspaceTaskListItemsWithOptimistic(params: {
-  items: readonly XCodeTaskMeta[];
-  optimisticTasks: readonly XCodeTaskMeta[];
+  items: readonly ZCodeTaskMeta[];
+  optimisticTasks: readonly ZCodeTaskMeta[];
   activeTaskId: string | null;
   sortBy: WorkspaceTaskListSortBy;
   visibleLimit: number | null;
-}): XCodeTaskMeta[] {
+}): ZCodeTaskMeta[] {
   const taskByKey = new Map(params.items.map((task) => [buildTaskEntityKey(task), task] as const));
 
   for (const optimisticTask of params.optimisticTasks) {
@@ -54,7 +54,7 @@ export function mergeWorkspaceTaskListItemsWithOptimistic(params: {
   }
 
   const sortedItems = [...taskByKey.values()].sort((left, right) =>
-    compareXCodeTaskListItems(left, right, params.sortBy),
+    compareZCodeTaskListItems(left, right, params.sortBy),
   );
   return params.visibleLimit === null ? sortedItems : sortedItems.slice(0, params.visibleLimit);
 }
@@ -75,10 +75,10 @@ export function useWorkspaceTaskOptimisticOverlayByWorkspaceKey(
     () => JSON.parse(workspaceScopeSignature) as WorkspaceOptimisticScope[],
     [workspaceScopeSignature],
   );
-  const optimisticTaskListSignature = useXCodeSessionStore((state) =>
+  const optimisticTaskListSignature = useZCodeSessionStore((state) =>
     JSON.stringify(
       workspaceScopes.map((scope) => {
-        const workspaceState = selectWorkspaceXCodeState(
+        const workspaceState = selectWorkspaceZCodeState(
           state,
           scope.workspacePath,
           scope.workspaceIdentity,
@@ -106,10 +106,10 @@ export function useWorkspaceTaskOptimisticOverlayByWorkspaceKey(
   );
 
   return useMemo(() => {
-    const state = useXCodeSessionStore.getState();
+    const state = useZCodeSessionStore.getState();
     return new Map<string, WorkspaceOptimisticTaskOverlay>(
       workspaceScopes.map((scope) => {
-        const workspaceState = selectWorkspaceXCodeState(
+        const workspaceState = selectWorkspaceZCodeState(
           state,
           scope.workspacePath,
           scope.workspaceIdentity,

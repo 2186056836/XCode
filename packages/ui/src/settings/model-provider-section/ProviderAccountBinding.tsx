@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu.js";
 import { Button } from "@/components/ui/button.js";
 import { useServices } from "@/hooks/useServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { IProxyPoolService, ProxyProviderBindingView } from "@zcode/services";
 import type { AccountRotationSettings, AccountRotationStrategy } from "@zcode/services";
 import {
@@ -115,7 +115,7 @@ export function ProviderAccountBinding({
   providerId: string;
   accountId: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { loaded, service, view, setView } = useProviderBindingView(providerId);
 
   const activePools = (view?.pools ?? []).filter((pool) => pool.isActive);
@@ -173,7 +173,7 @@ export function ProviderAccountBinding({
  * 没有启用中的池、或该供应商不支持 provider 级配置时不渲染。
  */
 export function ProviderProxyPoolControl({ providerId }: { providerId: string }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { loaded, service, view, setView } = useProviderBindingView(providerId);
 
   const activePools = (view?.pools ?? []).filter((pool) => pool.isActive);
@@ -315,7 +315,7 @@ export function ProviderProxyPoolControl({ providerId }: { providerId: string })
  *     其余错误（并发/鉴权/限流）应走重试而不是切号。
  */
 export function ProviderAccountRotationControl({ providerId }: { providerId: string }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { loaded, service, view, setView } = useProviderBindingView(providerId);
 
   const settings = view?.accountRotation;
@@ -459,7 +459,7 @@ export function ProviderAccountRotationControl({ providerId }: { providerId: str
  * 失败不再静默吞掉：写盘失败（例如 provider 已不存在）在这里给出错误行。
  */
 export function ProviderProxyBatchActions({ providerId }: { providerId: string }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { loaded, service, view, setView } = useProviderBindingView(providerId);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 

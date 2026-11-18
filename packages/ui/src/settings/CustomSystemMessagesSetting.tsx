@@ -10,7 +10,7 @@ import {
 import { Textarea } from "@/components/ui/textarea.js";
 import { toast } from "@/components/ui/toast.js";
 import { useSettings } from "@/hooks/useSettingService.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { SettingsGroupCard, SettingsRow } from "@/settings/SettingsPageParts.js";
 
@@ -32,7 +32,7 @@ const MAX_LENGTH = 65535;
 const DEFAULT_IDENTITY_PROMPT = "You are XCode, an interactive coding agent";
 
 export function CustomSystemMessagesSetting() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { settings, update } = useSettings();
   const savedValue = settings?.customSystemMessages?.cliPrefix ?? "";
   const [open, setOpen] = useState(false);

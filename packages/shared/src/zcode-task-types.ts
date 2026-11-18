@@ -1,9 +1,9 @@
 /* oxlint-disable eslint(max-lines) -- XCode task 投影类型当前集中在单文件维护，新增 workspace 事件先保持就近声明。 */
 // ── 旧协议兼容面（过渡期）──────────────────────────────
 // 剩余 29 个导出：workspace 预热/workspace 事件、turn steer 结果、session binding/import、
-// trace/input/query id 工厂函数、XCodeError、XCodeTaskCreateResult 等。
+// trace/input/query id 工厂函数、ZCodeError、ZCodeTaskCreateResult 等。
 // 消费者：services 旧栈（zcodeAgentService/zcodeTaskServiceAdapter/zcodeTaskService）、
-// UI 旧 store/投影。明星承重类型（XCodeTaskMeta/XCodeStreamEvent/XCodeTaskSnapshot 等）
+// UI 旧 store/投影。明星承重类型（ZCodeTaskMeta/ZCodeStreamEvent/ZCodeTaskSnapshot 等）
 // 已迁 zcode-task-types-core.ts（幸存面）。本文件与旧 task service 组同生命周期。
 import { createUuid } from "./uuid.js";
 import type {
@@ -11,17 +11,17 @@ import type {
   TraceId,
   InputId,
   QueryId,
-  XCodeTaskGoal,
-  XCodeProvider,
-  XCodeConfigOption,
-  XCodeSlashCommand,
-  XCodeTaskMeta,
-  XCodeTaskRuntimeCommand,
-  XCodeTaskRuntimeCommandStatus,
-  XCodeTaskSnapshotBodyField,
-  XCodeTaskSnapshotToolField,
-  XCodeTaskSnapshotFileContentField,
-  XCodePersistedToolCall,
+  ZCodeTaskGoal,
+  ZCodeProvider,
+  ZCodeConfigOption,
+  ZCodeSlashCommand,
+  ZCodeTaskMeta,
+  ZCodeTaskRuntimeCommand,
+  ZCodeTaskRuntimeCommandStatus,
+  ZCodeTaskSnapshotBodyField,
+  ZCodeTaskSnapshotToolField,
+  ZCodeTaskSnapshotFileContentField,
+  ZCodePersistedToolCall,
 } from "./zcode-task-types-core.js";
 
 /** 生成 traceId；保留旧函数名兼容已有调用，格式对齐 agent 的 UUID trace。 */
@@ -48,7 +48,7 @@ export const CRON_DEFAULT_GROUP_ID = "zcode-default-group-cron";
 /** 闲时任务已派发会话默认归入的系统分组固定 id（与 cron 分组同构）。 */
 export const OFF_PEAK_DEFAULT_GROUP_ID = "zcode-default-group-off-peak";
 
-type CronTaskIdentity = Pick<XCodeTaskMeta, "cronAutomationId"> & {
+type CronTaskIdentity = Pick<ZCodeTaskMeta, "cronAutomationId"> & {
   automationId?: string;
 };
 
@@ -60,32 +60,32 @@ export function isCronTask(task: CronTaskIdentity): boolean {
 }
 
 /** 判断一个 task/幻影行是否属于闲时任务（只看持久 meta 标记，UI 不反查 off-peak store）。 */
-export function isOffPeakTask(task: Pick<XCodeTaskMeta, "offPeakTaskId">): boolean {
+export function isOffPeakTask(task: Pick<ZCodeTaskMeta, "offPeakTaskId">): boolean {
   return Boolean(task.offPeakTaskId);
 }
 
 // ---- XCode Provider ----
-export type XCodeTaskTarget = XCodeTaskGoal;
+export type ZCodeTaskTarget = ZCodeTaskGoal;
 // ---- XCode task 模式 ----
 // ---- XCode 运行时状态 ----
 
 /** workspace 级 XCode 初始化状态 */
-export type XCodeWorkspaceInitStatus = "idle" | "initializing" | "ready" | "failed";
+export type ZCodeWorkspaceInitStatus = "idle" | "initializing" | "ready" | "failed";
 
 /** 预热 workspace 时返回的结果 */
-export interface XCodeWorkspacePrepareResult {
+export interface ZCodeWorkspacePrepareResult {
   workspacePath: string;
   preparedSessionId: string;
   version?: string;
-  provider: XCodeProvider;
+  provider: ZCodeProvider;
   /** session/new 返回的初始 configOptions，预热阶段就推到 UI 让用户提前选择模型 */
-  configOptions?: XCodeConfigOption[];
+  configOptions?: ZCodeConfigOption[];
   /** 预热 session 已经广播出来的 slash commands，草稿态也可以直接拿来展示 */
-  slashCommands?: XCodeSlashCommand[];
+  slashCommands?: ZCodeSlashCommand[];
 }
 
 /** Codex 预热前的网络连通性检查结果 */
-export interface XCodeCodexConnectivityCheckResult {
+export interface ZCodeCodexConnectivityCheckResult {
   /** 当前检查的目标域名 */
   target: string;
   /** host 侧是否成功连通目标站点 */
@@ -97,33 +97,33 @@ export interface XCodeCodexConnectivityCheckResult {
 // ---- Task 元数据 ----
 
 /** createTask 的返回结果；在持久化元信息之外，补充首屏渲染需要的临时初始化数据。 */
-export interface XCodeTaskCreateResult extends XCodeTaskMeta {
+export interface ZCodeTaskCreateResult extends ZCodeTaskMeta {
   /** createTask 时就能拿到的首批 slash commands，避免 UI 订阅建立前丢掉初始化命令。 */
-  initialSlashCommands?: XCodeSlashCommand[];
+  initialSlashCommands?: ZCodeSlashCommand[];
 }
 
 /** “补齐已有 session”能力的结果，不负责切换当前 active provider。 */
-export interface XCodeSyncTaskSessionBindingResult {
-  provider: XCodeProvider;
+export interface ZCodeSyncTaskSessionBindingResult {
+  provider: ZCodeProvider;
   sessionId: string;
   lastSyncedTurnIndex: number;
   updated: boolean;
 }
 
 /** `switchAgent` 切换成功后的统一结果。 */
-export interface XCodeSwitchAgentResult {
-  meta: XCodeTaskMeta;
-  provider: XCodeProvider;
+export interface ZCodeSwitchAgentResult {
+  meta: ZCodeTaskMeta;
+  provider: ZCodeProvider;
   sessionId: string;
   reusedBinding: boolean;
 }
 
-/** 外部原生 session 导入的来源 provider；与 agent runtime 的 XCodeProvider 解耦，当前仅 Claude Code。 */
-export type XCodeImportSessionSourceProvider = "claude" | "zcode";
+/** 外部原生 session 导入的来源 provider；与 agent runtime 的 ZCodeProvider 解耦，当前仅 Claude Code。 */
+export type ZCodeImportSessionSourceProvider = "claude" | "zcode";
 
 /** 外部原生 session 的导入候选。 */
-export interface XCodeImportableSessionCandidate {
-  provider: XCodeImportSessionSourceProvider;
+export interface ZCodeImportableSessionCandidate {
+  provider: ZCodeImportSessionSourceProvider;
   sessionId: string;
   workspacePath: string;
   sourcePath: string;
@@ -132,39 +132,39 @@ export interface XCodeImportableSessionCandidate {
   previewTitle?: string;
 }
 
-export interface XCodeImportedSessionResultItem {
-  provider: XCodeImportSessionSourceProvider;
+export interface ZCodeImportedSessionResultItem {
+  provider: ZCodeImportSessionSourceProvider;
   sessionId: string;
   taskId: string;
   workspacePath: string;
 }
 
-export interface XCodeImportedSessionSkippedItem {
-  provider: XCodeImportSessionSourceProvider;
+export interface ZCodeImportedSessionSkippedItem {
+  provider: ZCodeImportSessionSourceProvider;
   sessionId: string;
   reason: string;
   workspacePath?: string;
 }
 
-export interface XCodeImportSessionsResult {
-  imported: XCodeImportedSessionResultItem[];
-  skipped: XCodeImportedSessionSkippedItem[];
-  failed: XCodeImportedSessionSkippedItem[];
+export interface ZCodeImportSessionsResult {
+  imported: ZCodeImportedSessionResultItem[];
+  skipped: ZCodeImportedSessionSkippedItem[];
+  failed: ZCodeImportedSessionSkippedItem[];
 }
 
 // ---- XCode 配置与命令类型 ----
 // ---- XCode 流式事件（Host → Renderer） ----
 // ---- 新增流式事件类型 ----
 
-export interface XCodeEnqueueTaskCommandResult {
+export interface ZCodeEnqueueTaskCommandResult {
   accepted: true;
-  command: XCodeTaskRuntimeCommand;
+  command: ZCodeTaskRuntimeCommand;
 }
 
-export interface XCodeCancelTaskCommandResult {
+export interface ZCodeCancelTaskCommandResult {
   canceled: boolean;
   commandId: string;
-  status?: XCodeTaskRuntimeCommandStatus;
+  status?: ZCodeTaskRuntimeCommandStatus;
   reason?: "not_found" | "already_running";
 }
 
@@ -174,16 +174,16 @@ export interface XCodeCancelTaskCommandResult {
  * Workspace 级别事件，用于在 task 创建前把 XCode Agent 异步推送的
  * 通知（如 slash commands、configOptions）实时传递到 UI。
  *
- * 与 XCodeStreamEvent 的区别：XCodeStreamEvent 绑定到具体 taskId，
- * XCodeWorkspaceEvent 绑定到 workspacePath，覆盖 task 创建前的空档期。
+ * 与 ZCodeStreamEvent 的区别：ZCodeStreamEvent 绑定到具体 taskId，
+ * ZCodeWorkspaceEvent 绑定到 workspacePath，覆盖 task 创建前的空档期。
  */
-export type XCodeWorkspaceEvent =
-  | XCodeWorkspaceSlashCommandsUpdate
-  | XCodeWorkspaceConfigOptionsUpdate
-  | XCodeWorkspaceTaskListChanged
-  | XCodeWorkspaceSessionMessageSendRequested;
+export type ZCodeWorkspaceEvent =
+  | ZCodeWorkspaceSlashCommandsUpdate
+  | ZCodeWorkspaceConfigOptionsUpdate
+  | ZCodeWorkspaceTaskListChanged
+  | ZCodeWorkspaceSessionMessageSendRequested;
 
-export interface XCodeWorkspaceSlashCommandsUpdate {
+export interface ZCodeWorkspaceSlashCommandsUpdate {
   type: "workspace_slash_commands_update";
   workspacePath: string;
   /**
@@ -191,31 +191,31 @@ export interface XCodeWorkspaceSlashCommandsUpdate {
    * 同一路径可能来自不同 SSH/WSL/Docker session，带上 workspaceIdentity 后 service/UI 才能按 workspaceKey 收敛。
    */
   workspaceIdentity?: string;
-  commands: XCodeSlashCommand[];
+  commands: ZCodeSlashCommand[];
 }
 
-export interface XCodeWorkspaceConfigOptionsUpdate {
+export interface ZCodeWorkspaceConfigOptionsUpdate {
   type: "workspace_config_options_update";
   workspacePath: string;
   /**
    * 预热配置同样是 workspace 级身份状态，远程场景必须随事件传递 workspaceIdentity。
    */
   workspaceIdentity?: string;
-  configOptions: XCodeConfigOption[];
+  configOptions: ZCodeConfigOption[];
 }
 
-export interface XCodeWorkspaceTaskListChanged {
+export interface ZCodeWorkspaceTaskListChanged {
   type: "workspace_task_list_changed";
   workspacePath: string;
   workspaceIdentity?: string;
   taskId?: string;
   reason: TaskRealtimeReason;
-  taskMeta?: XCodeTaskMeta;
+  taskMeta?: ZCodeTaskMeta;
   /** Host 已确认该终态应制造后台未读；普通 status/resume/snapshot 收敛不得携带。 */
   unreadSignal?: "background_terminal";
 }
 
-export interface XCodeWorkspaceSessionMessageSendRequested {
+export interface ZCodeWorkspaceSessionMessageSendRequested {
   type: "workspace_session_message_send_requested";
   workspacePath: string;
   workspaceIdentity?: string;
@@ -231,7 +231,7 @@ export interface XCodeWorkspaceSessionMessageSendRequested {
 
 // ---- 错误 ----
 
-export interface XCodeError {
+export interface ZCodeError {
   code: string;
   message: string;
   traceId?: TraceId;
@@ -240,30 +240,30 @@ export interface XCodeError {
 
 // ---- 持久化格式 ----
 
-export interface XCodeTaskSnapshotBody {
+export interface ZCodeTaskSnapshotBody {
   refId: string;
-  field: XCodeTaskSnapshotBodyField;
+  field: ZCodeTaskSnapshotBodyField;
   content: string;
   hash: string;
   fullBytes: number;
 }
 
-export type XCodeTaskSnapshotRefKind = "tool_field" | "file_change_field";
+export type ZCodeTaskSnapshotRefKind = "tool_field" | "file_change_field";
 
-export interface XCodeTaskSnapshotRefContent {
-  kind: XCodeTaskSnapshotRefKind;
+export interface ZCodeTaskSnapshotRefContent {
+  kind: ZCodeTaskSnapshotRefKind;
   refId: string;
-  field: XCodeTaskSnapshotToolField | XCodeTaskSnapshotFileContentField;
+  field: ZCodeTaskSnapshotToolField | ZCodeTaskSnapshotFileContentField;
   content: unknown;
   hash: string;
   fullBytes: number;
 }
 
-export interface XCodeTaskSnapshotToolCallsSlice {
+export interface ZCodeTaskSnapshotToolCallsSlice {
   taskId: string;
   messageIndex: number;
   totalTools: number;
   startToolIndex: number;
   endToolIndexExclusive: number;
-  tools: XCodePersistedToolCall[];
+  tools: ZCodePersistedToolCall[];
 }

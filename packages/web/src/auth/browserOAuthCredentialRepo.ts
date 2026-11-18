@@ -323,7 +323,7 @@ export class BrowserOAuthCredentialRepo {
     return { status: "signed-out" };
   }
 
-  loadXCodeJwtToken(): string | null {
+  loadZCodeJwtToken(): string | null {
     // loadCachedSessionState 只读，可选配置读取不会顺带清理过期或残缺的登录态。
     const session = this.loadCachedSessionState();
     if (session.status !== "authenticated") return null;

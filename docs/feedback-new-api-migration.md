@@ -55,7 +55,7 @@ UI 和 RPC 服务接口暂不扩展，`IFeedbackService` 继续向 UI 暴露现�
 
 请求头规则：
 
-- 反馈请求通过统一 `ApiClient` 发送，自动携带 XCode Server 通参，例如 `User-Agent`、`HTTP-Referer`、`X-XCode-App-Version`、`X-Platform`、`X-Release-Channel`、`X-Client-Language`、`X-Client-Timezone`、`X-Os-Category`、`X-Os-Version`、`X-Device-Mid` 和 `x-request-id`。服务端按通参里的 `X-Device-Mid` 记录工单设备，用于设备维度统计。
+- 反馈请求通过统一 `ApiClient` 发送，自动携带 XCode Server 通参，例如 `User-Agent`、`HTTP-Referer`、`X-ZCode-App-Version`、`X-Platform`、`X-Release-Channel`、`X-Client-Language`、`X-Client-Timezone`、`X-Os-Category`、`X-Os-Version`、`X-Device-Mid` 和 `x-request-id`。服务端按通参里的 `X-Device-Mid` 记录工单设备，用于设备维度统计。
 - 已登录（本地凭据存在 `zcodejwttoken`）时只发送 `Authorization: Bearer <token>`。
 - 未登录时只发送 `X-Feedback-AccessToken: <access token>`。
 - 未登录且本地没有 access token 时：列表直接返回空，不请求服务端；详情、追加消息和上传附件直接报错。不能发送不带凭证的请求，否则服务端会按通参里的 `X-Device-Mid` 走旧版鉴权。

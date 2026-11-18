@@ -1,8 +1,8 @@
-import type { XCodeStreamEvent, XCodeTaskRuntimeStatus } from "@zcode/shared";
+import type { ZCodeStreamEvent, ZCodeTaskRuntimeStatus } from "@zcode/shared";
 import type { TaskChatMessage } from "@/lib/taskChatMessageTypes.js";
-import { hasRunningXCodeTimeline } from "@/lib/zcodeTimelineRuntime.js";
+import { hasRunningZCodeTimeline } from "@/lib/zcodeTimelineRuntime.js";
 
-type TaskStreamMirrorBatchEvent = Extract<XCodeStreamEvent, { type: "task_stream_mirror_batch" }>;
+type TaskStreamMirrorBatchEvent = Extract<ZCodeStreamEvent, { type: "task_stream_mirror_batch" }>;
 type TaskStreamMirrorOp = TaskStreamMirrorBatchEvent["ops"][number];
 
 export function shouldMarkMainActiveFromStreamMirrorOps(
@@ -19,7 +19,7 @@ export function shouldMarkMainActiveFromStreamMirrorOps(
   });
 }
 
-export function shouldMarkMainActiveFromStreamEvent(event: XCodeStreamEvent): boolean {
+export function shouldMarkMainActiveFromStreamEvent(event: ZCodeStreamEvent): boolean {
   switch (event.type) {
     case "task_run_started":
     case "goal_iteration_started":
@@ -55,19 +55,19 @@ function isTaskChatTimelineMessage(message: TaskChatMessage): boolean {
   );
 }
 
-function isTaskRuntimeBusy(taskStatus: XCodeTaskRuntimeStatus): boolean {
+function isTaskRuntimeBusy(taskStatus: ZCodeTaskRuntimeStatus): boolean {
   return taskStatus === "creating" || taskStatus === "restoring" || taskStatus === "streaming";
 }
 
 export function hasForegroundActivityFromMessages(messages: readonly TaskChatMessage[]): boolean {
-  return hasForegroundStreamingAssistantMessage(messages) || hasRunningXCodeTimeline(messages);
+  return hasForegroundStreamingAssistantMessage(messages) || hasRunningZCodeTimeline(messages);
 }
 
 export function isMainActivityRuntimeBusy(params: {
   currentStatus?: "idle" | "submitting" | "streaming" | "error";
   runtimeState?: {
     activeInputId?: unknown;
-    status: XCodeTaskRuntimeStatus;
+    status: ZCodeTaskRuntimeStatus;
   } | null;
   isMainActive: boolean;
   hasForegroundActivity?: boolean;
@@ -92,7 +92,7 @@ export function isMainActivityRuntimeBusy(params: {
 
 function isMainAgentStreamEvent(
   event: Extract<
-    XCodeStreamEvent,
+    ZCodeStreamEvent,
     { type: "agent_message_chunk" | "agent_thought_chunk" | "tool_call" | "tool_call_update" }
   >,
 ): boolean {

@@ -12,7 +12,7 @@ import {
 import { toast } from "@/components/ui/toast.js";
 import { GitGraphPane } from "@/git-graph/GitGraphPane.js";
 import { useServices } from "@/hooks/useServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { getErrorMessage } from "@/lib/errorMessage.js";
 import { logger } from "@/logger.js";
 import { AlertCircleIcon, LoaderCircle, XIcon } from "lucide-react";
@@ -27,7 +27,7 @@ const GIT_GRAPH_PAGE_SIZE = 50;
 
 export function GitGraphDialog({ open, workspacePath, onOpenChange }: GitGraphDialogProps) {
   const { gitService } = useServices();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);

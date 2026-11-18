@@ -10,7 +10,7 @@ import {
 } from "@zcode/shared/test-ids";
 import { Button } from "@/components/ui/button.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type {
   ComposerEditInvalidReason,
   ComposerEditTarget,
@@ -34,7 +34,7 @@ export function ComposerEditBar({
   onRewindWorkspace,
   onCancel,
 }: ComposerEditBarProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const targetId = target.kind === "userQuery" ? String(target.rowId) : target.queueItemId;
   const label = invalidReason
     ? intl.formatMessage({ id: `chat.composerEdit.invalid.${invalidReason}` })

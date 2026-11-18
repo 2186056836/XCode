@@ -15,7 +15,7 @@ const artifacts = join(root, "packages/desktop/.e2e-artifacts/workspace-hook-pen
 const fixture = `
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { WorkspaceHookPendingIndicator, WorkspaceMcpPendingIndicator } from "@/v4/WorkspaceHookPendingBanner.js";
 import "@/styles.css";
 const query = new URLSearchParams(location.search);
@@ -26,7 +26,7 @@ function Fixture() {
   const [bundle, setBundle] = useState(1);
   const [session, setSession] = useState("a");
   const [pending, setPending] = useState(true);
-  return <XCodeIntlProvider initialLocale={query.get("locale")}>
+  return <ZCodeIntlProvider initialLocale={query.get("locale")}>
     <main className="h-screen bg-background text-foreground p-3">
       <button data-testid="outside">Outside</button>
       <button data-testid="bundle" onClick={() => setBundle(value => value + 1)}>Bundle</button>
@@ -43,7 +43,7 @@ function Fixture() {
           workspacePath="/workspace/example" admission={{pendingCount: pending ? 2 : 0, bundleDigest: String(bundle)}} />
       </aside> : null}
     </main>
-  </XCodeIntlProvider>;
+  </ZCodeIntlProvider>;
 }
 createRoot(document.getElementById("root")).render(<Fixture />);
 `;

@@ -1,7 +1,7 @@
 /* 闲时任务 History tab（spec §5 / Figma 4866-2819 · 4866-3106 空态）：
    一行汇总一次完整执行（3h 续跑分段对用户透明，D30-6）：Instructions / Triggered /
    Status / Duration + 行菜单 Go to session / Delete；无执行记录 → 「No history yet.」 */
-import { isOffPeakTerminalStatus, type XCodeOffPeakTask } from "@zcode/shared";
+import { isOffPeakTerminalStatus, type ZCodeOffPeakTask } from "@zcode/shared";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { formatDateTime } from "@/settings/automationFormat.js";
 import {
   AutomationExternalLinkIcon,
@@ -28,7 +28,7 @@ const STATUS_INDICATOR_CLASS = {
 } as const satisfies Record<string, { dot: string; text: string }>;
 
 export function resolveOffPeakHistoryStatus(
-  task: Pick<XCodeOffPeakTask, "status">,
+  task: Pick<ZCodeOffPeakTask, "status">,
 ): keyof typeof STATUS_INDICATOR_CLASS {
   if (task.status === "completed") return "succeeded";
   if (task.status === "failed") return "failed";
@@ -41,11 +41,11 @@ export function OffPeakHistoryTab({
   onOpenSession,
   onDelete,
 }: {
-  task: XCodeOffPeakTask | null;
-  onOpenSession?: (task: XCodeOffPeakTask) => void;
-  onDelete?: (task: XCodeOffPeakTask) => void;
+  task: ZCodeOffPeakTask | null;
+  onOpenSession?: (task: ZCodeOffPeakTask) => void;
+  onDelete?: (task: ZCodeOffPeakTask) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   // 执行记录 = 首段派发起跑过（startedAt 存在）；纯排队/暂停中的任务无历史。
   if (!task?.startedAt || task.historyDeletedAt !== undefined) {
     return (

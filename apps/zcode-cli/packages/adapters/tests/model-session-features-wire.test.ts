@@ -69,7 +69,7 @@ function createCapture(providerKind: (typeof providerKinds)[number], retry = fal
   vi.stubGlobal("fetch", transport);
   const registry = new TestProviderConfigFixture({
     env: {},
-    defaultHeaders: { "X-XCode-Session-Features": "stale_default" },
+    defaultHeaders: { "X-ZCode-Session-Features": "stale_default" },
     providers: {
       fixture: {
         kind: providerKind,

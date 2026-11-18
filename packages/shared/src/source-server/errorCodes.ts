@@ -85,12 +85,12 @@ export const PUBLIC_XCODE_ERROR_CODES = [
   SOURCE_SERVER_CONTROL_UNRESPONSIVE_ERROR_CODE,
 ] as const;
 
-export type PublicXCodeErrorCode = (typeof PUBLIC_XCODE_ERROR_CODES)[number];
+export type PublicZCodeErrorCode = (typeof PUBLIC_XCODE_ERROR_CODES)[number];
 
 export const publicZCodeErrorCodeSchema = z.enum(PUBLIC_XCODE_ERROR_CODES);
 
 const publicZCodeErrorCodeSet = new Set<string>(PUBLIC_XCODE_ERROR_CODES);
 
-export function isPublicXCodeErrorCode(value: unknown): value is PublicXCodeErrorCode {
+export function isPublicZCodeErrorCode(value: unknown): value is PublicZCodeErrorCode {
   return typeof value === "string" && publicZCodeErrorCodeSet.has(value);
 }

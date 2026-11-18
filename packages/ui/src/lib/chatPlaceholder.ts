@@ -1,4 +1,4 @@
-import type { XCodeTaskRuntimeStatus } from "@zcode/shared";
+import type { ZCodeTaskRuntimeStatus } from "@zcode/shared";
 
 type ChatPlaceholderMessageKey =
   | "chat.placeholder.newTask"
@@ -24,7 +24,7 @@ export function resolveChatPlaceholderKey(options: {
 
 export function shouldDeferChatPlaceholder(options: {
   hasBoundTask: boolean;
-  taskStatus: XCodeTaskRuntimeStatus;
+  taskStatus: ZCodeTaskRuntimeStatus;
 }): boolean {
   const { hasBoundTask, taskStatus } = options;
 

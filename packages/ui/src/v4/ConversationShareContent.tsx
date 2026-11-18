@@ -17,7 +17,7 @@ import {
 import { WorkflowArtifactStrip } from "@/components/workflow-timeline/WorkflowArtifactStrip.js";
 import { workflowCardDetail } from "@/components/workflow-timeline/timeline-summary.js";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 class ContentBoundary extends Component<
   { fallback: ReactNode; children: ReactNode },
   { failed: boolean }
@@ -40,7 +40,7 @@ function SharedArtifact({
   url?: string;
   onOpenResource?: (id: string) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const previewText = "preview_text" in artifact ? artifact.preview_text : undefined;
   const [text, setText] = useState<string | undefined>(previewText);
   const [failed, setFailed] = useState(false);
@@ -109,7 +109,7 @@ function SharedArtifact({
         text === undefined ? (
           <p>{intl.formatMessage({ id: "conversationShare.artifact.loading" })}</p>
         ) : (
-          <MessageResponse renderXCodeFileCitations={false}>{text}</MessageResponse>
+          <MessageResponse renderZCodeFileCitations={false}>{text}</MessageResponse>
         )
       ) : contentType?.startsWith("image/") && url ? (
         <img src={url} alt={artifact.title} className="max-w-full" />
@@ -140,7 +140,7 @@ function WorkflowContent({
     () => (payload.graph && run ? buildWorkflowTimeline(payload.graph, run) : undefined),
     [payload.graph, run],
   );
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const format = intl.formatMessage.bind(intl);
   const detail = workflowCardDetail(format, model, payload.graph, run);
   const selectedArtifact = payload.artifacts.find((artifact) => artifact.id === selected);

@@ -4,7 +4,7 @@ import {
   type ProjectAccessTokenMaterial,
   resolveBigModelApiOrigin,
   resolveZaiBusinessBaseUrl,
-  type XCodeAccountAccess,
+  type ZCodeAccountAccess,
   type ProviderFamilyDomain,
 } from "@zcode/shared";
 import {
@@ -25,7 +25,7 @@ interface TeamPlanRequestKeyDependencies {
   readonly loadOAuthAccountMaterial: (
     family: ProviderFamilyDomain,
   ) => Promise<OAuthAccountMaterial | null>;
-  readonly access: Extract<XCodeAccountAccess, { planKind: "team-coding-plan" }>;
+  readonly access: Extract<ZCodeAccountAccess, { planKind: "team-coding-plan" }>;
 }
 
 export async function resolveAccountTeamPlanRuntimeApiKey(

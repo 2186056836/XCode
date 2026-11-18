@@ -6,8 +6,8 @@ import {
   zcodeWorkspaceHookTrustGrantParamsSchema,
   zcodeWorkspaceHookTrustGrantReasonCodeSchema,
   zcodeWorkspaceHookTrustGrantResultSchema,
-  type XCodeWorkspaceHookTrustGrantReasonCode,
-  type XCodeWorkspaceHookTrustGrantResult,
+  type ZCodeWorkspaceHookTrustGrantReasonCode,
+  type ZCodeWorkspaceHookTrustGrantResult,
 } from "@zcode/shared";
 import {
   grantWorkspaceHookTrust,
@@ -29,7 +29,7 @@ export async function grantWorkspaceHookTrustForProtocol(
     grant?: GrantWorkspaceHookTrust;
     policyProvider: WorkspaceHookPolicyProvider;
   },
-): Promise<XCodeWorkspaceHookTrustGrantResult> {
+): Promise<ZCodeWorkspaceHookTrustGrantResult> {
   const params = zcodeWorkspaceHookTrustGrantParamsSchema.parse(rawParams);
   const grant = dependencies.grant ?? grantWorkspaceHookTrust;
   // 企业 policy 按 Trust identity 评估（D23）：受管 worktree 与源仓库共用同一 policy 判定，
@@ -76,7 +76,7 @@ export async function grantWorkspaceHookTrustForProtocol(
 function getPolicyRejectionReason(
   policyProvider: WorkspaceHookPolicyProvider,
   workspaceIdentity: string,
-): XCodeWorkspaceHookTrustGrantReasonCode | undefined {
+): ZCodeWorkspaceHookTrustGrantReasonCode | undefined {
   try {
     const policy = workspaceHookPolicySchema.parse(
       policyProvider.getPolicy(workspaceIdentity),
@@ -92,7 +92,7 @@ function getPolicyRejectionReason(
   }
 }
 
-function toPublicReasonCode(error: unknown): XCodeWorkspaceHookTrustGrantReasonCode {
+function toPublicReasonCode(error: unknown): ZCodeWorkspaceHookTrustGrantReasonCode {
   const candidate = error instanceof Error ? error.message : error;
   const parsed = zcodeWorkspaceHookTrustGrantReasonCodeSchema.safeParse(candidate);
   if (parsed.success) return parsed.data;

@@ -1,4 +1,4 @@
-import type { XCodeProvider } from "@zcode/shared";
+import type { ZCodeProvider } from "@zcode/shared";
 
 type DraftWorkspacePrepareReason = "mount" | "select-provider";
 type WorkspacePrepareReason =
@@ -7,9 +7,9 @@ type WorkspacePrepareReason =
   | "first-send";
 
 interface ResolveDraftWorkspacePrepareReasonOptions {
-  previousDraftProvider: XCodeProvider | null;
-  previousTaskProvider: XCodeProvider | null;
-  selectedProvider: XCodeProvider;
+  previousDraftProvider: ZCodeProvider | null;
+  previousTaskProvider: ZCodeProvider | null;
+  selectedProvider: ZCodeProvider;
   returningFromTask: boolean;
 }
 

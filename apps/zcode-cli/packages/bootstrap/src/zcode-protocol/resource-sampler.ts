@@ -5,24 +5,24 @@ import {
   memoryUsageToSampleFields,
   zcodeProtocolNotifications,
   type MemorySample,
-  type XCodeProtocolNotification,
+  type ZCodeProtocolNotification,
 } from "@zcode/shared";
 import {
-  createXCodeProcessResourceSampler,
-  type XCodeProcessResourceSampler,
+  createZCodeProcessResourceSampler,
+  type ZCodeProcessResourceSampler,
 } from "../process-resource-sampler.js";
-import type { XCodeProtocolAgentServer } from "./server.js";
+import type { ZCodeProtocolAgentServer } from "./server.js";
 
 export function startProtocolResourceSampler(
-  server: XCodeProtocolAgentServer,
-  send: (message: XCodeProtocolNotification) => void,
+  server: ZCodeProtocolAgentServer,
+  send: (message: ZCodeProtocolNotification) => void,
   logger: Logger,
-): XCodeProcessResourceSampler | undefined {
+): ZCodeProcessResourceSampler | undefined {
   try {
     // 本地内存诊断日志：复用同一 60s 节拍，
     // 变化/心跳门控后才写一行，避免与消息流同频刷盘。
     const memoryDiagnosticsGate = createMemorySampleWriteGate();
-    const sampler = createXCodeProcessResourceSampler({
+    const sampler = createZCodeProcessResourceSampler({
       onSample: (sample, memoryUsage) => {
         send({
           method: zcodeProtocolNotifications.processResourceSample,

@@ -1,12 +1,12 @@
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import type {
-  XCodeModelTrajectory,
-  XCodeModelTrajectoryCallSource,
-  XCodeModelTrajectoryContentPart,
-  XCodeModelTrajectoryMessage,
-  XCodeModelTrajectoryRecord,
-  XCodeModelTrajectoryUsage,
+  ZCodeModelTrajectory,
+  ZCodeModelTrajectoryCallSource,
+  ZCodeModelTrajectoryContentPart,
+  ZCodeModelTrajectoryMessage,
+  ZCodeModelTrajectoryRecord,
+  ZCodeModelTrajectoryUsage,
 } from "#src/session/zcodeTaskService.js";
 import { createServiceLogger } from "#src/logger/serviceLogger.js";
 import {
@@ -33,7 +33,7 @@ const logger = createServiceLogger("model-trajectory");
 export async function readModelTrajectory(
   taskId: string,
   limit = DEFAULT_TRAJECTORY_LIMIT,
-): Promise<XCodeModelTrajectory> {
+): Promise<ZCodeModelTrajectory> {
   const safeLimit =
     Number.isFinite(limit) && limit > 0 ? Math.trunc(limit) : DEFAULT_TRAJECTORY_LIMIT;
   const sanitized = sanitizeSessionSegment(taskId);
@@ -127,7 +127,7 @@ function toTime(value?: string): number {
   return Number.isNaN(time) ? 0 : time;
 }
 
-function mapRecord(record: Record<string, unknown>): XCodeModelTrajectoryRecord {
+function mapRecord(record: Record<string, unknown>): ZCodeModelTrajectoryRecord {
   const request = asObject(record.request);
   const response = asObject(record.response);
   const model = asObject(record.model);
@@ -135,7 +135,7 @@ function mapRecord(record: Record<string, unknown>): XCodeModelTrajectoryRecord 
   const querySource = asString(record.querySource) ?? inferQuerySourceFromRequest(request);
   const modelRole = asString(model?.role);
 
-  const mapped: XCodeModelTrajectoryRecord = {
+  const mapped: ZCodeModelTrajectoryRecord = {
     requestId: asString(record.requestId) ?? "",
     attempt: asNumber(record.attempt) ?? 1,
     startedAt: asString(record.startedAt) ?? "",
@@ -198,7 +198,7 @@ function inferQuerySourceFromRequest(
 function classifyCallSource(
   querySource: string | undefined,
   modelRole: string | undefined,
-): XCodeModelTrajectoryCallSource {
+): ZCodeModelTrajectoryCallSource {
   if (querySource === "main_turn") {
     return { kind: "main", querySource };
   }
@@ -306,7 +306,7 @@ function expandMessageCollection(
   target[keys.collectionKey] = [...previousMessages.slice(0, offset), ...deltaMessages];
 }
 
-function mapMessages(value: unknown): XCodeModelTrajectoryMessage[] {
+function mapMessages(value: unknown): ZCodeModelTrajectoryMessage[] {
   if (!Array.isArray(value)) {
     return [];
   }
@@ -331,7 +331,7 @@ function mapContent(
   content: unknown,
   role?: string,
   messageTool?: { toolCallId?: string; toolName?: string; isError?: boolean },
-): XCodeModelTrajectoryContentPart[] {
+): ZCodeModelTrajectoryContentPart[] {
   if (typeof content === "string") {
     if (content.length === 0) return [];
     // tool 角色的字符串内容即工具输出，单独标记为 tool-result 便于 UI 区分。
@@ -362,7 +362,7 @@ function mapContent(
 function mapPart(
   rawPart: unknown,
   messageTool?: { toolCallId?: string; toolName?: string; isError?: boolean },
-): XCodeModelTrajectoryContentPart {
+): ZCodeModelTrajectoryContentPart {
   const part = asObject(rawPart);
   if (!part) {
     return { kind: "unknown", raw: rawPart };
@@ -395,7 +395,7 @@ function mapPart(
   }
 }
 
-function mapResponseToolCall(rawToolCall: unknown): XCodeModelTrajectoryContentPart {
+function mapResponseToolCall(rawToolCall: unknown): ZCodeModelTrajectoryContentPart {
   const toolCall = asObject(rawToolCall);
   if (!toolCall) {
     return { kind: "unknown", raw: rawToolCall };
@@ -409,7 +409,7 @@ function mapResponseToolCall(rawToolCall: unknown): XCodeModelTrajectoryContentP
   };
 }
 
-function mapUsage(value: unknown): XCodeModelTrajectoryUsage | undefined {
+function mapUsage(value: unknown): ZCodeModelTrajectoryUsage | undefined {
   const usage = asObject(value);
   if (!usage) {
     return undefined;

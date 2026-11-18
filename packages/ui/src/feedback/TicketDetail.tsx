@@ -14,7 +14,7 @@ import {
 } from "@/feedback/feedbackUserView.js";
 import { cn } from "@/components/lib/utils.js";
 import type { IFeedbackService } from "@zcode/services";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 
 export function TicketDetailView({
@@ -28,7 +28,7 @@ export function TicketDetailView({
   onRefresh: () => Promise<void>;
   onOpenProcess: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const formatMessage = intl.formatMessage;
   const copiedResetTimerRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
   const [copiedIssueId, setCopiedIssueId] = useState<string | null>(null);

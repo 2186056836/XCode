@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card.js";
 import { Button } from "@/components/ui/button.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.js";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { DshPetSettingsSection } from "@/settings/DshPetSettingsSection.js";
 import type { CreateTaskOptions } from "@/app-shell/types.js";
 
@@ -146,7 +146,7 @@ export function PetsSettingsSection({
 }: {
   onCreateTask?: (request?: CreateTaskOptions) => void;
 } = {}) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const bridge =
     typeof window !== "undefined" ? (window as PetBridgeWindow).zcode?.petOverlay : undefined;
   const [config, setConfig] = useState<PetConfig | null>(null);

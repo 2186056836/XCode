@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu.js";
 import { toast } from "@/components/ui/toast.js";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { fileSaveSuccessMessageId, MAX_FILE_COPY_BYTES } from "@/file-menu/fileCopy.js";
 import { logger } from "@/logger.js";
 import { DefaultFileApplicationLabel } from "@/file-menu/DefaultFileApplicationLabel.js";
@@ -79,7 +79,7 @@ function OpenAsFileSplitButton({
   onReveal,
   platform,
 }: ArtifactOpenAsFileButtonProps & { platform: MaterializeCapablePlatform }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const key = `${runId}\u0000${artifactId}\u0000${version}\u0000${fileName}`;
   const currentKey = useRef(key);
   currentKey.current = key;
@@ -278,7 +278,7 @@ function ArtifactSaveButton({
   platform,
   menu = false,
 }: ArtifactOpenAsFileButtonProps & { platform: IPlatformService; menu?: boolean }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const pending = useRef(false);
   const [saving, setSaving] = useState(false);
   const save = async () => {

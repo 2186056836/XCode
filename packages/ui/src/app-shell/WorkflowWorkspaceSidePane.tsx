@@ -15,7 +15,7 @@ import { phaseDisplayName } from "@/components/workflow-graph/phase-name.js";
 import { WorkflowRunStatus } from "@/components/workflow-timeline/WorkflowCardChrome.js";
 import { useRunningBackgroundTaskElapsedClock } from "@/hooks/useRunningBackgroundTaskElapsedClock.js";
 import { useWorkflowRunWorkspace } from "@/hooks/useWorkflowRunWorkspace.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { CodeViewerSource } from "@/lib/codeViewer.js";
 import type { WorkflowWorkspaceSidePaneTab } from "@/lib/workspaceSidePane.js";
 import {
@@ -50,7 +50,7 @@ interface WorkflowWorkspaceSidePaneProps {
 
 /** 整个 run 还没碰过工作区：占位（与 actor 的「尚未启动」同一形态，措辞换成工作区的）。 */
 function WorkspaceNotStarted() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <div
       className="wf-arrive flex h-full flex-col items-center justify-center gap-1.5 px-8 py-16 text-center"
@@ -83,7 +83,7 @@ function WorkspaceNotice({ text, testId }: { text: string; testId: string }) {
 
 /** `1 step` / `3 steps`——词典没有复数语法，单数另配一条。 */
 function countLabel(
-  format: ReturnType<typeof useXCodeIntl>["intl"]["formatMessage"],
+  format: ReturnType<typeof useZCodeIntl>["intl"]["formatMessage"],
   noun: "steps" | "phases",
   count: number,
 ): string {
@@ -94,7 +94,7 @@ function countLabel(
 
 /** 章头：阶段名 · ⟳n · 横线 · `3 steps · 2m 06s`。没有阶段的章不画头。 */
 function ChapterHeader({ chapter }: { chapter: WorkspaceChapter }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const format = intl.formatMessage.bind(intl);
   if (chapter.phase === undefined) return null;
   return (
@@ -127,7 +127,7 @@ const WorkflowWorkspaceContent = memo(function WorkflowWorkspaceContent({
   tab,
   onOpenCodeViewer,
 }: WorkflowWorkspaceSidePaneProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const format = intl.formatMessage.bind(intl);
   const { layer } = useV4Conversation();
 

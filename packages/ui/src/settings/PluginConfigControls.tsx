@@ -1,25 +1,25 @@
 import { Eye, EyeOff, RotateCcw, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
-import type { XCodePluginInfo, XCodePluginScope, XCodePluginUserConfigOption } from "@zcode/shared";
+import type { ZCodePluginInfo, ZCodePluginScope, ZCodePluginUserConfigOption } from "@zcode/shared";
 import { Button } from "@/components/ui/button.js";
 import { Input } from "@/components/ui/input.js";
 import { Switch } from "@/components/ui/switch.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { SettingsScopeBadge } from "@/settings/SettingsScopeBadge.js";
 
 interface PluginConfigControlsProps {
   getValue: (
-    plugin: XCodePluginInfo,
+    plugin: ZCodePluginInfo,
     key: string,
-    option: XCodePluginUserConfigOption,
+    option: ZCodePluginUserConfigOption,
   ) => string | number | boolean;
   isOptionClearPending?: (pluginId: string, key: string) => boolean;
   onClearOption?: (pluginId: string, key: string, clear: boolean) => void;
-  onSave: (plugin: XCodePluginInfo) => void;
+  onSave: (plugin: ZCodePluginInfo) => void;
   onSetDraft: (pluginId: string, key: string, value: string | number | boolean) => void;
   activeOperations: ReadonlyArray<{ id: string }>;
-  plugin: XCodePluginInfo;
-  scope: XCodePluginScope;
+  plugin: ZCodePluginInfo;
+  scope: ZCodePluginScope;
 }
 
 export function PluginConfigControls({
@@ -32,7 +32,7 @@ export function PluginConfigControls({
   plugin,
   scope,
 }: PluginConfigControlsProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [revealedSecrets, setRevealedSecrets] = useState<Record<string, boolean>>({});
   const entries = Object.entries(plugin.userConfig ?? {});
   if (entries.length === 0) return null;

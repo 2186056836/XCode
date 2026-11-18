@@ -1,4 +1,4 @@
-import { BUILTIN_XCODE_SLASH_COMMAND_HELP_ENTRIES, type XCodeSlashCommand } from "@zcode/shared";
+import { BUILTIN_XCODE_SLASH_COMMAND_HELP_ENTRIES, type ZCodeSlashCommand } from "@zcode/shared";
 
 /**
  * App `/` 面板与加号菜单按本顺序展示（UI 不维护排序白名单）。`workflow` 紧随 `goal`：两者都是
@@ -20,7 +20,7 @@ export const APP_PROTOCOL_APP_ONLY_BUILTIN_SLASH_COMMANDS = [
     name: "plan",
     source: "builtin",
   },
-] as const satisfies readonly XCodeSlashCommand[];
+] as const satisfies readonly ZCodeSlashCommand[];
 
 // Plan 由 Composer 本地操作提供，保留名称以防自定义命令接管该入口。
 const EXTRA_RESERVED_SLASH_COMMAND_NAMES = ["compress", "plan"] as const;
@@ -32,10 +32,10 @@ const RESERVED_SLASH_COMMAND_NAMES = new Set(
   ]).concat([...EXTRA_RESERVED_SLASH_COMMAND_NAMES]),
 );
 
-export function normalizeXCodeSlashCommandName(name: string): string {
+export function normalizeZCodeSlashCommandName(name: string): string {
   return name.trim().replace(/^\/+/, "").toLowerCase();
 }
 
-export function isReservedXCodeSlashCommandName(name: string): boolean {
-  return RESERVED_SLASH_COMMAND_NAMES.has(normalizeXCodeSlashCommandName(name));
+export function isReservedZCodeSlashCommandName(name: string): boolean {
+  return RESERVED_SLASH_COMMAND_NAMES.has(normalizeZCodeSlashCommandName(name));
 }

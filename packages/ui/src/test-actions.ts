@@ -1,6 +1,6 @@
 import type { TaskChatMessage as ChatMessage } from "@/lib/taskChatMessageTypes.js";
 import { shouldExposeE2EStoreBridge } from "@/lib/e2eStoreBridge.js";
-import type { IBotsService, IXCodeAgentService, IXCodeTaskService } from "@zcode/services";
+import type { IBotsService, IZCodeAgentService, IZCodeTaskService } from "@zcode/services";
 import type { TaskListE2EActions } from "@/lib/taskListE2EActions.js";
 import { useEffect } from "react";
 import type { Locale } from "@zcode/shared";
@@ -30,21 +30,21 @@ export interface TestActions extends TaskListE2EActions {
   /** 获取当前 mock 消息数量 */
   getChatMessageCount: () => number;
   /** E2E 通过真实 zcodeAgentService 拉取插件 overview */
-  getPluginsOverview: IXCodeAgentService["getPluginsOverview"];
+  getPluginsOverview: IZCodeAgentService["getPluginsOverview"];
   /** E2E 通过真实 zcodeAgentService 添加 marketplace */
-  addPluginMarketplace: IXCodeAgentService["addPluginMarketplace"];
+  addPluginMarketplace: IZCodeAgentService["addPluginMarketplace"];
   /** E2E 通过真实 zcodeAgentService 刷新 marketplace */
-  updatePluginMarketplace: IXCodeAgentService["updatePluginMarketplace"];
+  updatePluginMarketplace: IZCodeAgentService["updatePluginMarketplace"];
   /** E2E 通过真实 zcodeAgentService 安装 marketplace plugin */
-  installPlugin: IXCodeAgentService["installPlugin"];
+  installPlugin: IZCodeAgentService["installPlugin"];
   /** E2E 通过真实 zcodeAgentService 触发插件 discover */
-  listPlugins: IXCodeAgentService["listPlugins"];
+  listPlugins: IZCodeAgentService["listPlugins"];
   /** E2E 通过真实 zcodeAgentService 查询 Workspace/Session Plugin catalog */
-  getPluginReferenceCatalog: IXCodeAgentService["getPluginReferenceCatalog"];
+  getPluginReferenceCatalog: IZCodeAgentService["getPluginReferenceCatalog"];
   /** E2E 注入一条 bots 入站消息走真实分发链路 */
   sendBotMessage: IBotsService["handleInboundMessage"];
   /** E2E 提交 bot group 输入（真实 task service 准入） */
-  submitBotGroupInput: NonNullable<IXCodeTaskService["submitBotGroupInput"]>;
+  submitBotGroupInput: NonNullable<IZCodeTaskService["submitBotGroupInput"]>;
 }
 
 declare global {

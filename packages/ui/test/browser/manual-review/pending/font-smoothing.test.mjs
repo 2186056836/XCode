@@ -14,27 +14,27 @@ const artifacts = join(root, "packages/desktop/.e2e-artifacts/font-smoothing");
 const fixture = `
 import { createRoot } from "react-dom/client";
 import { useStore } from "zustand";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { AppearanceSectionContent } from "@/settingsCodePreview.js";
-import { createXCodeStore } from "@/store/index.js";
+import { createZCodeStore } from "@/store/index.js";
 import "@/styles.css";
 const query = new URLSearchParams(location.search);
 const platform = query.get("platform");
 document.documentElement.classList.toggle("platform-mac-desktop", platform === "mac");
 const channel = new BroadcastChannel("font-smoothing-test");
 window.sent = 0;
-const store = createXCodeStore({send(message) { window.sent++; channel.postMessage(message); }, onMessage(callback) {channel.onmessage = event => callback(event.data); return () => {channel.onmessage = null;};}});
+const store = createZCodeStore({send(message) { window.sent++; channel.postMessage(message); }, onMessage(callback) {channel.onmessage = event => callback(event.data); return () => {channel.onmessage = null;};}});
 store.getState().setTheme("zai-" + query.get("theme"));
 window.store = store;
 function Fixture() {
  const state = useStore(store);
- return <XCodeIntlProvider initialLocale={query.get("locale")}>
+ return <ZCodeIntlProvider initialLocale={query.get("locale")}>
  <main className="bg-background text-foreground p-4" style={{height:"100vh",overflow:"auto"}}>
  <AppearanceSectionContent isMacDesktop={platform === "mac"}
  fontSmoothingEnabled={state.fontSmoothingEnabled} setFontSmoothingEnabled={state.setFontSmoothingEnabled}
  theme={state.theme} setTheme={state.setTheme} uiFontSizePx={state.uiFontSizePx} setUiFontSizePx={state.setUiFontSizePx}
  codePreviewSettings={state.codePreviewSettings} setCodePreviewSettings={state.setCodePreviewSettings} />
- </main></XCodeIntlProvider>;
+ </main></ZCodeIntlProvider>;
 }
 createRoot(document.getElementById("root")).render(<Fixture />);
 `;

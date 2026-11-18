@@ -1,5 +1,5 @@
 /* eslint-disable max-lines -- 开发态 agent 部署包含本地打包、远端 owner staging 与 wrapper 安装，后续独立拆分上传事务。 */
-import { ZCODE_AGENT_PROVIDER, resolveXCodeRuntimeEnv } from "@zcode/shared";
+import { ZCODE_AGENT_PROVIDER, resolveZCodeRuntimeEnv } from "@zcode/shared";
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import {
@@ -52,7 +52,7 @@ const DEV_AGENT_BUNDLE_ENV = "ZCODE_REMOTE_DEV_AGENT_BUNDLE";
 const REMOTE_DEV_AGENT_BUNDLE_NAME = REMOTE_AGENT_BUNDLE_NAME;
 const REMOTE_DEV_AGENT_VERSION_FILE_NAME = ".dev-version";
 
-interface DeployDevelopmentXCodeAgentRuntimeParams {
+interface DeployDevelopmentZCodeAgentRuntimeParams {
   runtimeVersion: string;
   runtimeResourceDir: string;
   remoteProviderDir: string;
@@ -77,7 +77,7 @@ function findUpward(relativePath: string): { rootDir: string; path: string } | n
 }
 
 function shouldUseDevelopmentAgentBundle(): boolean {
-  if (resolveXCodeRuntimeEnv(process.env) !== "development") {
+  if (resolveZCodeRuntimeEnv(process.env) !== "development") {
     return false;
   }
 
@@ -203,7 +203,7 @@ async function findMissingRemoteOfficialPluginAssetPaths(params: {
   return missingPaths;
 }
 
-async function shouldSkipDevelopmentXCodeAgentDeploy(params: {
+async function shouldSkipDevelopmentZCodeAgentDeploy(params: {
   backend: IRemoteBackend;
   remoteVersionFile: string;
   remoteDevVersionFile: string;
@@ -387,9 +387,9 @@ async function uploadDevelopmentOfficialPluginPackages(params: {
   }
 }
 
-export async function deployDevelopmentXCodeAgentRuntime(
+export async function deployDevelopmentZCodeAgentRuntime(
   backend: IRemoteBackend,
-  params: DeployDevelopmentXCodeAgentRuntimeParams,
+  params: DeployDevelopmentZCodeAgentRuntimeParams,
   loggers: DeployLoggers,
 ): Promise<boolean> {
   const developmentBundle = resolveDevelopmentAgentBundle();
@@ -409,7 +409,7 @@ export async function deployDevelopmentXCodeAgentRuntime(
   });
 
   if (
-    await shouldSkipDevelopmentXCodeAgentDeploy({
+    await shouldSkipDevelopmentZCodeAgentDeploy({
       backend,
       remoteVersionFile: params.remoteVersionFile,
       remoteDevVersionFile,

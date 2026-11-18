@@ -1,7 +1,7 @@
 import { startDraftFromProject } from "#e2e/helpers/project-sidebar";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { XCodePluginInfo } from "@zcode/shared";
+import type { ZCodePluginInfo } from "@zcode/shared";
 import { clearAppData, getE2EAppDataPaths, waitForWorkspaceApp } from "#e2e/helpers/desktop-app";
 import {
   addMarketplaceSourceThroughAgent,
@@ -132,7 +132,7 @@ function readInstalledRecord(pluginStorageRoot: string): {
   };
 }
 
-function componentNames(plugin: XCodePluginInfo | undefined, kind: "mcp"): string[] {
+function componentNames(plugin: ZCodePluginInfo | undefined, kind: "mcp"): string[] {
   return (
     plugin?.components?.find((group) => group.kind === kind)?.items.map((item) => item.name) ?? []
   );

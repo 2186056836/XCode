@@ -20,7 +20,7 @@ export type {
   IntegratedTerminalShellSelection,
   Locale,
   LocalePreference,
-  XCodeInteractionBehavior,
+  ZCodeInteractionBehavior,
   TabId,
   TabState,
   ResourceUsageCategory,
@@ -65,7 +65,7 @@ export {
   stopPlatformAppVersionRefresh,
 } from "./platformAppVersion.js";
 export type { HelloMessage, HelloAckMessage } from "./handshake.js";
-export type { ArmsRumEnv, XCodeEnv, XCodeProductFlavor } from "./env.js";
+export type { ArmsRumEnv, ZCodeEnv, ZCodeProductFlavor } from "./env.js";
 export type { RemoteAssetInstallMode } from "./remoteAssetInstallMode.js";
 export type {
   RemoteResourcePackageId,
@@ -106,9 +106,9 @@ export {
   ZCODE_ARMS_RUM_ENDPOINT,
   ZCODE_AUTO_UPDATE_ENABLED,
   ZCODE_TELEMETRY_ENABLED,
-  mapXCodeEnvToArmsRumEnv,
-  normalizeXCodeEnv,
-  normalizeXCodeProductFlavor,
+  mapZCodeEnvToArmsRumEnv,
+  normalizeZCodeEnv,
+  normalizeZCodeProductFlavor,
 } from "./env.js";
 export * from "./errors.js";
 export type { SessionCreateSource } from "./sessionCreateSource.js";
@@ -314,7 +314,7 @@ export type {
   UpdateStatePayload,
   WSLDistro,
   WindowControlsOverlayReadyPayload,
-  XCodeStdioTapDevState,
+  ZCodeStdioTapDevState,
 } from "./platform.js";
 export type {
   CuaAccessibilitySettingsResult,
@@ -322,7 +322,7 @@ export type {
   OpenCuaPermissionOnboardingOptions,
   PrepareCuaHelperPermissionDragResult,
 } from "./cuaAccessibilitySettings.js";
-export type { XCodeTaskCreateResult } from "./zcode-task-types.js";
+export type { ZCodeTaskCreateResult } from "./zcode-task-types.js";
 export * from "./zcode-task-types.js";
 export * from "./automation-types.js";
 export * from "./off-peak-types.js";

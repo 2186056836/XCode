@@ -123,7 +123,7 @@ export function createWebPlatform(options?: {
       window.open(feedbackUrl, "_blank", "noopener,noreferrer");
     },
     openCommunity: async () => {
-      // openCommunity() 不带参数；XCodeIntlProvider 会把当前界面语言同步到 <html lang>，
+      // openCommunity() 不带参数；ZCodeIntlProvider 会把当前界面语言同步到 <html lang>，
       // 这里按界面语言解析，再收敛成中/英（社群链接只配了中英）。以前要求 lang 精确等于 "en-US"，
       // Web+Server 的 index.html 是 lang="en"，英/日/俄/韩都会被当成中文。
       const locale = toZhOrEnLocale(resolveLocaleFromLanguageTag(document.documentElement.lang));

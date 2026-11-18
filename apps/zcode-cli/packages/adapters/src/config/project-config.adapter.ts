@@ -75,7 +75,7 @@ export function loadProjectConfigFile(
           hookCandidate: createWorkspaceHookSourceInput({
             path: result.path,
             workingDirectory: resolve(options.workingDirectory ?? baseDir),
-            // hooks 字段已由 loadFileConfig 经 XCodeConfigFileSchema（shared 单源
+            // hooks 字段已由 loadFileConfig 经 ZCodeConfigFileSchema（shared 单源
             // schema）完成运行时校验；这里的 parse 仅做类型桥接——HooksRuntimeConfigPatch
             // 与 WorkspaceHooksConfig 是两个领域类型（执行 side vs 配置 side，字段语义有
             // 微差），不共享 TS 结构。禁止改成 as 断言绕过校验。

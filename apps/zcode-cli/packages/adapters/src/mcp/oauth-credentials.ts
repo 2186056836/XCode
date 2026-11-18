@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import type { OAuthClientInformationMixed, OAuthTokens } from "@modelcontextprotocol/client";
-import type { SharedXCodeCredentialStore } from "../auth/shared-credentials.js";
+import type { SharedZCodeCredentialStore } from "../auth/shared-credentials.js";
 
 export const MCP_OAUTH_CANONICAL_CREDENTIALS_KEY = "authorization_credentials";
 export const MCP_OAUTH_LEGACY_CLIENT_KEY = "client_information";
@@ -93,7 +93,7 @@ export function isCanonicalCredentials(value: unknown): value is McpOAuthCanonic
  * 交错兼容逻辑仍留在 provider 内。
  */
 export async function loadCanonicalCredentials(
-  credentialStore: SharedXCodeCredentialStore,
+  credentialStore: SharedZCodeCredentialStore,
   keyPrefix: string,
 ): Promise<CanonicalCredentialSnapshot | undefined> {
   const key = mcpOAuthCredentialKey(keyPrefix, MCP_OAUTH_CANONICAL_CREDENTIALS_KEY);
@@ -141,7 +141,7 @@ export interface PublishedCanonicalCredentials {
  * 不同事务。兼容窗口内继续维护 legacy 镜像，使未升级的 CLI/Desktop 仍可读取。
  */
 export async function publishCanonicalCredentials(
-  credentialStore: SharedXCodeCredentialStore,
+  credentialStore: SharedZCodeCredentialStore,
   keyPrefix: string,
   input: PublishCanonicalCredentialsInput,
 ): Promise<PublishedCanonicalCredentials> {
@@ -204,7 +204,7 @@ export type CanonicalInvalidationScope = "tokens" | "all";
  * `invalid_client`，client 与 token 必须整对丢弃。
  */
 export async function invalidateCanonicalCredentials(
-  credentialStore: SharedXCodeCredentialStore,
+  credentialStore: SharedZCodeCredentialStore,
   keyPrefix: string,
   expectedRaw: string,
   scope: CanonicalInvalidationScope,
@@ -237,7 +237,7 @@ export interface CredentialPairSnapshot {
  * 读取 canonical 与 legacy 镜像并按兼容规则派生出一份可用 pair。
  */
 export async function loadCredentialPair(
-  credentialStore: SharedXCodeCredentialStore,
+  credentialStore: SharedZCodeCredentialStore,
   keyPrefix: string,
 ): Promise<CredentialPairSnapshot | undefined> {
   const canonicalKey = mcpOAuthCredentialKey(keyPrefix, MCP_OAUTH_CANONICAL_CREDENTIALS_KEY);

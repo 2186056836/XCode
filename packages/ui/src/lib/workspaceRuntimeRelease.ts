@@ -1,4 +1,4 @@
-import type { IXCodeTaskService } from "@zcode/services";
+import type { IZCodeTaskService } from "@zcode/services";
 import type { WorkspaceTabState } from "@/store/tabStore.js";
 import { logger } from "@/logger.js";
 
@@ -7,7 +7,7 @@ export function releaseWorkspaceRuntimeAfterProjectRemoval({
   zcodeTaskService,
 }: {
   tab: Pick<WorkspaceTabState, "workspacePath" | "workspaceIdentity">;
-  zcodeTaskService: Pick<IXCodeTaskService, "releaseWorkspacePreparation">;
+  zcodeTaskService: Pick<IZCodeTaskService, "releaseWorkspacePreparation">;
 }): void {
   const workspaceIdentity = tab.workspaceIdentity?.trim() || undefined;
   void zcodeTaskService

@@ -20,7 +20,7 @@ const defaultDataBaseDir =
 
 // 命名约定（fork）：环境变量前缀保持 ZCODE_（沿用官方，避免破坏脚本/CI）；
 // 应用数据目录固定用 .xcode（fork 品牌）。ZCODE_DATA_BASE_DIR 只是「父级基目录」，
-// 真正的数据根目录见 getXCodeDataRootDir() = {base}/.xcode。
+// 真正的数据根目录见 getZCodeDataRootDir() = {base}/.xcode。
 
 export interface DataBaseDirTargetValidationOptions {
   platform?: NodeJS.Platform | string;
@@ -51,7 +51,7 @@ export function getDataBaseDir(): string {
 }
 
 /** {dataBaseDir}/.xcode */
-export function getXCodeDataRootDir(): string {
+export function getZCodeDataRootDir(): string {
   return join(getDataBaseDir(), ".xcode");
 }
 
@@ -138,12 +138,12 @@ export function findZcodeDataDir(): string | null {
 
 /** 非项目对话共享的真实工作目录；默认 ~/.xcode/workspace/default。 */
 export function getConversationWorkspaceDir(): string {
-  return join(getXCodeDataRootDir(), "workspace", "default");
+  return join(getZCodeDataRootDir(), "workspace", "default");
 }
 
 /** {dataBaseDir}/.xcode/v2 */
 export function getAppConfigDir(): string {
-  return join(getXCodeDataRootDir(), "v2");
+  return join(getZCodeDataRootDir(), "v2");
 }
 
 /**
@@ -269,15 +269,15 @@ export function validateDataBaseDirTarget(
 }
 
 export function getExportLogStageDir(): string {
-  return join(getXCodeDataRootDir(), "export-log-stage");
+  return join(getZCodeDataRootDir(), "export-log-stage");
 }
 
 export function getExportLogDir(): string {
-  return join(getXCodeDataRootDir(), "export-log");
+  return join(getZCodeDataRootDir(), "export-log");
 }
 
 export function getFeedbackRootDir(): string {
-  return join(getXCodeDataRootDir(), "feedback");
+  return join(getZCodeDataRootDir(), "feedback");
 }
 
 export function getFeedbackAttachmentDir(): string {
@@ -289,7 +289,7 @@ export function getFeedbackLogArchiveDir(): string {
 }
 
 export function getGitCheckpointIndexRootDir(): string {
-  return join(getXCodeDataRootDir(), "git-checkpoint-index");
+  return join(getZCodeDataRootDir(), "git-checkpoint-index");
 }
 
 /** ~/.xcode/v2/tasks-index.sqlite */

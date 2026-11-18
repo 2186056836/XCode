@@ -5,7 +5,7 @@ import type {
   CommandSetEnabledParams,
   CommandUpdateParams,
   UserCommand,
-  XCodeCommand,
+  ZCodeCommand,
 } from "@zcode/shared";
 import type { ICommandsService } from "@zcode/services";
 
@@ -17,9 +17,9 @@ interface CommandsStoreState {
   loadedWorkspacePath: string | null;
   loadedWorkspaceIdentity: string | null;
   loadedAuthorityKey: string | null;
-  commands: XCodeCommand[];
+  commands: ZCodeCommand[];
   userCommands: UserCommand[];
-  pluginCommands: XCodeCommand[];
+  pluginCommands: ZCodeCommand[];
   capability: { userScopeAvailable: boolean };
   loading: boolean;
   error: string | null;

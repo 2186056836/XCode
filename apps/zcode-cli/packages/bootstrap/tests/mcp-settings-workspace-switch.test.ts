@@ -4,11 +4,11 @@ import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
 import { createMcpConnectionPool } from "@zcode/adapters/mcp";
 import type { McpPort, McpServerStatus } from "@zcode/contracts";
-import { convertToXCodeAgentMcpServer, type XCodeProtocolMcpServer } from "@zcode/shared";
+import { convertToZCodeAgentMcpServer, type ZCodeProtocolMcpServer } from "@zcode/shared";
 import * as trustModule from "../src/workspace-mcp-trust/index.js";
 const { createWorkspaceMcpTrust } = trustModule;
 import { listMcpServers, setWorkspaceMcpTrust } from "../src/zcode-protocol/mcp.js";
-import type { XCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
 
 const isolated = vi.hoisted(() => ({ home: undefined as string | undefined }));
 vi.mock("node:os", async (original) => {
@@ -117,12 +117,12 @@ it("跨 workspace 状态查询保持现有连接，显式切换后迟到 OAuth �
     return {
       workspace: { workspacePath: workspace, workspaceKey: workspace },
       mcpServers: [
-        convertToXCodeAgentMcpServer("probe", config, "workspace")!,
-      ] as XCodeProtocolMcpServer[],
+        convertToZCodeAgentMcpServer("probe", config, "workspace")!,
+      ] as ZCodeProtocolMcpServer[],
     };
   }
   try {
-    const context = { deps: { env: {}, mcpPort: raw } } as XCodeProtocolAgentServerContext;
+    const context = { deps: { env: {}, mcpPort: raw } } as ZCodeProtocolAgentServerContext;
     const a = await params("A"),
       b = await params("B"),
       c = await params("C");
@@ -187,7 +187,7 @@ it("状态读取期间显式切换 workspace 时丢弃旧请求的共享连接�
     connectConfiguredServers: vi.fn(async () => ({ statuses: { probe: connected }, tools: [] })),
     listTools: vi.fn(async () => []),
   } as unknown as McpPort;
-  const context = { deps: { env: {}, mcpPort: raw } } as XCodeProtocolAgentServerContext;
+  const context = { deps: { env: {}, mcpPort: raw } } as ZCodeProtocolAgentServerContext;
   const params = (name: string) => ({
     workspace: { workspaceKey: name, workspacePath: root },
     mcpServers: [{ name: "probe", command: name, scope: "user", args: [], env: [] }],
@@ -219,7 +219,7 @@ it("mcp/list 的坏 fallback 邻项不拖垮用户 MCP 列表", async () => {
     join(workspace, ".agents/mcp.json"),
     JSON.stringify({ mcpServers: { bad: { command: "fake", description: "extra" } } }),
   );
-  const context = { deps: { env: {} } } as XCodeProtocolAgentServerContext;
+  const context = { deps: { env: {} } } as ZCodeProtocolAgentServerContext;
   const result = await listMcpServers(context, {
     workspace: { workspacePath: workspace, workspaceKey: workspace },
     mcpServers: [{ name: "good", scope: "user", command: "fake", args: [], env: [] }],
@@ -238,7 +238,7 @@ it("设置连接清理失败后，同一 workspace 可以重试", async () => {
     connectConfiguredServers: vi.fn(async () => ({ statuses: {}, tools: [] })),
     listTools: vi.fn(async () => []),
   } as unknown as McpPort;
-  const context = { deps: { env: {}, mcpPort: raw } } as XCodeProtocolAgentServerContext;
+  const context = { deps: { env: {}, mcpPort: raw } } as ZCodeProtocolAgentServerContext;
   const params = { workspace: { workspaceKey: root, workspacePath: root }, mcpServers: [] };
   await expect(listMcpServers(context, params)).rejects.toThrow("transient status failure");
   await expect(listMcpServers(context, params)).resolves.toEqual({ statuses: {} });
@@ -279,7 +279,7 @@ it("设置授权只通知相同 workspace 的活跃会话，刷新失败不改�
         },
       ],
     ]),
-  } as unknown as XCodeProtocolAgentServerContext;
+  } as unknown as ZCodeProtocolAgentServerContext;
   const params = {
     workspace: {
       workspaceKey: "identity-A",

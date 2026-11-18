@@ -49,7 +49,7 @@ declare global {
 /** 只暂挂本例原始输入，不伪造 RPC 结果，也不拦截发送前的配置查询。 */
 async function holdInputCommand(marker: string): Promise<void> {
   const signature = new BufferWriter();
-  serialize(signature, ServiceChannels.XCodeAgent);
+  serialize(signature, ServiceChannels.ZCodeAgent);
   serialize(signature, "sendConversationCommandV4");
   await browser.execute(
     (signature, marker) => {

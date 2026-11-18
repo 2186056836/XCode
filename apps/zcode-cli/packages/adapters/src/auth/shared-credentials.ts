@@ -12,7 +12,7 @@ import {
   withCredentialFileMutation,
   withFileLock,
 } from "@zcode/shared/node";
-import type { XCodeCredentialCipher } from "./credential-cipher.js";
+import type { ZCodeCredentialCipher } from "./credential-cipher.js";
 import {
   createSystemCredentialCipher,
   migrateCredentialRecord,
@@ -39,9 +39,9 @@ export const SHARED_XCODE_CREDENTIAL_KEYS = {
   zcodeJwtToken: "zcodejwttoken",
 } as const;
 
-export interface SharedXCodeCredentialStoreOptions {
+export interface SharedZCodeCredentialStoreOptions {
   baseDir?: string;
-  cipher?: XCodeCredentialCipher;
+  cipher?: ZCodeCredentialCipher;
   env?: Record<string, string | undefined>;
   filePath?: string;
 }
@@ -65,7 +65,7 @@ export interface SharedCredentialRecoveryGuard {
   readonly commit: CredentialFileGuard;
 }
 
-export interface SharedXCodeCredentialStore {
+export interface SharedZCodeCredentialStore {
   readonly filePath: string;
   /** 用首次写入的同一密钥路径确认可写；不写凭据文件，不可用时抛出原始安全存储错误。 */
   assertWritable(): Promise<void>;
@@ -100,11 +100,11 @@ export interface SharedXCodeCredentialStore {
   ): Promise<void>;
 }
 
-export function createSharedXCodeCredentialStore(
-  options: SharedXCodeCredentialStoreOptions = {},
-): SharedXCodeCredentialStore {
+export function createSharedZCodeCredentialStore(
+  options: SharedZCodeCredentialStoreOptions = {},
+): SharedZCodeCredentialStore {
   const env = options.env ?? process.env;
-  const filePath = resolveSharedXCodeCredentialsPath(options);
+  const filePath = resolveSharedZCodeCredentialsPath(options);
   const cipher = options.cipher ?? createSystemCredentialCipher({ env, filePath });
   const readCurrent = async () => {
     // 普通读取不取得写锁（慢写入曾让登录读取等锁超时），由读取前后的恢复代次校验拒绝旧结果。
@@ -139,7 +139,7 @@ export function createSharedXCodeCredentialStore(
       ),
     );
   };
-  const updateMany: SharedXCodeCredentialStore["updateMany"] = async (changes, options) => {
+  const updateMany: SharedZCodeCredentialStore["updateMany"] = async (changes, options) => {
     const entries = await Promise.all(
       Object.entries(changes).map(
         async ([key, value]) =>
@@ -378,16 +378,16 @@ export function createSharedXCodeCredentialStore(
 }
 
 /** 所有凭据读取均为异步，避免系统密钥库阻塞 UI 或 CLI 事件循环。 */
-export async function loadSharedXCodeCredential(
+export async function loadSharedZCodeCredential(
   key: string,
-  options: SharedXCodeCredentialStoreOptions = {},
+  options: SharedZCodeCredentialStoreOptions = {},
 ): Promise<string | undefined> {
-  const value = await createSharedXCodeCredentialStore(options).load(key);
+  const value = await createSharedZCodeCredentialStore(options).load(key);
   return value?.trim() ? value : undefined;
 }
 
-export function resolveSharedXCodeCredentialsPath(
-  options: SharedXCodeCredentialStoreOptions = {},
+export function resolveSharedZCodeCredentialsPath(
+  options: SharedZCodeCredentialStoreOptions = {},
 ): string {
   if (options.filePath) {
     return resolveUserPath(options.filePath);

@@ -1,6 +1,6 @@
 import { CheckIcon, LoaderCircle } from "lucide-react";
 import type { CodingPlanResetType } from "@zcode/shared";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { CodingPlanQuotaResetUiStatus } from "@/lib/codingPlanQuotaResetUi.js";
 
 /**
@@ -16,7 +16,7 @@ export function CodingPlanQuotaResetStatusContent({
   status: CodingPlanQuotaResetUiStatus;
   resetType?: CodingPlanResetType;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   if (status === "processing") {
     return (

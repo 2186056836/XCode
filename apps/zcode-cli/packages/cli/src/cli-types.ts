@@ -8,38 +8,38 @@ import type {
 import type {
   createDefaultProviderEndpointRoutingPort,
   createModelAdapter,
-  createXCodeApp,
+  createZCodeApp,
   CreateDefaultProviderEndpointRoutingPortOptions,
   CreateModelAdapterOptions,
   configureCodingPlanApiKey,
   ConfigureCodingPlanApiKeyOptions,
-  inspectXCodeSkill,
+  inspectZCodeSkill,
   inspectWorkspaceHookTrust,
   grantWorkspaceHookTrust,
   revokeWorkspaceHookTrustCli,
-  inspectXCodeCustomCommand,
-  InspectXCodeCustomCommandOptions,
-  InspectXCodeSkillOptions,
-  loginXCodeCli,
+  inspectZCodeCustomCommand,
+  InspectZCodeCustomCommandOptions,
+  InspectZCodeSkillOptions,
+  loginZCodeCli,
   loginBigmodelCodingPlan,
   LoginBigmodelCodingPlanOptions,
-  LoginXCodeCliOptions,
-  listXCodeCustomCommands,
-  ListXCodeCustomCommandsOptions,
-  loadXCodeCustomCommand,
-  listXCodeSessions,
-  listXCodeSkills,
-  ListXCodeSessionsOptions,
-  ListXCodeSkillsOptions,
-  logoutXCodeCli,
-  LogoutXCodeCliOptions,
+  LoginZCodeCliOptions,
+  listZCodeCustomCommands,
+  ListZCodeCustomCommandsOptions,
+  loadZCodeCustomCommand,
+  listZCodeSessions,
+  listZCodeSkills,
+  ListZCodeSessionsOptions,
+  ListZCodeSkillsOptions,
+  logoutZCodeCli,
+  LogoutZCodeCliOptions,
   resolveLatestSession,
   ResolveLatestSessionOptions,
-  RunXCodeProtocolAgentOptions,
-  prepareXCodeTelemetryEnv,
+  RunZCodeProtocolAgentOptions,
+  prepareZCodeTelemetryEnv,
   startProcessProviderRegistryRuntime,
-  shutdownXCodeTelemetry,
-  XCodeAppOptions,
+  shutdownZCodeTelemetry,
+  ZCodeAppOptions,
 } from "@zcode/bootstrap";
 import type { CliEnv, DotenvLoadResult, LoadCliDotenvOptions } from "./env.js";
 import type { PluginsCommandOverrides } from "./plugins-command.js";
@@ -50,7 +50,7 @@ export type BootstrapModule = typeof import("@zcode/bootstrap");
 
 export interface RunDependencies extends PluginsCommandOverrides {
   migrateStorage?: () => Promise<import("@zcode/shared/sqlite-migrations").MigrationResult>;
-  protocolLifecycle?: RunXCodeProtocolAgentOptions["lifecycle"];
+  protocolLifecycle?: RunZCodeProtocolAgentOptions["lifecycle"];
   protocolInput?: NodeJS.ReadableStream;
   createManagedCdpBrowserRuntime?: (
     options?: ManagedCdpBrowserRuntimeOptions,
@@ -61,26 +61,26 @@ export interface RunDependencies extends PluginsCommandOverrides {
   createProviderEndpointRoutingPort?: (
     options: CreateDefaultProviderEndpointRoutingPortOptions,
   ) => ReturnType<typeof createDefaultProviderEndpointRoutingPort>;
-  createXCodeApp?: (
-    options?: XCodeAppOptions,
-  ) => Awaited<ReturnType<typeof createXCodeApp>> | ReturnType<typeof createXCodeApp>;
+  createZCodeApp?: (
+    options?: ZCodeAppOptions,
+  ) => Awaited<ReturnType<typeof createZCodeApp>> | ReturnType<typeof createZCodeApp>;
   /**
    * Session-event shaper for --output-format stream-json. Defaults to the
    * bootstrap module's, which is also what the protocol server uses; injectable
-   * so a caller that supplies its own `createXCodeApp` (tests, embedders) can
+   * so a caller that supplies its own `createZCodeApp` (tests, embedders) can
    * still stream, since the bootstrap module is not loaded on that path.
    */
   mapSessionEvent?: BootstrapModule["mapSessionEvent"];
   cwd?: () => string;
   env?: CliEnv;
-  inspectSkill?: (options: InspectXCodeSkillOptions) => ReturnType<typeof inspectXCodeSkill>;
+  inspectSkill?: (options: InspectZCodeSkillOptions) => ReturnType<typeof inspectZCodeSkill>;
   inspectWorkspaceHookTrust?: typeof inspectWorkspaceHookTrust;
   grantWorkspaceHookTrust?: typeof grantWorkspaceHookTrust;
   revokeWorkspaceHookTrustCli?: typeof revokeWorkspaceHookTrustCli;
   inspectCustomCommand?: (
-    options: InspectXCodeCustomCommandOptions,
-  ) => ReturnType<typeof inspectXCodeCustomCommand>;
-  loginXCodeCli?: (options?: LoginXCodeCliOptions) => ReturnType<typeof loginXCodeCli>;
+    options: InspectZCodeCustomCommandOptions,
+  ) => ReturnType<typeof inspectZCodeCustomCommand>;
+  loginZCodeCli?: (options?: LoginZCodeCliOptions) => ReturnType<typeof loginZCodeCli>;
   loginBigmodelCodingPlan?: (
     options?: LoginBigmodelCodingPlanOptions,
   ) => ReturnType<typeof loginBigmodelCodingPlan>;
@@ -88,19 +88,19 @@ export interface RunDependencies extends PluginsCommandOverrides {
     options: ConfigureCodingPlanApiKeyOptions,
   ) => ReturnType<typeof configureCodingPlanApiKey>;
   loadDotenv?: (options?: LoadCliDotenvOptions) => DotenvLoadResult;
-  prepareXCodeTelemetryEnv?: typeof prepareXCodeTelemetryEnv;
+  prepareZCodeTelemetryEnv?: typeof prepareZCodeTelemetryEnv;
   projectConfigPath?: string;
-  listSessions?: (options: ListXCodeSessionsOptions) => ReturnType<typeof listXCodeSessions>;
+  listSessions?: (options: ListZCodeSessionsOptions) => ReturnType<typeof listZCodeSessions>;
   listCustomCommands?: (
-    options: ListXCodeCustomCommandsOptions,
-  ) => ReturnType<typeof listXCodeCustomCommands>;
+    options: ListZCodeCustomCommandsOptions,
+  ) => ReturnType<typeof listZCodeCustomCommands>;
   loadCustomCommand?: (
-    options: InspectXCodeCustomCommandOptions,
-  ) => ReturnType<typeof loadXCodeCustomCommand>;
+    options: InspectZCodeCustomCommandOptions,
+  ) => ReturnType<typeof loadZCodeCustomCommand>;
   // headless slash 路由要和 app facade 的保留名 gate 用同一个判据；默认取 bootstrap 的，
   // 注入点只为让单测不必拉起整个 bootstrap 模块。见 prompt-command.ts。
-  isReservedSlashCommandName?: BootstrapModule["isReservedXCodeSlashCommandName"];
-  listSkills?: (options: ListXCodeSkillsOptions) => ReturnType<typeof listXCodeSkills>;
+  isReservedSlashCommandName?: BootstrapModule["isReservedZCodeSlashCommandName"];
+  listSkills?: (options: ListZCodeSkillsOptions) => ReturnType<typeof listZCodeSkills>;
   logger?: Logger;
   readClipboardImage?: TuiReadClipboardImage;
   writeClipboardText?: TuiWriteClipboardText;
@@ -108,8 +108,8 @@ export interface RunDependencies extends PluginsCommandOverrides {
     options: ResolveLatestSessionOptions,
   ) => ReturnType<typeof resolveLatestSession>;
   resolveWorkspaceGitBranch?: typeof resolveWorkspaceGitBranch;
-  logoutXCodeCli?: (options?: LogoutXCodeCliOptions) => ReturnType<typeof logoutXCodeCli>;
-  runXCodeProtocolAgent?: (options?: RunXCodeProtocolAgentOptions) => Promise<void>;
+  logoutZCodeCli?: (options?: LogoutZCodeCliOptions) => ReturnType<typeof logoutZCodeCli>;
+  runZCodeProtocolAgent?: (options?: RunZCodeProtocolAgentOptions) => Promise<void>;
   runTui?: typeof import("@zcode/tui").runTui;
   skipUserConfig?: boolean;
   userConfigPath?: string;
@@ -117,7 +117,7 @@ export interface RunDependencies extends PluginsCommandOverrides {
   shutdownCleanupTimeoutMs?: number;
   shutdownProcess?: CliShutdownProcess;
   startProcessProviderRegistryRuntime?: typeof startProcessProviderRegistryRuntime;
-  shutdownXCodeTelemetry?: typeof shutdownXCodeTelemetry;
+  shutdownZCodeTelemetry?: typeof shutdownZCodeTelemetry;
 }
 
 export type CliPermissionMode = "build" | "plan" | "edit" | "yolo" | "guarded";
@@ -133,7 +133,7 @@ export interface CliTargetRequest {
   replaceExisting: boolean;
 }
 
-export type ModeCapableApp = Awaited<ReturnType<typeof createXCodeApp>> & {
+export type ModeCapableApp = Awaited<ReturnType<typeof createZCodeApp>> & {
   getMode?: () => CliRuntimeMode;
   setLocale?: (locale: UiLocale) => Promise<{ locale: "en-US" | "zh-CN" }>;
   setMode?: (mode: CliRuntimeMode) => Promise<{ mode: CliRuntimeMode }>;

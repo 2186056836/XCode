@@ -1,8 +1,8 @@
 import { memo, useCallback, useEffect, useState } from "react";
-import type { XCodeAgentRuntimeExitedEvent } from "@zcode/services";
+import type { ZCodeAgentRuntimeExitedEvent } from "@zcode/services";
 import { resolveWorkspaceKey } from "@zcode/shared";
 import { useServices } from "@/hooks/useServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /**
  * 当前 workspace 的后台 runtime（app-server）最近一次意外退出。
@@ -14,9 +14,9 @@ import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 export function useAgentRuntimeExitNotice(target: {
   workspacePath: string;
   workspaceIdentity?: string;
-}): { exit: XCodeAgentRuntimeExitedEvent | null; dismiss: () => void } {
+}): { exit: ZCodeAgentRuntimeExitedEvent | null; dismiss: () => void } {
   const { zcodeAgentService } = useServices();
-  const [exit, setExit] = useState<XCodeAgentRuntimeExitedEvent | null>(null);
+  const [exit, setExit] = useState<ZCodeAgentRuntimeExitedEvent | null>(null);
   // 与 services 发布事件时同一个口径：identity 优先，否则路径。
   const workspaceKey = resolveWorkspaceKey(target);
   useEffect(() => {
@@ -31,7 +31,7 @@ export function useAgentRuntimeExitNotice(target: {
 }
 
 export interface AgentRuntimeExitBannerProps {
-  exit: XCodeAgentRuntimeExitedEvent;
+  exit: ZCodeAgentRuntimeExitedEvent;
   onDismiss: () => void;
 }
 
@@ -43,7 +43,7 @@ export const AgentRuntimeExitBanner = memo(function AgentRuntimeExitBanner({
   exit,
   onDismiss,
 }: AgentRuntimeExitBannerProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <div
       role="status"

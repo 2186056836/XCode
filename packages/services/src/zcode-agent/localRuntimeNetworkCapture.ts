@@ -5,18 +5,18 @@ import {
   type NetworkCaptureBatch,
 } from "@zcode/shared";
 import type { IDisposable } from "@zcode/rpc";
-import type { XCodeProtocolClient } from "#src/zcode-agent/zcodeProtocolClient.js";
+import type { ZCodeProtocolClient } from "#src/zcode-agent/zcodeProtocolClient.js";
 
 /** 仅由本机子进程 spawn 点登记；remote RPC/手机 attachment 不登记也不透传启停。 */
 export class LocalRuntimeNetworkCapture {
   private readonly clients = new Map<
-    XCodeProtocolClient,
+    ZCodeProtocolClient,
     { pid: number; subscription?: IDisposable }
   >();
   private captureId: string | null = null;
   private sink?: (batch: NetworkCaptureBatch) => void;
 
-  register(client: XCodeProtocolClient, pid: number): () => void {
+  register(client: ZCodeProtocolClient, pid: number): () => void {
     this.clients.set(client, { pid });
     if (this.captureId) this.configure(client);
     return () => {
@@ -31,7 +31,7 @@ export class LocalRuntimeNetworkCapture {
     for (const client of this.clients.keys()) this.configure(client);
   }
 
-  private configure(client: XCodeProtocolClient): void {
+  private configure(client: ZCodeProtocolClient): void {
     const entry = this.clients.get(client)!;
     entry.subscription?.dispose();
     entry.subscription = undefined;

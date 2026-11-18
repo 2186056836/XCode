@@ -1,8 +1,8 @@
 import type { AppSessionControl, AppSessionTrustedContext } from "@zcode/session-control/contracts";
-import type { XCodeProtocolAgentServerContext } from "../zcode-protocol/server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "../zcode-protocol/server-types.js";
 
 export interface AppSessionControlBindingOptions {
-  requestClient: XCodeProtocolAgentServerContext["requestClient"];
+  requestClient: ZCodeProtocolAgentServerContext["requestClient"];
   sessionId: string;
   workspacePath: string;
   workspaceIdentity?: string;

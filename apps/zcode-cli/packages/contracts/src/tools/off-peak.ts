@@ -39,7 +39,7 @@ export const OffPeakCreateInputSchema = z
 export type OffPeakCreateInput = z.infer<typeof OffPeakCreateInputSchema>;
 export const OffPeakCreateInputJsonSchema = toToolJsonSchema(OffPeakCreateInputSchema);
 
-/** 客户端执行态（与 shared XCodeOffPeakTaskStatus 同值镜像；zod v3/v4 边界不 import shared）。 */
+/** 客户端执行态（与 shared ZCodeOffPeakTaskStatus 同值镜像；zod v3/v4 边界不 import shared）。 */
 export const OffPeakTaskStatusSchema = z.enum([
   "queued",
   "paused",

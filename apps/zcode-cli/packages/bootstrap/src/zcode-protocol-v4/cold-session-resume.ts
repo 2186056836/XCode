@@ -10,7 +10,7 @@
 //   message 附带 reasonCode——renderer 订阅错误块直显 lastError，无需 UI 改动即透出。
 
 import type { MessageWithParts } from "@zcode/contracts";
-import type { XCodeWorkspaceRef } from "@zcode/shared";
+import type { ZCodeWorkspaceRef } from "@zcode/shared";
 
 export type ColdSessionResumeOutcome =
   | {
@@ -25,7 +25,7 @@ export interface ColdSessionResumeHost {
   resumePersistedSession?(
     sessionId: string,
     resumeThoughtLevel?: string,
-    workspace?: XCodeWorkspaceRef,
+    workspace?: ZCodeWorkspaceRef,
     additionalDirectories?: string[],
     persistedMessages?: MessageWithParts[],
   ): Promise<ColdSessionResumeOutcome>;
@@ -62,7 +62,7 @@ export class ColdSessionResumeCoordinator {
   ensureResumed(
     sessionId: string,
     resumeThoughtLevel?: string,
-    workspace?: XCodeWorkspaceRef,
+    workspace?: ZCodeWorkspaceRef,
     additionalDirectories?: string[],
     persistedMessages?: MessageWithParts[],
     onActivated?: (outcome: Extract<ColdSessionResumeOutcome, { status: "resumed" }>) => void,
@@ -80,7 +80,7 @@ export class ColdSessionResumeCoordinator {
   private async resume(
     sessionId: string,
     resumeThoughtLevel?: string,
-    workspace?: XCodeWorkspaceRef,
+    workspace?: ZCodeWorkspaceRef,
     additionalDirectories?: string[],
     persistedMessages?: MessageWithParts[],
     onActivated?: (outcome: Extract<ColdSessionResumeOutcome, { status: "resumed" }>) => void,

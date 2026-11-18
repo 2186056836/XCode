@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import {
   OpenExtensionLogsContext,
   OpenExtensionViewContext,
@@ -50,9 +50,9 @@ export function ExtensionViewsProvider({
 }) {
   const service = useExtensionsService();
   const viewsService = useExtensionViewsService();
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const platform = useOptionalPlatform();
-  const notificationEnabled = useXCodeStore((state) => state.notificationEnabled);
+  const notificationEnabled = useZCodeStore((state) => state.notificationEnabled);
   const notificationEnabledRef = useRef(notificationEnabled);
   notificationEnabledRef.current = notificationEnabled;
   const intlRef = useRef(intl);

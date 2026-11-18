@@ -3,7 +3,7 @@ import { MessageSquareTextIcon, PencilIcon, PlusIcon, QuoteIcon, Trash2Icon } fr
 import { cn } from "@/components/lib/utils.js";
 import type { AttachmentHoverCardContentProps } from "@/components/ai-elements/attachments.js";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   isConversationSelectionReference,
   setHoveredConversationAnnotation,
@@ -36,7 +36,7 @@ export function ConversationSelectionReferenceChip({
   /** 提供时显示铅笔与“添加评论”；fallback 是正文编号不可见时编辑浮层的指向位置。 */
   onEdit?: (id: string, fallback: AnchorPoint) => void;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   useEffect(
     () => (numbered ? subscribeHoveredConversationAnnotation(setHoveredId) : undefined),

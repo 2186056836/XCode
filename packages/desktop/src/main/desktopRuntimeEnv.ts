@@ -15,16 +15,16 @@ import {
   ZCODE_PRODUCT_FLAVOR,
   ZCODE_RUNTIME_ENV_KEY,
   ZCODE_VERSION,
-  buildXCodeToolEnvPassthroughEnv,
-  resolveRuntimeXCodeEndpointOrigin,
+  buildZCodeToolEnvPassthroughEnv,
+  resolveRuntimeZCodeEndpointOrigin,
   resolveZaiBusinessBaseUrl,
   resolveZaiOAuthClientId,
   resolveZaiOAuthOrigin,
   normalizeDynamicWorkflowMode,
-  readXCodeAgentTelemetryEnv,
-  sanitizeXCodeRuntimeEnv,
+  readZCodeAgentTelemetryEnv,
+  sanitizeZCodeRuntimeEnv,
   type SourceServerArtifactPolicy,
-  type XCodeRuntimeEnv,
+  type ZCodeRuntimeEnv,
 } from "@zcode/shared";
 import { resolvePlatformKeyForPackagedApp } from "../../scripts/target-platform.mjs";
 import {
@@ -42,7 +42,7 @@ import { getElectronAppPath, isElectronAppPackaged } from "./desktopElectronApp.
 declare const __ZCODE_PACKAGED_AGENT_TELEMETRY_ENV__: Readonly<Record<string, string>> | undefined;
 
 const isLocalDevelopmentRuntime = !isElectronAppPackaged();
-export const desktopRuntimeEnv: XCodeRuntimeEnv = isLocalDevelopmentRuntime
+export const desktopRuntimeEnv: ZCodeRuntimeEnv = isLocalDevelopmentRuntime
   ? "development"
   : "production";
 // 身份看编译期 flavor 而不是 ZCODE_ENV：ZCODE_PREVIEW_IDENTITY=1 的生产后端构建同样是 Preview，
@@ -66,7 +66,7 @@ export const runtimeApplicationName =
   readRuntimeEnvOverride("ZCODE_DESKTOP_APPLICATION_NAME") ??
   (isLocalDevelopmentRuntime ? "XCode Dev" : isPreviewPackagedRuntime ? "XCode Preview" : "XCode");
 // Electron 的 app.getPath("home") 不一定跟随测试进程里的 HOME 覆盖。
-// e2e 默认工作区依赖 home 路径，因此提供显式覆盖，避免测试写到开发者真实 ~/XCodeProject。
+// e2e 默认工作区依赖 home 路径，因此提供显式覆盖，避免测试写到开发者真实 ~/ZCodeProject。
 export const runtimeHomePath = readRuntimeEnvOverride("ZCODE_DESKTOP_HOME_DIR");
 // Chromedriver 管理 Electron 时会注入临时 userData；e2e 默认路径模式下导入期不能提前读取 appData。
 export const shouldUseElectronDefaultUserDataPath = isTruthyRuntimeEnvOverride(
@@ -203,7 +203,7 @@ export function loadHostProcessEnvFromLocalFiles(): Record<string, string> {
     Object.assign(merged, parsed);
   }
 
-  return applySelectedXCodeEnvLinks(merged);
+  return applySelectedZCodeEnvLinks(merged);
 }
 
 export function resolvePackagedAgentTelemetryEnv(
@@ -220,7 +220,7 @@ export function resolvePackagedAgentTelemetryEnv(
   // 修复原因：开发版通过启动进程继承 OTLP 配置，正式安装包从 Finder/开始菜单启动时没有
   // 这组运行时环境，Agent 因而静默落入 Noop。构建默认值只允许连接字段进入 Main；
   // UID、Device MID 和 runtime surface 仍由 Host 的可信运行时上下文生成。
-  return readXCodeAgentTelemetryEnv({
+  return readZCodeAgentTelemetryEnv({
     OTEL_EXPORTER_OTLP_ENDPOINT: compiledEnv.OTEL_EXPORTER_OTLP_ENDPOINT,
     OTEL_EXPORTER_OTLP_HEADERS: compiledEnv.OTEL_EXPORTER_OTLP_HEADERS,
     OTEL_SERVICE_NAME: compiledEnv.OTEL_SERVICE_NAME,
@@ -270,7 +270,7 @@ function resolveEnvValue(envName: string, localEnv: LocalRuntimeEnv = {}): strin
   return process.env[envName]?.trim() || localEnv[envName]?.trim() || undefined;
 }
 
-export function resolveXCodeEndpointEnvBaseOrigin(
+export function resolveZCodeEndpointEnvBaseOrigin(
   localEnv: LocalRuntimeEnv = {},
 ): string | undefined {
   const scopedEnvName =
@@ -297,7 +297,7 @@ function readDefinedProcessEnv(): Record<string, string> {
   return values;
 }
 
-function applySelectedXCodeEnvLinks(env: Record<string, string>): Record<string, string> {
+function applySelectedZCodeEnvLinks(env: Record<string, string>): Record<string, string> {
   const endpointEnv = {
     ...env,
     ZCODE_ENV,
@@ -305,14 +305,14 @@ function applySelectedXCodeEnvLinks(env: Record<string, string>): Record<string,
 
   return {
     ...env,
-    ZCODE_BASE_URL: env.ZCODE_BASE_URL ?? resolveRuntimeXCodeEndpointOrigin(endpointEnv),
+    ZCODE_BASE_URL: env.ZCODE_BASE_URL ?? resolveRuntimeZCodeEndpointOrigin(endpointEnv),
     ZAI_OAUTH_ORIGIN: env.ZAI_OAUTH_ORIGIN ?? resolveZaiOAuthOrigin(endpointEnv),
     ZAI_BUSINESS_BASE_URL: env.ZAI_BUSINESS_BASE_URL ?? resolveZaiBusinessBaseUrl(endpointEnv),
     ZAI_OAUTH_CLIENT_ID: env.ZAI_OAUTH_CLIENT_ID ?? resolveZaiOAuthClientId(endpointEnv),
   };
 }
 
-function resolveHostProcessNodeEnv(): XCodeRuntimeEnv {
+function resolveHostProcessNodeEnv(): ZCodeRuntimeEnv {
   return desktopRuntimeEnv;
 }
 
@@ -360,7 +360,7 @@ export function resolveRemoteAssetDirs(
   };
 }
 
-function resolveBundledXCodeAgentBinaryPath(): string | undefined {
+function resolveBundledZCodeAgentBinaryPath(): string | undefined {
   const runtime = ZCODE_AGENT_RUNTIME;
   const entrySegments = runtime.resolveEntrySegments(process.platform);
   const platformKey = resolvePlatformKeyForPackagedApp();
@@ -425,7 +425,7 @@ function resolveBundledLarkCliBinaryPath(): string | undefined {
 }
 
 export function resolveBundledGlmBinaryPath(): string | undefined {
-  return resolveBundledXCodeAgentBinaryPath();
+  return resolveBundledZCodeAgentBinaryPath();
 }
 
 function resolveHostProcessBinaryEnv(
@@ -532,7 +532,7 @@ export function buildHostProcessEnv(hostProcessLocalEnv: Record<string, string>)
             )
           : undefined;
   const windowsAppInstallDir = resolveWindowsAppInstallDirForDataBaseDirGuard();
-  const agentTelemetryEnv = readXCodeAgentTelemetryEnv(rawInheritedEnv);
+  const agentTelemetryEnv = readZCodeAgentTelemetryEnv(rawInheritedEnv);
   // Desktop 身份由 host 从凭据仓库和本机状态读取后可信注入；外部环境只能配置 OTLP 连接，
   // 不能伪造 uid/device/runtime surface 或绕过本地 identity state 的隔离边界。
   for (const key of [
@@ -545,9 +545,9 @@ export function buildHostProcessEnv(hostProcessLocalEnv: Record<string, string>)
   ]) {
     delete agentTelemetryEnv[key];
   }
-  const inheritedEnv = applySelectedXCodeEnvLinks({
-    ...sanitizeXCodeRuntimeEnv(rawInheritedEnv),
-    ...buildXCodeToolEnvPassthroughEnv(rawInheritedEnv),
+  const inheritedEnv = applySelectedZCodeEnvLinks({
+    ...sanitizeZCodeRuntimeEnv(rawInheritedEnv),
+    ...buildZCodeToolEnvPassthroughEnv(rawInheritedEnv),
   });
   // A release app must never inherit the local unsigned-Helper escape hatch.
   // Otherwise a developer shell/launchctl variable can make the signed app

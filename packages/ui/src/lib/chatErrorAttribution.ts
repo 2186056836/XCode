@@ -15,7 +15,7 @@ import {
   resolveStableTransportCodeAttribution,
   resolveTrustedProviderCodeFailureReason,
 } from "@/lib/chatErrorAttributionEvidence.js";
-import type { XCodeUiError } from "@/lib/zcodeUiError.js";
+import type { ZCodeUiError } from "@/lib/zcodeUiError.js";
 
 const UNKNOWN_FAILURE_REASON = "unknown";
 
@@ -130,7 +130,7 @@ function resolveSourceFromStatusCode(statusCode: number): TelemetryErrorSource {
 }
 
 function resolveSourceFromAdditionalEvidence(params: {
-  error: XCodeUiError;
+  error: ZCodeUiError;
   displayMessage: string;
 }): TelemetryErrorSource {
   const statusCode = params.error.attribution?.statusCode;
@@ -177,7 +177,7 @@ function resolveSourceFromAdditionalEvidence(params: {
 }
 
 export function resolveTelemetryAttribution(params: {
-  error: XCodeUiError;
+  error: ZCodeUiError;
   displayMessage: string;
 }): TelemetryErrorAttribution {
   // 修复原因：adapter 的 unknown 可能是保守的产品运行时分类，不能代表 ARMS 缺少上游证据；

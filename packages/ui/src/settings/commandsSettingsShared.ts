@@ -1,7 +1,7 @@
 import {
   ZCODE_AGENT_PROVIDER,
   ZCODE_COMMAND_AGENT_SOURCES,
-  type XCodeProvider,
+  type ZCodeProvider,
   type CommandAgentSource,
 } from "@zcode/shared";
 
@@ -13,7 +13,7 @@ export const COMMAND_AGENT_SOURCE_META: Record<
   CommandAgentSource,
   {
     labelId: string;
-    provider: XCodeProvider;
+    provider: ZCodeProvider;
     pathHint: string;
   }
 > = {

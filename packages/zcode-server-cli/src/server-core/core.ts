@@ -4,12 +4,12 @@ import { createLegacyServerCredentialCipher } from "@zcode/shared/credential-sec
 import {
   createServerHostServices,
   disposeServiceResourcesAndWait,
-  materializeXCodeBuiltinProviderConfig,
+  materializeZCodeBuiltinProviderConfig,
   getAppConfigDir,
   ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV,
   createTopicResourcePeers,
 } from "@zcode/services/node";
-import { IXCodeAgentService } from "@zcode/services";
+import { IZCodeAgentService } from "@zcode/services";
 import { ZCODE_APP_VERSION_ENV, ZCODE_VERSION } from "@zcode/shared";
 import { createCoreHttpServer } from "./http.js";
 import { createIngressToken } from "./ingressToken.js";
@@ -40,15 +40,15 @@ export async function runServerCore(generation: number): Promise<void> {
   });
   const layout = resolveServerLayout(process.env.ZCODE_SERVER_ROOT?.trim());
   const topicResourcePeers = createTopicResourcePeers();
-  const explicitXCodeBuiltinProviderConfigFilePath =
+  const explicitZCodeBuiltinProviderConfigFilePath =
     process.env[ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]?.trim();
   // Built-in Config 物化到所属 Environment 配置根（~/.zcode/v2）而不是 release 自带的 runtime 目录：
   // release 目录是不可变的，同一 releaseId 重装时 assertExistingReleaseMatches 会重算整棵树的
   // 内容哈希，多出的物化文件会让校验失败。
-  const zcodeBuiltinProviderConfigFilePath = explicitXCodeBuiltinProviderConfigFilePath
-    ? explicitXCodeBuiltinProviderConfigFilePath
+  const zcodeBuiltinProviderConfigFilePath = explicitZCodeBuiltinProviderConfigFilePath
+    ? explicitZCodeBuiltinProviderConfigFilePath
     : typeof __ZCODE_BUILTIN_PROVIDER_CONFIG_JSON__ === "string"
-      ? await materializeXCodeBuiltinProviderConfig({
+      ? await materializeZCodeBuiltinProviderConfig({
           environmentConfigRoot: getAppConfigDir(),
           content: __ZCODE_BUILTIN_PROVIDER_CONFIG_JSON__,
         })
@@ -75,7 +75,7 @@ export async function runServerCore(generation: number): Promise<void> {
       credentialCipherProvider,
       topicResourceRelayChannel: (request) => topicResourcePeers.getChannel(request),
     });
-  const taskActivityTracker = createTaskActivityTracker(services.getOptional(IXCodeAgentService));
+  const taskActivityTracker = createTaskActivityTracker(services.getOptional(IZCodeAgentService));
   const ingressToken = await createIngressToken(layout);
   const http = await createCoreHttpServer(services, {
     serverId: sourceServerId,

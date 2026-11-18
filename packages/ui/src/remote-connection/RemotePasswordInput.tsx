@@ -3,7 +3,7 @@ import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { Input } from "@/components/ui/input.js";
 import { Button } from "@/components/ui/button.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /** 显隐只属于字段草稿，不复制凭据值，也不触发表单提交。 */
 export function RemotePasswordInput({
@@ -11,7 +11,7 @@ export function RemotePasswordInput({
   ...props
 }: Omit<ComponentProps<typeof Input>, "type">) {
   const [visible, setVisible] = useState(false);
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <div className="relative">
       <Input {...props} type={visible ? "text" : "password"} className={cn(className, "pr-10")} />

@@ -381,7 +381,7 @@ Agent 接线约定：发行包内 Core 不在 monorepo、也没有 Electron runt
 `ZCODE_AGENT_SERVER_COMMAND` 仍永远优先；开发态没有 release runtime 时不注入。
 
 Agent 版本身份：Core 启动时把自身编译期版本 `ZCODE_VERSION` 写入 `ZCODE_APP_VERSION`，覆盖继承值；
-Core 拉起的 Agent 继承该 env，模型请求的 `User-Agent` / `X-XCode-App-Version` 和遥测
+Core 拉起的 Agent 继承该 env，模型请求的 `User-Agent` / `X-ZCode-App-Version` 和遥测
 productVersion 报告 App 版本，而不是 CLI 包版本。注入点只能在 Core：升级时旧 Supervisor 会拉起
 新 release 的 Core，Supervisor 与 SSH/WSL/Docker exec 的版本都不代表该 Core。
 

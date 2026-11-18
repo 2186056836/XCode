@@ -3,12 +3,12 @@ import type {
   McpServerStatus,
   SkillSummary,
   UserCommand,
-  XCodeCommand,
-  XCodeMcpServer,
-  XCodeMcpServerStatusSnapshot,
-  XCodePluginInfo,
-  XCodePluginComponentKind,
-  XCodePluginsDescribeResult,
+  ZCodeCommand,
+  ZCodeMcpServer,
+  ZCodeMcpServerStatusSnapshot,
+  ZCodePluginInfo,
+  ZCodePluginComponentKind,
+  ZCodePluginsDescribeResult,
 } from "@zcode/shared";
 import { isPluginCommand, isUserCommand, ZCODE_COMMAND_AGENT_SOURCE } from "@zcode/shared";
 import type { PluginComponentDisplayGroup } from "@/settings/PluginComponentGroups.js";
@@ -19,7 +19,7 @@ export interface ResourceGroups<TLocal, TPlugin> {
 }
 
 /** 详情分组的展示顺序，与 describeResultToDisplayGroups / buildInstalledPluginDisplayGroups 一致。 */
-const COMPONENT_KIND_ORDER: XCodePluginComponentKind[] = [
+const COMPONENT_KIND_ORDER: ZCodePluginComponentKind[] = [
   "agent",
   "command",
   "skill",
@@ -32,9 +32,9 @@ const COMPONENT_KIND_ORDER: XCodePluginComponentKind[] = [
  * 省略空分组。数量取 items.length（describe 已是权威枚举）。
  */
 export function describeResultToDisplayGroups(
-  result: XCodePluginsDescribeResult,
+  result: ZCodePluginsDescribeResult,
 ): PluginComponentDisplayGroup[] {
-  const byKind = new Map<XCodePluginComponentKind, PluginComponentDisplayGroup>();
+  const byKind = new Map<ZCodePluginComponentKind, PluginComponentDisplayGroup>();
   for (const group of result.components) {
     if (group.items.length === 0) continue;
     byKind.set(group.kind, {
@@ -61,9 +61,9 @@ export function describeResultToDisplayGroups(
  * 这里直接用它，彻底去掉脆弱的 join。
  */
 export function buildInstalledPluginDisplayGroups(
-  plugin: XCodePluginInfo,
+  plugin: ZCodePluginInfo,
 ): PluginComponentDisplayGroup[] {
-  const byKind = new Map<XCodePluginComponentKind, PluginComponentDisplayGroup>();
+  const byKind = new Map<ZCodePluginComponentKind, PluginComponentDisplayGroup>();
   for (const group of plugin.components ?? []) {
     if (group.items.length === 0) continue;
     byKind.set(group.kind, {
@@ -82,9 +82,9 @@ export function buildInstalledPluginDisplayGroups(
 
 export interface PluginMcpServerItem {
   active: boolean;
-  authorization?: XCodeMcpServerStatusSnapshot["authorization"];
+  authorization?: ZCodeMcpServerStatusSnapshot["authorization"];
   error?: string;
-  failureKind?: XCodeMcpServerStatusSnapshot["failureKind"];
+  failureKind?: ZCodeMcpServerStatusSnapshot["failureKind"];
   id: string;
   name: string;
   pluginEnabled: boolean;
@@ -173,7 +173,7 @@ export function groupSkillsByPlugin(
 }
 
 export function groupCommandsByPlugin(
-  commands: XCodeCommand[],
+  commands: ZCodeCommand[],
   query: string,
 ): ResourceGroups<UserCommand, PluginCommand> {
   const local: UserCommand[] = [];
@@ -202,7 +202,7 @@ export function groupCommandsByPlugin(
   return { local, plugin };
 }
 
-export function filterLocalMcpServers(servers: XCodeMcpServer[], query: string): XCodeMcpServer[] {
+export function filterLocalMcpServers(servers: ZCodeMcpServer[], query: string): ZCodeMcpServer[] {
   return servers.filter((server) => {
     if (server.source !== "zcodeagentmcp") {
       return false;
@@ -212,9 +212,9 @@ export function filterLocalMcpServers(servers: XCodeMcpServer[], query: string):
 }
 
 export function buildPluginMcpServerItems(
-  plugins: XCodePluginInfo[],
+  plugins: ZCodePluginInfo[],
   query: string,
-  statusSnapshots: Record<string, XCodeMcpServerStatusSnapshot> = {},
+  statusSnapshots: Record<string, ZCodeMcpServerStatusSnapshot> = {},
 ): PluginMcpServerItem[] {
   return plugins.flatMap((plugin) => {
     const activeNames = new Set(plugin.mcpServerNames);
@@ -260,14 +260,14 @@ export function buildPluginMcpServerItems(
   });
 }
 
-function toPluginMcpServerDisplayName(plugin: XCodePluginInfo, serverName: string): string {
+function toPluginMcpServerDisplayName(plugin: ZCodePluginInfo, serverName: string): string {
   const namespacePrefix = `plugin:${plugin.name}:`;
   return serverName.startsWith(namespacePrefix)
     ? serverName.slice(namespacePrefix.length)
     : serverName;
 }
 
-function resolvePluginMcpRuntimeServerName(plugin: XCodePluginInfo, displayName: string): string {
+function resolvePluginMcpRuntimeServerName(plugin: ZCodePluginInfo, displayName: string): string {
   const activeName = plugin.mcpServerNames.find(
     (serverName) =>
       serverName === displayName ||
@@ -277,7 +277,7 @@ function resolvePluginMcpRuntimeServerName(plugin: XCodePluginInfo, displayName:
 }
 
 function mapPluginRuntimeStatus(
-  snapshot: XCodeMcpServerStatusSnapshot | undefined,
+  snapshot: ZCodeMcpServerStatusSnapshot | undefined,
 ): Pick<
   PluginMcpServerItem,
   "authorization" | "error" | "failureKind" | "serverRequestId" | "status" | "toolCount"

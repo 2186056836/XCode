@@ -2,7 +2,7 @@ import { Globe2Icon, MousePointer2Icon, Trash2Icon } from "lucide-react";
 import { TID_WEB_ELEMENT_CONTEXT_CHIP } from "@zcode/shared/test-ids";
 import type { AttachmentHoverCardContentProps } from "@/components/ai-elements/attachments.js";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { WebElementContextComposerAttachment } from "@/lib/webElementContext.js";
 import { ContextAttachmentPill } from "@/v4/composer/ContextAttachmentPill.js";
 
@@ -29,7 +29,7 @@ export function WebElementContextAttachmentChip({
   onRemove?: (id: string) => void;
   onRemoveAll?: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (contexts.length === 0) {
     return null;
   }

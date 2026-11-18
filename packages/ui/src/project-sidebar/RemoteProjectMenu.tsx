@@ -13,7 +13,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   getRemoteDevicePresentationInput,
   resolveRemoteConnectionPresentation,
@@ -29,7 +29,7 @@ export function RemoteProjectMenu({
   onOpenFolder: () => void;
   onOpenRemoteWorkspace?: (preference?: RemoteConnectionOpenPreference) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

@@ -5,9 +5,9 @@ import {
   findUnclosedAssistantDirectiveStart,
 } from "@/lib/assistantDirectiveParser.js";
 
-export type XCodeFileCitationPreviewKind = "docx" | "xlsx" | "pptx" | "pdf" | "video" | "audio";
+export type ZCodeFileCitationPreviewKind = "docx" | "xlsx" | "pptx" | "pdf" | "video" | "audio";
 
-export interface XCodeFileCitation {
+export interface ZCodeFileCitation {
   artifactKind?: string;
   end: number;
   path: string;
@@ -16,7 +16,7 @@ export interface XCodeFileCitation {
   start: number;
 }
 
-export interface XCodeFileCitationDirective {
+export interface ZCodeFileCitationDirective {
   artifactKind?: string;
   end: number;
   path?: string;
@@ -25,12 +25,12 @@ export interface XCodeFileCitationDirective {
   start: number;
 }
 
-export interface XCodeFileCitationProjection {
+export interface ZCodeFileCitationProjection {
   visibleText: string;
 }
 
 const ARTIFACT_KIND_TO_PREVIEW_KIND: Readonly<
-  Record<string, Exclude<XCodeFileCitationPreviewKind, "pdf">>
+  Record<string, Exclude<ZCodeFileCitationPreviewKind, "pdf">>
 > = {
   audio: "audio",
   document: "docx",
@@ -38,7 +38,7 @@ const ARTIFACT_KIND_TO_PREVIEW_KIND: Readonly<
   video: "video",
   workbook: "xlsx",
 };
-const PREVIEW_EXTENSION_TO_KIND: Readonly<Record<string, XCodeFileCitationPreviewKind>> = {
+const PREVIEW_EXTENSION_TO_KIND: Readonly<Record<string, ZCodeFileCitationPreviewKind>> = {
   ".docx": "docx",
   ".flac": "audio",
   ".m4a": "audio",
@@ -63,7 +63,7 @@ const ZCODE_FILE_CITATION_SYNTAX = {
   allowTripleColon: true,
 } as const;
 
-export function extractXCodeFileCitationDirectives(content: string): XCodeFileCitationDirective[] {
+export function extractZCodeFileCitationDirectives(content: string): ZCodeFileCitationDirective[] {
   return extractAssistantDirectives(
     content,
     ZCODE_FILE_CITATION_DIRECTIVE_NAME,
@@ -82,8 +82,8 @@ export function extractXCodeFileCitationDirectives(content: string): XCodeFileCi
   }));
 }
 
-export function extractXCodeFileCitations(content: string): XCodeFileCitation[] {
-  return extractXCodeFileCitationDirectives(content).flatMap((directive) =>
+export function extractZCodeFileCitations(content: string): ZCodeFileCitation[] {
+  return extractZCodeFileCitationDirectives(content).flatMap((directive) =>
     directive.path
       ? [
           {
@@ -100,10 +100,10 @@ export function extractXCodeFileCitations(content: string): XCodeFileCitation[] 
  * 卡片是否生成仍由终态 row gate 决定。异常模型输出若已换行继续正文，则保留原文，避免
  * 一个缺失 `}` 的指令把后续回答全部吞掉；代码块中的协议样例也不参与隐藏。
  */
-export function projectXCodeFileCitations(
+export function projectZCodeFileCitations(
   content: string,
   options: { streaming: boolean },
-): XCodeFileCitationProjection {
+): ZCodeFileCitationProjection {
   if (!options.streaming || !content) return { visibleText: content };
 
   const protectedRanges = findMarkdownCodeRanges(content);
@@ -134,7 +134,7 @@ export function projectXCodeFileCitations(
   };
 }
 
-function inferPreviewKindFromPath(path: string): XCodeFileCitationPreviewKind | null {
+function inferPreviewKindFromPath(path: string): ZCodeFileCitationPreviewKind | null {
   const normalizedPath = path.trim().toLowerCase();
   for (const [extension, kind] of Object.entries(PREVIEW_EXTENSION_TO_KIND)) {
     if (normalizedPath.endsWith(extension)) return kind;
@@ -142,10 +142,10 @@ function inferPreviewKindFromPath(path: string): XCodeFileCitationPreviewKind | 
   return null;
 }
 
-export function resolveXCodeFileCitationPreviewKind(params: {
+export function resolveZCodeFileCitationPreviewKind(params: {
   artifactKind?: string;
   path: string;
-}): XCodeFileCitationPreviewKind | null {
+}): ZCodeFileCitationPreviewKind | null {
   const inferredKind = inferPreviewKindFromPath(params.path);
   if (params.artifactKind === undefined) return inferredKind;
 

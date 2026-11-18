@@ -16,7 +16,7 @@ import {
 import { Anchor, Cable } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   setPendingSettingsSectionIntent,
   setPendingSettingsPluginIntent,
@@ -67,7 +67,7 @@ export const WorkspaceHookPendingIndicator = memo(function WorkspaceHookPendingI
   workspaceIdentity,
   admission,
 }: WorkspaceHookPendingIndicatorProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const openSettingsTab = useOptionalTabStore((state) => state.openSettingsTab);
   const commandBindings = useWorkspaceHookReviewStore((state) => state.commandBindings);
   const [open, setOpen] = useState(false);
@@ -203,7 +203,7 @@ export const WorkspaceMcpPendingIndicator = memo(function WorkspaceMcpPendingInd
   workspaceIdentity?: string;
   admission: WorkspaceMcpAdmissionSnapshotState;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const openSettingsTab = useOptionalTabStore((state) => state.openSettingsTab);
   const [open, setOpen] = useState(false);
   const workspaceKey = getWorkspaceKey(workspacePath, workspaceIdentity);

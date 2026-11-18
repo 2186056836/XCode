@@ -1,6 +1,6 @@
-import type { XCodeConfigOption, XCodeProvider, XCodeTaskMode } from "@zcode/shared";
+import type { ZCodeConfigOption, ZCodeProvider, ZCodeTaskMode } from "@zcode/shared";
 
-const ZCODE_TASK_MODE_VALUES: readonly XCodeTaskMode[] = [
+const ZCODE_TASK_MODE_VALUES: readonly ZCodeTaskMode[] = [
   "default",
   "yolo",
   "guarded",
@@ -16,12 +16,12 @@ const ZCODE_TASK_MODE_VALUES: readonly XCodeTaskMode[] = [
 
 const ZCODE_TASK_MODE_SET = new Set<string>(ZCODE_TASK_MODE_VALUES);
 
-function normalizeXCodeModeForTaskCreation(
+function normalizeZCodeModeForTaskCreation(
   modeId: string,
-  _provider?: XCodeProvider,
-): XCodeTaskMode | undefined {
+  _provider?: ZCodeProvider,
+): ZCodeTaskMode | undefined {
   if (ZCODE_TASK_MODE_SET.has(modeId)) {
-    return modeId as XCodeTaskMode;
+    return modeId as ZCodeTaskMode;
   }
 
   switch (modeId) {
@@ -88,10 +88,10 @@ export function getErrorMessage(err: unknown): string {
   return stringifyUnknownValue(err);
 }
 
-export function readCurrentXCodeMode(
-  options: readonly XCodeConfigOption[],
-  provider?: XCodeProvider,
-): XCodeTaskMode | undefined {
+export function readCurrentZCodeMode(
+  options: readonly ZCodeConfigOption[],
+  provider?: ZCodeProvider,
+): ZCodeTaskMode | undefined {
   const modeOption = options.find(
     (option) => option.category === "mode" && option.type === "select",
   );
@@ -100,7 +100,7 @@ export function readCurrentXCodeMode(
     return undefined;
   }
 
-  // Bugfix: 之前只白名单了本地 XCodeTaskMode，导致 provider 原生模式
+  // Bugfix: 之前只白名单了本地 ZCodeTaskMode，导致 provider 原生模式
   // 在首发建 session 时被丢弃。这里先归一化，避免 UI 已选模式和真实 XCode Agent session 模式不一致。
-  return normalizeXCodeModeForTaskCreation(currentValue, provider);
+  return normalizeZCodeModeForTaskCreation(currentValue, provider);
 }

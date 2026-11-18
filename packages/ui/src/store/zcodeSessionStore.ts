@@ -6,14 +6,14 @@
  */
 import { create } from "zustand";
 import { shouldExposeE2EStoreBridge } from "@/lib/e2eStoreBridge.js";
-import { type XCodeSessionStoreState } from "./zcodeSessionStoreTypes.js";
+import { type ZCodeSessionStoreState } from "./zcodeSessionStoreTypes.js";
 import { getWorkspaceState } from "./zcodeSessionStoreSelectors.js";
 import { createNavigationSlice } from "./zcodeSessionStoreNavigation.js";
 import { createTaskSlice } from "./zcodeSessionStoreTaskSlice.js";
 import { createWorkspaceSlice } from "./zcodeSessionStoreWorkspaceSlice.js";
 import { uiMemoryDiagnosticsRegistry } from "@/lib/memoryDiagnostics.js";
 
-export const useXCodeSessionStore = create<XCodeSessionStoreState>()((set, get) => ({
+export const useZCodeSessionStore = create<ZCodeSessionStoreState>()((set, get) => ({
   workspaces: {},
   ...createNavigationSlice(set, get),
   ...createWorkspaceSlice(set),
@@ -22,17 +22,17 @@ export const useXCodeSessionStore = create<XCodeSessionStoreState>()((set, get) 
     getWorkspaceState(get(), workspacePath, workspaceIdentity),
 }));
 
-type XCodeSessionStoreE2EBridge = typeof useXCodeSessionStore;
+type ZCodeSessionStoreE2EBridge = typeof useZCodeSessionStore;
 
 declare global {
   interface Window {
-    __zcodeSessionStoreE2E?: XCodeSessionStoreE2EBridge;
+    __zcodeSessionStoreE2E?: ZCodeSessionStoreE2EBridge;
   }
 }
 
 if (shouldExposeE2EStoreBridge()) {
   // E2E 诊断入口必须由 WDIO 显式打开，不能复用 ZCODE_ENV=test，避免产品测试环境暴露可变全局 store。
-  window.__zcodeSessionStoreE2E = useXCodeSessionStore;
+  window.__zcodeSessionStoreE2E = useZCodeSessionStore;
 }
 
 // ────────────────────────────────────────────
@@ -49,5 +49,5 @@ export type {
 
 // 内存诊断计数器：workspace 桶全仓无删除路径，先落日志。
 uiMemoryDiagnosticsRegistry.register("sessionStore", () => ({
-  workspaces: Object.keys(useXCodeSessionStore.getState().workspaces).length,
+  workspaces: Object.keys(useZCodeSessionStore.getState().workspaces).length,
 }));

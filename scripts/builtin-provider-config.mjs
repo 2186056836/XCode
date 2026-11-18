@@ -52,12 +52,12 @@ export async function loadBuiltinProviderConfig({ root = repositoryRoot, env = p
     // 构建期复用运行时的完整 Release 校验，避免打包成功后才发现 Schema 不兼容。
     // tsx 仅供构建工具加载仓库 TS，不进入产品 bundle，也不复制一份校验规则。
     // Windows 绝对路径的盘符会被 ESM 当作协议，转为 file URL 后各平台共用同一加载入口。
-    const { decodeXCodeBuiltinRelease } = await tsImport(
+    const { decodeZCodeBuiltinRelease } = await tsImport(
       pathToFileURL(resolve(repositoryRoot, "packages/provider-node/src/zcode-builtin-release.ts"))
         .href,
       import.meta.url,
     );
-    decodeXCodeBuiltinRelease(JSON.parse(content));
+    decodeZCodeBuiltinRelease(JSON.parse(content));
     return { environment, sourcePath, content };
   } catch (error) {
     throw new Error(`Invalid Built-in Provider config (${environment}): ${sourcePath}`, {

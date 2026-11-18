@@ -1,14 +1,14 @@
 // ── 旧协议兼容面（过渡期）──────────────────────────────
-// 剩余 1 个导出：deriveXCodeTaskStatusFromSessionSnapshot。
+// 剩余 1 个导出：deriveZCodeTaskStatusFromSessionSnapshot。
 // 消费者：zcodeTaskServiceAdapter/zcodeTaskIndexSyncer/zcodeSessionProjection（旧投影栈）。
-import type { XCodeSessionStateSnapshot } from "./zcode-protocol/index.js";
-import { getXCodeUserVisibleMessages } from "./zcode-session-visible-content.js";
-import type { XCodeTaskMeta } from "./zcode-task-types-core.js";
-type XCodeTaskStatus = XCodeTaskMeta["status"];
+import type { ZCodeSessionStateSnapshot } from "./zcode-protocol/index.js";
+import { getZCodeUserVisibleMessages } from "./zcode-session-visible-content.js";
+import type { ZCodeTaskMeta } from "./zcode-task-types-core.js";
+type ZCodeTaskStatus = ZCodeTaskMeta["status"];
 
-function statusFromXCodeSession(
-  status: XCodeSessionStateSnapshot["session"]["status"],
-): XCodeTaskStatus {
+function statusFromZCodeSession(
+  status: ZCodeSessionStateSnapshot["session"]["status"],
+): ZCodeTaskStatus {
   if (status === "running" || status === "waiting" || status === "paused") {
     return "running";
   }
@@ -17,7 +17,7 @@ function statusFromXCodeSession(
   return undefined;
 }
 
-function hasBlockingActiveSnapshotRuntime(snapshot: XCodeSessionStateSnapshot): boolean {
+function hasBlockingActiveSnapshotRuntime(snapshot: ZCodeSessionStateSnapshot): boolean {
   if (snapshot.runtime.activeTurnId || snapshot.runtime.activeTurnKind) {
     return true;
   }
@@ -31,7 +31,7 @@ function hasBlockingActiveSnapshotRuntime(snapshot: XCodeSessionStateSnapshot): 
   );
 }
 
-function hasActiveSnapshotRuntime(snapshot: XCodeSessionStateSnapshot): boolean {
+function hasActiveSnapshotRuntime(snapshot: ZCodeSessionStateSnapshot): boolean {
   return hasBlockingActiveSnapshotRuntime(snapshot);
 }
 
@@ -40,8 +40,8 @@ function isToolCallContinuationFinish(finish: string | undefined): boolean {
   return normalized === "tool-calls";
 }
 
-function hasCompletedVisibleAssistantTurn(snapshot: XCodeSessionStateSnapshot): boolean {
-  const visibleMessages = getXCodeUserVisibleMessages(snapshot.messages, {
+function hasCompletedVisibleAssistantTurn(snapshot: ZCodeSessionStateSnapshot): boolean {
+  const visibleMessages = getZCodeUserVisibleMessages(snapshot.messages, {
     target: snapshot.projection.target,
   });
   const latestVisibleMessage = visibleMessages.at(-1);
@@ -54,14 +54,14 @@ function hasCompletedVisibleAssistantTurn(snapshot: XCodeSessionStateSnapshot): 
   return typeof latestVisibleMessage.info.time.completed === "number";
 }
 
-export function deriveXCodeTaskStatusFromSessionSnapshot(
-  snapshot: XCodeSessionStateSnapshot,
-): XCodeTaskStatus {
+export function deriveZCodeTaskStatusFromSessionSnapshot(
+  snapshot: ZCodeSessionStateSnapshot,
+): ZCodeTaskStatus {
   if (snapshot.projection.lastError) {
     return "error";
   }
 
-  const status = statusFromXCodeSession(snapshot.session.status);
+  const status = statusFromZCodeSession(snapshot.session.status);
   if (status === "error" || status === "completed") {
     return status;
   }

@@ -7,7 +7,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export interface ProjectFolderTrustRequest {
   roots: string[];
@@ -26,7 +26,7 @@ export function ProjectFolderTrustDialog({
   request: ProjectFolderTrustRequest;
   onClosed(): void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const cancel = useRef<HTMLButtonElement>(null);
   const msg = (id: string) => intl.formatMessage({ id: `project.${id}` });
   return (

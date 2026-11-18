@@ -8,8 +8,8 @@ import { completeNewModelSelection } from "@zcode/provider";
 import { FolderOpen } from "lucide-react";
 import {
   ZCODE_AGENT_PROVIDER,
-  type XCodeConfigOption,
-  type XCodeOffPeakTask,
+  type ZCodeConfigOption,
+  type ZCodeOffPeakTask,
   type ModelSelection,
 } from "@zcode/shared";
 import {
@@ -41,7 +41,7 @@ import { OffPeakHistoryTab } from "@/settings/OffPeakHistoryTab.js";
 import { AutomationSwitchToggle } from "@/settings/AutomationSwitchToggle.js";
 import { cn } from "@/components/lib/utils.js";
 import { SETTINGS_FRAME_CONTENT_CLASSNAME } from "@/settings/SettingsPageParts.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useSettings } from "@/hooks/useSettingService.js";
 import { useConfirmDialog, useYoloModeConfirmation } from "@/hooks/useConfirmDialog.js";
 import {
@@ -93,7 +93,7 @@ export interface OffPeakEditSubmit {
 }
 
 interface OffPeakEditViewProps {
-  editing: XCodeOffPeakTask | null;
+  editing: ZCodeOffPeakTask | null;
   /** 创建态预填（New task 页模板卡跳转）；编辑态忽略。 */
   initialDraft?: { title?: string; prompt?: string } | null;
   modelSelectionView: ModelSelectionView;
@@ -110,10 +110,10 @@ interface OffPeakEditViewProps {
     workspacePath: string;
     workspaceIdentity?: string;
   }) => void;
-  onDelete?: (task: XCodeOffPeakTask) => void;
-  onDeleteHistory?: (task: XCodeOffPeakTask) => void;
-  onPause?: (task: XCodeOffPeakTask) => void;
-  onContinue?: (task: XCodeOffPeakTask) => void;
+  onDelete?: (task: ZCodeOffPeakTask) => void;
+  onDeleteHistory?: (task: ZCodeOffPeakTask) => void;
+  onPause?: (task: ZCodeOffPeakTask) => void;
+  onContinue?: (task: ZCodeOffPeakTask) => void;
   showToast?: typeof toast;
 }
 
@@ -139,7 +139,7 @@ export function OffPeakEditView({
   onContinue,
   showToast = toast,
 }: OffPeakEditViewProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { settings, update: updateSettings } = useSettings();
   const confirmDialog = useConfirmDialog();
   const localWorkspaceOptions = useAutomationProjectOptions();
@@ -228,7 +228,7 @@ export function OffPeakEditView({
   }, [createProjectKey, editing, localWorkspaceOptions, preferredLocalWorkspace]);
   // 闲时任务模型和 reasoning 档位只读取 Host 投影的 Built-in Config，
   // 避免 Renderer 按模型名重建第二份模型事实。
-  const thoughtLevelOption = useMemo<XCodeConfigOption | null>(
+  const thoughtLevelOption = useMemo<ZCodeConfigOption | null>(
     () =>
       resolveModelThoughtOption({
         modelSelectionView,
@@ -488,7 +488,7 @@ export function OffPeakEditView({
           task={editing}
           {...(onOpenSession
             ? {
-                onOpenSession: (task: XCodeOffPeakTask) =>
+                onOpenSession: (task: ZCodeOffPeakTask) =>
                   task.sessionId
                     ? onOpenSession({
                         sessionId: task.sessionId,

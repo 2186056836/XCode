@@ -1,6 +1,6 @@
 import { PanelLeftOpen } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export interface ConversationShareSelectionReopenTabProps {
   onOpen: () => void;
@@ -9,7 +9,7 @@ export interface ConversationShareSelectionReopenTabProps {
 export function ConversationShareSelectionReopenTab({
   onOpen,
 }: ConversationShareSelectionReopenTabProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <Button

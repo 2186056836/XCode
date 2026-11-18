@@ -1,6 +1,6 @@
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   getPatchPreviewLineContent,
   parseTruncatedMarkerOmittedLineCount,
@@ -117,7 +117,7 @@ export function LightweightDiffPreview({
   renderLineContent,
   ...props
 }: LightweightDiffPreviewProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <div

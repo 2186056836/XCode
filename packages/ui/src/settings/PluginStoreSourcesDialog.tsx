@@ -1,9 +1,9 @@
 import { AlertTriangle, LoaderCircle, RefreshCw, Trash2 } from "lucide-react";
-import type { XCodePluginMarketplaceSummary } from "@zcode/shared";
+import type { ZCodePluginMarketplaceSummary } from "@zcode/shared";
 import { CLAUDE_OFFICIAL_PLUGIN_MARKETPLACE_ID } from "@zcode/shared";
 import { Button } from "@/components/ui/button.js";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { resolveMarketplaceDisplayName } from "@/settings/pluginSourceLabel.js";
 import {
   isPublicStoreMarketplaceId,
@@ -12,7 +12,7 @@ import {
 import { DEFAULT_MARKETPLACE_ID } from "@/settings/recommendedPlugins.js";
 
 // 官方市场不可移除：移除后启动时会被重新补种，只会造成「删了又回来」的困惑。
-function isRemovableMarketplace(marketplace: XCodePluginMarketplaceSummary): boolean {
+function isRemovableMarketplace(marketplace: ZCodePluginMarketplaceSummary): boolean {
   if (isPublicStoreMarketplaceId(marketplace.id)) return false;
   if (marketplace.id === DEFAULT_MARKETPLACE_ID) return false;
   return true;
@@ -21,9 +21,9 @@ function isRemovableMarketplace(marketplace: XCodePluginMarketplaceSummary): boo
 export function PluginStoreSourceRefreshFailure({
   failure,
 }: {
-  failure: NonNullable<XCodePluginMarketplaceSummary["refreshFailure"]>;
+  failure: NonNullable<ZCodePluginMarketplaceSummary["refreshFailure"]>;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   return (
     <div
       className="mt-1 flex min-w-0 items-start gap-1 text-ui-base text-destructive"
@@ -52,12 +52,12 @@ export function PluginStoreSourcesDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  marketplaces: XCodePluginMarketplaceSummary[];
+  marketplaces: ZCodePluginMarketplaceSummary[];
   onUpdateMarketplace: (marketplace: string) => void;
   onRemoveMarketplace: (marketplace: string) => void;
   activeOperations: ReadonlyArray<{ id: string }>;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const claudeCodePlugins = intl.formatMessage({
     id: "settings.plugins.marketplace.claudeCodePlugins",
   });

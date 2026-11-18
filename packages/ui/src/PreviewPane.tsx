@@ -21,7 +21,7 @@ import type { FileBinaryPreview, FileMediaPreview, FileTextSlice } from "@zcode/
 import { TID_PREVIEW_PANE } from "@zcode/shared/test-ids";
 import { useWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { usePptxFileWatch } from "@/hooks/usePptxFileWatch.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { usePdfViewerLabels, usePptxViewerLabels } from "@/hooks/usePreviewViewerLabels.js";
 import {
   FILE_VIEWER_MAX_TEXT_BYTES,
@@ -40,7 +40,7 @@ import { getPathLeaf, isAbsoluteFilePath } from "@/lib/path.js";
 import { decodeBase64ToArrayBuffer, getOfficeFilePreviewKind } from "@/lib/officeFilePreview.js";
 import { OpenSplitButton } from "@/OpenSplitButton.js";
 import { logger } from "@/logger.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { useCodeCommentPreviewStore } from "@/store/codeCommentPreviewStore.js";
 import { resolveTheme } from "@/useTheme.js";
 import {
@@ -517,9 +517,9 @@ export function PreviewPane({
   headerContainer?: HTMLElement | null;
   markdownSelectionTarget?: MarkdownSelectionTarget;
 }) {
-  const { intl } = useXCodeIntl();
-  const theme = useXCodeStore((state) => state.theme);
-  const codePreviewSettings = useXCodeStore((state) => state.codePreviewSettings);
+  const { intl } = useZCodeIntl();
+  const theme = useZCodeStore((state) => state.theme);
+  const codePreviewSettings = useZCodeStore((state) => state.codePreviewSettings);
   const source = useMemo(
     () => (rawSource ? normalizeCodeViewerSource(rawSource) : null),
     [rawSource],

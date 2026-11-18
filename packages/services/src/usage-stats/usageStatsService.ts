@@ -15,13 +15,13 @@ import type {
   UsageEntitlementSnapshot,
   UsageStatsRequest,
   UsageStatsSnapshot,
-  XCodeUsageRequestDetailsParams,
-  XCodeUsageRequestDetailsResult,
+  ZCodeUsageRequestDetailsParams,
+  ZCodeUsageRequestDetailsResult,
 } from "@zcode/shared";
 import { isCodingPlanModelProviderId } from "@zcode/shared";
 import type { OAuthAccountMaterial } from "#src/oauth/repo/oauthCredentialRepo.js";
 import type { IAccountRequestAuthService } from "../model-provider/accountRequestAuthService.js";
-import type { IXCodeAgentService } from "../zcode-agent/zcodeAgent.js";
+import type { IZCodeAgentService } from "../zcode-agent/zcodeAgent.js";
 import type { IUsageStatsService } from "./usageStats.js";
 import {
   BigModelUsageQuotaProvider,
@@ -42,7 +42,7 @@ interface UsageStatsServiceDependencies {
   ) => Promise<UsageApiAuthorization | null>;
   env?: NodeJS.ProcessEnv;
   /** App Usage 经 XCode Protocol 读取 agent 数据库真实统计。 */
-  zcodeAgentService: Pick<IXCodeAgentService, "getAppUsageStats" | "getUsageRequestDetails">;
+  zcodeAgentService: Pick<IZCodeAgentService, "getAppUsageStats" | "getUsageRequestDetails">;
   /**
    * 官方 Server MCP 额度的凭证来源（与 server MCP 调用同一套 5 个身份头）。
    * 缺省时 entitlement 快照不含 MCP 额度。
@@ -92,8 +92,8 @@ export function createUsageStatsService(
       });
     },
     async getRequestDetails(
-      request: XCodeUsageRequestDetailsParams,
-    ): Promise<XCodeUsageRequestDetailsResult> {
+      request: ZCodeUsageRequestDetailsParams,
+    ): Promise<ZCodeUsageRequestDetailsResult> {
       // 「使用详情」与 App Usage 同源（agent 侧 model_usage 表），经 v4/usage/requestDetails 取回。
       return dependencies.zcodeAgentService.getUsageRequestDetails({
         page: request.page,

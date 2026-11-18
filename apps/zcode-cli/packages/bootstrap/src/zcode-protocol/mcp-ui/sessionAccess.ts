@@ -1,4 +1,4 @@
-import type { XCodeProtocolSessionRecord } from "../server-types.js";
+import type { ZCodeProtocolSessionRecord } from "../server-types.js";
 import type { McpUiPluginScope, McpUiSessionAccess } from "./contract.js";
 import { mcpUiInstances } from "./instances.js";
 
@@ -7,7 +7,7 @@ import { mcpUiInstances } from "./instances.js";
  * （插件 server 与普通 MCP server 同一张表），任何已配置的 server 都能渲染 MCP App。
  */
 export function createMcpUiSessionAccess(
-  record: XCodeProtocolSessionRecord,
+  record: ZCodeProtocolSessionRecord,
   scope: McpUiPluginScope,
 ): McpUiSessionAccess {
   const validate = () =>

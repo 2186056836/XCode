@@ -3,24 +3,24 @@ import {
   GHOST_SUPPLIER_KEY_PREFIX,
   buildNativeSupplierKey,
   resolveSupplierKeyFromModelDisplayValue,
-  type XCodeConfigOption,
-  type XCodeProvider,
-  type XCodeTaskMeta,
+  type ZCodeConfigOption,
+  type ZCodeProvider,
+  type ZCodeTaskMeta,
 } from "@zcode/shared";
 import { decodeCustomModelValue } from "@/lib/zcodeCustomModelValue.js";
 
 interface ModelConfigSyncScope {
-  provider: XCodeProvider;
+  provider: ZCodeProvider;
   supplierKey: string;
 }
 
 export interface ModelConfigSyncWorkspaceSnapshot {
   activeTaskId: string | null;
-  selectedProvider: XCodeProvider;
+  selectedProvider: ZCodeProvider;
   selectedSupplierKey: string;
-  configOptions: XCodeConfigOption[] | null;
-  optimisticTaskListByTaskId: Record<string, Pick<XCodeTaskMeta, "provider">>;
-  taskListCache: XCodeTaskMeta[] | null;
+  configOptions: ZCodeConfigOption[] | null;
+  optimisticTaskListByTaskId: Record<string, Pick<ZCodeTaskMeta, "provider">>;
+  taskListCache: ZCodeTaskMeta[] | null;
 }
 
 export function parseCustomProviderIdFromSupplierKey(supplierKey: string): string | null {
@@ -70,8 +70,8 @@ function isCustomSupplierKey(supplierKey: string): boolean {
 }
 
 function resolveModelSupplierKeyFromConfigOptions(
-  configOptions: XCodeConfigOption[] | null,
-  provider: XCodeProvider,
+  configOptions: ZCodeConfigOption[] | null,
+  provider: ZCodeProvider,
 ): string | null {
   const modelValue = resolveModelValueFromConfigOptions(configOptions);
   if (!modelValue) {
@@ -83,7 +83,7 @@ function resolveModelSupplierKeyFromConfigOptions(
 
 function resolveActiveTaskProvider(
   snapshot: ModelConfigSyncWorkspaceSnapshot,
-): XCodeProvider | null {
+): ZCodeProvider | null {
   const activeTaskId = snapshot.activeTaskId?.trim();
   if (!activeTaskId) {
     return null;
@@ -143,7 +143,7 @@ export function resolveWorkspaceModelConfigSyncScope(
 }
 
 function resolveModelValueFromConfigOptions(
-  configOptions: XCodeConfigOption[] | null,
+  configOptions: ZCodeConfigOption[] | null,
 ): string | null {
   const modelOption = configOptions?.find(
     (option) => option.category === "model" && option.type === "select",
@@ -161,8 +161,8 @@ function resolveModelValueFromConfigOptions(
 }
 
 export function resolveModelNameForConfigSync(params: {
-  configOptions: XCodeConfigOption[] | null;
-  selectedProvider: XCodeProvider;
+  configOptions: ZCodeConfigOption[] | null;
+  selectedProvider: ZCodeProvider;
   providerId: string;
   providerModels: string[];
 }): string | undefined {

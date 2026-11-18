@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { normalize } from "node:path";
-import type { XCodeAgentMcpServer } from "@zcode/shared";
+import type { ZCodeAgentMcpServer } from "@zcode/shared";
 
 function normalizePathForCompare(value: string): string {
   const normalized = normalize(value.trim()).replace(/[\\/]+$/, "");
@@ -8,8 +8,8 @@ function normalizePathForCompare(value: string): string {
 }
 
 function isFilesystemServer(
-  server: XCodeAgentMcpServer,
-): server is Extract<XCodeAgentMcpServer, { command: string }> {
+  server: ZCodeAgentMcpServer,
+): server is Extract<ZCodeAgentMcpServer, { command: string }> {
   return (
     "command" in server &&
     server.name === "filesystem" &&
@@ -18,9 +18,9 @@ function isFilesystemServer(
 }
 
 export function appendWorkspaceToFilesystemMcpServers(
-  mcpServers: XCodeAgentMcpServer[] | undefined,
+  mcpServers: ZCodeAgentMcpServer[] | undefined,
   workspacePath: string,
-): XCodeAgentMcpServer[] | undefined {
+): ZCodeAgentMcpServer[] | undefined {
   if (!mcpServers || mcpServers.length === 0) {
     return mcpServers;
   }

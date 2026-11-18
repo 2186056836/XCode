@@ -2,15 +2,15 @@
 // Host 删除受管 worktree 前用它卸载 cwd 位于 worktree 内的全部驻留会话：任一会话忙时全部不卸载。
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { zcodeProtocolMethods, type XCodeProtocolMessage } from "@zcode/shared";
-import { XCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
+import { zcodeProtocolMethods, type ZCodeProtocolMessage } from "@zcode/shared";
+import { ZCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
 import { createFakeApp } from "./helpers/fake-zcode-app.js";
 
 const PROJECT = join("/fixture", "repo");
 const WORKTREE = join("/fixture", "worktrees", "3f2a", "repo");
 
-async function request(server: XCodeProtocolAgentServer, method: string, params: unknown) {
-  const response = await server.handleMessage({ id: 1, method, params } as XCodeProtocolMessage);
+async function request(server: ZCodeProtocolAgentServer, method: string, params: unknown) {
+  const response = await server.handleMessage({ id: 1, method, params } as ZCodeProtocolMessage);
   if (!response || !("result" in response)) throw new Error(JSON.stringify(response));
   return response.result;
 }
@@ -18,8 +18,8 @@ async function request(server: XCodeProtocolAgentServer, method: string, params:
 /** 两个会话：一个 cwd 在 worktree 子目录中，一个在项目主目录中。 */
 async function boot() {
   const apps: Array<ReturnType<typeof createFakeApp>> = [];
-  const server = new XCodeProtocolAgentServer({
-    createXCodeApp: (options) => {
+  const server = new ZCodeProtocolAgentServer({
+    createZCodeApp: (options) => {
       const app = createFakeApp(options);
       apps.push(app);
       return app;

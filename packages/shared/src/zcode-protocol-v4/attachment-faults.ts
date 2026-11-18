@@ -6,7 +6,7 @@
 // 要求用稳定错误码，本模块即该契约的单一来源。
 //
 // 传输路径：CLI 侧抛出的 Error 带 `code` 字段，`toProtocolError` 会把 string code
-// 透传到 JSON-RPC `error.data.code`；客户端读回时用 readXCodeAttachmentFaultCode。
+// 透传到 JSON-RPC `error.data.code`；客户端读回时用 readZCodeAttachmentFaultCode。
 
 export const ZCODE_ATTACHMENT_FAULT_CODES = {
   /** host 未实现 stat 能力。 */
@@ -33,12 +33,12 @@ export const ZCODE_ATTACHMENT_FAULT_CODES = {
   previewNotMedia: "fault.attachment.previewNotMedia",
 } as const;
 
-export type XCodeAttachmentFaultCode =
+export type ZCodeAttachmentFaultCode =
   (typeof ZCODE_ATTACHMENT_FAULT_CODES)[keyof typeof ZCODE_ATTACHMENT_FAULT_CODES];
 
 const KNOWN_FAULT_CODES = new Set<string>(Object.values(ZCODE_ATTACHMENT_FAULT_CODES));
 
-export function isXCodeAttachmentFaultCode(value: unknown): value is XCodeAttachmentFaultCode {
+export function isZCodeAttachmentFaultCode(value: unknown): value is ZCodeAttachmentFaultCode {
   return typeof value === "string" && KNOWN_FAULT_CODES.has(value);
 }
 
@@ -46,36 +46,36 @@ export function isXCodeAttachmentFaultCode(value: unknown): value is XCodeAttach
  * 带稳定错误码的附件错误。`code` 是 string，`toProtocolError` 会把它放进
  * JSON-RPC `error.data.code`，因此同进程与跨进程都能按码分类。
  */
-export class XCodeAttachmentFaultError extends Error {
-  readonly code: XCodeAttachmentFaultCode;
+export class ZCodeAttachmentFaultError extends Error {
+  readonly code: ZCodeAttachmentFaultCode;
 
-  constructor(code: XCodeAttachmentFaultCode, options?: { cause?: unknown; message?: string }) {
+  constructor(code: ZCodeAttachmentFaultCode, options?: { cause?: unknown; message?: string }) {
     // message 默认就是 fault 码本身，旧版本客户端的文本匹配仍能命中。
     super(
       options?.message ?? code,
       options?.cause === undefined ? undefined : { cause: options.cause },
     );
-    this.name = "XCodeAttachmentFaultError";
+    this.name = "ZCodeAttachmentFaultError";
     this.code = code;
   }
 }
 
 /**
  * 从任意错误中读出附件 fault 码：
- * - 同进程抛出的 XCodeAttachmentFaultError / 带 code 的 Error；
+ * - 同进程抛出的 ZCodeAttachmentFaultError / 带 code 的 Error；
  * - 跨 JSON-RPC 回传的 `error.data.code`；
  * - 旧版本 CLI 只有消息文本时的兼容兜底（见下方注释）。
  */
-export function readXCodeAttachmentFaultCode(error: unknown): XCodeAttachmentFaultCode | undefined {
+export function readZCodeAttachmentFaultCode(error: unknown): ZCodeAttachmentFaultCode | undefined {
   if (!error || typeof error !== "object") return undefined;
   const candidate = error as { code?: unknown; data?: unknown };
-  if (isXCodeAttachmentFaultCode(candidate.code)) return candidate.code;
+  if (isZCodeAttachmentFaultCode(candidate.code)) return candidate.code;
   if (candidate.data && typeof candidate.data === "object") {
     const data = candidate.data as { code?: unknown };
-    if (isXCodeAttachmentFaultCode(data.code)) return data.code;
+    if (isZCodeAttachmentFaultCode(data.code)) return data.code;
   }
   // 兼容兜底：桌面端可能连接尚未带结构化 code 的旧 zcode-cli。仅在消息「整体等于」
   // 某个 fault 码时命中，不做模糊匹配，避免把包装后的任意文本误判成确定分类。
-  if (error instanceof Error && isXCodeAttachmentFaultCode(error.message)) return error.message;
+  if (error instanceof Error && isZCodeAttachmentFaultCode(error.message)) return error.message;
   return undefined;
 }

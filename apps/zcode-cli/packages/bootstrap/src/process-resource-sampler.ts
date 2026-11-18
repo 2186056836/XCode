@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { availableParallelism, totalmem } from "node:os";
 import {
   ZCODE_CLI_RESOURCE_SAMPLE_INTERVAL_MS,
-  type XCodeProcessResourceSample,
+  type ZCodeProcessResourceSample,
 } from "@zcode/shared";
 
 /** 采样周期与 app 侧聚合共用 shared 的同一个常量，避免两侧节拍各自漂移。 */
@@ -45,14 +45,14 @@ interface ResourceSamplerTimer {
   clearInterval(handle: ResourceSamplerTimerHandle): void;
 }
 
-interface CreateXCodeProcessResourceSamplerOptions {
+interface CreateZCodeProcessResourceSamplerOptions {
   /**
    * 第二个参数是本周期完整的内存快照，供进程内本地诊断日志使用；
    * 协议样本自身只带 rss 与 heapUsed 两项内存字段。
    */
-  onSample(sample: XCodeProcessResourceSample, memoryUsage: ProcessMemoryUsageSnapshot): void;
-  platform?: XCodeProcessResourceSample["platform"];
-  arch?: XCodeProcessResourceSample["arch"];
+  onSample(sample: ZCodeProcessResourceSample, memoryUsage: ProcessMemoryUsageSnapshot): void;
+  platform?: ZCodeProcessResourceSample["platform"];
+  arch?: ZCodeProcessResourceSample["arch"];
   logicalCpuCount?: number;
   readCpuUsage?: () => CpuUsageSnapshot;
   readMonotonicTimeNs?: () => bigint;
@@ -66,7 +66,7 @@ interface CreateXCodeProcessResourceSamplerOptions {
   timer?: ResourceSamplerTimer;
 }
 
-export interface XCodeProcessResourceSampler {
+export interface ZCodeProcessResourceSampler {
   start(): void;
   stop(): void;
 }
@@ -97,11 +97,11 @@ function toRoundedUnit(value: number, divisor: number): number | undefined {
   return Number.isFinite(value) && value >= 0 ? Math.round(value / divisor) : undefined;
 }
 
-export function createXCodeProcessResourceSampler(
-  options: CreateXCodeProcessResourceSamplerOptions,
-): XCodeProcessResourceSampler {
-  const platform = options.platform ?? (process.platform as XCodeProcessResourceSample["platform"]);
-  const arch = options.arch ?? (process.arch as XCodeProcessResourceSample["arch"]);
+export function createZCodeProcessResourceSampler(
+  options: CreateZCodeProcessResourceSamplerOptions,
+): ZCodeProcessResourceSampler {
+  const platform = options.platform ?? (process.platform as ZCodeProcessResourceSample["platform"]);
+  const arch = options.arch ?? (process.arch as ZCodeProcessResourceSample["arch"]);
   const logicalCpuCount = Math.max(
     1,
     Math.min(4_096, Math.trunc(options.logicalCpuCount ?? availableParallelism())),
@@ -151,7 +151,7 @@ export function createXCodeProcessResourceSampler(
       const rssKb = memoryUsage.rss / 1_024;
       const uptimeMinutes = toRoundedUnit(readUptimeSeconds(), 60);
       baseline = nextBaseline;
-      const resourceSample: XCodeProcessResourceSample = {
+      const resourceSample: ZCodeProcessResourceSample = {
         platform,
         arch,
         logicalCpuCount,

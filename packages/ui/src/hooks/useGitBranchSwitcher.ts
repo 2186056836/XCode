@@ -20,7 +20,7 @@ import {
   type GitBranchSwitchAssistState,
 } from "@/git-branch-switcher/switchAssist.js";
 import { useServices } from "@/hooks/useServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { getErrorMessage } from "@/lib/errorMessage.js";
 import { logger } from "@/logger.js";
 
@@ -40,7 +40,7 @@ export function useGitBranchSwitcher({
   onRefreshGit,
 }: UseGitBranchSwitcherOptions) {
   const { gitService } = useServices();
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const numberFormatter = new Intl.NumberFormat(locale);
   const [open, setOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);

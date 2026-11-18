@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { PluginStoreAvatar } from "@/settings/PluginStoreAvatar.js";
 import {
   canUpdatePluginItem,
@@ -58,7 +58,7 @@ export function PluginStorePaidPlanBadge({
 }: {
   item: Pick<StorePluginItem, "id" | "listing">;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (!item.listing?.requiresPaidPlan) return null;
   const label = intl.formatMessage({ id: "settings.plugins.store.requiresPaidPlan" });
   const badgeLabel = intl.formatMessage({ id: "settings.plugins.store.paidPlanBadge" });
@@ -93,7 +93,7 @@ export function PluginStoreItemMenu({
   triggerSize?: "icon-md" | "icon-lg";
   showEnabledAction?: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const enabled = item.info?.enabled ?? false;
   const busy = isItemBusy(item, actions);
   const canToggleEnabled = showEnabledAction && Boolean(item.info && actions.onSetEnabled);
@@ -168,7 +168,7 @@ export function PluginStoreInstallButton({
   actions: PluginStoreActions;
   size?: "sm" | "default" | "lg";
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   // 目录最新版要求更高的插件 API 版本（plugin-publishing.md §4.3）：同一位置换成不能点的提示按钮。
   if (isStoreItemInstallBlocked(item)) {
     return (
@@ -223,7 +223,7 @@ export function PluginStoreUpdateBadge({
 }: {
   item: Pick<StorePluginItem, "id" | "installedMeta" | "orphaned"> | null | undefined;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (!canUpdatePluginItem(item)) return null;
   const label = intl.formatMessage({ id: "settings.plugins.list.updateAvailable" });
   return (
@@ -249,7 +249,7 @@ export function PluginStoreUpdateButton({
   actions: PluginStoreActions;
   size?: "sm" | "default" | "lg";
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (!item || !canUpdatePluginItem(item)) return null;
   const updating = actions.activeOperations.some(
     (operation) => operation.id === `plugin:update:${item.id}`,
@@ -291,7 +291,7 @@ export function PluginUpdateAllButton({
   pending: boolean;
   onUpdateAll: (pluginIds: string[]) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const pluginIds = items.filter(canUpdatePluginItem).map((item) => item.id);
   if (pluginIds.length === 0) return null;
   const updating =
@@ -333,7 +333,7 @@ export function PluginStoreCard({
   locale: string;
   management?: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const displayName = resolveItemDisplayName(item, locale);
   const description = resolveItemDescription(item, locale);
   // 卡片整行统一进入详情；打开 UI 只走会话右侧市场提供的「打开」按钮。
@@ -435,7 +435,7 @@ export function PluginStoreOpenUiButton({
   actions: PluginStoreActions;
   size?: "sm" | "default" | "lg";
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (!item.installed || !isUiPluginItem(item) || !actions.onOpenUi) return null;
   return (
     <Button

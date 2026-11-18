@@ -1,7 +1,7 @@
 import type {
-  XCodeTaskMeta,
-  XCodeProvider,
-  XCodeTaskChangeSummary,
+  ZCodeTaskMeta,
+  ZCodeProvider,
+  ZCodeTaskChangeSummary,
   EditorInfo,
   GitRepositorySummary,
   RemoteTarget,
@@ -9,14 +9,14 @@ import type {
 } from "@zcode/shared";
 
 export interface WorkspaceHeaderState {
-  selectedProvider: XCodeProvider;
+  selectedProvider: ZCodeProvider;
 }
 
 export type WorkspaceHeaderVariant = "task" | "draft";
 
 export interface WorkspaceHeaderReloadSessionOptions {
   resumeTaskId?: string | null;
-  provider?: XCodeProvider | null;
+  provider?: ZCodeProvider | null;
 }
 
 export interface WorkspaceHeaderTitleSectionProps {
@@ -29,16 +29,16 @@ export interface WorkspaceHeaderTitleSectionProps {
   localWorkspacePath?: string;
   projectName: string;
   activeTaskTitle: string;
-  activeTaskChangeSummary?: XCodeTaskChangeSummary | null;
+  activeTaskChangeSummary?: ZCodeTaskChangeSummary | null;
   activeTaskId: string | null;
   activeTraceId: string | null;
   activeSessionId: string | null;
-  activeTaskProvider: XCodeProvider | null;
-  resolvedActiveTaskMeta?: XCodeTaskMeta | null;
+  activeTaskProvider: ZCodeProvider | null;
+  resolvedActiveTaskMeta?: ZCodeTaskMeta | null;
   gitSummary: GitRepositorySummary;
   gitDirtyFileCount: number;
   sessionLogPath: string | null;
-  nativeSessionLogProvider: XCodeProvider | null;
+  nativeSessionLogProvider: ZCodeProvider | null;
   nativeSessionLogPath: string | null;
   nativeSessionLogExists: boolean;
   nativeSessionLogLoading: boolean;

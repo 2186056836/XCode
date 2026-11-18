@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { ImagePreviewDialog } from "@/components/ai-elements/image-preview-dialog.js";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { registerImageComposerTarget } from "@/image-preview-editor/index.js";
 import "@/styles.css";
 const params = new URLSearchParams(location.search);
@@ -40,7 +40,7 @@ function Fixture() {
     [scope],
   );
   return (
-    <XCodeIntlProvider initialLocale={locale}>
+    <ZCodeIntlProvider initialLocale={locale}>
       <button onClick={() => setOpen(true)}>Open</button>
       <div className="m-6 rounded-xl border border-border bg-background p-4 text-foreground">
         <label>
@@ -66,7 +66,7 @@ function Fixture() {
             : [{ alt: "drawing.svg", src }]
         }
       />
-    </XCodeIntlProvider>
+    </ZCodeIntlProvider>
   );
 }
 createRoot(document.getElementById("root")!).render(<Fixture />);

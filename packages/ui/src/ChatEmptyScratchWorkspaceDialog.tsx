@@ -8,11 +8,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog.js";
 import { Input } from "@/components/ui/input.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 
 export function getScratchWorkspaceLocationHint(name: string) {
-  return `~/XCodeProject/${name.trim()}`;
+  return `~/ZCodeProject/${name.trim()}`;
 }
 
 export function getScratchWorkspaceNameErrorKind(name: string) {
@@ -30,7 +30,7 @@ export function getScratchWorkspaceNameErrorKind(name: string) {
 
 function formatScratchWorkspaceNameError(
   name: string,
-  intl: ReturnType<typeof useXCodeIntl>["intl"],
+  intl: ReturnType<typeof useZCodeIntl>["intl"],
 ) {
   const errorKind = getScratchWorkspaceNameErrorKind(name);
   if (errorKind === "required") {
@@ -53,7 +53,7 @@ export function ScratchWorkspaceDialog({
   onOpenChange: (open: boolean) => void;
   onCreateScratchWorkspace: (name: string) => Promise<string | null>;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);

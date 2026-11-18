@@ -12,7 +12,7 @@ import {
   ModelPropertiesConfig,
   ProviderRegistry,
 } from "@zcode/provider";
-import { createRegistryBackedTestApp as createXCodeApp } from "./helpers/registry-backed-test-app.js";
+import { createRegistryBackedTestApp as createZCodeApp } from "./helpers/registry-backed-test-app.js";
 import { readWorkflowScriptDocument } from "../src/app/script-workflow-meta.js";
 import { runScriptWorkflowChild } from "../src/app/script-workflow-process.js";
 import { createScriptWorkflowToolPort } from "../src/app/script-workflow-tool-port.js";
@@ -284,7 +284,7 @@ describe("script workflow runtime", () => {
     const requestTexts: string[] = [];
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         env: {
           PATH: shellDir,
           SHELL: join(shellDir, "fish"),
@@ -344,7 +344,7 @@ describe("script workflow runtime", () => {
       scriptPath,
       `export const meta = { name: "owned", description: "Close owned child" }; return await agent("Wait for cancellation");`,
     );
-    const app = await createXCodeApp({
+    const app = await createZCodeApp({
       modelExecutor: {
         setModelIoFullRetentionEnabled() {},
         async generateText(request: { abortSignal?: AbortSignal }) {
@@ -415,7 +415,7 @@ describe("script workflow runtime", () => {
     );
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         env: {},
         modelAdapter: {
           addStatusSink() {},
@@ -637,7 +637,7 @@ it("legacy workflow keeps a successful activity when child cleanup fails, then r
       };
       return child;
     });
-  const app = await createXCodeApp({
+  const app = await createZCodeApp({
     skipUserConfig: true,
     sessionStore: store,
     runtimeConfig: { workingDirectory: root },

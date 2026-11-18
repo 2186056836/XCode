@@ -4,7 +4,7 @@ import {
   sanitizeTelemetryModelValue,
   type ArmsCustomEventPayload,
   type IPlatformService,
-  type XCodeTaskNetworkDebugStatus,
+  type ZCodeTaskNetworkDebugStatus,
 } from "@zcode/shared";
 import { logger } from "@/logger.js";
 
@@ -57,7 +57,7 @@ function nonNegativeInteger(value: number | undefined): number | undefined {
 }
 
 function networkRequestStatus(
-  statusType: XCodeTaskNetworkDebugStatus["statusType"],
+  statusType: ZCodeTaskNetworkDebugStatus["statusType"],
 ): PlanUsageRequestStatus {
   switch (statusType) {
     case "model_request_started":
@@ -166,7 +166,7 @@ export function reportPlanUsageRequestToArms(
 
 export function reportPlanUsageModelRequestStartedToArms(
   reporter: ArmsReporter | null | undefined,
-  event: XCodeTaskNetworkDebugStatus,
+  event: ZCodeTaskNetworkDebugStatus,
 ): void {
   if (!reporter) {
     return;

@@ -1,6 +1,6 @@
 import { cn } from "@/components/lib/utils.js";
 
-export function XCodeAboutLogo({ className }: { className?: string }) {
+export function ZCodeAboutLogo({ className }: { className?: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -25,7 +25,7 @@ export function XCodeAboutLogo({ className }: { className?: string }) {
   );
 }
 
-export function XCodeWordmarkLogo({ className }: { className?: string }) {
+export function ZCodeWordmarkLogo({ className }: { className?: string }) {
   return (
     <svg
       width="244"

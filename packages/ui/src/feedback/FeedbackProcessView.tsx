@@ -6,7 +6,7 @@ import { FeedbackProgress } from "@/feedback/feedbackProgress.js";
 import { FeedbackSupplementComposer } from "@/feedback/FeedbackSupplementComposer.js";
 import { FeedbackTimeline, getFeedbackTimelineItems } from "@/feedback/feedbackTimeline.js";
 import { formatRelativeTime } from "@/feedback/feedbackUserView.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export function FeedbackProcessView({
   ticket,
@@ -19,7 +19,7 @@ export function FeedbackProcessView({
   onBack: () => void;
   onRefresh: () => Promise<void>;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const formatMessage = intl.formatMessage;
   const timelineItems = getFeedbackTimelineItems(ticket.events ?? [], ticket.comments, formatMessage);
   const latestItem = timelineItems.at(-1);

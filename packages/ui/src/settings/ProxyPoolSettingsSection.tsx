@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog.js";
 import { useServices } from "@/hooks/useServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { PoolEditor } from "./ProxyPoolEditor.js";
 import type {
   IProxyPoolService,
@@ -64,7 +64,7 @@ function isValidProxyUrl(url: string): boolean {
 }
 
 export function ProxyPoolSettingsSection() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const services = useServices();
   const proxyPoolService: IProxyPoolService | undefined = services.proxyPoolService;
 

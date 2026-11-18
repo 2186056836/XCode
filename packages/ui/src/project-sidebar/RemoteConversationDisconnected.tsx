@@ -8,7 +8,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useRemoteProjectConnectionPresentation } from "@/project-sidebar/useRemoteProjectConnectionPresentation.js";
 import { RemoteConnectionStateIcon } from "@/remote-connection/RemoteConnectionStateIcon.js";
 import { RemoteProjectConnectionDetails } from "@/WorkspaceSidebar/RemoteProjectConnectionDetails.js";
@@ -20,7 +20,7 @@ import {
 } from "@/v4/composer/composerDraftStore.js";
 
 import { useComposerClientNamespace } from "@/hooks/useServices.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 
 interface Scope {
   workspacePath: string;
@@ -29,7 +29,7 @@ interface Scope {
 }
 
 export function RemoteConversationBanner(scope: Scope) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { presentation, busy, reconnect, tab, deviceName, error } =
     useRemoteProjectConnectionPresentation(scope);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -94,9 +94,9 @@ export function RemoteConversationBanner(scope: Scope) {
 
 /** 冷态不读取远端数据；草稿只读既有持久化，离线页面没有提交或排队处理器。 */
 export function RemoteConversationDisconnected(scope: Scope) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const clientNamespace = useComposerClientNamespace();
-  const projectId = useXCodeSessionStore(
+  const projectId = useZCodeSessionStore(
     (state) =>
       state.workspaces[scope.workspaceIdentity?.trim() || scope.workspacePath]?.draftProjectId,
   );

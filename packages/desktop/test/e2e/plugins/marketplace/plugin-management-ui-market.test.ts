@@ -167,7 +167,7 @@ describe("PLM-UI-001 UI 插件市场与项目配置", () => {
         await browser.waitUntil(
           async () =>
             (await browser.$('[data-testid="plugin-settings-scope-trigger"]').getText()).includes(
-              "XCodeProject",
+              "ZCodeProject",
             ),
           { timeout: 10000 },
         );

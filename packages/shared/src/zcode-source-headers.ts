@@ -1,12 +1,12 @@
 import { DEFAULT_XCODE_ENDPOINT_ORIGIN } from "./zcodeEndpoint.js";
 
 export const ZCODE_SOURCE_HEADERS = {
-  "User-Agent": "XCode/unknown",
+  "User-Agent": "ZCode/unknown",
   "HTTP-Referer": DEFAULT_XCODE_ENDPOINT_ORIGIN,
   "X-Title": "Z Code@electron",
 } as const;
 
-export interface BuildXCodeSourceHeadersFromContextOptions {
+export interface BuildZCodeSourceHeadersFromContextOptions {
   appVersion?: string;
   arch?: string;
   clientLanguage?: string;
@@ -19,7 +19,7 @@ export interface BuildXCodeSourceHeadersFromContextOptions {
   sourceTitle?: string;
 }
 
-export function normalizeXCodeSourceHeaderValue(value: string | undefined): string | undefined {
+export function normalizeZCodeSourceHeaderValue(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
   if (!trimmed || !/^[\x20-\x7e]+$/.test(trimmed)) {
     return undefined;
@@ -27,25 +27,25 @@ export function normalizeXCodeSourceHeaderValue(value: string | undefined): stri
   return trimmed;
 }
 
-export function buildXCodeSourceHeadersFromContext(
-  options: BuildXCodeSourceHeadersFromContextOptions = {},
+export function buildZCodeSourceHeadersFromContext(
+  options: BuildZCodeSourceHeadersFromContextOptions = {},
 ): Record<string, string> {
-  const appVersion = normalizeXCodeSourceHeaderValue(options.appVersion);
-  const arch = normalizeXCodeSourceHeaderValue(options.arch);
-  const clientLanguage = normalizeXCodeSourceHeaderValue(options.clientLanguage) ?? "unknown";
-  const clientTimezone = normalizeXCodeSourceHeaderValue(options.clientTimezone) ?? "unknown";
-  const deviceMid = normalizeXCodeSourceHeaderValue(options.deviceMid);
+  const appVersion = normalizeZCodeSourceHeaderValue(options.appVersion);
+  const arch = normalizeZCodeSourceHeaderValue(options.arch);
+  const clientLanguage = normalizeZCodeSourceHeaderValue(options.clientLanguage) ?? "unknown";
+  const clientTimezone = normalizeZCodeSourceHeaderValue(options.clientTimezone) ?? "unknown";
+  const deviceMid = normalizeZCodeSourceHeaderValue(options.deviceMid);
   const endpointOrigin =
-    normalizeXCodeSourceHeaderValue(options.endpointOrigin) ?? DEFAULT_XCODE_ENDPOINT_ORIGIN;
-  const osVersion = normalizeXCodeSourceHeaderValue(options.osVersion);
-  const platform = normalizeXCodeSourceHeaderValue(options.platform);
-  const releaseChannel = normalizeXCodeSourceHeaderValue(options.releaseChannel);
-  const sourceTitle = normalizeXCodeSourceHeaderValue(options.sourceTitle) ?? "electron";
+    normalizeZCodeSourceHeaderValue(options.endpointOrigin) ?? DEFAULT_XCODE_ENDPOINT_ORIGIN;
+  const osVersion = normalizeZCodeSourceHeaderValue(options.osVersion);
+  const platform = normalizeZCodeSourceHeaderValue(options.platform);
+  const releaseChannel = normalizeZCodeSourceHeaderValue(options.releaseChannel);
+  const sourceTitle = normalizeZCodeSourceHeaderValue(options.sourceTitle) ?? "electron";
 
   return {
     ...ZCODE_SOURCE_HEADERS,
     "HTTP-Referer": endpointOrigin,
-    "User-Agent": `XCode/${appVersion ?? "unknown"}`,
+    "User-Agent": `ZCode/${appVersion ?? "unknown"}`,
     // 操作系统为 zcode.z.ai（ZCode 平台），线上 HTTP 头必须保持 X-ZCode- 前缀，
     // 服务器据此识别客户端版本并决定资源位下发（含营销投放）。fork 换肤不能改这个头名。
     ...(appVersion ? { "X-ZCode-App-Version": appVersion } : {}),

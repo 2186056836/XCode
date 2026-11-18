@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- Controller source 聚合、路由、订阅与生命周期属于同一个 Host 边界。 */
 import { Emitter, Event } from "@zcode/rpc";
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 import type {
   ControllerSubscribeParams,
   WindowHostControllerTaskRow,
@@ -13,15 +13,15 @@ import {
 } from "@zcode/shared/zcode-protocol-v4";
 import type {
   IWindowControllerService,
-  IXCodeAgentService,
-  IXCodeTaskService,
+  IZCodeAgentService,
+  IZCodeTaskService,
   WindowHostControllerFrame,
   WindowHostControllerTaskListItem,
   WindowHostControllerTaskListResult,
   WindowHostTaskUnreadSignal,
   WindowHostTasksRemovedSignal,
-  XCodeTaskListQuery,
-  XCodeTaskListWorkspaceScope,
+  ZCodeTaskListQuery,
+  ZCodeTaskListWorkspaceScope,
 } from "@zcode/services";
 import {
   createWindowHostControllerProjection,
@@ -37,8 +37,8 @@ import {
 
 export interface ResolvedWindowHostControllerSource {
   scope: WindowHostControllerSourceScope;
-  taskService?: IXCodeTaskService;
-  agentService?: IXCodeAgentService;
+  taskService?: IZCodeTaskService;
+  agentService?: IZCodeAgentService;
   sourceAvailability: "online" | "offline";
 }
 
@@ -46,14 +46,14 @@ function sourceKey(scope: WindowHostControllerSourceScope): string {
   return `${scope.kind}\0${scope.kind === "remote" ? (scope.sourceServerId ?? scope.remoteSessionId) : "local"}\0${scope.workspaceIdentity?.trim() || scope.workspacePath}`;
 }
 
-function taskKey(task: Pick<XCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">) {
+function taskKey(task: Pick<ZCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">) {
   return `${task.workspaceIdentity?.trim() || task.workspacePath}\0${task.taskId}`;
 }
 
 function normalizeTaskMeta(
-  meta: XCodeTaskMeta,
+  meta: ZCodeTaskMeta,
   scope: WindowHostControllerSourceScope,
-): XCodeTaskMeta {
+): ZCodeTaskMeta {
   return {
     ...meta,
     workspacePath: scope.workspacePath,
@@ -66,7 +66,7 @@ function normalizeTaskMeta(
 function compareItems(
   left: WindowHostControllerTaskListItem,
   right: WindowHostControllerTaskListItem,
-  sortBy: XCodeTaskListQuery["sortBy"],
+  sortBy: ZCodeTaskListQuery["sortBy"],
 ): number {
   const leftAt = sortBy === "created" ? left.createdAt : left.updatedAt;
   const rightAt = sortBy === "created" ? right.createdAt : right.updatedAt;
@@ -130,7 +130,7 @@ function sessionOverlay(
   };
 }
 
-function liveStatusFromMeta(meta: XCodeTaskMeta): WindowHostControllerTaskRow["liveStatus"] {
+function liveStatusFromMeta(meta: ZCodeTaskMeta): WindowHostControllerTaskRow["liveStatus"] {
   if (meta.status === "completed") return "completed";
   if (meta.status === "error") return "error";
   return "idle";
@@ -144,8 +144,8 @@ export function createWindowHostControllerRuntime(options: {
   onRunStarted?: (run: import("@zcode/shared/web-remote-relay").MobilePushRun) => void;
   onNotification?: (event: import("@zcode/shared/web-remote-relay").MobilePushEvent) => void;
   createId: () => string;
-  readHostTaskList: IXCodeTaskService["listTaskList"];
-  resolveSource: (scope: XCodeTaskListWorkspaceScope) => ResolvedWindowHostControllerSource | null;
+  readHostTaskList: IZCodeTaskService["listTaskList"];
+  resolveSource: (scope: ZCodeTaskListWorkspaceScope) => ResolvedWindowHostControllerSource | null;
   onSourceError?: (
     scope: WindowHostControllerSourceScope,
     operation: "refresh" | "search",
@@ -158,18 +158,18 @@ export function createWindowHostControllerRuntime(options: {
   const tasksRemovedSignals = new Emitter<WindowHostTasksRemovedSignal>();
   const registeredScopes = new Map<string, WindowHostControllerSourceScope>();
   const sourceAvailability = new Map<string, "online" | "offline">();
-  const sourceTaskServices = new Map<string, IXCodeTaskService>();
-  const sourceSnapshotTaskServices = new Map<string, IXCodeTaskService>();
+  const sourceTaskServices = new Map<string, IZCodeTaskService>();
+  const sourceSnapshotTaskServices = new Map<string, IZCodeTaskService>();
   const sourceEventSubscriptions = new Map<string, { dispose(): void }>();
   const sourceRefreshFlights = new Map<
     string,
-    { taskService: IXCodeTaskService; promise: Promise<void> }
+    { taskService: IZCodeTaskService; promise: Promise<void> }
   >();
   const sourceRefreshGenerations = new Map<string, number>();
   const sourceLiveOverlays = new Map<string, WindowHostControllerSessionOverlay[]>();
   const sourceSessionObservers = new Map<
     string,
-    { agentService: IXCodeAgentService; observer: WindowHostSessionsIndexObserver }
+    { agentService: IZCodeAgentService; observer: WindowHostSessionsIndexObserver }
   >();
   const pendingReplacementByNextSourceKey = new Map<string, WindowHostControllerSourceScope>();
 
@@ -466,7 +466,7 @@ export function createWindowHostControllerRuntime(options: {
     const membershipByTaskKey = new Map<
       string,
       {
-        meta: XCodeTaskMeta;
+        meta: ZCodeTaskMeta;
         membership: { pinned: boolean; archived: boolean; active: boolean };
       }
     >();
@@ -621,7 +621,7 @@ export function createWindowHostControllerRuntime(options: {
   }
 
   function resolveQuerySources(
-    scopes: XCodeTaskListWorkspaceScope[],
+    scopes: ZCodeTaskListWorkspaceScope[],
   ): ResolvedWindowHostControllerSource[] {
     const resolved = new Map<string, ResolvedWindowHostControllerSource>();
     for (const scope of scopes) {
@@ -635,7 +635,7 @@ export function createWindowHostControllerRuntime(options: {
   }
 
   async function listTaskList(
-    query: XCodeTaskListQuery,
+    query: ZCodeTaskListQuery,
   ): Promise<WindowHostControllerTaskListResult> {
     if (query.workspaceScopes === "host") {
       // 已注册 source 也只覆盖打开过的工作区；全局历史必须直接交给持久化 owner。

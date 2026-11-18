@@ -214,7 +214,7 @@ async function saveMcpToUserDirectory(payload: SaveCliMcpToUserDirectoryRequest)
     delete nextServers[payload.name];
   }
 
-  await writeXCodeServersToFile(scope, nextServers, payload.projectPath);
+  await writeZCodeServersToFile(scope, nextServers, payload.projectPath);
 }
 
 function sortMcpRecords(records: UserMcpRecord[]): UserMcpRecord[] {
@@ -267,7 +267,7 @@ async function readDirectoryServersFromFile(
   }));
 }
 
-async function writeXCodeServersToFile(
+async function writeZCodeServersToFile(
   scope: Exclude<McpScope, "common">,
   servers: Record<string, Record<string, unknown>>,
   workspacePath?: string,

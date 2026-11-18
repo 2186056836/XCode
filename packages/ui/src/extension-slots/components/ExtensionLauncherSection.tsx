@@ -15,7 +15,7 @@ import {
   TID_SIDE_PANE_EXTENSION_VIEW_ITEM,
 } from "@zcode/shared/test-ids";
 import { SidePaneLauncherRow } from "@/plugin-ui/index.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useExtensionLauncher } from "@/extension-slots/adapters/useExtensionSlots.js";
 import {
   useDecideExtensionActivation,
@@ -45,7 +45,7 @@ const STATE_LABEL_IDS: Record<string, string> = {
  * 操作改为重新加载。没有任何要显示的行时整个分区不渲染。
  */
 export function ExtensionLauncherSection(props: ExtensionLauncherSectionProps) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const model = useExtensionLauncher(props);
   // 需要授权的插件（owner：Window Host 的授权记录）。未授权时扩展照常激活，会话能力报 not-granted。
   const grantRequests = useExtensionGrantsState(

@@ -1,5 +1,5 @@
 /* eslint-disable max-lines -- Desktop renderer bridge 聚合平台、远端 attachment 与启动编排契约。 */
-import type { XCodeAgentGenerateWorkspaceTextParams } from "@zcode/services";
+import type { ZCodeAgentGenerateWorkspaceTextParams } from "@zcode/services";
 import { DatabaseStartupAdmission } from "./databaseStartupAdmission.js";
 import { initializeDesktopLocalTtft } from "./local-ttft/contract.js";
 import { createRoot } from "react-dom/client";
@@ -9,7 +9,7 @@ import {
   Root,
   GlobalDatabaseStartupLoading,
   UpdateStatusWindowRoot,
-  XCodeIntlProvider,
+  ZCodeIntlProvider,
   getRemoteWorkspaceSession,
   registerBaseWorkspaceServices,
   registerRemoteWorkspaceSession,
@@ -172,7 +172,7 @@ const sendStartupControl = (control: DatabaseStartupControl) =>
 function renderDatabaseStartup(): void {
   appRoot?.render(
     <AppErrorBoundary isDesktop isMacDesktop={isMacDesktop} isWindowsDesktop={isWindowsDesktop}>
-      <XCodeIntlProvider
+      <ZCodeIntlProvider
         initialLocale={initialLocaleFlag ? initialLocale : undefined}
         resolveSystemLocale={desktopPlatform.getSystemLocale}
       >
@@ -190,7 +190,7 @@ function renderDatabaseStartup(): void {
           onExportLogs={() => desktopPlatform.exportLogs()}
           onExit={() => sendStartupControl({ action: "exit" })}
         />
-      </XCodeIntlProvider>
+      </ZCodeIntlProvider>
     </AppErrorBoundary>,
   );
 }
@@ -425,7 +425,7 @@ window.addEventListener("message", (event) => {
       prompt,
       // 1112 协议的 user 消息 content 收敛为 string；宠物聊天的分片形态待迁移，先显式断言。
       ...(Array.isArray(messages) && messages.length > 0
-        ? { messages: messages as unknown as XCodeAgentGenerateWorkspaceTextParams["messages"] }
+        ? { messages: messages as unknown as ZCodeAgentGenerateWorkspaceTextParams["messages"] }
         : {}),
       querySource: "dsh-pet",
       // 显式预算（见 petOptions）；requestTimeoutMs 让协议层登记 operationId，
@@ -468,7 +468,7 @@ function initializeBusinessRoot(port: MessagePort): void {
 
   appRoot?.render(
     <AppErrorBoundary isDesktop isMacDesktop={isMacDesktop} isWindowsDesktop={isWindowsDesktop}>
-      <XCodeIntlProvider
+      <ZCodeIntlProvider
         settingService={settingService}
         broadcastService={services.broadcastService}
         resolveSystemLocale={desktopPlatform.getSystemLocale}
@@ -489,7 +489,7 @@ function initializeBusinessRoot(port: MessagePort): void {
           }
           unavailableWorkspacePath={unavailableWorkspacePath}
         />
-      </XCodeIntlProvider>
+      </ZCodeIntlProvider>
     </AppErrorBoundary>,
   );
 }

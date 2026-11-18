@@ -41,7 +41,7 @@ import {
   TID_BROWSER_RESPONSIVE_BUTTON,
   TID_BROWSER_RECENT_VISITS,
 } from "@zcode/shared/test-ids";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { BrowserVisitRecord } from "@/store/browserRecentVisitsStore.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { Button } from "@/components/ui/button.js";
@@ -384,7 +384,7 @@ function BrowserRecentVisits({
   onRemove?: (url: string) => void;
   visits: BrowserVisitRecord[];
 }) {
-  const { locale } = useXCodeIntl();
+  const { locale } = useZCodeIntl();
   const timeFormatter = useMemo(
     () => new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "short" }),
     [locale],

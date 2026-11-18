@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button.js";
 import { toast } from "@/components/ui/toast.js";
 import { useServices } from "@/hooks/useServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { ConversationUserInputBubble } from "@/v4/ConversationUserInputBubble.js";
 import { formatManagedWorktreeError } from "./managedWorktreeErrors.js";
@@ -20,7 +20,7 @@ import { WorktreeOutputBlock } from "./WorktreeOutputBlock.js";
 type CreationAction = "retryCreation" | "continueWithoutWorktree" | "dismissCreation";
 
 export function ManagedWorktreeCreationView({ creation }: { creation: ManagedWorktreeCreation }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { managedWorktreeService } = useServices();
   const [pendingAction, setPendingAction] = useState<CreationAction | null>(null);
 

@@ -2,17 +2,17 @@ import { existsSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import {
-  materializeXCodeBuiltinProviderConfig,
-  NodeXCodeBuiltinProviderConfigSource,
+  materializeZCodeBuiltinProviderConfig,
+  NodeZCodeBuiltinProviderConfigSource,
   PERSONAL_PROVIDER_CONFIG_FILE_NAME,
-  resolveXCodeBuiltinCachePaths,
-  resolveXCodeBuiltinClientPlatform,
+  resolveZCodeBuiltinCachePaths,
+  resolveZCodeBuiltinClientPlatform,
   ZCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV,
   ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV,
   ZCODE_PERSONAL_PROVIDER_CONFIG_FILE_ENV,
-  type XCodeBuiltinRefreshEvent,
+  type ZCodeBuiltinRefreshEvent,
 } from "@zcode/provider-node";
-import { resolveRuntimeXCodeEndpointOrigin, ZCODE_VERSION } from "@zcode/shared";
+import { resolveRuntimeZCodeEndpointOrigin, ZCODE_VERSION } from "@zcode/shared";
 import type { CliEnv } from "./env.js";
 
 export const SEA_XCODE_BUILTIN_PROVIDER_CONFIG_ASSET_KEY = "zcode-provider/zcode-builtin.json";
@@ -26,7 +26,7 @@ export function createCliProviderRefreshReporter(
         `XCode Built-in 刷新失败: ${error instanceof Error ? error.message : "unknown error"}\n`,
       );
     },
-    onBuiltinRefreshResult(event: XCodeBuiltinRefreshEvent) {
+    onBuiltinRefreshResult(event: ZCodeBuiltinRefreshEvent) {
       // TTL 检查不是生产事件；成功更新才默认留痕，不能输出 CDN URL 查询参数或内容。
       if (event.result === "updated" || process.env.NODE_ENV !== "production") {
         stderr.write(
@@ -55,19 +55,19 @@ export async function prepareCliProviderRuntimeEnv(
 ): Promise<Record<string, string>> {
   if (!requiresProviderRuntime(options.argv)) return {};
 
-  const explicitXCodeBuiltin = options.env[ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]?.trim();
+  const explicitZCodeBuiltin = options.env[ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]?.trim();
   const explicitPersonal = options.env[ZCODE_PERSONAL_PROVIDER_CONFIG_FILE_ENV]?.trim();
   const dataBaseDir = options.dataBaseDir ?? options.env.ZCODE_DATA_BASE_DIR?.trim() ?? homedir();
-  if (explicitXCodeBuiltin && explicitPersonal) {
+  if (explicitZCodeBuiltin && explicitPersonal) {
     return {
-      [ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]: explicitXCodeBuiltin,
+      [ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]: explicitZCodeBuiltin,
       [ZCODE_PERSONAL_PROVIDER_CONFIG_FILE_ENV]: explicitPersonal,
     };
   }
 
   const zcodeBuiltinFilePath =
-    explicitXCodeBuiltin ??
-    (await resolveBundledXCodeBuiltinProviderConfig({
+    explicitZCodeBuiltin ??
+    (await resolveBundledZCodeBuiltinProviderConfig({
       dataBaseDir,
       entrypoint: options.entrypoint ?? process.argv[1],
       sea: options.sea ?? getSeaProviderConfigAssets(),
@@ -75,15 +75,15 @@ export async function prepareCliProviderRuntimeEnv(
   const personalFilePath =
     explicitPersonal ?? join(dataBaseDir, ".xcode", "v2", PERSONAL_PROVIDER_CONFIG_FILE_NAME);
   const appVersion = options.appVersion ?? ZCODE_VERSION;
-  const platform = options.platform ?? resolveXCodeBuiltinClientPlatform();
-  const zcodeEndpointOrigin = resolveRuntimeXCodeEndpointOrigin(options.env);
-  const cachePaths = resolveXCodeBuiltinCachePaths({
+  const platform = options.platform ?? resolveZCodeBuiltinClientPlatform();
+  const zcodeEndpointOrigin = resolveRuntimeZCodeEndpointOrigin(options.env);
+  const cachePaths = resolveZCodeBuiltinCachePaths({
     environmentConfigRoot: join(dataBaseDir, ".xcode", "v2"),
     platform,
     appVersion,
     zcodeEndpointOrigin,
   });
-  const source = new NodeXCodeBuiltinProviderConfigSource({
+  const source = new NodeZCodeBuiltinProviderConfigSource({
     bundledFilePath: zcodeBuiltinFilePath,
     activeFilePath: cachePaths.activeFilePath,
     watch: false,
@@ -129,14 +129,14 @@ function requiresProviderRuntime(argv: readonly string[]): boolean {
   );
 }
 
-async function resolveBundledXCodeBuiltinProviderConfig(input: {
+async function resolveBundledZCodeBuiltinProviderConfig(input: {
   readonly dataBaseDir: string;
   readonly entrypoint: string | undefined;
   readonly sea: SeaProviderConfigAssets | undefined;
 }): Promise<string> {
   if (input.sea?.isSea()) {
     const content = input.sea.getAsset(SEA_XCODE_BUILTIN_PROVIDER_CONFIG_ASSET_KEY, "utf8");
-    return materializeXCodeBuiltinProviderConfig({
+    return materializeZCodeBuiltinProviderConfig({
       environmentConfigRoot: join(input.dataBaseDir, ".xcode", "v2"),
       content,
     });

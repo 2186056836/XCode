@@ -15,15 +15,15 @@ import {
   ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
   ZCODE_PLUGIN_ID_ENV_KEY,
   ZCODE_RUNTIME_ENV_KEY,
-  readXCodeToolEnvPassthroughEnv,
-  resetCapturedXCodeCuaBrokerCredentialsForTest,
-  sanitizeXCodeRuntimeEnvInPlace,
+  readZCodeToolEnvPassthroughEnv,
+  resetCapturedZCodeCuaBrokerCredentialsForTest,
+  sanitizeZCodeRuntimeEnvInPlace,
   type ModelSelection,
-  type XCodeModelOption,
+  type ZCodeModelOption,
 } from "@zcode/shared";
 import type { RunContext } from "@zcode/shared-types";
 import type { TuiOptions } from "@zcode/tui";
-import type { XCodeAppOptions } from "@zcode/bootstrap";
+import type { ZCodeAppOptions } from "@zcode/bootstrap";
 import { run } from "../src/run.js";
 import { createTuiSubmitPrompt } from "../src/tui-prompt-handler.js";
 import {
@@ -116,7 +116,7 @@ const createTestModelOption = (
     label = modelId,
     levels = ["low", "medium", "high"],
   }: { defaultLevel?: string; label?: string; levels?: readonly string[] } = {},
-): XCodeModelOption => ({
+): ZCodeModelOption => ({
   ref: { providerId, modelId },
   label,
   providerLabel: providerId,
@@ -137,7 +137,7 @@ const createTestModelOption = (
 });
 
 /** 至少一个未禁用的模型，表示 Provider/账号已可用，普通 prompt 不会被登录提示拦截。 */
-const selectableTestModels = (): XCodeModelOption[] => [
+const selectableTestModels = (): ZCodeModelOption[] => [
   createTestModelOption("openai", "gpt-test"),
 ];
 
@@ -152,7 +152,7 @@ const loadTuiStartup = async (options: TuiOptions): Promise<TuiOptions> => ({
 
 const createPromptDeps = (): RunDependencies => ({
   createModelAdapter: () => ({}) as never,
-  createXCodeApp: () =>
+  createZCodeApp: () =>
     ({
       getModel: () => "openai/gpt-test",
       getLocale: () => "en-US",
@@ -192,7 +192,7 @@ test("prepares a sanitized CLI runtime env with XCode-owned runtime keys", () =>
   };
 
   const env = prepareCliRuntimeEnv(sourceEnv, ["/usr/bin/node", "/workspace/bin/zcode.js"]);
-  const toolEnv = readXCodeToolEnvPassthroughEnv(env);
+  const toolEnv = readZCodeToolEnvPassthroughEnv(env);
 
   assert.equal(env.ZCODE_RUNTIME_ENV, "production");
   assert.equal(env.ZCODE_HTTP_PROXY, "http://zcode-proxy:8080");
@@ -345,7 +345,7 @@ test("passes configured TUI theme into the TUI", async () => {
   const ctx = createContext([]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         getLocale: () => "en-US",
         getModel: () => "openai/gpt-test",
@@ -408,7 +408,7 @@ test("enables session title generation for TUI sessions", async () => {
   const ctx = createContext(["tui"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.deepEqual(options?.runtimeConfig?.titleGeneration, {});
       assert.equal(options?.runtimeConfig?.memory?.extractionEnabled, undefined);
       return {
@@ -437,7 +437,7 @@ test("passes --disallowedTools into TUI runtime config", async () => {
   const ctx = createContext(["tui", "--disallowedTools", "Bash", "Edit,web_search"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.deepEqual(options?.runtimeConfig?.toolDisallowlist, ["Bash", "Edit", "WebSearch"]);
       return {
         getLocale: () => "en-US",
@@ -465,7 +465,7 @@ test("passes force MCS into TUI runtime config", async () => {
   const ctx = createContext(["tui", "--force-mcs"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.deepEqual((options?.runtimeConfig as any)?.midConversationSystem, {
         mode: "force",
       });
@@ -495,7 +495,7 @@ test("does not enable session title generation for headless prompts", async () =
   const ctx = createContext(["--prompt", "hello"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.runtimeConfig?.titleGeneration, undefined);
       assert.equal(options?.standaloneSessionControl, true);
       return {
@@ -522,7 +522,7 @@ test("disables automatic Memory Extraction for headless prompts", async () => {
   const ctx = createContext(["-p", "hello Memory"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.deepEqual(options?.runtimeConfig?.memory, {
         extractionEnabled: false,
       });
@@ -561,7 +561,7 @@ test("injects process provider endpoint routing into headless prompts", async ()
       assert.equal(options.workingDirectory, "/tmp/zcode-routing-headless");
       return providerEndpointRoutingPort;
     },
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.providerEndpointRoutingPort, providerEndpointRoutingPort);
       return {
         close: async () => {},
@@ -636,7 +636,7 @@ test("borrows one process provider registry for a headless prompt and disposes i
         },
       } as never;
     },
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.providerRegistry, providerRegistry);
       assert.equal(options?.providerRuntimeHeadersPort, providerRuntimeHeadersPort);
       assert.deepEqual(options?.configuredDefaultModelSelection, {
@@ -670,7 +670,7 @@ test("shows a non-blocking login notice when no coding plan key is configured", 
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
     // 登录态改由 Registry 的可选模型推导：未配置 Coding Plan 时模型目录只有被禁用的选项。
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         getLocale: () => "en-US",
         getModel: () => undefined,
@@ -710,7 +710,7 @@ test("honors configured locale before app creation when login is required", asyn
       cwd: () => tempRoot,
       env: {},
       // 登录态改由 App 的可选模型推导；App 在启动屏首帧之后才创建，这里模拟没有可选模型。
-      createXCodeApp: () => {
+      createZCodeApp: () => {
         appCreated = true;
         return {
           listModels: () => [],
@@ -768,7 +768,7 @@ test("passes detected auto locale into the app and TUI", async () => {
   const ctx = createContext(["--locale", "auto"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.uiLocale, "auto");
       assert.equal(options?.uiDetectedLocale, "zh-CN");
       return {
@@ -801,7 +801,7 @@ test("TUI locale command updates later app creation locale", async () => {
   let activeLocale: "en-US" | "zh-CN" = "en-US";
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       createdLocales.push(options?.uiLocale);
       return {
         getLocale: () => activeLocale,
@@ -985,7 +985,7 @@ test("zcode login runs OAuth flow and prints the authorization URL", async () =>
   let sawNoBrowser = false;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    loginXCodeCli: async (options) => {
+    loginZCodeCli: async (options) => {
       sawNoBrowser = options?.noBrowser === true;
       await options?.onAuthorizeUrl?.({
         authorize_url: "https://chat.z.ai/oauth/authorize?state=state",
@@ -1024,7 +1024,7 @@ test("zcode logout clears shared OAuth credentials", async () => {
   let logoutCalled = false;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    logoutXCodeCli: async () => {
+    logoutZCodeCli: async () => {
       logoutCalled = true;
       return {
         credentialsPath: "/home/test/.xcode/v2/credentials.json",
@@ -1242,8 +1242,8 @@ test("headless prompt submits a resolvable custom command as raw text", async ()
   let submitted: unknown;
   const exitCode = await run(ctx, {
     ...base,
-    createXCodeApp: (options) => {
-      const app = base.createXCodeApp?.(options) as {
+    createZCodeApp: (options) => {
+      const app = base.createZCodeApp?.(options) as {
         submitPrompt: (prompt: unknown, submitOptions?: unknown) => Promise<unknown>;
       };
       return {
@@ -1279,8 +1279,8 @@ test("headless prompt keeps a facade-reserved custom command name on the command
   let submitted: unknown;
   const exitCode = await run(ctx, {
     ...base,
-    createXCodeApp: (options) => {
-      const app = base.createXCodeApp?.(options) as {
+    createZCodeApp: (options) => {
+      const app = base.createZCodeApp?.(options) as {
         submitPrompt: (prompt: unknown, submitOptions?: unknown) => Promise<unknown>;
       };
       return {
@@ -1382,7 +1382,7 @@ test("wires TUI input recall skip into the active app", async () => {
   const recalledSkips: Array<number | undefined> = [];
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         sessionId: "session-test",
         traceId: "trace-test",
@@ -1417,7 +1417,7 @@ test("wires TUI slash command history recording into the active app", async () =
   const recorded: Array<{ input: unknown; kind: unknown }> = [];
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         getModel: () => "openai/gpt-main",
         listModels: () => [],
@@ -1457,7 +1457,7 @@ test("TUI bare skill command lists skills when startup metadata is unavailable",
   let listed = false;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () => {
+    createZCodeApp: () => {
       appCreationAttempts += 1;
       throw new Error("app is unavailable");
     },
@@ -1724,7 +1724,7 @@ test("TUI startup migration failures return before entering fullscreen UI", asyn
 
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () => {
+    createZCodeApp: () => {
       throw migrationError;
     },
     // 新启动流程先绘制启动屏，再在 loadStartupOptions 中创建运行时；真实 runTui 在启动数据
@@ -1898,7 +1898,7 @@ test("wires TUI approval requests into the runtime permission broker", async () 
   let approvalSeen = false;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       return {
         listModels: selectableTestModels,
         sessionId: "session-test",
@@ -1949,7 +1949,7 @@ test("wires TUI sendInput approval requests into the runtime permission broker",
   let approvalSeen = false;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       return {
         sessionId: "session-test",
         traceId: "trace-test",
@@ -2003,11 +2003,11 @@ test("wires TUI sendInput approval requests into the runtime permission broker",
 // 回归：审批入口原先只在单次提交内有效，回合之外的询问（后台会话、通知驱动的回合）被直接拒绝。
 test("routes approvals raised outside any submit to the mounted TUI and fails closed after unmount", async () => {
   const ctx = createContext(["tui"]);
-  let broker: NonNullable<XCodeAppOptions["permissionBroker"]> | undefined;
+  let broker: NonNullable<ZCodeAppOptions["permissionBroker"]> | undefined;
   const seen: string[] = [];
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       broker = options?.permissionBroker;
       return {
         listModels: selectableTestModels,
@@ -2061,7 +2061,7 @@ test("wires TUI mode display and switching into runtime config", async () => {
   const runtimeModeUpdates: string[] = [];
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       // 启动屏首帧后按 CLI --mode 创建 App；此后的模式切换都作用于活动 App。
       assert.equal(options?.runtimeConfig?.mode, "plan");
       appMode = options?.runtimeConfig?.mode ?? "build";
@@ -2131,7 +2131,7 @@ test("wires TUI edit mode switching into runtime config", async () => {
   const runtimeModeUpdates: string[] = [];
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       // 启动屏首帧后按 CLI --mode 创建 App；edit 切换经活动 App 的 runtime config 生效。
       assert.equal(options?.runtimeConfig?.mode, "build");
       appMode = options?.runtimeConfig?.mode ?? "build";
@@ -2214,7 +2214,7 @@ test("wires TUI model command into app server state", async () => {
         },
         runtime: { registryService: {} },
       }) as never,
-    createXCodeApp: () => {
+    createZCodeApp: () => {
       return {
         getCurrentModelOption: () =>
           modelOptions.find(
@@ -2293,7 +2293,7 @@ test("wires TUI effort command into app server state", async () => {
   const requestedLevels: string[] = [];
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () => {
+    createZCodeApp: () => {
       return {
         getModel: () => "openai/gpt-main",
         getThoughtLevel: () => thoughtLevel,
@@ -2364,7 +2364,7 @@ test("wires TUI fork command into a new active app", async () => {
   let forkTarget: string | undefined;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       const appSessionId = options?.sessionId ?? "sess_parent";
       createdSessionIds.push(options?.sessionId);
       return {
@@ -2416,7 +2416,7 @@ test("wires TUI new command into a fresh active app", async () => {
   const closedSessionIds: string[] = [];
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.standaloneSessionControl, true);
       const appSessionId = options?.sessionId ?? `sess_new_${createdSessionIds.length}`;
       createdSessionIds.push(options?.sessionId);
@@ -2469,11 +2469,11 @@ test("keeps shared telemetry alive across TUI session replacement and shuts it d
   let telemetryShutdownCount = 0;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    prepareXCodeTelemetryEnv: async (env) => {
+    prepareZCodeTelemetryEnv: async (env) => {
       telemetryPrepareCount += 1;
       return env;
     },
-    shutdownXCodeTelemetry: async () => {
+    shutdownZCodeTelemetry: async () => {
       telemetryShutdownCount += 1;
     },
     runTui: async (options) => {
@@ -2508,7 +2508,7 @@ test("reuses provider endpoint routing when TUI replaces its active session", as
       routingFactoryCalls += 1;
       return providerEndpointRoutingPort;
     },
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.providerEndpointRoutingPort, providerEndpointRoutingPort);
       createdApps += 1;
       return {
@@ -2550,11 +2550,11 @@ test("closes the active TUI app on process shutdown signals", async () => {
 
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    prepareXCodeTelemetryEnv: async (env) => env,
-    shutdownXCodeTelemetry: async () => {
+    prepareZCodeTelemetryEnv: async (env) => env,
+    shutdownZCodeTelemetry: async () => {
       telemetryShutdownCount += 1;
     },
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         close: async () => {
           closeCount += 1;
@@ -4242,8 +4242,8 @@ export async function main() {
     process.env.ZCODE_CUA_PERMISSION_BROKER_SOCKET = "/tmp/cua-broker.sock";
     process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN = "scoped-secret-token";
     process.env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY] = "official-authority";
-    resetCapturedXCodeCuaBrokerCredentialsForTest();
-    sanitizeXCodeRuntimeEnvInPlace(process.env);
+    resetCapturedZCodeCuaBrokerCredentialsForTest();
+    sanitizeZCodeRuntimeEnvInPlace(process.env);
     assert.equal(process.env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY], undefined);
 
     const ctx = createContext([ZCODE_PLUGIN_HOST_COMMAND, serverPath]);
@@ -4260,7 +4260,7 @@ export async function main() {
     );
     await assert.rejects(readFile(outputPath, "utf8"), { code: "ENOENT" });
   } finally {
-    resetCapturedXCodeCuaBrokerCredentialsForTest();
+    resetCapturedZCodeCuaBrokerCredentialsForTest();
     for (const key of keys) {
       const value = originalEnv[key];
       if (value === undefined) delete process.env[key];
@@ -4303,8 +4303,8 @@ export async function main() {
     process.env.ZCODE_CUA_PERMISSION_BROKER_SOCKET = "/tmp/cua-broker.sock";
     process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN = "scoped-secret-token";
     process.env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY] = "official-authority";
-    resetCapturedXCodeCuaBrokerCredentialsForTest();
-    sanitizeXCodeRuntimeEnvInPlace(process.env);
+    resetCapturedZCodeCuaBrokerCredentialsForTest();
+    sanitizeZCodeRuntimeEnvInPlace(process.env);
 
     const ctx = createContext([ZCODE_PLUGIN_HOST_COMMAND, serverPath]);
     assert.equal(await runPluginHostCommand(ctx, [serverPath]), 0);
@@ -4322,7 +4322,7 @@ export async function main() {
     assert.equal(process.env.ZCODE_CUA_PERMISSION_BROKER_SOCKET, undefined);
     assert.equal(process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN, undefined);
   } finally {
-    resetCapturedXCodeCuaBrokerCredentialsForTest();
+    resetCapturedZCodeCuaBrokerCredentialsForTest();
     for (const key of keys) {
       const value = originalEnv[key];
       if (value === undefined) delete process.env[key];
@@ -4367,8 +4367,8 @@ export async function main() {
     process.env.ZCODE_CUA_PERMISSION_BROKER_SOCKET = "/tmp/cua-broker.sock";
     delete process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN;
     process.env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY] = "official-authority";
-    resetCapturedXCodeCuaBrokerCredentialsForTest();
-    sanitizeXCodeRuntimeEnvInPlace(process.env);
+    resetCapturedZCodeCuaBrokerCredentialsForTest();
+    sanitizeZCodeRuntimeEnvInPlace(process.env);
 
     const ctx = createContext([ZCODE_PLUGIN_HOST_COMMAND, serverPath]);
     assert.equal(await runPluginHostCommand(ctx, [serverPath]), 0);
@@ -4377,7 +4377,7 @@ export async function main() {
       token: null,
     });
   } finally {
-    resetCapturedXCodeCuaBrokerCredentialsForTest();
+    resetCapturedZCodeCuaBrokerCredentialsForTest();
     for (const key of keys) {
       const value = originalEnv[key];
       if (value === undefined) delete process.env[key];
@@ -4416,8 +4416,8 @@ export async function main() {
     process.env.ZCODE_CUA_PERMISSION_BROKER_SOCKET = "/tmp/cua-broker.sock";
     process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN = "must-not-leak";
     process.env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY] = "captured-authority";
-    resetCapturedXCodeCuaBrokerCredentialsForTest();
-    sanitizeXCodeRuntimeEnvInPlace(process.env);
+    resetCapturedZCodeCuaBrokerCredentialsForTest();
+    sanitizeZCodeRuntimeEnvInPlace(process.env);
     assert.equal(process.env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY], undefined);
 
     const ctx = createContext([
@@ -4433,7 +4433,7 @@ export async function main() {
     );
     await assert.rejects(readFile(outputPath, "utf8"), { code: "ENOENT" });
   } finally {
-    resetCapturedXCodeCuaBrokerCredentialsForTest();
+    resetCapturedZCodeCuaBrokerCredentialsForTest();
     for (const key of keys) {
       const value = originalEnv[key];
       if (value === undefined) delete process.env[key];
@@ -4639,7 +4639,7 @@ test("prints slash help for prompt help command without creating an app", async 
   const ctx = createContext(["--prompt", "/help"]);
   let appCreated = false;
   const exitCode = await run(ctx, {
-    createXCodeApp: () => {
+    createZCodeApp: () => {
       appCreated = true;
       throw new Error("app should not be created");
     },
@@ -4704,7 +4704,7 @@ test("lists skills for bare prompt skill command", async () => {
   let listed = false;
   let appCreated = false;
   const exitCode = await run(ctx, {
-    createXCodeApp: () => {
+    createZCodeApp: () => {
       appCreated = true;
       throw new Error("app should not be created");
     },
@@ -4825,7 +4825,7 @@ test("loads dotenv before creating the prompt app", async () => {
   let appEnv: NodeJS.ProcessEnv | undefined;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       appEnv = options?.env;
       return {
         sessionId: "session-test",
@@ -4873,7 +4873,7 @@ test("passes the CLI version into app creation for prompt runs", async () => {
   let appVersion: string | undefined;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       appVersion = options?.version;
       return {
         getModel: () => "openai/gpt-test",
@@ -4910,7 +4910,7 @@ test("passes prompt attachments into the app API", async () => {
   let submitted: unknown;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         sessionId: "session-test",
         traceId: "trace-test",
@@ -4945,7 +4945,7 @@ test("rewrites skill slash commands for single prompts", async () => {
   let submitted = "";
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         sessionId: "session-test",
         traceId: "trace-test",
@@ -4983,7 +4983,7 @@ test("runs goal command without prompt", async () => {
   let continued = false;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.deepEqual(options?.runtimeConfig?.memory, {
         extractionEnabled: false,
       });
@@ -5028,7 +5028,7 @@ test("passes force MCS into target runtime config", async () => {
   let continued = false;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.deepEqual((options?.runtimeConfig as any)?.midConversationSystem, {
         mode: "force",
       });
@@ -5081,7 +5081,7 @@ test("rejects combining target with prompt", async () => {
   const ctx = createContext(["--prompt", "hello target", "--target", "Ship target MVP"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         sessionId: "session-test",
         traceId: "trace-test",
@@ -5102,7 +5102,7 @@ test("closes the app after a headless prompt", async () => {
   let closeCount = 0;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         sessionId: "session-test",
         traceId: "trace-test",
@@ -5130,8 +5130,8 @@ test("shuts down prepared telemetry after a headless prompt", async () => {
   let telemetryShutdownCount = 0;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    prepareXCodeTelemetryEnv: async (env) => env,
-    shutdownXCodeTelemetry: async () => {
+    prepareZCodeTelemetryEnv: async (env) => env,
+    shutdownZCodeTelemetry: async () => {
       telemetryShutdownCount += 1;
     },
   });
@@ -5145,11 +5145,11 @@ test("shuts down prepared telemetry when headless app creation fails", async () 
   let telemetryShutdownCount = 0;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () => {
+    createZCodeApp: () => {
       throw new Error("app creation failed");
     },
-    prepareXCodeTelemetryEnv: async (env) => env,
-    shutdownXCodeTelemetry: async () => {
+    prepareZCodeTelemetryEnv: async (env) => env,
+    shutdownZCodeTelemetry: async () => {
       telemetryShutdownCount += 1;
     },
   });
@@ -5168,7 +5168,7 @@ test("aborts and closes the headless app on process shutdown signals", async () 
 
   const runPromise = run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         close: async () => {
           closeCount += 1;
@@ -5217,7 +5217,7 @@ test("closes a late async app without submitting after shutdown during initializ
     ...createPromptDeps(),
     shutdownProcess,
     exitProcess: (code) => exited.resolve(code),
-    createXCodeApp: async () => {
+    createZCodeApp: async () => {
       started.resolve();
       await release.promise;
       return {
@@ -5250,7 +5250,7 @@ test("TUI closes an app that finishes initialization after handler shutdown", as
   const handler = createTuiSubmitPrompt(
     {
       ...createPromptDeps(),
-      createXCodeApp: async () => {
+      createZCodeApp: async () => {
         started.resolve();
         await release.promise;
         return {
@@ -5278,7 +5278,7 @@ test("rejects headless goal replacement without explicit target-replace", async 
   const ctx = createContext(["--target", "New target"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         clearTarget: async () => true,
         continueActiveTarget: async () => null,
@@ -5317,7 +5317,7 @@ test("replaces an existing goal for headless goal commands when target-replace i
   let continued = false;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         clearTarget: async () => true,
         continueActiveTarget: async () => {
@@ -5368,7 +5368,7 @@ test("runs slash goal commands directly in headless prompt mode", async () => {
   let continued = false;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         clearTarget: async () => false,
         continueActiveTarget: async () => {
@@ -5408,7 +5408,7 @@ test("rejects interactive goal replacement prompts in headless mode", async () =
   const ctx = createContext(["--prompt", "/goal New target"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         clearTarget: async () => true,
         continueActiveTarget: async () => null,
@@ -5445,7 +5445,7 @@ test("defaults headless prompts to yolo mode", async () => {
   const ctx = createContext(["--prompt", "hello default mode"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.runtimeConfig?.mode, "yolo");
       assert.equal(options?.runtimeConfig?.presentationSurface, "terminal");
       return {
@@ -5471,7 +5471,7 @@ test("passes the Desktop presentation surface into headless runtime config", asy
   const ctx = createContext(["--surface", "desktop", "--prompt", "hello desktop"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.runtimeConfig?.presentationSurface, "zcode_desktop");
       assert.equal(options?.sourceTitle, undefined);
       return {
@@ -5518,7 +5518,7 @@ test("passes prompt mode override into runtime config", async () => {
   const ctx = createContext(["--prompt", "hello mode", "--mode", "plan"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.runtimeConfig?.mode, "plan");
       return {
         sessionId: "session-test",
@@ -5543,7 +5543,7 @@ test("passes force MCS into headless runtime config", async () => {
   const ctx = createContext(["--force-mcs", "--prompt", "hello force mcs"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.deepEqual((options?.runtimeConfig as any)?.midConversationSystem, {
         mode: "force",
       });
@@ -5575,7 +5575,7 @@ test("passes --disallowedTools into headless runtime config", async () => {
   ]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.deepEqual(options?.runtimeConfig?.toolDisallowlist, [
         "Bash(git *)",
         "Edit",
@@ -5604,7 +5604,7 @@ test("supports the prompt short alias with --disallowedTools", async () => {
   const ctx = createContext(["-p", "hello short prompt", "--disallowedTools", "Bash"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.deepEqual(options?.runtimeConfig?.toolDisallowlist, ["Bash"]);
       return {
         sessionId: "session-test",
@@ -5635,7 +5635,7 @@ test("supports dashed disallowed tools alias before the prompt option", async ()
   ]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.deepEqual(options?.runtimeConfig?.toolDisallowlist, ["Bash", "Edit"]);
       return {
         sessionId: "session-test",
@@ -5660,7 +5660,7 @@ test("passes edit prompt mode override into runtime config", async () => {
   const ctx = createContext(["--prompt", "hello edit mode", "--mode", "edit"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.runtimeConfig?.mode, "edit");
       return {
         sessionId: "session-test",
@@ -5687,7 +5687,7 @@ test("passes the CLI cwd into prompt runtime config", async () => {
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
     cwd: () => cwd,
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.runtimeConfig?.workingDirectory, cwd);
       return {
         sessionId: "session-test",
@@ -5719,7 +5719,7 @@ test("passes explicit resume session into prompt app creation", async () => {
   const ctx = createContext(["--resume", "sess_existing", "--prompt", "hello resume"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.resume, true);
       assert.equal(options?.sessionId, "sess_existing");
       return {
@@ -5753,7 +5753,7 @@ test("resolves latest session for continue prompts", async () => {
       assert.equal(options.directory, cwd);
       return { id: "sess_latest" } as never;
     },
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.resume, true);
       assert.equal(options?.sessionId, "sess_latest");
       return {
@@ -5815,7 +5815,7 @@ test("prints provider token usage in prompt JSON", async () => {
   const ctx = createContext(["--prompt", "hello usage", "--json"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         sessionId: "session-test",
         traceId: "trace-test",
@@ -5925,7 +5925,7 @@ test("dispatches app-server stdio command to the XCode Protocol runner without p
         loaded: false,
       };
     },
-    runXCodeProtocolAgent: async (options) => {
+    runZCodeProtocolAgent: async (options) => {
       called = true;
       assert.equal(options?.cwd, "/workspace");
       assert.equal(options?.input, ctx.stdin);
@@ -5976,7 +5976,7 @@ test("passes the Desktop presentation surface to the protocol app server", async
   const ctx = createContext(["app-server", "--stdio", "--surface", "desktop"]);
   let called = false;
   const exitCode = await run(ctx, {
-    runXCodeProtocolAgent: async (options) => {
+    runZCodeProtocolAgent: async (options) => {
       called = true;
       assert.equal(options?.presentationSurface, "zcode_desktop");
     },
@@ -5991,7 +5991,7 @@ test("rejects force MCS before starting the protocol app server", async () => {
   const ctx = createContext(["app-server", "--stdio", "--force-mcs"]);
   let called = false;
   const exitCode = await run(ctx, {
-    runXCodeProtocolAgent: async () => {
+    runZCodeProtocolAgent: async () => {
       called = true;
     },
   });
@@ -6023,7 +6023,7 @@ test("loads dotenv for app-server only in development runtime", async () => {
         path: "/workspace/.env",
       };
     },
-    runXCodeProtocolAgent: async (options) => {
+    runZCodeProtocolAgent: async (options) => {
       called = true;
       assert.equal(options?.cwd, "/workspace");
       assert.equal(options?.env?.[ZCODE_RUNTIME_ENV_KEY], "development");
@@ -6181,7 +6181,7 @@ test("injects and closes the managed CDP port for headless prompt", async () => 
         },
       };
     },
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.browserControlPort, browserControlPort);
       return {
         close: async () => {
@@ -6221,7 +6221,7 @@ test("continues managed browser cleanup when app close never settles", async () 
         browserCloseCount += 1;
       },
     }),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         close: async () => {
           appCloseCount += 1;
@@ -6262,7 +6262,7 @@ test("returns from a headless prompt when managed browser close never settles", 
         await new Promise<void>(() => undefined);
       },
     }),
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         close: async () => {
           appCloseCount += 1;
@@ -6312,7 +6312,7 @@ test("injects one managed CDP runtime into TUI app lifecycle and closes it", asy
         runtimeClosed += 1;
       },
     }),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.browserControlPort, browserControlPort);
       return {
         close: async () => {
@@ -6397,7 +6397,7 @@ test("reuses one process provider registry across TUI app replacements", async (
         },
       } as never;
     },
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       appCreations += 1;
       assert.equal(options?.providerRegistry, providerRegistry);
       assert.equal(options?.providerRuntimeHeadersPort, providerRuntimeHeadersPort);
@@ -6449,7 +6449,7 @@ test("rejects an invalid explicit browser executable before creating the app", a
   let appCreated = false;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: () => {
+    createZCodeApp: () => {
       appCreated = true;
       throw new Error("app must not be created");
     },
@@ -6539,7 +6539,7 @@ test("headless prompt reports exact Workspace Hook pretrust diagnostics without 
   const deps = createPromptDeps();
   const exitCode = await run(ctx, {
     ...deps,
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         getModel: () => "openai/gpt-test",
         getLocale: () => "en-US",
@@ -6595,7 +6595,7 @@ test("headless rollout-off diagnostics preserve the runtime feature-disabled rea
   const deps = createPromptDeps();
   const exitCode = await run(ctx, {
     ...deps,
-    createXCodeApp: () =>
+    createZCodeApp: () =>
       ({
         getModel: () => "openai/gpt-test",
         getLocale: () => "en-US",
@@ -6637,10 +6637,10 @@ for (const mode of [undefined, "off", "auto", "local"] as const) {
     let observed = false;
     const ctx = createContext([...(mode ? ["--toolsearch-mode", mode] : []), "--prompt", "hello"]);
     const deps = createPromptDeps();
-    const original = deps.createXCodeApp;
+    const original = deps.createZCodeApp;
     const code = await run(ctx, {
       ...deps,
-      createXCodeApp: (options) => {
+      createZCodeApp: (options) => {
         observed = true;
         assert.deepEqual((options?.runtimeConfig as any)?.toolSearch, { mode: mode ?? "off" });
         return original!(options);
@@ -6660,7 +6660,7 @@ test("rejects invalid ToolSearch mode and removed enable flag before creating an
     let created = false;
     const ctx = createContext([...args, "-p", "hello"]);
     const code = await run(ctx, {
-      createXCodeApp: () => {
+      createZCodeApp: () => {
         created = true;
         throw new Error("unreachable");
       },
@@ -6675,7 +6675,7 @@ test("passes explicit Native ToolSearch into TUI runtime config", async () => {
   const ctx = createContext(["tui", "--toolsearch-mode", "native"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.deepEqual((options?.runtimeConfig as any)?.toolSearch, {
         mode: "native",
       });
@@ -6706,7 +6706,7 @@ test("passes explicit Native ToolSearch into target runtime config", async () =>
   let continued = false;
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.deepEqual((options?.runtimeConfig as any)?.toolSearch, {
         mode: "native",
       });
@@ -6750,7 +6750,7 @@ test("passes explicit Native ToolSearch into headless runtime config", async () 
   const ctx = createContext(["--toolsearch-mode", "native", "--prompt", "hello enable toolsearch"]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.deepEqual((options?.runtimeConfig as any)?.toolSearch, {
         mode: "native",
       });
@@ -6789,7 +6789,7 @@ test("rejects explicit Native ToolSearch before starting the protocol app server
   const ctx = createContext(["app-server", "--stdio", "--toolsearch-mode", "native"]);
   let called = false;
   const exitCode = await run(ctx, {
-    runXCodeProtocolAgent: async () => {
+    runZCodeProtocolAgent: async () => {
       called = true;
     },
   });
@@ -6814,7 +6814,7 @@ test("passes explicit Native ToolSearch and explicit resume session into prompt 
   ]);
   const exitCode = await run(ctx, {
     ...createPromptDeps(),
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.resume, true);
       assert.deepEqual((options?.runtimeConfig as any)?.toolSearch, { mode: "native" });
       assert.equal(options?.sessionId, "sess_existing");
@@ -6855,7 +6855,7 @@ test("passes explicit Native ToolSearch while resolving latest session for conti
       assert.equal(options.directory, cwd);
       return { id: "sess_latest" } as never;
     },
-    createXCodeApp: (options) => {
+    createZCodeApp: (options) => {
       assert.equal(options?.resume, true);
       assert.deepEqual((options?.runtimeConfig as any)?.toolSearch, { mode: "native" });
       assert.equal(options?.sessionId, "sess_latest");
@@ -6887,10 +6887,10 @@ test("storage-migrate executes only the migration port and emits strict completi
       calls++;
       return { applied: ["0020"], backupSkipped: true };
     },
-    runXCodeProtocolAgent: async () => {
+    runZCodeProtocolAgent: async () => {
       throw new Error("must not start runtime");
     },
-    createXCodeApp: () => {
+    createZCodeApp: () => {
       throw new Error("must not create session");
     },
   });

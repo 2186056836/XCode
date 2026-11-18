@@ -7,7 +7,7 @@ import {
 } from "react";
 import { cn } from "@/components/lib/utils.js";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { GitGraphCommitDetail } from "./GitGraphCommitDetail.js";
 import {
   formatCommitTime,
@@ -80,7 +80,7 @@ export function GitGraphPane({
   onLoadMore,
   onRefresh,
 }: GitGraphPaneProps) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const [hoveredCommitHash, setHoveredCommitHash] = useState<string | null>(null);
   const [expandedCommitHash, setExpandedCommitHash] = useState<string | null>(null);
   const layout = useMemo(() => layoutGitGraph(commits), [commits]);

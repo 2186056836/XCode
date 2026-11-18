@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import type { XCodeTaskMeta } from "@zcode/shared";
-import { useXCodeSessionService } from "@/hooks/useXCodeSessionService.js";
+import type { ZCodeTaskMeta } from "@zcode/shared";
+import { useZCodeSessionService } from "@/hooks/useZCodeSessionService.js";
 import { zcodeSessionSnapshotToTaskMeta } from "@/lib/zcodeSessionProjection.js";
 
 export function resolveImmediateActiveTaskSnapshotMeta(
-  previousSnapshotMeta: XCodeTaskMeta | null,
+  previousSnapshotMeta: ZCodeTaskMeta | null,
   taskId: string | null,
-  taskMetaFromLists?: XCodeTaskMeta | null,
+  taskMetaFromLists?: ZCodeTaskMeta | null,
 ) {
   if (!taskId || taskMetaFromLists) {
     return null;
@@ -32,14 +32,14 @@ export function useActiveTaskSnapshotMeta(
   taskId: string | null,
   preferredRemoteSessionId?: string | null,
   workspaceIdentity?: string,
-  taskMetaFromLists?: XCodeTaskMeta | null,
+  taskMetaFromLists?: ZCodeTaskMeta | null,
 ) {
-  const zcodeSessionService = useXCodeSessionService(
+  const zcodeSessionService = useZCodeSessionService(
     workspacePath,
     preferredRemoteSessionId,
     workspaceIdentity,
   );
-  const [snapshotMeta, setSnapshotMeta] = useState<XCodeTaskMeta | null>(null);
+  const [snapshotMeta, setSnapshotMeta] = useState<ZCodeTaskMeta | null>(null);
 
   useEffect(() => {
     let cancelled = false;

@@ -1,5 +1,5 @@
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
-import { useXCodeAgentService } from "@/hooks/useXCodeAgentService.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeAgentService } from "@/hooks/useZCodeAgentService.js";
 import { toast } from "@/components/ui/toast.js";
 /* eslint-disable max-lines -- Composer 草稿 owner 同时收口选择、正文与提交生命周期，保持单一状态边界。 */
 // 当前编辑由 Composer 持有；进入已有 Session 从当前快照恢复权限/Plan，在线只响应新变化。
@@ -10,10 +10,10 @@ import { toast } from "@/components/ui/toast.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ZCODE_AGENT_PROVIDER, resolveExecutionState } from "@zcode/shared";
 import type {
-  XCodeConfigOption,
+  ZCodeConfigOption,
   ModelSelection,
-  XCodeProvider,
-  XCodeSlashCommand,
+  ZCodeProvider,
+  ZCodeSlashCommand,
 } from "@zcode/shared";
 import type { SessionConfigState } from "@zcode/shared/zcode-protocol-v4";
 import type { IModelSelectionService } from "@zcode/services";
@@ -23,8 +23,8 @@ import {
   type ModelSelectionRead,
 } from "@/hooks/useModelSelectionView.js";
 import { submissionModeSchema } from "@zcode/shared/zcode-protocol-v4";
-import { prepareWorkspaceWithXCodeSessionService } from "@/hooks/useWorkspacePrepare.js";
-import { useXCodeSessionService } from "@/hooks/useXCodeSessionService.js";
+import { prepareWorkspaceWithZCodeSessionService } from "@/hooks/useWorkspacePrepare.js";
+import { useZCodeSessionService } from "@/hooks/useZCodeSessionService.js";
 import { useSettings } from "@/hooks/useSettingService.js";
 import { parseModelPickerValue } from "@/lib/zcodeSessionProjection.js";
 import { resolveDraftInitialModelSelection } from "@/lib/composerRecent.js";
@@ -41,7 +41,7 @@ import {
 import { resolveAppFollowupMode } from "@/v4/composer/followupModeSettings.js";
 import { isComposerEditScopeId } from "@/composer-edit-mode/contract.js";
 import { logger } from "@/logger.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 
 /** 目录水合单飞（per workspaceKey）：draft、已有 session 和严格模式双挂载共享一次 RPC。 */
 const workspaceCatalogHydrationFlights = new Map<string, Promise<void>>();
@@ -67,9 +67,9 @@ export function applyDraftModelSelection(
 }
 
 export function shouldHydrateWorkspaceCatalog(params: {
-  configOptions: readonly XCodeConfigOption[];
+  configOptions: readonly ZCodeConfigOption[];
   sessionId: string | null;
-  slashCommands: readonly XCodeSlashCommand[];
+  slashCommands: readonly ZCodeSlashCommand[];
 }): boolean {
   const hasModePresentation = params.configOptions.some(
     (option) => option.category === "mode" && option.type === "select",
@@ -178,7 +178,7 @@ function hasSameComposerDraftContent(left: V4ComposerDraft, right: V4ComposerDra
 export function useDraftConfigControl(params: {
   workspacePath: string;
   workspaceIdentity?: string;
-  provider?: XCodeProvider;
+  provider?: ZCodeProvider;
   /** 会话切换恢复文字/模型，权限和 Plan 使用当前快照。 */
   sessionId: string | null;
   /** 仅匹配当前 Session 的首份投影可用作初始化；null 表示还没恢复完成。 */
@@ -189,7 +189,7 @@ export function useDraftConfigControl(params: {
   /** composer 编辑态：草稿切到该 Session 的 edit scope，原草稿留在原 scope 不动。 */
   editScopeId?: string | null;
 }): DraftConfigControl {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const {
     workspacePath,
     workspaceIdentity,
@@ -202,7 +202,7 @@ export function useDraftConfigControl(params: {
   } = params;
   const workspaceKey = workspaceIdentity?.trim() || workspacePath;
   const displayProvider = provider ?? ZCODE_AGENT_PROVIDER;
-  const agentService = useXCodeAgentService(workspacePath, null, workspaceIdentity);
+  const agentService = useZCodeAgentService(workspacePath, null, workspaceIdentity);
   useEffect(() => {
     const subscription = agentService.onDynamicPluginStartupDegraded({
       workspacePath,
@@ -216,19 +216,19 @@ export function useDraftConfigControl(params: {
     });
     return () => subscription.dispose();
   }, [agentService, intl, workspacePath, workspaceIdentity, workspaceKey]);
-  const zcodeSessionService = useXCodeSessionService(workspacePath, null, workspaceIdentity);
+  const zcodeSessionService = useZCodeSessionService(workspacePath, null, workspaceIdentity);
   const { settings: sharedSettings } = useSettings();
   const appFollowupMode = resolveAppFollowupMode(sharedSettings);
   const scopeId = sessionId === null ? V4_DRAFT_SCOPE_ROOT : (editScopeId ?? sessionId);
   const clientNamespace = useComposerClientNamespace();
-  const draftProjectId = useXCodeSessionStore(
+  const draftProjectId = useZCodeSessionStore(
     (state) => state.workspaces[workspaceKey]?.draftProjectId,
   );
   const rootScope = useMemo(
     () => resolveComposerScope(draftProjectId, workspaceIdentity, clientNamespace),
     [draftProjectId, workspaceIdentity, clientNamespace],
   );
-  const draftFocusVersion = useXCodeSessionStore((state) =>
+  const draftFocusVersion = useZCodeSessionStore((state) =>
     sessionId === null ? (state.workspaces[workspaceKey]?.draftFocusVersion ?? 0) : 0,
   );
   // New Task 可以复用同一个 pane；无文字时必须重新取 Recent，不能只清磁盘留旧内存。
@@ -238,7 +238,7 @@ export function useDraftConfigControl(params: {
     draftFocusVersion,
     sessionId === null ? composerScopeKey(rootScope) : null,
   ]);
-  const navigationInitialization = useXCodeSessionStore((state) => {
+  const navigationInitialization = useZCodeSessionStore((state) => {
     const workspace = state.workspaces[workspaceKey];
     return workspace?.activeTaskId === sessionId &&
       workspace?.composerInitialization?.taskId === sessionId
@@ -422,11 +422,11 @@ export function useDraftConfigControl(params: {
   draftConfigRef.current = draftConfig;
   const createDraftPersistence = useCallback(
     (targetScopeId = stateRef.current.promotedSessionId ?? scopeId) => {
-      const workspace = useXCodeSessionStore
+      const workspace = useZCodeSessionStore
         .getState()
         .getWorkspaceState(workspacePath, workspaceIdentity);
       return (value: V4ComposerDraft) => {
-        const current = useXCodeSessionStore
+        const current = useZCodeSessionStore
           .getState()
           .getWorkspaceState(workspacePath, workspaceIdentity);
         // Bug 根因：自动保存不再触发父级 render 后，旧闭包可能把已关闭的分组归属写回来。
@@ -495,7 +495,7 @@ export function useDraftConfigControl(params: {
   }, []);
   useEffect(() => {
     if (navigationInitialization)
-      useXCodeSessionStore
+      useZCodeSessionStore
         .getState()
         .consumeComposerInitialization(workspacePath, navigationInitialization, workspaceIdentity);
   }, [scopeKey, navigationInitialization, workspacePath, workspaceIdentity]);
@@ -505,7 +505,7 @@ export function useDraftConfigControl(params: {
       stateRef.current.scopeKey === scopeKey &&
       stateRef.current.incarnation === incarnation &&
       (sessionId !== null ||
-        (useXCodeSessionStore.getState().getWorkspaceState(workspacePath, workspaceIdentity)
+        (useZCodeSessionStore.getState().getWorkspaceState(workspacePath, workspaceIdentity)
           .draftFocusVersion ?? 0) === draftFocusVersion),
     [scopeKey, incarnation, sessionId, workspacePath, workspaceIdentity, draftFocusVersion],
   );
@@ -926,7 +926,7 @@ export function useDraftConfigControl(params: {
   // 目录已 ready（reload/广播/上次水合写过）则跳过；否则读取最小 workspace presentation。
   useEffect(() => {
     const isDraft = sessionId === null;
-    const store = useXCodeSessionStore.getState();
+    const store = useZCodeSessionStore.getState();
     const workspaceState = store.getWorkspaceState(workspacePath, workspaceIdentity);
     if (!agentStartupAllowed) {
       // V4 目录水合曾在无模型时直接进入 RPC，虽然 Host 不会启动 CLI，
@@ -962,7 +962,7 @@ export function useDraftConfigControl(params: {
     }
 
     store.setConfigOptionsStatus(workspacePath, "loading", workspaceIdentity);
-    const flight = prepareWorkspaceWithXCodeSessionService({
+    const flight = prepareWorkspaceWithZCodeSessionService({
       workspacePath,
       workspaceIdentity,
       provider: displayProvider,
@@ -980,7 +980,7 @@ export function useDraftConfigControl(params: {
           ),
           workspaceKey,
         });
-        const latest = useXCodeSessionStore.getState();
+        const latest = useZCodeSessionStore.getState();
         latest.setConfigOptions(workspacePath, baseOptions, workspaceIdentity);
         latest.setConfigOptionsStatus(workspacePath, "ready", workspaceIdentity);
         latest.setSlashCommands(
@@ -990,7 +990,7 @@ export function useDraftConfigControl(params: {
         );
       })
       .catch((error) => {
-        useXCodeSessionStore
+        useZCodeSessionStore
           .getState()
           .setConfigOptionsStatus(workspacePath, "error", workspaceIdentity);
         logger.warn(`[v4-workspace-catalog] workspace 目录水合失败: ${String(error)}`);

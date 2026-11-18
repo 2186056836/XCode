@@ -80,7 +80,7 @@ describe("PDF 预览手机 Web 远控", () => {
       const dialog = page.getByRole("dialog");
       const pdfPage = dialog.locator(".react-pdf__Page canvas");
       try {
-        const project = page.locator('[data-project-name="XCodeProject"]');
+        const project = page.locator('[data-project-name="ZCodeProject"]');
         await project.waitFor({ timeout: 60000 });
         await project.getByTestId("virtual-project-create-task").tap();
         await page.locator('[data-mobile-page="chat"]').waitFor();

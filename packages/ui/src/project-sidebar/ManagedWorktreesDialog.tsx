@@ -49,14 +49,14 @@ import { cn } from "@/components/lib/utils.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { useFileContextActions } from "@/hooks/useFileContextActions.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { readLastSelectedEditorId } from "@/lib/editorPreference.js";
 import { isFileManagerOpenTarget, sortInstalledEditorsForOpenWith } from "@/lib/openWithEditors.js";
 import { getPathLeaf } from "@/lib/path.js";
 import { logger } from "@/logger.js";
 import { getFileManagerLabel } from "@/workspace-file-tree/helpers.js";
 
-type XCodeIntl = ReturnType<typeof useXCodeIntl>["intl"];
+type ZCodeIntl = ReturnType<typeof useZCodeIntl>["intl"];
 
 interface RowError {
   message: string;
@@ -69,7 +69,7 @@ function worktreeName(worktree: ManagedWorktreeEntry): string {
 }
 
 /** 只按结构化 code（及 in-use 的 detail）选择文案，不解析 git 原始报错。 */
-function describeRemoveError(intl: XCodeIntl, error: ManagedWorktreeError): RowError {
+function describeRemoveError(intl: ZCodeIntl, error: ManagedWorktreeError): RowError {
   const msg = (id: string) => intl.formatMessage({ id: `git.managedWorktree.dialog.${id}` });
   if (error.code === "worktree-dirty") return { message: msg("error.dirty") };
   if (error.code === "worktree-in-use" && error.detail === "running")
@@ -165,7 +165,7 @@ function TaskActions({
   tasks: ManagedWorktreeTask[];
   onOpenTask(task: ManagedWorktreeTask): void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const msg = (id: string) => intl.formatMessage({ id: `git.managedWorktree.dialog.${id}` });
   const buttonProps: ComponentProps<typeof Button> = {
     type: "button",
@@ -235,7 +235,7 @@ function WorktreeRow({
   onDelete(): void;
   onPrune(): void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const msg = (id: string, values?: Record<string, string>) =>
     intl.formatMessage({ id: `git.managedWorktree.dialog.${id}` }, values);
   const platform = usePlatform();
@@ -386,7 +386,7 @@ export function ManagedWorktreesDialog({
   onClose(): void;
   onOpenTask: ProjectSidebarProps["onSelectTask"];
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const msg = (id: string, values?: Record<string, string>) =>
     intl.formatMessage({ id: `git.managedWorktree.dialog.${id}` }, values);
   const { groups, loading, error, reload } = useManagedWorktreeList(service, project.id);

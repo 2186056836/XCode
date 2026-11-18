@@ -1,4 +1,4 @@
-import type { ICommandsService, ISkillsService, IXCodeAgentService } from "@zcode/services";
+import type { ICommandsService, ISkillsService, IZCodeAgentService } from "@zcode/services";
 import { logger } from "@/logger.js";
 import { invalidateDeferredDraftSessionForSkillChange } from "@/lib/zcodeDraftSkillInvalidation.js";
 import { refreshSharedSkillStoreForWorkspace } from "@/lib/skillStoreRefresh.js";
@@ -6,7 +6,7 @@ import { mergeSlashCommandsAfterCommandRefresh } from "@/settings/pluginSlashCom
 import { useCommandsStore } from "@/store/commandsStore.js";
 import { useMcpStore } from "@/store/mcpStore.js";
 import { notifyPluginManagementChange } from "@/store/pluginManagementStoreLoading.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 
 function toMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -48,7 +48,7 @@ export async function refreshSlashCommandsAfterRemoteSync(params: {
       });
     }
 
-    const zcodeSessionStore = useXCodeSessionStore.getState();
+    const zcodeSessionStore = useZCodeSessionStore.getState();
     const currentSlashCommands = zcodeSessionStore.getWorkspaceState(
       workspacePath,
       workspaceIdentityParam,
@@ -112,7 +112,7 @@ export async function refreshWorkspacePluginCapabilitiesAfterRemoteSync(params: 
   skillsService: ISkillsService;
   workspaceIdentity?: string | null;
   workspacePath?: string | null;
-  zcodeAgentService: IXCodeAgentService;
+  zcodeAgentService: IZCodeAgentService;
 }): Promise<void> {
   const workspacePath = params.workspacePath;
   if (!workspacePath) {

@@ -7,12 +7,12 @@ import {
   v4ConversationContextCompositionResultSchema,
   type V4ConversationContextCompositionResult,
 } from "@zcode/shared/zcode-protocol-v4";
-import { parseParams, type XCodeProtocolAgentServerContext } from "../server-types.js";
+import { parseParams, type ZCodeProtocolAgentServerContext } from "../server-types.js";
 import { getContextCompositionTracker } from "./tracker.js";
 
 export async function getConversationContextComposition(
   context: Pick<
-    XCodeProtocolAgentServerContext,
+    ZCodeProtocolAgentServerContext,
     "contextCompositionTracker" | "notify" | "sessions"
   >,
   rawParams: unknown,

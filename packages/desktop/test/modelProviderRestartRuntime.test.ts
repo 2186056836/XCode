@@ -141,7 +141,7 @@ describe("model provider restart runtime", () => {
       },
     });
     await expect(
-      stat(join(homeDir, "XCodeProject", ".xcode", "config.json")),
+      stat(join(homeDir, "ZCodeProject", ".xcode", "config.json")),
     ).rejects.toMatchObject({ code: "ENOENT" });
   });
 });

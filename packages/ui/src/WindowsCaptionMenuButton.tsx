@@ -3,7 +3,7 @@ import type { UpdateStatePayload } from "@zcode/shared";
 import { useCallback, useEffect, useState } from "react";
 import { useFeedbackStore } from "@/feedback/feedbackStore.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { createHelpMenuActionHandlers } from "@/lib/helpMenuActions.js";
 import { useShortcutCommandLabel } from "@/shortcuts/useShortcutBindings.js";
 import { logger } from "@/logger.js";
@@ -55,7 +55,7 @@ export function WindowsCaptionMenuButton({
   useWindowsCaptionSpacing?: boolean;
 }) {
   const platform = usePlatform();
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const newTaskShortcutLabel = useShortcutCommandLabel("newTask");
   const openWorkspaceShortcutLabel = useShortcutCommandLabel("openWorkspace");
   const openFeedbackSubmit = useFeedbackStore((state) => state.openSubmit);
@@ -87,13 +87,13 @@ export function WindowsCaptionMenuButton({
   }, [platform]);
 
   const syncStdioTapDevState = useCallback(async () => {
-    if (!platform.getXCodeStdioTapDevState) {
+    if (!platform.getZCodeStdioTapDevState) {
       setStdioTapDevState({ enabled: false, visible: false });
       return;
     }
 
     try {
-      const state = await platform.getXCodeStdioTapDevState();
+      const state = await platform.getZCodeStdioTapDevState();
       setStdioTapDevState({ enabled: state.enabled, visible: state.visible });
     } catch (error) {
       logger.warn("[WindowsCaptionMenuButton] 同步 stdio tap 状态失败", { error });
@@ -159,7 +159,7 @@ export function WindowsCaptionMenuButton({
 
   const handleToggleStdioTapDevProxy = () => {
     void (async () => {
-      await platform.executeDesktopCommand(DesktopCommandIds.ToggleXCodeStdioTapDevProxy);
+      await platform.executeDesktopCommand(DesktopCommandIds.ToggleZCodeStdioTapDevProxy);
       await syncStdioTapDevState();
     })();
   };
@@ -288,7 +288,7 @@ export function WindowsCaptionMenuButton({
               checked={stdioTapDevState.enabled}
               onCheckedChange={handleToggleStdioTapDevProxy}
             >
-              {intl.formatMessage({ id: "titleBar.menu.help.toggleXCodeStdioTap" })}
+              {intl.formatMessage({ id: "titleBar.menu.help.toggleZCodeStdioTap" })}
             </DropdownMenuCheckboxItem>
             <DropdownMenuItem
               onSelect={() => handleExecuteDesktopCommand(DesktopCommandIds.ToggleDevTools)}

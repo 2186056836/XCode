@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useBotPrivateDeliveryRetry } from "@/hooks/useBotPrivateDeliveryRetry.js";
 
 export function PrivateDeliveryRetry({ botId, deliveryId }: { botId: string; deliveryId: string }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { state, retry } = useBotPrivateDeliveryRetry(botId, deliveryId);
   if (state === "done") return null;
   return (

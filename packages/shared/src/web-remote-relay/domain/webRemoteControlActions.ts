@@ -10,7 +10,7 @@
 export const WEB_REMOTE_CONTROL_RENDERER_ACTION_TIMEOUT_MS = 30_000;
 
 /** 手机新建本地项目的固定根目录（相对用户主目录），与桌面 scratch workspace 一致。 */
-export const WEB_REMOTE_CONTROL_LOCAL_PROJECT_ROOT_DIR = "XCodeProject";
+export const WEB_REMOTE_CONTROL_LOCAL_PROJECT_ROOT_DIR = "ZCodeProject";
 
 export interface WebRemoteControlWorkspaceCreateRequestPayload {
   zcode_type: "workspace-create-request";

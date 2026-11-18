@@ -17,7 +17,7 @@ import {
   type ModelRequestSessionFeature,
 } from "@zcode/contracts";
 import { createOfficialCommandEndpoint } from "../src/official-command-endpoint/index.js";
-import { createRegistryBackedTestApp as createXCodeApp } from "./helpers/registry-backed-test-app.js";
+import { createRegistryBackedTestApp as createZCodeApp } from "./helpers/registry-backed-test-app.js";
 
 // docs/design/v2/model/session-features-header.md「Sites 部署标签的补充规则」的装配层：
 // 真实的官方命令端点 + 假 zcode-server。假执行端口在收到部署命令时，像 zcode-site CLI 一样用请求 env
@@ -30,7 +30,7 @@ afterEach(async () => {
   while (cleanups.length > 0) await cleanups.pop()!();
 });
 
-async function startXCodeServer(status: number): Promise<string> {
+async function startZCodeServer(status: number): Promise<string> {
   const server: Server = createServer((req, res) => {
     req.resume();
     req.on("end", () => {
@@ -86,11 +86,11 @@ async function runScenario(upstreamStatus: number) {
   cleanups.push(() => rm(root, { force: true, recursive: true }));
   const sessionStore = await createSqliteSessionStore({ dbPath: ":memory:" });
   cleanups.push(async () => sessionStore.close());
-  const origin = await startXCodeServer(upstreamStatus);
+  const origin = await startZCodeServer(upstreamStatus);
   const endpoint = createOfficialCommandEndpoint({
     fetch: globalThis.fetch,
     resolveHeaders: async () => ({ ok: true, headers: { Authorization: "Bearer jwt" } }),
-    resolveXCodeApiOrigin: () => origin,
+    resolveZCodeApiOrigin: () => origin,
   });
   cleanups.push(() => endpoint.close());
 
@@ -105,7 +105,7 @@ async function runScenario(upstreamStatus: number) {
   };
 
   const seen: Array<readonly ModelRequestSessionFeature[] | undefined> = [];
-  const app = await createXCodeApp({
+  const app = await createZCodeApp({
     env: {},
     executionPort,
     officialCommandEnv: (sessionId, workspace, observer) =>

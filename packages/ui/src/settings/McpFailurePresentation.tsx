@@ -2,7 +2,7 @@ import { InfoIcon } from "lucide-react";
 import type { McpServerFailureKind } from "@zcode/shared";
 import { Button } from "@/components/ui/button.js";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export function resolveMcpFailureMessageId(
   failureKind: McpServerFailureKind | undefined,
@@ -17,7 +17,7 @@ export function McpFailurePresentation({
   error?: string;
   failureKind?: McpServerFailureKind;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const message = intl.formatMessage({
     id: resolveMcpFailureMessageId(failureKind),
   });

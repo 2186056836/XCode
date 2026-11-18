@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- 内置 Agent CLI 的安装/卸载状态、随机进度模板与设置同步目前集中在同一 hook，先保持收口，避免把同一条交互链拆散。 */
 import { useCallback, useMemo, useState } from "react";
-import type { XCodeProvider } from "@zcode/shared";
+import type { ZCodeProvider } from "@zcode/shared";
 import { useSettings } from "@/hooks/useSettingService.js";
 import {
   resolveBuiltinAgentCliStatus,
@@ -296,8 +296,8 @@ function getInstallTargetProgressAtElapsed(
 }
 
 async function simulateInstallProgress(
-  provider: XCodeProvider,
-  setProgress: (provider: XCodeProvider, progress: number | null) => void,
+  provider: ZCodeProvider,
+  setProgress: (provider: ZCodeProvider, progress: number | null) => void,
 ): Promise<void> {
   const plan = createInstallProgressPlan();
   const startedAt = Date.now();
@@ -352,10 +352,10 @@ async function simulateUninstallDelay(): Promise<void> {
 
 export function useBuiltinAgentCli() {
   const { settings, loading, refresh, update } = useSettings();
-  const [enablingProvider, setEnablingProvider] = useState<XCodeProvider | null>(null);
-  const [disablingProvider, setDisablingProvider] = useState<XCodeProvider | null>(null);
+  const [enablingProvider, setEnablingProvider] = useState<ZCodeProvider | null>(null);
+  const [disablingProvider, setDisablingProvider] = useState<ZCodeProvider | null>(null);
   const [installProgressByProvider, setInstallProgressByProvider] = useState<
-    Partial<Record<XCodeProvider, number>>
+    Partial<Record<ZCodeProvider, number>>
   >({});
   const [error, setError] = useState<string | null>(null);
 
@@ -367,17 +367,17 @@ export function useBuiltinAgentCli() {
   const hasPendingMutation = activeMutatingProvider !== null;
 
   const isEnabled = useCallback(
-    (provider: XCodeProvider) => enabledProviders.includes(provider),
+    (provider: ZCodeProvider) => enabledProviders.includes(provider),
     [enabledProviders],
   );
 
   const getEffectiveProvider = useCallback(
-    (provider: XCodeProvider) => getEffectiveBuiltinAgentCliProvider(settings, provider),
+    (provider: ZCodeProvider) => getEffectiveBuiltinAgentCliProvider(settings, provider),
     [settings],
   );
 
   const getStatus = useCallback(
-    (provider: XCodeProvider): BuiltinAgentCliStatus =>
+    (provider: ZCodeProvider): BuiltinAgentCliStatus =>
       resolveBuiltinAgentCliStatus({
         provider,
         enabledProviders,
@@ -388,13 +388,13 @@ export function useBuiltinAgentCli() {
   );
 
   const canMutateProvider = useCallback(
-    (provider: XCodeProvider) =>
+    (provider: ZCodeProvider) =>
       !hasPendingMutation || activeMutatingProvider === provider,
     [activeMutatingProvider, hasPendingMutation],
   );
 
   const installProvider = useCallback(
-    async (provider: XCodeProvider) => {
+    async (provider: ZCodeProvider) => {
       if (!canMutateProvider(provider)) {
         return;
       }
@@ -444,7 +444,7 @@ export function useBuiltinAgentCli() {
   );
 
   const uninstallProvider = useCallback(
-    async (provider: XCodeProvider) => {
+    async (provider: ZCodeProvider) => {
       if (!canMutateProvider(provider)) {
         return;
       }
@@ -498,7 +498,7 @@ export function useBuiltinAgentCli() {
     canMutateProvider,
     getEffectiveProvider,
     getStatus,
-    getInstallProgress: (provider: XCodeProvider) =>
+    getInstallProgress: (provider: ZCodeProvider) =>
       installProgressByProvider[provider] ?? null,
     installProvider,
     uninstallProvider,

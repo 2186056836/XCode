@@ -20,13 +20,13 @@ import {
 import { zcodeProtocolErrorCodes, zcodeTurnStartedEventPayloadSchema } from "@zcode/shared";
 import {
   ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE,
-  type IXCodeAgentService,
+  type IZCodeAgentService,
 } from "#src/zcode-agent/zcodeAgent.js";
-import { withTrustedXCodeAgentV4Connection } from "#src/zcode-agent/zcodeAgentConnectionScope.js";
+import { withTrustedZCodeAgentV4Connection } from "#src/zcode-agent/zcodeAgentConnectionScope.js";
 
 /** 只读已活跃 session；缺 runtime 是明确未知，不订阅/恢复历史。 */
 export async function readAppLiveSummary(
-  agent: IXCodeAgentService,
+  agent: IZCodeAgentService,
   session: AppSessionRef,
 ): Promise<
   { status: "unknown" | "idle" | "running" | "needs_attention"; executionId?: string } | undefined
@@ -166,7 +166,7 @@ export interface AppConversationObservation {
 
 /** 每个观察者使用独立 connectionId；先订阅 listener 再读 ACK，避免首帧夹在两者之间丢失。 */
 export async function observeAppConversation(
-  agent: IXCodeAgentService,
+  agent: IZCodeAgentService,
   operation: AppOperationRef,
   signal: AbortSignal,
   connectionId: string,
@@ -306,7 +306,7 @@ export async function observeAppConversation(
     closePromise = subscriptionId
       ? agent
           .unsubscribeConversationV4(
-            withTrustedXCodeAgentV4Connection(
+            withTrustedZCodeAgentV4Connection(
               { ...target, subscriptionId, runtimePolicy: "existing-only" as const },
               connection,
             ),
@@ -338,7 +338,7 @@ export async function observeAppConversation(
   try {
     if (signal.aborted) throw new SessionControlError("cancelled", "Observation cancelled");
     const result = await agent.subscribeConversationV4(
-      withTrustedXCodeAgentV4Connection(
+      withTrustedZCodeAgentV4Connection(
         { ...target, visibility: "background" as const },
         connection,
       ),
@@ -392,7 +392,7 @@ export async function observeAppConversation(
 }
 
 export async function observeAppOperation(
-  agent: IXCodeAgentService,
+  agent: IZCodeAgentService,
   operation: AppOperationRef,
   signal: AbortSignal,
   connectionId: string,
@@ -400,7 +400,7 @@ export async function observeAppOperation(
   const feed = await observeAppConversation(agent, operation, signal, connectionId);
   try {
     const query = await agent.queryConversationCommandsV4(
-      withTrustedXCodeAgentV4Connection(
+      withTrustedZCodeAgentV4Connection(
         {
           workspacePath: operation.session.workspacePath,
           workspaceIdentity: operation.session.workspaceIdentity,

@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useRef } from "react";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useConfirmDialogStore } from "@/store/confirmDialogStore.js";
 
 export function useConfirmDialog() {
@@ -8,7 +8,7 @@ export function useConfirmDialog() {
 
 /** 只包装显式入口；scope 必须稳定，并随原状态 owner 的目标换代而改变。 */
 export function useYoloModeConfirmation(scope: unknown, currentMode: string | undefined) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const requestConfirmation = useConfirmDialog();
   const pending = useRef<AbortController | null>(null);
   useLayoutEffect(

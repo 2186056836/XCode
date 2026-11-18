@@ -1,7 +1,7 @@
 /* eslint-disable max-lines -- 投影状态、V4 帧与离线替换属于同一个一致性边界。 */
 import { isDeepStrictEqual } from "node:util";
-import type { XCodeTaskMeta } from "@zcode/shared";
-import type { XCodeArchivedTaskDeletionResult } from "@zcode/services";
+import type { ZCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeArchivedTaskDeletionResult } from "@zcode/services";
 import {
   CONTROLLER_TASKS_INDEX_TOPIC,
   CONTROLLER_WORKSPACES_TOPIC,
@@ -32,7 +32,7 @@ export type WindowHostControllerSourceScope =
     };
 
 export interface WindowHostControllerTaskMembership {
-  meta: XCodeTaskMeta;
+  meta: ZCodeTaskMeta;
   membership: {
     pinned: boolean;
     archived: boolean;
@@ -47,7 +47,7 @@ export interface WindowHostControllerSessionOverlay {
   title?: string;
   titleSource?: "default" | "generated" | "custom";
   updatedAt?: number;
-  pendingInteraction?: XCodeTaskMeta["pendingInteraction"];
+  pendingInteraction?: ZCodeTaskMeta["pendingInteraction"];
   activity?: NonNullable<WindowHostControllerTaskRow["activity"]>;
 }
 
@@ -66,8 +66,8 @@ export type WindowHostControllerMutation =
 export type WindowHostControllerMutationResult =
   | void
   | boolean
-  | XCodeArchivedTaskDeletionResult
-  | XCodeTaskMeta;
+  | ZCodeArchivedTaskDeletionResult
+  | ZCodeTaskMeta;
 
 interface ControllerSource {
   scope: WindowHostControllerSourceScope;
@@ -118,7 +118,7 @@ function taskKey(address: WindowHostTaskAddress): string {
   return `${address.sourceServerId ?? address.remoteSessionId ?? "local"}\0${address.workspaceIdentity?.trim() || address.workspacePath}\0${address.taskId}`;
 }
 
-function defaultLiveStatus(meta: XCodeTaskMeta): WindowHostControllerTaskRow["liveStatus"] {
+function defaultLiveStatus(meta: ZCodeTaskMeta): WindowHostControllerTaskRow["liveStatus"] {
   // live overlay 缺失表示当前没有可证明的 runtime；SQLite 里的 running/interaction
   // 可能来自上次进程退出，不能重新解释成当前运行或等待事实。
   switch (meta.status) {
@@ -133,7 +133,7 @@ function defaultLiveStatus(meta: XCodeTaskMeta): WindowHostControllerTaskRow["li
 
 function statusFromActivity(
   activity: NonNullable<WindowHostControllerSessionOverlay["activity"]>,
-): XCodeTaskMeta["status"] {
+): ZCodeTaskMeta["status"] {
   switch (activity.phase) {
     case "prewarming":
     case "running":

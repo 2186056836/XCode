@@ -7,7 +7,7 @@ import type { StartupTimer } from "../startup-logging.js";
 import { resolveOfficialPluginRoots } from "./bundled-plugins.js";
 import { DEFAULT_ENABLED_OFFICIAL_PLUGIN_IDS } from "./official-plugin-definitions.js";
 import { getPluginStorageRoot } from "./paths.js";
-import type { XCodeAppOptions } from "./types.js";
+import type { ZCodeAppOptions } from "./types.js";
 import { filterVisualizeSkillRoots } from "./visualize-skill-gate.js";
 
 export async function resolveStartupPlugins(input: {
@@ -16,7 +16,7 @@ export async function resolveStartupPlugins(input: {
   env?: NodeJS.ProcessEnv;
   logger?: Logger;
   options: Pick<
-    XCodeAppOptions,
+    ZCodeAppOptions,
     | "officialPluginRoots"
     | "pluginStorageRoot"
     | "pluginPreparation"
@@ -30,7 +30,7 @@ export async function resolveStartupPlugins(input: {
   const pluginStorageRoot =
     input.options.pluginStorageRoot ?? getPluginStorageRoot(input.cliStorageRoot);
   const resolve = async (): Promise<PluginLoadOutcome> => {
-    // 会话运行时的 MCP 展开也要读到私有文件里的敏感值（与 resolveXCodePlugins 同一叠加）。
+    // 会话运行时的 MCP 展开也要读到私有文件里的敏感值（与 resolveZCodePlugins 同一叠加）。
     const secrets = await withPluginSecrets(
       input.configResult,
       resolvePluginSecretsPath(pluginStorageRoot),
@@ -55,7 +55,7 @@ export async function resolveStartupPlugins(input: {
         }),
         // defaultEnabled 的 official plugin (如 skill-creator) 只有在这里
         // 把名单传给 discoverNodePlugins 才会真正默认开启。CLI 子命令路径
-        // (resolveXCodePlugins) 和应用启动路径都要传，否则 `/skill skill-creator` 在会话里
+        // (resolveZCodePlugins) 和应用启动路径都要传，否则 `/skill skill-creator` 在会话里
         // 报 "Skill not found: skill-creator"，但 `zcode plugins list` 却显示它是 enabled。
         officialPluginsEnabledByDefault: DEFAULT_ENABLED_OFFICIAL_PLUGIN_IDS,
         storageRoot: pluginStorageRoot,

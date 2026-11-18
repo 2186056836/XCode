@@ -90,7 +90,7 @@ turn 事件天然同源，不引入第二套身份。
 
 **关键调研结论（已核实，修正早期认知）**：SDK 主链路（生产链，node_repl）
 的产品 sessionId **现在就已 per-request 流到 Helper**，不存在「缺一整条
-路由」——`trace.sessionId → MCP request-context（com.xcode/request-context
+路由」——`trace.sessionId → MCP request-context（com.zcode/request-context
 .session_id，cua-bridge 构造 context 时必填缺失抛错）→ runtime.execute
 ({context})`；`capture_app` 已带 `pip_session_context.session_id`（同为裸
 产品 sessionId）。真正缺的只有最后一公里：**ghost fire 点与 native API 不

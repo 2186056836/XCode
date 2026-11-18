@@ -1,4 +1,4 @@
-import type { XCodeAppOptions } from "@zcode/bootstrap";
+import type { ZCodeAppOptions } from "@zcode/bootstrap";
 import type { CliEnv } from "./env.js";
 import { loadBootstrapModule } from "./bootstrap-loader.js";
 import type { CliResumeRequest, RunDependencies } from "./cli-types.js";
@@ -8,9 +8,9 @@ export const resolveResumeSession = async (
   workingDirectory: string,
   env: CliEnv,
   deps: RunDependencies,
-): Promise<XCodeAppOptions["sessionId"] | undefined> => {
+): Promise<ZCodeAppOptions["sessionId"] | undefined> => {
   if (request.resumeSessionId) {
-    return request.resumeSessionId as XCodeAppOptions["sessionId"];
+    return request.resumeSessionId as ZCodeAppOptions["sessionId"];
   }
 
   if (!request.continueSession) {

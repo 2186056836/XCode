@@ -1,7 +1,7 @@
 import {
   createLocalServices,
   getAppConfigDir,
-  type XCodeAgentCommandResolver,
+  type ZCodeAgentCommandResolver,
 } from "@zcode/services/node";
 import { createServerCredentialCipher } from "@zcode/shared/credential-security";
 import { join } from "node:path";
@@ -17,7 +17,7 @@ export interface CreateStdioServicesOptions {
   topicResourceRelayChannel?: () => IChannel;
   env?: Record<string, string | undefined>;
   zcodeBuiltinProviderConfigFilePath: string;
-  zcodeAgentCommandResolver?: XCodeAgentCommandResolver;
+  zcodeAgentCommandResolver?: ZCodeAgentCommandResolver;
 }
 
 export interface RemoteAgentNetworkOptions {

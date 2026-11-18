@@ -2,7 +2,7 @@ import { WrenchIcon } from "lucide-react";
 import { useCallback, type ReactNode } from "react";
 import { ToolCallBody } from "@/ToolCallBlocks/ToolCallBody.js";
 import { ToolSnapshotFieldNotice } from "@/ToolCallBlocks/ToolSnapshotFieldNotice.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { ToolLayout } from "@/ToolCallBlocks/ToolLayout.js";
 import type { ToolCallBlockRenderContext } from "@/ToolCallBlocks/shared.js";
 import { ToolDetailSection as DetailSection } from "@/ToolCallBlocks/session/contract.js";
@@ -20,7 +20,7 @@ function displayValue(value: unknown): string {
 }
 
 function ParameterValue({ value }: { value: unknown }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (value !== null && typeof value === "object" && !Array.isArray(value)) {
     const entries = Object.entries(value);
     if (entries.length === 0)
@@ -46,7 +46,7 @@ function ParameterValue({ value }: { value: unknown }) {
 }
 
 export function FallbackToolCallBlock(context: FallbackToolCallBlockProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const {
     toolCallNode,
     isRunning,

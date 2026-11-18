@@ -1,5 +1,5 @@
 import { PERMISSION_FULL_ACCESS_OPTION_ID } from "@zcode/shared/zcode-protocol-v4";
-import type { XCodePermissionOption } from "@zcode/shared";
+import type { ZCodePermissionOption } from "@zcode/shared";
 
 export {
   getPermissionRequestPreview,
@@ -53,7 +53,7 @@ export function getPermissionOptionDisplayKind(kind: string): PermissionOptionDi
 }
 
 export function shouldPreferPermissionOptionName(
-  option: Pick<XCodePermissionOption, "kind" | "name">,
+  option: Pick<ZCodePermissionOption, "kind" | "name">,
 ): boolean {
   const normalizedName = normalizeInlineText(option.name).toLowerCase();
   if (normalizedName.length === 0) {
@@ -84,8 +84,8 @@ function getPermissionOptionSortPriority(kind: string): number {
 }
 
 export function sortPermissionOptions(
-  options: readonly XCodePermissionOption[],
-): XCodePermissionOption[] {
+  options: readonly ZCodePermissionOption[],
+): ZCodePermissionOption[] {
   return options
     .map((option, index) => ({ option, index }))
     .sort((left, right) => {

@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { MessageSquareTextIcon } from "lucide-react";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export interface SelectionAnchoredPlacement {
   /** 浮层落在锚点上方还是下方；箭头画在靠近锚点的那条边上。 */
@@ -74,7 +74,7 @@ export function SelectionActionMenu({
    */
   onComment?: () => void;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const ref = useRef<HTMLDivElement>(null);
   useSelectionAnchoredPosition(ref, { center, top, bottom }, `${String(singleLimit)}:${locale}`);
   return createPortal(

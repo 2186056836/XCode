@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { IServiceAccessor, ModelSelectionView } from "@zcode/services";
-import type { IPlatformService, XCodePermissionRequest } from "@zcode/shared";
+import type { IPlatformService, ZCodePermissionRequest } from "@zcode/shared";
 import { ServiceProvider } from "@/hooks/useServices.js";
 import { PlatformProvider } from "@/hooks/usePlatform.js";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { ConfirmDialogHost } from "@/ConfirmDialog.js";
 import { PermissionDialog } from "@/PermissionDialog.js";
 import { V4ComposerModeSwitch } from "@/v4/composer/V4ComposerModeControls.js";
@@ -27,7 +27,7 @@ const services = {
   projectService: { readProjects: async () => [] },
   modelSelectionService: { getView: async () => modelView, onDidChange: () => ({ dispose() {} }) },
 } as unknown as IServiceAccessor;
-const request: XCodePermissionRequest = {
+const request: ZCodePermissionRequest = {
   type: "permission_request",
   taskId: "session-a",
   traceId: "trace",
@@ -120,13 +120,13 @@ function Fixture() {
 createRoot(document.getElementById("root")!).render(
   <ServiceProvider services={services}>
     <PlatformProvider platform={{} as IPlatformService}>
-      <XCodeIntlProvider initialLocale={params.get("locale") === "en-US" ? "en-US" : "zh-CN"}>
+      <ZCodeIntlProvider initialLocale={params.get("locale") === "en-US" ? "en-US" : "zh-CN"}>
         <TabStoreProvider>
           <TooltipProvider>
             <Fixture />
           </TooltipProvider>
         </TabStoreProvider>
-      </XCodeIntlProvider>
+      </ZCodeIntlProvider>
     </PlatformProvider>
   </ServiceProvider>,
 );

@@ -1,10 +1,10 @@
 /* eslint-disable max-lines -- task query cache 的 descriptor、membership 与 mutation 必须在同一 Zustand 事务里维护，拆散会增加缓存一致性风险。 */
 import { create } from "zustand";
-import type { XCodeTaskListItem } from "@zcode/services";
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskListItem } from "@zcode/services";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 import { matchesTaskListMembershipKind } from "@zcode/shared/zcode-protocol-v4";
 import { mergeTaskMetaCandidates } from "@/lib/zcodeTaskMetaMerge.js";
-import { compareXCodeTaskListItems } from "@/lib/taskListOrdering.js";
+import { compareZCodeTaskListItems } from "@/lib/taskListOrdering.js";
 import { getTaskListRowActivity, mergeTaskListMembershipFields } from "@/v4/taskListRowActivity.js";
 import {
   buildTaskEntityKey,
@@ -52,35 +52,35 @@ interface TaskQueryCacheState {
       expectedInvalidationVersion?: number;
     }>,
   ) => void;
-  upsertTaskMeta: (task: XCodeTaskMeta) => void;
-  updateTaskMetaPreservingMembership: (task: XCodeTaskMeta) => void;
+  upsertTaskMeta: (task: ZCodeTaskMeta) => void;
+  updateTaskMetaPreservingMembership: (task: ZCodeTaskMeta) => void;
   applyTaskMutation: (params: {
-    previousTask: XCodeTaskMeta;
-    nextTask: XCodeTaskMeta;
+    previousTask: ZCodeTaskMeta;
+    nextTask: ZCodeTaskMeta;
     previousState: TaskListMembershipState;
     nextState: TaskListMembershipState;
   }) => void;
   setTaskUnreadOverlay: (
-    task: Pick<XCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
+    task: Pick<ZCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
     unreadAt: number | undefined,
   ) => void;
   reconcileTaskUnread: (
-    task: Pick<XCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
+    task: Pick<ZCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
     unreadAt: number | undefined,
   ) => void;
   rollbackTaskUnread: (
-    task: Pick<XCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
+    task: Pick<ZCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
     unreadAt: number | undefined,
   ) => void;
   removeTask: (
-    task: Pick<XCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
+    task: Pick<ZCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
   ) => boolean;
   markWorkspaceKeysStale: (workspaceKeys: string[]) => void;
   invalidateWorkspaceKeys: (workspaceKeys: string[]) => void;
   clearAll: () => void;
 }
 
-type CachedTaskListItem = XCodeTaskListItem & { searchSnippets?: string[] };
+type CachedTaskListItem = ZCodeTaskListItem & { searchSnippets?: string[] };
 
 function buildCachedTaskListResult(params: {
   descriptor: TaskListCacheDescriptor;
@@ -120,7 +120,7 @@ function matchesTaskMembership(
   return matchesTaskListMembershipKind(membership, kind);
 }
 
-function matchesTaskSearch(descriptor: TaskListCacheDescriptor, task: XCodeTaskMeta): boolean {
+function matchesTaskSearch(descriptor: TaskListCacheDescriptor, task: ZCodeTaskMeta): boolean {
   if (!descriptor.search) {
     return true;
   }
@@ -130,7 +130,7 @@ function matchesTaskSearch(descriptor: TaskListCacheDescriptor, task: XCodeTaskM
 
 function matchesTaskDescriptor(
   descriptor: TaskListCacheDescriptor,
-  task: XCodeTaskMeta,
+  task: ZCodeTaskMeta,
   membership: TaskListMembershipState,
 ): boolean {
   const workspaceKey = buildTaskWorkspaceKey(task.workspacePath, task.workspaceIdentity);
@@ -143,7 +143,7 @@ function matchesTaskDescriptor(
 
 function sortTaskKeysByDescriptor(params: {
   taskKeys: TaskEntityKey[];
-  taskMetaByEntityKey: Record<TaskEntityKey, XCodeTaskListItem>;
+  taskMetaByEntityKey: Record<TaskEntityKey, ZCodeTaskListItem>;
   descriptor: TaskListCacheDescriptor;
 }): TaskEntityKey[] {
   const uniqueTaskKeys = [...new Set(params.taskKeys)];
@@ -159,7 +159,7 @@ function sortTaskKeysByDescriptor(params: {
     if (!rightTask) {
       return -1;
     }
-    return compareXCodeTaskListItems(leftTask, rightTask, params.descriptor.sortBy);
+    return compareZCodeTaskListItems(leftTask, rightTask, params.descriptor.sortBy);
   });
 }
 
@@ -955,17 +955,17 @@ export function markTaskQueryCacheScopesStale(
   useTaskQueryCacheStore.getState().markWorkspaceKeysStale(workspaceKeys);
 }
 
-export function upsertTaskQueryCacheTaskMeta(task: XCodeTaskMeta): void {
+export function upsertTaskQueryCacheTaskMeta(task: ZCodeTaskMeta): void {
   useTaskQueryCacheStore.getState().upsertTaskMeta(task);
 }
 
-export function updateTaskQueryCacheTaskMetaPreservingMembership(task: XCodeTaskMeta): void {
+export function updateTaskQueryCacheTaskMetaPreservingMembership(task: ZCodeTaskMeta): void {
   useTaskQueryCacheStore.getState().updateTaskMetaPreservingMembership(task);
 }
 
 export function applyTaskQueryCacheMutation(params: {
-  previousTask: XCodeTaskMeta;
-  nextTask: XCodeTaskMeta;
+  previousTask: ZCodeTaskMeta;
+  nextTask: ZCodeTaskMeta;
   previousState: TaskListMembershipState;
   nextState: TaskListMembershipState;
 }): void {
@@ -973,28 +973,28 @@ export function applyTaskQueryCacheMutation(params: {
 }
 
 export function setTaskQueryCacheUnreadOverlay(
-  task: Pick<XCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
+  task: Pick<ZCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
   unreadAt: number | undefined,
 ): void {
   useTaskQueryCacheStore.getState().setTaskUnreadOverlay(task, unreadAt);
 }
 
 export function reconcileTaskQueryCacheUnread(
-  task: Pick<XCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
+  task: Pick<ZCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
   unreadAt: number | undefined,
 ): void {
   useTaskQueryCacheStore.getState().reconcileTaskUnread(task, unreadAt);
 }
 
 export function rollbackTaskQueryCacheUnread(
-  task: Pick<XCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
+  task: Pick<ZCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
   unreadAt: number | undefined,
 ): void {
   useTaskQueryCacheStore.getState().rollbackTaskUnread(task, unreadAt);
 }
 
 export function removeTaskFromTaskQueryCaches(
-  task: Pick<XCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
+  task: Pick<ZCodeTaskMeta, "taskId" | "workspacePath" | "workspaceIdentity">,
 ): boolean {
   return useTaskQueryCacheStore.getState().removeTask(task);
 }

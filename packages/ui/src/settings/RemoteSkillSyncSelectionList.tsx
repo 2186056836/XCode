@@ -2,7 +2,7 @@ import { useState, type MouseEvent } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import type { SkillSyncCandidate } from "@zcode/shared";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export interface RemoteSkillSyncRow {
   candidate: SkillSyncCandidate;
@@ -39,7 +39,7 @@ export function RemoteSkillSyncSelectionList({
   emptyMessageId?: string;
   onToggle: (skillId: string, checked: boolean) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [expandedDescriptionIds, setExpandedDescriptionIds] = useState<Set<string>>(new Set());
 
   const toggleDescription = (skillId: string) => {

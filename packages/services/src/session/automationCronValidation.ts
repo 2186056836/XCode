@@ -1,4 +1,4 @@
-import type { XCodeAutomationScheduleRule } from "@zcode/shared";
+import type { ZCodeAutomationScheduleRule } from "@zcode/shared";
 import { Cron } from "croner";
 
 /** 校验 cron 表达式是否合法（5 段，本地时区）。 */
@@ -37,7 +37,7 @@ function hasOnlyIntegersInRange(values: number[] | undefined, min: number, max: 
   );
 }
 
-export function assertValidAutomationScheduleRule(rule: XCodeAutomationScheduleRule): void {
+export function assertValidAutomationScheduleRule(rule: ZCodeAutomationScheduleRule): void {
   if (!AUTOMATION_SCHEDULE_RULE_UNITS.has(rule.unit)) {
     throw new InvalidAutomationScheduleRuleError("unit 不受支持");
   }

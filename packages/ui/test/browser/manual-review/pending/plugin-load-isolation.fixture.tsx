@@ -3,7 +3,7 @@ import type { IPluginManagementService } from "@zcode/services";
 import { createPluginManagementStore } from "@/store/pluginManagementStore.js";
 import { PluginStoreCard } from "@/settings/PluginStoreCard.js";
 import { buildStoreItems } from "@/settings/pluginStoreListing.js";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { TooltipProvider } from "@/components/ui/tooltip.js";
 import { Button } from "@/components/ui/button.js";
 import "@/styles.css";
@@ -59,7 +59,7 @@ function Fixture() {
   const state = store();
   const items = buildStoreItems(state);
   return (
-    <XCodeIntlProvider initialLocale={params.get("locale") === "zh-CN" ? "zh-CN" : "en-US"}>
+    <ZCodeIntlProvider initialLocale={params.get("locale") === "zh-CN" ? "zh-CN" : "en-US"}>
       <TooltipProvider>
         <main className="min-h-screen space-y-4 bg-background p-4 text-ui-base text-foreground">
           <Button
@@ -103,7 +103,7 @@ function Fixture() {
           </div>
         </main>
       </TooltipProvider>
-    </XCodeIntlProvider>
+    </ZCodeIntlProvider>
   );
 }
 createRoot(document.getElementById("root")!).render(<Fixture />);

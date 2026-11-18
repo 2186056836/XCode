@@ -11,8 +11,8 @@ import {
 } from "@zcode/shared";
 import { useServices } from "@/hooks/useServices.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { resolveTheme } from "@/useTheme.js";
 import { logger } from "@/logger.js";
 import { Button } from "@/components/ui/button.js";
@@ -21,11 +21,11 @@ import { EmbeddedWebsiteHeader } from "@/components/EmbeddedWebsiteHeader.js";
 export function RewardsWebview({ onClose }: { onClose: () => void }) {
   const { oauthService } = useServices();
   const platform = usePlatform();
-  const { intl, locale: uiLocale } = useXCodeIntl();
+  const { intl, locale: uiLocale } = useZCodeIntl();
   // 奖励页是外部网页，只有中英两套；非中文界面语言打开英文页。
   const locale = toZhOrEnLocale(uiLocale);
-  const themePreference = useXCodeStore((s) => s.theme);
-  const userId = useXCodeStore((s) => s.user?.id ?? null);
+  const themePreference = useZCodeStore((s) => s.theme);
+  const userId = useZCodeStore((s) => s.user?.id ?? null);
   const [systemDark, setSystemDark] = useState(
     () => matchMedia("(prefers-color-scheme: dark)").matches,
   );

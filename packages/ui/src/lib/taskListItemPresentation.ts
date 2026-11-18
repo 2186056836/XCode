@@ -1,4 +1,4 @@
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 import type { TaskListRowActivity } from "@/v4/taskListRowActivity.js";
 
 // 行根同时承载选择、拖拽和菜单；行内按钮、交互胶囊与工作流运行行有自己的点击语义，
@@ -22,7 +22,7 @@ export function isTaskRowRenameBlockedTarget(target: EventTarget | null): boolea
 }
 
 export function deriveTaskLeadingIndicator(
-  task: XCodeTaskMeta,
+  task: ZCodeTaskMeta,
   activity: TaskListRowActivity | null,
 ): "error" | "unread" | "loading" | "none" {
   if (activity?.phase === "error") {

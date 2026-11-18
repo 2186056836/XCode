@@ -1,6 +1,6 @@
 import { memo, useMemo } from "react";
 import { MessageResponse, type MessageResponseProps } from "@/components/ai-elements/message.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { projectGenUiReferences } from "../domain/references.js";
 import { GenUiCard } from "./GenUiCard.js";
 export const GenUiMessageResponse = memo(function GenUiMessageResponse({
@@ -8,7 +8,7 @@ export const GenUiMessageResponse = memo(function GenUiMessageResponse({
   messageKey,
   ...props
 }: MessageResponseProps & { completed: boolean; messageKey: string }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const parts = useMemo(
     () =>
       projectGenUiReferences(typeof props.children === "string" ? props.children : "", completed),

@@ -117,8 +117,8 @@ export async function pickV4ComposerFiles(paths: string[]) {
 interface PrepareV4ConversationE2EOptions {
   resetDraftBeforeProvider?: boolean;
   skipProvider?: boolean;
-  /** 跳过 ensureV4ShellReady 的 XCodeProject 等待。已登录冷启（真实凭据 seed 后 reloadSession）
-   * 的 app 按 startupWorkspace 语义落在 conversation backing workspace，XCodeProject 永远不出现；
+  /** 跳过 ensureV4ShellReady 的 ZCodeProject 等待。已登录冷启（真实凭据 seed 后 reloadSession）
+   * 的 app 按 startupWorkspace 语义落在 conversation backing workspace，ZCodeProject 永远不出现；
    * 调用方需自行等待 v4 shell 就绪（如侧栏新任务按钮）。见 ANALYSIS r3-rerun §46。 */
   skipShellReady?: boolean;
 }

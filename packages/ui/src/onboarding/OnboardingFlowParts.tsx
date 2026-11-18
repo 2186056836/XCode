@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type {
   ClaudeMigrationRange,
   useClaudeSessionMigration,
@@ -75,7 +75,7 @@ export function OnboardingSessionsStep(props: {
   onSelectAll: () => void;
   onClearSelection: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const selectedCount = props.selectedWorkspacePaths.length;
   const totalCount = props.workspaceCandidates.length;
   const allSelected = totalCount > 0 && selectedCount === totalCount;
@@ -225,7 +225,7 @@ export function OnboardingSessionsStep(props: {
 export function OnboardingAgentSettingsStep(props: {
   settingsSync: ReturnType<typeof useSettingsSync>;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   const { discovery, loading, error } = props.settingsSync.state;
 
@@ -278,7 +278,7 @@ export function OnboardingMigrationStep(props: {
   overallProgress: number;
   finishExecution: FinishExecutionState;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <div className="flex h-full min-h-0 flex-col justify-center">
@@ -324,7 +324,7 @@ export function OnboardingFinishStep(props: {
   /** 没有打开项目、需要项目才能导入而记为失败的设置项数。 */
   settingsWorkspaceRequiredCount: number;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-8 pt-8">

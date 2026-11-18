@@ -126,14 +126,14 @@ export const ServiceChannels = {
   /** 跨窗口广播 */
   Broadcast: "broadcast",
   /** XCode task wrapper 服务 */
-  XCodeTask: "zcode-task",
+  ZCodeTask: "zcode-task",
   /** ZCode task wrapper 服务 */
   /** 窗口 Host 聚合 workspace/task 投影与列表写路由 */
   WindowController: "window-controller",
   /** XCode Protocol agent 服务 */
-  XCodeAgent: "zcode-agent",
+  ZCodeAgent: "zcode-agent",
   /** XCode session 应用服务 */
-  XCodeSession: "zcode-session",
+  ZCodeSession: "zcode-session",
   Project: "project",
   /** 受管 worktree 任务管理（列表、删除、起点、fork 到新 worktree），仅本地桌面 Host。 */
   ManagedWorktrees: "managed-worktrees",
@@ -614,7 +614,7 @@ export const PlatformChannels = {
   /** Main → Renderer：当前窗口页面缩放档位变化 */
   DesktopZoomLevelChanged: "zcode:desktop-zoom-level-changed",
   /** Renderer → Main：读取开发态 stdio tap proxy 开关状态 */
-  GetXCodeStdioTapDevState: "zcode:get-zcode-stdio-tap-dev-state",
+  GetZCodeStdioTapDevState: "zcode:get-zcode-stdio-tap-dev-state",
   /** Main → Renderer：本地 setting.json 已由 main 进程更新 */
   SettingsChanged: "zcode:settings-changed",
   /** Main → Renderer：应用语言已切换 */

@@ -7,7 +7,7 @@ import {
 } from "@zcode/shared/test-ids";
 import { Button } from "@/components/ui/button.js";
 import { Switch } from "@/components/ui/switch.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   useExtensionGrantState,
   useExtensionRecentActions,
@@ -43,7 +43,7 @@ const STATUS_LABEL_IDS = {
  * 系统通知开关（§18.1 H8）、最近操作（审计日志里该插件的行）。插件没有声明档位、也没有记录时不渲染；Web 与手机远控没有授权门面，也不渲染。
  */
 export function ExtensionPermissionsSection({ pluginId }: ExtensionPermissionsSectionProps) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const state = useExtensionGrantState(pluginId);
   const requestGrant = useRequestExtensionGrant();
   const revoke = useRevokeExtensionGrant();

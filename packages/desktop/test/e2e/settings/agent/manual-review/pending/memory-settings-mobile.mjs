@@ -48,7 +48,7 @@ import { Event } from '@zcode/rpc';
 import { ServiceProvider } from '@/hooks/useServices.js';
 import { PlatformProvider } from '@/hooks/usePlatform.js';
 import { StoreProvider } from '@/store/StoreProvider.js';
-import { XCodeIntlProvider } from '@/i18n/IntlProvider.js';
+import { ZCodeIntlProvider } from '@/i18n/IntlProvider.js';
 import { MemorySettingsPage } from '@/settings/MemorySettingsSection.js';
 import '@/styles.css';
 const services = await connectViaWebSocket('ws://' + location.host + '/memory-rpc?target=' + new URLSearchParams(location.search).get('target'));
@@ -57,7 +57,7 @@ const platform = { getDeviceId: () => 'mobile-memory', reportTelemetryEvent: asy
 const broadcast = { onMessage: Event.None, send: async () => {} };
 createRoot(document.getElementById('root')).render(
   h(ServiceProvider, {services}, h(PlatformProvider, {platform},
-    h(StoreProvider, {broadcastService: broadcast}, h(XCodeIntlProvider, null,
+    h(StoreProvider, {broadcastService: broadcast}, h(ZCodeIntlProvider, null,
       h('main', {style: {background: 'var(--color-background)', color: 'var(--color-foreground)', minHeight: '100vh', padding: 16}},
         h(MemorySettingsPage, {isDesktop: false, workspaceDisplayNames: []})))))));
 `;

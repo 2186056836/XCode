@@ -197,7 +197,7 @@ describe(`${CASE}: App session lifecycle through actual tools`, () => {
 
     const projects = await action<{
       projects: Array<{ project: NonNullable<SessionRef["project"]> }>;
-    }>("projects", "Call ListProjects with query=XCodeProject.");
+    }>("projects", "Call ListProjects with query=ZCodeProject.");
     expect(projects.projects).toHaveLength(1);
     const created = await action<Creation>(
       "create",

@@ -43,7 +43,7 @@ export class NodeProviderRegistryRuntime {
     await this.#configRuntime.start();
     if (this.#accountSource instanceof MutableAccountProviderConfigSource) {
       const account = await this.#accountSource.read();
-      if (account.basedOnXCodeBuiltinRevision === "uninitialized") {
+      if (account.basedOnZCodeBuiltinRevision === "uninitialized") {
         this.#accountSource.replace(
           createFailClosedAccountProviderConfigSnapshot(await this.configService.read()),
           "initial-fail-closed",
@@ -57,8 +57,8 @@ export class NodeProviderRegistryRuntime {
     return this.#configRuntime.personalRepository;
   }
 
-  onDidCheckXCodeBuiltin(listener: () => Promise<void>): () => void {
-    return this.#configRuntime.onDidCheckXCodeBuiltin(listener);
+  onDidCheckZCodeBuiltin(listener: () => Promise<void>): () => void {
+    return this.#configRuntime.onDidCheckZCodeBuiltin(listener);
   }
 
   dispose(): void {

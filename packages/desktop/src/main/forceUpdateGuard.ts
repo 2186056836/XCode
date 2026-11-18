@@ -1,13 +1,13 @@
 import {
   DEFAULT_XCODE_ENDPOINT_ORIGIN,
   ZCODE_VERSION,
-  buildXCodeEndpointUrls,
+  buildZCodeEndpointUrls,
   getForceUpdateMinimalVersionFromConfig,
   resolveForceUpdateRequirement,
-  resolveOptionalXCodeAuthorization,
+  resolveOptionalZCodeAuthorization,
   type ForceUpdateRequirement,
   type Locale,
-  type XCodeJwtTokenResolver,
+  type ZCodeJwtTokenResolver,
 } from "@zcode/shared";
 import { requestForceAutoUpdate, type ForceAutoUpdateState } from "./autoUpdater.js";
 import { showForceUpdatePrompt } from "./forceUpdatePrompt.js";
@@ -40,7 +40,7 @@ export interface ForceUpdateGuardOptions {
   logger: ForceUpdateGuardLogger;
   endpointOrigin?: string;
   fetchRemoteConfig?: () => Promise<unknown>;
-  resolveXcodeJwtToken?: XCodeJwtTokenResolver;
+  resolveXcodeJwtToken?: ZCodeJwtTokenResolver;
   requestAutoUpdate?: (
     onStateChange?: (state: ForceAutoUpdateState) => void,
   ) => (() => void) | void;
@@ -51,7 +51,7 @@ export function resolveForceUpdateClientConfigUrl(
   endpointOrigin = DEFAULT_XCODE_ENDPOINT_ORIGIN,
 ): string {
   const url = new URL(
-    `${buildXCodeEndpointUrls(endpointOrigin).origin}${ZCODE_CLIENT_CONFIG_API_PATH}`,
+    `${buildZCodeEndpointUrls(endpointOrigin).origin}${ZCODE_CLIENT_CONFIG_API_PATH}`,
   );
   url.searchParams.set("app_version", ZCODE_VERSION);
   url.searchParams.set("platform", `${process.platform}-${process.arch}`);
@@ -79,14 +79,14 @@ function getForceUpdateMinimalVersionFromClientConfig(config: unknown): string |
 async function fetchRemoteForceUpdateConfig(
   endpointOrigin?: string,
   fetchRemoteConfig?: () => Promise<unknown>,
-  resolveXcodeJwtToken?: XCodeJwtTokenResolver,
+  resolveXcodeJwtToken?: ZCodeJwtTokenResolver,
 ): Promise<unknown> {
   if (fetchRemoteConfig) {
     return fetchRemoteConfig();
   }
 
   const { net } = await import("electron");
-  const authorization = await resolveOptionalXCodeAuthorization(resolveXcodeJwtToken);
+  const authorization = await resolveOptionalZCodeAuthorization(resolveXcodeJwtToken);
   return new Promise<unknown>((resolve, reject) => {
     let request: ReturnType<typeof net.request>;
     let timer: ReturnType<typeof setTimeout>;
@@ -162,7 +162,7 @@ export async function resolveDesktopForceUpdateRequirement(options: {
   logger: ForceUpdateGuardLogger;
   endpointOrigin?: string;
   fetchRemoteConfig?: () => Promise<unknown>;
-  resolveXcodeJwtToken?: XCodeJwtTokenResolver;
+  resolveXcodeJwtToken?: ZCodeJwtTokenResolver;
 }): Promise<ForceUpdateRequirement | null> {
   const resolveFromConfig = (config: unknown) =>
     resolveForceUpdateRequirement({
@@ -198,7 +198,7 @@ export function resolveForceUpdateDownloadUrl(
   locale: Locale,
   endpointOrigin = DEFAULT_XCODE_ENDPOINT_ORIGIN,
 ): string {
-  const origin = buildXCodeEndpointUrls(endpointOrigin).origin;
+  const origin = buildZCodeEndpointUrls(endpointOrigin).origin;
   return locale === "zh-CN" ? `${origin}/cn` : `${origin}/en`;
 }
 

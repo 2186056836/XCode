@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { link, mkdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { getXCodeDataRootDir } from "@zcode/services/node";
+import { getZCodeDataRootDir } from "@zcode/services/node";
 import type {
   MaterializeWorkflowArtifactFileRequest,
   MaterializeWorkflowArtifactFileResult,
@@ -40,7 +40,7 @@ export async function materializeWorkflowArtifactFile(
 ): Promise<MaterializeWorkflowArtifactFileResult> {
   const request = parseRequest(payload);
   const dir = join(
-    getXCodeDataRootDir(),
+    getZCodeDataRootDir(),
     "tmp",
     WORKFLOW_ARTIFACT_DIR,
     identitySegment(request.runId),

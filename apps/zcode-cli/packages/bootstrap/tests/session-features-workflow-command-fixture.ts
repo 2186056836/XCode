@@ -7,7 +7,7 @@ import {
   getCurrentModelInvocationContext,
   type ModelRequestSessionFeature,
 } from "@zcode/contracts";
-import { createRegistryBackedTestApp as createXCodeApp } from "./helpers/registry-backed-test-app.js";
+import { createRegistryBackedTestApp as createZCodeApp } from "./helpers/registry-backed-test-app.js";
 
 // docs/design/v2/model/session-features-header.md 的装配层一半：内置 `/workflow` 的展开处
 // （create-app.ts 的 builtin prompt resolver）打 workflow_cmd，先于 executeTurn，所以敲命令那一轮的
@@ -16,7 +16,7 @@ import { createRegistryBackedTestApp as createXCodeApp } from "./helpers/registr
 export async function withApp(
   runtimeConfig: Record<string, unknown>,
   run: (input: {
-    app: Awaited<ReturnType<typeof createXCodeApp>>;
+    app: Awaited<ReturnType<typeof createZCodeApp>>;
     seen: Array<readonly ModelRequestSessionFeature[] | undefined>;
     sessionStore: Awaited<ReturnType<typeof createSqliteSessionStore>>;
   }) => Promise<void>,
@@ -25,7 +25,7 @@ export async function withApp(
   const sessionStore = await createSqliteSessionStore({ dbPath: ":memory:" });
   const seen: Array<readonly ModelRequestSessionFeature[] | undefined> = [];
   try {
-    const app = await createXCodeApp({
+    const app = await createZCodeApp({
       env: {},
       modelExecutor: {
         async generateText() {

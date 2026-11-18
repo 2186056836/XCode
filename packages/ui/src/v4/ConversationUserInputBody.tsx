@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { cn } from "@/components/lib/utils.js";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export const COLLAPSED_USER_INPUT_CONTENT_MAX_HEIGHT_PX = 120;
 const USER_INPUT_CONTENT_OVERFLOW_TOLERANCE_PX = 1;
@@ -33,7 +33,7 @@ export function ConversationUserInputBody({
   contentText: string;
   rowId: string | number;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const contentRef = useRef<HTMLDivElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const [contentScrollHeight, setContentScrollHeight] = useState(

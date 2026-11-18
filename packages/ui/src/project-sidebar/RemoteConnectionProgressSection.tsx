@@ -4,7 +4,7 @@ import { buildRemoteHostWorkspaceIdentity, parseRemoteWorkspaceIdentity } from "
 import type { RemoteProjectHost } from "@/project-sidebar/contract.js";
 import { cn } from "@/components/lib/utils.js";
 import { toast } from "@/components/ui/toast.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { useRemoteDevicePresentationInput } from "@/hooks/useSourceServerStatuses.js";
@@ -48,7 +48,7 @@ export function RemoteConnectionProgressSection({
   status: RemoteConnectionStatus;
   error?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const management = useBaseWorkspaceServices().sourceServerManagementService;
   const sourceServerId = sourceServerIdForHost(host);
   const device = useRemoteDevicePresentationInput(sourceServerId);

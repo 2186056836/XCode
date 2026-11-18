@@ -5,14 +5,14 @@ import type { Logger, SkillContent, SkillDiagnostic, SkillLoadOutcome } from "@z
 import { resolveBundledSkillRoots } from "./app/bundled-skills.js";
 import { getCliStorageRoot } from "./app/paths.js";
 import { filterVisualizeSkillRoots } from "./app/visualize-skill-gate.js";
-import { resolveXCodePlugins, type ResolveXCodePluginsOptions } from "./plugins.js";
+import { resolveZCodePlugins, type ResolveZCodePluginsOptions } from "./plugins.js";
 import { collectDisabledPaths } from "./skill-command-overrides.js";
 
-export interface ListXCodeSkillsOptions {
+export interface ListZCodeSkillsOptions {
   workspaceIdentity?: string;
   remoteSessionId?: string;
-  pluginPreparation?: ResolveXCodePluginsOptions["pluginPreparation"];
-  pluginDiscovery?: ResolveXCodePluginsOptions["pluginDiscovery"];
+  pluginPreparation?: ResolveZCodePluginsOptions["pluginPreparation"];
+  pluginDiscovery?: ResolveZCodePluginsOptions["pluginDiscovery"];
   env?: NodeJS.ProcessEnv;
   /** 协议宿主草稿目录使用；CLI 命令缺省关闭。 */
   includeVisualize?: boolean;
@@ -23,17 +23,17 @@ export interface ListXCodeSkillsOptions {
   workingDirectory?: string;
 }
 
-export interface InspectXCodeSkillOptions extends ListXCodeSkillsOptions {
+export interface InspectZCodeSkillOptions extends ListZCodeSkillsOptions {
   name: string;
 }
 
-export interface XCodeSkillInspection {
+export interface ZCodeSkillInspection {
   diagnostics: SkillDiagnostic[];
   skill: SkillContent;
 }
 
-export async function listXCodeSkills(
-  options: ListXCodeSkillsOptions = {},
+export async function listZCodeSkills(
+  options: ListZCodeSkillsOptions = {},
 ): Promise<SkillLoadOutcome> {
   const discovery = await createSkillDiscovery(options);
   if (!discovery.enabled) {
@@ -49,9 +49,9 @@ export async function listXCodeSkills(
   });
 }
 
-export async function inspectXCodeSkill(
-  options: InspectXCodeSkillOptions,
-): Promise<XCodeSkillInspection> {
+export async function inspectZCodeSkill(
+  options: InspectZCodeSkillOptions,
+): Promise<ZCodeSkillInspection> {
   const discovery = await createSkillDiscovery(options);
   if (!discovery.enabled) {
     throw new Error("Skills are disabled.");
@@ -79,7 +79,7 @@ export async function inspectXCodeSkill(
   };
 }
 
-async function createSkillDiscovery(options: ListXCodeSkillsOptions): Promise<
+async function createSkillDiscovery(options: ListZCodeSkillsOptions): Promise<
   | {
       enabled: false;
       workingDirectory: string;
@@ -105,7 +105,7 @@ async function createSkillDiscovery(options: ListXCodeSkillsOptions): Promise<
       workingDirectory,
     };
   }
-  const pluginOutcome = await resolveXCodePlugins({
+  const pluginOutcome = await resolveZCodePlugins({
     pluginPreparation: options.pluginPreparation,
     pluginDiscovery: options.pluginDiscovery,
     workspaceIdentity: options.workspaceIdentity,

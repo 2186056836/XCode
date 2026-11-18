@@ -10,7 +10,7 @@ import type { SessionEvent } from "@zcode/contracts";
  * 从 `unknown` 上动态读一个函数成员。
  *
  * 收 `unknown` 并动态探属性，**不是**为了防御真实的 `AgentRuntime`（那上面这些成员都是
- * 必选的），而是因为 `RunDependencies.createXCodeApp` 是公开注入点（cli-types.ts 的注释
+ * 必选的），而是因为 `RunDependencies.createZCodeApp` 是公开注入点（cli-types.ts 的注释
  * 写着"tests, embedders"），替身的 runtime 可以是任意形状。对着必选成员写 `?.` 会被 TS
  * 判成恒真条件——所以边界在这里，用一次显式的动态读取表达。
  */

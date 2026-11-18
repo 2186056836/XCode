@@ -25,7 +25,7 @@ import { buildPluginMentionMarkdown } from "@/mentions/mentionMarkdown.js";
 import { Button } from "@/components/ui/button.js";
 import { usePluginStoreOrder } from "@/hooks/usePluginStoreOrder.js";
 import { useIsOfficeMode } from "@/hooks/useInterfaceMode.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { ComposerMentionPrefill } from "@/store/zcodeSessionStoreTypes.js";
 
 type WorkspacePluginPreviewEntry = ReturnType<
@@ -66,7 +66,7 @@ export function WorkspacePluginPreview({
   workspaceIdentity?: string;
   remoteSessionId?: string;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const isOfficeMode = useIsOfficeMode();
   const { order } = usePluginStoreOrder();
   const [open, setOpen] = useState(false);

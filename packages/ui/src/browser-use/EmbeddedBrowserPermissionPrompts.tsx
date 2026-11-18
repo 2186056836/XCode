@@ -22,7 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/index.js";
+import { useZCodeIntl } from "@/i18n/index.js";
 import { logger } from "@/logger.js";
 import { useEmbeddedBrowserPermissionStore } from "@/store/embeddedBrowserPermissionStore.js";
 
@@ -105,7 +105,7 @@ export function EmbeddedBrowserPermissionPrompts({
   const platform = usePlatform();
   const {
     intl: { formatMessage },
-  } = useXCodeIntl();
+  } = useZCodeIntl();
   const prompts = useEmbeddedBrowserPermissionStore((state) => state.prompts);
   const receivePrompt = useEmbeddedBrowserPermissionStore((state) => state.receivePrompt);
   const dropPrompt = useEmbeddedBrowserPermissionStore((state) => state.dropPrompt);

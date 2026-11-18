@@ -8,7 +8,7 @@ import type {
 import { Button } from "@/components/ui/button.js";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   getRemoteDevicePresentationInput,
   resolveRemoteConnectionPresentation,
@@ -97,7 +97,7 @@ function isSameDay(left: number, right: number): boolean {
 
 export function DataSyncSection(props: DataSyncSectionProps) {
   const resultVersion = useDataSyncResultVersion();
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const now = props.now ?? Date.now;
   const devices = useMemo(() => buildDataSyncDevices(props.snapshot), [props.snapshot]);
   const [syncStates, setSyncStates] = useState<Record<string, DeviceSyncState>>({});

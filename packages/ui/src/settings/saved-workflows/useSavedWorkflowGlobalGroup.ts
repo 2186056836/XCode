@@ -1,9 +1,9 @@
 // 全局工作流组的状态与动作。抽成 hook 让组件文件守住
 // max-lines 400；载体是 `useServices().zcodeAgentService`，RPC 一律带 `{ scope: "global" }`。
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { XCodeSavedWorkflowEntry, XCodeSavedWorkflowRun } from "@zcode/shared";
+import type { ZCodeSavedWorkflowEntry, ZCodeSavedWorkflowRun } from "@zcode/shared";
 import { toast } from "@/components/ui/toast.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
 import { useServices } from "@/hooks/useServices.js";
 import { logger } from "@/logger.js";
@@ -64,7 +64,7 @@ export function useSavedWorkflowGlobalGroup({
   activeProjectKey,
   onMoved,
 }: UseSavedWorkflowGlobalGroupParams) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const requestConfirmation = useConfirmDialog();
   const { zcodeAgentService: agentService, fileWatcherService } = useServices();
 
@@ -72,8 +72,8 @@ export function useSavedWorkflowGlobalGroup({
     selectSavedWorkflowState(store, GLOBAL_SAVED_WORKFLOW_TARGET),
   );
   const load = useSavedWorkflowStore((store) => store.load);
-  const [launchEntry, setLaunchEntry] = useState<XCodeSavedWorkflowEntry | null>(null);
-  const [moveEntry, setMoveEntry] = useState<XCodeSavedWorkflowEntry | null>(null);
+  const [launchEntry, setLaunchEntry] = useState<ZCodeSavedWorkflowEntry | null>(null);
+  const [moveEntry, setMoveEntry] = useState<ZCodeSavedWorkflowEntry | null>(null);
   const [busyName, setBusyName] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
@@ -128,7 +128,7 @@ export function useSavedWorkflowGlobalGroup({
 
   // 全局档一律弹窗——即使无实参，也需要「运行于」选择器。
   const handleRun = useCallback(
-    (entry: XCodeSavedWorkflowEntry) => {
+    (entry: ZCodeSavedWorkflowEntry) => {
       launcher.clearError();
       setLaunchEntry(entry);
     },
@@ -136,7 +136,7 @@ export function useSavedWorkflowGlobalGroup({
   );
   const launch = useCallback(
     async (
-      entry: XCodeSavedWorkflowEntry,
+      entry: ZCodeSavedWorkflowEntry,
       args: Record<string, unknown>,
       target?: AutomationWorkspaceOption,
     ) => {
@@ -154,7 +154,7 @@ export function useSavedWorkflowGlobalGroup({
     [launcher],
   );
   const handleRevise = useCallback(
-    (entry: XCodeSavedWorkflowEntry) => {
+    (entry: ZCodeSavedWorkflowEntry) => {
       if (!actionTarget) return;
       onCreateViaChat?.(
         buildSavedWorkflowRevisePrompt({
@@ -173,7 +173,7 @@ export function useSavedWorkflowGlobalGroup({
     onCreateViaChat?.(buildSavedWorkflowCreatePrompt(locale, "global"), actionTarget);
   }, [actionTarget, locale, onCreateViaChat]);
   const handleCopyPath = useCallback(
-    (entry: XCodeSavedWorkflowEntry) => {
+    (entry: ZCodeSavedWorkflowEntry) => {
       void navigator.clipboard
         ?.writeText(entry.path)
         .then(() => toast(intl.formatMessage({ id: "workflows.hub.copied" })))
@@ -186,7 +186,7 @@ export function useSavedWorkflowGlobalGroup({
     [intl],
   );
   const handleDelete = useCallback(
-    async (entry: XCodeSavedWorkflowEntry) => {
+    async (entry: ZCodeSavedWorkflowEntry) => {
       const confirmed = await requestConfirmation({
         title: intl.formatMessage({ id: "workflows.hub.delete.title" }, { name: entry.name }),
         description: intl.formatMessage(
@@ -229,18 +229,18 @@ export function useSavedWorkflowGlobalGroup({
     [agentService, intl, mode, onBack, refresh, requestConfirmation],
   );
   const handleCardDelete = useCallback(
-    (entry: XCodeSavedWorkflowEntry) => void handleDelete(entry),
+    (entry: ZCodeSavedWorkflowEntry) => void handleDelete(entry),
     [handleDelete],
   );
-  const handleCardMove = useCallback((entry: XCodeSavedWorkflowEntry) => setMoveEntry(entry), []);
+  const handleCardMove = useCallback((entry: ZCodeSavedWorkflowEntry) => setMoveEntry(entry), []);
   const handleOpen = useCallback(
-    (entry: XCodeSavedWorkflowEntry) => onOpenDetail(entry.name),
+    (entry: ZCodeSavedWorkflowEntry) => onOpenDetail(entry.name),
     [onOpenDetail],
   );
   // 全局档的目标项目按 `run.cwd` 反查已打开项目；没打开就两个入口都关掉
   // （实例必须开在发起它的项目）。门与实参构造与项目档共用（产物不需要 toolCallId）。
   const resolveRunTarget = useCallback(
-    (run: XCodeSavedWorkflowRun) => findProjectByCwd(localProjects, run.cwd) ?? null,
+    (run: ZCodeSavedWorkflowRun) => findProjectByCwd(localProjects, run.cwd) ?? null,
     [localProjects],
   );
   const { handleOpenArtifact, handleOpenRun } = useSavedWorkflowRunOpeners({

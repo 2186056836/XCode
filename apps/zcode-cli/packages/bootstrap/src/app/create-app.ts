@@ -50,10 +50,10 @@ import {
   type ExecutionShellSelection,
   type MessageId,
 } from "@zcode/contracts";
-import { isRemoteWorkspaceIdentity, resolveXCodeRuntimeEnv } from "@zcode/shared";
+import { isRemoteWorkspaceIdentity, resolveZCodeRuntimeEnv } from "@zcode/shared";
 import {
   ZCODE_ATTACHMENT_FAULT_CODES,
-  XCodeAttachmentFaultError,
+  ZCodeAttachmentFaultError,
 } from "@zcode/shared/zcode-protocol-v4";
 
 import { createModelAdapter } from "../model-factory.js";
@@ -62,8 +62,8 @@ import { scheduleStartupLogRetentionCleanup } from "../log-retention.js";
 import type {
   PrepareUserExecutionBoundary,
   ResumeOptions,
-  XCodeApp,
-  XCodeAppOptions,
+  ZCodeApp,
+  ZCodeAppOptions,
 } from "./types.js";
 import {
   createConfigCliOverrides,
@@ -119,12 +119,12 @@ import {
   type NodeReplBrowserBroker,
 } from "./node-repl-browser-broker.js";
 import { resolveBuiltInNodeReplMcpServers } from "./built-in-node-repl.js";
-import { resolveXCodeCustomCommandPrompt } from "../custom-command-prompt.js";
-import { resolveXCodeBuiltinPromptCommandInvocation } from "../builtin-prompt-command.js";
+import { resolveZCodeCustomCommandPrompt } from "../custom-command-prompt.js";
+import { resolveZCodeBuiltinPromptCommandInvocation } from "../builtin-prompt-command.js";
 import { BUILTIN_WORKFLOW_COMMAND_NAME } from "../builtin-workflow-command.js";
-import { resolveXCodeBuiltinPromptCommand } from "../builtin-prompt-command.js";
+import { resolveZCodeBuiltinPromptCommand } from "../builtin-prompt-command.js";
 import { collectDisabledPaths } from "../skill-command-overrides.js";
-import { loadPluginAgentProfiles, loadXCodeAgentProfiles } from "../subagents.js";
+import { loadPluginAgentProfiles, loadZCodeAgentProfiles } from "../subagents.js";
 import { createRuntimeAiSdkModelExecutionConfig } from "../model-config.js";
 import { withOfficialCommandEnv } from "../official-command-endpoint/index.js";
 import { ApiProviderModelRuntime } from "./provider-registry-model-runtime.js";
@@ -172,9 +172,9 @@ function decodePromptAttachmentDataUrl(
   return { bytes, mediaType };
 }
 
-export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp> {
+export async function createZCodeApp(options: ZCodeAppOptions): Promise<ZCodeApp> {
   if (!options?.providerRegistry) {
-    throw new Error("createXCodeApp requires a Provider Registry");
+    throw new Error("createZCodeApp requires a Provider Registry");
   }
   const startupStartedAt = startupNow();
   const appVersion = options.version ?? "0.0.0";
@@ -243,7 +243,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
     const cliStorageRoot = getCliStorageRoot(storageRoot);
     const modelIoDir = getModelIoDir(
       cliStorageRoot,
-      resolveXCodeRuntimeEnv(options.env ?? process.env) === "development",
+      resolveZCodeRuntimeEnv(options.env ?? process.env) === "development",
     );
     // 初始化与父轮必须使用同一 Host 来源，避免 CLI storage.dir 的另一份定义在首轮消失。
     const hostSubagentSnapshot = await options.readSubagentRuntimeConfig?.({
@@ -252,7 +252,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
     });
     const zcodeSubagentProfileOutcome = hostSubagentSnapshot
       ? subagentProfilesFromSnapshot(hostSubagentSnapshot)
-      : await loadXCodeAgentProfiles({
+      : await loadZCodeAgentProfiles({
           logger,
           storageRoot,
           workingDirectory,
@@ -325,7 +325,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
         sessionStore,
         createRootApp: async (request) => {
           // 新根只借用基础设施和独立 CLI 配置，不展开 actor 的 runtimeConfig、yolo 或审批结果。
-          const target = await createXCodeApp({
+          const target = await createZCodeApp({
             sessionId: request.sessionId,
             resume: request.resume,
             traceContext: request.traceContext,
@@ -1021,7 +1021,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       cliDefaultSelection,
       artifactStore,
       customCommandPromptResolver: async (text, resolverOptions) => {
-        const builtin = resolveXCodeBuiltinPromptCommandInvocation(text, {
+        const builtin = resolveZCodeBuiltinPromptCommandInvocation(text, {
           // 动态工作流灰度关闭时内置 `/workflow` 不得展开（DWG-03）。目录侧已经把它从 `/` 面板
           // 剔除，但用户仍可手打命令名，两条路径必须给出同一个结论。独立 CLI 的 TUI 与 headless
           // 按 --workflow-mode 显式取值；缺席（进程内嵌入方）不设门禁，见 runtimeConfig 字段注释。
@@ -1046,7 +1046,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
           }
           return builtin.prompt;
         }
-        return await resolveXCodeCustomCommandPrompt(text, {
+        return await resolveZCodeCustomCommandPrompt(text, {
           additionalDirectories: options.additionalDirectories,
           env: options.env,
           executionPort,
@@ -1199,7 +1199,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       }
       return { ref, mediaType, ...(artifactUri ? { artifactUri } : {}) };
     };
-    const app: XCodeApp = {
+    const app: ZCodeApp = {
       sessionId,
       traceId: traceContext.traceId,
       runtime,
@@ -1332,7 +1332,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
         const { ref, mediaType, artifactUri } = await resolvePromptAttachment(input);
         if (artifactUri) {
           if (!artifactStore.statToolResultArtifact) {
-            throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.statUnsupported);
+            throw new ZCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.statUnsupported);
           }
           const result = await artifactStore.statToolResultArtifact({
             uri: artifactUri,
@@ -1348,7 +1348,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
         if (result.kind !== "file") {
           // 目录/符号链接/已消失都意味着「这个附件不再是可分享的文件」，用稳定码上抛，
           // 让 share 预检按确定分类处理，而不是靠错误文本猜。
-          throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.statNotFile);
+          throw new ZCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.statNotFile);
         }
         return {
           totalBytes: result.sizeBytes,

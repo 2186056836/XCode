@@ -3,7 +3,7 @@ import {
   bytesToKb,
   createMemorySampleWriteGate,
   formatMemorySampleLine,
-  mapXCodeEnvToArmsRumEnv,
+  mapZCodeEnvToArmsRumEnv,
   memoryUsageToSampleFields,
   type MemorySample,
   type MemorySampleWriteGate,
@@ -87,7 +87,7 @@ interface ResourceGlobalContext {
   deviceMid: string;
   platform: NodeJS.Platform;
   appVersion: string;
-  armsEnv: ReturnType<typeof mapXCodeEnvToArmsRumEnv>;
+  armsEnv: ReturnType<typeof mapZCodeEnvToArmsRumEnv>;
 }
 
 let globalContext: ResourceGlobalContext | null = null;

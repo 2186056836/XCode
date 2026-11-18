@@ -1,4 +1,4 @@
-import { zcodeProtocolTraceSchema, type XCodeProtocolTrace } from "./zcode-protocol/trace.js";
+import { zcodeProtocolTraceSchema, type ZCodeProtocolTrace } from "./zcode-protocol/trace.js";
 import { channelContentPartsSchema, type ChannelContentPart } from "./channel-mention.js";
 /* oxlint-disable eslint(max-lines) -- Bot 共享合约集中维护 provider、状态和 schema，保持类型与校验就近。 */
 import { z } from "zod";
@@ -6,21 +6,21 @@ import { modelSelectionSchema, type ModelSelection } from "./model-selection.js"
 import { ZCODE_AGENT_PROVIDER, ZCODE_AGENT_PROVIDER_LABEL } from "./zcode-agent-policy.js";
 import { conversationQuotesSchema } from "./conversationSelection.js";
 import type {
-  XCodeConfigOption,
-  XCodeElicitationRequest,
-  XCodeElicitationQuestion,
-  XCodePermissionRequest,
-  XCodePromptAttachment,
-  XCodeProvider,
-  XCodeStreamEvent,
-  XCodeTaskMeta,
-  XCodeTaskRuntimeStatus,
+  ZCodeConfigOption,
+  ZCodeElicitationRequest,
+  ZCodeElicitationQuestion,
+  ZCodePermissionRequest,
+  ZCodePromptAttachment,
+  ZCodeProvider,
+  ZCodeStreamEvent,
+  ZCodeTaskMeta,
+  ZCodeTaskRuntimeStatus,
 } from "./zcode-task-types-core.js";
 import {
   zcodeInteractionRequestOriginSchema,
   zcodePermissionResponseSchema,
-  type XCodeInteractionRequestOrigin,
-  type XCodePermissionResponse,
+  type ZCodeInteractionRequestOrigin,
+  type ZCodePermissionResponse,
 } from "./zcode-protocol-legacy-types.js";
 import type { Locale } from "./protocol.js";
 
@@ -52,7 +52,7 @@ export const zcodeAutomationBotDeliveryTargetSchema = z
   })
   .strict();
 
-export type XCodeAutomationBotDeliveryTarget = z.infer<
+export type ZCodeAutomationBotDeliveryTarget = z.infer<
   typeof zcodeAutomationBotDeliveryTargetSchema
 >;
 
@@ -133,7 +133,7 @@ export interface BotPendingPermissionOption {
   optionId: string;
   command: "approve" | "deny";
   label: string;
-  response: XCodePermissionResponse;
+  response: ZCodePermissionResponse;
   handledAt?: number;
 }
 
@@ -141,10 +141,10 @@ export interface BotPendingElicitation {
   taskId: string;
   requestId: string;
   runId: string;
-  origin?: XCodeInteractionRequestOrigin;
+  origin?: ZCodeInteractionRequestOrigin;
   actorKey?: string;
   currentQuestionIndex: number;
-  questions: XCodeElicitationQuestion[];
+  questions: ZCodeElicitationQuestion[];
   answers: Record<string, string[]>;
   renderContext?: {
     kind: "plan_approval";
@@ -165,7 +165,7 @@ export interface BotOutboundElicitationRequest {
   taskId: string;
   runId: string;
   currentQuestionIndex: number;
-  questions: XCodeElicitationQuestion[];
+  questions: ZCodeElicitationQuestion[];
   answers?: Record<string, string[]>;
   status?: "pending" | "completed" | "cancelled";
   expandedCustomAnswerQuestionIndexes?: number[];
@@ -173,7 +173,7 @@ export interface BotOutboundElicitationRequest {
 }
 
 export interface BotDraftOptions {
-  provider: XCodeProvider;
+  provider: ZCodeProvider;
   modelSelection?: ModelSelection;
   mode?: string;
 }
@@ -615,7 +615,7 @@ export interface BotInboundMessage {
 }
 
 export interface BotOutboundMessage {
-  trace?: XCodeProtocolTrace;
+  trace?: ZCodeProtocolTrace;
   contentParts?: ChannelContentPart[];
   groupCard?: BotGroupCard;
   threadId?: string;
@@ -646,10 +646,10 @@ export interface BotOutboundMessage {
 export interface BotTaskSummary {
   taskId: string;
   title: string;
-  status: XCodeTaskRuntimeStatus | "persisted-completed" | "persisted-error" | "unknown";
+  status: ZCodeTaskRuntimeStatus | "persisted-completed" | "persisted-error" | "unknown";
   workspacePath: string;
   workspaceIdentity?: string;
-  provider?: XCodeProvider;
+  provider?: ZCodeProvider;
   model?: string;
 }
 
@@ -675,17 +675,17 @@ export interface BotTaskBroadcastPayload {
   taskId: string;
   event: BotTaskBroadcastEvent;
   updatedAt: number;
-  task?: XCodeTaskMeta;
-  provider?: XCodeProvider;
-  configOptions?: XCodeConfigOption[];
+  task?: ZCodeTaskMeta;
+  provider?: ZCodeProvider;
+  configOptions?: ZCodeConfigOption[];
   prompt?: {
     content: string;
-    attachments?: XCodePromptAttachment[];
+    attachments?: ZCodePromptAttachment[];
     messageId: string;
     sentAt: number;
   };
-  permissionRequest?: XCodePermissionRequest;
-  elicitationRequest?: XCodeElicitationRequest;
+  permissionRequest?: ZCodePermissionRequest;
+  elicitationRequest?: ZCodeElicitationRequest;
   requestId?: string;
   error?: string;
 }
@@ -694,7 +694,7 @@ export interface BotTaskStreamBroadcastPayload {
   workspacePath: string;
   workspaceIdentity?: string;
   taskId: string;
-  event: XCodeStreamEvent;
+  event: ZCodeStreamEvent;
   updatedAt: number;
 }
 
@@ -730,7 +730,7 @@ export const botAllowedCommandsSchema = z
 
 export const botCommandPolicySchema = botAllowedCommandsSchema;
 
-// 修复原因：第三方 CLI provider 已移除，XCodeProvider 只剩 glm，但旧 bot 配置与状态文件里可能仍存有
+// 修复原因：第三方 CLI provider 已移除，ZCodeProvider 只剩 glm，但旧 bot 配置与状态文件里可能仍存有
 // 已移除 provider 的历史值。改成严格 literal 会让整份文件 parse 失败、Bot 全部不可用；
 // 因此解析时继续接受这些历史值，并统一归一到当前唯一的 agent provider。
 const legacyBotAgentProviderSchema = z
@@ -954,6 +954,6 @@ export function normalizeBotReplyGranularity(
 }
 
 export const BOT_XCODE_PROVIDER_OPTIONS: Array<{
-  id: XCodeProvider;
+  id: ZCodeProvider;
   label: string;
 }> = [{ id: ZCODE_AGENT_PROVIDER, label: ZCODE_AGENT_PROVIDER_LABEL }];

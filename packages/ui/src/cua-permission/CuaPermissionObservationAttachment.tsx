@@ -5,12 +5,12 @@ import {
   isCuaPermissionStatusAvailable,
   type CuaPermissionRestartOptions,
   type CuaPermissionStatusResult,
-  type XCodeAgentCuaPermissionObservation,
+  type ZCodeAgentCuaPermissionObservation,
 } from "@zcode/services";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useServices } from "@/hooks/useServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { shouldRestartHelperAfterCuaPermissionReturn } from "@/lib/cuaPermissionAction.js";
 import { createCuaPermissionOnboardingOperationId } from "@/lib/cuaPermissionOnboardingOperation.js";
 import { fetchCuaPermissionStatus } from "@/lib/cuaPermissionStatusStore.js";
@@ -54,7 +54,7 @@ async function runWithOneRetry<T>(
 }
 
 export function cuaPermissionObservationKey(
-  observation: XCodeAgentCuaPermissionObservation,
+  observation: ZCodeAgentCuaPermissionObservation,
 ): string {
   const workspaceKey = observation.workspaceIdentity?.trim() || observation.workspacePath;
   const missing = requiredCuaPermissionsForRequestAccessStatus(observation.permissionStatus);
@@ -115,7 +115,7 @@ export function CuaPermissionObservationAttachment() {
   const services = useServices();
   const platform = usePlatform();
   const confirmDialog = useConfirmDialog();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   useEffect(() => {
     const permissionService = services.cuaPermissionService;

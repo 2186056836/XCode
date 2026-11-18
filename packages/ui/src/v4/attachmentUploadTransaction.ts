@@ -8,9 +8,9 @@ import {
   type V4AttachmentPutResult,
 } from "@zcode/shared/zcode-protocol-v4";
 import type {
-  XCodeAgentAttachmentBeginParams,
-  XCodeAgentAttachmentChunkParams,
-  XCodeAgentAttachmentTerminalParams,
+  ZCodeAgentAttachmentBeginParams,
+  ZCodeAgentAttachmentChunkParams,
+  ZCodeAgentAttachmentTerminalParams,
 } from "@zcode/services";
 import { logger } from "@/logger.js";
 
@@ -18,10 +18,10 @@ import { logger } from "@/logger.js";
 export const ATTACHMENT_UPLOAD_CHUNK_BYTES = 384 * 1024;
 
 export interface AttachmentUploadAgent {
-  attachmentBeginV4(params: XCodeAgentAttachmentBeginParams): Promise<V4AttachmentBeginResult>;
-  attachmentChunkV4(params: XCodeAgentAttachmentChunkParams): Promise<V4AttachmentChunkResult>;
-  attachmentCommitV4(params: XCodeAgentAttachmentTerminalParams): Promise<V4AttachmentPutResult>;
-  attachmentAbortV4(params: XCodeAgentAttachmentTerminalParams): Promise<void>;
+  attachmentBeginV4(params: ZCodeAgentAttachmentBeginParams): Promise<V4AttachmentBeginResult>;
+  attachmentChunkV4(params: ZCodeAgentAttachmentChunkParams): Promise<V4AttachmentChunkResult>;
+  attachmentCommitV4(params: ZCodeAgentAttachmentTerminalParams): Promise<V4AttachmentPutResult>;
+  attachmentAbortV4(params: ZCodeAgentAttachmentTerminalParams): Promise<void>;
 }
 
 export interface AttachmentUploadWorkspace {
@@ -108,7 +108,7 @@ function createUploadId(): string {
 export function measureAttachmentChannelRequestBytes(method: string, params: unknown): number {
   const writer = new BufferWriter();
   // RequestType.Promise=100；max int id 比正常短生命周期 request id 更保守。
-  serialize(writer, [100, 2_147_483_647, ServiceChannels.XCodeAgent, method]);
+  serialize(writer, [100, 2_147_483_647, ServiceChannels.ZCodeAgent, method]);
   serialize(writer, [params]);
   return writer.buffer.byteLength;
 }
@@ -135,7 +135,7 @@ export async function uploadAttachmentTransaction(
   const uploadId = createUploadId();
   const common = { ...workspace, sessionId: input.sessionId, uploadId };
   const totalChunks = Math.ceil(bytes.byteLength / ATTACHMENT_UPLOAD_CHUNK_BYTES);
-  const beginParams: XCodeAgentAttachmentBeginParams = {
+  const beginParams: ZCodeAgentAttachmentBeginParams = {
     ...common,
     fileName: input.fileName,
     mime: input.mime,
@@ -172,7 +172,7 @@ export async function uploadAttachmentTransaction(
     for (let chunkIndex = begin.nextChunkIndex; chunkIndex < totalChunks; chunkIndex += 1) {
       throwIfAborted(options.signal);
       const start = chunkIndex * ATTACHMENT_UPLOAD_CHUNK_BYTES;
-      const chunkParams: XCodeAgentAttachmentChunkParams = {
+      const chunkParams: ZCodeAgentAttachmentChunkParams = {
         ...common,
         chunkIndex,
         dataBase64: encodeBase64(
@@ -196,7 +196,7 @@ export async function uploadAttachmentTransaction(
       uploadedBytes: bytes.byteLength,
       totalBytes: bytes.byteLength,
     });
-    const terminal = common satisfies XCodeAgentAttachmentTerminalParams;
+    const terminal = common satisfies ZCodeAgentAttachmentTerminalParams;
     assertAttachmentChannelRequest("attachmentCommitV4", terminal);
     return await agent.attachmentCommitV4(terminal);
   } catch (error) {

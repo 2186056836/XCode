@@ -2,7 +2,7 @@ import type {
   ProviderEndpointRoutingDecision,
   ProviderEndpointRoutingPort,
 } from "@zcode/contracts";
-import { resolveRuntimeXCodeEndpointOrigin } from "@zcode/shared";
+import { resolveRuntimeZCodeEndpointOrigin } from "@zcode/shared";
 import type { EnvRecord } from "./model-execution.js";
 
 /**
@@ -66,7 +66,7 @@ export function resolveOfficialCodingPlanGatewayUrl(
   if (!gatewayPath) {
     return { viaGateway: false, url: requestUrl };
   }
-  const gatewayUrl = new URL(gatewayPath, resolveRuntimeXCodeEndpointOrigin(env));
+  const gatewayUrl = new URL(gatewayPath, resolveRuntimeZCodeEndpointOrigin(env));
   gatewayUrl.search = parsed.search;
   return { viaGateway: true, url: gatewayUrl.href };
 }

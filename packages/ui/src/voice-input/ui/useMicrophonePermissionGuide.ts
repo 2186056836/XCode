@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DesktopCommandIds } from "@zcode/shared";
 import { toast } from "@/components/ui/toast.js";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import type {
   MicrophonePermissionGuide,
@@ -29,7 +29,7 @@ import { resolveVoiceInputOs } from "@/voice-input/domain/voiceInputFailure.js";
 export function useMicrophonePermissionGuide(): MicrophonePermissionGuide {
   const platform = useOptionalPlatform();
   const microphone = platform?.microphone;
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const os = resolveVoiceInputOs(typeof navigator === "undefined" ? "" : navigator.userAgent);
   const [phase, setPhase] = useState<MicrophonePermissionGuidePhase | null>(null);
   const [busy, setBusy] = useState(false);

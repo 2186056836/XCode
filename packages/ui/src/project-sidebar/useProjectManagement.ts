@@ -7,7 +7,7 @@ import {
 import { useProjectDirectory } from "@/project-sidebar/ProjectDirectoryProvider.js";
 import { formatProjectError, projectKey } from "@/project-sidebar/view.js";
 import { dismissToast, toast, updateToast } from "@/components/ui/toast.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { formatBytes } from "@/resource-manager/resourceUsageView.js";
 
@@ -45,7 +45,7 @@ export const isProjectDataCandidate = (row: ProjectManagementRow) =>
 
 export function useProjectManagement() {
   const directory = useProjectDirectory();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<ProjectManagementFailure | null>(null);
   const queue = useRef<Promise<void>>(Promise.resolve());

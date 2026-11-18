@@ -55,7 +55,7 @@ export function createNodeReplBrowserBroker(input: {
     socketPath,
     token,
     close: async () => {
-      // createXCodeApp 是同步工厂，极短生命周期下 close 可能先于 listen 回调；
+      // createZCodeApp 是同步工厂，极短生命周期下 close 可能先于 listen 回调；
       // 直接检查 server.listening 会漏关随后才绑定成功的 socket。
       await ready.catch(() => undefined);
       await closeServer(server);

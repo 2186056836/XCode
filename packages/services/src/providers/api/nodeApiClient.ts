@@ -1,13 +1,13 @@
 import {
   ApiError,
   DEFAULT_XCODE_ENDPOINT_ORIGIN,
-  normalizeXCodeEndpointOrigin,
-  rewriteXCodeEndpointUrl,
+  normalizeZCodeEndpointOrigin,
+  rewriteZCodeEndpointUrl,
   type ApiClient,
   type ApiRequestInit,
 } from "@zcode/shared";
 import { createServiceLogger } from "#src/logger/serviceLogger.js";
-import { buildXCodeSourceHeaders } from "../sourceHeaders.js";
+import { buildZCodeSourceHeaders } from "../sourceHeaders.js";
 import { withRequestIdHeader } from "./requestIdHeaders.js";
 
 const log = createServiceLogger("node-api-client");
@@ -30,7 +30,7 @@ interface NodeApiClientOptions {
     input: string | URL,
     headers: Headers,
   ) => Promise<{ url: string; authorization: string; emptyBodyMeansInvalid: boolean } | null>;
-  resolveXCodeEndpointOrigin?: () => Promise<string> | string;
+  resolveZCodeEndpointOrigin?: () => Promise<string> | string;
 
   /** 返回当前激活账号引用（provider:identity）；设置时 X-Device-Mid 按账号读取。 */
   resolveAccountRef?: () => string | null;
@@ -143,20 +143,20 @@ function readHeaderKeys(headers: RequestInit["headers"] | undefined): string[] {
 
 function isRequestForEndpoint(input: string | URL, endpointOrigin: string): boolean {
   try {
-    return new URL(resolveUrl(input)).origin === normalizeXCodeEndpointOrigin(endpointOrigin);
+    return new URL(resolveUrl(input)).origin === normalizeZCodeEndpointOrigin(endpointOrigin);
   } catch {
     return false;
   }
 }
 
-function withXCodeEndpointHeaders(
+function withZCodeEndpointHeaders(
   headers: RequestInit["headers"] | undefined,
   endpointOrigin: string,
   accountRef?: string | null,
   clientLanguage?: string | undefined,
 ): RequestInit["headers"] {
   const next = new Headers(
-    buildXCodeSourceHeaders({ accountRef: accountRef ?? undefined, clientLanguage }),
+    buildZCodeSourceHeaders({ accountRef: accountRef ?? undefined, clientLanguage }),
   );
   if (headers) {
     new Headers(headers).forEach((value, key) => {
@@ -183,13 +183,13 @@ function resolveRequestHeaders(
 
   // XCode 后端请求以前只有部分业务路径手动补来源头。
   // 统一在 ApiClient 出口按 endpoint origin 注入，避免 OAuth/config/billing/snapshot 等链路遗漏。
-  return withXCodeEndpointHeaders(headers, endpointOrigin, accountRef, clientLanguage);
+  return withZCodeEndpointHeaders(headers, endpointOrigin, accountRef, clientLanguage);
 }
 
 export class NodeApiClient implements ApiClient {
   private readonly fetchImpl?: typeof fetch;
   private readonly resolveAssociatedCredentialRefresh?: NodeApiClientOptions["resolveAssociatedCredentialRefresh"];
-  private readonly resolveXCodeEndpointOrigin?: () => Promise<string> | string;
+  private readonly resolveZCodeEndpointOrigin?: () => Promise<string> | string;
   private readonly resolveClientLanguage?: NodeApiClientOptions["resolveClientLanguage"];
   private readonly onXcodeJwtInvalid?: (input: string | URL, headers: Headers) => void;
   private readonly isXcodeJwtRequest?: NodeApiClientOptions["isXcodeJwtRequest"];
@@ -217,7 +217,7 @@ export class NodeApiClient implements ApiClient {
     this.businessUnauthorizedObservationTimeoutMs =
       options.businessUnauthorizedObservationTimeoutMs ??
       DEFAULT_BUSINESS_UNAUTHORIZED_OBSERVATION_TIMEOUT_MS;
-    this.resolveXCodeEndpointOrigin = options.resolveXCodeEndpointOrigin;
+    this.resolveZCodeEndpointOrigin = options.resolveZCodeEndpointOrigin;
     this.resolveAccountRef = options.resolveAccountRef;
     this.resolveClientLanguage = options.resolveClientLanguage;
   }
@@ -298,11 +298,11 @@ export class NodeApiClient implements ApiClient {
   }
 
   async request(input: string | URL, init?: ApiRequestInit): Promise<Response> {
-    const endpointOrigin = this.resolveXCodeEndpointOrigin
-      ? await this.resolveXCodeEndpointOrigin()
+    const endpointOrigin = this.resolveZCodeEndpointOrigin
+      ? await this.resolveZCodeEndpointOrigin()
       : undefined;
     const activeEndpointOrigin = endpointOrigin ?? DEFAULT_XCODE_ENDPOINT_ORIGIN;
-    const requestInput = rewriteXCodeEndpointUrl(input, activeEndpointOrigin);
+    const requestInput = rewriteZCodeEndpointUrl(input, activeEndpointOrigin);
     const url = resolveUrl(requestInput);
     const method = resolveMethod(init);
     const timeoutMs = init?.timeoutMs;
@@ -394,11 +394,11 @@ export class NodeApiClient implements ApiClient {
           await waitWithAbort(
             (async () => {
               const requestHeadersForObservation = new Headers(requestHeaders);
-              const isCurrentXCodeJwtRequest = await this.isXcodeJwtRequest?.(
+              const isCurrentZCodeJwtRequest = await this.isXcodeJwtRequest?.(
                 requestInput,
                 requestHeadersForObservation,
               );
-              if (isCurrentXCodeJwtRequest) {
+              if (isCurrentZCodeJwtRequest) {
                 let invalid = response.status === 401;
                 if (
                   !invalid &&

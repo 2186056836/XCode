@@ -86,7 +86,7 @@ export function createDesktopTray(options: {
     desktopTray?.setContextMenu(
       Menu.buildFromTemplate([
         {
-          label: getLabel(desktopMenuMessageIds.trayOpenXCode),
+          label: getLabel(desktopMenuMessageIds.trayOpenZCode),
           click: showTrayWindow,
         },
         { type: "separator" },

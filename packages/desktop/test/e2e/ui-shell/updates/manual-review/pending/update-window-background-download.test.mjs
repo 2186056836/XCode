@@ -259,11 +259,11 @@ test("普通更新窗口关闭、后台下载、快照恢复和退出", { timeou
         'import React,{useEffect,useState} from "react";import {createRoot} from "react-dom/client";',
         'import {UpdateStatusButton} from "@/UpdateStatusButton";import {TooltipProvider} from "@/components/ui/tooltip";',
         'import {UpdateStatusWindowRoot} from "@/UpdateStatusWindowRoot";',
-        'import {XCodeIntlProvider} from "@/i18n/IntlProvider";import "@/styles.css";',
+        'import {ZCodeIntlProvider} from "@/i18n/IntlProvider";import "@/styles.css";',
         'const params=new URLSearchParams(location.search);const locale=params.get("locale")||"zh-CN";',
         'document.documentElement.classList.add("theme-"+(params.get("theme")||"zai-light"));',
         'document.body.style.background="var(--color-background)";const platform=window.updateFixture;',
-        'function Main(){const[state,setState]=useState(null);useEffect(()=>{platform.getUpdateState().then(setState);return platform.onUpdateStateChanged(setState)},[]);return <XCodeIntlProvider initialLocale={locale}><TooltipProvider><main style={{padding:32}}><UpdateStatusButton platform={platform} updateState={state} version={null}/><button id="workspace">Workspace</button></main></TooltipProvider></XCodeIntlProvider>}',
+        'function Main(){const[state,setState]=useState(null);useEffect(()=>{platform.getUpdateState().then(setState);return platform.onUpdateStateChanged(setState)},[]);return <ZCodeIntlProvider initialLocale={locale}><TooltipProvider><main style={{padding:32}}><UpdateStatusButton platform={platform} updateState={state} version={null}/><button id="workspace">Workspace</button></main></TooltipProvider></ZCodeIntlProvider>}',
         'createRoot(document.getElementById("root")!).render(params.get("windowKind")==="update-status"?<UpdateStatusWindowRoot platform={platform} initialLocale={locale} onRequestClose={()=>window.close()}/>:<Main/>);',
       ].join("\n"),
     );

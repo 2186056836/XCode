@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { ZCODE_PLUGIN_HOST_COMMAND } from "@zcode/contracts/plugins";
 import {
-  getCapturedXCodeCuaBrokerCredentials,
+  getCapturedZCodeCuaBrokerCredentials,
   ZCODE_CUA_BROKER_SOCKET_ENV_KEY,
   ZCODE_CUA_NODE_REPL_HOST_ENV_KEY,
 } from "@zcode/shared/runtime-env";
@@ -44,7 +44,7 @@ export async function runPluginHostCommand(ctx: RunContext, argv: string[]): Pro
     if (!existsSync(serverPath)) {
       throw new Error("Plugin server file does not exist.");
     }
-    const capturedBrokerCredentials = getCapturedXCodeCuaBrokerCredentials();
+    const capturedBrokerCredentials = getCapturedZCodeCuaBrokerCredentials();
     assertCapturedBrokerLaunchIsAuthorized(capturedBrokerCredentials);
     const module = (await import(pathToFileURL(serverPath).href)) as HostedPluginModule;
     if (typeof module.main !== "function") {
@@ -78,7 +78,7 @@ export async function runPluginHostCommand(ctx: RunContext, argv: string[]): Pro
   }
 }
 
-type CapturedBrokerCredentials = ReturnType<typeof getCapturedXCodeCuaBrokerCredentials>;
+type CapturedBrokerCredentials = ReturnType<typeof getCapturedZCodeCuaBrokerCredentials>;
 
 function assertCapturedBrokerLaunchIsAuthorized(credentials: CapturedBrokerCredentials): void {
   const hasCapturedCredentials = Boolean(credentials.socket || credentials.pluginAuthority);

@@ -17,9 +17,9 @@ import {
 } from "lucide-react";
 import {
   ZCODE_AGENT_PROVIDER,
-  type XCodeAutomation,
-  type XCodeAutomationRun,
-  type XCodeAutomationScheduleRule,
+  type ZCodeAutomation,
+  type ZCodeAutomationRun,
+  type ZCodeAutomationScheduleRule,
 } from "@zcode/shared";
 import {
   testId,
@@ -124,7 +124,7 @@ import {
   resolveAutomationEditRequiredFieldErrors,
   type AutomationEditRequiredField,
 } from "@/settings/automationEditValidation.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useConfirmDialog, useYoloModeConfirmation } from "@/hooks/useConfirmDialog.js";
 import { useAutomationProjectOptions } from "@/hooks/useAutomationProjectOptions.js";
 import { useWorkspaceServicesResolution } from "@/hooks/useWorkspaceServices.js";
@@ -376,7 +376,7 @@ function MonthDayPicker({
 }: {
   month: number;
   day: number;
-  intl: ReturnType<typeof useXCodeIntl>["intl"];
+  intl: ReturnType<typeof useZCodeIntl>["intl"];
   onChange: (month: number, day: number) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -434,7 +434,7 @@ function WeekdayPicker({
   onChange,
 }: {
   weekdays: number[];
-  intl: ReturnType<typeof useXCodeIntl>["intl"];
+  intl: ReturnType<typeof useZCodeIntl>["intl"];
   onChange: (weekdays: number[]) => void;
 }) {
   const label = WEEKDAY_ORDER.filter((day) => weekdays.includes(day))
@@ -513,7 +513,7 @@ function EndDatePicker({
   value,
 }: {
   disabled: boolean;
-  intl: ReturnType<typeof useXCodeIntl>["intl"];
+  intl: ReturnType<typeof useZCodeIntl>["intl"];
   min: string;
   onChange: (value: string) => void;
   value: string;
@@ -639,7 +639,7 @@ function CustomRepeatDialog({
 }: {
   builder: CronBuilderState;
   endAt: number | undefined;
-  intl: ReturnType<typeof useXCodeIntl>["intl"];
+  intl: ReturnType<typeof useZCodeIntl>["intl"];
   onConfirm: (value: {
     interval: number;
     unit: CustomRepeatUnit;
@@ -1067,7 +1067,7 @@ export interface AutomationEditSubmit {
 
 export interface AutomationEditViewProps {
   /** null = 新建；否则编辑。 */
-  editing: XCodeAutomation | null;
+  editing: ZCodeAutomation | null;
   /** 新建预填(来自 More ideas 模板)。 */
   initialDraft?: { title: string; cronExpr: string; prompt: string } | null;
   /** 当前列表所在项目,作为新建的默认目标项目。 */
@@ -1078,9 +1078,9 @@ export interface AutomationEditViewProps {
   onSubmit: (params: AutomationEditSubmit) => Promise<boolean>;
   onBack: () => void;
   /** 编辑态:立即运行 / 启停 / 删除。 */
-  onRunNow?: (automation: XCodeAutomation) => Promise<void> | void;
-  onToggle?: (automation: XCodeAutomation, enabled: boolean) => void;
-  onDelete?: (automation: XCodeAutomation) => void;
+  onRunNow?: (automation: ZCodeAutomation) => Promise<void> | void;
+  onToggle?: (automation: ZCodeAutomation, enabled: boolean) => void;
+  onDelete?: (automation: ZCodeAutomation) => void;
   /** History tab 运行历史。 */
   runsEntry?: AutomationRunsEntry;
   onLoadRuns?: () => void;
@@ -1115,7 +1115,7 @@ function defaultBuilder(): CronBuilderState {
 }
 
 function initialBuilder(
-  editing: XCodeAutomation | null,
+  editing: ZCodeAutomation | null,
   initialDraft?: { title: string; cronExpr: string; prompt: string } | null,
 ): CronBuilderState {
   if (!editing) {
@@ -1142,7 +1142,7 @@ function initialBuilder(
 
 // ---- 运行历史状态映射(与 AutomationRunsDialog 保持一致) ----
 type RunStatusKind = "running" | "succeeded" | "failed" | "stopped" | "skipped";
-function resolveRunStatus(run: XCodeAutomationRun): RunStatusKind {
+function resolveRunStatus(run: ZCodeAutomationRun): RunStatusKind {
   if (run.dispatchStatus === "skipped") return "skipped";
   if (run.dispatchStatus === "failed_to_dispatch") return "failed";
   switch (run.outcome) {
@@ -1180,7 +1180,7 @@ const AUTOMATION_STATUS_DOT_CLASS: Record<AutomationStatusKind, string> = {
 };
 
 function normalizeAutomationScheduleRule(
-  rule: XCodeAutomationScheduleRule | null | undefined,
+  rule: ZCodeAutomationScheduleRule | null | undefined,
 ): Record<string, unknown> | null {
   if (!rule) return null;
   return {
@@ -1213,7 +1213,7 @@ export function AutomationEditView({
   onDeleteRun,
   onOpenSession,
 }: AutomationEditViewProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const confirmDialog = useConfirmDialog();
   const [tab, setTab] = useState<AutomationSettingsHistoryTab>("settings");
   const [runsPage, setRunsPage] = useState(1);
@@ -1641,7 +1641,7 @@ export function AutomationEditView({
     [editing?.automationId, requiredFieldErrors],
   );
 
-  const currentScheduleRule = useMemo<XCodeAutomationScheduleRule | undefined>(
+  const currentScheduleRule = useMemo<ZCodeAutomationScheduleRule | undefined>(
     () =>
       builder.frequency === "custom"
         ? {

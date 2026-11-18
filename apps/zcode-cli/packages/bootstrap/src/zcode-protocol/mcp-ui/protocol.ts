@@ -8,18 +8,18 @@ import {
   zcodeMcpUiOpenInstanceParamsSchema,
   zcodeMcpUiReadResourceParamsSchema,
   zcodeMcpUiResourceSubscriptionParamsSchema,
-  type XCodeMcpReadResourceResult,
-  type XCodeMcpUiCallToolResult,
-  type XCodeMcpUiCancelCallResult,
-  type XCodeMcpUiListResourceTemplatesResult,
-  type XCodeMcpUiListResourcesResult,
-  type XCodeMcpUiReadResourceResult,
+  type ZCodeMcpReadResourceResult,
+  type ZCodeMcpUiCallToolResult,
+  type ZCodeMcpUiCancelCallResult,
+  type ZCodeMcpUiListResourceTemplatesResult,
+  type ZCodeMcpUiListResourcesResult,
+  type ZCodeMcpUiReadResourceResult,
 } from "@zcode/shared";
 import {
   ProtocolRequestError,
   parseParams,
   requireSession,
-  type XCodeProtocolAgentServerContext,
+  type ZCodeProtocolAgentServerContext,
 } from "../server-types.js";
 import { getSessionLifecycle } from "../session-residency.js";
 import { getMcpUiAppToolRegistry } from "./appToolsProtocol.js";
@@ -35,10 +35,10 @@ import { createMcpUiSessionAccess } from "./sessionAccess.js";
 
 /** `mcp/readResource`：插件 UI 的 `ui://` 资源读取，走 session 自己的 mcpPort。 */
 export async function readMcpUiResource(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   signal?: AbortSignal,
-): Promise<XCodeMcpReadResourceResult> {
+): Promise<ZCodeMcpReadResourceResult> {
   const params = parseParams(zcodeMcpReadResourceParamsSchema, rawParams);
   const record = requireSession(context, params.sessionId, { operation: "mcp/readResource" });
   const active = mcpUiInstances.validate(
@@ -59,10 +59,10 @@ export async function readMcpUiResource(
 
 /** `mcp/uiCallTool`：插件 UI 回调本插件工具；复用工具授权路径，不产生 transcript row。 */
 export async function callMcpUiTool(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   signal?: AbortSignal,
-): Promise<XCodeMcpUiCallToolResult> {
+): Promise<ZCodeMcpUiCallToolResult> {
   const params = parseParams(zcodeMcpUiCallToolParamsSchema, rawParams);
   const record = requireSession(context, params.sessionId, { operation: "mcp/uiCallTool" });
   return translateScopeError(() =>
@@ -76,9 +76,9 @@ export async function callMcpUiTool(
 
 /** `mcp/uiCancelCall`（）：取消 `mcp/uiCallTool` 带 callId 的进行中调用；同样 fail closed 校验归属。 */
 export async function cancelMcpUiToolCall(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodeMcpUiCancelCallResult> {
+): Promise<ZCodeMcpUiCancelCallResult> {
   const params = parseParams(zcodeMcpUiCancelCallParamsSchema, rawParams);
   const record = requireSession(context, params.sessionId, { operation: "mcp/uiCancelCall" });
   return translateScopeError(async () =>
@@ -91,10 +91,10 @@ export async function cancelMcpUiToolCall(
 
 /** `mcp/uiListResources` / `mcp/uiListResourceTemplates`（同插件服务器，分页游标透传）。 */
 export async function listMcpUiResources(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   signal?: AbortSignal,
-): Promise<XCodeMcpUiListResourcesResult> {
+): Promise<ZCodeMcpUiListResourcesResult> {
   const params = parseParams(zcodeMcpUiListResourcesParamsSchema, rawParams);
   const record = requireSession(context, params.sessionId, { operation: "mcp/uiListResources" });
   return translateScopeError(() =>
@@ -107,10 +107,10 @@ export async function listMcpUiResources(
 }
 
 export async function listMcpUiResourceTemplates(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   signal?: AbortSignal,
-): Promise<XCodeMcpUiListResourceTemplatesResult> {
+): Promise<ZCodeMcpUiListResourceTemplatesResult> {
   const params = parseParams(zcodeMcpUiListResourcesParamsSchema, rawParams);
   const record = requireSession(context, params.sessionId, {
     operation: "mcp/uiListResourceTemplates",
@@ -126,7 +126,7 @@ export async function listMcpUiResourceTemplates(
 
 /** `mcp/uiSubscribeResource` / `mcp/uiUnsubscribeResource`；订阅者 = sessionId + scopeId + generation。 */
 export async function subscribeMcpUiResource(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   signal?: AbortSignal,
 ): Promise<Record<string, never>> {
@@ -145,7 +145,7 @@ export async function subscribeMcpUiResource(
 }
 
 export async function unsubscribeMcpUiResource(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   signal?: AbortSignal,
 ): Promise<Record<string, never>> {
@@ -165,10 +165,10 @@ export async function unsubscribeMcpUiResource(
 
 /** `mcp/uiReadResource`：插件页面发起的 resources/read（A7）；限同插件服务器、8 MiB、mimeType 白名单。 */
 export async function readMcpUiResourceForUi(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   signal?: AbortSignal,
-): Promise<XCodeMcpUiReadResourceResult> {
+): Promise<ZCodeMcpUiReadResourceResult> {
   const params = parseParams(zcodeMcpUiReadResourceParamsSchema, rawParams);
   const record = requireSession(context, params.sessionId, { operation: "mcp/uiReadResource" });
   return translateScopeError(() =>
@@ -215,7 +215,7 @@ async function translateScopeError<T>(run: () => Promise<T>): Promise<T> {
 }
 
 export async function openMcpUiInstance(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
 ) {
   const params = parseParams(zcodeMcpUiOpenInstanceParamsSchema, rawParams);
@@ -301,7 +301,7 @@ export async function openMcpUiInstance(
   return lease;
 }
 export async function closeMcpUiInstance(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
 ) {
   const params = parseParams(zcodeMcpUiCloseInstanceParamsSchema, rawParams);
@@ -322,7 +322,7 @@ export async function closeMcpUiInstance(
 }
 
 export async function validateMcpUiInstance(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
 ) {
   const params = parseParams(zcodeMcpUiCloseInstanceParamsSchema, rawParams);

@@ -7,7 +7,7 @@ import {
 import { testId } from "@zcode/shared/test-ids";
 import { Button } from "@/components/ui/button.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { AutomationWorkspaceOption } from "@/settings/automationWorkspaceOptions.js";
 import { SavedWorkflowCard } from "@/settings/saved-workflows/SavedWorkflowCard.js";
 import { SavedWorkflowDetailView } from "@/settings/saved-workflows/SavedWorkflowDetailView.js";
@@ -62,7 +62,7 @@ export function SavedWorkflowGlobalGroup(props: SavedWorkflowGlobalGroupProps) {
     localProjects,
     activeProjectKey,
   } = props;
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const group = useSavedWorkflowGlobalGroup(props);
   const {
     agentService,

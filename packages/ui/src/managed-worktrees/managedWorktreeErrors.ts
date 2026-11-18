@@ -1,7 +1,7 @@
 // worktree 相关错误的本地化：只按结构化 code 选择文案，不解析 git 原始报错文本。
-import type { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import type { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
-type XCodeIntl = ReturnType<typeof useXCodeIntl>["intl"];
+type ZCodeIntl = ReturnType<typeof useZCodeIntl>["intl"];
 
 /** Host 抛出的错误前缀：任务行守卫 `project.worktree-*` 与编排服务 `worktree.*`。 */
 const ERROR_PREFIXES = ["project.worktree-", "worktree."];
@@ -26,7 +26,7 @@ const KNOWN_CODES = new Set([
 ]);
 
 /** 把 Host 抛出的 `project.worktree-<code>` 或结构化 code 映射为本地化提示。 */
-export function formatManagedWorktreeError(intl: XCodeIntl, error: unknown): string {
+export function formatManagedWorktreeError(intl: ZCodeIntl, error: unknown): string {
   const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
   const prefix = ERROR_PREFIXES.find((item) => message.startsWith(item));
   const code = prefix ? message.slice(prefix.length) : message;

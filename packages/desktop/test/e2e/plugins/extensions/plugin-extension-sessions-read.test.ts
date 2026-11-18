@@ -516,7 +516,7 @@ describe("PLM-EXT-P3B 扩展的会话读连接与商店安装后的激活确认"
     }).flat();
     const beforeImport = (await log.lines()).length;
     const imported = await callHandoffHost<{ session: { sessionId: string } }>(
-      ServiceChannels.XCodeAgent,
+      ServiceChannels.ZCodeAgent,
       "createSession",
       [
         {

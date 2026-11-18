@@ -1,7 +1,7 @@
 import type { IChannel } from "@zcode/rpc";
 import { zcodeTopicResourceRelayRequestSchema } from "@zcode/shared";
-import type { IXCodeAgentService } from "./zcodeAgent.js";
-import { readTrustedXCodeAgentV4Connection } from "./zcodeAgentConnectionScope.js";
+import type { IZCodeAgentService } from "./zcodeAgent.js";
+import { readTrustedZCodeAgentV4Connection } from "./zcodeAgentConnectionScope.js";
 
 interface Peer {
   channel: IChannel;
@@ -26,7 +26,7 @@ export function createTopicResourcePeers() {
         // 断连后只停止登记；旧 facade 仍需通过 base 完成 unsubscribe/flow cleanup。
         if (peer.closed) return;
         // 公共参数不能声明来源；只有连接 facade 写入的可信 carrier 可以登记返回路由。
-        if (!readTrustedXCodeAgentV4Connection(value)) return;
+        if (!readTrustedZCodeAgentV4Connection(value)) return;
         const request = value as Record<string, unknown>;
         if (request.remoteSessionId === undefined) return;
         if (
@@ -47,7 +47,7 @@ export function createTopicResourcePeers() {
         peer.routes.set(request.remoteSessionId, route);
       };
       return {
-        wrapAgent(base: IXCodeAgentService): IXCodeAgentService {
+        wrapAgent(base: IZCodeAgentService): IZCodeAgentService {
           return new Proxy(base, {
             get(target, property) {
               const value = Reflect.get(target, property, target);

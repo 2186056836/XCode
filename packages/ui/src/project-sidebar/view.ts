@@ -13,7 +13,7 @@ import type {
   WindowHostControllerTaskActivity,
 } from "@/project-sidebar/contract.js";
 import { attachTaskListRowActivity } from "@/v4/taskListRowActivity.js";
-import { compareTaskListItemsByTime, compareXCodeTaskListItems } from "@/lib/taskListOrdering.js";
+import { compareTaskListItemsByTime, compareZCodeTaskListItems } from "@/lib/taskListOrdering.js";
 import { buildTaskEntityKey } from "@/lib/taskQueryCache.js";
 import { LEGACY_SINGLE_ROOT_PROJECT_PREFIX } from "@/project-sidebar/contract.js";
 import {
@@ -76,7 +76,7 @@ export function compareProjectTaskRows(
   return (
     (kind === "timeline" || kind === "unread"
       ? compareTaskListItemsByTime(left, right, "updated")
-      : compareXCodeTaskListItems(left, right, "updated")) ||
+      : compareZCodeTaskListItems(left, right, "updated")) ||
     JSON.stringify([right.hostId, buildTaskEntityKey(right)]).localeCompare(
       JSON.stringify([left.hostId, buildTaskEntityKey(left)]),
     )

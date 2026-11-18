@@ -33,7 +33,7 @@ import {
 // 目标会话一轮 70 个工具调用，超过快照尾窗 60 行，turnHeader 只在 owner 全量投影里。
 const CASE = "E2E_SCT06";
 const LONG_TURN_TOOL_CALLS = 70;
-const SECOND_ROOT = join(dirname(DEFAULT_WORKSPACE), "XCodeProjectSCT06Second");
+const SECOND_ROOT = join(dirname(DEFAULT_WORKSPACE), "ZCodeProjectSCT06Second");
 // 冷会话：只写两个库，不启动运行态；读取前它从未被打开，CLI 侧没有 record。
 const COLD_SESSION = "session_e2e_sct06_cold";
 const COLD_TITLE = "E2E_SCT06_COLD_TITLE";
@@ -147,7 +147,7 @@ describe(`${CASE}: App session tools on a long turn and a retried creation`, () 
 
     const projects = await action<{
       projects: Array<{ project: NonNullable<SessionRef["project"]> }>;
-    }>("projects", "Call ListProjects with query=XCodeProject.");
+    }>("projects", "Call ListProjects with query=ZCodeProject.");
     expect(projects.projects).toHaveLength(1);
     const project = projects.projects[0]!.project;
 

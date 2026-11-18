@@ -55,7 +55,7 @@ export function importLegacyCliPersonalProviderConfig(
   input: LegacyCliPersonalProviderConfigImportInput,
 ): ProviderConfigLayerUpdate {
   const runtimePatch = parseLegacyCliModelConfig(input.input);
-  // 通用 XCodeConfigFileSchema 刻意把旧 provider 留在 passthrough unknown，
+  // 通用 ZCodeConfigFileSchema 刻意把旧 provider 留在 passthrough unknown，
   // 迁移器却从该结果取类型，导致 Bootstrap build 无法证明 model/provider 结构。
   // 这里只消费专用旧格式 parser 的已校验投影，保持兼容逻辑封闭在读取边界。
   let providers = ProviderConfigMap.empty();

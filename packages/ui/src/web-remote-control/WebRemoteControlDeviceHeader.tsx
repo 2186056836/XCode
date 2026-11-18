@@ -2,7 +2,7 @@ import { SidebarNativeTooltip } from "@/ControlHintTooltip.js";
 import { ChevronsUpDownIcon } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { DevicePlatformIcon } from "@/components/mobile-ui/DevicePlatformIcon.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { WebRemoteControlDeviceNavigation } from "@/web-remote-control/contract.js";
 
 /** 侧栏顶部的当前电脑行：与主导航同款 ghost 行，整行即“切换设备”入口。 */
@@ -11,7 +11,7 @@ export function WebRemoteControlDeviceHeader({
 }: {
   navigation: WebRemoteControlDeviceNavigation;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const deviceName =
     navigation.deviceName?.trim() || intl.formatMessage({ id: "webRemoteControl.unnamedDevice" });
   const switchLabel = intl.formatMessage({ id: "webRemoteControl.switchDevice" });

@@ -1,12 +1,12 @@
 import { PassThrough } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
-import { zcodeProtocolMethods, type XCodeProtocolMessage } from "@zcode/shared";
-import { XCodeProtocolNdjsonConnection } from "../src/zcode-protocol/transport.js";
+import { zcodeProtocolMethods, type ZCodeProtocolMessage } from "@zcode/shared";
+import { ZCodeProtocolNdjsonConnection } from "../src/zcode-protocol/transport.js";
 
-describe("XCodeProtocolNdjsonConnection", () => {
+describe("ZCodeProtocolNdjsonConnection", () => {
   it("stdout 背压时丢弃观测批次，业务响应仍可写入", () => {
     const output = new PassThrough({ highWaterMark: 1 });
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       input: new PassThrough(),
       output,
       handleMessage: async () => undefined,
@@ -26,7 +26,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
     const input = new PassThrough();
     const output = new PassThrough();
     const controls: unknown[] = [];
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       input,
       output,
       handleMessage: async (message) => {
@@ -49,7 +49,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
     const input = new PassThrough();
     const output = new PassThrough();
     const closed = vi.fn();
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       input,
       output,
       handleMessage: () => new Promise(() => {}),
@@ -73,7 +73,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
       };
       order.push(value.id ? "response" : `wire-${value.params?.fragmentIndex}`);
     });
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       handleMessage: async (message) =>
         "id" in message && "method" in message
           ? { id: message.id, result: { ack: {} } }
@@ -108,7 +108,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
       return originalWrite(chunk);
     }) as typeof output.write;
     const commit = vi.fn(() => true);
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       handleMessage: async (message) =>
         "id" in message && "method" in message
           ? { id: message.id, result: { ack: {} } }
@@ -142,7 +142,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
       messages: [{ method: "v4/conversation/frame", params: { kind: "complete" } }],
       commit,
     }));
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       clearPostResponseMessages,
       handleMessage: async (message) =>
         "id" in message && "method" in message
@@ -178,7 +178,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
     output.on("data", (chunk: Buffer) => {
       written += chunk.toString("utf8");
     });
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       handleMessage: async (message) => {
         if (!("id" in message) || !("method" in message)) return undefined;
         return {
@@ -246,7 +246,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
     output.on("data", (chunk: Buffer) => {
       written += chunk.toString("utf8");
     });
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       handleMessage: async (message) =>
         "id" in message && "method" in message
           ? {
@@ -284,7 +284,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
     const input = new PassThrough();
     const output = new PassThrough();
     const clearPostResponseMessages = vi.fn();
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       clearPostResponseMessages,
       handleMessage: async () => {
         throw new Error("request failed");
@@ -310,7 +310,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
     const input = new PassThrough();
     const output = new PassThrough();
     const clearPostResponseMessages = vi.fn();
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       clearPostResponseMessages,
       handleMessage: async () => {
         throw new Error("bypass failed");
@@ -354,7 +354,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
     output.on("data", (chunk: Buffer) => {
       written += chunk.toString("utf8");
     });
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       clearPostResponseMessages,
       handleMessage: async () => {
         resolveStarted();
@@ -411,7 +411,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
       }
     });
 
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       handleMessage: async (message) => {
         if (!("method" in message)) {
           return undefined;
@@ -487,7 +487,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
       }
     });
 
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       handleMessage: async (message) => {
         if (!("method" in message) || !("id" in message)) {
           return undefined;
@@ -573,7 +573,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
       resolveResponseHandled = resolve;
     });
 
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       handleMessage: async (message) => {
         handled.push(message);
         if ("method" in message && message.method === zcodeProtocolMethods.sessionCompact) {
@@ -635,7 +635,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
     let sendActive = false;
     let stopSawActiveSend = false;
 
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       handleMessage: async (message) => {
         if (!("method" in message)) {
           return undefined;
@@ -703,7 +703,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
       zcodeProtocolMethods.pluginsOverview,
     ];
     const order: string[] = [];
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       handleMessage: async (message) => {
         if (!("method" in message) || !("id" in message)) return undefined;
         order.push(`${message.method}#${message.id}`);
@@ -742,7 +742,7 @@ describe("XCodeProtocolNdjsonConnection", () => {
   });
 });
 
-function frame(message: XCodeProtocolMessage): string {
+function frame(message: ZCodeProtocolMessage): string {
   return `${JSON.stringify(message)}\n`;
 }
 
@@ -752,7 +752,7 @@ describe("session lifecycle transport admission", () => {
     const output = new PassThrough();
     const entered: string[] = [];
     const gate = Promise.withResolvers<void>();
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       input,
       output,
       handleMessage: async (message) => {
@@ -787,7 +787,7 @@ describe("shared CLI session admission", () => {
     const output = new PassThrough();
     const gate = Promise.withResolvers<void>();
     const entered: string[] = [];
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       input,
       output,
       handleMessage: async (message) => {
@@ -849,7 +849,7 @@ describe("workspace presentation admission", () => {
           );
         }
       });
-      const connection = new XCodeProtocolNdjsonConnection({
+      const connection = new ZCodeProtocolNdjsonConnection({
         input,
         output,
         handleMessage: async (message) => {
@@ -935,7 +935,7 @@ describe("workspace presentation admission", () => {
     const replied: number[] = [];
     const closed = vi.fn();
     output.on("data", (chunk: Buffer) => replied.push(JSON.parse(chunk.toString()).id));
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       input,
       output,
       handleMessage: async (message) => {
@@ -978,7 +978,7 @@ describe("workspace presentation admission", () => {
     const entered = Promise.withResolvers<void>();
     const write = vi.fn();
     output.on("data", write);
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       input,
       output,
       handleMessage: async (message) => {
@@ -1003,7 +1003,7 @@ describe("workspace presentation admission", () => {
     const gate = Promise.withResolvers<void>();
     const controller = new AbortController();
     const entered: string[] = [];
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       input,
       output: new PassThrough(),
       signal: controller.signal,
@@ -1029,7 +1029,7 @@ describe("workspace presentation admission", () => {
   it("fails the connection and clears outbox when catalog handling rejects", async () => {
     const input = new PassThrough();
     const clearPostResponseMessages = vi.fn();
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       input,
       output: new PassThrough(),
       clearPostResponseMessages,

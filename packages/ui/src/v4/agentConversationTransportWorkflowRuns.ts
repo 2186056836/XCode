@@ -1,7 +1,7 @@
 // createAgentConversationTransport 的 workflow-run 查询面。拆分原因：主文件受
 // eslint max-lines(400) 约束，主文件与分支增量叠加超限，
 // 按查询面边界把 dwf journal 的两个只读查询拆到本文件（闭包依赖显式传入，行为不变）。
-import type { IXCodeAgentService } from "@zcode/services";
+import type { IZCodeAgentService } from "@zcode/services";
 import type {
   V4ConversationWorkflowRunArtifactDataParams,
   V4ConversationWorkflowRunArtifactDataResult,
@@ -21,7 +21,7 @@ import type {
 
 export function createWorkflowRunTransportMethods(input: {
   agentService: Pick<
-    IXCodeAgentService,
+    IZCodeAgentService,
     | "conversationWorkflowRunEventsV4"
     | "conversationWorkflowRunsV4"
     | "conversationWorkflowRunArtifactsV4"

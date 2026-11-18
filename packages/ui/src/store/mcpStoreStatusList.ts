@@ -1,14 +1,14 @@
-import type { McpServerStatus, XCodeMcpServer, XCodeMcpServerStatusSnapshot } from "@zcode/shared";
+import type { McpServerStatus, ZCodeMcpServer, ZCodeMcpServerStatusSnapshot } from "@zcode/shared";
 
 type MappedMcpServerStatus = {
-  authorization?: XCodeMcpServerStatusSnapshot["authorization"];
+  authorization?: ZCodeMcpServerStatusSnapshot["authorization"];
   error?: string;
-  failureKind?: XCodeMcpServerStatusSnapshot["failureKind"];
+  failureKind?: ZCodeMcpServerStatusSnapshot["failureKind"];
   serverRequestId?: string;
   status: McpServerStatus;
 };
 
-function mapRuntimeStatusToUi(snapshot: XCodeMcpServerStatusSnapshot): MappedMcpServerStatus {
+function mapRuntimeStatusToUi(snapshot: ZCodeMcpServerStatusSnapshot): MappedMcpServerStatus {
   switch (snapshot.status) {
     case "connected":
     case "connecting":
@@ -40,10 +40,10 @@ function mapRuntimeStatusToUi(snapshot: XCodeMcpServerStatusSnapshot): MappedMcp
 }
 
 export function mergeMcpServerStatusSnapshots(
-  servers: XCodeMcpServer[],
-  statuses: Record<string, XCodeMcpServerStatusSnapshot>,
+  servers: ZCodeMcpServer[],
+  statuses: Record<string, ZCodeMcpServerStatusSnapshot>,
   options: { markMissingConnectingAsError?: boolean } = {},
-): XCodeMcpServer[] {
+): ZCodeMcpServer[] {
   const markMissingConnectingAsError = options.markMissingConnectingAsError ?? true;
   return servers.map((server) => {
     if (server.source !== "zcodeagentmcp") {

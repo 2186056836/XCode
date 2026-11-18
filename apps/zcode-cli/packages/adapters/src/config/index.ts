@@ -482,7 +482,7 @@ export {
   type UiLocalePatchResult,
 } from "./file-config.adapter.js";
 export { parseEnvConfig, getToolConcurrencyConfig } from "./env-config.adapter.js";
-export { XCodeConfigFileSchema, type XCodeConfigFile } from "./schema.js";
+export { ZCodeConfigFileSchema, type ZCodeConfigFile } from "./schema.js";
 export { mergeConfigs, createPrioritizedConfig, getScopePriority } from "./config-merger.js";
 export {
   classifyLocalSessionDirectory,
@@ -490,7 +490,7 @@ export {
   createConfigWithPluginMigrations,
   resolveWorkspaceHookTrustIdentityForWorkspace,
   resolveWorkspaceStorageDir,
-  resolveXCodeDataBaseDir,
+  resolveZCodeDataBaseDir,
   type ConfigFactoryOptions,
   type ConfigResult,
   type PluginConfigScope,

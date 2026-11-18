@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
 import { useOptionalServices } from "@/hooks/useServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   supportsLocalMacCuaPermissionOnboarding,
   supportsLocalWindowsCuaEntry,
@@ -45,7 +45,7 @@ function V4ComposerCuaEntryImpl(props: V4ComposerCuaEntryProps) {
 }
 
 function V4ComposerCuaEntryMounted(props: V4ComposerCuaEntryProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { view, onActivate } = useCuaComposerEntry(props);
   const label = intl.formatMessage({ id: "chat.toolbar.computerUse.label" });
 

@@ -1,7 +1,7 @@
 import type { ConversationSharePopoverProps } from "@/conversation-share-interaction/contract.js";
 import { useMemo } from "react";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /** 设置仍由 SessionPane 提供，锚点复用 workspace 顶栏入口，避免跨层传递第二份分享状态。 */
 export function ConversationSharePopover({
@@ -13,7 +13,7 @@ export function ConversationSharePopover({
   onCancelSelection,
   children,
 }: ConversationSharePopoverProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const anchor = useMemo(
     () => ({
       current: {

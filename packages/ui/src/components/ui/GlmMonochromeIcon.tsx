@@ -2,7 +2,7 @@ import type { ImgHTMLAttributes } from "react";
 import glmDarkIcon from "@/assets/cli-icons/icon-glm-for-dark.png";
 import glmLightIcon from "@/assets/cli-icons/icon-glm-for-light.png";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { resolveTheme } from "@/useTheme.js";
 
 type GlmMonochromeIconProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src">;
@@ -13,7 +13,7 @@ export function GlmMonochromeIcon({
   style,
   ...props
 }: GlmMonochromeIconProps) {
-  const theme = useXCodeStore((state) => state.theme);
+  const theme = useZCodeStore((state) => state.theme);
   const isDark = resolveTheme(theme) === "dark";
   const src = isDark ? glmDarkIcon : glmLightIcon;
 

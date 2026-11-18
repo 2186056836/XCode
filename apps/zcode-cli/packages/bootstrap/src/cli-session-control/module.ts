@@ -23,7 +23,7 @@ import {
   type SendToSessionResult,
   type SessionSummary,
 } from "@zcode/session-control/contracts";
-import type { XCodeApp } from "../app/types.js";
+import type { ZCodeApp } from "../app/types.js";
 import { resolveStableForkTargetFromTranscript } from "../zcode-protocol-v4/stable-fork-target.js";
 import {
   isTranscriptVisibleMessage,
@@ -56,7 +56,7 @@ const ROOT_ACTIONS = [
 ] as const;
 
 type Root = {
-  app: XCodeApp;
+  app: ZCodeApp;
   owned: boolean;
   verified: boolean;
   signal: AbortController;
@@ -230,7 +230,7 @@ export function createCliSessionControlRuntime(
   function commandId(ctx: CliTrustedContext, requestId: string): string {
     return `cli-control-${digest([ctx.callerId, ctx.rootSession, requestId])}`;
   }
-  function attach(app: XCodeApp, owned: boolean, verified = true): Root {
+  function attach(app: ZCodeApp, owned: boolean, verified = true): Root {
     if (roots.has(app.sessionId)) {
       const existing = roots.get(app.sessionId)!;
       if (existing.app !== app)
@@ -330,7 +330,7 @@ export function createCliSessionControlRuntime(
       abortSignal: root.signal.signal,
       traceContext: trace(ctx, root.app.sessionId),
     };
-    const watch = (completion: ReturnType<XCodeApp["submitPrompt"]>): void => {
+    const watch = (completion: ReturnType<ZCodeApp["submitPrompt"]>): void => {
       track(
         root,
         completion.then(
@@ -516,7 +516,7 @@ export function createCliSessionControlRuntime(
             validate(ctx, grant);
             reserveRoot();
             const sessionId = createSessionId();
-            let app: XCodeApp | undefined;
+            let app: ZCodeApp | undefined;
             try {
               app = await options.createRootApp({
                 sessionId,

@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button.js";
 import { Spinner } from "@/components/ui/spinner.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { SettingsFormTextarea } from "@/settings/SettingsFormTextarea.js";
 import type {
   SavedWorkflowArgRow,
@@ -54,7 +54,7 @@ export function SavedWorkflowMetaForm({
   onDiscard,
   onSave,
 }: SavedWorkflowMetaFormProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <section className="flex flex-col gap-4">
       <h2 className="text-ui-base font-medium leading-5 text-foreground-subtle">

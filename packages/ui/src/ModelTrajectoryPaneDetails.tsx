@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 import type {
-  XCodeModelTrajectoryContentPart,
-  XCodeModelTrajectoryRecord,
-  XCodeModelTrajectoryUsage,
+  ZCodeModelTrajectoryContentPart,
+  ZCodeModelTrajectoryRecord,
+  ZCodeModelTrajectoryUsage,
 } from "@zcode/services";
 import { Badge } from "@/components/ui/badge.js";
 import { cn } from "@/components/lib/utils.js";
-import type { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import type { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
-type IntlShape = ReturnType<typeof useXCodeIntl>["intl"];
+type IntlShape = ReturnType<typeof useZCodeIntl>["intl"];
 
 export function ContentPartView({
   part,
@@ -16,7 +16,7 @@ export function ContentPartView({
   sectionLabel,
   showToolHeader = true,
 }: {
-  part: XCodeModelTrajectoryContentPart;
+  part: ZCodeModelTrajectoryContentPart;
   intl: IntlShape;
   sectionLabel?: string;
   showToolHeader?: boolean;
@@ -164,7 +164,7 @@ export function UsageBadges({
   usage,
   intl,
 }: {
-  usage?: XCodeModelTrajectoryUsage;
+  usage?: ZCodeModelTrajectoryUsage;
   intl: IntlShape;
 }) {
   if (!usage) {
@@ -225,7 +225,7 @@ export function EmptyState({
   );
 }
 
-export function summarizeRecords(records: XCodeModelTrajectoryRecord[]): {
+export function summarizeRecords(records: ZCodeModelTrajectoryRecord[]): {
   totalTokens: number;
   models: string[];
 } {

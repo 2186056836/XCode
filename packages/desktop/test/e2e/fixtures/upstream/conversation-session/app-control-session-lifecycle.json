@@ -257,7 +257,7 @@
           "name": "ListProjects",
           "id": "toolu_sct04_projects",
           "input": {
-            "query": "XCodeProject"
+            "query": "ZCodeProject"
           }
         }
       },

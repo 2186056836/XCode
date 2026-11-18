@@ -17,7 +17,7 @@ import { isKnownRemoteResourcePackageId } from "./remoteResourcePackages.js";
 import { wslUserSchema } from "./wslUserValidation.js";
 import { ZCODE_ENABLED_AGENT_PROVIDERS } from "./zcode-agent-policy.js";
 import { DYNAMIC_WORKFLOW_MODES } from "./dynamic-workflow-feature.js";
-import { normalizeXCodeEndpointOrigin } from "./zcodeEndpoint.js";
+import { normalizeZCodeEndpointOrigin } from "./zcodeEndpoint.js";
 import {
   DEFAULT_EMBEDDED_BROWSER_VIEWPORT_PREFERENCE,
   embeddedBrowserViewportPreferenceSchema,
@@ -186,13 +186,13 @@ const zcodeEndpointOriginSchema = z.preprocess((value) => {
     return undefined;
   }
   try {
-    return normalizeXCodeEndpointOrigin(trimmed);
+    return normalizeZCodeEndpointOrigin(trimmed);
   } catch {
     return undefined;
   }
 }, z.string().optional());
 
-function sanitizeXCodeEndpointOrigin(value: unknown): unknown {
+function sanitizeZCodeEndpointOrigin(value: unknown): unknown {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return value;
   }
@@ -921,7 +921,7 @@ export const appSettingsSchema = z.preprocess(
           migrateCloseToTrayOnWindowsDefault(
             migrateLegacyLocalePreference(
               applyPersistedUiLocaleFields(
-                sanitizeXCodeEndpointOrigin(
+                sanitizeZCodeEndpointOrigin(
                   migrateLegacyWorkspaceSession(
                     migrateLegacyBuiltinAgentCliProviders(
                       migrateRemoteBoundaryIntroAcknowledgement(migrateTaskAutoArchiveReset(value)),

@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type RefObject } from "react";
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover.js";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { WorkspaceTabState } from "@/store/tabStore.js";
 import type { RemoteConnectionPresentation } from "@/lib/remoteConnectionPresentation.js";
 import { RemoteProjectConnectionDetails } from "@/WorkspaceSidebar/RemoteProjectConnectionDetails.js";
@@ -30,7 +30,7 @@ export function RemoteProjectDetailsPopover({
   onEdit?: () => void;
   onManage?: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const statusId = useId();
   const [mode, setMode] = useState<"hover" | "click" | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);

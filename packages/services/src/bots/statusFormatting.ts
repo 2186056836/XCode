@@ -1,8 +1,8 @@
 import {
-  type XCodePersistedToolCall,
-  type XCodeSessionFile,
-  type XCodeStreamEvent,
-  type XCodeTaskMeta,
+  type ZCodePersistedToolCall,
+  type ZCodeSessionFile,
+  type ZCodeStreamEvent,
+  type ZCodeTaskMeta,
 } from "@zcode/shared";
 import { buildPerTurnChangeSummaries } from "../session/taskChangeSummary.js";
 
@@ -11,7 +11,7 @@ const MS_IN_MINUTE = 60 * MS_IN_SECOND;
 const MS_IN_HOUR = 60 * MS_IN_MINUTE;
 const MS_IN_DAY = 24 * MS_IN_HOUR;
 
-export function taskStatus(task: XCodeTaskMeta): string {
+export function taskStatus(task: ZCodeTaskMeta): string {
   return task.status ?? "running";
 }
 
@@ -39,7 +39,7 @@ export function formatTaskRunningDuration(durationMs: number): string {
   return parts.join(" ");
 }
 
-function readRunningTaskStartedAt(snapshot: XCodeSessionFile | null, task: XCodeTaskMeta): number | null {
+function readRunningTaskStartedAt(snapshot: ZCodeSessionFile | null, task: ZCodeTaskMeta): number | null {
   const messages = snapshot?.messages ?? [];
   const assistantStartedAt = messages.findLast((message) => message.role === "assistant")?.timestamp;
   if (assistantStartedAt !== undefined) {
@@ -52,11 +52,11 @@ function readRunningTaskStartedAt(snapshot: XCodeSessionFile | null, task: XCode
   return task.createdAt ?? task.updatedAt ?? null;
 }
 
-export function formatStatusTaskLine(task: XCodeTaskMeta, label = "Task"): string {
+export function formatStatusTaskLine(task: ZCodeTaskMeta, label = "Task"): string {
   return `${label}: ${task.title} (${task.taskId})`;
 }
 
-export function readTaskWorkedDurationMs(snapshot: XCodeSessionFile | null, task: XCodeTaskMeta): number | null {
+export function readTaskWorkedDurationMs(snapshot: ZCodeSessionFile | null, task: ZCodeTaskMeta): number | null {
   const status = taskStatus(task);
   if (status === "running") {
     const startedAt = readRunningTaskStartedAt(snapshot, task);
@@ -76,7 +76,7 @@ export function readTaskWorkedDurationMs(snapshot: XCodeSessionFile | null, task
   return null;
 }
 
-export function readLatestAssistantTurnChangeSummary(snapshot: XCodeSessionFile | null): XCodeTaskMeta["changeSummary"] | null {
+export function readLatestAssistantTurnChangeSummary(snapshot: ZCodeSessionFile | null): ZCodeTaskMeta["changeSummary"] | null {
   if (!snapshot?.fileChanges || snapshot.fileChanges.length === 0) {
     return null;
   }
@@ -126,7 +126,7 @@ function readStatusStringField(value: unknown, keys: readonly string[]): string 
   return null;
 }
 
-function formatStatusToolProgress(tool: XCodePersistedToolCall | undefined): string | null {
+function formatStatusToolProgress(tool: ZCodePersistedToolCall | undefined): string | null {
   if (!tool) {
     return null;
   }
@@ -139,7 +139,7 @@ function formatStatusToolProgress(tool: XCodePersistedToolCall | undefined): str
   return detail ? `${title}${status}: ${detail}` : `${title}${status}`;
 }
 
-export function formatStatusStreamToolProgress(event: Extract<XCodeStreamEvent, { type: "tool_call" | "tool_call_update" }>): string | null {
+export function formatStatusStreamToolProgress(event: Extract<ZCodeStreamEvent, { type: "tool_call" | "tool_call_update" }>): string | null {
   const title = normalizeStatusProgressText(event.title ?? event.kind ?? "tool");
   const detail =
     readStatusStringField(event.input, ["command", "path", "file_path", "filePath", "prompt"]) ??
@@ -149,7 +149,7 @@ export function formatStatusStreamToolProgress(event: Extract<XCodeStreamEvent, 
   return detail ? `${title}${status}: ${detail}` : `${title}${status}`;
 }
 
-export function readLatestTaskProgress(snapshot: XCodeSessionFile | null): string | null {
+export function readLatestTaskProgress(snapshot: ZCodeSessionFile | null): string | null {
   const messages = snapshot?.messages ?? [];
   for (const latestMessage of [...messages].reverse()) {
     if (latestMessage.role !== "assistant") {

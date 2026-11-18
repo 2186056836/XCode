@@ -10,7 +10,7 @@ import {
   type V4SessionDeletionResult,
 } from "@zcode/shared/zcode-protocol-v4";
 import { createSessionResidentPoolHost, deactivateSessionRecord } from "../session-residency.js";
-import { parseParams, type XCodeProtocolAgentServerContext } from "../server-types.js";
+import { parseParams, type ZCodeProtocolAgentServerContext } from "../server-types.js";
 
 export interface SessionDeletionHost {
   store: Required<
@@ -145,7 +145,7 @@ export async function executeSessionDeletionWith(
     return { ...result, status: admitted ? "incomplete" : "blocked", reason };
   }
 }
-function hostFromContext(context: XCodeProtocolAgentServerContext): SessionDeletionHost {
+function hostFromContext(context: ZCodeProtocolAgentServerContext): SessionDeletionHost {
   const store = context.deps.sessionStore;
   const files = context.deps.sessionDataFiles;
   if (
@@ -178,7 +178,7 @@ function hostFromContext(context: XCodeProtocolAgentServerContext): SessionDelet
   };
 }
 export async function previewSessionDeletion(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   raw: unknown,
 ) {
   return previewSessionDeletionWith(
@@ -187,7 +187,7 @@ export async function previewSessionDeletion(
   );
 }
 export async function executeSessionDeletion(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   raw: unknown,
 ) {
   const result = await executeSessionDeletionWith(

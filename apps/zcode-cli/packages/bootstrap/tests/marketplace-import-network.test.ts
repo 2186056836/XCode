@@ -5,12 +5,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { addXCodePluginMarketplace } from "../src/plugins.js";
+import { addZCodePluginMarketplace } from "../src/plugins.js";
 
 const execFileAsync = promisify(execFile);
 
 function addViaFacade(source: string, storageRoot: string, workingDirectory: string) {
-  return addXCodePluginMarketplace({
+  return addZCodePluginMarketplace({
     source,
     pluginStorageRoot: storageRoot,
     workingDirectory,

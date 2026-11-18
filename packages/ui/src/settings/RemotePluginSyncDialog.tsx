@@ -15,22 +15,22 @@ import type {
   PluginSyncImportResult,
   PluginSyncRemoteStatus,
   RemoteTarget,
-  XCodePluginOptionValue,
-  XCodePluginInfo,
-  XCodePluginMarketplaceSummary,
-  XCodePluginUserConfigOption,
-  XCodePluginsOverviewResult,
+  ZCodePluginOptionValue,
+  ZCodePluginInfo,
+  ZCodePluginMarketplaceSummary,
+  ZCodePluginUserConfigOption,
+  ZCodePluginsOverviewResult,
 } from "@zcode/shared";
 import { collectTelemetryRendererContext } from "@zcode/shared";
 import { reportAppTelemetryEvent } from "@/lib/appTelemetry.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import type { IPluginSyncService, IXCodeAgentService } from "@zcode/services";
+import type { IPluginSyncService, IZCodeAgentService } from "@zcode/services";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { cn } from "@/components/lib/utils.js";
 import { Button } from "@/components/ui/button.js";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { formatRemoteSkillSyncTarget } from "@/settings/RemoteSkillSyncDialog.js";
 import {
   isRemoteSyncPreflightTimeoutError,
@@ -48,12 +48,12 @@ type Step = RemotePluginSyncDialogStep;
 type RemotePluginSyncKind = "inline" | "marketplace";
 
 interface RemotePluginSyncPluginOptions {
-  configuredOptions: Record<string, XCodePluginOptionValue>;
-  userConfig: Record<string, XCodePluginUserConfigOption>;
+  configuredOptions: Record<string, ZCodePluginOptionValue>;
+  userConfig: Record<string, ZCodePluginUserConfigOption>;
 }
 
 type RemotePluginSyncAgentService = Pick<
-  IXCodeAgentService,
+  IZCodeAgentService,
   | "addPluginMarketplace"
   | "cancelPluginOperation"
   | "configurePlugin"
@@ -166,8 +166,8 @@ interface RemotePluginSyncDialogProps {
   onOpenChange: (open: boolean) => void;
   localPluginSyncService: IPluginSyncService;
   remotePluginSyncService: IPluginSyncService;
-  localXCodeAgentService?: RemotePluginSyncAgentService | null;
-  remoteXCodeAgentService?: RemotePluginSyncAgentService | null;
+  localZCodeAgentService?: RemotePluginSyncAgentService | null;
+  remoteZCodeAgentService?: RemotePluginSyncAgentService | null;
   remoteTarget: RemoteTarget;
   localWorkspacePath?: string;
   workspacePath: string;
@@ -263,8 +263,8 @@ export function shouldAllowRemotePluginSyncDialogOpenChange(
 }
 
 export function buildMarketplaceRemotePluginSyncCandidates(
-  overview: XCodePluginsOverviewResult,
-  plugins: readonly XCodePluginInfo[],
+  overview: ZCodePluginsOverviewResult,
+  plugins: readonly ZCodePluginInfo[],
 ): RemotePluginSyncCandidate[] {
   const pluginInfoById = new Map(plugins.map((plugin) => [plugin.id, plugin]));
   const marketplaceSourceById = new Map(
@@ -304,7 +304,7 @@ export function buildMarketplaceRemotePluginSyncCandidates(
 
 export function buildMarketplaceRemotePluginStatuses(
   candidates: readonly RemotePluginSyncCandidate[],
-  remoteOverview: XCodePluginsOverviewResult,
+  remoteOverview: ZCodePluginsOverviewResult,
 ): RemotePluginSyncCandidateStatus[] {
   const installedById = new Map(
     remoteOverview.installedPlugins.map((plugin) => [plugin.id, plugin]),
@@ -324,12 +324,12 @@ export function buildMarketplaceRemotePluginStatuses(
   });
 }
 
-function componentTypesFromPluginInfo(plugin: XCodePluginInfo | undefined): string[] {
+function componentTypesFromPluginInfo(plugin: ZCodePluginInfo | undefined): string[] {
   return plugin?.components?.map((component) => component.kind) ?? [];
 }
 
 function buildRemotePluginSyncPluginOptions(
-  plugin: XCodePluginInfo | undefined,
+  plugin: ZCodePluginInfo | undefined,
 ): RemotePluginSyncPluginOptions | undefined {
   const configuredOptions = plugin?.configuredOptions ?? {};
   if (Object.keys(configuredOptions).length === 0) {
@@ -343,7 +343,7 @@ function buildRemotePluginSyncPluginOptions(
 
 function applyPluginInfoToRemoteSyncCandidate(
   candidate: RemotePluginSyncCandidate,
-  plugin: XCodePluginInfo | undefined,
+  plugin: ZCodePluginInfo | undefined,
 ): RemotePluginSyncCandidate {
   const pluginOptions = buildRemotePluginSyncPluginOptions(plugin);
   return pluginOptions ? { ...candidate, pluginOptions } : candidate;
@@ -351,7 +351,7 @@ function applyPluginInfoToRemoteSyncCandidate(
 
 function enrichRemotePluginSyncCandidatesWithPluginInfo(
   candidates: readonly RemotePluginSyncCandidate[],
-  plugins: readonly XCodePluginInfo[],
+  plugins: readonly ZCodePluginInfo[],
 ): RemotePluginSyncCandidate[] {
   const pluginInfoById = new Map(plugins.map((plugin) => [plugin.id, plugin]));
   return candidates.map((candidate) =>
@@ -379,7 +379,7 @@ function summarizeLocalPluginOptionsForDisplay(
 }
 
 function serializeMarketplaceSourceInput(
-  marketplace: XCodePluginMarketplaceSummary,
+  marketplace: ZCodePluginMarketplaceSummary,
 ): string | undefined {
   const source = marketplace.source;
   const sourceKind = typeof source.source === "string" ? source.source : "";
@@ -398,7 +398,7 @@ function serializeMarketplaceSourceInput(
 }
 
 function buildMarketplaceSourceSyncInfo(
-  marketplace: XCodePluginMarketplaceSummary,
+  marketplace: ZCodePluginMarketplaceSummary,
 ): Pick<
   NonNullable<RemotePluginSyncCandidate["marketplacePlugin"]>,
   "marketplaceSourceArchive" | "marketplaceSourceInput"
@@ -422,11 +422,11 @@ function buildMarketplaceSourceSyncInfo(
 async function loadRemotePluginSyncCandidates(params: {
   localPluginSyncService: IPluginSyncService;
   localWorkspacePath: string;
-  localXCodeAgentService?: RemotePluginSyncAgentService | null;
+  localZCodeAgentService?: RemotePluginSyncAgentService | null;
   remotePluginSyncService: IPluginSyncService;
   remoteWorkspaceIdentity?: string;
   remoteWorkspacePath: string;
-  remoteXCodeAgentService?: RemotePluginSyncAgentService | null;
+  remoteZCodeAgentService?: RemotePluginSyncAgentService | null;
 }): Promise<{
   candidates: RemotePluginSyncCandidate[];
   statuses: RemotePluginSyncCandidateStatus[];
@@ -451,18 +451,18 @@ async function loadRemotePluginSyncCandidates(params: {
     }),
   );
 
-  if (!params.localXCodeAgentService || !params.remoteXCodeAgentService) {
+  if (!params.localZCodeAgentService || !params.remoteZCodeAgentService) {
     return { candidates: inlineCandidates, statuses: inlineStatuses };
   }
 
   const [localOverview, localPluginsResult, remoteOverview] = await Promise.all([
-    params.localXCodeAgentService.getPluginsOverview({
+    params.localZCodeAgentService.getPluginsOverview({
       workspacePath: params.localWorkspacePath,
     }),
-    params.localXCodeAgentService.listPlugins({
+    params.localZCodeAgentService.listPlugins({
       workspacePath: params.localWorkspacePath,
     }),
-    params.remoteXCodeAgentService.getPluginsOverview({
+    params.remoteZCodeAgentService.getPluginsOverview({
       workspacePath: params.remoteWorkspacePath,
       ...(params.remoteWorkspaceIdentity
         ? { workspaceIdentity: params.remoteWorkspaceIdentity }
@@ -608,14 +608,14 @@ async function awaitRemotePluginSyncStep<T>(
   }
 }
 
-function isPathPluginOption(option: XCodePluginUserConfigOption | undefined): boolean {
+function isPathPluginOption(option: ZCodePluginUserConfigOption | undefined): boolean {
   return option?.type === "file" || option?.type === "directory";
 }
 
 function isPortablePluginOptionValue(
-  value: XCodePluginOptionValue,
-  localOption: XCodePluginUserConfigOption | undefined,
-  remoteOption: XCodePluginUserConfigOption | undefined,
+  value: ZCodePluginOptionValue,
+  localOption: ZCodePluginUserConfigOption | undefined,
+  remoteOption: ZCodePluginUserConfigOption | undefined,
 ): boolean {
   if (!localOption || !remoteOption) {
     return false;
@@ -635,9 +635,9 @@ function isPortablePluginOptionValue(
 
 function buildPortablePluginOptionsSyncPlan(
   localOptions: RemotePluginSyncPluginOptions,
-  remotePlugin: XCodePluginInfo,
-): { options: Record<string, XCodePluginOptionValue>; skippedCount: number } {
-  const options: Record<string, XCodePluginOptionValue> = {};
+  remotePlugin: ZCodePluginInfo,
+): { options: Record<string, ZCodePluginOptionValue>; skippedCount: number } {
+  const options: Record<string, ZCodePluginOptionValue> = {};
   let skippedCount = 0;
   for (const [key, value] of Object.entries(localOptions.configuredOptions)) {
     if (
@@ -656,8 +656,8 @@ function buildPortablePluginOptionsSyncPlan(
 }
 
 function arePluginOptionsEqual(
-  left: Record<string, XCodePluginOptionValue>,
-  right: Record<string, XCodePluginOptionValue>,
+  left: Record<string, ZCodePluginOptionValue>,
+  right: Record<string, ZCodePluginOptionValue>,
 ): boolean {
   const leftEntries = Object.entries(left);
   if (leftEntries.length !== Object.keys(right).length) {
@@ -671,7 +671,7 @@ async function syncPortablePluginOptions(
     onItemProgress?: (event: RemotePluginSyncProgressEvent) => void;
     remoteWorkspaceIdentity?: string;
     remoteWorkspacePath: string;
-    remoteXCodeAgentService?: RemotePluginSyncAgentService | null;
+    remoteZCodeAgentService?: RemotePluginSyncAgentService | null;
     signal?: AbortSignal;
     stopControl?: RemotePluginSyncStopControl;
   },
@@ -681,8 +681,8 @@ async function syncPortablePluginOptions(
   if (!localOptions || Object.keys(localOptions.configuredOptions).length === 0) {
     return;
   }
-  const remoteXCodeAgentService = params.remoteXCodeAgentService;
-  if (!remoteXCodeAgentService) {
+  const remoteZCodeAgentService = params.remoteZCodeAgentService;
+  if (!remoteZCodeAgentService) {
     emitRemotePluginSyncProgress(
       params,
       row,
@@ -701,7 +701,7 @@ async function syncPortablePluginOptions(
     params,
     row,
     `RPC plugins/list for options ${row.candidate.pluginId}`,
-    () => remoteXCodeAgentService.listPlugins(workspace),
+    () => remoteZCodeAgentService.listPlugins(workspace),
   );
   const remotePlugin = remotePlugins.plugins.find((plugin) => plugin.id === row.candidate.pluginId);
   if (!remotePlugin) {
@@ -750,7 +750,7 @@ async function syncPortablePluginOptions(
     row,
     `RPC plugins/configure ${portableCount} portable option(s) for ${row.candidate.pluginId}`,
     () =>
-      remoteXCodeAgentService.configurePlugin({
+      remoteZCodeAgentService.configurePlugin({
         ...workspace,
         options: mergedOptions,
         pluginId: row.candidate.pluginId,
@@ -766,7 +766,7 @@ export async function syncSelectedRemotePlugins(params: {
   remotePluginSyncService: IPluginSyncService;
   remoteWorkspaceIdentity?: string;
   remoteWorkspacePath: string;
-  remoteXCodeAgentService?: RemotePluginSyncAgentService | null;
+  remoteZCodeAgentService?: RemotePluginSyncAgentService | null;
   rows: readonly RemotePluginSyncRow[];
   signal?: AbortSignal;
   stopControl?: RemotePluginSyncStopControl;
@@ -899,7 +899,7 @@ async function syncMarketplaceRemotePlugin(
     remotePluginSyncService: IPluginSyncService;
     remoteWorkspaceIdentity?: string;
     remoteWorkspacePath: string;
-    remoteXCodeAgentService?: RemotePluginSyncAgentService | null;
+    remoteZCodeAgentService?: RemotePluginSyncAgentService | null;
     selectedMarketplacePluginNames: ReadonlyMap<string, string[]>;
     signal?: AbortSignal;
     stopControl?: RemotePluginSyncStopControl;
@@ -911,10 +911,10 @@ async function syncMarketplaceRemotePlugin(
   const directoryName = `${candidate.marketplace}/${candidate.name}`;
   try {
     throwIfRemotePluginSyncStopped(params, row);
-    if (!params.remoteXCodeAgentService || !marketplacePlugin) {
+    if (!params.remoteZCodeAgentService || !marketplacePlugin) {
       throw new Error("remote plugin install service is not available");
     }
-    const remoteXCodeAgentService = params.remoteXCodeAgentService;
+    const remoteZCodeAgentService = params.remoteZCodeAgentService;
     const workspace = {
       workspacePath: params.remoteWorkspacePath,
       ...(params.remoteWorkspaceIdentity
@@ -930,7 +930,7 @@ async function syncMarketplaceRemotePlugin(
           localPluginSyncService: params.localPluginSyncService,
           onItemProgress: params.onItemProgress,
           remotePluginSyncService: params.remotePluginSyncService,
-          remoteXCodeAgentService,
+          remoteZCodeAgentService,
           selectedMarketplacePluginNames: params.selectedMarketplacePluginNames,
           signal: params.signal,
           stopControl: params.stopControl,
@@ -945,7 +945,7 @@ async function syncMarketplaceRemotePlugin(
       row,
       `RPC plugins/install ${candidate.pluginId}`,
       (operationId) =>
-        remoteXCodeAgentService.installPlugin({
+        remoteZCodeAgentService.installPlugin({
           ...workspace,
           marketplace: candidate.marketplace,
           operationId,
@@ -969,7 +969,7 @@ async function syncMarketplaceRemotePlugin(
       row,
       `RPC plugins/setEnabled enabled=${String(candidate.enabled)} for ${candidate.pluginId}`,
       () =>
-        remoteXCodeAgentService.setPluginEnabled({
+        remoteZCodeAgentService.setPluginEnabled({
           ...workspace,
           enabled: candidate.enabled,
           pluginId: candidate.pluginId,
@@ -1022,7 +1022,7 @@ async function prepareRemoteMarketplaceSource(
     localPluginSyncService: IPluginSyncService;
     onItemProgress?: (event: RemotePluginSyncProgressEvent) => void;
     remotePluginSyncService: IPluginSyncService;
-    remoteXCodeAgentService: RemotePluginSyncAgentService;
+    remoteZCodeAgentService: RemotePluginSyncAgentService;
     selectedMarketplacePluginNames: ReadonlyMap<string, string[]>;
     signal?: AbortSignal;
     stopControl?: RemotePluginSyncStopControl;
@@ -1042,7 +1042,7 @@ async function prepareRemoteMarketplaceSource(
       row,
       `RPC plugins/marketplace/add ${candidate.marketplace} from ${marketplaceSourceInput}`,
       (operationId) =>
-        params.remoteXCodeAgentService.addPluginMarketplace({
+        params.remoteZCodeAgentService.addPluginMarketplace({
           ...workspace,
           operationId,
           source: marketplaceSourceInput,
@@ -1083,7 +1083,7 @@ async function prepareRemoteMarketplaceSource(
     row,
     `RPC plugins/marketplace/add mirrored ${candidate.marketplace} from ${imported.path}`,
     (operationId) =>
-      params.remoteXCodeAgentService.addPluginMarketplace({
+      params.remoteZCodeAgentService.addPluginMarketplace({
         ...workspace,
         operationId,
         source: imported.path,
@@ -1109,7 +1109,7 @@ function formatInstallError(
 }
 
 function RemotePluginSyncTitle() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [warningTooltipOpen, setWarningTooltipOpen] = useState(false);
   const warningTitle = intl.formatMessage({
     id: "settings.plugins.remoteSync.warningTitle",
@@ -1150,7 +1150,7 @@ function RemotePluginSyncExistingFilterCheckbox({
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <label className="inline-flex h-6 cursor-pointer items-center gap-2 rounded-md px-1 text-ui-base text-foreground-subtle hover:text-foreground">
@@ -1176,7 +1176,7 @@ function RemotePluginSyncTargetRow({
   showExistingFilter: boolean;
   onShowExistingRemotePluginsChange: (checked: boolean) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1206,7 +1206,7 @@ function RemotePluginSyncBulkSelectionCheckbox({
   onSelectAll: () => void;
   onClearAll: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const inputRef = useRef<HTMLInputElement>(null);
   const disabled = totalSelectable === 0;
   const checked = totalSelectable > 0 && selectedCount >= totalSelectable;
@@ -1255,7 +1255,7 @@ function RemotePluginSyncSelectionList({
   emptyMessageId?: string;
   onToggle: (pluginId: string, checked: boolean) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   if (rows.length === 0) {
     return (
@@ -1354,7 +1354,7 @@ function RemotePluginSyncSelectionList({
 }
 
 function RemotePluginSyncStatusBadge({ status }: { status: RemotePluginSyncProgressStatus }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const label = intl.formatMessage({ id: `settings.plugins.remoteSync.${status}` });
   const icon =
     status === "synced" ? (
@@ -1383,7 +1383,7 @@ function RemotePluginSyncStatusBadge({ status }: { status: RemotePluginSyncProgr
 }
 
 function RemotePluginSyncLogHoverCard({ logs }: { logs: readonly string[] }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const shownLogs = logs.length > 0 ? logs : ["Queued plugin sync"];
 
   return (
@@ -1423,7 +1423,7 @@ function RemotePluginSyncProgressList({
   rows: readonly RemotePluginSyncRow[];
   onStop: (candidateId: string) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   if (rows.length === 0) {
     return (
@@ -1527,7 +1527,7 @@ function RemotePluginSyncProgressList({
 }
 
 function RemotePluginSyncResultList({ result }: { result: RemotePluginSyncRunResult | null }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const items = result?.results ?? [];
 
   if (items.length === 0) {
@@ -1566,16 +1566,16 @@ function RemotePluginSyncResultList({ result }: { result: RemotePluginSyncRunRes
 
 export function RemotePluginSyncDialog(props: RemotePluginSyncDialogProps) {
   const platform = usePlatform();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const {
     localPluginSyncService,
     localWorkspacePath,
-    localXCodeAgentService,
+    localZCodeAgentService,
     onOpenChange,
     onSynced,
     open,
     remotePluginSyncService,
-    remoteXCodeAgentService,
+    remoteZCodeAgentService,
     remoteTarget,
     workspacePath,
     workspaceIdentity,
@@ -1620,11 +1620,11 @@ export function RemotePluginSyncDialog(props: RemotePluginSyncDialogProps) {
         const { candidates, statuses } = await loadRemotePluginSyncCandidates({
           localPluginSyncService,
           localWorkspacePath: localWorkspacePath ?? workspacePath,
-          localXCodeAgentService,
+          localZCodeAgentService,
           remotePluginSyncService,
           remoteWorkspaceIdentity: workspaceIdentity,
           remoteWorkspacePath: workspacePath,
-          remoteXCodeAgentService,
+          remoteZCodeAgentService,
         });
         if (cancelled) {
           return;
@@ -1652,10 +1652,10 @@ export function RemotePluginSyncDialog(props: RemotePluginSyncDialogProps) {
   }, [
     localPluginSyncService,
     localWorkspacePath,
-    localXCodeAgentService,
+    localZCodeAgentService,
     open,
     remotePluginSyncService,
-    remoteXCodeAgentService,
+    remoteZCodeAgentService,
     workspaceIdentity,
     workspacePath,
   ]);
@@ -1836,15 +1836,15 @@ export function RemotePluginSyncDialog(props: RemotePluginSyncDialogProps) {
         remotePluginSyncService,
         remoteWorkspaceIdentity: workspaceIdentity,
         remoteWorkspacePath: workspacePath,
-        remoteXCodeAgentService,
+        remoteZCodeAgentService,
         rows: selectedRows,
         signal: syncAbortController.signal,
         stopControl: {
           cancelOperation: async (operationId) => {
-            if (!remoteXCodeAgentService?.cancelPluginOperation) {
+            if (!remoteZCodeAgentService?.cancelPluginOperation) {
               return;
             }
-            await remoteXCodeAgentService.cancelPluginOperation({ operationId });
+            await remoteZCodeAgentService.cancelPluginOperation({ operationId });
           },
           isStopped: (candidateId) => stopRequestedRef.current.has(candidateId),
           waitForStop: (candidateId) => {

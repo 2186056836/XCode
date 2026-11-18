@@ -5,7 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { createProviderConfigRuntime } from "../src/model-provider/providerConfigRuntime.js";
-import { readLegacyXCodeConfigProviders } from "../src/model-provider/legacyXCodeConfigProviderReader.js";
+import { readLegacyZCodeConfigProviders } from "../src/model-provider/legacyZCodeConfigProviderReader.js";
 import { getAppConfigDir, setDataBaseDir } from "../src/paths.js";
 
 const legacyConfig = {
@@ -48,7 +48,7 @@ async function setup() {
     watch: false,
     readLegacyProviders: async () => {
       reads += 1;
-      return readLegacyXCodeConfigProviders();
+      return readLegacyZCodeConfigProviders();
     },
     onPersonalConfigRecovery: (event) => recoveries.push(event.error),
   });

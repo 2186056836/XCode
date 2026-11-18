@@ -10,7 +10,7 @@ import {
   type PointerEvent,
 } from "react";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { TimelineFill } from "./timeline-holes.js";
 import { framePath, legendGaps, type TimelineFrame } from "./timeline-frames.js";
 import { HEAD_ROW, MARK_X, stationX } from "./timeline-geometry.js";
@@ -170,7 +170,7 @@ export function WorkflowTimelineFills({
   inset: number;
   onOpenFill?: (fill: TimelineFill) => void;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const maskId = `wf-fill-legend-${useId().replace(/:/gu, "")}`;
   // 模型按 from 升序、同起点外层在前，所以同起点的头按同一顺序排成一行。
   const headRows = new Map<number, TimelineFill[]>();

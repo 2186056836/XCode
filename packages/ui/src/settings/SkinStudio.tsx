@@ -45,7 +45,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog.js";
 import { Input } from "@/components/ui/input.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { applyCustomSkin, buildSkinTokenValues } from "@/useTheme.js";
 import { cn } from "@/components/lib/utils.js";
 import { logger } from "@/logger.js";
@@ -281,7 +281,7 @@ function InspectorTabs({
   active: InspectorTab;
   onChange: (tab: InspectorTab) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const tabRefs = useRef<Partial<Record<InspectorTab, HTMLButtonElement | null>>>({});
 
   const focusTab = (tab: InspectorTab) => {
@@ -458,7 +458,7 @@ function SkinPreview({
   draft: SkinDraft;
   className?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   // 预览可交互：侧栏导航/页签/任务项可点（看选中态），composer 是真输入框
   // （可打字、可聚焦）。hover/focus 直接用真实组件的类，鼠标过去就生效——
   // 皮肤在这些态上的 token（surface-hover / input-border-hover / input-border-focused）
@@ -893,7 +893,7 @@ export function SkinStudio({
   initialSkin: CustomSkinSettings | null;
   onSave: (skin: CustomSkinSettings | null) => Promise<void> | void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [draft, setDraft] = useState<SkinDraft>(initialSkin ?? { base: "zai-light" });
   const [inspectorTab, setInspectorTab] = useState<InspectorTab>("design");
   const [saving, setSaving] = useState(false);

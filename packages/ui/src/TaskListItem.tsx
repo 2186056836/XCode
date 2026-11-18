@@ -12,7 +12,7 @@ import {
   Pin,
   Smartphone,
 } from "lucide-react";
-import { isCronTask, isOffPeakTask, type XCodeTaskMeta } from "@zcode/shared";
+import { isCronTask, isOffPeakTask, type ZCodeTaskMeta } from "@zcode/shared";
 import {
   TID_TASK_ARCHIVE,
   TID_TASK_ITEM,
@@ -71,7 +71,7 @@ type TaskListItemIntl = {
 interface TaskListItemProps {
   workspacePath: string;
   remoteSessionId?: string;
-  task: XCodeTaskMeta;
+  task: ZCodeTaskMeta;
   isPinned: boolean;
   isArchived?: boolean;
   isActive: boolean;
@@ -108,11 +108,11 @@ function areJsonFieldsEqual(left: unknown, right: unknown) {
   return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
 }
 
-function getTaskAutomationIdentity(task: XCodeTaskMeta): string | undefined {
-  return task.cronAutomationId ?? (task as XCodeTaskMeta & { automationId?: string }).automationId;
+function getTaskAutomationIdentity(task: ZCodeTaskMeta): string | undefined {
+  return task.cronAutomationId ?? (task as ZCodeTaskMeta & { automationId?: string }).automationId;
 }
 
-function areTaskListItemTaskFieldsEqual(left: XCodeTaskMeta, right: XCodeTaskMeta) {
+function areTaskListItemTaskFieldsEqual(left: ZCodeTaskMeta, right: ZCodeTaskMeta) {
   if (left === right) {
     return true;
   }
@@ -915,7 +915,7 @@ export function TaskListItemContextMenuContent({
   organizationActions?: React.ReactNode;
   workspacePath: string;
   remoteSessionId?: string;
-  task: XCodeTaskMeta;
+  task: ZCodeTaskMeta;
   isPinned: boolean;
   isArchived?: boolean;
   intl: TaskListItemIntl;

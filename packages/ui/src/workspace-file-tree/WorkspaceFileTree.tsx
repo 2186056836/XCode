@@ -33,7 +33,7 @@ import { toast } from "@/components/ui/toast.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useSettings } from "@/hooks/useSettingService.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   TID_WORKSPACE_FILE_TREE_PANEL,
   TID_WORKSPACE_FILE_TREE_REFRESH_BUTTON,
@@ -100,7 +100,7 @@ export function WorkspaceFileTree({
   onOpenBrowserUrl,
   onOpenPreview,
 }: WorkspaceFileTreeProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   // HTML 单击打开方式是本机界面偏好；远端 workspace 下也读本机设置。
   const { settings: localSettings } = useSettings({ services: useBaseWorkspaceServices() });
   const platform = usePlatform();

@@ -56,7 +56,7 @@ const activeTask = () =>
   }, DEFAULT_WORKSPACE);
 const revealProject = async (id: string) => {
   if (!(await item(id).isDisplayed()))
-    await $('[data-project-name="XCodeProject"] [data-testid="virtual-project-row"]').click();
+    await $('[data-project-name="ZCodeProject"] [data-testid="virtual-project-row"]').click();
   await item(id).waitForDisplayed();
 };
 

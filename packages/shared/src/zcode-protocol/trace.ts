@@ -8,4 +8,4 @@ export const zcodeProtocolTraceSchema = z
     traceparent: z.string().min(1).optional(),
   })
   .strict();
-export type XCodeProtocolTrace = z.infer<typeof zcodeProtocolTraceSchema>;
+export type ZCodeProtocolTrace = z.infer<typeof zcodeProtocolTraceSchema>;

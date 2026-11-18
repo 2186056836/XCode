@@ -1,4 +1,4 @@
-import { isXCodeAgentModelSelectionBasisUnsupportedError } from "#src/zcode-agent/zcodeAgentErrors.js";
+import { isZCodeAgentModelSelectionBasisUnsupportedError } from "#src/zcode-agent/zcodeAgentErrors.js";
 import { replyToBotChannel } from "#src/bots/channelReply.js";
 import {
   BotAdminRequiredError,
@@ -34,30 +34,30 @@ import {
   parseRemoteWorkspaceIdentity,
   CONVERSATION_SELECTION_MAX_TEXT_LENGTH,
   generateTraceId,
-  normalizeAgentProviderToXCodeAgent,
+  normalizeAgentProviderToZCodeAgent,
   ZCODE_AGENT_PROVIDER,
   BOT_TASK_BROADCAST_CHANNEL,
   BOT_TASK_STREAM_BROADCAST_CHANNEL,
   appendAssistantMessagePart,
-  buildXCodeAssistantPresentation,
+  buildZCodeAssistantPresentation,
   decodeCustomModelValue,
   encodeCustomModelValue,
   getPermissionRequestPreview,
   getSupportedBotReplyGranularities,
   normalizeBotReplyGranularity,
-  type XCodeConfigOption,
-  type XCodeElicitationRequest,
-  type XCodeElicitationQuestion,
-  type XCodePermissionOption,
-  type XCodePermissionRequest,
-  type XCodePromptAttachment,
-  type XCodeTaskMode,
-  type XCodeAssistantMessagePart,
-  type XCodeAutomationBotDeliveryTarget,
-  type XCodeProvider,
-  type XCodeStreamEvent,
+  type ZCodeConfigOption,
+  type ZCodeElicitationRequest,
+  type ZCodeElicitationQuestion,
+  type ZCodePermissionOption,
+  type ZCodePermissionRequest,
+  type ZCodePromptAttachment,
+  type ZCodeTaskMode,
+  type ZCodeAssistantMessagePart,
+  type ZCodeAutomationBotDeliveryTarget,
+  type ZCodeProvider,
+  type ZCodeStreamEvent,
   type TaskStreamMirrorableEvent,
-  type XCodeTaskMeta,
+  type ZCodeTaskMeta,
   type BotActor,
   type BotTaskBroadcastPayload,
   type BotTaskStreamBroadcastPayload,
@@ -98,7 +98,7 @@ import {
   remoteHostIdFromWorkspaceIdentity,
   toZhOrEnLocale,
 } from "@zcode/shared";
-import type { IXCodeTaskService } from "../session/zcodeTaskService.js";
+import type { IZCodeTaskService } from "../session/zcodeTaskService.js";
 import { resolveProviderModeIdFromConfigOptions } from "#src/session/sessionModeOptions.js";
 import { deriveSessionTitle as deriveTaskTitle } from "#src/session/sessionTitle.js";
 import type { IBroadcastService } from "../broadcast/broadcast.js";
@@ -317,7 +317,7 @@ function validateBotConfig(config: BotsConfigFile, candidate: BotConfig): void {
 
 interface BotsServiceDeps {
   credentialService: ICredentialService;
-  zcodeTaskService: IXCodeTaskService;
+  zcodeTaskService: IZCodeTaskService;
   projectService: Pick<IProjectService, "readProjects" | "readTree" | "prepareSession">;
   remoteProjectService?: Pick<IRemoteProjectService, "readDirectory">;
   ownerHostId?: string;
@@ -350,7 +350,7 @@ interface PreparedTopicMessage {
 
 interface PreparedBotMessageContent {
   content: string;
-  zcodeAttachments: XCodePromptAttachment[];
+  zcodeAttachments: ZCodePromptAttachment[];
 }
 
 type BotAuthorizedCommand =
@@ -389,7 +389,7 @@ interface BotModelProviderOption {
 }
 
 interface BotTaskSelectionEntry {
-  task: XCodeTaskMeta;
+  task: ZCodeTaskMeta;
   workspacePath: string;
   workspaceIdentity?: string;
 }
@@ -547,7 +547,7 @@ function groupCardFor(
 
 function resolveAutomationBotDeliveryTarget(
   actor: BotActor,
-): XCodeAutomationBotDeliveryTarget | undefined {
+): ZCodeAutomationBotDeliveryTarget | undefined {
   if (actor.provider !== "feishu" && actor.provider !== "lark" && actor.provider !== "weixin") {
     return undefined;
   }
@@ -592,7 +592,7 @@ const BOT_PERMISSION_OPTION_PRIORITY = {
 } as const satisfies Record<BotPermissionOptionDisplayKind, number>;
 
 function getBotPermissionOptionDisplayKind(
-  option: XCodePermissionOption,
+  option: ZCodePermissionOption,
 ): BotPermissionOptionDisplayKind {
   const text = `${option.optionId} ${option.kind} ${option.name}`.toLowerCase();
   const isAlways =
@@ -610,8 +610,8 @@ function getBotPermissionOptionDisplayKind(
 }
 
 function sortBotPermissionOptions(
-  options: readonly XCodePermissionOption[],
-): XCodePermissionOption[] {
+  options: readonly ZCodePermissionOption[],
+): ZCodePermissionOption[] {
   return [...options].sort((left, right) => {
     const leftPriority = BOT_PERMISSION_OPTION_PRIORITY[getBotPermissionOptionDisplayKind(left)];
     const rightPriority = BOT_PERMISSION_OPTION_PRIORITY[getBotPermissionOptionDisplayKind(right)];
@@ -619,7 +619,7 @@ function sortBotPermissionOptions(
   });
 }
 
-function formatBotPermissionOptionLabel(option: XCodePermissionOption, locale?: Locale): string {
+function formatBotPermissionOptionLabel(option: ZCodePermissionOption, locale?: Locale): string {
   const displayKind = getBotPermissionOptionDisplayKind(option);
   if (locale === "en-US") {
     switch (displayKind) {
@@ -650,8 +650,8 @@ function formatBotPermissionOptionLabel(option: XCodePermissionOption, locale?: 
 }
 
 function formatBotPermissionOptionDescription(
-  option: XCodePermissionOption,
-  request: Pick<XCodePermissionRequest, "title" | "description" | "kind" | "raw">,
+  option: ZCodePermissionOption,
+  request: Pick<ZCodePermissionRequest, "title" | "description" | "kind" | "raw">,
   locale?: Locale,
 ): string | undefined {
   const displayKind = getBotPermissionOptionDisplayKind(option);
@@ -699,7 +699,7 @@ function formatBotPermissionOptionDescription(
       : "后续相同权限请求也会直接拒绝";
 }
 
-function isBotPermissionRejectOption(option: XCodePermissionOption): boolean {
+function isBotPermissionRejectOption(option: ZCodePermissionOption): boolean {
   const displayKind = getBotPermissionOptionDisplayKind(option);
   return displayKind === "rejectOnce" || displayKind === "rejectAlways";
 }
@@ -731,7 +731,7 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const DEFAULT_BOT_XCODE_PROVIDER: XCodeProvider = ZCODE_AGENT_PROVIDER;
+const DEFAULT_BOT_XCODE_PROVIDER: ZCodeProvider = ZCODE_AGENT_PROVIDER;
 // Bot 模式硬锁 yolo：所有 bot task 一律免交互权限，且禁止通过 /mode 切换运行模式。
 const BOT_FORCED_MODE = "yolo";
 const BOT_TYPING_INTERVAL_MS = 4_000;
@@ -758,7 +758,7 @@ export function createBotsService(
     string,
     IDisposable & { automation(runId?: string): void; imInput(): void }
   >();
-  const taskStreamHub = createBotTaskStreamHub<XCodeStreamEvent | TaskStreamMirrorableEvent>();
+  const taskStreamHub = createBotTaskStreamHub<ZCodeStreamEvent | TaskStreamMirrorableEvent>();
   const failedPrivateDeliveries = new Map<
     string,
     {
@@ -1471,7 +1471,7 @@ export function createBotsService(
     }
     if (!valid || !bot || !context || !signature || privateWatches.has(botId)) return;
     if (!(await isRemoteWorkspaceConnected(context))) return;
-    const taskService = await resolveXCodeTaskServiceForContext(context);
+    const taskService = await resolveZCodeTaskServiceForContext(context);
     const deleted = await taskService.listDeletedTaskIds?.({
       workspacePath: context.workspacePath,
       workspaceIdentity: context.workspaceIdentity,
@@ -1855,7 +1855,7 @@ export function createBotsService(
 
   function formatUserFacingBotError(error: unknown, locale: Locale | undefined): string {
     // 旧 Worker 缺少选模并发保护时保持拒绝，用稳定错误码提示升级，不自动重发。
-    if (isXCodeAgentModelSelectionBasisUnsupportedError(error)) {
+    if (isZCodeAgentModelSelectionBasisUnsupportedError(error)) {
       return msg(locale, "modelSelectionBasisUnsupported");
     }
     // Bugfix: 旧 bot 消息或脏 task index 会让协议层抛出 Session not found。
@@ -2008,7 +2008,7 @@ export function createBotsService(
       );
     }
     const rawAttachments = (message.attachments ?? []).slice(0, BOT_MAX_ATTACHMENTS_PER_MESSAGE);
-    const zcodeAttachments: XCodePromptAttachment[] = [];
+    const zcodeAttachments: ZCodePromptAttachment[] = [];
     const fileLines: string[] = [];
     for (const rawAttachment of rawAttachments) {
       const resolved = await resolveAttachmentBytes(bot, rawAttachment, message.actor);
@@ -2045,7 +2045,7 @@ export function createBotsService(
           filename: cached.filename,
           mimeType: cached.mimeType,
           dataBase64,
-          // Bugfix：Bot 已把附件缓存到本地，XCodePromptAttachment 也必须携带该路径。
+          // Bugfix：Bot 已把附件缓存到本地，ZCodePromptAttachment 也必须携带该路径。
           // 只在 prompt 文本里描述路径会让下游附件策略无法选择本地文件读取。
           localPath: cached.localPath,
         });
@@ -2119,19 +2119,19 @@ export function createBotsService(
     });
   }
 
-  async function resolveXCodeTaskServiceForContext(
+  async function resolveZCodeTaskServiceForContext(
     context: Pick<BotContextState, "workspacePath" | "workspaceIdentity" | "hostId">,
-  ): Promise<IXCodeTaskService> {
+  ): Promise<IZCodeTaskService> {
     if (!context.workspaceIdentity) {
       return deps.zcodeTaskService;
     }
-    const remoteXCodeTaskService = await deps.remoteWorkspaceService?.getXCodeTaskService?.({
+    const remoteZCodeTaskService = await deps.remoteWorkspaceService?.getZCodeTaskService?.({
       workspacePath: context.workspacePath,
       workspaceIdentity: context.workspaceIdentity,
       ...(context.hostId ? { hostId: context.hostId } : {}),
     });
-    if (remoteXCodeTaskService) {
-      return remoteXCodeTaskService;
+    if (remoteZCodeTaskService) {
+      return remoteZCodeTaskService;
     }
     // Bugfix: 远端 workspace 的 bot 请求不能缺 runtime 时静默走本地 zcodeTaskService。
     // 否则 /root 这类远端路径会在 macOS/Windows 本地 host 创建任务，模型和文件系统都错位。
@@ -2230,7 +2230,7 @@ export function createBotsService(
 
   async function listUserConfigOptions(
     _params: BotUserConfigOptionsParams,
-  ): Promise<XCodeConfigOption[]> {
+  ): Promise<ZCodeConfigOption[]> {
     return [];
   }
   async function ensureBotStorageMigrated(): Promise<void> {
@@ -2249,26 +2249,26 @@ export function createBotsService(
   async function listActiveTaskConfigOptions(
     context: Pick<BotContextState, "workspacePath" | "workspaceIdentity" | "hostId">,
     taskId: string,
-  ): Promise<XCodeConfigOption[]> {
-    const zcodeTaskService = await resolveXCodeTaskServiceForContext(context);
+  ): Promise<ZCodeConfigOption[]> {
+    const zcodeTaskService = await resolveZCodeTaskServiceForContext(context);
     return zcodeTaskService.getTaskConfigOptions({ taskId });
   }
 
   function findSelectConfigOption(
-    options: readonly XCodeConfigOption[],
+    options: readonly ZCodeConfigOption[],
     configId: "model" | "mode" | "thoughtLevel",
-  ): (XCodeConfigOption & { type: "select" }) | undefined {
+  ): (ZCodeConfigOption & { type: "select" }) | undefined {
     const category = configId === "thoughtLevel" ? "thought_level" : configId;
     return options.find(
-      (item): item is XCodeConfigOption & { type: "select" } =>
+      (item): item is ZCodeConfigOption & { type: "select" } =>
         item.type === "select" && (item.category === category || item.id === category),
     );
   }
 
   function listConfigSelectOptions(
-    options: readonly XCodeConfigOption[],
+    options: readonly ZCodeConfigOption[],
     configId: "model" | "mode" | "thoughtLevel",
-    context: { locale?: Locale; provider?: XCodeProvider } = {},
+    context: { locale?: Locale; provider?: ZCodeProvider } = {},
   ): BotModelOption[] {
     const option = findSelectConfigOption(options, configId);
     return (option?.options ?? []).map((item) => {
@@ -2295,14 +2295,14 @@ export function createBotsService(
 
   function getModeDisplayLabel(
     locale: Locale | undefined,
-    provider: XCodeProvider | undefined,
+    provider: ZCodeProvider | undefined,
     option: Pick<BotModelOption, "id" | "label">,
   ): string {
     if (!provider) {
       return option.label;
     }
     const isEnglish = locale === "en-US";
-    const labels: Partial<Record<XCodeProvider, Record<string, string>>> = {
+    const labels: Partial<Record<ZCodeProvider, Record<string, string>>> = {
       glm: {
         default: isEnglish ? "Default" : "默认",
         yolo: "Yolo",
@@ -2317,7 +2317,7 @@ export function createBotsService(
     context: {
       configId: "model" | "mode" | "thoughtLevel";
       locale?: Locale;
-      provider?: XCodeProvider;
+      provider?: ZCodeProvider;
     },
   ): string {
     if (context.configId !== "mode") {
@@ -2369,15 +2369,15 @@ export function createBotsService(
   }
 
   async function listModelProviderOptionsForActiveTask(
-    task: Pick<XCodeTaskMeta, "model" | "workspacePath" | "workspaceIdentity">,
-    _activeProvider: XCodeProvider,
+    task: Pick<ZCodeTaskMeta, "model" | "workspacePath" | "workspaceIdentity">,
+    _activeProvider: ZCodeProvider,
   ): Promise<BotModelProviderOption[]> {
     return listModelSelectionProviderOptions(task);
   }
 
   async function listModelOptionsForProviderFromActiveTask(
-    task: Pick<XCodeTaskMeta, "model" | "workspacePath" | "workspaceIdentity">,
-    activeProvider: XCodeProvider,
+    task: Pick<ZCodeTaskMeta, "model" | "workspacePath" | "workspaceIdentity">,
+    activeProvider: ZCodeProvider,
     providerId: string,
   ): Promise<BotModelOption[]> {
     return (
@@ -2399,8 +2399,8 @@ export function createBotsService(
   }
 
   async function listAllModelOptionsForActiveTask(
-    task: Pick<XCodeTaskMeta, "model" | "workspacePath" | "workspaceIdentity">,
-    activeProvider: XCodeProvider,
+    task: Pick<ZCodeTaskMeta, "model" | "workspacePath" | "workspaceIdentity">,
+    activeProvider: ZCodeProvider,
   ): Promise<BotModelOption[]> {
     return (await listModelProviderOptionsForActiveTask(task, activeProvider)).flatMap(
       (provider) => provider.models,
@@ -2408,8 +2408,8 @@ export function createBotsService(
   }
 
   function readCurrentActiveTaskModel(
-    task: Pick<XCodeTaskMeta, "model">,
-    options: readonly XCodeConfigOption[],
+    task: Pick<ZCodeTaskMeta, "model">,
+    options: readonly ZCodeConfigOption[],
   ): string | undefined {
     return readConfigSelectCurrentValue(options, "model") ?? task.model;
   }
@@ -2446,9 +2446,9 @@ export function createBotsService(
   }
 
   async function readCurrentModelProviderId(
-    task: Pick<XCodeTaskMeta, "model" | "workspacePath" | "workspaceIdentity">,
-    options: readonly XCodeConfigOption[],
-    activeProvider: XCodeProvider,
+    task: Pick<ZCodeTaskMeta, "model" | "workspacePath" | "workspaceIdentity">,
+    options: readonly ZCodeConfigOption[],
+    activeProvider: ZCodeProvider,
   ): Promise<string | undefined> {
     const currentValue = readCurrentActiveTaskModel(task, options);
     if (!currentValue) {
@@ -2466,7 +2466,7 @@ export function createBotsService(
   }
 
   function resolveCustomModelRuntimeModelId(
-    _activeProvider: XCodeProvider,
+    _activeProvider: ZCodeProvider,
     customModel: { providerId: string; modelName?: string },
   ): string | undefined {
     if (!customModel.modelName) {
@@ -2476,7 +2476,7 @@ export function createBotsService(
   }
 
   function readConfigSelectCurrentValue(
-    options: readonly XCodeConfigOption[],
+    options: readonly ZCodeConfigOption[],
     configId: "model" | "mode" | "thoughtLevel",
   ): string | undefined {
     const currentValue = findSelectConfigOption(options, configId)?.currentValue;
@@ -2484,9 +2484,9 @@ export function createBotsService(
   }
 
   function resolveSupportedDraftMode(
-    options: readonly XCodeConfigOption[],
+    options: readonly ZCodeConfigOption[],
     mode: string | undefined,
-    provider: XCodeProvider,
+    provider: ZCodeProvider,
   ): string | undefined {
     if (!mode) {
       return undefined;
@@ -2501,9 +2501,9 @@ export function createBotsService(
   }
 
   function readConfigSelectCurrentLabel(
-    options: readonly XCodeConfigOption[],
+    options: readonly ZCodeConfigOption[],
     configId: "model" | "mode" | "thoughtLevel",
-    context: { locale?: Locale; provider?: XCodeProvider } = {},
+    context: { locale?: Locale; provider?: ZCodeProvider } = {},
   ): string | undefined {
     const currentValue = readConfigSelectCurrentValue(options, configId);
     if (!currentValue) {
@@ -2517,10 +2517,10 @@ export function createBotsService(
   }
 
   function readConfigSelectLabelForValue(
-    options: readonly XCodeConfigOption[],
+    options: readonly ZCodeConfigOption[],
     configId: "model" | "mode" | "thoughtLevel",
     value: string | undefined,
-    context: { locale?: Locale; provider?: XCodeProvider } = {},
+    context: { locale?: Locale; provider?: ZCodeProvider } = {},
   ): string | undefined {
     if (!value) {
       return undefined;
@@ -2532,16 +2532,16 @@ export function createBotsService(
   }
 
   function readCurrentActiveTaskMode(
-    task: Pick<XCodeTaskMeta, "mode">,
-    options: readonly XCodeConfigOption[],
+    task: Pick<ZCodeTaskMeta, "mode">,
+    options: readonly ZCodeConfigOption[],
   ): string | undefined {
     return readConfigSelectCurrentValue(options, "mode") ?? task.mode;
   }
 
   async function listProviderConfigOptionsForActiveTask(
-    task: Pick<XCodeTaskMeta, "workspacePath" | "workspaceIdentity">,
-    activeProvider: XCodeProvider,
-  ): Promise<XCodeConfigOption[]> {
+    task: Pick<ZCodeTaskMeta, "workspacePath" | "workspaceIdentity">,
+    activeProvider: ZCodeProvider,
+  ): Promise<ZCodeConfigOption[]> {
     return listUserConfigOptions({
       workspacePath: task.workspacePath,
       workspaceIdentity: task.workspaceIdentity,
@@ -2554,15 +2554,15 @@ export function createBotsService(
     // 如果直接复用，/new 后首条消息会重新创建第三方 runtime，绕过 XCode Agent 单一事实源。
     return {
       ...draftOptions,
-      provider: normalizeAgentProviderToXCodeAgent(draftOptions.provider),
+      provider: normalizeAgentProviderToZCodeAgent(draftOptions.provider),
     };
   }
 
   async function buildInitializedDraftOptions(
     context: Pick<BotContextState, "workspacePath" | "workspaceIdentity" | "hostId">,
-    provider?: XCodeProvider,
+    provider?: ZCodeProvider,
   ): Promise<BotDraftOptions> {
-    const requestedProvider = normalizeAgentProviderToXCodeAgent(
+    const requestedProvider = normalizeAgentProviderToZCodeAgent(
       provider ?? DEFAULT_BOT_XCODE_PROVIDER,
     );
     if (context.workspaceIdentity && !(await isRemoteWorkspaceConnected(context))) {
@@ -2587,7 +2587,7 @@ export function createBotsService(
     const configOptions = await listActiveTaskConfigOptions(context, context.activeTaskId).catch(
       () => [],
     );
-    const resolvedProvider = normalizeAgentProviderToXCodeAgent(activeTask.provider);
+    const resolvedProvider = normalizeAgentProviderToZCodeAgent(activeTask.provider);
     // Bot 硬锁 yolo：继承当前 task 时也强制 yolo，不沿用原 task 的 mode。
     const forcedMode = resolveSupportedDraftMode(
       configOptions,
@@ -2596,7 +2596,7 @@ export function createBotsService(
     );
     // 继承的是领域选择，不是菜单显示值；显示值中的 $max 曾被误存为 modelId。
     // 由同一工作区的任务服务读取真实选择，保留 Provider、模型和显式思考等级。
-    const taskService = await resolveXCodeTaskServiceForContext(context);
+    const taskService = await resolveZCodeTaskServiceForContext(context);
     const modelSelection = await taskService.getTaskModelSelection({
       taskId: context.activeTaskId,
     });
@@ -2651,7 +2651,7 @@ export function createBotsService(
     context: BotContextState,
     draftOptions: BotDraftOptions,
     resolvedView?: ModelSelectionView | null,
-  ): Promise<XCodeConfigOption[]> {
+  ): Promise<ZCodeConfigOption[]> {
     const view =
       resolvedView === undefined
         ? await readModelSelectionView(context, draftOptions.modelSelection)
@@ -2700,10 +2700,10 @@ export function createBotsService(
       draftOptions.provider,
     );
     if ((modeOption?.id && forcedDraftMode) || context.group) {
-      const zcodeTaskService = await resolveXCodeTaskServiceForContext(context);
+      const zcodeTaskService = await resolveZCodeTaskServiceForContext(context);
       await zcodeTaskService.setMode({
         taskId,
-        mode: (forcedDraftMode ?? "default") as XCodeTaskMode,
+        mode: (forcedDraftMode ?? "default") as ZCodeTaskMode,
       });
     } else if (modeOption?.id) {
       // provider 不支持 yolo（非 XCode Agent）：保持其自身默认模式，避免首条消息回调失败。
@@ -3270,7 +3270,7 @@ export function createBotsService(
     typingIntervals.delete(taskId);
   }
 
-  function updateLiveStatusProgress(event: XCodeStreamEvent): void {
+  function updateLiveStatusProgress(event: ZCodeStreamEvent): void {
     if (event.type === "agent_message_chunk" || event.type === "agent_thought_chunk") {
       const text = normalizeStatusProgressText(event.content);
       if (!text) {
@@ -3329,7 +3329,7 @@ export function createBotsService(
 
   async function broadcastTaskStreamEvent(
     context: Pick<BotContextState, "workspacePath" | "workspaceIdentity" | "hostId">,
-    event: XCodeStreamEvent,
+    event: ZCodeStreamEvent,
   ): Promise<void> {
     const payload: BotTaskStreamBroadcastPayload = {
       workspacePath: context.workspacePath,
@@ -3532,8 +3532,8 @@ export function createBotsService(
   async function readTaskMeta(
     context: Pick<BotContextState, "workspacePath" | "workspaceIdentity" | "hostId">,
     taskId: string,
-  ): Promise<XCodeTaskMeta | null> {
-    const zcodeTaskService = await resolveXCodeTaskServiceForContext(context);
+  ): Promise<ZCodeTaskMeta | null> {
+    const zcodeTaskService = await resolveZCodeTaskServiceForContext(context);
     const tasks = await zcodeTaskService.listTasks({
       workspacePath: context.workspacePath,
       workspaceIdentity: context.workspaceIdentity,
@@ -3606,7 +3606,7 @@ export function createBotsService(
 
   async function readContextActiveTaskMeta(
     context: BotContextState,
-  ): Promise<XCodeTaskMeta | null> {
+  ): Promise<ZCodeTaskMeta | null> {
     if (!context.activeTaskId) {
       return null;
     }
@@ -3617,7 +3617,7 @@ export function createBotsService(
     return (
       (
         await (
-          await resolveXCodeTaskServiceForContext(context)
+          await resolveZCodeTaskServiceForContext(context)
         )
           .getTaskSnapshot({
             taskId: context.activeTaskId,
@@ -3639,8 +3639,8 @@ export function createBotsService(
     | {
         ok: true;
         taskId: string;
-        task: XCodeTaskMeta;
-        configOptions: XCodeConfigOption[];
+        task: ZCodeTaskMeta;
+        configOptions: ZCodeConfigOption[];
       }
     | { ok: false; reply: BotOutboundMessage[] }
   > {
@@ -3672,9 +3672,9 @@ export function createBotsService(
   async function broadcastTaskConfigSync(params: {
     context: BotContextState;
     taskId: string;
-    task?: XCodeTaskMeta | null;
-    provider?: XCodeProvider;
-    configOptions?: XCodeConfigOption[];
+    task?: ZCodeTaskMeta | null;
+    provider?: ZCodeProvider;
+    configOptions?: ZCodeConfigOption[];
   }): Promise<void> {
     await broadcastTaskListChange(params.context, params.taskId, "updated", {
       ...(params.task ? { task: params.task } : {}),
@@ -3684,7 +3684,7 @@ export function createBotsService(
   }
 
   function isTerminalTaskMeta(
-    task: XCodeTaskMeta | null,
+    task: ZCodeTaskMeta | null,
     eventType: "task_complete" | "task_error",
   ): boolean {
     if (!task) {
@@ -3700,7 +3700,7 @@ export function createBotsService(
     context: Pick<BotContextState, "workspacePath" | "workspaceIdentity" | "hostId">,
     taskId: string,
     eventType: "task_complete" | "task_error",
-  ): Promise<XCodeTaskMeta | null> {
+  ): Promise<ZCodeTaskMeta | null> {
     let latestTask = await readTaskMeta(context, taskId).catch(() => null);
     if (isTerminalTaskMeta(latestTask, eventType)) {
       return latestTask;
@@ -4120,14 +4120,14 @@ export function createBotsService(
   }
 
   function createAssistantReplyBlocks(
-    parts: readonly XCodeAssistantMessagePart[],
+    parts: readonly ZCodeAssistantMessagePart[],
     toolCalls: ReadonlyMap<string, BotReplyToolCallState>,
     mode: BotReplyGranularity | undefined,
-    changeSummary: XCodeTaskMeta["changeSummary"] | null | undefined,
+    changeSummary: ZCodeTaskMeta["changeSummary"] | null | undefined,
   ): BotAssistantReplyBlock[] {
     const blocks: BotAssistantReplyBlock[] = [];
     const resolvedMode = mode ?? getDefaultBotReplyGranularity();
-    const presentation = buildXCodeAssistantPresentation({
+    const presentation = buildZCodeAssistantPresentation({
       content: "",
       toolCalls: [...toolCalls.values()].map((toolCall) => ({
         ...toolCall,
@@ -4168,9 +4168,9 @@ export function createBotsService(
   }
 
   function normalizeBotElicitationQuestions(
-    event: Extract<XCodeStreamEvent, { type: "elicitation_request" }>,
+    event: Extract<ZCodeStreamEvent, { type: "elicitation_request" }>,
     locale: Locale | undefined,
-  ): XCodeElicitationQuestion[] {
+  ): ZCodeElicitationQuestion[] {
     const schema = isRecord(event.schema) ? event.schema : null;
     const isPlanApproval = schema?.interaction === "plan_approval";
     if (isPlanApproval) {
@@ -4212,7 +4212,7 @@ export function createBotsService(
   }
 
   function readBotElicitationRenderContext(
-    event: Extract<XCodeStreamEvent, { type: "elicitation_request" }>,
+    event: Extract<ZCodeStreamEvent, { type: "elicitation_request" }>,
   ): BotPendingElicitation["renderContext"] {
     const schema = isRecord(event.schema) ? event.schema : null;
     if (
@@ -4284,7 +4284,7 @@ export function createBotsService(
   }
 
   function mergeElicitationFormValues(
-    question: XCodeElicitationQuestion,
+    question: ZCodeElicitationQuestion,
     selectedValues: readonly string[],
     formValues: readonly string[],
   ): string[] {
@@ -4318,7 +4318,7 @@ export function createBotsService(
   }
 
   function resolveElicitationQuestionValue(
-    question: XCodeElicitationQuestion,
+    question: ZCodeElicitationQuestion,
     value: string,
     options: { includeSubmit?: boolean } = {},
   ): string {
@@ -4408,7 +4408,7 @@ export function createBotsService(
 
   function createBotElicitationRequestSnapshot(
     pending: BotPendingElicitation,
-  ): XCodeElicitationRequest {
+  ): ZCodeElicitationRequest {
     const currentQuestion = pending.questions[pending.currentQuestionIndex] ?? pending.questions[0];
     const answerDrafts = Object.fromEntries(
       Object.entries(pending.answers).map(([index, values]) => [`answer_${index}`, values]),
@@ -4633,7 +4633,7 @@ export function createBotsService(
     if (pending.handledAt) {
       return [createOutbound(actor, msg(auth.locale, "elicitationHandled"))];
     }
-    const zcodeTaskService = await resolveXCodeTaskServiceForContext(auth.context);
+    const zcodeTaskService = await resolveZCodeTaskServiceForContext(auth.context);
     const submitted = await zcodeTaskService.respondElicitation({
       taskId: pending.taskId,
       workspacePath: auth.context.workspacePath,
@@ -4874,7 +4874,7 @@ export function createBotsService(
     user: BotConfig,
     actor: BotActor,
     context: BotContextState,
-    event: Extract<XCodeStreamEvent, { type: "elicitation_request" }>,
+    event: Extract<ZCodeStreamEvent, { type: "elicitation_request" }>,
     mentionedUserIds?: string[],
   ): Promise<void> {
     const locale = await readMessageLocale();
@@ -5032,7 +5032,7 @@ export function createBotsService(
           getWorkspaceKey(context.workspacePath, context.workspaceIdentity),
       );
     };
-    const zcodeTaskService = await resolveXCodeTaskServiceForContext(context);
+    const zcodeTaskService = await resolveZCodeTaskServiceForContext(context);
     if (context.group) {
       // Bug 原因：旧会话尚未冷恢复时建立结果订阅会耗尽重试；先读取权威状态，
       // 再监听未来事件，避免新请求执行结束后无人消费结果。这里不提交历史输入。
@@ -5143,7 +5143,7 @@ export function createBotsService(
         privateDeliveryFailed = true;
       }
     };
-    let assistantParts: XCodeAssistantMessagePart[] = [];
+    let assistantParts: ZCodeAssistantMessagePart[] = [];
     let assistantReplyBuffer = "";
     let sentAnyAssistantReply = false;
     const assistantPartToolIds = new Set<string>();
@@ -5399,7 +5399,7 @@ export function createBotsService(
       }
     };
     const handleStreamEventImpl = async (
-      event: XCodeStreamEvent | TaskStreamMirrorableEvent,
+      event: ZCodeStreamEvent | TaskStreamMirrorableEvent,
       shouldBroadcast = true,
     ): Promise<void> => {
       if (disposed) return;
@@ -5930,7 +5930,7 @@ export function createBotsService(
       }
     };
     const handleStreamEvent = async (
-      event: XCodeStreamEvent | TaskStreamMirrorableEvent,
+      event: ZCodeStreamEvent | TaskStreamMirrorableEvent,
       shouldBroadcast = true,
     ): Promise<void> => {
       try {
@@ -5971,7 +5971,7 @@ export function createBotsService(
     };
     let streamEventQueue: Promise<void> = Promise.resolve();
     const enqueueStreamEvent = (
-      event: XCodeStreamEvent | TaskStreamMirrorableEvent,
+      event: ZCodeStreamEvent | TaskStreamMirrorableEvent,
     ): Promise<void> => {
       const shouldBroadcast = !forwardedTaskEvents.has(event);
       forwardedTaskEvents.add(event);
@@ -5991,7 +5991,7 @@ export function createBotsService(
       return streamEventQueue;
     };
     const dynamicTaskEvent = (
-      zcodeTaskService as Partial<Pick<IXCodeTaskService, "onDynamicTaskEvent">>
+      zcodeTaskService as Partial<Pick<IZCodeTaskService, "onDynamicTaskEvent">>
     ).onDynamicTaskEvent;
     // Bugfix: 远控/共享 host 场景会通过 workspace+task mirror 分发流事件。
     // 这里优先订阅 workspace 级事件，避免只监听本地 taskId relay 时漏掉 channel 回复。
@@ -6611,7 +6611,7 @@ export function createBotsService(
         }),
       ].join("\n");
     }
-    const zcodeTaskService = await resolveXCodeTaskServiceForContext(context);
+    const zcodeTaskService = await resolveZCodeTaskServiceForContext(context);
     const tasks = await zcodeTaskService.listTasks({
       workspacePath: context.workspacePath,
       workspaceIdentity: context.workspaceIdentity,
@@ -6829,7 +6829,7 @@ export function createBotsService(
   ): Promise<BotOutboundMessage[]> {
     if (!context.group || !context.activeTaskId || !isFeishuBotProvider(bot.provider))
       throw new Error("Group context is missing");
-    const service = await resolveXCodeTaskServiceForContext(context);
+    const service = await resolveZCodeTaskServiceForContext(context);
     if (!service.submitBotGroupInput)
       throw new Error("Runtime does not support group input admission");
     const messageId = message.actor.providerMessageId;
@@ -6850,7 +6850,7 @@ export function createBotsService(
     )
       throw new Error("Group authorization changed before input admission");
     let attachmentOffset = 0;
-    const admittedAttachments: XCodePromptAttachment[] = [];
+    const admittedAttachments: ZCodePromptAttachment[] = [];
     // 多个回调可能在首次接收前已各自准备根引用；提交时再按权威记录去重。
     let rootIncluded = Object.values(admissionContext.group.inputs ?? {}).some(
       (input) => input.admission === "accepted",
@@ -7132,7 +7132,7 @@ export function createBotsService(
         },
       ];
     }
-    const taskService = await resolveXCodeTaskServiceForContext(auth.context);
+    const taskService = await resolveZCodeTaskServiceForContext(auth.context);
     if (!taskService.cancelBotGroupInput) throw new Error("Runtime cannot cancel queued input");
     const ack = await taskService.cancelBotGroupInput({
       taskId: input.taskId,
@@ -7167,8 +7167,8 @@ export function createBotsService(
     taskId: string,
     traceId: string,
     content: string,
-    attachments: XCodePromptAttachment[],
-    botDeliveryTarget?: XCodeAutomationBotDeliveryTarget,
+    attachments: ZCodePromptAttachment[],
+    botDeliveryTarget?: ZCodeAutomationBotDeliveryTarget,
     modelSelection?: ModelSelection,
     modelSelectionBasis?: ModelSelection,
   ): void {
@@ -7180,7 +7180,7 @@ export function createBotsService(
     // Bugfix: Telegram polling 是单循环顺序处理 update。如果这里 await session/prompt，
     // 权限按钮 callback 会一直排队到整轮任务结束，导致用户点 inline keyboard 没反应。
     // 因此 prompt 必须后台跑，polling loop 才能继续接收 /permission 回调。
-    void resolveXCodeTaskServiceForContext(context)
+    void resolveZCodeTaskServiceForContext(context)
       .then((zcodeTaskService) =>
         zcodeTaskService.sendPrompt({
           taskId,
@@ -7263,7 +7263,7 @@ export function createBotsService(
     ]);
     const existing = topicStops.get(key);
     if (existing) return existing;
-    const stopping = resolveXCodeTaskServiceForContext(context).then(async (service) => {
+    const stopping = resolveZCodeTaskServiceForContext(context).then(async (service) => {
       if (!service.stopBotTopicExecution) throw new Error("Topic stop is unavailable");
       await service.stopBotTopicExecution({
         taskId,
@@ -7333,7 +7333,7 @@ export function createBotsService(
       );
     }
     if (context?.activeTaskId) {
-      const service = await resolveXCodeTaskServiceForContext(context);
+      const service = await resolveZCodeTaskServiceForContext(context);
       if (!service.invalidateBotTopicInputs)
         throw new Error("Topic preparation cancellation is unavailable");
       await service.invalidateBotTopicInputs({
@@ -7437,7 +7437,7 @@ export function createBotsService(
         readRunningRun: async () => {
           const context = await current();
           if (!context?.activeTaskId) return undefined;
-          const service = await resolveXCodeTaskServiceForContext(context);
+          const service = await resolveZCodeTaskServiceForContext(context);
           if (!service.readBotTopicExecution)
             throw new Error("Topic runtime control is unavailable");
           const execution = await service.readBotTopicExecution({
@@ -7708,7 +7708,7 @@ export function createBotsService(
     }
     let deletedTaskId: string | undefined;
     if (auth.context.mode === "task" && auth.context.activeTaskId) {
-      const taskService = await resolveXCodeTaskServiceForContext(auth.context);
+      const taskService = await resolveZCodeTaskServiceForContext(auth.context);
       const deletedTaskIds = await taskService.listDeletedTaskIds({
         workspacePath: auth.context.workspacePath,
         workspaceIdentity: auth.context.workspaceIdentity,
@@ -7792,7 +7792,7 @@ export function createBotsService(
             : {}),
         },
       };
-      const zcodeTaskService = await resolveXCodeTaskServiceForContext(auth.context);
+      const zcodeTaskService = await resolveZCodeTaskServiceForContext(auth.context);
       const task = await zcodeTaskService.createTask({
         workspacePath: auth.context.workspacePath,
         workspaceIdentity: auth.context.workspaceIdentity,
@@ -7916,7 +7916,7 @@ export function createBotsService(
         topicBatch,
         isCurrent,
       );
-    const zcodeTaskService = await resolveXCodeTaskServiceForContext(auth.context);
+    const zcodeTaskService = await resolveZCodeTaskServiceForContext(auth.context);
     await zcodeTaskService.resumeTask({
       taskId: auth.context.activeTaskId,
       workspacePath: auth.context.workspacePath,
@@ -8044,7 +8044,7 @@ export function createBotsService(
     if (context.group) {
       if (context.workspaceIdentity && !(await isRemoteWorkspaceConnected(context)))
         return "groupTaskDisconnected";
-      const taskService = await resolveXCodeTaskServiceForContext(context);
+      const taskService = await resolveZCodeTaskServiceForContext(context);
       if (!taskService.getBotGroupTaskBlockReason)
         throw new Error("Runtime cannot verify group queue state");
       const reason = await taskService.getBotGroupTaskBlockReason({
@@ -8084,7 +8084,7 @@ export function createBotsService(
       // 断连时把内存 running 状态视为不可确认，交给显式 /reconnect 后再恢复查询。
       return null;
     }
-    const zcodeTaskService = await resolveXCodeTaskServiceForContext(context);
+    const zcodeTaskService = await resolveZCodeTaskServiceForContext(context);
     const activeTaskSnapshot = await zcodeTaskService
       .getTaskSnapshot({
         taskId: context.activeTaskId,
@@ -8107,7 +8107,7 @@ export function createBotsService(
   }
 
   function warnAutomationDeliveryOnce(params: {
-    target: XCodeAutomationBotDeliveryTarget;
+    target: ZCodeAutomationBotDeliveryTarget;
     reason: string;
   }): void {
     const key = `${params.target.provider}:${params.target.botId}:${params.reason}`;
@@ -8509,7 +8509,7 @@ export function createBotsService(
         state.bots[
           getBotConversationKey({ botId: params.botId, chatId: params.chatId, chatType: "group" })
         ];
-      const service = await resolveXCodeTaskServiceForContext({ ...context, ...workspace });
+      const service = await resolveZCodeTaskServiceForContext({ ...context, ...workspace });
       const summaries =
         (await service.readBotTopicSummaries?.({
           taskId: params.taskId,
@@ -8763,7 +8763,7 @@ export function createBotsService(
             if (!alias) continue;
             // 默认会话可能已切换工作区；迁移检查必须使用旧任务自己的完整工作区身份。
             const workspace = group.taskWorkspaces?.[alias.taskId] ?? candidate;
-            const service = await resolveXCodeTaskServiceForContext({ ...candidate, ...workspace });
+            const service = await resolveZCodeTaskServiceForContext({ ...candidate, ...workspace });
             if (
               !service.getBotGroupTaskBlockReason ||
               (await service.getBotGroupTaskBlockReason({
@@ -9039,7 +9039,7 @@ export function createBotsService(
             }
             const active = await requireActiveTask(message, auth);
             if (!active.ok) return active.reply;
-            const activeProvider = normalizeAgentProviderToXCodeAgent(active.task.provider);
+            const activeProvider = normalizeAgentProviderToZCodeAgent(active.task.provider);
             if (!activeProvider) {
               return [createOutbound(message.actor, msg(auth.locale, "modelProviderMissing"))];
             }
@@ -9128,7 +9128,7 @@ export function createBotsService(
             }
             const active = await requireActiveTask(message, auth);
             if (!active.ok) return active.reply;
-            const activeProvider = normalizeAgentProviderToXCodeAgent(active.task.provider);
+            const activeProvider = normalizeAgentProviderToZCodeAgent(active.task.provider);
             if (!activeProvider) {
               return [createOutbound(message.actor, msg(auth.locale, "modelProviderMissing"))];
             }
@@ -9213,7 +9213,7 @@ export function createBotsService(
             }
             const active = await requireActiveTask(message, auth);
             if (!active.ok) return active.reply;
-            const activeProvider = normalizeAgentProviderToXCodeAgent(active.task.provider);
+            const activeProvider = normalizeAgentProviderToZCodeAgent(active.task.provider);
             if (!activeProvider) {
               return [createOutbound(message.actor, msg(auth.locale, "modelProviderMissing"))];
             }
@@ -9247,7 +9247,7 @@ export function createBotsService(
             if (!targetModelSelection)
               return [createOutbound(message.actor, msg(auth.locale, "modelMissing"))];
             const traceId = generateTraceId(active.taskId);
-            const zcodeTaskService = await resolveXCodeTaskServiceForContext(active.task);
+            const zcodeTaskService = await resolveZCodeTaskServiceForContext(active.task);
             const configOptions = await zcodeTaskService.setModel({
               taskId: active.taskId,
               traceId,
@@ -9329,7 +9329,7 @@ export function createBotsService(
               commandName === "mode" && active.task.provider
                 ? await listProviderConfigOptionsForActiveTask(
                     active.task,
-                    normalizeAgentProviderToXCodeAgent(active.task.provider),
+                    normalizeAgentProviderToZCodeAgent(active.task.provider),
                   )
                 : active.configOptions;
             const currentValue =
@@ -9340,16 +9340,16 @@ export function createBotsService(
               commandName === "mode"
                 ? readConfigSelectLabelForValue(optionSource, commandName, currentValue, {
                     locale: auth.locale,
-                    provider: normalizeAgentProviderToXCodeAgent(active.task.provider),
+                    provider: normalizeAgentProviderToZCodeAgent(active.task.provider),
                   })
                 : readConfigSelectCurrentLabel(active.configOptions, commandName, {
                     locale: auth.locale,
-                    provider: normalizeAgentProviderToXCodeAgent(active.task.provider),
+                    provider: normalizeAgentProviderToZCodeAgent(active.task.provider),
                   });
             const selectOption = findSelectConfigOption(optionSource, commandName);
             const options = listConfigSelectOptions(optionSource, commandName, {
               locale: auth.locale,
-              provider: normalizeAgentProviderToXCodeAgent(active.task.provider),
+              provider: normalizeAgentProviderToZCodeAgent(active.task.provider),
             });
             if (options.length === 0) {
               return [
@@ -9488,7 +9488,7 @@ export function createBotsService(
               ];
             }
             const traceId = generateTraceId(active.taskId);
-            const zcodeTaskService = await resolveXCodeTaskServiceForContext(auth.context);
+            const zcodeTaskService = await resolveZCodeTaskServiceForContext(auth.context);
             const configOptions = await zcodeTaskService.setConfigOption({
               taskId: active.taskId,
               traceId,
@@ -9600,7 +9600,7 @@ export function createBotsService(
               await repo.writeState(state);
             });
             if (auth.context.activeTaskId) {
-              const service = await resolveXCodeTaskServiceForContext(auth.context);
+              const service = await resolveZCodeTaskServiceForContext(auth.context);
               const target = {
                 taskId: auth.context.activeTaskId,
                 workspacePath: auth.context.workspacePath,
@@ -9628,7 +9628,7 @@ export function createBotsService(
               return [createOutbound(message.actor, msg(auth.locale, "noActiveTask"))];
             }
             try {
-              const zcodeTaskService = await resolveXCodeTaskServiceForContext(auth.context);
+              const zcodeTaskService = await resolveZCodeTaskServiceForContext(auth.context);
               if (auth.context.group?.threadId) {
                 if (!zcodeTaskService.readBotTopicExecution)
                   throw new Error("Topic runtime control is unavailable");
@@ -9673,7 +9673,7 @@ export function createBotsService(
               return [createOutbound(message.actor, msg(auth.locale, "permissionExpired"))];
             if (option.handledAt)
               return [createOutbound(message.actor, msg(auth.locale, "permissionHandled"))];
-            const zcodeTaskService = await resolveXCodeTaskServiceForContext(auth.context);
+            const zcodeTaskService = await resolveZCodeTaskServiceForContext(auth.context);
             const submitted = await zcodeTaskService.respondPermission({
               taskId: auth.context.activeTaskId,
               requestId: option.requestId,
@@ -9753,7 +9753,7 @@ export function createBotsService(
             if (!pendingOption) {
               return [createOutbound(message.actor, msg(auth.locale, "permissionHandled"))];
             }
-            const zcodeTaskService = await resolveXCodeTaskServiceForContext(auth.context);
+            const zcodeTaskService = await resolveZCodeTaskServiceForContext(auth.context);
             const submitted = await zcodeTaskService.respondPermission({
               taskId: auth.context.activeTaskId,
               requestId: command.requestId,
@@ -9781,7 +9781,7 @@ export function createBotsService(
             const pendingOption = auth.context.pendingPermissionOptions?.find(
               (option) => option.requestId === command.requestId && option.command === "deny",
             );
-            const zcodeTaskService = await resolveXCodeTaskServiceForContext(auth.context);
+            const zcodeTaskService = await resolveZCodeTaskServiceForContext(auth.context);
             const submitted = await zcodeTaskService.respondPermission({
               taskId: auth.context.activeTaskId,
               requestId: command.requestId,
@@ -9881,7 +9881,7 @@ export function createBotsService(
           pendingTopicKeys.map(async (key) => {
             const context = states[key];
             if (!context?.activeTaskId) return;
-            const taskService = await resolveXCodeTaskServiceForContext(context);
+            const taskService = await resolveZCodeTaskServiceForContext(context);
             await taskService.invalidateBotTopicInputs?.({
               taskId: context.activeTaskId,
               workspacePath: context.workspacePath,

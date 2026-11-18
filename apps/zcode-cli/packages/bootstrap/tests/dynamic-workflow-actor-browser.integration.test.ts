@@ -1,5 +1,5 @@
 // ============================================================
-// dwf 子代理的 Browser Use：真 createXCodeApp + 真 run service 的端到端一格
+// dwf 子代理的 Browser Use：真 createZCodeApp + 真 run service 的端到端一格
 // ============================================================
 // 契约见 apps/zcode-cli/packages/dynamic-workflow/docs/execution-engine.md「Subagent sessions」与
 // docs/zcode-protocol-model-backed-control-requests.md 契约 4。
@@ -21,8 +21,8 @@ import { createSqliteSessionStore } from "@zcode/adapters/storage";
 import { ESCALATE_TOOL_NAME, type ModelRequest, type ModelResult } from "@zcode/contracts";
 import { saveSavedWorkflow } from "@zcode/core";
 import { createProtocolBrowserControlBroker } from "../src/zcode-protocol/browser-control-broker.js";
-import type { XCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
-import { createRegistryBackedTestApp as createXCodeApp } from "./helpers/registry-backed-test-app.js";
+import type { ZCodeProtocolAgentServerContext } from "../src/zcode-protocol/server-types.js";
+import { createRegistryBackedTestApp as createZCodeApp } from "./helpers/registry-backed-test-app.js";
 
 const WORKFLOW_NAME = "browse";
 const ACTOR_SESSION_PREFIX = "sess_dwf-";
@@ -106,8 +106,8 @@ describe("dwf 子代理的 Browser Use（真 app 装配）", () => {
     const context = {
       requestClient,
       sessions,
-    } as unknown as XCodeProtocolAgentServerContext;
-    // 同一 context 两个实例：app 的 runtime 端口（交给 createXCodeApp），与进程级 node_repl broker 的那个。
+    } as unknown as ZCodeProtocolAgentServerContext;
+    // 同一 context 两个实例：app 的 runtime 端口（交给 createZCodeApp），与进程级 node_repl broker 的那个。
     const appPort = createProtocolBrowserControlBroker(context);
     const nodeReplPort = createProtocolBrowserControlBroker(context);
 
@@ -121,7 +121,7 @@ describe("dwf 子代理的 Browser Use（真 app 装配）", () => {
       meta: { description: "open a page" },
     });
 
-    const app = await createXCodeApp({
+    const app = await createZCodeApp({
       env: {},
       browserControlPort: appPort,
       modelExecutor: {

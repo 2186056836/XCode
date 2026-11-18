@@ -18,14 +18,14 @@ import {
   type PluginSubagentModelSelectionOverrides,
 } from "@zcode/shared";
 
-interface LoadXCodeAgentProfilesInput {
+interface LoadZCodeAgentProfilesInput {
   logger?: Logger;
   storageRoot: string;
   workingDirectory: string;
   additionalDirectories?: readonly string[];
 }
 
-interface LoadXCodeAgentProfilesResult {
+interface LoadZCodeAgentProfilesResult {
   builtInModelSelectionOverrides: BuiltInSubagentModelSelectionOverrides;
   pluginAgentModelSelectionOverrides: PluginSubagentModelSelectionOverrides;
   diagnostics: AgentProfileParseDiagnostic[];
@@ -48,9 +48,9 @@ interface ParsedPluginAgentProfile {
 
 const RESERVED_AGENT_NAMES = new Set(["general-purpose", "Explore"]);
 
-export async function loadXCodeAgentProfiles(
-  input: LoadXCodeAgentProfilesInput,
-): Promise<LoadXCodeAgentProfilesResult> {
+export async function loadZCodeAgentProfiles(
+  input: LoadZCodeAgentProfilesInput,
+): Promise<LoadZCodeAgentProfilesResult> {
   const migration = await migrateUserSubagentMarkdown(join(input.storageRoot, "agents"));
   await migrateSubagentStateFile(join(input.storageRoot, "v2", "agents-state.json"));
   const roots: Array<{ path: string; source: "user" | "project"; namespace?: string }> = [
@@ -132,7 +132,7 @@ function sanitizeProjectAgentProfile(profile: AgentProfile): AgentProfile {
 
 export function loadPluginAgentProfiles(
   input: LoadPluginAgentProfilesInput,
-): LoadXCodeAgentProfilesResult {
+): LoadZCodeAgentProfilesResult {
   const diagnostics: AgentProfileParseDiagnostic[] = [];
   const parsedProfiles: ParsedPluginAgentProfile[] = [];
   const reservedProfileNames = new Set([

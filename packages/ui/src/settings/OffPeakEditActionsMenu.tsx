@@ -1,7 +1,7 @@
 /* 闲时任务编辑页顶栏动作菜单：Save 右侧「⋯」→ 按状态给 暂停/继续 + 删除。
    与列表卡片菜单同义，供编辑页内直接操作；queued→暂停、paused→继续，终态只留删除。
    样式与定时任务编辑页顶栏菜单同源。 */
-import { type XCodeOffPeakTask } from "@zcode/shared";
+import { type ZCodeOffPeakTask } from "@zcode/shared";
 import { TID_OFFPEAK_CARD_MENU } from "@zcode/shared/test-ids";
 import {
   DropdownMenu,
@@ -16,7 +16,7 @@ import {
   AutomationPauseActionIcon,
   AutomationTrashIcon,
 } from "@/settings/AutomationDesignPrimitives.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export function OffPeakEditActionsMenu({
   task,
@@ -24,12 +24,12 @@ export function OffPeakEditActionsMenu({
   onContinue,
   onDelete,
 }: {
-  task: XCodeOffPeakTask;
-  onPause?: (task: XCodeOffPeakTask) => void;
-  onContinue?: (task: XCodeOffPeakTask) => void;
-  onDelete?: (task: XCodeOffPeakTask) => void;
+  task: ZCodeOffPeakTask;
+  onPause?: (task: ZCodeOffPeakTask) => void;
+  onContinue?: (task: ZCodeOffPeakTask) => void;
+  onDelete?: (task: ZCodeOffPeakTask) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

@@ -1,7 +1,7 @@
 import type {
-  XCodeAutomationIntervalUnit,
-  XCodeAutomationScheduleRule,
-  XCodeAutomationUpdateParams,
+  ZCodeAutomationIntervalUnit,
+  ZCodeAutomationScheduleRule,
+  ZCodeAutomationUpdateParams,
 } from "@zcode/shared";
 
 /** 会话侧自定义重复 carrier 的受控上限；不要收紧管理页历史 scheduleRule 的领域上限。 */
@@ -23,9 +23,9 @@ export class InvalidAutomationIntervalCarrierError extends Error {
  * 语义，也不能与 carrier 混用，否则无法确定是新建规则还是清除规则。
  */
 export function assertValidAutomationIntervalCarrier(input: {
-  intervalUnit?: XCodeAutomationIntervalUnit;
+  intervalUnit?: ZCodeAutomationIntervalUnit;
   interval?: number;
-  scheduleRule?: XCodeAutomationScheduleRule | null;
+  scheduleRule?: ZCodeAutomationScheduleRule | null;
   relativeDelayMinutes?: number;
   recurring?: boolean;
   maxRuns?: number | null;
@@ -66,7 +66,7 @@ export function assertValidAutomationIntervalCarrier(input: {
 
 /** carrier 更新必须原子切换无限循环，避免 scheduleRule 与生命周期模式脱节。 */
 export function forceIntervalCarrierRecurring(
-  params: XCodeAutomationUpdateParams,
-): XCodeAutomationUpdateParams {
+  params: ZCodeAutomationUpdateParams,
+): ZCodeAutomationUpdateParams {
   return { ...params, recurring: true, maxRuns: null };
 }

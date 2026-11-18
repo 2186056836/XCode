@@ -67,8 +67,8 @@ describe(`${CASE_MARKER}: 账号 Coding Plan 代表（BigModel Team / glm-5.3-fl
     // 不渲染 workspace 菜单（SessionPane 仅 isDraft 挂 contextHeader），远程连接入口
     // 不可达。本 case 的目标是 provisioning + 远端真实请求，非 conversation 工作区 UI——
     // 显式 seed 项目会话并预建目录，让 reloadSession 后与全批其它 case 同路径恢复
-    // XCodeProject（产品已不再自动创建该目录，见 startupWorkspace 注释）。
-    const defaultWorkspace = resolve(getE2EAppDataPaths().homeDir, "XCodeProject");
+    // ZCodeProject（产品已不再自动创建该目录，见 startupWorkspace 注释）。
+    const defaultWorkspace = resolve(getE2EAppDataPaths().homeDir, "ZCodeProject");
     await mkdir(defaultWorkspace, { recursive: true });
     await seedSettings({
       providerFamilyDomain: "bigmodel",

@@ -12,7 +12,7 @@
 - 插件命令运行在用户 session 的 Bash 里，同一 session 的任何进程都能读到它的环境变量，所以它
   **不持有凭证**：XCode JWT、MaaS JWT 都不进命令进程的 env、参数或文件。
 - Agent 起一个本地端点，命令把请求发给端点；端点只放行该插件的 API 前缀（Sites 为
-  `/api/v1/sites/*`），每个请求向 Host 现取身份头、补上 `X-XCode-App-Version` 后转发给 XCode API。
+  `/api/v1/sites/*`），每个请求向 Host 现取身份头、补上 `X-ZCode-App-Version` 后转发给 XCode API。
 - Host 仍是唯一的凭证 authority，经现有反向请求 `interaction/requestOfficialMcpAuthHeaders` 发放：
 
 ```text

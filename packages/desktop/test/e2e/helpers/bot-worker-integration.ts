@@ -14,13 +14,13 @@ import {
   createNodeModelSelectionFacade,
 } from "@zcode/provider-node";
 import {
-  createXCodeAgentService,
-  createXCodeTaskServiceAdapter,
+  createZCodeAgentService,
+  createZCodeTaskServiceAdapter,
   getDataBaseDir,
   setDataBaseDir,
 } from "@zcode/services/node";
 import { TaskIndexRepo } from "../../../../services/src/session/taskIndexRepo.js";
-import { createXCodeTaskIndexSyncer } from "../../../../services/src/zcode-agent/zcodeTaskIndexSyncer.js";
+import { createZCodeTaskIndexSyncer } from "../../../../services/src/zcode-agent/zcodeTaskIndexSyncer.js";
 import { getE2EAppDataPaths } from "./desktop-app.js";
 import {
   createBotsServiceHarness,
@@ -138,7 +138,7 @@ export async function createBotWorkerIntegration(baseUrl: string, dropTextContai
     });
     const reverseReplies: unknown[] = [];
     const reverseResources: unknown[] = [];
-    const agent = createXCodeAgentService({
+    const agent = createZCodeAgentService({
       // 项目化创建要求先预留 task 归属；旧夹具漏接此 Host 端口，在调用 CLI 前即失败。
       prepareSessionCreation: async (target) => {
         const prepared = projects.reserveCreatedTask({
@@ -216,10 +216,10 @@ export async function createBotWorkerIntegration(baseUrl: string, dropTextContai
             ...rest,
           );
     }
-    const syncer = createXCodeTaskIndexSyncer({ agentService: agent, taskIndexRepo: repo });
+    const syncer = createZCodeTaskIndexSyncer({ agentService: agent, taskIndexRepo: repo });
     cleanup.push(() => syncer.disposeAll());
     cleanup.push(() => bot.service.disposeAllAndWait());
-    const task = createXCodeTaskServiceAdapter({
+    const task = createZCodeTaskServiceAdapter({
       zcodeAgentService: agent,
       taskIndexRepo: repo,
       taskIndexSyncer: syncer,

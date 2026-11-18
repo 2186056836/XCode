@@ -54,7 +54,7 @@ import { cn } from "@/components/lib/utils.js";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
 import { useSourceServerManagementSnapshot } from "@/hooks/useSourceServerManagementSnapshot.js";
 import { useSourceServerOperationLogs } from "@/hooks/useSourceServerOperationLogs.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { SourceServerMigrationReportPanel } from "@/settings/SourceServerMigrationReportPanel.js";
 import {
   resolveSourceServerUpdatePercent,
@@ -271,7 +271,7 @@ export function SourceServerManagementPanel({
   onHideProjectDeviceNamesChange?: (hidden: boolean) => void;
 }) {
   const background = useRemoteConnectionProgress();
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const confirmDialog = useConfirmDialog();
   const platform = useOptionalPlatform();
   const deferredUpdates = useDeferredSourceServerUpdates();

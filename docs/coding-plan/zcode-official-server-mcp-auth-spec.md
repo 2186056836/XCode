@@ -23,7 +23,7 @@
   `ping`、`tools/list`、GET probe 与 `tools/call` 都向 Host 解析并注入当前身份头。解析失败时仍发送
   匿名请求，由服务端按请求方法权威判定；用户 entitlement 不应决定工具目录可见性。
 - stdio MCP 在 `server/discover`、`initialize`、notification、`ping`、`tools/list` 与 `tools/call`
-  的 `_meta["com.xcode/official-mcp-auth"]` 中取得当前身份载荷；凭证不得进入进程 env。
+  的 `_meta["com.zcode/official-mcp-auth"]` 中取得当前身份载荷；凭证不得进入进程 env。
 - `Authorization` 携带 XCode JWT；`X-Bigmodel-Authorization` 携带当前 family 的 MaaS JWT。
 - `X-Coding-Plan-Api-Key` 只属于服务端存量兼容通道，客户端不得发送或允许插件静态注入。
 

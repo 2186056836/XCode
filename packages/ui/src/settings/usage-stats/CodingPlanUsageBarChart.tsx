@@ -7,7 +7,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   UsageEmptyState,
   formatCompactNumber,
@@ -107,7 +107,7 @@ function buildBarKeys({
   intl,
   series,
 }: {
-  intl: ReturnType<typeof useXCodeIntl>["intl"];
+  intl: ReturnType<typeof useZCodeIntl>["intl"];
   series: CodingPlanBarChartSeries[];
 }): CodingPlanBarKey[] {
   return series.flatMap((item, index) => {
@@ -242,7 +242,7 @@ export function CodingPlanUsageBarChart({
   valueKind?: "count" | "credit" | "speed" | "token";
   xTime: string[];
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const tokenUnit = intl.formatMessage({ id: "settings.usage.tokenUnit" });
   const creditUnit = intl.formatMessage({ id: "settings.usage.creditUnit" });
   const visibleSeries = useMemo(() => series.slice(0, 6), [series]);

@@ -1,6 +1,6 @@
 import type { WebRemoteControlStatus, WebRemoteControlFailure } from "@zcode/shared";
 import { resolveWebRemoteControlWorkspaceKey } from "@zcode/shared";
-import type { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import type { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export function isSameWebRemoteControlTarget(
   status: WebRemoteControlStatus,
@@ -55,7 +55,7 @@ export function isReusableWebRemoteControlSession(status: WebRemoteControlStatus
 
 export function getStatusLabel(
   status: WebRemoteControlStatus,
-  formatMessage: ReturnType<typeof useXCodeIntl>["intl"]["formatMessage"],
+  formatMessage: ReturnType<typeof useZCodeIntl>["intl"]["formatMessage"],
 ): string {
   switch (status.status) {
     case "starting":
@@ -75,7 +75,7 @@ export function getStatusLabel(
 
 export function getStatusDetail(
   status: WebRemoteControlStatus,
-  formatMessage: ReturnType<typeof useXCodeIntl>["intl"]["formatMessage"],
+  formatMessage: ReturnType<typeof useZCodeIntl>["intl"]["formatMessage"],
 ): string {
   switch (status.status) {
     case "starting":
@@ -108,7 +108,7 @@ export function getStatusDotClassName(status: WebRemoteControlStatus): string {
 
 export function getWebRemoteControlStatusTagLabel(
   status: WebRemoteControlStatus,
-  formatMessage: ReturnType<typeof useXCodeIntl>["intl"]["formatMessage"],
+  formatMessage: ReturnType<typeof useZCodeIntl>["intl"]["formatMessage"],
 ): string {
   const deviceName =
     status.mobileDeviceInfo?.browserPlatform?.trim() || status.mobileDeviceInfo?.name?.trim();
@@ -160,7 +160,7 @@ export function isSameWebRemoteControlStatus(
 
 export function getFailureDescription(
   failure: WebRemoteControlFailure | undefined,
-  formatMessage: ReturnType<typeof useXCodeIntl>["intl"]["formatMessage"],
+  formatMessage: ReturnType<typeof useZCodeIntl>["intl"]["formatMessage"],
 ): string | null {
   if (!failure) {
     return null;

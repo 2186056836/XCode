@@ -1,4 +1,4 @@
-import type { XCodeProvider } from "@zcode/shared";
+import type { ZCodeProvider } from "@zcode/shared";
 
 type SkillSourceType = "glm" | "unknown";
 
@@ -27,7 +27,7 @@ function isXcodeSkill(skill: { id?: string; path: string; scope?: string }): boo
 
 export function filterSkillsForProvider<T extends { path: string; id?: string; scope?: string }>(
   skills: T[],
-  _legacyProvider: XCodeProvider,
+  _legacyProvider: ZCodeProvider,
 ): T[] {
   return skills.filter(isXcodeSkill);
 }

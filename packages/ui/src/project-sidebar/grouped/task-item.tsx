@@ -1,11 +1,11 @@
-import type { ProjectTask as XCodeTaskMeta } from "@/project-sidebar/contract.js";
+import type { ProjectTask as ZCodeTaskMeta } from "@/project-sidebar/contract.js";
 import { memo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 
 import { MessageCirclePlus } from "lucide-react";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { GroupedTaskRow } from "@/project-sidebar/grouped/task-row.js";
 import type { TaskGroupMenuItem } from "@/project-sidebar/grouped/shared.js";
 
@@ -16,7 +16,7 @@ export function EmptyGroupDropZone({
   groupId: string;
   onCreateTask: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const droppable = useDroppable({
     id: `group-empty-drop:${groupId}`,
     data: {
@@ -69,7 +69,7 @@ function GroupedTaskItemComponent({
   dragOverlay,
   tooltipsDisabled,
 }: {
-  task: XCodeTaskMeta;
+  task: ZCodeTaskMeta;
   groupId?: string;
   groups: TaskGroupMenuItem[];
   remoteSessionId?: string;
@@ -77,13 +77,13 @@ function GroupedTaskItemComponent({
   isMobileActive: boolean;
   workspaceLabel: string;
   onSelectTask: (workspacePath: string, taskId: string, workspaceIdentity?: string) => void;
-  onCloseTask: (task: XCodeTaskMeta) => void;
-  onOpenFileTree?: (task: XCodeTaskMeta) => void;
-  onMoveTaskToGroup: (task: XCodeTaskMeta, groupId: string | null) => void;
-  onMoveTaskToTop: (task: XCodeTaskMeta) => void;
-  onStartRenameTask: (task: XCodeTaskMeta) => void;
-  onArchiveTask: (task: XCodeTaskMeta) => void;
-  onMarkTaskAsUnread: (task: XCodeTaskMeta) => void;
+  onCloseTask: (task: ZCodeTaskMeta) => void;
+  onOpenFileTree?: (task: ZCodeTaskMeta) => void;
+  onMoveTaskToGroup: (task: ZCodeTaskMeta, groupId: string | null) => void;
+  onMoveTaskToTop: (task: ZCodeTaskMeta) => void;
+  onStartRenameTask: (task: ZCodeTaskMeta) => void;
+  onArchiveTask: (task: ZCodeTaskMeta) => void;
+  onMarkTaskAsUnread: (task: ZCodeTaskMeta) => void;
   dragId?: UniqueIdentifier;
   dragging?: boolean;
   dragOverlay?: boolean;

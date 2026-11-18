@@ -41,7 +41,7 @@ import type {
   EnterpriseCodingPlanPricingRequest,
   EnterpriseCodingPlanPricingResponse,
   StartPlanPreviewConfig,
-  XCodeModelContextBudgetStrategy,
+  ZCodeModelContextBudgetStrategy,
   ForceUpdateConfig,
   CodingPlanBillingDiscountConfig,
   DynamicWorkflowClientConfig,
@@ -78,7 +78,7 @@ export interface ICodingPlanSubscriptionService {
     forceRefresh?: boolean;
   }): Promise<DynamicWorkflowClientConfig>;
   /** 兼容接口：固定返回 preflight-v1，不读取远端配置或缓存。 */
-  getModelContextBudgetStrategy(): Promise<XCodeModelContextBudgetStrategy>;
+  getModelContextBudgetStrategy(): Promise<ZCodeModelContextBudgetStrategy>;
   getForceUpdateConfig(): Promise<ForceUpdateConfig | null>;
   /** Coding Plan 活动/折扣配置（client/configs 下发）；未下发或未激活返回 null。 */
   getBillingDiscount(): Promise<CodingPlanBillingDiscountConfig | null>;

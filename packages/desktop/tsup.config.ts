@@ -21,7 +21,7 @@ const buildTimeConfigDefines = createBuildTimeConfigDefines(
 
 const buildMetadata = getBuildMetadata();
 
-function resolveXCodeEnv(value: string | undefined): "test" | "production" {
+function resolveZCodeEnv(value: string | undefined): "test" | "production" {
   return value?.trim().toLowerCase() === "production" ? "production" : "test";
 }
 
@@ -143,7 +143,7 @@ export function resolveBuildPackagedAgentTelemetryEnv(
     throw new Error("ZCODE_PACKAGED_AGENT_OTEL_ENDPOINT must be a valid HTTP(S) URL");
   }
   if (
-    resolveXCodeEnv(runtimeEnv.ZCODE_ENV) === "production" &&
+    resolveZCodeEnv(runtimeEnv.ZCODE_ENV) === "production" &&
     parsedEndpoint.protocol !== "https:"
   ) {
     throw new Error("ZCODE_PACKAGED_AGENT_OTEL_ENDPOINT must use HTTPS in production");

@@ -1,3 +1,3 @@
-import { getXCodeCopy } from "@zcode/i18n";
+import { getZCodeCopy } from "@zcode/i18n";
 
-export const DEFAULT_TUI_COPY = getXCodeCopy("en-US").tui;
+export const DEFAULT_TUI_COPY = getZCodeCopy("en-US").tui;

@@ -8,7 +8,7 @@ import {
 import { cn } from "@/components/lib/utils.js";
 import { STATUS_DOT } from "@/components/workflow-graph/run-status-presentation.js";
 import type { StepRunStatus } from "@/components/workflow-graph/types.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { TimelineHole } from "./timeline-holes.js";
 import type { TimelineRail, TimelineStation } from "./timeline-model.js";
 import { LEDGE_PITCH, LEDGE_LAMP, ledgeLamps, railKey, scrollbarThumb } from "./timeline-ledge.js";
@@ -120,7 +120,7 @@ export function WorkflowLedge({
   nameOf: (index: number) => string;
   onSelect: (index: number) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (indexes.length === 0) return null;
   const { shown, more } = ledgeLamps(indexes, side);
   const stubRail =
@@ -205,7 +205,7 @@ export function WorkflowTimelineScrollbar({
   scrollRef: RefObject<HTMLDivElement | null>;
   viewport: TimelineViewport;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [dragging, setDragging] = useState(false);
   const drag = useRef<{ pointerId: number; startX: number; startLeft: number } | null>(null);
   const thumb = scrollbarThumb(viewport.scrollLeft, viewport.clientWidth, viewport.scrollWidth);

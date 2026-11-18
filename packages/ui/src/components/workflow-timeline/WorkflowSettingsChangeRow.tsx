@@ -8,7 +8,7 @@
 import { Fragment } from "react";
 import { SlidersHorizontalIcon } from "lucide-react";
 import type { WorkflowSettingsAmendMeta } from "@zcode/shared/zcode-protocol-v4";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { workflowSettingsChangeSegments } from "./workflowSettingsChange.js";
 
 export function WorkflowSettingsChangeRow({
@@ -22,7 +22,7 @@ export function WorkflowSettingsChangeRow({
   /** providerId → provider 名（与卡上的模型段同一个查找）；缺席退回裸 modelId。 */
   providerName?: (providerId: string) => string | undefined;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const segments = workflowSettingsChangeSegments(amend, {
     formatMessage: intl.formatMessage.bind(intl),
     ...(providerName === undefined ? {} : { providerName }),

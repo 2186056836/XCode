@@ -13,7 +13,7 @@ const entry = join(root, "interaction-origin-preview.tsx");
 const artifacts = join(root, "packages/desktop/.e2e-artifacts/interaction-origin-badge");
 const fixture = `
 import { createRoot } from "react-dom/client";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { InteractionRequestOriginBadge } from "@/InteractionRequestOriginBadge.js";
 import "@/styles.css";
 const query = new URLSearchParams(location.search);
@@ -23,7 +23,7 @@ const locale = query.get("locale");
 const descriptions = locale === "zh-CN"
  ? ["颜色规范检查员 (actor-color@1)", "负责检查全部页面与深浅主题颜色规范的检查员 (actor-color@12)", "检查员"]
  : ["Color reviewer (actor-color@1)", "Reviewer for all page colors and light and dark themes (actor-color@12)", "Reviewer"];
-createRoot(document.getElementById("root")).render(<XCodeIntlProvider initialLocale={locale}>
+createRoot(document.getElementById("root")).render(<ZCodeIntlProvider initialLocale={locale}>
  <main style={{padding:16}} className="bg-background text-foreground">
  {descriptions.map(description => <section key={description} style={{marginBottom:12}} className="rounded-2xl border border-border bg-popover p-3">
  <div className="flex flex-wrap items-center gap-2">
@@ -31,7 +31,7 @@ createRoot(document.getElementById("root")).render(<XCodeIntlProvider initialLoc
  <InteractionRequestOriginBadge origin={{kind:"subagent",agentType:"general-purpose",description}} />
  </div></section>)}
  </main>
-</XCodeIntlProvider>);
+</ZCodeIntlProvider>);
 `;
 
 test("来源标签：长名称完整换行、完整 title、深浅主题与窄屏", async () => {

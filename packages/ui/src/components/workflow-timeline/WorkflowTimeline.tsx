@@ -11,7 +11,7 @@ import {
 import { cn } from "@/components/lib/utils.js";
 import { laneDisplayName } from "@/components/workflow-graph/lane-name.js";
 import { phaseDisplayName } from "@/components/workflow-graph/phase-name.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { TimelinePill, TimelineStation, WorkflowTimelineModel } from "./timeline-model.js";
 import { ROSTER_PINS_CARD, rosterMore, stationRosterOf } from "./roster-model.js";
 import { useTypewriter } from "./use-typewriter.js";
@@ -138,7 +138,7 @@ export const WorkflowTimeline = memo(function WorkflowTimeline({
   onOpenWorkspace,
   onSelectStation,
 }: WorkflowTimelineProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const format = intl.formatMessage.bind(intl);
   const markerId = useId();
   const scrollRef = useRef<HTMLDivElement>(null);

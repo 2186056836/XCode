@@ -19,7 +19,7 @@ Sites 面板是官方插件 `zcode-site` 自带的 UI plugin（MCP Apps），用
 | 登记       | `official-plugin-definitions.ts` 与三份打包清单                            | `componentTypes: ["ui"]`，`requiredSeedPaths` 带两个 dist 产物；桌面包、SEA、dev 的运行时构建登记，做法同 documents                     |
 
 - **模型不可见**：工具全部声明 `_meta.ui.visibility: ["app"]`，不进入模型的工具列表；模型没有读 MCP 资源的工具；server 不返回 `instructions`。
-- **身份**：宿主在发给 server 的每条消息的 `_meta["com.zcode/official-mcp-auth"]` 里附 `{ok: true, headers}` 或 `{ok: false, reason}`，`resources/read` 和 `tools/call` 都带。server 用它请求 zcode-server，不缓存、不落盘、不写日志；没有身份头时不发请求。请求 origin 用 `resolveRuntimeXCodeEndpointOrigin(process.env)`，与宿主校验官方 MCP 目标同一口径；`X-XCode-App-Version` 取桌面端注入的 `ZCODE_APP_VERSION`；网络出口经 `http.setGlobalProxyFromEnv()` 读宿主给的代理变量。
+- **身份**：宿主在发给 server 的每条消息的 `_meta["com.zcode/official-mcp-auth"]` 里附 `{ok: true, headers}` 或 `{ok: false, reason}`，`resources/read` 和 `tools/call` 都带。server 用它请求 zcode-server，不缓存、不落盘、不写日志；没有身份头时不发请求。请求 origin 用 `resolveRuntimeXCodeEndpointOrigin(process.env)`，与宿主校验官方 MCP 目标同一口径；`X-ZCode-App-Version` 取桌面端注入的 `ZCODE_APP_VERSION`；网络出口经 `http.setGlobalProxyFromEnv()` 读宿主给的代理变量。
 - **套餐**：MCP 路径不支持「套餐可选」。没有 Coding Plan 连接的用户拿到只含 XCode JWT 的身份头，可以正常使用；选中的 Coding Plan 连接已过期或类型不符时拿到 `official_auth_plan_required`，面板显示对应状态页。CLI 走命令端点的套餐可选模式，不受影响。
 
 ## 资源与工具

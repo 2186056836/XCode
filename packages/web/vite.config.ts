@@ -11,7 +11,7 @@ import { resolveRemoteFrontendVersion } from "./vite/remoteFrontendVersion.mjs";
 // 根入口包含 NodeNext 风格的源码 re-export，Node 会按真实文件查找 .js 并在 bootstrap 阶段失败。
 import {
   resolveBigModelApiOrigin,
-  resolveRuntimeXCodeEndpointOrigin,
+  resolveRuntimeZCodeEndpointOrigin,
   resolveZaiOAuthClientId,
   resolveZaiOAuthOrigin,
 } from "@zcode/shared/zcodeEndpoint";
@@ -23,7 +23,7 @@ const { version, zcodeCompatibility } = JSON.parse(
 ) as { version: string; zcodeCompatibility?: { minCompatibleVersion?: string } };
 const minCompatibleVersion = zcodeCompatibility?.minCompatibleVersion ?? version;
 
-function resolveXCodeEnv(value: string | undefined): "test" | "production" {
+function resolveZCodeEnv(value: string | undefined): "test" | "production" {
   return value?.trim().toLowerCase() === "production" ? "production" : "test";
 }
 
@@ -32,12 +32,12 @@ export default defineConfig(({ mode }) => {
   // 启动脚本通过 process.env 显式选择 test/production；它必须优先于 .env 文件，
   // 否则 share:test 可能被 mode 的旧配置误解析到错误 endpoint。
   const env = { ...loadEnv(mode, REPO_ROOT, ""), ...process.env };
-  const zcodeEnv = resolveXCodeEnv(env.ZCODE_ENV);
+  const zcodeEnv = resolveZCodeEnv(env.ZCODE_ENV);
   const endpointEnv = {
     ...env,
     ZCODE_ENV: zcodeEnv,
   };
-  const zcodeEndpointOrigin = resolveRuntimeXCodeEndpointOrigin(endpointEnv);
+  const zcodeEndpointOrigin = resolveRuntimeZCodeEndpointOrigin(endpointEnv);
   const zaiOAuthOrigin = resolveZaiOAuthOrigin(endpointEnv);
   // 远控与桌面/分享页一致，BigModel 授权域名必须跟随产品环境。
   const bigmodelOAuthOrigin = resolveBigModelApiOrigin(endpointEnv);

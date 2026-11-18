@@ -635,7 +635,7 @@ modules:
       - packages/ui/src/components/mobile-ui/index.ts
       - packages/ui/src/components/mobile-ui/contract.ts
       - packages/ui/src/components/mobile-ui/DevicePlatformIcon.tsx
-      - packages/ui/src/components/mobile-ui/XCodeAppLogo.tsx
+      - packages/ui/src/components/mobile-ui/ZCodeAppLogo.tsx
       - packages/ui/src/components/mobile-ui/bottom-sheet.tsx
     layers:
       contract: contract.ts

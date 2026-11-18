@@ -2,7 +2,7 @@ import { PanelLeftOpen } from "lucide-react";
 import appLogoUrl from "@/assets/X.svg";
 import { Button } from "@/components/ui/button.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export function WorkspaceSidebarCollapsedRail({
   onToggleSidebar,
@@ -11,7 +11,7 @@ export function WorkspaceSidebarCollapsedRail({
   onToggleSidebar: () => void;
   toggleSidebarShortcutLabel?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <aside className="flex h-full flex-col overflow-hidden border-r border-border bg-background-alt">

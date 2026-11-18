@@ -1,12 +1,12 @@
 /* eslint-disable max-lines -- Source Server transport 在同一适配器内汇合安装、daemon、channel 与 target 生命周期，继续拆分会割裂取消边界。 */
 import { Duplex } from "node:stream";
 import {
-  isPublicXCodeErrorCode,
+  isPublicZCodeErrorCode,
   normalizeRemoteConnectionError,
   normalizeRemoteAssetInstallMode,
   sourceServerInstallProgressSchema,
   type SourceServerInstallProgress,
-  type PublicXCodeErrorCode,
+  type PublicZCodeErrorCode,
   type RemoteTarget,
 } from "@zcode/shared";
 import type { IRemoteBackend } from "@zcode/server/remote/backend.js";
@@ -85,7 +85,7 @@ export interface SourceServerEnsureDaemonOptions {
 export class SourceServerTransportOperationError extends Error {
   public constructor(
     message: string,
-    public readonly code: PublicXCodeErrorCode,
+    public readonly code: PublicZCodeErrorCode,
     public readonly retryable?: boolean,
   ) {
     super(message);
@@ -100,7 +100,7 @@ export class SourceServerTransportOperationError extends Error {
 function createServerCommandError(result: RemoteExecResult, fallbackMessage: string): Error {
   try {
     const response = readLastJsonLine(result.stdout);
-    if (isPublicXCodeErrorCode(response.code)) {
+    if (isPublicZCodeErrorCode(response.code)) {
       return new SourceServerTransportOperationError(
         typeof response.error === "string" && response.error.trim()
           ? response.error

@@ -14,7 +14,7 @@ import type { AgentRuntimeInternal } from "../../core/src/runtime/internal.js";
 import { createTestAgentRuntime } from "../../core/tests/test-agent-runtime.js";
 import { createTestModelFactory } from "../../core/tests/test-runtime-model.js";
 import { createTestSessionEventStore } from "../../core/tests/test-event-store.js";
-import type { XCodeApp } from "../src/app/types.js";
+import type { ZCodeApp } from "../src/app/types.js";
 import { V4CommandExecutor } from "../src/zcode-protocol-v4/commands/executor.js";
 import type {
   V4CommandCoreHost,
@@ -121,7 +121,7 @@ it.each([
       if (cold) await reopen();
 
       // 只适配 App admission；rewind、持久化、hydrate 和模型请求均走真实 Runtime。
-      const sendInput: XCodeApp["sendInput"] = async (input, options) => {
+      const sendInput: ZCodeApp["sendInput"] = async (input, options) => {
         const prompt = typeof input === "string" ? { text: input } : input;
         const result = await runtime.executeTurn(prompt.text, prompt.attachments, {
           inputId: options?.inputId,

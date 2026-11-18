@@ -13,7 +13,7 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { clampWorkflowRunSettingsBound } from "./workflowRunSettings.js";
 
 /** 句中的值画成一枚芯片：平时是一小块 surface，悬停才出边框与输入底色（composer 模型触发器的语汇）。 */
@@ -35,7 +35,7 @@ export function WorkflowAskWasTail({
   testId: string;
   value: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const resetLabel = intl.formatMessage({ id: "chat.permission.workflow.settings.reset" });
   // 按钮只有图标：aria-label 给读屏，title 给悬停（spec：「恢复原值」）。
   return (
@@ -78,7 +78,7 @@ export function WorkflowAskBoundLine({
   onChange: (bound: number) => void;
   onReset: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const format = intl.formatMessage.bind(intl);
   const tail =
     defaultConcurrency === undefined
@@ -177,7 +177,7 @@ export function WorkflowAskPlainSettings({
   scriptNamesModels?: boolean;
   subagentModel: { text: string; tooltip: string } | undefined;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (maxConcurrency === undefined && subagentModel === undefined) return null;
   return (
     <div className="space-y-1">

@@ -20,7 +20,7 @@ import {
 } from "@/lib/cuaPlatform.js";
 import { setPendingSettingsSectionIntent } from "@/lib/settingsNavigation.js";
 import { usePluginManagementStore } from "@/store/pluginManagementStore.js";
-import { useXCodeSessionStore } from "@/store/zcodeSessionStore.js";
+import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import { getVisibleTaskMetas, getWorkspaceState } from "@/store/zcodeSessionStoreSelectors.js";
 import { useOptionalTabStore } from "@/store/TabStoreProvider.js";
 
@@ -116,7 +116,7 @@ export function useCuaComposerEntry({
   // session-busy 判定粒度是 workspace：切换插件会让该 workspace 全部会话的
   // 工具集变化、prompt 缓存失效，影响面与禁用面必须一致，因此不能只看当前 task。
   // 复用 getWorkspaceState 的 identity→path fallback，避免这里重写一份 workspaceKey 规则。
-  const workspaceSessionBusy = useXCodeSessionStore((state) => {
+  const workspaceSessionBusy = useZCodeSessionStore((state) => {
     const workspaceState = getWorkspaceState(state, workspacePath, workspaceIdentity);
     const runtimeBusy = Object.values(workspaceState.taskRuntimeByTaskId ?? {}).some(
       (runtime) =>

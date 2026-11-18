@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 // 设计工具行（docs/browser-use/2026-11-03-browser-design-mode-spec.md）：属性面板开关、版本、翻页、设备预设。
 // 纯展示：状态和动作都来自 useBrowserDesignMode。
@@ -65,7 +65,7 @@ export function BrowserDesignToolbar({
   /** 自由尺寸打开时的设备预设控件：放进同一行中间，不再单独占一行 */
   viewportControls?: ReactNode;
 }): React.JSX.Element {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const info = design.pageInfo;
   const { slide } = design;
   return (

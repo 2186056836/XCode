@@ -240,7 +240,7 @@ describe(`${MARKER}: 远端 daemon 正在 starting 时连接，以及远端 agen
     expect(remoteRequests.length).toBeGreaterThan(0);
     for (const request of remoteRequests) {
       // AI SDK 会在产品标识后追加 ai-sdk/runtime 片段；断言首个产品标识是 App 版本。
-      expect(request.userAgent?.split(" ")[0]).toBe(`XCode/${appVersion}`);
+      expect(request.userAgent?.split(" ")[0]).toBe(`ZCode/${appVersion}`);
       expect(request.appVersion).toBe(appVersion);
     }
   });

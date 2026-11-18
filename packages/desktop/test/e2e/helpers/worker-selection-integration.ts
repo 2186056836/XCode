@@ -12,14 +12,14 @@ import {
 } from "@zcode/provider";
 import { NodeProviderRegistryRuntime, createNodeModelSelectionFacade } from "@zcode/provider-node";
 import {
-  createXCodeAgentService,
-  createXCodeTaskServiceAdapter,
+  createZCodeAgentService,
+  createZCodeTaskServiceAdapter,
   getDataBaseDir,
   setDataBaseDir,
 } from "@zcode/services/node";
 import { BUILTIN_MODEL_PROVIDER_IDS } from "@zcode/shared";
 import { TaskIndexRepo } from "../../../../services/src/session/taskIndexRepo.js";
-import { createXCodeTaskIndexSyncer } from "../../../../services/src/zcode-agent/zcodeTaskIndexSyncer.js";
+import { createZCodeTaskIndexSyncer } from "../../../../services/src/zcode-agent/zcodeTaskIndexSyncer.js";
 import { getE2EAppDataPaths } from "./desktop-app.js";
 
 /** 独立测试 Host + 真实 stdio Worker；仅账号上游和模型 HTTP 使用隔离 fixture。 */
@@ -104,7 +104,7 @@ export async function createWorkerSelectionIntegration(
   };
   const repo = new TaskIndexRepo();
   const projects: ProjectRepositoryContract = await repo.getProjectRepository();
-  const agent = createXCodeAgentService({
+  const agent = createZCodeAgentService({
     // 真实 Host 创建端口必须预留任务归属；旧夹具漏装配，Worker 启动前即报 creation-unavailable。
     prepareSessionCreation: async (target) => {
       const prepared = projects.reserveCreatedTask({
@@ -151,8 +151,8 @@ export async function createWorkerSelectionIntegration(
     // 夹具只用 Team Plan，不会读取验证配置；返回 null 保持 Start Plan 失败关闭的正式语义。
     readRequestVerificationConfig: async () => null,
   });
-  const syncer = createXCodeTaskIndexSyncer({ agentService: agent, taskIndexRepo: repo });
-  const task = createXCodeTaskServiceAdapter({
+  const syncer = createZCodeTaskIndexSyncer({ agentService: agent, taskIndexRepo: repo });
+  const task = createZCodeTaskServiceAdapter({
     zcodeAgentService: agent,
     taskIndexRepo: repo,
     taskIndexSyncer: syncer,

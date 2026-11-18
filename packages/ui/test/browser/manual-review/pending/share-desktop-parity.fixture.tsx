@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import type { ConversationRow } from "@zcode/shared/zcode-protocol-v4";
 import { TooltipProvider } from "@/components/ui/tooltip.js";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { DEFAULT_CODE_PREVIEW_SETTINGS } from "@/lib/codePreviewSettings.js";
 import { ConversationShareReadonlyTimeline } from "@/v4/ConversationShareReadonlyTimeline.js";
 import { ConversationTurnGroup } from "@/v4/ConversationTurnGroup.js";
@@ -148,13 +148,13 @@ const context = {
 
 function DesktopColumn() {
   return (
-    <XCodeIntlProvider initialLocale={locale}>
+    <ZCodeIntlProvider initialLocale={locale}>
       <div data-parity-column="desktop" className="@container/conversation flex flex-col">
         {desktopUnits.map((unit) => (
           <ConversationTurnGroup key={unit.key} unit={unit} context={context} />
         ))}
       </div>
-    </XCodeIntlProvider>
+    </ZCodeIntlProvider>
   );
 }
 

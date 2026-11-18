@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { XCodeUsageRequestDetailsResult } from "@zcode/shared";
+import type { ZCodeUsageRequestDetailsResult } from "@zcode/shared";
 import { useServices } from "@/hooks/useServices.js";
 import { logger } from "@/logger.js";
 
@@ -23,7 +23,7 @@ export const EMPTY_USAGE_DETAILS_FILTERS: UsageDetailsFilters = {
 };
 
 export interface UsageRequestDetailsState {
-  result: XCodeUsageRequestDetailsResult | null;
+  result: ZCodeUsageRequestDetailsResult | null;
   loading: boolean;
   error: string | undefined;
   page: number;
@@ -49,7 +49,7 @@ function parseLocalDate(value: string): number | undefined {
  */
 export function useUsageRequestDetails(): UsageRequestDetailsState {
   const { usageStatsService } = useServices();
-  const [result, setResult] = useState<XCodeUsageRequestDetailsResult | null>(null);
+  const [result, setResult] = useState<ZCodeUsageRequestDetailsResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   const [page, setPage] = useState(1);

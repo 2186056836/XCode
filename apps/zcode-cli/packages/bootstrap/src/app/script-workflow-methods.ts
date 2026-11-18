@@ -1,4 +1,4 @@
-import type { SubmitPromptOptions, XCodeApp } from "./types.js";
+import type { SubmitPromptOptions, ZCodeApp } from "./types.js";
 import {
   ScriptWorkflowRuntime,
   type ScriptWorkflowRuntimeDeps,
@@ -6,7 +6,7 @@ import {
 import { createScriptWorkflowToolPort } from "./script-workflow-tool-port.js";
 
 type ScriptWorkflowFacade = Pick<
-  XCodeApp,
+  ZCodeApp,
   | "listScriptWorkflows"
   | "resumeWorkflowScript"
   | "runWorkflowScript"
@@ -83,7 +83,7 @@ function createScriptWorkflowFacade(runtime: ScriptWorkflowRuntime): ScriptWorkf
 }
 
 function toRuntimeOptions(
-  options: Parameters<NonNullable<XCodeApp["runWorkflowScript"]>>[1],
+  options: Parameters<NonNullable<ZCodeApp["runWorkflowScript"]>>[1],
 ): ScriptWorkflowRuntimeOptions | undefined {
   if (!options) return undefined;
   return {

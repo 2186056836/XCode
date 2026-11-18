@@ -1,8 +1,8 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import type {
-  XCodePersistedFileChange,
-  XCodeTaskChangeSummary,
-  XCodeTurnFileState,
+  ZCodePersistedFileChange,
+  ZCodeTaskChangeSummary,
+  ZCodeTurnFileState,
 } from "@zcode/shared";
 import { TID_CHAT_CHANGE_SUMMARY_TOGGLE_FILES_BUTTON, testId } from "@zcode/shared/test-ids";
 import { ChevronRightIcon, Undo2 } from "lucide-react";
@@ -11,7 +11,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { CodeViewerSource } from "@/lib/codeViewer.js";
 import { FileDisplayInline } from "@/lib/fileDisplay.js";
 import { buildTurnChangeSummary, toWorkspaceRelativePath } from "@/lib/taskChangeSummary.js";
@@ -30,13 +30,13 @@ export {
 } from "@/messageChangeSummaryPreview.js";
 
 interface MessageChangeSummaryPanelProps {
-  summary: XCodeTaskChangeSummary;
+  summary: ZCodeTaskChangeSummary;
   workspacePath: string;
   workspaceIdentity?: string;
   workspaceRemoteSessionId?: string;
-  changeDetails?: XCodePersistedFileChange | null;
+  changeDetails?: ZCodePersistedFileChange | null;
   readonlyDiffPatchesByPath?: ReadonlyMap<string, string>;
-  fileState?: XCodeTurnFileState;
+  fileState?: ZCodeTurnFileState;
   messageId?: string;
   compactForRemoteControl?: boolean;
   animationDelayMs?: number;
@@ -61,7 +61,7 @@ export function MessageChangeSummaryPanel({
   onToggleFiles,
   onOpenCodeViewer,
 }: MessageChangeSummaryPanelProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [isFileListOpen, setIsFileListOpen] = useState(false);
 
   const turnSummary = useMemo(() => {

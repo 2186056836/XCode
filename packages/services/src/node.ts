@@ -41,7 +41,7 @@ export type {
   AppControlServiceHandle,
 } from "#src/app-control/contract.js";
 export { createRemoteProjectService } from "#src/remote-projects/index.js";
-import { getXCodeDataRootDir as projectDataRoot } from "#src/paths.js";
+import { getZCodeDataRootDir as projectDataRoot } from "#src/paths.js";
 import { getDataBaseDir } from "#src/paths.js";
 import { createGitWorktreeRepo } from "#src/git/managed-worktree/index.js";
 import { createGitCommandProvider } from "#src/git/providers/gitCommandProvider.js";
@@ -87,7 +87,7 @@ import {
 } from "@zcode/shared";
 
 export {
-  materializeXCodeBuiltinProviderConfig,
+  materializeZCodeBuiltinProviderConfig,
   ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV,
 } from "@zcode/provider-node";
 import { randomUUID } from "node:crypto";
@@ -156,7 +156,7 @@ export {
 export {
   setDataBaseDir,
   getDataBaseDir,
-  getXCodeDataRootDir,
+  getZCodeDataRootDir,
   getConversationWorkspaceDir,
   getAppConfigDir,
   getExportLogStageDir,
@@ -181,33 +181,33 @@ export {
 } from "./setting/settingService.js";
 export { createCredentialService } from "./credential/credentialService.js";
 export { createBroadcastService } from "./broadcast/broadcastService.js";
-export { createXCodeAgentService } from "./zcode-agent/zcodeAgentService.js";
+export { createZCodeAgentService } from "./zcode-agent/zcodeAgentService.js";
 export type {
   PluginUserOptionsReader,
-  XCodeAgentPluginUserOptionsResult,
-  XCodeAgentReadPluginUserOptionsParams,
+  ZCodeAgentPluginUserOptionsResult,
+  ZCodeAgentReadPluginUserOptionsParams,
 } from "./zcode-agent/pluginHostQueriesClient.js";
-export { createXCodeTaskServiceAdapter } from "./zcode-agent/zcodeTaskServiceAdapter.js";
-export { createXCodeSessionService } from "./zcode-session/zcodeSessionService.js";
+export { createZCodeTaskServiceAdapter } from "./zcode-agent/zcodeTaskServiceAdapter.js";
+export { createZCodeSessionService } from "./zcode-session/zcodeSessionService.js";
 export {
-  resolveDefaultXCodeAgentCommand,
-  XCodeAgentProcessManager,
+  resolveDefaultZCodeAgentCommand,
+  ZCodeAgentProcessManager,
 } from "./zcode-agent/zcodeAgentProcessManager.js";
 export type {
-  XCodeAgentCommand,
-  XCodeAgentCommandResolver,
-  XCodeAgentCommandResolverContext,
-  XCodeAgentProcessManagerOptions,
+  ZCodeAgentCommand,
+  ZCodeAgentCommandResolver,
+  ZCodeAgentCommandResolverContext,
+  ZCodeAgentProcessManagerOptions,
 } from "./zcode-agent/zcodeAgentProcessManager.js";
-export { XCodeProtocolClient } from "./zcode-agent/zcodeProtocolClient.js";
-export type { XCodeProtocolTransport } from "./zcode-agent/zcodeProtocolTransport.js";
-export { XCodeStdioTransport } from "./zcode-agent/zcodeStdioTransport.js";
+export { ZCodeProtocolClient } from "./zcode-agent/zcodeProtocolClient.js";
+export type { ZCodeProtocolTransport } from "./zcode-agent/zcodeProtocolTransport.js";
+export { ZCodeStdioTransport } from "./zcode-agent/zcodeStdioTransport.js";
 export {
-  getXCodeStdioTapDevLogDir,
-  readXCodeStdioTapDevState,
-  setXCodeStdioTapDevEnabled,
+  getZCodeStdioTapDevLogDir,
+  readZCodeStdioTapDevState,
+  setZCodeStdioTapDevEnabled,
 } from "./zcode-agent/zcodeStdioTapDevConfig.js";
-export type { XCodeStdioTapDevState } from "@zcode/shared";
+export type { ZCodeStdioTapDevState } from "@zcode/shared";
 export {
   createCuaHelperInstaller,
   requestHelperAccessibilityPermissionViaLaunchServices,
@@ -440,10 +440,10 @@ import { ISettingService } from "./setting/setting.js";
 import { IOnboardingRecordService } from "./onboarding/onboardingRecord.js";
 import { ICredentialService } from "./credential/credential.js";
 import { IBroadcastService } from "./broadcast/broadcast.js";
-import { IXCodeTaskService } from "./session/zcodeTaskService.js";
-import { IXCodeAgentService } from "./zcode-agent/zcodeAgent.js";
+import { IZCodeTaskService } from "./session/zcodeTaskService.js";
+import { IZCodeAgentService } from "./zcode-agent/zcodeAgent.js";
 import type { CuaOperationStateReporter } from "./zcode-agent/cuaOperationTurnTracker.js";
-import { IXCodeSessionService } from "./zcode-session/zcodeSession.js";
+import { IZCodeSessionService } from "./zcode-session/zcodeSession.js";
 import {
   createUnsupportedConversationShareService,
   IConversationShareService,
@@ -523,22 +523,22 @@ import {
 } from "./marketing-touch/autoClaim.js";
 import { setAutoActivityLogStore } from "./marketing-touch/autoClaimLog.js";
 import { readApiJson } from "./providers/api/apiJson.js";
-import { buildXCodeSourceHeaders } from "./providers/sourceHeaders.js";
+import { buildZCodeSourceHeaders } from "./providers/sourceHeaders.js";
 import { ZCODE_MARKETING_TOUCH_URL } from "./providers/api/apiEndpoints.js";
 import { ensureDeviceMidForAccountSync } from "./device/deviceMid.js";
 import { createUpstreamModelListFetcher } from "./model-provider/upstreamModelListFetcher.js";
 import { createBroadcastService } from "./broadcast/broadcastService.js";
 import {
-  createXCodeAgentService,
+  createZCodeAgentService,
   getInProcessPluginUserOptionsReader,
 } from "./zcode-agent/zcodeAgentService.js";
 import type { PluginUserOptionsReader } from "./zcode-agent/pluginHostQueriesClient.js";
-import type { XCodeAgentCommandResolver } from "./zcode-agent/zcodeAgentProcessManager.js";
+import type { ZCodeAgentCommandResolver } from "./zcode-agent/zcodeAgentProcessManager.js";
 import { buildAgentTelemetrySpawnEnv } from "./zcode-agent/agentTelemetryEnv.js";
-import { resolveXCodeAgentPresentationSurface } from "./zcode-agent/zcodeAgentPresentationSurface.js";
-import { createXCodeTaskServiceAdapter } from "./zcode-agent/zcodeTaskServiceAdapter.js";
-import { createXCodeSessionService } from "./zcode-session/zcodeSessionService.js";
-import { createXCodeTaskIndexSyncer } from "./zcode-agent/zcodeTaskIndexSyncer.js";
+import { resolveZCodeAgentPresentationSurface } from "./zcode-agent/zcodeAgentPresentationSurface.js";
+import { createZCodeTaskServiceAdapter } from "./zcode-agent/zcodeTaskServiceAdapter.js";
+import { createZCodeSessionService } from "./zcode-session/zcodeSessionService.js";
+import { createZCodeTaskIndexSyncer } from "./zcode-agent/zcodeTaskIndexSyncer.js";
 import { TaskIndexRepo } from "./session/taskIndexRepo.js";
 import { AutomationRepo } from "#src/session/automationRepo.js";
 import type { AppSettings } from "@zcode/shared";
@@ -560,7 +560,7 @@ import {
 } from "#src/oauth/oauthUnauthorizedRequest.js";
 import { createOAuthProviderLogoutHandler } from "./oauth/oauthProviderLogout.js";
 import { OAuthCredentialRepo } from "./oauth/repo/oauthCredentialRepo.js";
-import { readLegacyXCodeConfigProviders } from "./model-provider/legacyXCodeConfigProviderReader.js";
+import { readLegacyZCodeConfigProviders } from "./model-provider/legacyZCodeConfigProviderReader.js";
 import { resolveAccountTeamPlanRuntimeMaterial } from "./model-provider/accountProviderTeamPlanRequestKey.js";
 import { createAccountProviderCredentialStore } from "./model-provider/accountProviderCredentialStore.js";
 import { createAccountProviderCredentialService } from "./model-provider/accountProviderCredentialService.js";
@@ -576,7 +576,7 @@ import { AccountProviderApiClient } from "./model-provider/accountProviderApiCli
 import { createAccountProjectTokenClient } from "./model-provider/accountProjectTokenClient.js";
 import { AccountProviderApiKeyResolver } from "./model-provider/accountProviderApiKeyResolver.js";
 import { createProviderConfigRuntime } from "./model-provider/providerConfigRuntime.js";
-import { fetchXCodeBuiltinRemoteRelease } from "./model-provider/zcodeBuiltinRemoteConfig.js";
+import { fetchZCodeBuiltinRemoteRelease } from "./model-provider/zcodeBuiltinRemoteConfig.js";
 import {
   createProviderRuntimeFromConfigRuntime,
   type ProviderRuntime,
@@ -742,25 +742,25 @@ import {
   type ProviderFamilyDomain,
   type OAuthAccountAvailability,
   type ServiceAuthorityMode,
-  resolveRuntimeXCodeEndpointOrigin,
+  resolveRuntimeZCodeEndpointOrigin,
   resolveSafeTelemetryHostname,
   type BrowserBackendDescriptor,
   type BrowserClientMode,
   type BrowserCommand,
-  isXCodeCuaMcpCommand,
-  isXCodeCuaMcpPackageArg,
-  isXCodeCuaInternalFeatureEnabled,
+  isZCodeCuaMcpCommand,
+  isZCodeCuaMcpPackageArg,
+  isZCodeCuaInternalFeatureEnabled,
   ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
-  type XCodeAutomation,
-  type XCodeAutomationRun,
-  getCapturedXCodeAgentTelemetryEnv,
+  type ZCodeAutomation,
+  type ZCodeAutomationRun,
+  getCapturedZCodeAgentTelemetryEnv,
   ZCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV,
   ZAI_PROVIDER_ID,
   zcodeAccountAccessSchema,
   zcodeProviderAccountAccessSchema,
   ZCODE_VERSION,
   ZCODE_ENV,
-  buildRuntimeXCodeApiUrl,
+  buildRuntimeZCodeApiUrl,
 } from "@zcode/shared";
 
 // 这些 conversation-share 实现依赖 Node 文件系统；仅通过 @zcode/services/node 暴露，
@@ -905,10 +905,10 @@ export function shouldEnableDefaultCuaProductHelper(
     env?: NodeJS.ProcessEnv;
   } = {},
 ): boolean {
-  // CUA 已随正式版默认开启（isXCodeCuaInternalFeatureEnabled 默认 ON，仅显式 0/false/off 关闭；2026-08 注释更正——旧注释称默认关闭已过期）。显式开启后 macOS 使用既有产品 Helper，Windows 使用安装包内 runtime；
+  // CUA 已随正式版默认开启（isZCodeCuaInternalFeatureEnabled 默认 ON，仅显式 0/false/off 关闭；2026-08 注释更正——旧注释称默认关闭已过期）。显式开启后 macOS 使用既有产品 Helper，Windows 使用安装包内 runtime；
   // 两端都保持按需启动。关闭时不创建 host、不探测资源、不产生子进程或权限提示。
   const env = options.env ?? process.env;
-  if (!isXCodeCuaInternalFeatureEnabled(env)) return false;
+  if (!isZCodeCuaInternalFeatureEnabled(env)) return false;
   const platform = options.platform ?? process.platform;
   return platform === "darwin" || platform === "win32";
 }
@@ -1279,7 +1279,7 @@ export function resolveBundledCuaHelperAppPath(
 
 export { isOfficialCuaPluginEnabledForWorkspace };
 
-export function hasGlobalCliXCodeCuaServer(env: NodeJS.ProcessEnv = process.env): boolean {
+export function hasGlobalCliZCodeCuaServer(env: NodeJS.ProcessEnv = process.env): boolean {
   const home = env.HOME?.trim() || homedir();
   const configPath = join(home, ".xcode", "cli", "config.json");
   let parsed: unknown;
@@ -1292,11 +1292,11 @@ export function hasGlobalCliXCodeCuaServer(env: NodeJS.ProcessEnv = process.env)
   if (isRecord(parsed.features) && parsed.features.mcp === false) return false;
   if (!isRecord(parsed.mcp) || !isRecord(parsed.mcp.servers)) return false;
   return Object.entries(parsed.mcp.servers).some(([name, config]) =>
-    isGlobalCliXCodeCuaServer(name, config),
+    isGlobalCliZCodeCuaServer(name, config),
   );
 }
 
-function isGlobalCliXCodeCuaServer(name: string, config: unknown): boolean {
+function isGlobalCliZCodeCuaServer(name: string, config: unknown): boolean {
   if (!isRecord(config)) return false;
   if (config.enabled === false) return false;
   if (typeof config.type === "string" && config.type !== "stdio") return false;
@@ -1304,12 +1304,12 @@ function isGlobalCliXCodeCuaServer(name: string, config: unknown): boolean {
   // 与 desktop/services resolver 和 CLI bootstrap 共用 @zcode/shared 的单一事实源，避免第三处
   // 判定漂移：git/.git/本地路径形态的 zcode-cua 若这里漏判，全局 CLI env 注入不会带 broker
   // socket/token，agent 会回退成 Python/uvx 自己持有 macOS TCC（违反 product broker 边界）。
-  if (typeof config.command === "string" && isXCodeCuaMcpCommand(config.command)) {
+  if (typeof config.command === "string" && isZCodeCuaMcpCommand(config.command)) {
     return true;
   }
   return (
     Array.isArray(config.args) &&
-    config.args.some((arg) => typeof arg === "string" && isXCodeCuaMcpPackageArg(arg))
+    config.args.some((arg) => typeof arg === "string" && isZCodeCuaMcpPackageArg(arg))
   );
 }
 
@@ -1409,14 +1409,14 @@ export function createLocalServices(options: {
   ) => Promise<void> | void;
   /** desktop local host 在 manual run 落库后直接派发，不经过 scheduler 正常路径。 */
   onAutomationManualRunRequested?: (params: {
-    automation: XCodeAutomation;
-    run: XCodeAutomationRun;
+    automation: ZCodeAutomation;
+    run: ZCodeAutomationRun;
   }) => Promise<void>;
   /** 闲时任务翻 schedulable 后请求宿主立即唤醒 scheduler（desktop host 注入 parentPort 转发）。 */
   onOffPeakSchedulerWakeRequested?: () => void;
   // 注入点：默认 resolver 已能覆盖 dev/桌面/SSH 远端三类形态；
   // 测试或特殊宿主想强制走自定义 binary/参数时从这里注入。
-  zcodeAgentCommandResolver?: XCodeAgentCommandResolver;
+  zcodeAgentCommandResolver?: ZCodeAgentCommandResolver;
   /** Desktop Main 提前异步采集的本机 runtime 环境；Local Host 注入后不再同步启动 login shell。 */
   runtimeProcessEnvPatch?: Record<string, string>;
   /** 本地桌面上次 workspace 缺失时，仅用于 Agent 子进程 spawn.cwd 兜底。 */
@@ -1517,8 +1517,8 @@ export function createLocalServices(options: {
   const settingService = createObservableSettingService(
     options?.settingService ?? localSettings!.service,
   );
-  const resolveCurrentXCodeEndpointOrigin = async () =>
-    resolveRuntimeXCodeEndpointOrigin(process.env, {
+  const resolveCurrentZCodeEndpointOrigin = async () =>
+    resolveRuntimeZCodeEndpointOrigin(process.env, {
       overrideOrigin: (await settingService.get()).zcodeEndpointOrigin,
     });
   let invalidateProjectTokens = () => {};
@@ -1596,7 +1596,7 @@ export function createLocalServices(options: {
       isOAuthBusinessRequest({ input, credentialService }),
     resolveBusinessCredentialValidationRequest: (input, headers) =>
       resolveOAuthBusinessCredentialValidationRequest({ input, headers, credentialService }),
-    resolveXCodeEndpointOrigin: resolveCurrentXCodeEndpointOrigin,
+    resolveZCodeEndpointOrigin: resolveCurrentZCodeEndpointOrigin,
     resolveClientLanguage: options?.resolveClientLanguage,
   });
   const systemService = createSystemService();
@@ -1755,14 +1755,14 @@ export function createLocalServices(options: {
       environmentConfigRoot: resolveAppConfigDir(),
       platform: clientConfigPlatform,
       appVersion: ZCODE_VERSION,
-      resolveEndpointOrigin: resolveCurrentXCodeEndpointOrigin,
+      resolveEndpointOrigin: resolveCurrentZCodeEndpointOrigin,
       onRefreshResult: (event) => {
         if (event.result === "updated")
           providerConfigLog.info(undefined, "XCode Built-in CDN 配置已更新", event);
         else providerConfigLog.debug(undefined, "XCode Built-in 刷新检查", event);
       },
       fetchRelease: (endpointOrigin, signal) =>
-        fetchXCodeBuiltinRemoteRelease({
+        fetchZCodeBuiltinRemoteRelease({
           apiClient,
           resolveXcodeJwtToken: () => credentialService.load("zcodejwttoken"),
           endpointOrigin,
@@ -1771,7 +1771,7 @@ export function createLocalServices(options: {
           platform: clientConfigPlatform,
         }),
     },
-    onXCodeBuiltinRefreshError: (error) => {
+    onZCodeBuiltinRefreshError: (error) => {
       providerConfigLog.warn(undefined, "XCode Built-in Config 远端刷新失败", { error });
     },
     onPersonalConfigRecovery: (event) => {
@@ -1791,7 +1791,7 @@ export function createLocalServices(options: {
     },
     // 已发布 config.json 保存的是 XCode 用户配置；清理第三方 ACP 不能移除这条升级路径。
     // Repository 仅在新 Personal 配置不存在时导入，并保留旧文件以便回滚。
-    readLegacyProviders: () => readLegacyXCodeConfigProviders(),
+    readLegacyProviders: () => readLegacyZCodeConfigProviders(),
   });
   const accountProviderConfigSource = createAccountProviderConfigSource({
     loadSessionRevision: async () =>
@@ -1857,7 +1857,7 @@ export function createLocalServices(options: {
     },
   );
   let providerConnectivityAgentService:
-    | Pick<IXCodeAgentService, "testModelConnectivity">
+    | Pick<IZCodeAgentService, "testModelConnectivity">
     | undefined;
   setCodeBuddyAccountStore({
     load: (key) => credentialService.load(key),
@@ -1940,7 +1940,7 @@ export function createLocalServices(options: {
       // 与 marketingTouchService.query 同构：source 头跟随目标账号。
       ensureDeviceMidForAccountSync(accountRef);
       const headers = {
-        ...buildXCodeSourceHeaders({ accountRef }),
+        ...buildZCodeSourceHeaders({ accountRef }),
         Authorization: `Bearer ${token}`,
       };
       const url = new URL(ZCODE_MARKETING_TOUCH_URL);
@@ -2151,9 +2151,9 @@ export function createLocalServices(options: {
   const isCuaEnabledForContext = (context?: CuaProductMcpServerResolverContext): boolean =>
     // 保留 main 原有 gate 行为（避免回归）：dev/internal 特性开启时（ZCODE_CUA_DEV_MODE=1 或
     // ZCODE_CUA_PRODUCT_HELPER=1）即视为启用，不依赖 config.json 显式 enable——main 的 bootstrap
-    // 用 isXCodeCuaInternalFeatureEnabled 门控 bundled plugin，与 feat 的 workspace enablement 不同。
+    // 用 isZCodeCuaInternalFeatureEnabled 门控 bundled plugin，与 feat 的 workspace enablement 不同。
     // 生产路径（dev mode off）回落到官方插件 workspace enablement 判定（与 feat 一致）。
-    isXCodeCuaInternalFeatureEnabled(process.env) ||
+    isZCodeCuaInternalFeatureEnabled(process.env) ||
     isOfficialCuaPluginEnabledForWorkspace({
       env: process.env,
       workingDirectory: context?.workspacePath,
@@ -2776,7 +2776,7 @@ export function createLocalServices(options: {
   // primaryWindowCoordinator 创建并复用已有窗口，renderer 刷新复用原 Host。以后支持多个主窗口时，
   // 删除需要改由 main 跨 Host 协调（docs/git/worktree.md §8.3）。
   const worktreeRemovalGate = createWorktreeRemovalGate();
-  const zcodeAgentService = createXCodeAgentService({
+  const zcodeAgentService = createZCodeAgentService({
     credentialCipherProvider,
     runSessionOperation: (target, operation) =>
       worktreeRemovalGate.runSessionOperation(
@@ -2885,14 +2885,14 @@ export function createLocalServices(options: {
     ...(resolveDynamicWorkflowUserMode ? { resolveDynamicWorkflowUserMode } : {}),
     forwardDynamicWorkflowUserMode: options?.forwardDynamicWorkflowUserMode,
     commandResolver: options?.zcodeAgentCommandResolver,
-    presentationSurface: resolveXCodeAgentPresentationSurface({
+    presentationSurface: resolveZCodeAgentPresentationSurface({
       runtimeSurface: options?.agentTelemetry?.runtimeSurface,
       serviceAuthorityMode: options?.serviceAuthorityMode,
       desktopContextPromptEnabled,
     }),
     onAutomationManualRunRequested: options?.onAutomationManualRunRequested,
     // createLocalServices 虽然暴露了 reporter 注入点，旧装配却没有继续传给
-    // XCodeAgentProcessManager，导致 host 永远不向 main 上报 Agent spawn/exit，进程监控器
+    // ZCodeAgentProcessManager，导致 host 永远不向 main 上报 Agent spawn/exit，进程监控器
     // 因而看不到实际运行的 Agent，也无法验证只读到可写升级是否复用同一进程。
     processLifecycleReporter: options?.processLifecycleReporter,
     spawnFallbackCwd: options?.zcodeAgentSpawnFallbackCwd,
@@ -2957,12 +2957,12 @@ export function createLocalServices(options: {
     }),
     // host 是身份权威边界：provenance/origin 必须在这里再校验一次，不能只依赖 agent
     // adapter 的 fetch wrapper。判定实现与 CLI 侧共用 @zcode/shared 的同一份，避免分叉。
-    // origin 解析复用 resolveCurrentXCodeEndpointOrigin——与闲时任务同口径（含 settings
+    // origin 解析复用 resolveCurrentZCodeEndpointOrigin——与闲时任务同口径（含 settings
     // 覆盖），否则会出现"闲时任务能连、官方 MCP 连不上"。
     // dev 开关必须同样传入，否则本地自测会被 host 单方面拒绝。
     officialMcpTrustedOrigins: createOfficialMcpTrustedOriginRegistry({
       devTrustedOriginsRaw: process.env[OFFICIAL_MCP_DEV_TRUSTED_ORIGINS_ENV],
-      resolveXCodeApiOrigin: resolveCurrentXCodeEndpointOrigin,
+      resolveZCodeApiOrigin: resolveCurrentZCodeEndpointOrigin,
     }),
     cuaOperationStateReporter: shouldEnableCuaOperationStateReporter({
       serviceAuthorityMode: options?.serviceAuthorityMode,
@@ -3013,7 +3013,7 @@ export function createLocalServices(options: {
           }
         }
       }
-      const telemetryEnv = getCapturedXCodeAgentTelemetryEnv();
+      const telemetryEnv = getCapturedZCodeAgentTelemetryEnv();
       const telemetryConfigured = Boolean(
         telemetryEnv.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || telemetryEnv.OTEL_EXPORTER_OTLP_ENDPOINT,
       );
@@ -3034,7 +3034,7 @@ export function createLocalServices(options: {
         }),
         // 把 host 解析出的权威 origin（含 settings 覆盖）下发给 agent，否则 agent 侧只按
         // env 推导，test env + 自定义端点时两侧信任判定的输入分叉、官方 MCP 整体 fail closed。
-        ...buildAgentEndpointOriginEnv(await resolveCurrentXCodeEndpointOrigin()),
+        ...buildAgentEndpointOriginEnv(await resolveCurrentZCodeEndpointOrigin()),
         // Agent 模型请求的 X-Client-Language 默认取 Agent 进程 Intl（Dock 启动无 LANG 时回退 en-US），
         // 跟界面语言无关；这里把 Host 的实时界面语言按 spawn 时下发，切换语言后下一次启动 Agent 生效。
         // 远端 Host 不注入 resolveClientLanguage，保持远端 Intl 行为。
@@ -3051,7 +3051,7 @@ export function createLocalServices(options: {
         ...createNodeProviderRuntimePathEnv({
           // Built-in Active 路径按当前 Endpoint 隔离，不能通过同步的固定路径
           // getter 读取；Agent spawn 必须等待本轮 Endpoint Source 完成解析和物化。
-          zcodeBuiltinFilePath: await providerConfigRuntime.resolveXCodeBuiltinActiveFilePath(),
+          zcodeBuiltinFilePath: await providerConfigRuntime.resolveZCodeBuiltinActiveFilePath(),
           personalFilePath: join(resolveAppConfigDir(), PERSONAL_PROVIDER_CONFIG_FILE_NAME),
         }),
       };
@@ -3094,7 +3094,7 @@ export function createLocalServices(options: {
   // mapServiceEvent 路径，导致 task_complete 永远不会写回 sqlite，侧边栏 spinner 不停。
   // 在 services 层装配一个共享的 taskIndexRepo + syncer，session 任意入口都会唤醒
   // shadow 订阅，把 runtime 终态收敛进 sqlite。
-  const zcodeTaskIndexSyncer = createXCodeTaskIndexSyncer({
+  const zcodeTaskIndexSyncer = createZCodeTaskIndexSyncer({
     agentService: zcodeAgentService,
     taskIndexRepo,
   });
@@ -3137,7 +3137,7 @@ export function createLocalServices(options: {
   });
   const cuaProductMcpServerResolver =
     options?.cuaProductMcpServerResolver ?? defaultCuaProductMcpServerResolver;
-  const zcodeSessionService = createXCodeSessionService({
+  const zcodeSessionService = createZCodeSessionService({
     agentService: zcodeAgentService,
     taskIndexSyncer: zcodeTaskIndexSyncer,
     cuaProductMcpServerResolver,
@@ -3208,7 +3208,7 @@ export function createLocalServices(options: {
     afterChange: publishProjectChange,
   });
   // task wrapper 由 XCode task service adapter 提供；核心 session 状态由 XCode agent server 维护。
-  const zcodeTaskService = createXCodeTaskServiceAdapter({
+  const zcodeTaskService = createZCodeTaskServiceAdapter({
     zcodeAgentService,
     taskIndexRepo,
     taskIndexSyncer: zcodeTaskIndexSyncer,
@@ -3437,7 +3437,7 @@ export function createLocalServices(options: {
     // 分享运行时始终走真实 API；测试/Mock 场景应在 service 单测或 Web fixture 中显式注入，
     // 不能让开发环境默认生成仅存在于进程内存的 mock-share 链接。
     apiClient,
-    baseUrl: buildRuntimeXCodeApiUrl(process.env, "/api/v1"),
+    baseUrl: buildRuntimeZCodeApiUrl(process.env, "/api/v1"),
     tokenProvider: async (): Promise<string | null> => {
       const activeProvider = await oauthCredentialRepo.getActiveProvider();
       if (!activeProvider) {
@@ -3530,7 +3530,7 @@ export function createLocalServices(options: {
         isOAuthBusinessRequest({ input, credentialService }),
       resolveBusinessCredentialValidationRequest: (input, headers) =>
         resolveOAuthBusinessCredentialValidationRequest({ input, headers, credentialService }),
-      resolveXCodeEndpointOrigin: resolveCurrentXCodeEndpointOrigin,
+      resolveZCodeEndpointOrigin: resolveCurrentZCodeEndpointOrigin,
       resolveAccountRef: () => accountRef,
       resolveClientLanguage: options?.resolveClientLanguage,
     });
@@ -3569,7 +3569,7 @@ export function createLocalServices(options: {
       createVoiceInputService({
         apiClient,
         getToken: () => credentialService.load("zcodejwttoken"),
-        resolveOrigin: resolveCurrentXCodeEndpointOrigin,
+        resolveOrigin: resolveCurrentZCodeEndpointOrigin,
         createSocket: (url) => hostApiNetworkTransport.createWebSocket(url),
       }),
     )
@@ -3608,9 +3608,9 @@ export function createLocalServices(options: {
       },
     })
     .register(IBroadcastService, broadcastService)
-    .register(IXCodeTaskService, zcodeTaskService)
-    .register(IXCodeAgentService, zcodeAgentService)
-    .register(IXCodeSessionService, zcodeSessionService)
+    .register(IZCodeTaskService, zcodeTaskService)
+    .register(IZCodeAgentService, zcodeAgentService)
+    .register(IZCodeSessionService, zcodeSessionService)
     .register(IProjectService, projectService)
     .register(ITaskGroupService, taskGroupService)
     .register(IRemoteProjectService, remoteProjectService)
@@ -3657,7 +3657,7 @@ export function createLocalServices(options: {
         apiClient,
         resolveXcodeJwtToken: () => credentialService.load("zcodejwttoken"),
         resolveRequestContext: async () => ({
-          endpointOrigin: await resolveCurrentXCodeEndpointOrigin(),
+          endpointOrigin: await resolveCurrentZCodeEndpointOrigin(),
           appVersion: ZCODE_VERSION,
           platform: `${process.platform}-${process.arch}`,
         }),
@@ -3750,7 +3750,7 @@ export function createLocalServices(options: {
     .register(
       IHighspeedCardService,
       (() => {
-        const origin = resolveRuntimeXCodeEndpointOrigin(process.env);
+        const origin = resolveRuntimeZCodeEndpointOrigin(process.env);
         const rawMockScenario = process.env.ZCODE_HIGHSPEED_MOCK_SCENARIO;
         const mockScenarios = new Set<HighspeedMockScenario>([
           "hit-fast",
@@ -4153,9 +4153,9 @@ export function disposeServiceResources(services: ServiceCollection): void {
   // 这里集中调用各服务的本地 disposeAll 钩子，把“退出 app = 回收所有托管资源”落成机械动作。
   const disposableServices = [
     services.getOptional(ITerminalService),
-    services.getOptional(IXCodeTaskService),
-    services.getOptional(IXCodeAgentService),
-    services.getOptional(IXCodeSessionService),
+    services.getOptional(IZCodeTaskService),
+    services.getOptional(IZCodeAgentService),
+    services.getOptional(IZCodeSessionService),
     services.getOptional(IBotsService),
     services.getOptional(IFileWatcherService),
     services.getOptional(ISubagentsService),
@@ -4194,11 +4194,11 @@ export async function disposeServiceResourcesAndWait(services: ServiceCollection
   // 旧的同步 dispose 会在 host 退出时丢掉强杀 timer，导致 zcode-cli/app-server 变成孤儿进程。
   // CLI 的 EOF 宽限不能被云内容或终端清理消耗；先关闭 Agent admission 并完成进程回收。
   const disposableServices = [
-    services.getOptional(IXCodeAgentService),
+    services.getOptional(IZCodeAgentService),
     services.getOptional(ICloudContentService),
     services.getOptional(ITerminalService),
-    services.getOptional(IXCodeTaskService),
-    services.getOptional(IXCodeSessionService),
+    services.getOptional(IZCodeTaskService),
+    services.getOptional(IZCodeSessionService),
     services.getOptional(IBotsService),
     services.getOptional(IFileWatcherService),
     services.getOptional(ISubagentsService),
@@ -4291,7 +4291,7 @@ export async function createServerHostServices(options: {
   );
   if (!projectStorageHostId) throw new Error("Invalid Source Server storage identity");
   // Bug 原因：billing/balance 把 X-Device-Mid 当必填，而独立 Server 主机没有 Desktop main 写设备身份，
-  // buildXCodeSourceHeaders() 又只读不生成。原修复只放在旧 stdio entry，SSH/WSL/Docker 的 Core 与
+  // buildZCodeSourceHeaders() 又只读不生成。原修复只放在旧 stdio entry，SSH/WSL/Docker 的 Core 与
   // Lite HTTP 入口共用本装配却没有确保，首次 Start Plan 权益查询返回 400，Start 模型被判为不可用。
   // 收口到本装配，所有独立 Server 入口在创建 services 前得到本机自己的 deviceMid；失败只告警、不阻断启动、不伪造 ID。
   await ensureTelemetryDeviceMid().catch((error: unknown) => {

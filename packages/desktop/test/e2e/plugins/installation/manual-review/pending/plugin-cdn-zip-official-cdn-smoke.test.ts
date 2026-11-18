@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { XCodePluginInfo } from "@zcode/shared";
+import type { ZCodePluginInfo } from "@zcode/shared";
 import { clearAppData, getE2EAppDataPaths } from "#e2e/helpers/desktop-app";
 import {
   capturePluginManualReview,
@@ -91,7 +91,7 @@ describe("PLM-LC-007b Desktop real official CDN ZIP smoke", () => {
   });
 });
 
-function componentNames(plugin: XCodePluginInfo | undefined, kind: "command" | "skill"): string[] {
+function componentNames(plugin: ZCodePluginInfo | undefined, kind: "command" | "skill"): string[] {
   return (
     plugin?.components?.find((group) => group.kind === kind)?.items.map((item) => item.name) ?? []
   );

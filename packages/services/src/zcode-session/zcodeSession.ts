@@ -1,55 +1,55 @@
 import { ServiceChannels } from "@zcode/shared";
 import type {
   TraceId,
-  XCodeAgentMcpServer,
-  XCodeDeliveryKind,
-  XCodeMessageWithParts,
+  ZCodeAgentMcpServer,
+  ZCodeDeliveryKind,
+  ZCodeMessageWithParts,
   ModelSelection,
-  XCodePermissionRequestParams,
-  XCodeProviderRuntimeHeadersRequestParams,
-  XCodeUserInputRequestParams,
-  XCodeUserInputResponse,
-  XCodeSessionInfo,
-  XCodeSessionImportHistory,
-  XCodeSessionEvent,
-  XCodeSessionMode,
-  XCodeSessionPersistence,
-  XCodeSessionStateSnapshot,
-  XCodeStateUpdatedNotification,
-  XCodeWorkspacePresentation,
+  ZCodePermissionRequestParams,
+  ZCodeProviderRuntimeHeadersRequestParams,
+  ZCodeUserInputRequestParams,
+  ZCodeUserInputResponse,
+  ZCodeSessionInfo,
+  ZCodeSessionImportHistory,
+  ZCodeSessionEvent,
+  ZCodeSessionMode,
+  ZCodeSessionPersistence,
+  ZCodeSessionStateSnapshot,
+  ZCodeStateUpdatedNotification,
+  ZCodeWorkspacePresentation,
 } from "@zcode/shared";
 import { createServiceDescriptor } from "#src/descriptors.js";
 import type { ProviderRuntimeHeadersUiResponse } from "#src/zcode-agent/zcodeAgent.js";
 
-export interface XCodeSessionWorkspaceTarget {
+export interface ZCodeSessionWorkspaceTarget {
   workspacePath: string;
   workspaceIdentity?: string;
   remoteSessionId?: string;
 }
 
-export type XCodeSessionReadWorkspacePresentationParams = XCodeSessionWorkspaceTarget;
+export type ZCodeSessionReadWorkspacePresentationParams = ZCodeSessionWorkspaceTarget;
 
-export interface XCodeTaskTarget extends XCodeSessionWorkspaceTarget {
+export interface ZCodeTaskTarget extends ZCodeSessionWorkspaceTarget {
   sessionId: string;
 }
 
-export interface XCodeSessionCreateParams extends XCodeSessionWorkspaceTarget {
+export interface ZCodeSessionCreateParams extends ZCodeSessionWorkspaceTarget {
   /** 仅导入事务使用的预分配 ID；普通新会话继续由 Agent 分配。 */
   sessionId?: string;
   sessionTraceId?: TraceId;
   parentSessionId?: string;
-  mode?: XCodeSessionMode;
+  mode?: ZCodeSessionMode;
   model?: ModelSelection;
-  persistence?: XCodeSessionPersistence;
+  persistence?: ZCodeSessionPersistence;
   thoughtLevel?: string;
-  mcpServers?: XCodeAgentMcpServer[];
-  importedHistory?: XCodeSessionImportHistory;
+  mcpServers?: ZCodeAgentMcpServer[];
+  importedHistory?: ZCodeSessionImportHistory;
 }
 
-export interface XCodeSessionResumeParams extends XCodeTaskTarget {
+export interface ZCodeSessionResumeParams extends ZCodeTaskTarget {
   model?: ModelSelection;
   thoughtLevel?: string;
-  mcpServers?: XCodeAgentMcpServer[];
+  mcpServers?: ZCodeAgentMcpServer[];
   /**
    * 默认广播 resume 得到的历史快照，并让 shadow 订阅请求初始 snapshot。
    * 续聊发送前的 runtime 预恢复会关闭它，避免旧终态快照覆盖本地已开始的新输入运行态。
@@ -57,50 +57,50 @@ export interface XCodeSessionResumeParams extends XCodeTaskTarget {
   broadcastSnapshot?: boolean;
 }
 
-export interface XCodeSessionListParams extends XCodeSessionWorkspaceTarget {
+export interface ZCodeSessionListParams extends ZCodeSessionWorkspaceTarget {
   limit?: number;
 }
 
-export interface XCodeSessionReadParams extends XCodeTaskTarget {
-  deliveryKind?: XCodeDeliveryKind;
+export interface ZCodeSessionReadParams extends ZCodeTaskTarget {
+  deliveryKind?: ZCodeDeliveryKind;
   messageLimit?: number;
   afterSeq?: number;
 }
 
-export interface XCodeSessionMessagesParams extends XCodeTaskTarget {
+export interface ZCodeSessionMessagesParams extends ZCodeTaskTarget {
   afterMessageId?: string;
   limit?: number;
 }
 
-export interface XCodeSessionEventsParams extends XCodeTaskTarget {
+export interface ZCodeSessionEventsParams extends ZCodeTaskTarget {
   afterSeq?: number;
   limit?: number;
 }
 
-export interface XCodeSessionSetModelParams extends XCodeTaskTarget {
+export interface ZCodeSessionSetModelParams extends ZCodeTaskTarget {
   model: ModelSelection;
   expectedRevision?: number;
   persistAsWorkspaceLastUsed?: boolean;
 }
 
-export interface XCodeSessionSetThoughtLevelParams extends XCodeTaskTarget {
+export interface ZCodeSessionSetThoughtLevelParams extends ZCodeTaskTarget {
   thoughtLevel?: string;
   expectedRevision?: number;
   persistAsWorkspaceLastUsed?: boolean;
 }
 
-export interface XCodeSessionSetModeParams extends XCodeTaskTarget {
-  mode: XCodeSessionMode;
+export interface ZCodeSessionSetModeParams extends ZCodeTaskTarget {
+  mode: ZCodeSessionMode;
   expectedRevision?: number;
 }
 
-export interface XCodeSessionRespondProviderRuntimeHeadersParams extends XCodeTaskTarget {
+export interface ZCodeSessionRespondProviderRuntimeHeadersParams extends ZCodeTaskTarget {
   requestId: string;
   response: ProviderRuntimeHeadersUiResponse;
 }
 
-export interface XCodeSessionSubscribeParams extends XCodeTaskTarget {
-  deliveryKind: XCodeDeliveryKind;
+export interface ZCodeSessionSubscribeParams extends ZCodeTaskTarget {
+  deliveryKind: ZCodeDeliveryKind;
   afterSeq?: number;
   includeSnapshot?: boolean;
   eventCoalescing?: {
@@ -109,20 +109,20 @@ export interface XCodeSessionSubscribeParams extends XCodeTaskTarget {
   };
 }
 
-export type XCodeSessionServiceEvent =
-  | { type: "session.event"; event: XCodeSessionEvent }
-  | { type: "state.updated"; notification: XCodeStateUpdatedNotification }
-  | { type: "permission.request"; request: XCodePermissionRequestParams }
-  | { type: "userInput.request"; request: XCodeUserInputRequestParams }
+export type ZCodeSessionServiceEvent =
+  | { type: "session.event"; event: ZCodeSessionEvent }
+  | { type: "state.updated"; notification: ZCodeStateUpdatedNotification }
+  | { type: "permission.request"; request: ZCodePermissionRequestParams }
+  | { type: "userInput.request"; request: ZCodeUserInputRequestParams }
   | {
       type: "userInput.response";
       requestId: string;
-      response: XCodeUserInputResponse;
+      response: ZCodeUserInputResponse;
     }
-  | { type: "providerRuntimeHeaders.request"; request: XCodeProviderRuntimeHeadersRequestParams }
-  | { type: "snapshot"; snapshot: XCodeSessionStateSnapshot };
+  | { type: "providerRuntimeHeaders.request"; request: ZCodeProviderRuntimeHeadersRequestParams }
+  | { type: "snapshot"; snapshot: ZCodeSessionStateSnapshot };
 
-export interface XCodeSessionInitializeResult {
+export interface ZCodeSessionInitializeResult {
   available: boolean;
   workspaceKey: string;
   protocolName?: string;
@@ -132,41 +132,41 @@ export interface XCodeSessionInitializeResult {
   reasonCode?: "provider_not_ready";
 }
 
-export interface XCodeSessionWorkspaceRuntimeIdentity {
+export interface ZCodeSessionWorkspaceRuntimeIdentity {
   generation: number;
   identity: string;
   processId?: number;
   workspaceKey: string;
 }
 
-export interface IXCodeSessionService {
-  initializeWorkspace(params: XCodeSessionWorkspaceTarget): Promise<XCodeSessionInitializeResult>;
+export interface IZCodeSessionService {
+  initializeWorkspace(params: ZCodeSessionWorkspaceTarget): Promise<ZCodeSessionInitializeResult>;
   getWorkspaceRuntimeIdentity(
-    params: XCodeSessionWorkspaceTarget,
-  ): Promise<XCodeSessionWorkspaceRuntimeIdentity>;
+    params: ZCodeSessionWorkspaceTarget,
+  ): Promise<ZCodeSessionWorkspaceRuntimeIdentity>;
   readWorkspacePresentation(
-    params: XCodeSessionReadWorkspacePresentationParams,
-  ): Promise<XCodeWorkspacePresentation>;
-  createSession(params: XCodeSessionCreateParams): Promise<XCodeSessionStateSnapshot>;
-  resumeSession(params: XCodeSessionResumeParams): Promise<XCodeSessionStateSnapshot>;
-  listSessions(params: XCodeSessionListParams): Promise<XCodeSessionInfo[]>;
-  readSession(params: XCodeSessionReadParams): Promise<XCodeSessionStateSnapshot>;
-  readSessionMessages(params: XCodeSessionMessagesParams): Promise<XCodeMessageWithParts[]>;
-  readSessionEvents(params: XCodeSessionEventsParams): Promise<XCodeSessionEvent[]>;
-  promoteDeferredDraftSession(params: XCodeTaskTarget): Promise<void>;
-  closeSession(params: XCodeTaskTarget): Promise<void>;
-  closeDeferredDraftSession(params: XCodeTaskTarget): Promise<boolean>;
-  setModel(params: XCodeSessionSetModelParams): Promise<XCodeSessionStateSnapshot>;
-  setThoughtLevel(params: XCodeSessionSetThoughtLevelParams): Promise<XCodeSessionStateSnapshot>;
-  setMode(params: XCodeSessionSetModeParams): Promise<XCodeSessionStateSnapshot>;
+    params: ZCodeSessionReadWorkspacePresentationParams,
+  ): Promise<ZCodeWorkspacePresentation>;
+  createSession(params: ZCodeSessionCreateParams): Promise<ZCodeSessionStateSnapshot>;
+  resumeSession(params: ZCodeSessionResumeParams): Promise<ZCodeSessionStateSnapshot>;
+  listSessions(params: ZCodeSessionListParams): Promise<ZCodeSessionInfo[]>;
+  readSession(params: ZCodeSessionReadParams): Promise<ZCodeSessionStateSnapshot>;
+  readSessionMessages(params: ZCodeSessionMessagesParams): Promise<ZCodeMessageWithParts[]>;
+  readSessionEvents(params: ZCodeSessionEventsParams): Promise<ZCodeSessionEvent[]>;
+  promoteDeferredDraftSession(params: ZCodeTaskTarget): Promise<void>;
+  closeSession(params: ZCodeTaskTarget): Promise<void>;
+  closeDeferredDraftSession(params: ZCodeTaskTarget): Promise<boolean>;
+  setModel(params: ZCodeSessionSetModelParams): Promise<ZCodeSessionStateSnapshot>;
+  setThoughtLevel(params: ZCodeSessionSetThoughtLevelParams): Promise<ZCodeSessionStateSnapshot>;
+  setMode(params: ZCodeSessionSetModeParams): Promise<ZCodeSessionStateSnapshot>;
   respondProviderRuntimeHeaders(
-    params: XCodeSessionRespondProviderRuntimeHeadersParams,
+    params: ZCodeSessionRespondProviderRuntimeHeadersParams,
   ): Promise<void>;
   // M5 删波次 2：onDynamicSessionEvent（旧 session/subscribe 词表的 renderer 订阅面）
   // 已删除——v4 UI 走 agentService 的 conversation/sessions-index 帧通道，
   // 该方法在 renderer 侧已无任何调用者（grep packages/ui packages/desktop 为零）。
 }
 
-export const IXCodeSessionService = createServiceDescriptor<IXCodeSessionService>(
-  ServiceChannels.XCodeSession,
+export const IZCodeSessionService = createServiceDescriptor<IZCodeSessionService>(
+  ServiceChannels.ZCodeSession,
 );

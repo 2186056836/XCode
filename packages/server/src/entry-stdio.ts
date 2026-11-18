@@ -17,9 +17,9 @@ import { registerStdioProcessLifecycle } from "./stdio-lifecycle.js";
 import { createStdioServices } from "./stdioServices.js";
 import { ensureRemoteServerDeviceMid } from "./stdioDeviceMid.js";
 import {
-  materializeBundledXCodeBuiltinProviderConfig,
-  readBundledXCodeBuiltinProviderConfig,
-} from "./bundledXCodeBuiltinProviderConfig.js";
+  materializeBundledZCodeBuiltinProviderConfig,
+  readBundledZCodeBuiltinProviderConfig,
+} from "./bundledZCodeBuiltinProviderConfig.js";
 
 // In stdio mode, all logging goes to stderr
 const log = (...args: unknown[]) =>
@@ -66,9 +66,9 @@ async function main() {
 
   // Phase 3: Initialize services and start stdio RPC server
   let topicResourceChannel: IChannel | undefined;
-  const zcodeBuiltinProviderConfigFilePath = await materializeBundledXCodeBuiltinProviderConfig({
+  const zcodeBuiltinProviderConfigFilePath = await materializeBundledZCodeBuiltinProviderConfig({
     environmentConfigRoot: getAppConfigDir(),
-    content: readBundledXCodeBuiltinProviderConfig(),
+    content: readBundledZCodeBuiltinProviderConfig(),
   });
   await migrateApplicationStorage(await createSettingService().get());
   const { authorityModeParseResult, services } = await createStdioServices({

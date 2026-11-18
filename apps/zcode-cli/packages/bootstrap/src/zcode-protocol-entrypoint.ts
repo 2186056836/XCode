@@ -1,8 +1,8 @@
 import { createNodePluginAdapter } from "@zcode/adapters/plugins";
 import { createOfficialPluginPreparation } from "./app/bundled-plugins.js";
-import { resolveXCodePlugins } from "./plugins.js";
+import { resolveZCodePlugins } from "./plugins.js";
 import { createMcpTransportFetch } from "@zcode/adapters";
-import { createSharedXCodeCredentialStore } from "@zcode/adapters/auth";
+import { createSharedZCodeCredentialStore } from "@zcode/adapters/auth";
 import { createCredentialCipherBridge } from "@zcode/shared/credential-security";
 import { credentialCipherReplySchema, zcodeProtocolMethods } from "@zcode/shared";
 import { createConfig, resolvePath } from "@zcode/adapters/config";
@@ -17,15 +17,15 @@ import {
 } from "@zcode/adapters/mcp";
 import {
   zcodeProtocolNotifications,
-  type XCodeMcpResourceSample,
-  type XCodeMcpTelemetryEvent,
+  type ZCodeMcpResourceSample,
+  type ZCodeMcpTelemetryEvent,
 } from "@zcode/shared";
 import { createNodeSessionDataFiles, type SqliteSessionStore } from "@zcode/adapters/storage";
 import { traceContextToLogContext, createRootTraceContext } from "@zcode/contracts";
 import type { McpPort, ModelSelection } from "@zcode/contracts";
 import type { PresentationSurface } from "@zcode/core";
-import type { RunXCodeProtocolAgentOptions, XCodeAppOptions } from "./app/types.js";
-import { createXCodeApp } from "./app/create-app.js";
+import type { RunZCodeProtocolAgentOptions, ZCodeAppOptions } from "./app/types.js";
+import { createZCodeApp } from "./app/create-app.js";
 import {
   createNodeReplBrowserBroker,
   type NodeReplBrowserBroker,
@@ -41,7 +41,7 @@ import { startProcessProviderRegistryRuntime } from "./app/process-provider-regi
 import { scheduleStartupLogRetentionCleanup } from "./log-retention.js";
 import { resolveProcessProviderEndpointRoutingPort } from "./provider-endpoint-routing.js";
 import { StartupTimer, startupNow } from "./startup-logging.js";
-import { installXCodeProtocolAiSdkWarningLogger } from "./zcode-protocol/ai-sdk-warning-logger.js";
+import { installZCodeProtocolAiSdkWarningLogger } from "./zcode-protocol/ai-sdk-warning-logger.js";
 import {
   createOfficialCommandAuthHeadersPort,
   createOfficialMcpAuthHeadersPort,
@@ -55,20 +55,20 @@ import {
   createOfficialMcpTrustedOriginRegistry,
   OFFICIAL_MCP_DEV_TRUSTED_ORIGINS_ENV,
   ZCODE_WORKSPACE_IDENTITY_ENV,
-  resolveRuntimeXCodeEndpointOrigin,
+  resolveRuntimeZCodeEndpointOrigin,
 } from "@zcode/shared";
-import { XCodeProtocolAgentServer } from "./zcode-protocol/server.js";
-import { XCodeProtocolNdjsonConnection } from "./zcode-protocol/transport.js";
+import { ZCodeProtocolAgentServer } from "./zcode-protocol/server.js";
+import { ZCodeProtocolNdjsonConnection } from "./zcode-protocol/transport.js";
 import { cleanupProtocolRuntime } from "./zcode-protocol/runtime-cleanup.js";
 import { startProtocolResourceSampler } from "./zcode-protocol/resource-sampler.js";
 import { acquireProtocolStartupResource } from "./zcode-protocol/startup-resource.js";
-import { prepareXCodeTelemetryEnv, shutdownXCodeTelemetry } from "./telemetry-bootstrap.js";
-import type { XCodeProcessResourceSampler } from "./process-resource-sampler.js";
+import { prepareZCodeTelemetryEnv, shutdownZCodeTelemetry } from "./telemetry-bootstrap.js";
+import type { ZCodeProcessResourceSampler } from "./process-resource-sampler.js";
 
 export function applyProtocolPresentationSurface(
-  options: Omit<XCodeAppOptions, "providerRegistry">,
+  options: Omit<ZCodeAppOptions, "providerRegistry">,
   presentationSurface: PresentationSurface,
-): Omit<XCodeAppOptions, "providerRegistry"> {
+): Omit<ZCodeAppOptions, "providerRegistry"> {
   return {
     ...options,
     runtimeConfig: {
@@ -84,10 +84,10 @@ export function applyProtocolPresentationSurface(
  * 旧 workspace snapshot 不再参与 Provider 和 Model 执行。
  */
 export function applyProtocolProviderRegistry(
-  options: Omit<XCodeAppOptions, "providerRegistry">,
-  providerRegistry: XCodeAppOptions["providerRegistry"],
+  options: Omit<ZCodeAppOptions, "providerRegistry">,
+  providerRegistry: ZCodeAppOptions["providerRegistry"],
   configuredDefaultModelSelection?: ModelSelection,
-): XCodeAppOptions {
+): ZCodeAppOptions {
   return {
     ...options,
     providerRegistry,
@@ -95,8 +95,8 @@ export function applyProtocolProviderRegistry(
   };
 }
 
-export async function runXCodeProtocolAgent(
-  options: RunXCodeProtocolAgentOptions = {},
+export async function runZCodeProtocolAgent(
+  options: RunZCodeProtocolAgentOptions = {},
 ): Promise<void> {
   if (options.prepareStorageOnly) {
     const config = createConfig({ env: options.env });
@@ -121,7 +121,7 @@ export async function runXCodeProtocolAgent(
     ...traceContextToLogContext(traceContext),
     module: "bootstrap.zcode_protocol",
   });
-  installXCodeProtocolAiSdkWarningLogger(logger);
+  installZCodeProtocolAiSdkWarningLogger(logger);
   const startupTimer = new StartupTimer(
     logger,
     {
@@ -144,16 +144,16 @@ export async function runXCodeProtocolAgent(
   let pluginDiscovery: ReturnType<typeof createNodePluginAdapter> | undefined;
   let pluginPrewarm: Promise<void> | undefined;
   let sessionStore: SqliteSessionStore | undefined;
-  let serverForCleanup: XCodeProtocolAgentServer | undefined;
+  let serverForCleanup: ZCodeProtocolAgentServer | undefined;
   let nodeReplBrowserBroker: NodeReplBrowserBroker | undefined;
   let officialCommandEndpoint: OfficialCommandEndpoint | undefined;
   let mcpConnectionPool: McpConnectionPool | undefined;
   let credentialCipherBridge: ReturnType<typeof createProtocolCredentialCipher> | undefined;
   let mcpPort: McpPort | undefined;
   let mcpTelemetryTracker: McpTelemetryTracker | undefined;
-  let mcpResourceSink: ((samples: XCodeMcpResourceSample[]) => void) | undefined;
-  let mcpTelemetrySink: ((event: XCodeMcpTelemetryEvent) => void) | undefined;
-  let processResourceSampler: XCodeProcessResourceSampler | undefined;
+  let mcpResourceSink: ((samples: ZCodeMcpResourceSample[]) => void) | undefined;
+  let mcpTelemetrySink: ((event: ZCodeMcpTelemetryEvent) => void) | undefined;
+  let processResourceSampler: ZCodeProcessResourceSampler | undefined;
   let providerRegistryRuntime:
     | Awaited<ReturnType<typeof startProcessProviderRegistryRuntime>>
     | undefined;
@@ -180,7 +180,7 @@ export async function runXCodeProtocolAgent(
         getCliStorageRoot(resolvePath(configResult.config.storage.dir)),
       ),
     });
-    pluginPrewarm = resolveXCodePlugins({
+    pluginPrewarm = resolveZCodePlugins({
       pluginDiscovery,
       workspaceIdentity: (options.env ?? process.env)[ZCODE_WORKSPACE_IDENTITY_ENV]?.trim(),
       env: options.env,
@@ -217,9 +217,9 @@ export async function runXCodeProtocolAgent(
     const telemetryEnv = await acquireProtocolStartupResource({
       signal: options.lifecycle?.signal,
       logger,
-      disposeLate: () => shutdownXCodeTelemetry(),
+      disposeLate: () => shutdownZCodeTelemetry(),
       create: () =>
-        prepareXCodeTelemetryEnv(runtimeEnv, {
+        prepareZCodeTelemetryEnv(runtimeEnv, {
           cliVersion: options.version,
           productVersion: options.env?.ZCODE_APP_VERSION,
           runtimeSurface,
@@ -239,7 +239,7 @@ export async function runXCodeProtocolAgent(
     // 返回结构化权限错误，stdio 则把 reason 下发给插件。连接与工具发现都不受影响。
     let officialMcpAuthContext: OfficialMcpAuthRequestContext | undefined;
     credentialCipherBridge = createProtocolCredentialCipher(() => officialMcpAuthContext);
-    const mcpCredentialStore = createSharedXCodeCredentialStore({
+    const mcpCredentialStore = createSharedZCodeCredentialStore({
       env: options.env,
       cipher: credentialCipherBridge.cipher,
     });
@@ -254,9 +254,9 @@ export async function runXCodeProtocolAgent(
         sourceTitle: "electron",
       });
     // stdio 官方 MCP 没有 url 可供校验，targetOrigin 只能由宿主给出。
-    // 与下面 trustedOrigins 的 resolveXCodeApiOrigin 必须是同一个表达式，否则两侧判定分叉。
-    const resolveXCodeApiOrigin = (): string =>
-      resolveRuntimeXCodeEndpointOrigin(options.env ?? process.env);
+    // 与下面 trustedOrigins 的 resolveZCodeApiOrigin 必须是同一个表达式，否则两侧判定分叉。
+    const resolveZCodeApiOrigin = (): string =>
+      resolveRuntimeZCodeEndpointOrigin(options.env ?? process.env);
     const workspaceIdentity = (options.env ?? process.env)[ZCODE_WORKSPACE_IDENTITY_ENV]?.trim();
     const officialMcpAuth = {
       authHeadersPort: createOfficialMcpAuthHeadersPort({
@@ -279,13 +279,13 @@ export async function runXCodeProtocolAgent(
           };
         },
       }),
-      resolveXCodeApiOrigin,
+      resolveZCodeApiOrigin,
       ...(workspaceIdentity ? { workspaceIdentity } : {}),
       // 信任判定只看一条：目标 origin 等于当前 XCode API origin（https）。pluginId 不参与。
       // origin 运行时解析（跟随 production/test 与自建环境），不硬编码域名。
       trustedOrigins: createOfficialMcpTrustedOriginRegistry({
         devTrustedOriginsRaw: (options.env ?? process.env)[OFFICIAL_MCP_DEV_TRUSTED_ORIGINS_ENV],
-        resolveXCodeApiOrigin,
+        resolveZCodeApiOrigin,
       }),
     };
     // 官方插件命令进程的代理端点（技术方案 5.8）：CLI 不持有凭证，端点每个请求向 host 现取
@@ -296,7 +296,7 @@ export async function runXCodeProtocolAgent(
         resolveContext: () => officialMcpAuthContext,
         logger,
       }).resolveHeaders,
-      resolveXCodeApiOrigin,
+      resolveZCodeApiOrigin,
       appVersion: endpointEnv.ZCODE_APP_VERSION?.trim() || options.version,
       fetch: createMcpTransportFetch({ env: endpointEnv, network: configResult.config.network }),
       logger,
@@ -346,9 +346,9 @@ export async function runXCodeProtocolAgent(
       activeProviderRegistryRuntime.runtime.registryService,
     );
     options.lifecycle?.signal.throwIfAborted();
-    const server = (serverForCleanup = new XCodeProtocolAgentServer({
-      createXCodeApp: (appOptions = {}) =>
-        createXCodeApp({
+    const server = (serverForCleanup = new ZCodeProtocolAgentServer({
+      createZCodeApp: (appOptions = {}) =>
+        createZCodeApp({
           ...applyProtocolProviderRegistry(
             applyProtocolPresentationSurface(appOptions, presentationSurface),
             activeProviderRegistryRuntime.runtime.registryService,
@@ -419,7 +419,7 @@ export async function runXCodeProtocolAgent(
         create: () => broker.ready,
       });
     }
-    const connection = new XCodeProtocolNdjsonConnection({
+    const connection = new ZCodeProtocolNdjsonConnection({
       signal: options.lifecycle?.signal,
       clearPostResponseMessages: () => server.clearPostResponseMessages(),
       handleMessage: (message) => server.handleMessage(message),

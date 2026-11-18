@@ -2,7 +2,7 @@ import { useRemoteProjectPresentationFacts } from "@/hooks/RemoteProjectPresenta
 import { parseRemoteWorkspaceIdentity } from "@zcode/shared";
 import { cn } from "@/components/lib/utils.js";
 import { useRemoteDevicePresentationInput } from "@/hooks/useSourceServerStatuses.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { resolveRemoteConnectionPresentation } from "@/lib/remoteConnectionPresentation.js";
 import {
   resolveTaskSourceLabel,
@@ -16,7 +16,7 @@ export function RemoteTaskDeviceLabel({
   task: TaskSourceAttributionInput;
   className?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const sourceServerId =
     task.sourceServerId ??
     parseRemoteWorkspaceIdentity(task.workspaceIdentity ?? "")?.sourceServerId;

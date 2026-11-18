@@ -40,7 +40,7 @@ export function seedLegacyProviderTasks(db: DatabaseSync, workspacePath: string)
 
 /** 先写旧版数据，再让真实建窗前迁移建立 position；不能在启动后伪造迁移结果。 */
 export async function seedProjectUpgradeOrderFixture(home: string, settingsFile: string) {
-  const workspace = join(home, "XCodeProject");
+  const workspace = join(home, "ZCodeProject");
   const root = join(workspace, ".zcode-e2e", "project-upgrade-order");
   const defaultPath = join(home, ".xcode", "workspace", "default");
   await mkdir(defaultPath, { recursive: true });

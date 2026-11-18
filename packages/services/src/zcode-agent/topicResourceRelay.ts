@@ -5,8 +5,8 @@ import {
   zcodeTopicResourceRelayKeySchema,
   zcodeTopicResourceRelayChunkRequestSchema,
   zcodeTopicResourceRelayMetadataSchema,
-  type XCodeTopicResourceRelayRequest,
-  type XCodePromptAttachment,
+  type ZCodeTopicResourceRelayRequest,
+  type ZCodePromptAttachment,
 } from "@zcode/shared";
 import { PROTOCOL_V4_LIMITS } from "@zcode/shared/zcode-protocol-v4";
 
@@ -14,14 +14,14 @@ export interface TopicResourceRelayDependencies {
   reply?(
     request: import("@zcode/shared").ChannelReplyHostRequest,
   ): Promise<import("@zcode/shared").ChannelReplyResult>;
-  validate(request: XCodeTopicResourceRelayRequest, signal: AbortSignal): Promise<void>;
+  validate(request: ZCodeTopicResourceRelayRequest, signal: AbortSignal): Promise<void>;
   read(
-    request: XCodeTopicResourceRelayRequest,
+    request: ZCodeTopicResourceRelayRequest,
     signal: AbortSignal,
-  ): Promise<XCodePromptAttachment>;
+  ): Promise<ZCodePromptAttachment>;
 }
 interface Transfer {
-  request: XCodeTopicResourceRelayRequest;
+  request: ZCodeTopicResourceRelayRequest;
   controller: AbortController;
   timer: ReturnType<typeof setTimeout>;
   data?: Buffer;

@@ -25,7 +25,7 @@ import { DEFAULT_EXPERT_WORKFLOW_STRATEGY } from "@zcode/core";
 import {
   createNodeProviderRuntimePathEnv,
   encodeProviderConfigFile,
-  serializeXCodeBuiltinRelease,
+  serializeZCodeBuiltinRelease,
 } from "@zcode/provider-node";
 import { ModelConfigRules, ProviderConfigMap, ProviderTemplateMap } from "@zcode/provider";
 import { zcodeStorageStartupStateSchema } from "@zcode/shared";
@@ -46,11 +46,11 @@ import {
   type TargetChangedPayload,
   type WorkflowRunSnapshot,
 } from "@zcode/contracts";
-import { resolveLatestSession, runXCodeProtocolAgent } from "../src/index.js";
+import { resolveLatestSession, runZCodeProtocolAgent } from "../src/index.js";
 import { ProductProjection } from "../src/zcode-protocol-v4/product-projection.js";
 import { synthesizeEventsFromMessages } from "../src/zcode-protocol-v4/transcript-hydration.js";
 import {
-  createRegistryBackedTestApp as createXCodeApp,
+  createRegistryBackedTestApp as createZCodeApp,
   createTestProviderRegistry,
 } from "./helpers/registry-backed-test-app.js";
 import { readLogEntries } from "./session-persistence-fixture.js";
@@ -87,7 +87,7 @@ describe("session persistence", () => {
         withContext: (context) => loggerFor(context),
       };
       try {
-        const app = await createXCodeApp({
+        const app = await createZCodeApp({
           env: { ZCODE_STORAGE_DIR: tempRoot },
           loggerFactory,
           ...(modelSelectionMode ? { modelSelectionMode } : {}),
@@ -151,7 +151,7 @@ describe("session persistence", () => {
     const sessionId = createSessionId("highspeed-message-metadata");
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         env: {},
         modelExecutor: {
           async generateText() {
@@ -219,7 +219,7 @@ describe("session persistence", () => {
     const primeSpy = vi.spyOn(artifactStore, "primeMediaAttachmentPath");
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         artifactStore,
         env: {},
         runtimeConfig: { workingDirectory: process.cwd() },
@@ -305,7 +305,7 @@ describe("session persistence", () => {
     const messageId = createMessageId();
     const persistedBytes = Uint8Array.from([1, 2, 3, 4]);
     const changedOriginalBytes = Uint8Array.from([9, 8, 7, 6]);
-    let app: Awaited<ReturnType<typeof createXCodeApp>> | undefined;
+    let app: Awaited<ReturnType<typeof createZCodeApp>> | undefined;
 
     try {
       await store.createSession({
@@ -317,7 +317,7 @@ describe("session persistence", () => {
         version: "test",
       });
       await writeFile(originalPath, changedOriginalBytes);
-      app = await createXCodeApp({
+      app = await createZCodeApp({
         artifactStore,
         bootstrapModelConfig: {
           main: {
@@ -448,7 +448,7 @@ describe("session persistence", () => {
     );
     const store = await createSqliteSessionStore({ dbPath: ":memory:" });
     const requests: Array<Array<{ content: unknown; role: string }>> = [];
-    let app: Awaited<ReturnType<typeof createXCodeApp>> | undefined;
+    let app: Awaited<ReturnType<typeof createZCodeApp>> | undefined;
 
     try {
       await mkdir(dirname(enabledSkillPath), { recursive: true });
@@ -482,7 +482,7 @@ describe("session persistence", () => {
         }),
       );
 
-      app = await createXCodeApp({
+      app = await createZCodeApp({
         env: {
           HOME: tempRoot,
           ZCODE_STORAGE_DIR: tempRoot,
@@ -531,7 +531,7 @@ describe("session persistence", () => {
     const requests: string[][] = [];
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         env: {},
         modelExecutor: {
           async generateText(request) {
@@ -580,7 +580,7 @@ describe("session persistence", () => {
     const requests: string[][] = [];
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         env: {},
         modelExecutor: {
           async generateText(request) {
@@ -637,7 +637,7 @@ describe("session persistence", () => {
     const sessionId = createSessionId("bootstrap-session-version");
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         env: {
           ZCODE_STORAGE_DIR: tempRoot,
         },
@@ -720,7 +720,7 @@ describe("session persistence", () => {
     const store = await createSqliteSessionStore({ dbPath });
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         env: {
           ZCODE_STORAGE_DIR: tempRoot,
         },
@@ -778,7 +778,7 @@ describe("session persistence", () => {
     const queueItemId = "queue-goal-visible-prompt";
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         env: {
           ZCODE_STORAGE_DIR: tempRoot,
         },
@@ -912,7 +912,7 @@ describe("session persistence", () => {
     const resolveInitialBashShellSelection = vi.fn(async () => hostSelection);
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         env: {
           ZCODE_STORAGE_DIR: tempRoot,
         },
@@ -960,7 +960,7 @@ describe("session persistence", () => {
     const replacementDisplayText = `/GoAl replace ${replacementObjective}`;
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         env: {
           ZCODE_STORAGE_DIR: tempRoot,
         },
@@ -1041,7 +1041,7 @@ describe("session persistence", () => {
     const store = await createSqliteSessionStore({ dbPath });
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         env: {
           ZCODE_STORAGE_DIR: tempRoot,
         },
@@ -1116,8 +1116,8 @@ describe("session persistence", () => {
 
     try {
       let switched = false;
-      let app: Awaited<ReturnType<typeof createXCodeApp>>;
-      app = await createXCodeApp({
+      let app: Awaited<ReturnType<typeof createZCodeApp>>;
+      app = await createZCodeApp({
         configuredDefaultModelSelection: {
           providerId: "zai",
           modelId: "glm-main",
@@ -1212,7 +1212,7 @@ describe("session persistence", () => {
         }),
       );
 
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         env: {
           PATH: shellDir,
           SHELL: join(shellDir, "fish"),
@@ -1303,7 +1303,7 @@ describe("session persistence", () => {
 
     try {
       await workflowStore.writeSnapshot(snapshot);
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         env: {
           ZCODE_STORAGE_DIR: tempRoot,
         },
@@ -1378,7 +1378,7 @@ describe("session persistence", () => {
 
     try {
       await expect(
-        createXCodeApp({
+        createZCodeApp({
           env: {
             ZCODE_SESSION_DB_PATH: dbPath,
           },
@@ -1413,7 +1413,7 @@ describe("session persistence", () => {
 
     try {
       await expect(
-        runXCodeProtocolAgent({
+        runZCodeProtocolAgent({
           env: {
             ...providerEnv,
             ZCODE_SESSION_DB_PATH: dbPath,
@@ -1439,7 +1439,7 @@ describe("session persistence", () => {
     const providerEnv = await createProtocolProviderEnv(tempRoot);
 
     try {
-      await runXCodeProtocolAgent({
+      await runZCodeProtocolAgent({
         env: {
           ...providerEnv,
           ZCODE_LOG_DIR: join(tempRoot, "log"),
@@ -1475,7 +1475,7 @@ describe("session persistence", () => {
     const providerEnv = await createProtocolProviderEnv(tempRoot);
 
     try {
-      await runXCodeProtocolAgent({
+      await runZCodeProtocolAgent({
         env: {
           ...providerEnv,
           ZCODE_LOG_DIR: logDir,
@@ -1518,7 +1518,7 @@ describe("session persistence", () => {
       await mkdir(join(workspace, ".git"));
       await writeFile(join(workspace, "AGENTS.md"), "Always follow marker: project-rule-314.\n");
 
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {
@@ -1608,7 +1608,7 @@ describe("session persistence", () => {
     } satisfies ExecutionPort;
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {
@@ -1728,7 +1728,7 @@ describe("session persistence", () => {
     const liveEventTypes: string[] = [];
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {},
@@ -1781,7 +1781,7 @@ describe("session persistence", () => {
     let capturedMessages: Array<{ content: string; role: string }> = [];
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {},
@@ -1846,7 +1846,7 @@ describe("session persistence", () => {
     let secondRequestMessages: Array<{ content: string; role: string }> = [];
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {},
@@ -1918,7 +1918,7 @@ describe("session persistence", () => {
     let modelCallCount = 0;
 
     try {
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {},
@@ -1990,7 +1990,7 @@ describe("session persistence", () => {
     const store = await createSqliteSessionStore({ dbPath: join(tempRoot, "session.sqlite") });
 
     try {
-      const firstApp = await createXCodeApp({
+      const firstApp = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {},
@@ -2017,7 +2017,7 @@ describe("session persistence", () => {
 
       await firstApp.setMode("yolo");
 
-      const restoredApp = await createXCodeApp({
+      const restoredApp = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {},
@@ -2043,7 +2043,7 @@ describe("session persistence", () => {
       });
       expect(restoredApp.getMode()).toBe("yolo");
 
-      const otherProjectApp = await createXCodeApp({
+      const otherProjectApp = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {},
@@ -2069,7 +2069,7 @@ describe("session persistence", () => {
       });
       expect(otherProjectApp.getMode()).toBe("build");
 
-      const cliOverrideApp = await createXCodeApp({
+      const cliOverrideApp = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {},
@@ -2138,7 +2138,7 @@ describe("session persistence", () => {
     };
 
     try {
-      const firstApp = await createXCodeApp({
+      const firstApp = await createZCodeApp({
         env: { ZCODE_STORAGE_DIR: tempRoot },
         modelExecutor: createWriteModelExecutor(firstFile, "hello") as never,
         runtimeConfig: {
@@ -2153,7 +2153,7 @@ describe("session persistence", () => {
       await firstApp.close?.();
       expect(await readFile(firstFile, "utf8")).toBe("hello");
 
-      const resumedApp = await createXCodeApp({
+      const resumedApp = await createZCodeApp({
         env: { ZCODE_STORAGE_DIR: tempRoot },
         modelExecutor: createWriteModelExecutor(secondFile, "world") as never,
         resume: true,
@@ -2189,7 +2189,7 @@ describe("session persistence", () => {
       await writeFile(zshPath, "#!/bin/sh\n");
       await chmod(zshPath, 0o755);
 
-      const app = await createXCodeApp({
+      const app = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {
@@ -2246,7 +2246,7 @@ describe("session persistence", () => {
       await chmod(oldZshPath, 0o755);
       await chmod(newBashPath, 0o755);
 
-      const firstApp = await createXCodeApp({
+      const firstApp = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {
@@ -2284,7 +2284,7 @@ describe("session persistence", () => {
         path: newBashPath,
         source: "user-config",
       };
-      const secondApp = await createXCodeApp({
+      const secondApp = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {
@@ -2335,7 +2335,7 @@ describe("session persistence", () => {
     const sessionId = createSessionId("resume-transcript");
 
     try {
-      const firstApp = await createXCodeApp({
+      const firstApp = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {},
@@ -2361,7 +2361,7 @@ describe("session persistence", () => {
 
       await firstApp.submitPrompt("first prompt");
 
-      const resumedApp = await createXCodeApp({
+      const resumedApp = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {},
@@ -2434,7 +2434,7 @@ describe("session persistence", () => {
     };
 
     try {
-      const firstApp = await createXCodeApp({
+      const firstApp = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {},
@@ -2461,7 +2461,7 @@ describe("session persistence", () => {
 
       await firstApp.submitPrompt("first prompt");
 
-      const secondApp = await createXCodeApp({
+      const secondApp = await createZCodeApp({
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {},
@@ -2525,7 +2525,7 @@ async function createProtocolProviderEnv(root: string): Promise<Record<string, s
   const zcodeBuiltinFilePath = join(root, "zcode-builtin.json");
   const personalFilePath = join(root, "provider-personal.json");
   // 用正式编码器构造启动夹具，避免旧配置结构让用例在被测边界之前失败。
-  const emptyBuiltinRelease = serializeXCodeBuiltinRelease({
+  const emptyBuiltinRelease = serializeZCodeBuiltinRelease({
     schemaVersion: 1,
     revision: 1,
     config: {

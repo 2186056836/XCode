@@ -1,58 +1,58 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import type { XCodeStdioTapDevState } from "@zcode/shared";
+import type { ZCodeStdioTapDevState } from "@zcode/shared";
 import { getAppConfigDir } from "#src/paths.js";
 import { isEffectiveDevelopmentNodeEnv } from "#src/runtime-tools/nodeEnv.js";
 
-interface XCodeStdioTapStateFile {
+interface ZCodeStdioTapStateFile {
   enabled?: boolean;
 }
 
-export function isXCodeStdioTapDevVisible(): boolean {
+export function isZCodeStdioTapDevVisible(): boolean {
   return isEffectiveDevelopmentNodeEnv();
 }
 
-export function getXCodeStdioTapDevDir(): string {
+export function getZCodeStdioTapDevDir(): string {
   return join(getAppConfigDir(), "dev");
 }
 
-export function getXCodeStdioTapDevLogDir(): string {
-  return join(getXCodeStdioTapDevDir(), "stdio-traffic");
+export function getZCodeStdioTapDevLogDir(): string {
+  return join(getZCodeStdioTapDevDir(), "stdio-traffic");
 }
 
-export function getXCodeStdioTapDevStatePath(): string {
-  return join(getXCodeStdioTapDevDir(), "zcode-stdio-tap.json");
+export function getZCodeStdioTapDevStatePath(): string {
+  return join(getZCodeStdioTapDevDir(), "zcode-stdio-tap.json");
 }
 
-function readStateFile(path: string): XCodeStdioTapStateFile {
+function readStateFile(path: string): ZCodeStdioTapStateFile {
   if (!existsSync(path)) {
     return {};
   }
 
   try {
     const parsed = JSON.parse(readFileSync(path, "utf-8")) as unknown;
-    return parsed && typeof parsed === "object" ? (parsed as XCodeStdioTapStateFile) : {};
+    return parsed && typeof parsed === "object" ? (parsed as ZCodeStdioTapStateFile) : {};
   } catch {
     return {};
   }
 }
 
-export function readXCodeStdioTapDevState(): XCodeStdioTapDevState {
-  const visible = isXCodeStdioTapDevVisible();
-  const statePath = getXCodeStdioTapDevStatePath();
+export function readZCodeStdioTapDevState(): ZCodeStdioTapDevState {
+  const visible = isZCodeStdioTapDevVisible();
+  const statePath = getZCodeStdioTapDevStatePath();
   const fileState = readStateFile(statePath);
   return {
     enabled: visible && fileState.enabled === true,
     visible,
-    logDir: getXCodeStdioTapDevLogDir(),
+    logDir: getZCodeStdioTapDevLogDir(),
     statePath,
   };
 }
 
-export function setXCodeStdioTapDevEnabled(enabled: boolean): XCodeStdioTapDevState {
-  const visible = isXCodeStdioTapDevVisible();
-  const statePath = getXCodeStdioTapDevStatePath();
-  mkdirSync(getXCodeStdioTapDevDir(), { recursive: true });
+export function setZCodeStdioTapDevEnabled(enabled: boolean): ZCodeStdioTapDevState {
+  const visible = isZCodeStdioTapDevVisible();
+  const statePath = getZCodeStdioTapDevStatePath();
+  mkdirSync(getZCodeStdioTapDevDir(), { recursive: true });
   writeFileSync(
     statePath,
     `${JSON.stringify(
@@ -65,5 +65,5 @@ export function setXCodeStdioTapDevEnabled(enabled: boolean): XCodeStdioTapDevSt
       2,
     )}\n`,
   );
-  return readXCodeStdioTapDevState();
+  return readZCodeStdioTapDevState();
 }

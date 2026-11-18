@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Settings, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /**
  * 地址栏左侧的站点设置入口（spec：docs/browser-use/2026-10-08-embedded-browser-permission-governance-spec.md
@@ -17,7 +17,7 @@ export function BrowserSiteSettingsEntry({
   origin: string;
   onOpenSettings?: (origin: string) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const t = (id: string) => intl.formatMessage({ id: `browser.permission.${id}` });
   // Bug 原因：弹窗内容渲染在 body portal，而 trigger 在浏览器 tab 的 TabsContent 里。
   // 点「权限设置」后设置标签激活、浏览器 tab 被 display:none（forceMount 不卸载），

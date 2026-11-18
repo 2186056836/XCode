@@ -1,8 +1,8 @@
 import type {
-  XCodePermissionOption,
-  XCodePermissionRequest,
-  XCodePermissionResponse,
-  XCodeElicitationRequest,
+  ZCodePermissionOption,
+  ZCodePermissionRequest,
+  ZCodePermissionResponse,
+  ZCodeElicitationRequest,
 } from "@zcode/shared";
 import {
   PERMISSION_FULL_ACCESS_OPTION_ID,
@@ -22,7 +22,7 @@ const LEGACY_PERMISSION_RULE_INPUT_KEYS = [
 function permissionKindToResponse(
   kind: string,
   payload: PermissionRequestPayload,
-): XCodePermissionResponse {
+): ZCodePermissionResponse {
   if (kind === "deny" || kind === "rejectOnce" || kind === "rejectAlways") {
     return { decision: "deny" };
   }
@@ -55,11 +55,11 @@ function permissionKindToResponse(
   return { decision: "allow" };
 }
 
-/** v4 permission payload → 旧 PermissionDialog 可消费的 XCodePermissionRequest。 */
+/** v4 permission payload → 旧 PermissionDialog 可消费的 ZCodePermissionRequest。 */
 export function pendingPermissionToLegacyRequest(
   sessionId: string,
   interaction: PendingInteraction & { payload: PermissionRequestPayload },
-): XCodePermissionRequest {
+): ZCodePermissionRequest {
   const { payload } = interaction;
   // 自主模式的危险请求仍给旧端两个普通选项；新版单独呈现显式切换动作。
   const switchOption =
@@ -73,7 +73,7 @@ export function pendingPermissionToLegacyRequest(
         }
       : undefined);
   const advertisedOptions = switchOption ? [...payload.options, switchOption] : payload.options;
-  const options: XCodePermissionOption[] = advertisedOptions.map((option) => ({
+  const options: ZCodePermissionOption[] = advertisedOptions.map((option) => ({
     optionId: option.optionId,
     kind: option.kind,
     name: option.label,
@@ -126,7 +126,7 @@ export function pendingUserInputToViewModel(
 export function pendingUserInputToElicitationRequest(
   sessionId: string,
   interaction: PendingInteraction & { payload: UserInputRequestPayload },
-): XCodeElicitationRequest | null {
+): ZCodeElicitationRequest | null {
   const { payload } = interaction;
   if (!payload.questions || payload.questions.length === 0) {
     return null;

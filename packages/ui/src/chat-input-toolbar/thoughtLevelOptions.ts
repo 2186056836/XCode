@@ -1,10 +1,10 @@
 import { thoughtLevelLabelId } from "@/chat-input-toolbar/thoughtLevelLabels.js";
 export { thoughtLevelLabelId } from "@/chat-input-toolbar/thoughtLevelLabels.js";
-import type { XCodeConfigOption, XCodeProvider } from "@zcode/shared";
-import type { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import type { ZCodeConfigOption, ZCodeProvider } from "@zcode/shared";
+import type { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { getConfigOptionEntryLabel } from "@/chat-input-toolbar/display.js";
 
-export type ThoughtLevelEntry = NonNullable<XCodeConfigOption["options"]>[number];
+export type ThoughtLevelEntry = NonNullable<ZCodeConfigOption["options"]>[number];
 
 const NO_THOUGHT_LEVEL_VALUES = new Set([
   "disabled",
@@ -26,7 +26,7 @@ export function isNoThoughtLevel(entry: Pick<ThoughtLevelEntry, "value">): boole
 }
 
 export function getNextThoughtLevelValue(
-  option: Pick<XCodeConfigOption, "type" | "currentValue" | "options">,
+  option: Pick<ZCodeConfigOption, "type" | "currentValue" | "options">,
 ): string | null {
   if (option.type !== "select" || !option.options || option.options.length < 2) {
     return null;
@@ -42,9 +42,9 @@ export function getNextThoughtLevelValue(
 }
 
 export function getThoughtLevelLabel(
-  intl: ReturnType<typeof useXCodeIntl>["intl"],
-  provider: XCodeProvider | undefined,
-  option: XCodeConfigOption,
+  intl: ReturnType<typeof useZCodeIntl>["intl"],
+  provider: ZCodeProvider | undefined,
+  option: ZCodeConfigOption,
   entry: ThoughtLevelEntry,
 ): string {
   const labelId = thoughtLevelLabelId(entry.value);

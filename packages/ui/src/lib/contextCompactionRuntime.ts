@@ -1,15 +1,15 @@
-import type { XCodeContextCompactionTimelineMeta } from "@zcode/shared";
+import type { ZCodeContextCompactionTimelineMeta } from "@zcode/shared";
 
 const RUNNING_CONTEXT_COMPACTION_STATUSES = new Set(["started", "retrying"]);
 
 export function isRunningContextCompactionTimeline(
-  timeline: XCodeContextCompactionTimelineMeta,
+  timeline: ZCodeContextCompactionTimelineMeta,
 ): boolean {
   return RUNNING_CONTEXT_COMPACTION_STATUSES.has(timeline.status);
 }
 
 export function shouldContextCompactionTimelineCompleteTask(
-  timeline: XCodeContextCompactionTimelineMeta,
+  timeline: ZCodeContextCompactionTimelineMeta,
 ): boolean {
   if (isRunningContextCompactionTimeline(timeline)) {
     return false;

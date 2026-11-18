@@ -1,7 +1,7 @@
 import {
-  normalizeAgentProviderToXCodeAgent,
+  normalizeAgentProviderToZCodeAgent,
   ZCODE_AGENT_PROVIDER,
-  type XCodeProvider,
+  type ZCodeProvider,
 } from "@zcode/shared";
 import { ZCODE_AGENT_PROVIDERS } from "./zcodeProviders.js";
 
@@ -24,11 +24,11 @@ function getBrowserStorage(): StorageLike | null {
   }
 }
 
-function isAgentProvider(value: unknown): value is XCodeProvider {
-  return typeof value === "string" && ZCODE_AGENT_PROVIDERS.includes(value as XCodeProvider);
+function isAgentProvider(value: unknown): value is ZCodeProvider {
+  return typeof value === "string" && ZCODE_AGENT_PROVIDERS.includes(value as ZCodeProvider);
 }
 
-export function readLastSelectedAgentProvider(storage: StorageLike | null = getBrowserStorage()): XCodeProvider | null {
+export function readLastSelectedAgentProvider(storage: StorageLike | null = getBrowserStorage()): ZCodeProvider | null {
   const rawValue = storage?.getItem(LAST_SELECTED_AGENT_PROVIDER_STORAGE_KEY);
   if (!isAgentProvider(rawValue)) {
     return ZCODE_AGENT_PROVIDER;
@@ -36,17 +36,17 @@ export function readLastSelectedAgentProvider(storage: StorageLike | null = getB
 
   // Bugfix: 单 XCode Agent 迁移后，旧本地存储里已移除的第三方 provider 值不能再参与首屏预热。
   // 否则 UI 会短暂以旧 provider 作为事实源发起 prepare/create，和 agent server 的 glm 状态产生竞态。
-  return normalizeAgentProviderToXCodeAgent(rawValue);
+  return normalizeAgentProviderToZCodeAgent(rawValue);
 }
 
 export function persistLastSelectedAgentProvider(
-  provider: XCodeProvider,
+  provider: ZCodeProvider,
   storage: StorageLike | null = getBrowserStorage(),
 ) {
   // Bugfix: 迁移到单 XCode Agent 后，旧本地存储里可能还保存已移除的第三方 provider。
   // 如果继续照读，草稿预热和首发 createTask 会在 UI 层短暂走错 provider。这里统一收敛到 glm。
   storage?.setItem(
     LAST_SELECTED_AGENT_PROVIDER_STORAGE_KEY,
-    normalizeAgentProviderToXCodeAgent(provider),
+    normalizeAgentProviderToZCodeAgent(provider),
   );
 }

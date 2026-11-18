@@ -14,12 +14,12 @@ import {
   zcodeAutomationPauseResultSchema,
   zcodeAutomationUpdateResultSchema,
   zcodeProtocolMethods,
-  type XCodeAutomationProtocol,
+  type ZCodeAutomationProtocol,
 } from "@zcode/shared";
 import {
   ProtocolRequestError,
-  type XCodeProtocolAgentServerContext,
-  type XCodeProtocolSessionRecord,
+  type ZCodeProtocolAgentServerContext,
+  type ZCodeProtocolSessionRecord,
 } from "./server-types.js";
 
 export const AUTOMATION_CREATE_FROM_AUTOMATION_RUN_ERROR =
@@ -33,11 +33,11 @@ export const AUTOMATION_CREATE_BOUND_SESSION_CHECK_ERROR =
   "Cannot verify whether this session belongs to a scheduled task. Try again later.";
 
 export function createProtocolAutomationPort(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   // 归属会话解析器：automation-port 是按 session 构造的，直接绑定「自己所服务的 session
   // record」。避免依赖 context.sessions 查找——V4/desktop 会话未必登记在该 legacy map 里，
   // 之前会导致 activeSession 命中失败、权限/思考等级丢失（模型有 createContext 兜底才幸存）。
-  resolveOwnSession?: () => XCodeProtocolSessionRecord | undefined,
+  resolveOwnSession?: () => ZCodeProtocolSessionRecord | undefined,
 ): AutomationPort {
   // 共享连接不能借用首个工作区；包括只有 automationId 或空参数的列表请求。
   const requestClient: typeof context.requestClient = (...args) => {
@@ -245,7 +245,7 @@ export function createProtocolAutomationPort(
 }
 
 function normalizeCronAutomationMode(
-  mode: XCodeAutomationProtocol["mode"],
+  mode: ZCodeAutomationProtocol["mode"],
 ): CronAutomation["mode"] {
   switch (mode) {
     case undefined:
@@ -271,7 +271,7 @@ function normalizeCronAutomationMode(
   }
 }
 
-function toCronAutomation(input: XCodeAutomationProtocol): CronAutomation {
+function toCronAutomation(input: ZCodeAutomationProtocol): CronAutomation {
   return {
     automationId: input.automationId,
     title: input.title,

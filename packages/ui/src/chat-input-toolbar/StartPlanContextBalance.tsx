@@ -7,7 +7,7 @@ import {
   CodingPlanBillingDiscountInfoDialog,
   useCodingPlanBillingDiscount,
 } from "@/CodingPlanBillingDiscount.js";
-import type { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import type { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { getContextQuotaMeterGridClass } from "@/chat-input-toolbar/contextQuotaMeterGrid.js";
 import { formatStartPlanBucketResetTime } from "@/lib/codingPlanQuotaPresentation.js";
 import { formatQuotaModelDisplayName } from "@/settings/model-provider-section/quotaModelDisplayName.js";
@@ -120,7 +120,7 @@ export function ChatStartPlanBalancePanel({
   separated = false,
 }: {
   config: ChatStartPlanBalanceConfig;
-  intl: ReturnType<typeof useXCodeIntl>["intl"];
+  intl: ReturnType<typeof useZCodeIntl>["intl"];
   locale: string;
   separated?: boolean;
 }) {

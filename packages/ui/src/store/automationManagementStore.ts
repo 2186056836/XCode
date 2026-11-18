@@ -4,12 +4,12 @@ import {
   AUTOMATION_CREATE_LIMIT,
   AUTOMATION_CREATE_LIMIT_ERROR_CODE,
   isAutomationCreateLimitError,
-  type XCodeAutomation,
-  type XCodeAutomationRun,
-  type XCodeAutomationScheduleRule,
+  type ZCodeAutomation,
+  type ZCodeAutomationRun,
+  type ZCodeAutomationScheduleRule,
   type ModelSelection,
 } from "@zcode/shared";
-import type { IXCodeAgentService } from "@zcode/services";
+import type { IZCodeAgentService } from "@zcode/services";
 import { logger } from "@/logger.js";
 
 // 定时任务(automation)管理 store：走 zcode-agent RPC（列表 / 创建 / 编辑 / 启停 / 重跑 / 删除 + 运行历史）。
@@ -18,7 +18,7 @@ import { logger } from "@/logger.js";
 /** 单条 automation 的运行历史缓存（按 automationId 记 loading/data/error）。 */
 export interface AutomationRunsEntry {
   status: "loading" | "loaded" | "error";
-  runs?: XCodeAutomationRun[];
+  runs?: ZCodeAutomationRun[];
   error?: string;
 }
 
@@ -34,7 +34,7 @@ export interface CreateAutomationInput {
   recurring?: boolean;
   maxRuns?: number;
   endAt?: number;
-  scheduleRule?: XCodeAutomationScheduleRule;
+  scheduleRule?: ZCodeAutomationScheduleRule;
   // 目标项目;缺省用 store 当前列表所在项目。创建整页可在项目下拉里改。
   workspacePath?: string;
   workspaceIdentity?: string;
@@ -49,14 +49,14 @@ export interface UpdateAutomationInput {
   recurring?: boolean;
   maxRuns?: number | null;
   endAt?: number | null;
-  scheduleRule?: XCodeAutomationScheduleRule | null;
+  scheduleRule?: ZCodeAutomationScheduleRule | null;
   scheduleEditedByUser?: boolean;
 }
 
 export interface AutomationManagementState {
   workspacePath: string | null;
   workspaceIdentity: string | null;
-  automations: XCodeAutomation[];
+  automations: ZCodeAutomation[];
   loading: boolean;
   error: string | null;
   // 正在进行的写操作标记，用于禁用对应按钮（如 `automation:delete:<id>`）。
@@ -65,39 +65,39 @@ export interface AutomationManagementState {
   initialize: (params: {
     workspacePath: string;
     workspaceIdentity?: string;
-    agentService: IXCodeAgentService;
+    agentService: IZCodeAgentService;
   }) => Promise<void>;
-  refresh: (agentService: IXCodeAgentService) => Promise<void>;
+  refresh: (agentService: IZCodeAgentService) => Promise<void>;
   createAutomation: (
     input: CreateAutomationInput,
-    agentService: IXCodeAgentService,
-  ) => Promise<XCodeAutomation | null>;
+    agentService: IZCodeAgentService,
+  ) => Promise<ZCodeAutomation | null>;
   updateAutomation: (
     automationId: string,
     input: UpdateAutomationInput,
-    agentService: IXCodeAgentService,
+    agentService: IZCodeAgentService,
   ) => Promise<boolean>;
-  deleteAutomation: (automationId: string, agentService: IXCodeAgentService) => Promise<void>;
+  deleteAutomation: (automationId: string, agentService: IZCodeAgentService) => Promise<void>;
   setEnabled: (
     automationId: string,
     enabled: boolean,
-    agentService: IXCodeAgentService,
+    agentService: IZCodeAgentService,
   ) => Promise<void>;
-  restartAutomation: (automationId: string, agentService: IXCodeAgentService) => Promise<void>;
+  restartAutomation: (automationId: string, agentService: IZCodeAgentService) => Promise<void>;
   /** 立即运行一次；queued / duplicate / failed 均由调用方 toast。 */
   runAutomationNow: (
     automationId: string,
-    agentService: IXCodeAgentService,
+    agentService: IZCodeAgentService,
   ) => Promise<AutomationRunNowResult>;
   loadRuns: (
     automationId: string,
-    agentService: IXCodeAgentService,
+    agentService: IZCodeAgentService,
     force?: boolean,
   ) => Promise<void>;
   deleteRun: (
     automationId: string,
     runId: string,
-    agentService: IXCodeAgentService,
+    agentService: IZCodeAgentService,
   ) => Promise<void>;
 }
 
@@ -135,7 +135,7 @@ async function loadInto(
   params: {
     workspacePath: string;
     workspaceIdentity: string | null;
-    agentService: IXCodeAgentService;
+    agentService: IZCodeAgentService;
     requestId: number;
   },
 ): Promise<void> {

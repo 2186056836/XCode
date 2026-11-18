@@ -71,7 +71,7 @@ async function idle() {
 }
 async function prompt(marker: string, newTask = true) {
   if (newTask) {
-    // 合并适配：全局新任务落到独立聊天目录，Bash fixture 必须从 XCodeProject 发起。
+    // 合并适配：全局新任务落到独立聊天目录，Bash fixture 必须从 ZCodeProject 发起。
     await startDraftFromProject(DEFAULT_WORKSPACE);
 
     // 项目新草稿恢复 build；显式选择 yolo，避免把模式切换动画中的旧文案当成已选中。

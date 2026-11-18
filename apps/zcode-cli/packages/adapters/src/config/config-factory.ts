@@ -582,7 +582,7 @@ function summarizeOptionalProjectConfig(files: ProjectConfigFile[]): OptionalPat
 const ZCODE_DATA_BASE_DIR_ENV_KEY = "ZCODE_DATA_BASE_DIR";
 
 /** 与 Host getDataBaseDir 同规则：ZCODE_DATA_BASE_DIR 优先，空值回落 homedir。 */
-export function resolveXCodeDataBaseDir(
+export function resolveZCodeDataBaseDir(
   env: Record<string, string | undefined> = process.env,
 ): string {
   return env[ZCODE_DATA_BASE_DIR_ENV_KEY]?.trim() || homedir();
@@ -615,7 +615,7 @@ export function resolveWorkspaceHookTrustIdentityForWorkspace(input: {
     {
       workspacePath: input.workspacePath,
       ...(input.workspaceIdentity ? { workspaceIdentity: input.workspaceIdentity } : {}),
-      dataBaseDir: resolveXCodeDataBaseDir(input.env),
+      dataBaseDir: resolveZCodeDataBaseDir(input.env),
     },
     nodeTrustIdentityFs,
   );
@@ -647,7 +647,7 @@ export async function classifyLocalSessionDirectory(input: {
     realpathOrNull(workspacePath),
   ]);
   if (realDirectory !== null && realDirectory === realWorkspace) return "same";
-  const dataBaseDir = resolveXCodeDataBaseDir(input.env);
+  const dataBaseDir = resolveZCodeDataBaseDir(input.env);
   if (realDirectory === null) {
     // 会话 cwd 落盘时就是 realpath；受管根目录本身可能经过软链，两种形态都认。
     const managedRoot = resolveManagedWorktreeRoot(dataBaseDir);

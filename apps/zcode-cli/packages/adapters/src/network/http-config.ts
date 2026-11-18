@@ -4,7 +4,7 @@ import {
   ZCODE_HTTP_PROXY_ENV_KEY,
   ZCODE_NO_PROXY_ENV_KEY,
   ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY,
-  readXCodeToolEnvPassthroughEnv,
+  readZCodeToolEnvPassthroughEnv,
 } from "@zcode/shared";
 
 interface NetworkProxyOptions {
@@ -144,7 +144,7 @@ function readExplicitNoProxyValue(options: NetworkProxyOptions): string | undefi
 function readCapturedUserProxy(
   env: Record<string, string | undefined>,
 ): { key: string; proxyUrl: string } | undefined {
-  const captured = readXCodeToolEnvPassthroughEnv(env);
+  const captured = readZCodeToolEnvPassthroughEnv(env);
 
   for (const key of CAPTURED_USER_PROXY_KEYS) {
     const proxyUrl = normalizeProxyUrl(captured[key]);
@@ -156,7 +156,7 @@ function readCapturedUserProxy(
 }
 
 function readCapturedUserNoProxy(env: Record<string, string | undefined>): string | undefined {
-  const captured = readXCodeToolEnvPassthroughEnv(env);
+  const captured = readZCodeToolEnvPassthroughEnv(env);
   return normalizePathLike(captured.no_proxy) ?? normalizePathLike(captured.NO_PROXY);
 }
 

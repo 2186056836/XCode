@@ -90,11 +90,11 @@ class FakeSites {
     if (this.endpointNetworkError) {
       return Response.json(
         { code: 2007, msg: "x", data: null, logid: "" },
-        { status: 502, headers: { "X-XCode-Official-Endpoint-Error": "network" } },
+        { status: 502, headers: { "X-ZCode-Official-Endpoint-Error": "network" } },
       );
     }
     assert.equal(init.headers.Authorization, "Bearer session-token");
-    assert.equal(init.headers["X-XCode-App-Version"], undefined);
+    assert.equal(init.headers["X-ZCode-App-Version"], undefined);
     assert.equal(init.headers["X-Bigmodel-Authorization"], undefined);
     const { pathname } = new URL(url);
     const body = typeof init.body === "string" ? JSON.parse(init.body) : init.body;

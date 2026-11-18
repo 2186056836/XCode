@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { resolveXCodeBuiltinPromptCommand } from "../src/builtin-prompt-command.js";
-import { resolveXCodeCustomCommandPrompt } from "../src/custom-command-prompt.js";
+import { resolveZCodeBuiltinPromptCommand } from "../src/builtin-prompt-command.js";
+import { resolveZCodeCustomCommandPrompt } from "../src/custom-command-prompt.js";
 import { listProtocolSlashCommands } from "../src/zcode-protocol/slash-commands.js";
 
 describe("protocol slash command surface", () => {
@@ -92,20 +92,20 @@ describe("protocol slash command surface", () => {
         skipUserConfig: true,
         workingDirectory: workspace,
       };
-      const prompt = await resolveXCodeCustomCommandPrompt("/review src packages", options);
+      const prompt = await resolveZCodeCustomCommandPrompt("/review src packages", options);
 
       expect(prompt).toContain("Run custom command /review.");
       expect(prompt).toContain("Command source: user/zcode.");
       expect(prompt).toContain("Review src packages.");
-      await expect(resolveXCodeCustomCommandPrompt("/model glm-5", options)).resolves.toBe(
+      await expect(resolveZCodeCustomCommandPrompt("/model glm-5", options)).resolves.toBe(
         undefined,
       );
-      await expect(resolveXCodeCustomCommandPrompt("/plan task", options)).resolves.toBe(undefined);
-      expect(resolveXCodeBuiltinPromptCommand("/plan task", { workingDirectory: workspace })).toBe(
+      await expect(resolveZCodeCustomCommandPrompt("/plan task", options)).resolves.toBe(undefined);
+      expect(resolveZCodeBuiltinPromptCommand("/plan task", { workingDirectory: workspace })).toBe(
         undefined,
       );
-      await expect(resolveXCodeCustomCommandPrompt("/init", options)).resolves.toBe(undefined);
-      await expect(resolveXCodeCustomCommandPrompt("please /review", options)).resolves.toBe(
+      await expect(resolveZCodeCustomCommandPrompt("/init", options)).resolves.toBe(undefined);
+      await expect(resolveZCodeCustomCommandPrompt("please /review", options)).resolves.toBe(
         undefined,
       );
     } finally {
@@ -132,7 +132,7 @@ describe("protocol slash command surface", () => {
         workingDirectory: workspace,
       };
 
-      const expanded = resolveXCodeBuiltinPromptCommand("/workflow ship it", {
+      const expanded = resolveZCodeBuiltinPromptCommand("/workflow ship it", {
         dynamicWorkflowEnabled: true,
         workingDirectory: workspace,
       });
@@ -141,15 +141,15 @@ describe("protocol slash command surface", () => {
       expect(expanded).not.toContain("Should not expand.");
       // 缺席（TUI / headless）等于开启；显式 false 才挡下。
       expect(
-        resolveXCodeBuiltinPromptCommand("/workflow ship it", { workingDirectory: workspace }),
+        resolveZCodeBuiltinPromptCommand("/workflow ship it", { workingDirectory: workspace }),
       ).toContain("ship it");
       expect(
-        resolveXCodeBuiltinPromptCommand("/workflow ship it", {
+        resolveZCodeBuiltinPromptCommand("/workflow ship it", {
           dynamicWorkflowEnabled: false,
           workingDirectory: workspace,
         }),
       ).toBe(undefined);
-      await expect(resolveXCodeCustomCommandPrompt("/workflow ship it", options)).resolves.toBe(
+      await expect(resolveZCodeCustomCommandPrompt("/workflow ship it", options)).resolves.toBe(
         undefined,
       );
     } finally {
@@ -163,7 +163,7 @@ describe("protocol slash command surface", () => {
 
     try {
       await mkdir(workspace, { recursive: true });
-      const prompt = resolveXCodeBuiltinPromptCommand("/init include pnpm scripts", {
+      const prompt = resolveZCodeBuiltinPromptCommand("/init include pnpm scripts", {
         workingDirectory: workspace,
       });
 
@@ -175,11 +175,11 @@ describe("protocol slash command surface", () => {
       expect(prompt).toContain("they already have an instructions file");
       expect(prompt).not.toContain("Do not create CLAUDE.md or AGNENTS.md");
       expect(prompt).toContain("include pnpm scripts");
-      expect(resolveXCodeBuiltinPromptCommand("/review", { workingDirectory: workspace })).toBe(
+      expect(resolveZCodeBuiltinPromptCommand("/review", { workingDirectory: workspace })).toBe(
         undefined,
       );
       expect(
-        resolveXCodeBuiltinPromptCommand("please /init", { workingDirectory: workspace }),
+        resolveZCodeBuiltinPromptCommand("please /init", { workingDirectory: workspace }),
       ).toBe(undefined);
     } finally {
       await rm(tempRoot, { force: true, recursive: true });
@@ -228,7 +228,7 @@ describe("protocol slash command surface", () => {
 
       // 项目配置会剥离 plugins.dirs（工作区不能引入插件根目录），测试插件只能经用户配置加载；
       // homeDirectory 指向临时目录，不读本机用户命令。
-      const prompt = await resolveXCodeCustomCommandPrompt("/ralph-loop build demo", {
+      const prompt = await resolveZCodeCustomCommandPrompt("/ralph-loop build demo", {
         env: { ZCODE_ENV: "test", ZCODE_STORAGE_DIR: join(tempRoot, "storage") },
         homeDirectory: join(tempRoot, "home"),
         userConfigPath: configPath,
@@ -257,7 +257,7 @@ describe("protocol slash command surface", () => {
         await writeCommand(commands, "runtime-context", "Runtime context", [
           "```!", `echo \"$${variable}\"`, "```",
         ].join("\n"));
-        const prompt = await resolveXCodeCustomCommandPrompt("/runtime-context", {
+        const prompt = await resolveZCodeCustomCommandPrompt("/runtime-context", {
           env: { ZCODE_ENV: "test", ZCODE_STORAGE_DIR: join(tempRoot, "storage") },
           homeDirectory: home,
           skipUserConfig: true,

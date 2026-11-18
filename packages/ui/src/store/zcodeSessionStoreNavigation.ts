@@ -16,15 +16,15 @@ import {
   type WorkspaceNavEntry,
   type TaskNavEntry,
 } from "@/lib/taskNavigationHistory.js";
-import type { XCodeSessionStoreState } from "./zcodeSessionStoreTypes.js";
+import type { ZCodeSessionStoreState } from "./zcodeSessionStoreTypes.js";
 
 type SetFn = (
   partial:
-    | XCodeSessionStoreState
-    | Partial<XCodeSessionStoreState>
-    | ((state: XCodeSessionStoreState) => XCodeSessionStoreState | Partial<XCodeSessionStoreState>),
+    | ZCodeSessionStoreState
+    | Partial<ZCodeSessionStoreState>
+    | ((state: ZCodeSessionStoreState) => ZCodeSessionStoreState | Partial<ZCodeSessionStoreState>),
 ) => void;
-type GetFn = () => XCodeSessionStoreState;
+type GetFn = () => ZCodeSessionStoreState;
 
 // 查看事实只由完整导航提交发布；tab 激活与历史游标移动都可能暴露缓存任务，不能代替提交。
 const taskNavigationCommitted = new Emitter<TaskNavEntry>();

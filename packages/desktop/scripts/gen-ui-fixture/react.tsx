@@ -5,7 +5,7 @@ import { GenUiMessageResponse } from "../../../ui/src/gen-ui/components/GenUiMes
 import { ServiceProvider } from "../../../ui/src/hooks/useServices.js";
 import { PlatformProvider } from "../../../ui/src/hooks/usePlatform.js";
 import { TabStoreProvider } from "../../../ui/src/store/TabStoreProvider.js";
-import { XCodeIntlProvider } from "../../../ui/src/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "../../../ui/src/i18n/IntlProvider.js";
 import { useRemoteWorkspaceSessionStore } from "../../../ui/src/store/remoteWorkspaceSessionStore.js";
 import { registerPluginUiSessionActions } from "../../../ui/src/plugin-ui/hostPrimitives.js";
 import type { IServiceAccessor } from "@zcode/services";
@@ -139,7 +139,7 @@ void (async () => {
   let compact = false;
   const renderReply = (phase: "streaming" | "complete" | "hidden") =>
     reactRoot.render(
-      <XCodeIntlProvider initialLocale="en-US">
+      <ZCodeIntlProvider initialLocale="en-US">
         <TabStoreProvider>
           <ServiceProvider services={remote}>
             <PlatformProvider platform={(mobile ? mobilePlatform : platform) as never}>
@@ -173,7 +173,7 @@ void (async () => {
             </PlatformProvider>
           </ServiceProvider>
         </TabStoreProvider>
-      </XCodeIntlProvider>,
+      </ZCodeIntlProvider>,
     );
   flushSync(() => renderReply("streaming"));
   Object.assign(window, {

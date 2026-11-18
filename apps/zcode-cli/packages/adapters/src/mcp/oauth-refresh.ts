@@ -10,9 +10,9 @@ import {
   type OAuthDiscoveryState,
 } from "@modelcontextprotocol/client";
 import type { Logger } from "@zcode/contracts";
-import { isXCodeFileLockTimeoutError } from "@zcode/shared";
+import { isZCodeFileLockTimeoutError } from "@zcode/shared";
 import { withFileLock } from "@zcode/shared/node";
-import type { SharedXCodeCredentialStore } from "../auth/shared-credentials.js";
+import type { SharedZCodeCredentialStore } from "../auth/shared-credentials.js";
 import {
   invalidateCanonicalCredentials,
   loadCredentialPair,
@@ -35,7 +35,7 @@ import { loadDiscoveryRecord, saveDiscoveryRecord } from "./oauth-shared.js";
 const REFRESH_LOCK_MAX_WAIT_MS = 45_000;
 
 export interface RefreshMcpOAuthTokensInput {
-  credentialStore: SharedXCodeCredentialStore;
+  credentialStore: SharedZCodeCredentialStore;
   fetchFn?: FetchLike;
   keyPrefix: string;
   logger?: Logger;
@@ -78,7 +78,7 @@ export async function refreshMcpOAuthTokensUnderLock(
       lockMaxWaitMs: REFRESH_LOCK_MAX_WAIT_MS,
     });
   } catch (error) {
-    if (!isXCodeFileLockTimeoutError(error)) throw error;
+    if (!isZCodeFileLockTimeoutError(error)) throw error;
     // 等锁超时不代表刷新失败：winner 可能已经发布结果。先重读，确认换代且有 token 就直接用。
     const current = await loadCredentialPair(input.credentialStore, input.keyPrefix);
     if (current?.tokens && current.generation !== observedGeneration) {

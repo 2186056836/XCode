@@ -7,7 +7,7 @@ import type {
 import { Button } from "@/components/ui/button.js";
 import { Checkbox } from "@/components/ui/checkbox.js";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   formatConversationShareAllowedArtifacts,
   formatConversationShareArtifactType,
@@ -52,7 +52,7 @@ function ConversationShareSelectionDockImpl({
   preflight = DEFAULT_PREFLIGHT,
   pending = false,
 }: ConversationShareSelectionDockProps) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const selectAllState =
     selectedCount === 0 ? false : selectedCount === totalCount ? true : ("indeterminate" as const);
   const bulkActionMessageId =

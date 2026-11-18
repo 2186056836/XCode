@@ -4,7 +4,7 @@ function normalizeToolName(value: string | null | undefined): string {
   return value?.trim().toLowerCase().replace(/_/g, "-") ?? "";
 }
 
-export function isXCodeCuaToolName(value: string | null | undefined): boolean {
+export function isZCodeCuaToolName(value: string | null | undefined): boolean {
   const normalized = normalizeToolName(value);
   // server key 段为 computer-use。feat: mcp__computer-use__*；
   // main v3.5.3 的 plugin MCP 命名约定给 plugin server 加 namespace：

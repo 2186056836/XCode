@@ -11,7 +11,7 @@ import {
 import { AlertTriangleIcon } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button.js";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   useRemoteConnectionFlow,
   type RemoteConnectionFlowOptions,
@@ -41,7 +41,7 @@ export function RemoteConnectionDialog(props: RemoteConnectionDialogProps) {
     hideTriggerWhenClosed = false,
     allowBackground = true,
   } = props;
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const flow = useRemoteConnectionFlow(props);
   const { open, currentStep, error, handleOpenChange } = flow;
   usePublishRemoteConnectionProgress(flow.minimizedProgress);

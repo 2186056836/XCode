@@ -5,7 +5,7 @@ import { createReadStream } from "node:fs";
 import type { Duplex } from "node:stream";
 import { posix } from "node:path";
 import { Emitter } from "@zcode/rpc";
-import { resolveXCodeRuntimeEnv } from "@zcode/shared";
+import { resolveZCodeRuntimeEnv } from "@zcode/shared";
 import type {
   IRemoteBackend,
   RemoteDisconnectEvent,
@@ -149,7 +149,7 @@ export class SSHBackend implements IRemoteBackend {
       password: options.password,
       agent: options.agent,
     });
-    if (resolveXCodeRuntimeEnv(process.env) === "development") {
+    if (resolveZCodeRuntimeEnv(process.env) === "development") {
       this.config.debug = (message: string) => {
         // SSH ready 超时只暴露 client-timeout 时无法判断卡在 TCP、协商还是认证。
         // 仅开发环境输出 ssh2 握手细节；CHANNEL_DATA / EXTENDED_DATA 是命令 stdout/stderr 数据包，

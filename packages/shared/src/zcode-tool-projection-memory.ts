@@ -1,39 +1,39 @@
-import type { XCodeStreamingToolInputState } from "./streaming-tool-input-preview.js";
+import type { ZCodeStreamingToolInputState } from "./streaming-tool-input-preview.js";
 
-export interface XCodeToolProjectionMemory {
+export interface ZCodeToolProjectionMemory {
   completeToolInputById?: Map<string, unknown>;
-  streamingToolInputById?: Map<string, XCodeStreamingToolInputState>;
+  streamingToolInputById?: Map<string, ZCodeStreamingToolInputState>;
   toolNameById?: Map<string, string>;
 }
 
-export interface XCodeToolProjectionMetadata {
+export interface ZCodeToolProjectionMetadata {
   hasInput: boolean;
   input?: unknown;
   toolName?: string;
 }
 
-export function createXCodeToolProjectionMemory(): XCodeToolProjectionMemory {
+export function createZCodeToolProjectionMemory(): ZCodeToolProjectionMemory {
   return {
     completeToolInputById: new Map<string, unknown>(),
-    streamingToolInputById: new Map<string, XCodeStreamingToolInputState>(),
+    streamingToolInputById: new Map<string, ZCodeStreamingToolInputState>(),
     toolNameById: new Map<string, string>(),
   };
 }
 
-export function ensureXCodeToolProjectionMemory(
-  memory: XCodeToolProjectionMemory,
-): XCodeToolProjectionMemory {
+export function ensureZCodeToolProjectionMemory(
+  memory: ZCodeToolProjectionMemory,
+): ZCodeToolProjectionMemory {
   memory.completeToolInputById ??= new Map<string, unknown>();
-  memory.streamingToolInputById ??= new Map<string, XCodeStreamingToolInputState>();
+  memory.streamingToolInputById ??= new Map<string, ZCodeStreamingToolInputState>();
   memory.toolNameById ??= new Map<string, string>();
   return memory;
 }
 
-export function resolveXCodeToolProjectionMetadata(
+export function resolveZCodeToolProjectionMetadata(
   payload: Record<string, unknown>,
   toolId: string,
-  memory: XCodeToolProjectionMemory,
-): XCodeToolProjectionMetadata {
+  memory: ZCodeToolProjectionMemory,
+): ZCodeToolProjectionMetadata {
   const toolName = readNonEmptyString(payload.toolName) ?? memory.toolNameById?.get(toolId);
   if (toolName) {
     memory.toolNameById?.set(toolId, toolName);
@@ -61,10 +61,10 @@ export function resolveXCodeToolProjectionMetadata(
   };
 }
 
-export function finalizeXCodeToolProjectionInput(
+export function finalizeZCodeToolProjectionInput(
   toolId: string,
   input: unknown,
-  memory: XCodeToolProjectionMemory,
+  memory: ZCodeToolProjectionMemory,
 ): void {
   memory.completeToolInputById ??= new Map<string, unknown>();
   memory.completeToolInputById.set(toolId, input);
@@ -75,9 +75,9 @@ export function finalizeXCodeToolProjectionInput(
   }
 }
 
-export function forgetXCodeToolProjectionMetadata(
+export function forgetZCodeToolProjectionMetadata(
   toolId: string,
-  memory: XCodeToolProjectionMemory,
+  memory: ZCodeToolProjectionMemory,
 ): void {
   memory.completeToolInputById?.delete(toolId);
   memory.streamingToolInputById?.delete(toolId);

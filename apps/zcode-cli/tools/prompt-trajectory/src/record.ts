@@ -19,8 +19,8 @@ import { startOpenAiProviderProxy } from "./openai-provider-proxy.js";
 
 const RECORDER_REASONING_LEVEL = "disabled";
 
-interface XCodeBootstrapModule {
-  createXCodeApp(input: unknown): Promise<{
+interface ZCodeBootstrapModule {
+  createZCodeApp(input: unknown): Promise<{
     close?: () => Promise<void>;
     submitPrompt(prompt: RecorderPromptInput): Promise<unknown>;
   }>;
@@ -41,7 +41,7 @@ interface ProviderRegistryConstructor {
   new (providers?: readonly unknown[]): unknown;
 }
 
-interface XCodeProviderModule {
+interface ZCodeProviderModule {
   ApiKeyAccessConfig: ConfigConstructor;
   ModelConfig: ConfigConstructor;
   ModelOptionSpecsConfig: ConfigConstructor;
@@ -90,7 +90,7 @@ export async function recordPromptTrajectoryFromFixture(input: {
   const restoreHome = setIsolatedHome(isolatedHome);
 
   try {
-    const { bootstrap, provider } = await loadXCodeModules();
+    const { bootstrap, provider } = await loadZCodeModules();
     const proxy = await startOpenAiProviderProxy({
       ledger,
       mockResponses: fixture.mockResponses,
@@ -109,7 +109,7 @@ export async function recordPromptTrajectoryFromFixture(input: {
     };
     const eventObserver = createRuntimeEventObserver();
     const providerRegistry = createRecorderProviderRegistry(provider, modelConfig, fixture);
-    const app = await bootstrap.createXCodeApp({
+    const app = await bootstrap.createZCodeApp({
       eventSink: eventObserver.sink,
       env: process.env,
       providerRegistry,
@@ -237,9 +237,9 @@ function assertNever(value: never): never {
   throw new Error(`Unsupported fixture step: ${JSON.stringify(value)}`);
 }
 
-async function loadXCodeModules(): Promise<{
-  bootstrap: XCodeBootstrapModule;
-  provider: XCodeProviderModule;
+async function loadZCodeModules(): Promise<{
+  bootstrap: ZCodeBootstrapModule;
+  provider: ZCodeProviderModule;
 }> {
   const bootstrapPath = pathToFileURL(
     join(import.meta.dirname, "../../../packages/bootstrap/dist/index.js"),
@@ -251,8 +251,8 @@ async function loadXCodeModules(): Promise<{
   ).href;
   try {
     const [bootstrap, provider] = await Promise.all([
-      import(bootstrapPath) as Promise<XCodeBootstrapModule>,
-      import(providerPath) as Promise<XCodeProviderModule>,
+      import(bootstrapPath) as Promise<ZCodeBootstrapModule>,
+      import(providerPath) as Promise<ZCodeProviderModule>,
     ]);
     return { bootstrap, provider };
   } catch (error) {
@@ -264,7 +264,7 @@ async function loadXCodeModules(): Promise<{
 }
 
 function createRecorderProviderRegistry(
-  provider: XCodeProviderModule,
+  provider: ZCodeProviderModule,
   modelConfig: RuntimeModelConfig,
   fixture: PromptTrajectoryFixture,
 ): unknown {

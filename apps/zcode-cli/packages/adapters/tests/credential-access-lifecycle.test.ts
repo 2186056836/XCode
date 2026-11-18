@@ -13,7 +13,7 @@ import {
   isCredentialDecryptError,
   type CredentialCipherRequest,
 } from "@zcode/shared";
-import { createSharedXCodeCredentialStore } from "../src/auth/shared-credentials.js";
+import { createSharedZCodeCredentialStore } from "../src/auth/shared-credentials.js";
 
 const backend = vi.hoisted(() => ({ reads: 0, fail: false }));
 vi.mock("@napi-rs/keyring", () => ({
@@ -83,7 +83,7 @@ describe("system credential access lifecycle", () => {
     try {
       const value = "a".repeat(800000);
       await writeFile(filePath, JSON.stringify({ profile: value }));
-      const store = createSharedXCodeCredentialStore({ filePath, cipher: bridge.cipher });
+      const store = createSharedZCodeCredentialStore({ filePath, cipher: bridge.cipher });
       expect(await store.load("profile")).toBe(value);
       await store.save("later", "still-available");
       expect(await store.load("later")).toBe("still-available");
@@ -98,7 +98,7 @@ describe("system credential access lifecycle", () => {
     });
     try {
       await writeFile(filePath, JSON.stringify({ profile: "legacy" }));
-      const store = createSharedXCodeCredentialStore({ filePath, cipher: bridge.cipher });
+      const store = createSharedZCodeCredentialStore({ filePath, cipher: bridge.cipher });
       await expect(store.load("profile")).rejects.toHaveProperty(
         "code",
         "CREDENTIAL_CIPHER_INVALID_PAYLOAD",
@@ -220,7 +220,7 @@ describe("system credential access lifecycle", () => {
     const { filePath, value } = await fixture();
     backend.fail = true;
     for (let i = 0; i < 3; i++) {
-      const store = createSharedXCodeCredentialStore({ filePath, env: {} });
+      const store = createSharedZCodeCredentialStore({ filePath, env: {} });
       await expect(store.load("zcodejwttoken")).rejects.toHaveProperty(
         "code",
         "CREDENTIAL_SECURE_STORAGE_UNAVAILABLE",
@@ -237,13 +237,13 @@ describe("system credential access lifecycle", () => {
 
   it("reads current tokens from disk while reusing only the system key", async () => {
     const { filePath, cipher } = await fixture();
-    const first = createSharedXCodeCredentialStore({ filePath, env: {} });
+    const first = createSharedZCodeCredentialStore({ filePath, env: {} });
     expect(await first.load("zcodejwttoken")).toBe("first-token");
     await writeFile(
       filePath,
       JSON.stringify({ zcodejwttoken: await cipher.encrypt("replacement-token") }),
     );
-    const second = createSharedXCodeCredentialStore({ filePath, env: {} });
+    const second = createSharedZCodeCredentialStore({ filePath, env: {} });
     expect(await second.load("zcodejwttoken")).toBe("replacement-token");
     expect(backend.reads).toBe(1);
   });

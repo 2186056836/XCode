@@ -1,9 +1,9 @@
 import {
-  isXCodeAgentProvider,
+  isZCodeAgentProvider,
   resolveModelProviderFamilySpecByProviderId,
   zcodeProviderAccountAccessSchema,
-  type XCodeProviderAccountAccess,
-  type XCodeProvider,
+  type ZCodeProviderAccountAccess,
+  type ZCodeProvider,
 } from "@zcode/shared";
 import type { ModelSelectionView } from "@zcode/services";
 import type { ModelSelectGroup } from "@/ModelConfigSelect.js";
@@ -23,16 +23,16 @@ export interface ModelProviderGroupLabelOptions {
 }
 
 function supportsRegistryApiFormat(
-  selectedProvider: XCodeProvider,
+  selectedProvider: ZCodeProvider,
   apiFormat: string | null | undefined,
 ): boolean {
   if (!apiFormat) return false;
   // 仅剩 glm（XCode Agent）provider；三方 CLI 的 api format 差异已随 provider 下线。
-  return isXCodeAgentProvider(selectedProvider);
+  return isZCodeAgentProvider(selectedProvider);
 }
 
 export function buildRegistryModelSelectGroups(
-  selectedProvider: XCodeProvider,
+  selectedProvider: ZCodeProvider,
   view: ModelSelectionView,
   labels: ModelProviderGroupLabelOptions = {},
 ): ModelSelectGroup[] {
@@ -93,7 +93,7 @@ export function buildRegistryModelSelectGroups(
 
 function getRegistryAccountProviderGroupPresentation(
   providerId: string,
-  access: XCodeProviderAccountAccess,
+  access: ZCodeProviderAccountAccess,
   labels: ModelProviderGroupLabelOptions,
 ): Pick<ModelSelectGroup, "label" | "labelBadge"> {
   const familySpec = resolveModelProviderFamilySpecByProviderId(providerId);

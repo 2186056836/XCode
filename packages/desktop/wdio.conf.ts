@@ -1120,10 +1120,10 @@ function createPnpmChildEnv() {
   };
 }
 
-function prepareXCodeAgentServer() {
+function prepareZCodeAgentServer() {
   if (E2E_PACKAGED_APP_BINARY_PATH) {
     // 真正的 Preview 包必须使用随包 Agent，禁止测试 runner 注入源码入口掩盖漏打包。
-    configureXCodeAgentServerEnv();
+    configureZCodeAgentServerEnv();
     return;
   }
   if (process.env.ZCODE_E2E_SKIP_AGENT_BUILD === "1") {
@@ -1133,7 +1133,7 @@ function prepareXCodeAgentServer() {
     if (!existsSync(ZCODE_CLI_ENTRYPOINT)) {
       throw new Error(`XCode CLI entrypoint not found: ${ZCODE_CLI_ENTRYPOINT}`);
     }
-    configureXCodeAgentServerEnv();
+    configureZCodeAgentServerEnv();
     return;
   }
 
@@ -1151,10 +1151,10 @@ function prepareXCodeAgentServer() {
     throw new Error(`XCode CLI entrypoint not found: ${ZCODE_CLI_ENTRYPOINT}`);
   }
 
-  configureXCodeAgentServerEnv();
+  configureZCodeAgentServerEnv();
 }
 
-function configureXCodeAgentServerEnv() {
+function configureZCodeAgentServerEnv() {
   // 数据库准备只信任 bundled resolver 确认的入口。E2E 即使把本轮 bundle 填进自定义
   // command，也会按 unsupported_runtime 拒绝；清除继承的覆盖，复用正式桌面解析链。
   delete process.env.ZCODE_AGENT_SERVER_COMMAND;
@@ -2585,7 +2585,7 @@ async function startOffPeakE2EMock(specs: string[] = []): Promise<void> {
     delete process.env.ZCODE_OFFPEAK_MOCK;
     const port = Number(process.env.ZCODE_OFFPEAK_MOCK_PORT);
     if (!port) throw new Error("Team 闲时 E2E 网关未由 launcher 准备");
-    await materializeOffPeakMockXCodeBuiltinProviderConfig(port, "GLM-5.3");
+    await materializeOffPeakMockZCodeBuiltinProviderConfig(port, "GLM-5.3");
     process.env.ZCODE_BUILTIN_PROVIDER_CONFIG_FILE = E2E_OFFPEAK_XCODE_BUILTIN_PROVIDER_CONFIG_FILE;
     return;
   }
@@ -2623,7 +2623,7 @@ async function startOffPeakE2EMock(specs: string[] = []): Promise<void> {
     } else {
       delete process.env.ZCODE_OFFPEAK_MOCK_AVAILABILITY_BLOCK_MS;
     }
-    await materializeOffPeakMockXCodeBuiltinProviderConfig(
+    await materializeOffPeakMockZCodeBuiltinProviderConfig(
       Number(process.env.ZCODE_OFFPEAK_MOCK_PORT),
       isSubagentInheritanceSpec ? "GLM-5.3" : "GLM-5.2",
     );
@@ -2641,7 +2641,7 @@ async function startOffPeakE2EMock(specs: string[] = []): Promise<void> {
   }
 }
 
-async function materializeOffPeakMockXCodeBuiltinProviderConfig(
+async function materializeOffPeakMockZCodeBuiltinProviderConfig(
   port: number,
   modelId: string,
 ): Promise<void> {
@@ -3320,7 +3320,7 @@ async function resetE2EHome(specs: string[] = []) {
     await seedSidebarRichContentFixture({
       cliEntryPoint: ZCODE_CLI_ENTRYPOINT,
       e2eHomeDir: E2E_HOME_DIR,
-      workspacePath: resolve(E2E_HOME_DIR, "XCodeProject"),
+      workspacePath: resolve(E2E_HOME_DIR, "ZCodeProject"),
     });
   }
   if (usesProviderReadinessColdStartFixture(specs) || usesGitReviewEntryFixture(specs)) {
@@ -3329,7 +3329,7 @@ async function resetE2EHome(specs: string[] = []) {
     await seedProviderReadinessHistoryFixture({
       cliEntryPoint: ZCODE_CLI_ENTRYPOINT,
       e2eHomeDir: E2E_HOME_DIR,
-      workspacePath: resolve(E2E_HOME_DIR, "XCodeProject"),
+      workspacePath: resolve(E2E_HOME_DIR, "ZCodeProject"),
     });
   }
   if (usesTaskIndexRowAuthorityFixture(specs)) {
@@ -3338,21 +3338,21 @@ async function resetE2EHome(specs: string[] = []) {
     await seedTaskIndexRowAuthorityFixture({
       cliEntryPoint: ZCODE_CLI_ENTRYPOINT,
       e2eHomeDir: E2E_HOME_DIR,
-      workspacePath: resolve(E2E_HOME_DIR, "XCodeProject"),
+      workspacePath: resolve(E2E_HOME_DIR, "ZCodeProject"),
     });
   }
   if (specs.some((spec) => spec.includes(TASK_TITLE_MARQUEE_SPEC))) {
     await seedTaskTitleMarqueeFixture({
       cliEntryPoint: ZCODE_CLI_ENTRYPOINT,
       e2eHomeDir: E2E_HOME_DIR,
-      workspacePath: resolve(E2E_HOME_DIR, "XCodeProject"),
+      workspacePath: resolve(E2E_HOME_DIR, "ZCodeProject"),
     });
   }
   if (specs.some((spec) => spec.includes("usage-stats-app-usage.test.ts"))) {
     await seedAppUsageE2EFixture({
       cliEntryPoint: ZCODE_CLI_ENTRYPOINT,
       e2eHomeDir: E2E_HOME_DIR,
-      workspacePath: resolve(E2E_HOME_DIR, "XCodeProject"),
+      workspacePath: resolve(E2E_HOME_DIR, "ZCodeProject"),
     });
   }
   seedE2EWorkerModelStreamConfig(specs);
@@ -3372,7 +3372,7 @@ async function resetE2EHome(specs: string[] = []) {
     await seedSessionHistoryFirstFixture({
       cliEntryPoint: ZCODE_CLI_ENTRYPOINT,
       e2eHomeDir: E2E_HOME_DIR,
-      workspacePath: resolve(E2E_HOME_DIR, "XCodeProject"),
+      workspacePath: resolve(E2E_HOME_DIR, "ZCodeProject"),
       providerId: e2eProviderPreset.providerId,
       modelId: e2eProviderPreset.model,
       thoughtLevel: readE2EThoughtLevel(),
@@ -3480,7 +3480,7 @@ function seedE2EGitCommitDialogWorkspace(specs: string[] = []) {
     return;
   }
 
-  const workspacePath = resolve(E2E_HOME_DIR, "XCodeProject");
+  const workspacePath = resolve(E2E_HOME_DIR, "ZCodeProject");
   mkdirSync(resolve(workspacePath, "src"), { recursive: true });
   writeFileSync(resolve(workspacePath, "README.md"), "Git commit dialog E2E workspace\n", "utf-8");
   runGitE2ECommand(workspacePath, ["init"]);
@@ -3517,7 +3517,7 @@ function seedE2EStartupState(specs: string[] = []) {
   const useFreshConversationWorkspace = specs.some((spec) =>
     spec.includes("conversation-session-conversation-workspace.test.ts"),
   );
-  const legacyDefaultProjectPath = resolve(E2E_HOME_DIR, "XCodeProject");
+  const legacyDefaultProjectPath = resolve(E2E_HOME_DIR, "ZCodeProject");
   const agentWarmupFixture = AGENT_WARMUP_FIXTURE_SPECS.some((marker) =>
     workerSpecsContain(specs, marker),
   );
@@ -3701,7 +3701,7 @@ function usesGitReviewEntryFixture(specs: string[] = []) {
 async function seedE2EGitReviewEntryWorkspace(specs: string[] = []) {
   if (!usesGitReviewEntryFixture(specs)) return;
 
-  const workspacePath = resolve(E2E_HOME_DIR, "XCodeProject");
+  const workspacePath = resolve(E2E_HOME_DIR, "ZCodeProject");
   const caseRoot = resolve(workspacePath, ".zcode-e2e/conversation-session-git-review-entry");
   await mkdir(caseRoot, { recursive: true });
   await runGitReviewEntryCommand(workspacePath, ["init"]);
@@ -3886,7 +3886,7 @@ async function seedE2EWorkspacePluginState(specs: string[] = []) {
   const state = resolvePluginMcpSkillState(specs);
   if (!state?.startsWith("workspace-")) return;
 
-  const workspacePath = resolve(E2E_HOME_DIR, "XCodeProject");
+  const workspacePath = resolve(E2E_HOME_DIR, "ZCodeProject");
   const userConfigPath = resolve(E2E_CLI_CONFIG_DIR, "config.json");
   const workspaceConfigPath = resolve(workspacePath, ".xcode", "config.json");
   const pluginId = "e2e-plugin-mcp-ping@e2e-fixture";
@@ -3956,7 +3956,7 @@ async function seedE2EBuiltinWorkspacePluginDisable(specs: string[] = []) {
   }
 
   const pluginId = "skill-creator@zcode-plugins-official";
-  const workspaceA = resolve(E2E_HOME_DIR, "XCodeProject");
+  const workspaceA = resolve(E2E_HOME_DIR, "ZCodeProject");
   const workspaceB = resolve(E2E_HOME_DIR, "WorkspaceB");
   const userConfig = await readOptionalE2ECliConfig(E2E_CLI_CONFIG_FILE);
   const userPlugins = (userConfig.plugins as Record<string, unknown> | undefined) ?? {};
@@ -4958,7 +4958,7 @@ export const config: WebdriverIO.Config = {
             artifactDir: e2eReporter.artifactDir,
           });
         } else await buildAndStage();
-        prepareXCodeAgentServer();
+        prepareZCodeAgentServer();
         // 正式包使用随包 CLI，模板 seed 源不同，不预热；缺模板时各 HOME 照常冷 seed。
         if (!E2E_PACKAGED_APP_BINARY_PATH) {
           await prepareOfficialPluginCacheTemplate({
@@ -5084,7 +5084,7 @@ export const config: WebdriverIO.Config = {
         await runE2EBeforeSessionSetup({
           cid,
           specs,
-          configureAgentServerEnv: configureXCodeAgentServerEnv,
+          configureAgentServerEnv: configureZCodeAgentServerEnv,
           configureCodingPlanTeamMockForSpecs,
           recordBeforeSession: e2eReporter.beforeSession,
           resetHome: resetE2EHome,
@@ -5121,19 +5121,19 @@ export const config: WebdriverIO.Config = {
           specs,
           credentialsFile: E2E_APP_CREDENTIALS_FILE,
           settingsFile: E2E_APP_SETTINGS_FILE,
-          workspacePath: resolve(E2E_HOME_DIR, "XCodeProject"),
+          workspacePath: resolve(E2E_HOME_DIR, "ZCodeProject"),
         });
         stopOfficialMcpAuthRoutingFixture = await prepareOfficialMcpAuthRoutingFixture({
           specs,
           credentialsFile: E2E_APP_CREDENTIALS_FILE,
           settingsFile: E2E_APP_SETTINGS_FILE,
-          workspacePath: resolve(E2E_HOME_DIR, "XCodeProject"),
+          workspacePath: resolve(E2E_HOME_DIR, "ZCodeProject"),
         });
         stopMcpFailureGuidanceFixture = await prepareMcpFailureGuidanceFixture({
           specs,
           credentialsFile: E2E_APP_CREDENTIALS_FILE,
           settingsFile: E2E_APP_SETTINGS_FILE,
-          workspacePath: resolve(E2E_HOME_DIR, "XCodeProject"),
+          workspacePath: resolve(E2E_HOME_DIR, "ZCodeProject"),
         });
         // resetHome 之后、Electron 启动之前安装，Main -> Host -> Agent 才会同时继承
         // case-owned PATH；其他 spec 由 helper 保持 no-op。

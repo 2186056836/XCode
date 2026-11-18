@@ -14,7 +14,7 @@ export interface ProviderConfigRuntimeOptions {
   readonly zcodeBuiltinActiveFilePath?: string;
   readonly zcodeBuiltinRemote?: NodeProviderConfigRuntimeOptions["zcodeBuiltinRemote"];
   readonly zcodeBuiltinEnvironment?: NodeProviderConfigRuntimeOptions["zcodeBuiltinEnvironment"];
-  readonly onXCodeBuiltinRefreshError?: (error: unknown) => void;
+  readonly onZCodeBuiltinRefreshError?: (error: unknown) => void;
   readonly onPersonalConfigRecovery?: (event: PersonalProviderConfigRecoveryEvent) => void;
   readonly onPersonalConfigPollingError?: (error: unknown) => void;
   readonly personalFilePath?: string;
@@ -37,7 +37,7 @@ export class ProviderConfigRuntime {
       zcodeBuiltinActiveFilePath: options.zcodeBuiltinActiveFilePath,
       zcodeBuiltinRemote: options.zcodeBuiltinRemote,
       zcodeBuiltinEnvironment: options.zcodeBuiltinEnvironment,
-      onXCodeBuiltinRefreshError: options.onXCodeBuiltinRefreshError,
+      onZCodeBuiltinRefreshError: options.onZCodeBuiltinRefreshError,
       onPersonalConfigRecovery: options.onPersonalConfigRecovery,
       onPersonalConfigPollingError: options.onPersonalConfigPollingError,
       personalFilePath:
@@ -65,16 +65,16 @@ export class ProviderConfigRuntime {
     return this.#runtime.personalRepository;
   }
 
-  resolveXCodeBuiltinActiveFilePath(): Promise<string> {
-    return this.#runtime.resolveXCodeBuiltinActiveFilePath();
+  resolveZCodeBuiltinActiveFilePath(): Promise<string> {
+    return this.#runtime.resolveZCodeBuiltinActiveFilePath();
   }
 
-  refreshXCodeBuiltin(options?: { readonly force?: boolean }) {
-    return this.#runtime.refreshXCodeBuiltin(options);
+  refreshZCodeBuiltin(options?: { readonly force?: boolean }) {
+    return this.#runtime.refreshZCodeBuiltin(options);
   }
 
-  onDidCheckXCodeBuiltin(listener: () => Promise<void>): () => void {
-    return this.#runtime.onDidCheckXCodeBuiltin(listener);
+  onDidCheckZCodeBuiltin(listener: () => Promise<void>): () => void {
+    return this.#runtime.onDidCheckZCodeBuiltin(listener);
   }
 
   dispose(): void {

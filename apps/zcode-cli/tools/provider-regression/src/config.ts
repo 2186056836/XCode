@@ -10,7 +10,7 @@ import {
   parsePersonalProviderConfigMap,
   parsePersonalModelConfigRules,
 } from "@zcode/provider";
-import { decodeXCodeBuiltinRelease } from "@zcode/provider-node";
+import { decodeZCodeBuiltinRelease } from "@zcode/provider-node";
 
 const nonempty = z.string().trim().min(1);
 const ids = z
@@ -83,7 +83,7 @@ export async function loadConfiguration(providersFile: string, listFile: string)
   const config = providerFileSchema.parse(JSON.parse(providerText));
   const list = listSchema.parse(JSON.parse(listText));
   const builtinText = await readFile(resolve(dirname(providersFile), config.builtinFile), "utf8");
-  const builtin = decodeXCodeBuiltinRelease(JSON.parse(builtinText));
+  const builtin = decodeZCodeBuiltinRelease(JSON.parse(builtinText));
   const original = parsePersonalProviderConfigMap({ providerRules: config.providerRules });
   const missingKeys = new Set<string>();
   const secrets: string[] = [];

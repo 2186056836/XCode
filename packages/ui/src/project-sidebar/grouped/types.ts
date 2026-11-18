@@ -1,13 +1,13 @@
 import type {
   TaskGroup,
-  TaskGroupColor as XCodeTaskGroupColor,
+  TaskGroupColor as ZCodeTaskGroupColor,
   ProjectTask,
 } from "@/project-sidebar/contract.js";
 
 interface TaskGroupMenuItem {
   id: string;
   title: string;
-  color: XCodeTaskGroupColor;
+  color: ZCodeTaskGroupColor;
 }
 const TASK_GROUP_COLORS = [
   "gray",
@@ -17,8 +17,8 @@ const TASK_GROUP_COLORS = [
   "green",
   "blue",
   "purple",
-] satisfies XCodeTaskGroupColor[];
-const TASK_GROUP_COLOR_CLASS: Record<XCodeTaskGroupColor, string> = {
+] satisfies ZCodeTaskGroupColor[];
+const TASK_GROUP_COLOR_CLASS: Record<ZCodeTaskGroupColor, string> = {
   gray: "bg-zinc-300 text-zinc-800 dark:bg-zinc-400/32 dark:text-zinc-100",
   red: "bg-rose-300 text-rose-900 dark:bg-rose-400/32 dark:text-rose-50",
   orange: "bg-orange-300 text-orange-900 dark:bg-orange-400/32 dark:text-orange-50",
@@ -27,7 +27,7 @@ const TASK_GROUP_COLOR_CLASS: Record<XCodeTaskGroupColor, string> = {
   blue: "bg-sky-300 text-sky-900 dark:bg-sky-400/32 dark:text-sky-50",
   purple: "bg-violet-300 text-violet-900 dark:bg-violet-400/32 dark:text-violet-50",
 };
-const TASK_GROUP_BORDER_COLOR_CLASS: Record<XCodeTaskGroupColor, string> = {
+const TASK_GROUP_BORDER_COLOR_CLASS: Record<ZCodeTaskGroupColor, string> = {
   gray: "border-zinc-500/70 dark:border-zinc-400/55",
   red: "border-rose-500/70 dark:border-rose-400/52",
   orange: "border-orange-500/70 dark:border-orange-400/52",
@@ -65,12 +65,12 @@ export {
 export type { TaskGroupMenuItem };
 
 // 删除前分组组件的展示契约；行集合只从当前目录投影，不恢复旧事实缓存。
-export type { XCodeTaskGroupColor };
-export type XCodeTaskGroup = TaskGroup;
-export type XCodeGroupedTaskViewNode =
+export type { ZCodeTaskGroupColor };
+export type ZCodeTaskGroup = TaskGroup;
+export type ZCodeGroupedTaskViewNode =
   | { type: "group"; group: TaskGroup; tasks: ProjectTask[] }
   | { type: "task"; task: ProjectTask };
-export interface XCodeGroupedTaskView {
-  nodes: XCodeGroupedTaskViewNode[];
+export interface ZCodeGroupedTaskView {
+  nodes: ZCodeGroupedTaskViewNode[];
 }
 export type GroupedDraftTaskPlacement = { type: "top" } | { type: "group"; groupId: string };

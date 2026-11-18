@@ -17,7 +17,7 @@ import {
 import { downloadImagePreview, readBoundedImageBlob } from "@/lib/imagePreviewDownload.js";
 import { DefaultFileApplicationLabel, FileApplicationChoices } from "@/file-menu/index.js";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { captureImageComposerTarget } from "@/image-preview-editor/composerTarget.js";
 import { copyPreviewImage } from "@/lib/copyPreviewImage.js";
 import { getContainingDirectoryPath } from "@/lib/path.js";
@@ -55,7 +55,7 @@ export function ImagePreviewActions({
   onDownload: () => Promise<string | null>;
   downloading: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const platform = useOptionalPlatform();
   const [busy, setBusy] = useState(false);
   const pending = useRef(false),

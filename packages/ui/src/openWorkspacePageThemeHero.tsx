@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { normalizeThemePreference, resolveTheme } from "@/useTheme.js";
 import type { Theme } from "@/useTheme.js";
 
@@ -66,7 +66,7 @@ function getThemeHeroPalette(theme: Theme): ThemeHeroPalette {
 }
 
 export function useResolvedThemeHeroPalette(): ThemeHeroPalette {
-  const theme = useXCodeStore((state) => state.theme);
+  const theme = useZCodeStore((state) => state.theme);
   // 主题存储可能是旧值 light/dark，但实际应用的是 Zai Light/Zai Dark；
   // 背景调色板必须跟实际主题一致，否则登录页会出现蓝色渐变与页面主题不匹配。
   const appliedTheme =

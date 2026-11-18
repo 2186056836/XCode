@@ -1,5 +1,5 @@
 import type { ModelUsageSummary, TodoItem, TurnId } from "@zcode/contracts";
-import { getXCodeCopy } from "@zcode/i18n";
+import { getZCodeCopy } from "@zcode/i18n";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppView } from "./app-view.js";
 import type { PromptInputEditor } from "./app-input-pane.js";
@@ -55,7 +55,7 @@ export function TuiApp({
   const initialResult = options.initialResult;
   const initialLoginRequired = initialResult?.loginRequired ?? options.loginRequired ?? false;
   const initialLocale = options.locale ?? "en-US";
-  const initialCopy = getXCodeCopy(initialLocale).tui;
+  const initialCopy = getZCodeCopy(initialLocale).tui;
   useTuiThemeSync(options);
   const [messages, setMessages] = useState<Message[]>(() =>
     initialResult
@@ -73,7 +73,7 @@ export function TuiApp({
   const [locale, setLocale] = useState(initialLocale);
   const [lastEvent, setLastEvent] = useState("idle");
   const [lastError, setLastError] = useState<string | undefined>();
-  const copy = useMemo(() => getXCodeCopy(locale), [locale]);
+  const copy = useMemo(() => getZCodeCopy(locale), [locale]);
   const [loginRequired, setLoginRequired] = useState(initialLoginRequired);
   const [status, setStatus] = useState(
     initialResult?.selection?.prompt ??

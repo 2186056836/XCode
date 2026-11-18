@@ -10,7 +10,7 @@ import { memo } from "react";
 import { AlertCircle, AlertTriangle, Info } from "lucide-react";
 import type { ConversationShareFailureIssue } from "@/conversation-share-interaction/contract.js";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   formatConversationShareAllowedArtifacts,
   formatConversationShareArtifactType,
@@ -28,7 +28,7 @@ function ConversationSharePreflightStatusImpl({
   onRetryPreflight,
   preflight = DEFAULT_PREFLIGHT,
 }: ConversationSharePreflightStatusProps) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const blockingIssues = "blockingIssues" in preflight ? preflight.blockingIssues : [];
   const skippableWarnings = "skippableWarnings" in preflight ? preflight.skippableWarnings : [];
   const deferredIssues = "deferredIssues" in preflight ? preflight.deferredIssues : [];

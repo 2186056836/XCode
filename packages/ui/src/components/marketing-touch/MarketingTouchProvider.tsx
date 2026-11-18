@@ -23,8 +23,8 @@ import {
 import { BUILTIN_MODEL_PROVIDER_IDS, toZhOrEnLocale, ZCODE_ENV } from "@zcode/shared";
 import { useServices } from "@/hooks/useServices.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useCloudHeroEnvironment } from "@/components/cloud-content-dialog/useCloudHeroEnvironment.js";
 import { MarketingDialogs } from "@/components/marketing-touch/MarketingDialogs.js";
 import { toast } from "@/components/ui/toast.js";
@@ -73,13 +73,13 @@ export function MarketingTouchProvider({
   });
   const upgradeTargetRef = useRef(upgradeTargetProviderId);
   upgradeTargetRef.current = upgradeTargetProviderId;
-  const user = useXCodeStore((state) => state.user);
-  const restoring = useXCodeStore((state) => state.isRestoringOAuthSession);
-  const requestLogin = useXCodeStore((state) => state.requestLoginEntry);
+  const user = useZCodeStore((state) => state.user);
+  const restoring = useZCodeStore((state) => state.isRestoringOAuthSession);
+  const requestLogin = useZCodeStore((state) => state.requestLoginEntry);
   const openRewards = useOpenRewards();
   const openRewardsRef = useRef(openRewards);
   openRewardsRef.current = openRewards;
-  const { intl, locale, localeResolved } = useXCodeIntl();
+  const { intl, locale, localeResolved } = useZCodeIntl();
   const startEntitlement = useStartPlanEntitlement(
     BUILTIN_MODEL_PROVIDER_IDS.bigmodelStartPlan,
     services.usageStatsService,
@@ -391,7 +391,7 @@ export function MarketingBanner() {
 function ConnectedBanner({ controller }: { controller: MarketingTouchController }) {
   const state = useStore(controller.store);
   const { dark } = useCloudHeroEnvironment();
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const banner = state.banner;
   useRequestVerificationPrewarm(
     Boolean(

@@ -127,7 +127,7 @@ export interface McpConfig {
   opencodemcp: CliMcpConfig;
 }
 
-export interface XCodeMcpServer {
+export interface ZCodeMcpServer {
   id: string;
   name: string;
   config: McpServerConfig;
@@ -181,7 +181,7 @@ export interface McpTestResult {
   response_time?: number;
 }
 
-export type XCodeAgentMcpServer = { scope?: "user" | "workspace" } & (
+export type ZCodeAgentMcpServer = { scope?: "user" | "workspace" } & (
   | {
       name: string;
       command: string;
@@ -249,7 +249,7 @@ function zcodeCuaArgLeaf(value: string): string {
 // zcode-cua）；覆盖 uv/npm 的 `@version`、pip 的 `==version`、extras `[...]`、git 的 `.git`/`.git@`，
 // 以及 `python -m zcode_cua.server` 这种点号子模块（`zcode-cua.<submodule>`）。fail-closed 边界宁可
 // 过判也不漏判；仍不会误判 `zcode-cua-proxy`（短横续接，不以 `.`/`@`/`[`/`==` 边界续接）。
-function matchesXCodeCuaSpec(candidate: string): boolean {
+function matchesZCodeCuaSpec(candidate: string): boolean {
   const c = candidate.replace(/_/g, "-");
   return (
     c === "zcode-cua" ||
@@ -266,8 +266,8 @@ function matchesXCodeCuaSpec(candidate: string): boolean {
  * 覆盖 `command: "zcode-cua"`、`/opt/bin/zcode-cua`，以及把包规格直接当 command 的写法
  * （`zcode-cua@1.2.3` 等）。对 fail-closed 边界宁可过判也不漏判。
  */
-export function isXCodeCuaMcpCommand(command: string): boolean {
-  return matchesXCodeCuaSpec(command) || matchesXCodeCuaSpec(zcodeCuaArgLeaf(command));
+export function isZCodeCuaMcpCommand(command: string): boolean {
+  return matchesZCodeCuaSpec(command) || matchesZCodeCuaSpec(zcodeCuaArgLeaf(command));
 }
 
 /**
@@ -275,8 +275,8 @@ export function isXCodeCuaMcpCommand(command: string): boolean {
  * `zcode-cua==1.2.3`、`zcode_cua`，以及 git / 本地路径形态（`.../zcode-cua`、`zcode-cua.git`、
  * `git+https://.../zcode-cua.git@v1`）。同时比对原始值与路径叶子，覆盖 `--from <path>`、`--from <git-url>`。
  */
-export function isXCodeCuaMcpPackageArg(value: string): boolean {
-  return matchesXCodeCuaSpec(value) || matchesXCodeCuaSpec(zcodeCuaArgLeaf(value));
+export function isZCodeCuaMcpPackageArg(value: string): boolean {
+  return matchesZCodeCuaSpec(value) || matchesZCodeCuaSpec(zcodeCuaArgLeaf(value));
 }
 
 /** 审核摘要与 Host DTO 共用 Windows 命令归一化，避免批准 cmd /c 后执行 npx 被误拒绝。 */
@@ -297,11 +297,11 @@ export function normalizeMcpStdioCommand(command: string, args: string[] = []) {
   return { command, args };
 }
 
-export function convertToXCodeAgentMcpServer(
+export function convertToZCodeAgentMcpServer(
   name: string,
   config: McpServerConfig,
   scope?: "user" | "workspace",
-): XCodeAgentMcpServer | null {
+): ZCodeAgentMcpServer | null {
   let inferredType = config.type;
   if (!inferredType) {
     if (config.command) inferredType = "stdio";

@@ -83,7 +83,7 @@ import type {
   RemoteSessionReconnectedEvent,
   UpdateCheckResultPayload,
   UpdateStatePayload,
-  XCodeStdioTapDevState,
+  ZCodeStdioTapDevState,
   LoadCliMcpFromUserDirectoryRequest,
   MigrateLegacyCommonMcpRequest,
   SaveCliMcpToUserDirectoryRequest,
@@ -117,7 +117,7 @@ import type {
 import {
   InternalChannels,
   PlatformChannels,
-  formatXCodeRendererProcessName,
+  formatZCodeRendererProcessName,
   scopedServicePortPayloadSchema,
   shouldEnableE2ETestBridge,
 } from "@zcode/shared";
@@ -240,7 +240,7 @@ ipcRenderer.on(PlatformChannels.ShareImport, (_event: unknown, payload: { shareC
 });
 
 function updateRendererProcessTitle(): void {
-  process.title = formatXCodeRendererProcessName(document.title);
+  process.title = formatZCodeRendererProcessName(document.title);
 }
 
 function notifyUpdateReadyCallbacks(version: string): void {
@@ -1108,8 +1108,8 @@ contextBridge.exposeInMainWorld("zcode", {
   clearEmbeddedBrowserData: (mode: "cache" | "all") =>
     ipcRenderer.invoke(PlatformChannels.ClearEmbeddedBrowserData, mode),
   /** 读取开发态 stdio tap proxy 开关状态 */
-  getXCodeStdioTapDevState: (): Promise<XCodeStdioTapDevState> =>
-    ipcRenderer.invoke(PlatformChannels.GetXCodeStdioTapDevState),
+  getZCodeStdioTapDevState: (): Promise<ZCodeStdioTapDevState> =>
+    ipcRenderer.invoke(PlatformChannels.GetZCodeStdioTapDevState),
   /** 注册 main 进程修改 settings 后的通知，返回 disposer */
   onSettingsChanged: (callback: () => void): (() => void) => {
     const handler = () => callback();

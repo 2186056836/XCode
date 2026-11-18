@@ -61,7 +61,7 @@ import {
   CommandList,
 } from "@/components/ui/command.js";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   parseSshPasteTarget,
   type RemoteFormField,
@@ -169,7 +169,7 @@ export function SshConfigAliasPicker({
   onClear?: () => void;
   children: ReactNode;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [open, setOpen] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
   const handleListWheel = useCallback((event: React.WheelEvent<HTMLDivElement>) => {
@@ -446,7 +446,7 @@ export function RemoteConnectionFields({
   setServerToken?: (value: string) => void;
   setServerWorkspacePath?: (value: string) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const fieldId = useId();
   const [dockerInputMode, setDockerInputMode] = useState<"select" | "manual">(
     manualDockerContainer || !dockerContainer ? "manual" : "select",

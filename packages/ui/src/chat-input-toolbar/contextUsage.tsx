@@ -10,8 +10,8 @@ import {
 } from "react";
 import {
   type CodingPlanResetType,
-  type XCodeContextUsageBreakdownItem,
-  type XCodeProvider,
+  type ZCodeContextUsageBreakdownItem,
+  type ZCodeProvider,
 } from "@zcode/shared";
 import { TID_CHAT_CONTEXT_USAGE_TRIGGER } from "@zcode/shared/test-ids";
 import {
@@ -28,7 +28,7 @@ import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { resolveCodingPlanUsageRemainingState } from "@/CodingPlanUsageRemainingPanel.js";
 import { CodingPlanQuotaResetStatusContent } from "@/components/coding-plan-quota-reset/CodingPlanQuotaResetStatus.js";
 import { useCodingPlanQuotaResetUi } from "@/hooks/useCodingPlanQuotaResetUi.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   CODING_PLAN_QUOTA_RESET_AUTOMATIC_PROCESSING_MS,
   CODING_PLAN_QUOTA_RESET_TYPES,
@@ -64,7 +64,7 @@ import {
   shouldDismissContextQuotaResetOpportunityReminder,
 } from "@/chat-input-toolbar/contextQuotaResetOpportunityReminder.js";
 
-type ContextUsageBreakdownSource = XCodeContextUsageBreakdownItem["source"];
+type ContextUsageBreakdownSource = ZCodeContextUsageBreakdownItem["source"];
 
 interface ContextUsageBreakdownSegment {
   chars: number;
@@ -168,7 +168,7 @@ const BREAKDOWN_SOURCE_ORDER: Record<ContextUsageBreakdownSource, number> = {
 };
 
 export function buildContextUsageBreakdownSegments(
-  breakdown: readonly XCodeContextUsageBreakdownItem[] | undefined,
+  breakdown: readonly ZCodeContextUsageBreakdownItem[] | undefined,
 ): ContextUsageBreakdownSegment[] {
   const charsBySource = new Map<ContextUsageBreakdownSource, number>();
   for (const item of breakdown ?? []) {
@@ -234,7 +234,7 @@ export function getRenderableTaskUsage<
   return taskUsage;
 }
 
-export function getContextCompressionCommand(_provider: XCodeProvider): string {
+export function getContextCompressionCommand(_provider: ZCodeProvider): string {
   return "/compact";
 }
 
@@ -272,10 +272,10 @@ export function ChatContextUsage({
     used: number;
     size: number;
     cache?: { hitRate: number | null };
-    breakdown?: XCodeContextUsageBreakdownItem[];
+    breakdown?: ZCodeContextUsageBreakdownItem[];
   } | null;
-  selectedProvider: XCodeProvider;
-  intl: ReturnType<typeof useXCodeIntl>["intl"];
+  selectedProvider: ZCodeProvider;
+  intl: ReturnType<typeof useZCodeIntl>["intl"];
   locale: string;
   onSendCompressionCommand?: (command: string) => void;
   compressionDisabled?: boolean;

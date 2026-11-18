@@ -1,6 +1,6 @@
-import type { XCodeProvider } from "@zcode/shared";
+import type { ZCodeProvider } from "@zcode/shared";
 
-export const ZCODE_MODE_OPTION_LABEL_IDS: Record<XCodeProvider, Record<string, string>> = {
+export const ZCODE_MODE_OPTION_LABEL_IDS: Record<ZCodeProvider, Record<string, string>> = {
   glm: {
     default: "mode.label.glm.default",
     build: "mode.label.glm.build",
@@ -11,7 +11,7 @@ export const ZCODE_MODE_OPTION_LABEL_IDS: Record<XCodeProvider, Record<string, s
   },
 };
 
-export const ZCODE_MODE_OPTION_DESCRIPTION_IDS: Record<XCodeProvider, Record<string, string>> = {
+export const ZCODE_MODE_OPTION_DESCRIPTION_IDS: Record<ZCodeProvider, Record<string, string>> = {
   glm: {
     default: "mode.description.glm.default",
     build: "mode.description.glm.build",

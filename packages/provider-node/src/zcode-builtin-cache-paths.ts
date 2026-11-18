@@ -1,32 +1,32 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 
-export function resolveXCodeBuiltinClientPlatform(): string {
+export function resolveZCodeBuiltinClientPlatform(): string {
   const target = process.platform === "win32" ? "windows" : process.platform;
   const arch =
     process.arch === "arm64" ? "aarch64" : process.arch === "x64" ? "x86_64" : process.arch;
   return `${target}-${arch}`;
 }
 
-export interface XCodeBuiltinCachePathOptions {
+export interface ZCodeBuiltinCachePathOptions {
   readonly environmentConfigRoot: string;
   readonly platform: string;
   readonly appVersion: string;
   readonly zcodeEndpointOrigin: string;
 }
 
-export interface XCodeBuiltinCachePaths {
+export interface ZCodeBuiltinCachePaths {
   readonly activeFilePath: string;
   readonly controlFilePath: string;
 }
 
 /** 按平台与 App 版本隔离 Active/LKG；路径本身就是兼容范围。 */
-export function resolveXCodeBuiltinCachePaths(
-  options: XCodeBuiltinCachePathOptions,
-): XCodeBuiltinCachePaths {
+export function resolveZCodeBuiltinCachePaths(
+  options: ZCodeBuiltinCachePathOptions,
+): ZCodeBuiltinCachePaths {
   const platform = normalizeSegment(options.platform, "platform");
   const appVersion = normalizeSegment(options.appVersion, "appVersion");
-  const endpointKey = createXCodeBuiltinEndpointKey(options.zcodeEndpointOrigin);
+  const endpointKey = createZCodeBuiltinEndpointKey(options.zcodeEndpointOrigin);
   const directory = join(
     options.environmentConfigRoot,
     "runtime",
@@ -42,13 +42,13 @@ export function resolveXCodeBuiltinCachePaths(
 }
 
 /** 将 XCode 控制面 Origin 规范化后映射为安全、稳定且碰撞风险可忽略的缓存路径段。 */
-export function createXCodeBuiltinEndpointKey(zcodeEndpointOrigin: string): string {
-  const normalized = normalizeXCodeBuiltinEndpointOrigin(zcodeEndpointOrigin);
+export function createZCodeBuiltinEndpointKey(zcodeEndpointOrigin: string): string {
+  const normalized = normalizeZCodeBuiltinEndpointOrigin(zcodeEndpointOrigin);
   const digest = createHash("sha256").update(normalized).digest("hex").slice(0, 32);
   return `endpoint-${digest}`;
 }
 
-export function normalizeXCodeBuiltinEndpointOrigin(value: string): string {
+export function normalizeZCodeBuiltinEndpointOrigin(value: string): string {
   const normalized = value.trim();
   if (!normalized) throw new Error("XCode Built-in Endpoint Origin 不能为空");
   const url = new URL(normalized);

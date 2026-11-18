@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button.js";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.js";
 import { Input } from "@/components/ui/input.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
 import { useServices } from "@/hooks/useServices.js";
@@ -106,7 +106,7 @@ export function QoderLoginSection({
   region: "cn" | "intl";
   name: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const platform = useOptionalPlatform();
   const { providerSettingsService } = useServices();
   const [phase, setPhase] = useState<LoginPhase>({ kind: "idle" });

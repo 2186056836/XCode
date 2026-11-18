@@ -1,12 +1,12 @@
 import { resolve } from "node:path";
-import { parseRemoteWorkspaceIdentity, type XCodeWorkspaceRef } from "@zcode/shared";
+import { parseRemoteWorkspaceIdentity, type ZCodeWorkspaceRef } from "@zcode/shared";
 
 const REMOTE_WORKSPACE_ID_PREFIX = "remote:";
 
 export function buildWorkspaceRef(input: {
   workspaceIdentity?: string;
   workspacePath: string;
-}): XCodeWorkspaceRef {
+}): ZCodeWorkspaceRef {
   const workspaceIdentity = input.workspaceIdentity?.trim() || undefined;
   return {
     workspaceIdentity,
@@ -18,7 +18,7 @@ export function buildWorkspaceRef(input: {
 /**
  * 将 V4 workspaceId 的本地路径/远程 identity 双形态统一还原为 workspace ref。
  */
-export function resolveWorkspaceRefFromId(workspaceId: string): XCodeWorkspaceRef {
+export function resolveWorkspaceRefFromId(workspaceId: string): ZCodeWorkspaceRef {
   const parsedRemote = parseRemoteWorkspaceIdentity(workspaceId);
   if (!parsedRemote) {
     // 非法 remote identity 若继续按本地路径处理，会再次把 identity 写入
@@ -53,7 +53,7 @@ export class WorktreeCwdLocalOnlyError extends Error {
 }
 
 /** workspace 身份（key）不变，执行路径换成 cwd。远程 workspace 拒绝。 */
-export function workspaceRefWithCwd(workspace: XCodeWorkspaceRef, cwd: string): XCodeWorkspaceRef {
+export function workspaceRefWithCwd(workspace: ZCodeWorkspaceRef, cwd: string): ZCodeWorkspaceRef {
   if (workspace.workspaceIdentity?.trim() || workspace.workspaceKey.startsWith(REMOTE_WORKSPACE_ID_PREFIX)) {
     throw new WorktreeCwdLocalOnlyError(workspace.workspaceKey);
   }
@@ -67,9 +67,9 @@ export function workspaceRefWithCwd(workspace: XCodeWorkspaceRef, cwd: string): 
  * 是项目主目录，沿用请求路径会让会话在主目录中恢复执行。远程 workspace 保持原行为。
  */
 export function resolveResumeWorkspaceRef(
-  requested: XCodeWorkspaceRef | undefined,
+  requested: ZCodeWorkspaceRef | undefined,
   stored: { workspaceID?: string; path?: string; directory: string },
-): XCodeWorkspaceRef {
+): ZCodeWorkspaceRef {
   const storedPath = stored.path ?? stored.directory;
   if (!requested) {
     return buildWorkspaceRef({

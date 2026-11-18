@@ -1,11 +1,11 @@
 // worktree 显示名 `<仓库名> · <bucket>`（docs/git/worktree.md §3.7），只由任务的 worktree 根目录
 // （tasks-index worktree_root）推导：受管布局为 <受管根>/<bucket>/<仓库名>。
-import type { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import type { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
-type XCodeIntl = ReturnType<typeof useXCodeIntl>["intl"];
+type ZCodeIntl = ReturnType<typeof useZCodeIntl>["intl"];
 
 export function formatWorktreeLabel(
-  intl: XCodeIntl,
+  intl: ZCodeIntl,
   worktreeRoot: string | undefined,
 ): string | null {
   if (!worktreeRoot) return null;

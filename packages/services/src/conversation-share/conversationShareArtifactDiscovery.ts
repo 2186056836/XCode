@@ -19,10 +19,10 @@ import type {
 import {
   PROTOCOL_V4_LIMITS,
   ZCODE_ATTACHMENT_FAULT_CODES,
-  readXCodeAttachmentFaultCode,
+  readZCodeAttachmentFaultCode,
 } from "@zcode/shared/zcode-protocol-v4";
 
-import type { IXCodeAgentService } from "../zcode-agent/zcodeAgent.js";
+import type { IZCodeAgentService } from "../zcode-agent/zcodeAgent.js";
 import type {
   ConversationShareFailureIssue,
   PublishTextConversationInput,
@@ -145,7 +145,7 @@ async function materializeRegisteredArtifacts(options: {
 
 async function discoverPreviewArtifacts(options: {
   zcodeAgentService: Pick<
-    IXCodeAgentService,
+    IZCodeAgentService,
     "conversationFileChangesV4" | "conversationAttachmentReadV4"
   >;
   artifactSource: ConversationShareArtifactSource;
@@ -212,7 +212,7 @@ async function discoverPreviewArtifacts(options: {
       if (!header.entityId || !header.productTurnId) {
         throwDiscoveryError("Conversation file changes are missing a stable turn identity");
       }
-      let result: Awaited<ReturnType<IXCodeAgentService["conversationFileChangesV4"]>>;
+      let result: Awaited<ReturnType<IZCodeAgentService["conversationFileChangesV4"]>>;
       try {
         result = await options.zcodeAgentService.conversationFileChangesV4({
           workspacePath: options.input.workspacePath,
@@ -404,7 +404,7 @@ async function discoverPreviewArtifacts(options: {
 }
 
 async function readInputAttachment(options: {
-  zcodeAgentService: Pick<IXCodeAgentService, "conversationAttachmentReadV4">;
+  zcodeAgentService: Pick<IZCodeAgentService, "conversationAttachmentReadV4">;
   input: PublishTextConversationInput;
   row: Extract<WireConversationRow, { kind: "userInput" }>;
   attachmentIndex: number;
@@ -479,7 +479,7 @@ async function readInputAttachment(options: {
 }
 
 async function discoverInputAttachments(options: {
-  zcodeAgentService: Pick<IXCodeAgentService, "conversationAttachmentReadV4">;
+  zcodeAgentService: Pick<IZCodeAgentService, "conversationAttachmentReadV4">;
   input: PublishTextConversationInput;
   selectedRows: WireConversationRow[];
   capabilities: ConversationShareCapabilities;
@@ -568,7 +568,7 @@ async function discoverInputAttachments(options: {
           bytes: materialized.bytes.byteLength,
         });
       } catch (error) {
-        const faultCode = readXCodeAttachmentFaultCode(error);
+        const faultCode = readZCodeAttachmentFaultCode(error);
         if (
           faultCode === ZCODE_ATTACHMENT_FAULT_CODES.shareReadNotAuthorized ||
           faultCode === ZCODE_ATTACHMENT_FAULT_CODES.shareReadConnectionUntrusted
@@ -662,7 +662,7 @@ function insertDiscoveredArtifacts(
 
 export async function buildConversationShareArtifactSnapshot(options: {
   zcodeAgentService: Pick<
-    IXCodeAgentService,
+    IZCodeAgentService,
     "conversationFileChangesV4" | "conversationAttachmentReadV4"
   >;
   artifactSource: ConversationShareArtifactSource;

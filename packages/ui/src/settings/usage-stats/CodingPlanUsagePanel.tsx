@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button.js";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { BUILTIN_MODEL_PROVIDER_IDS } from "@zcode/shared";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useUsageEntitlement } from "@/hooks/useUsageEntitlement.js";
 import { useCodingPlanQuotaResetUi } from "@/hooks/useCodingPlanQuotaResetUi.js";
 import { useCodingPlanUsageStats } from "@/hooks/useUsageStats.js";
@@ -106,7 +106,7 @@ export function CodingPlanUsagePanel({
   workspaceIdentity?: string;
   workspacePath?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [range, setRange] = useState<CodingPlanUsageTrendRange>("7d");
   void workspaceIdentity;
   void workspacePath;
@@ -333,13 +333,13 @@ function CodingPlanQuotaCards({
   sourceKey: string | undefined;
   preferredProviderId: string | undefined;
   accountAccess:
-    | import("@zcode/shared").XCodeProviderAccountAccess
-    | import("@zcode/shared").XCodeAccountAccess
+    | import("@zcode/shared").ZCodeProviderAccountAccess
+    | import("@zcode/shared").ZCodeAccountAccess
     | undefined;
   onEntitlementRefresh: () => void | Promise<void>;
   onUsageStatsRefresh: () => void | Promise<void>;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const [quotaResetDialogOpen, setQuotaResetDialogOpen] = useState(false);
   const resetUi = useCodingPlanQuotaResetUi({
     sourceKey,
@@ -563,7 +563,7 @@ function CodingPlanUsageTrendsSection({
   snapshot: CodingPlanUsageSnapshot;
   onRangeChange: (range: CodingPlanUsageTrendRange) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <section id={CODING_PLAN_USAGE_TRENDS_SECTION_ID} className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -581,7 +581,7 @@ function CodingPlanUsageTrendsSection({
 }
 
 function CodingPlanActivitySection({ snapshot }: { snapshot: CodingPlanUsageSnapshot }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const summary = snapshot.activity.summary;
   const items = [
     {
@@ -658,7 +658,7 @@ function CodingPlanActivitySection({ snapshot }: { snapshot: CodingPlanUsageSnap
 }
 
 function CodingPlanUsageDetailSection({ snapshot }: { snapshot: CodingPlanUsageSnapshot }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const [metric, setMetric] = useState<CodingPlanUsageDetailMetric>("credits");
   const [subject, setSubject] = useState<CodingPlanUsageDetailSubject>("model");
   const [selectedSeriesNames, setSelectedSeriesNames] = useState<string[]>([]);
@@ -932,7 +932,7 @@ function CodingPlanUsageDetailSummary({
 }: {
   summary: CodingPlanUsageSnapshot["detail"]["model"];
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const items = [
     {
       label: intl.formatMessage({ id: "settings.usage.cacheHitRate" }),
@@ -975,7 +975,7 @@ function CodingPlanUsageDetailSummary({
 }
 
 function CodingPlanHealthSection({ snapshot }: { snapshot: CodingPlanUsageSnapshot }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const healthSeries = useMemo(
     () => [
       {
@@ -1037,7 +1037,7 @@ function formatCodingPlanRate(locale: string, value: number | null): string {
 
 function formatCodingPlanRefreshTime(
   locale: string,
-  intl: ReturnType<typeof useXCodeIntl>["intl"],
+  intl: ReturnType<typeof useZCodeIntl>["intl"],
   value: number,
 ): string {
   const time = new Intl.DateTimeFormat(locale, {
@@ -1085,7 +1085,7 @@ function SegmentedTabs<T extends string>({
   labelIdPrefix: string;
   onChange: (value: T) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <Tabs value={value} onValueChange={(next) => onChange(next as T)}>
       <TabsList className={USAGE_STATS_TABS_LIST_CLASS}>

@@ -79,7 +79,7 @@ export class WebRemoteControlEntry {
   private reset(): void {
     this.dispose();
     this.scope = new AbortController();
-    const jwt = this.options.auth.getXCodeJwtToken();
+    const jwt = this.options.auth.getZCodeJwtToken();
     const revision = this.options.auth.getSessionRevision();
     const unsubscribe = this.options.auth.subscribeSessionChange(() => {
       if (!this.matchesSession(jwt, revision)) void this.start();
@@ -89,7 +89,7 @@ export class WebRemoteControlEntry {
 
   private matchesSession(jwt: string | null, revision: string | null): boolean {
     return (
-      this.options.auth.getXCodeJwtToken() === jwt &&
+      this.options.auth.getZCodeJwtToken() === jwt &&
       this.options.auth.getSessionRevision() === revision
     );
   }
@@ -101,7 +101,7 @@ export class WebRemoteControlEntry {
       this.options.onView({ kind: "callback" });
       return;
     }
-    if (!this.options.auth.getXCodeJwtToken()) {
+    if (!this.options.auth.getZCodeJwtToken()) {
       this.options.onView({ kind: "login" });
       return;
     }
@@ -151,7 +151,7 @@ export class WebRemoteControlEntry {
     const list = this.list;
     if (!list) return;
     if (list.request) return list.request;
-    const jwt = this.options.auth.getXCodeJwtToken();
+    const jwt = this.options.auth.getZCodeJwtToken();
     const revision = this.options.auth.getSessionRevision();
     if (!jwt) return this.switchAccount();
     if (list.acceptedJwt && !this.matchesSession(list.acceptedJwt, list.acceptedRevision ?? null))
@@ -241,7 +241,7 @@ export class WebRemoteControlEntry {
   ): Promise<void> {
     this.reset();
     const { signal } = this.scope;
-    const jwt = this.options.auth.getXCodeJwtToken();
+    const jwt = this.options.auth.getZCodeJwtToken();
     const revision = this.options.auth.getSessionRevision();
     if (!jwt) return this.switchAccount();
     try {
@@ -305,7 +305,7 @@ export class WebRemoteControlEntry {
       params,
       signal,
       getToken: async (tokenSignal) => {
-        const jwt = this.options.auth.getXCodeJwtToken();
+        const jwt = this.options.auth.getZCodeJwtToken();
         const revision = this.options.auth.getSessionRevision();
         if (!jwt) throw new WebRemoteControlV2ConnectionError("auth-required");
         try {
@@ -317,7 +317,7 @@ export class WebRemoteControlEntry {
         } catch (error) {
           // Bugfix: 401 只否定这次请求用的 JWT。请求在途时其他标签页写入了新 JWT，旧实现仍按 401
           // 登出，把新登录一起清掉并回登录页；这里改为可重试，transport 下一轮读取新 JWT 重新申请。
-          const current = this.options.auth.getXCodeJwtToken();
+          const current = this.options.auth.getZCodeJwtToken();
           if (
             error instanceof WebRemoteControlV2ConnectionError &&
             error.reason === "auth-required" &&

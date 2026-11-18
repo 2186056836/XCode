@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button.js";
 import { Textarea } from "@/components/ui/textarea.js";
 import { FeedbackErrorTip } from "@/feedback/feedbackBadges.js";
 import { getErrorMessage } from "@/lib/errorMessage.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export const MAX_SUPPLEMENT_ATTACHMENTS = 6;
 export const MAX_SUPPLEMENT_ATTACHMENT_BYTES = 100 * 1024 * 1024;
@@ -68,7 +68,7 @@ export function FeedbackSupplementComposer({
   title?: string;
   description?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const formatMessage = intl.formatMessage;
   const displayTitle = title ?? formatMessage({ id: "feedback.supplement.title" });
   const displayDescription =

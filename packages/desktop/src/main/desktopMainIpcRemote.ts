@@ -10,7 +10,7 @@ import {
   hostRemoteWorkspaceConnectFailedResponseSchema,
   normalizeUnknownError,
   InternalChannels,
-  isPublicXCodeErrorCode,
+  isPublicZCodeErrorCode,
   isTrustedCodingPlanWebviewOrigin,
   PlatformChannels,
   remoteTargetSchema,
@@ -48,7 +48,7 @@ import { openFileUrlInDefaultApp, openPathInDefaultApp } from "./desktopMainIpcH
 function isPublicRemoteReasonCode(code: string | undefined): code is string {
   // Bug 原因：前缀 OR 形成第二份公开码真源，任何内部 source-server-* 字符串都会穿透
   // Main 暴露给 Renderer。公开边界只消费 shared 登记表，新增码必须先进入统一合同。
-  return isPublicXCodeErrorCode(code);
+  return isPublicZCodeErrorCode(code);
 }
 
 function readRetryable(error: unknown): boolean | undefined {

@@ -1,8 +1,8 @@
 import {
-  getXCodeAgentModeSelectOptions,
+  getZCodeAgentModeSelectOptions,
   type ModelSelection,
-  type XCodeConfigOption,
-  type XCodeProvider,
+  type ZCodeConfigOption,
+  type ZCodeProvider,
 } from "@zcode/shared";
 import type { ModelSelectionView } from "@zcode/services";
 import type { ModelSelectGroup, ModelSelectGroupItem } from "@/ModelConfigSelect.js";
@@ -28,7 +28,7 @@ export function resolveAutomationPreferredModelValue(
 }
 
 export function buildAutomationModelSelectGroups(params: {
-  selectedProvider: XCodeProvider;
+  selectedProvider: ZCodeProvider;
   labels: ModelProviderGroupLabelOptions;
   registrySelectionView: ModelSelectionView;
 }): ModelSelectGroup[] {
@@ -39,14 +39,14 @@ export function buildAutomationModelSelectGroups(params: {
   );
 }
 
-export function buildAutomationModeOption(currentValue: string): XCodeConfigOption {
+export function buildAutomationModeOption(currentValue: string): ZCodeConfigOption {
   return {
     id: "mode",
     name: "Mode",
     category: "mode",
     type: "select",
     currentValue,
-    options: getXCodeAgentModeSelectOptions(),
+    options: getZCodeAgentModeSelectOptions(),
   };
 }
 
@@ -128,9 +128,9 @@ export function resolveAutomationModelTriggerLabel(params: {
 }
 
 export function buildAutomationThoughtLevelOption(
-  runtimeOption: XCodeConfigOption | undefined,
+  runtimeOption: ZCodeConfigOption | undefined,
   currentValue: string,
-): XCodeConfigOption | null {
+): ZCodeConfigOption | null {
   const options = runtimeOption?.options ?? [];
   if (options.length === 0) return null;
   const validCurrentValue = options.some((option) => option.value === currentValue);

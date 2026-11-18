@@ -114,7 +114,7 @@ const WORKSPACE_DEPENDENCY_FIELDS = [
  *
  * bug 根因：从 XCode 客户端拉起的 shell 里带有应用自身环境（实测 ZCODE_ENV=production、
  * ZCODE_BASE_URL=https://zcode.z.ai）。这些变量被 tsup 当作构建输入编译进 main/host 包，
- * 于是 `resolveXCodeEndpointOrigin` 走 production 分支、忽略 settings 里的 endpoint，
+ * 于是 `resolveZCodeEndpointOrigin` 走 production 分支、忽略 settings 里的 endpoint，
  * spec 用 fixture 起的本地 mock server 全部收不到请求，表现为大批配置类用例失败。
  * 构建前统一归一，runner 与本脚本共用同一结果；ZCODE_BASE_URL 等运行时变量也不能进入构建。
  */

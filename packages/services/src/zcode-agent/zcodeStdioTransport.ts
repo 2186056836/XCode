@@ -2,12 +2,12 @@ import type { WindowsRuntimeHost } from "#src/windows-runtime-host/contract.js";
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { StringDecoder } from "node:string_decoder";
 import { Emitter } from "@zcode/rpc";
-import type { XCodeProtocolMessage } from "@zcode/shared";
+import type { ZCodeProtocolMessage } from "@zcode/shared";
 import { zcodeProtocolMessageSchema } from "@zcode/shared";
 import { createServiceLogger } from "#src/logger/serviceLogger.js";
 import type {
-  XCodeProtocolTransport,
-  XCodeProtocolTransportClosedEvent,
+  ZCodeProtocolTransport,
+  ZCodeProtocolTransportClosedEvent,
 } from "./zcodeProtocolTransport.js";
 import {
   captureProcessGroupSnapshot,
@@ -19,7 +19,7 @@ import {
 import type { ProcessTreeSnapshot } from "#src/process/processTreeTerminator.js";
 import { AgentStderrCollector, EXIT_STDERR_DRAIN_MS } from "./agentStderrCollector.js";
 
-interface XCodeStdioTransportOptions {
+interface ZCodeStdioTransportOptions {
   windowsRuntime?: WindowsRuntimeHost;
   onStderrLine?: (line: string) => void;
   ownedProcessGroupId?: number;
@@ -32,11 +32,11 @@ const E2E_COVERAGE_STDIO_EOF_EXIT_WAIT_MS = 5_000;
 const PROCESS_TREE_FORCE_AFTER_MS = 2_000;
 const processTreeLogger = createServiceLogger("zcode-agent-process-tree");
 
-export class XCodeStdioTransport implements XCodeProtocolTransport {
+export class ZCodeStdioTransport implements ZCodeProtocolTransport {
   readonly kind = "stdio" as const;
 
-  private readonly messageEmitter = new Emitter<XCodeProtocolMessage>();
-  private readonly closeEmitter = new Emitter<XCodeProtocolTransportClosedEvent>();
+  private readonly messageEmitter = new Emitter<ZCodeProtocolMessage>();
+  private readonly closeEmitter = new Emitter<ZCodeProtocolTransportClosedEvent>();
   private readonly stderrCollector: AgentStderrCollector;
   private readonly stdoutDecoder = new StringDecoder("utf8");
   // 当前未完成行的分片；只在遇到 LF 时 join 一次，见 handleStdoutData 注释。
@@ -55,7 +55,7 @@ export class XCodeStdioTransport implements XCodeProtocolTransport {
 
   constructor(
     private readonly child: ChildProcessWithoutNullStreams,
-    private readonly options?: XCodeStdioTransportOptions,
+    private readonly options?: ZCodeStdioTransportOptions,
   ) {
     this.stderrCollector = new AgentStderrCollector(child.stderr, options?.onStderrLine);
 
@@ -81,7 +81,7 @@ export class XCodeStdioTransport implements XCodeProtocolTransport {
     });
   }
 
-  async send(message: XCodeProtocolMessage): Promise<void> {
+  async send(message: ZCodeProtocolMessage): Promise<void> {
     if (this.disposed || this.closed || this.child.killed || !this.child.stdin.writable) {
       throw new Error("XCode agent stdio transport is closed");
     }
@@ -271,7 +271,7 @@ export class XCodeStdioTransport implements XCodeProtocolTransport {
     this.fireClose({ reason: `${stream}_error: ${error.message}` });
   }
 
-  private fireClose(event: XCodeProtocolTransportClosedEvent): void {
+  private fireClose(event: ZCodeProtocolTransportClosedEvent): void {
     if (this.closed) {
       return;
     }

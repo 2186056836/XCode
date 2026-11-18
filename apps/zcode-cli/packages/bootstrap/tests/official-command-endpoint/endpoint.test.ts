@@ -117,7 +117,7 @@ describe("official command endpoint", () => {
       appVersion: "3.16.0",
       fetch: globalThis.fetch,
       resolveHeaders,
-      resolveXCodeApiOrigin: () => options.origin ?? upstream.origin,
+      resolveZCodeApiOrigin: () => options.origin ?? upstream.origin,
     });
     cleanups.push(() => endpoint.close());
     return { endpoint, resolveHeaders, upstream };
@@ -182,8 +182,8 @@ describe("official command endpoint", () => {
         "Content-Type": "application/gzip",
         Cookie: "c=d",
         "X-Bigmodel-Authorization": "Bearer forged",
-        "X-XCode-App-Version": "0.0.1",
-        "X-Xcode-Plan": "max",
+        "X-ZCode-App-Version": "0.0.1",
+        "X-Zcode-Plan": "max",
       },
       method: "PUT",
     });

@@ -1,4 +1,4 @@
-import { XCodeAgentModelSelectionBasisUnsupportedError } from "@zcode/services";
+import { ZCodeAgentModelSelectionBasisUnsupportedError } from "@zcode/services";
 import {
   BUILTIN_MODEL_PROVIDER_IDS,
   encodeCustomModelValue,
@@ -290,7 +290,7 @@ describe("BOT-E2E-BASIS-01 旧 CLI 配置依据不降级", () => {
     harness.zcodeTaskService.sendPrompt = async (params: unknown) => {
       calls.push(params);
       // RPC 还原后不保留原型；验证通过稳定错误身份展示，不依赖 instanceof 子类。
-      const source = new XCodeAgentModelSelectionBasisUnsupportedError();
+      const source = new ZCodeAgentModelSelectionBasisUnsupportedError();
       throw Object.assign(new Error(source.message), { name: source.name, code: source.code });
     };
     try {

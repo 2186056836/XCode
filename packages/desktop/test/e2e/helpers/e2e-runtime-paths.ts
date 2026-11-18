@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 
 export const E2E_RUNTIME_RELATIVE_ROOT = ".zcode-e2e";
 export const E2E_RUNTIME_ROOT_REPLAY_TOKEN = "{{e2eRuntimeRoot}}";
-const E2E_AGENT_WORKSPACE_NAME = "XCodeProject";
+const E2E_AGENT_WORKSPACE_NAME = "ZCodeProject";
 
 interface ResolveE2EHomeDirOptions {
   cwd?: string;
@@ -44,7 +44,7 @@ export function resolveE2EStorageRoot(e2eHomeDir = resolveE2EHomeDir()): string 
 
 export function resolveE2ERuntimeRoot(e2eHomeDir = resolveE2EHomeDir()): string {
   // Bug 根因：conversation E2E 的 Agent 实际 cwd 是隔离 HOME 下的
-  // XCodeProject，而不是 conversation backing workspace。Node 若写到后者，
+  // ZCodeProject，而不是 conversation backing workspace。Node 若写到后者，
   // Bash 的相对路径就会永远等不到同一个文件，Windows 上还会叠加 shell 路径差异。
   return join(e2eHomeDir, E2E_AGENT_WORKSPACE_NAME, E2E_RUNTIME_RELATIVE_ROOT);
 }

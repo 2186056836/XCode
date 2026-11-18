@@ -3,8 +3,8 @@ import { Gift, Loader2Icon, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { Input } from "@/components/ui/input.js";
 import { useServices } from "@/hooks/useServices.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { SettingsGroupCard } from "@/settings/SettingsPageParts.js";
 import {
   AccountAvatar,
@@ -106,9 +106,9 @@ export function AccountSettingsSection({
   onOpenLogin?: () => void;
   onLogout?: () => void;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const { oauthService, codingPlanSubscriptionService, marketingTouchService } = useServices();
-  const setUser = useXCodeStore((state) => state.setUser);
+  const setUser = useZCodeStore((state) => state.setUser);
   const svc = oauthService as unknown as OAuthAccountService;
   const claimService = codingPlanSubscriptionService as unknown as
     | CodingPlanClaimCapableService
@@ -571,7 +571,7 @@ function AccountTabsBlock({
   claimAllRunning: boolean;
   claimService: unknown;
   touchService: unknown;
-  intl: ReturnType<typeof useXCodeIntl>["intl"];
+  intl: ReturnType<typeof useZCodeIntl>["intl"];
   onSwitch: (accountRef: string) => Promise<void>;
   onClaimOne: (account: AccountEntry) => Promise<void>;
   onRemove: (accountRef: string) => Promise<void>;
@@ -716,7 +716,7 @@ function AccountRemark({
   remark?: string;
   onSave: (value: string) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(remark ?? "");
   const inputRef = useRef<HTMLInputElement>(null);

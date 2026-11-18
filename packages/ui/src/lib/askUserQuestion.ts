@@ -1,4 +1,4 @@
-type XCodeUserQuestionAnswers = Record<string, unknown>;
+type ZCodeUserQuestionAnswers = Record<string, unknown>;
 
 type AskUserQuestionType = "single" | "multiple";
 
@@ -20,7 +20,7 @@ interface AskUserQuestionItem {
 
 interface AskUserQuestionData {
   questions: AskUserQuestionItem[];
-  answers?: XCodeUserQuestionAnswers;
+  answers?: ZCodeUserQuestionAnswers;
 }
 
 interface AskUserQuestionAnswerDraft {
@@ -114,7 +114,7 @@ function readQuestions(input: unknown): unknown[] {
     : [];
 }
 
-function readAnswers(input: unknown): XCodeUserQuestionAnswers | undefined {
+function readAnswers(input: unknown): ZCodeUserQuestionAnswers | undefined {
   if (!isPlainRecord(input)) {
     return undefined;
   }
@@ -122,12 +122,12 @@ function readAnswers(input: unknown): XCodeUserQuestionAnswers | undefined {
   return isPlainRecord(answers) ? answers : undefined;
 }
 
-function parseClaudeAskUserQuestionOutput(output: unknown): XCodeUserQuestionAnswers | undefined {
+function parseClaudeAskUserQuestionOutput(output: unknown): ZCodeUserQuestionAnswers | undefined {
   if (typeof output !== "string" || output.trim().length === 0) {
     return undefined;
   }
 
-  const answers: XCodeUserQuestionAnswers = {};
+  const answers: ZCodeUserQuestionAnswers = {};
   const answerPattern = /"([^"]+)"="([^"]*)"/g;
   for (const match of output.matchAll(answerPattern)) {
     const question = match[1]?.trim();
@@ -155,7 +155,7 @@ function parseJsonRecord(output: unknown): Record<string, unknown> | undefined {
   }
 }
 
-function readNestedAskUserQuestionAnswers(input: unknown): XCodeUserQuestionAnswers | undefined {
+function readNestedAskUserQuestionAnswers(input: unknown): ZCodeUserQuestionAnswers | undefined {
   const directTextAnswers = parseClaudeAskUserQuestionOutput(input);
   if (directTextAnswers) {
     return directTextAnswers;
@@ -198,10 +198,10 @@ function readNestedAskUserQuestionAnswers(input: unknown): XCodeUserQuestionAnsw
   return readNestedAskUserQuestionAnswers(record.output);
 }
 
-function parseXCodeAskUserQuestionOutput(
+function parseZCodeAskUserQuestionOutput(
   output: unknown,
   input: unknown,
-): XCodeUserQuestionAnswers | undefined {
+): ZCodeUserQuestionAnswers | undefined {
   const outputRecord = parseJsonRecord(output);
   if (!outputRecord) {
     return undefined;
@@ -318,7 +318,7 @@ export function readAskUserQuestionAnswers(value: {
   input?: unknown;
   output?: unknown;
   raw?: unknown;
-}): XCodeUserQuestionAnswers | undefined {
+}): ZCodeUserQuestionAnswers | undefined {
   const nestedOutputAnswers = readNestedAskUserQuestionAnswers(value.output);
   if (nestedOutputAnswers) {
     return nestedOutputAnswers;
@@ -330,12 +330,12 @@ export function readAskUserQuestionAnswers(value: {
   if (parsedOutputAnswers) {
     return parsedOutputAnswers;
   }
-  const parsedXCodeOutputAnswers = parseXCodeAskUserQuestionOutput(
+  const parsedZCodeOutputAnswers = parseZCodeAskUserQuestionOutput(
     value.output,
     readAskUserQuestionInput(value),
   );
-  if (parsedXCodeOutputAnswers) {
-    return parsedXCodeOutputAnswers;
+  if (parsedZCodeOutputAnswers) {
+    return parsedZCodeOutputAnswers;
   }
   if (isPlainRecord(value.input) && isPlainRecord(value.input.answers)) {
     return value.input.answers;
@@ -349,12 +349,12 @@ export function readAskUserQuestionAnswers(value: {
     if (parsedRawOutputAnswers) {
       return parsedRawOutputAnswers;
     }
-    const parsedRawXCodeOutputAnswers = parseXCodeAskUserQuestionOutput(
+    const parsedRawZCodeOutputAnswers = parseZCodeAskUserQuestionOutput(
       value.raw.rawOutput,
       readAskUserQuestionInput(value),
     );
-    if (parsedRawXCodeOutputAnswers) {
-      return parsedRawXCodeOutputAnswers;
+    if (parsedRawZCodeOutputAnswers) {
+      return parsedRawZCodeOutputAnswers;
     }
     const nestedRawAnswers = readNestedAskUserQuestionAnswers(value.raw.output);
     if (nestedRawAnswers) {
@@ -364,12 +364,12 @@ export function readAskUserQuestionAnswers(value: {
     if (parsedRawAnswers) {
       return parsedRawAnswers;
     }
-    const parsedRawXCodeAnswers = parseXCodeAskUserQuestionOutput(
+    const parsedRawZCodeAnswers = parseZCodeAskUserQuestionOutput(
       value.raw.output,
       readAskUserQuestionInput(value),
     );
-    if (parsedRawXCodeAnswers) {
-      return parsedRawXCodeAnswers;
+    if (parsedRawZCodeAnswers) {
+      return parsedRawZCodeAnswers;
     }
     const nestedRawContentAnswers = readNestedAskUserQuestionAnswers(value.raw.content);
     if (nestedRawContentAnswers) {
@@ -381,7 +381,7 @@ export function readAskUserQuestionAnswers(value: {
 
 export function getAskUserQuestionAnswerText(
   question: AskUserQuestionItem,
-  answers: XCodeUserQuestionAnswers | undefined,
+  answers: ZCodeUserQuestionAnswers | undefined,
   noAnswerText: string,
 ) {
   const value = answers?.[question.question] ?? answers?.[question.id];

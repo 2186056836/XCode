@@ -5,7 +5,7 @@ import { z } from "zod";
 import {
   BUILTIN_MODEL_PROVIDER_IDS,
   resolveBigModelApiOrigin,
-  resolveRuntimeXCodeEnv,
+  resolveRuntimeZCodeEnv,
 } from "@zcode/shared";
 import {
   createModelProviderModelConfig,
@@ -68,14 +68,14 @@ function normalizeBigModelCodingPlanAnthropicBaseUrlForEnv(
   env: Record<string, string | undefined> = process.env,
 ): string {
   const fallbackBaseUrl =
-    resolveRuntimeXCodeEnv(env) === "production"
+    resolveRuntimeZCodeEnv(env) === "production"
       ? BIGMODEL_CODING_PLAN_ANTHROPIC_BASE_URL
       : `${resolveBigModelApiOrigin(env)}/api/anthropic`;
   const normalizedBaseUrl = normalizeModelProviderBaseUrlForKind(
     baseUrl ?? fallbackBaseUrl,
     "anthropic",
   );
-  if (resolveRuntimeXCodeEnv(env) === "production") {
+  if (resolveRuntimeZCodeEnv(env) === "production") {
     return normalizedBaseUrl || fallbackBaseUrl;
   }
 
@@ -91,7 +91,7 @@ function normalizeBigModelCodingPlanAnthropicBaseUrlForEnv(
   }
 }
 
-function getXCodeConfigFilePath(): string {
+function getZCodeConfigFilePath(): string {
   return join(getAppConfigDir(), "config.json");
 }
 
@@ -100,13 +100,13 @@ const RETIRED_ZAPI_PROVIDER_ID = "builtin:zapi";
 
 type JsonObject = Record<string, unknown>;
 
-interface XCodeConfigFile {
+interface ZCodeConfigFile {
   $schema?: string;
-  provider?: Record<string, XCodeOpenCodeProviderConfig>;
+  provider?: Record<string, ZCodeOpenCodeProviderConfig>;
   [key: string]: unknown;
 }
 
-interface XCodeOpenCodeProviderConfig {
+interface ZCodeOpenCodeProviderConfig {
   api?: string;
   name?: string;
   env?: string[];
@@ -132,18 +132,18 @@ interface XCodeOpenCodeProviderConfig {
   providerMappings?: ProviderModelMappings;
   createdAt?: number;
   updatedAt?: number;
-  models?: Record<string, XCodeOpenCodeModelConfig>;
-  zcode?: XCodeProviderConfigExtension;
+  models?: Record<string, ZCodeOpenCodeModelConfig>;
+  zcode?: ZCodeProviderConfigExtension;
   [key: string]: unknown;
 }
 
-interface XCodeOpenCodeModelConfig {
+interface ZCodeOpenCodeModelConfig {
   id?: string;
   name?: string;
   family?: string;
   release_date?: string;
   attachment?: boolean;
-  reasoning?: boolean | XCodeReasoningConfigExtension;
+  reasoning?: boolean | ZCodeReasoningConfigExtension;
   temperature?: boolean;
   tool_call?: boolean;
   interleaved?: unknown;
@@ -179,18 +179,18 @@ interface XCodeOpenCodeModelConfig {
   priority?: number;
   modified?: boolean;
   deleted?: boolean;
-  zcode?: XCodeModelConfigExtension;
+  zcode?: ZCodeModelConfigExtension;
   [key: string]: unknown;
 }
 
-interface XCodeReasoningConfigExtension {
+interface ZCodeReasoningConfigExtension {
   enabled?: boolean;
   variants?: string[];
   defaultVariant?: string;
   aliases?: Record<string, string>;
 }
 
-interface XCodeProviderConfigExtension {
+interface ZCodeProviderConfigExtension {
   enabled?: boolean;
   systemDisabledReason?: ModelProviderSystemDisabledReason;
   endpoints?: ModelProviderEndpoints;
@@ -210,7 +210,7 @@ interface XCodeProviderConfigExtension {
   deletedModels?: string[];
 }
 
-interface XCodeModelConfigExtension {
+interface ZCodeModelConfigExtension {
   kinds?: ModelProviderKind[];
   defaultKind?: ModelProviderKind;
   modelIdByKind?: Partial<Record<ModelProviderKind, string>>;
@@ -253,7 +253,7 @@ const zcodeModelConfigExtensionSchema = z
   })
   .passthrough();
 
-const zcodeOpenCodeModelConfigSchema: z.ZodType<XCodeOpenCodeModelConfig> = z
+const zcodeOpenCodeModelConfigSchema: z.ZodType<ZCodeOpenCodeModelConfig> = z
   .object({
     id: z.string().optional(),
     name: z.string().optional(),
@@ -313,7 +313,7 @@ const zcodeProviderConfigExtensionSchema = z
   })
   .passthrough();
 
-const zcodeOpenCodeProviderConfigSchema: z.ZodType<XCodeOpenCodeProviderConfig> = z
+const zcodeOpenCodeProviderConfigSchema: z.ZodType<ZCodeOpenCodeProviderConfig> = z
   .object({
     api: z.string().optional(),
     name: z.string().optional(),
@@ -381,7 +381,7 @@ function readStringRecord(value: unknown): Record<string, string> | undefined {
 }
 
 function inferModelProviderKindFromOpenCodeProvider(
-  provider: XCodeOpenCodeProviderConfig,
+  provider: ZCodeOpenCodeProviderConfig,
 ): ModelProviderKind {
   if (provider.kind) {
     return provider.kind;
@@ -399,7 +399,7 @@ function inferModelProviderKindFromOpenCodeProvider(
   return "openai-compatible";
 }
 
-function hasOpenCodeProviderRuntimeFields(provider: XCodeOpenCodeProviderConfig): boolean {
+function hasOpenCodeProviderRuntimeFields(provider: ZCodeOpenCodeProviderConfig): boolean {
   // config.json 的权威运行态字段是 kind/options.baseURL。
   // 旧 endpoints/apiFormat/defaultKind/zcode 可能是历史迁移残留，若继续优先读取会覆盖新配置。
   return Boolean(
@@ -411,7 +411,7 @@ function hasOpenCodeProviderRuntimeFields(provider: XCodeOpenCodeProviderConfig)
 }
 
 function resolveOpenCodeProviderDefaultKind(
-  provider: XCodeOpenCodeProviderConfig,
+  provider: ZCodeOpenCodeProviderConfig,
 ): ModelProviderKind {
   if (provider.kind) {
     return provider.kind;
@@ -482,7 +482,7 @@ function isBigModelCodingPlanLegacyOpenAiRuntime(
 }
 
 function resolveOpenCodeProviderEndpoints(
-  provider: XCodeOpenCodeProviderConfig,
+  provider: ZCodeOpenCodeProviderConfig,
   defaultKind: ModelProviderKind,
   providerId: string,
 ): ModelProviderEndpoints {
@@ -519,7 +519,7 @@ function resolveOpenCodeProviderEndpoints(
   return provider.endpoints ?? provider.zcode?.endpoints ?? {};
 }
 
-function stripXCodePrefixedProviderMappings(
+function stripZCodePrefixedProviderMappings(
   providerMappings: ProviderModelMappings | undefined,
 ): ProviderModelMappings | undefined {
   if (!providerMappings) {
@@ -532,7 +532,7 @@ function stripXCodePrefixedProviderMappings(
 }
 
 function openCodeReasoningToModelReasoning(
-  model: XCodeOpenCodeModelConfig,
+  model: ZCodeOpenCodeModelConfig,
   options: { preferOpenCodeFields: boolean },
 ): ModelProviderReasoningSpec | undefined {
   if (!options.preferOpenCodeFields && model.reasoningSpec) {
@@ -561,7 +561,7 @@ function openCodeReasoningToModelReasoning(
 
 function openCodeModelToModelProviderModel(
   modelId: string,
-  model: XCodeOpenCodeModelConfig,
+  model: ZCodeOpenCodeModelConfig,
   providerDefaultKind: ModelProviderKind,
   options: { preferOpenCodeFields: boolean },
 ): ModelProviderModelConfig {
@@ -640,7 +640,7 @@ function createDeletedModelTombstone(
 
 function openCodeProviderToModelProviderConfig(
   providerId: string,
-  provider: XCodeOpenCodeProviderConfig,
+  provider: ZCodeOpenCodeProviderConfig,
 ): ModelProviderConfig {
   const zcode = provider.zcode;
   const preferOpenCodeFields = hasOpenCodeProviderRuntimeFields(provider);
@@ -671,7 +671,7 @@ function openCodeProviderToModelProviderConfig(
     provider.apiKeyRequired ?? zcode?.apiKeyRequired ?? readBoolean(options.apiKeyRequired);
   const providerMappings = preferOpenCodeFields
     ? undefined
-    : stripXCodePrefixedProviderMappings(provider.providerMappings ?? zcode?.providerMappings);
+    : stripZCodePrefixedProviderMappings(provider.providerMappings ?? zcode?.providerMappings);
   return normalizeProviderForStore({
     id: provider.id?.trim() || providerId,
     name: provider.name?.trim() || providerId,
@@ -728,8 +728,8 @@ function openCodeProviderToModelProviderConfig(
   });
 }
 
-async function readRawXCodeConfigFile(): Promise<XCodeConfigFile | null> {
-  const filePath = getXCodeConfigFilePath();
+async function readRawZCodeConfigFile(): Promise<ZCodeConfigFile | null> {
+  const filePath = getZCodeConfigFilePath();
   let raw: string;
   try {
     raw = await readFile(filePath, "utf-8");
@@ -755,8 +755,8 @@ async function readRawXCodeConfigFile(): Promise<XCodeConfigFile | null> {
   return parsed.data;
 }
 
-async function readXCodeConfigProviders(): Promise<ModelProviderConfig[] | null> {
-  const config = await readRawXCodeConfigFile();
+async function readZCodeConfigProviders(): Promise<ModelProviderConfig[] | null> {
+  const config = await readRawZCodeConfigFile();
   if (!config?.provider) {
     return null;
   }
@@ -909,7 +909,7 @@ function normalizeProviderForStore(provider: ModelProviderConfig): ModelProvider
     models: normalizedModels,
     modelDisplayNames: undefined,
     modelSupportedFormats: undefined,
-    providerMappings: stripXCodePrefixedProviderMappings(
+    providerMappings: stripZCodePrefixedProviderMappings(
       stripLegacyClaudeProviderMappings(provider.providerMappings),
     ),
   };
@@ -931,8 +931,8 @@ function applyProviderStoreMigrations(providers: ModelProviderConfig[]): ModelPr
 }
 
 /** 只读取已发布旧 config.json；更早期的独立 Provider Store 已退出所有迁移链路。 */
-export async function readLegacyXCodeConfigProviders(): Promise<ModelProviderConfig[]> {
-  const configProviders = await readXCodeConfigProviders();
+export async function readLegacyZCodeConfigProviders(): Promise<ModelProviderConfig[]> {
+  const configProviders = await readZCodeConfigProviders();
   return configProviders ? filterDeletedProviderModelsForRead(configProviders) : [];
 }
 

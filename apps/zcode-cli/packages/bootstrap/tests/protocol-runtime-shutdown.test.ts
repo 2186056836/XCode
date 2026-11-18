@@ -5,7 +5,7 @@ import { acquireProtocolStartupResource } from "../src/zcode-protocol/startup-re
 import { createFakeApp } from "./helpers/fake-zcode-app.js";
 import type { Logger } from "@zcode/contracts";
 import { createInMemorySessionEventStore } from "@zcode/adapters/storage";
-import { XCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
+import { ZCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
 
 const telemetry = vi.hoisted(() => ({ shutdown: vi.fn(async () => {}) }));
 vi.mock("@zcode/telemetry", async (importOriginal) => ({
@@ -35,8 +35,8 @@ describe("protocol runtime resource ownership", () => {
       const deleteSession = vi.spyOn(eventStore, "deleteSession");
       const notifications: unknown[] = [];
       let sessionId = "";
-      const server = new XCodeProtocolAgentServer({
-        createXCodeApp: (options) => {
+      const server = new ZCodeProtocolAgentServer({
+        createZCodeApp: (options) => {
           const app = createFakeApp(options, { close });
           sessionId = app.sessionId;
           app.runtime.beginShutdown = vi.fn();
@@ -191,8 +191,8 @@ describe("session lifecycle shutdown reentry", () => {
   it("reserves the shutdown promise before synchronous abort listeners reenter", async () => {
     const { app } = fakeApp();
     const controller = new AbortController();
-    const server = new XCodeProtocolAgentServer({
-      createXCodeApp: async () => app,
+    const server = new ZCodeProtocolAgentServer({
+      createZCodeApp: async () => app,
       cwd: "/workspace",
     });
     const context = (server as unknown as { context: { sessions: Map<string, unknown> } }).context;

@@ -108,7 +108,7 @@ async function verifyRequiredDevPluginRuntimeArtifacts() {
  * 把刚构建出的 agent bundle 暂存进 bundled-agents。
  *
  * 必须做：dev 未打包时 agent 二进制由 desktopRuntimeEnv.ts 的
- * resolveBundledXCodeAgentBinaryPath() 解析，候选**只有** bundled-agents/，没有
+ * resolveBundledZCodeAgentBinaryPath() 解析，候选**只有** bundled-agents/，没有
  * cli/dist/。只靠打包链暂存会让 dev 一直跑上一次打包留下的那份 —— 实测陈旧
  * 3 天，任何 agent CLI 侧改动在 dev 里静默不生效，把「改动没进去」伪装成「代码没作用」。
  * 实现与打包链共用 stage-agent-bundle.mjs，两边不可能再各自漂移。

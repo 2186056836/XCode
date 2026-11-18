@@ -1,8 +1,8 @@
 import {
-  buildXCodeEndpointUrls,
-  buildXCodeSourceHeadersFromContext,
-  resolveOptionalXCodeAuthorization,
-  type XCodeJwtTokenResolver,
+  buildZCodeEndpointUrls,
+  buildZCodeSourceHeadersFromContext,
+  resolveOptionalZCodeAuthorization,
+  type ZCodeJwtTokenResolver,
   ZCODE_ENV,
   ZCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV,
 } from "@zcode/shared";
@@ -88,14 +88,14 @@ export function createElectronDesktopContextPromptConfigFetcher(options: {
   resolveEndpointOrigin: () => Promise<string>;
   /** 当前界面语言；以前不传，X-Client-Language 固定为 unknown。 */
   getClientLanguage: () => string;
-  resolveXcodeJwtToken?: XCodeJwtTokenResolver;
+  resolveXcodeJwtToken?: ZCodeJwtTokenResolver;
 }): (signal: AbortSignal) => Promise<unknown> {
   return async (signal) => {
     const { net } = await import("electron");
     const endpointOrigin = await options.resolveEndpointOrigin();
-    const authorization = await resolveOptionalXCodeAuthorization(options.resolveXcodeJwtToken);
+    const authorization = await resolveOptionalZCodeAuthorization(options.resolveXcodeJwtToken);
     signal.throwIfAborted();
-    const url = new URL(`${buildXCodeEndpointUrls(endpointOrigin).origin}/api/v1/client/configs`);
+    const url = new URL(`${buildZCodeEndpointUrls(endpointOrigin).origin}/api/v1/client/configs`);
     url.searchParams.set("app_version", options.appVersion);
     url.searchParams.set("platform", `${process.platform}-${process.arch}`);
 
@@ -123,7 +123,7 @@ export function createElectronDesktopContextPromptConfigFetcher(options: {
       };
       signal.addEventListener("abort", onAbort, { once: true });
 
-      const sourceHeaders = buildXCodeSourceHeadersFromContext({
+      const sourceHeaders = buildZCodeSourceHeadersFromContext({
         appVersion: options.appVersion,
         arch: process.arch,
         clientLanguage: options.getClientLanguage(),

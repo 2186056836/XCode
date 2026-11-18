@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import type { XCodeAutomationBotDeliveryTarget, XCodeStreamEvent } from "@zcode/shared";
+import type { ZCodeAutomationBotDeliveryTarget, ZCodeStreamEvent } from "@zcode/shared";
 import { AutomationRepo, setDataBaseDir } from "@zcode/services/node";
 
 import {
@@ -54,7 +54,7 @@ describe("Bot automation terminal result delivery E2E", () => {
     expect(callback.ok).toBe(true);
     await waitFor(() => harness?.sendPromptCalls.length === 1, "Bot prompt dispatch");
     const creationPrompt = harness.sendPromptCalls[0] as {
-      botDeliveryTarget?: XCodeAutomationBotDeliveryTarget;
+      botDeliveryTarget?: ZCodeAutomationBotDeliveryTarget;
     };
     expect(creationPrompt.botDeliveryTarget).toEqual({
       provider: "feishu",
@@ -151,7 +151,7 @@ describe("Bot automation terminal result delivery E2E", () => {
   });
 });
 
-function streamEvent(event: XCodeStreamEvent): XCodeStreamEvent {
+function streamEvent(event: ZCodeStreamEvent): ZCodeStreamEvent {
   return event;
 }
 

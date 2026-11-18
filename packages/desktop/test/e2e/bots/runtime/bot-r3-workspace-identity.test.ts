@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { type IXCodeTaskService, type ISettingService } from "@zcode/services";
+import { type IZCodeTaskService, type ISettingService } from "@zcode/services";
 import {
   appSettingsSchema,
   buildRemoteWorkspaceIdentity,
@@ -132,7 +132,7 @@ it("BOT-E2E-RW-02 legacy 与 stable Bot 通过同一 Source 身份完成任务�
   const bound: string[] = [];
   const connection = {
     owner: {},
-    taskService: taskService as unknown as IXCodeTaskService,
+    taskService: taskService as unknown as IZCodeTaskService,
     modelSelectionService: { getView: async () => ({ ...view, effectiveSelection: selected }) },
     agentService: { syncAppRuntimePreferences: async () => {} },
     bindWorkspace: async (workspace: { workspaceIdentity: string }) => {

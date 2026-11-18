@@ -1,9 +1,9 @@
 import type {
-  XCodeSavedWorkflowMeta,
-  XCodeSavedWorkflowScope,
-  XCodeWorkflowsForRunCandidate,
+  ZCodeSavedWorkflowMeta,
+  ZCodeSavedWorkflowScope,
+  ZCodeWorkflowsForRunCandidate,
 } from "@zcode/shared";
-import type { XCodeAgentWorkspaceTarget } from "./zcodeAgentPluginParams.js";
+import type { ZCodeAgentWorkspaceTarget } from "./zcodeAgentPluginParams.js";
 
 // 已保存工作流的 GUI 中枢：五个 workspace 级、无会话的方法。
 // 与 Skill catalog 同一条路径（workspace agent client），不走独立插件管理进程——文件在
@@ -14,26 +14,26 @@ import type { XCodeAgentWorkspaceTarget } from "./zcodeAgentPluginParams.js";
 // （活跃的本地 runtime → 管理面 workspace），协议处理器对全局档不读 workspace 的路径。
 // 项目组内的动作仍带自己的 workspace（既是运行目标又是载体），因此下面用一个 union：
 // 要么带 workspace（scope 可选，缺省 project），要么只给 `scope: "global"`（workspace 可省）。
-export type XCodeAgentSavedWorkflowTarget =
-  | (XCodeAgentWorkspaceTarget & { scope?: XCodeSavedWorkflowScope })
-  | ({ scope: "global" } & Partial<XCodeAgentWorkspaceTarget>);
+export type ZCodeAgentSavedWorkflowTarget =
+  | (ZCodeAgentWorkspaceTarget & { scope?: ZCodeSavedWorkflowScope })
+  | ({ scope: "global" } & Partial<ZCodeAgentWorkspaceTarget>);
 
-export type XCodeAgentListSavedWorkflowsParams = XCodeAgentSavedWorkflowTarget;
+export type ZCodeAgentListSavedWorkflowsParams = ZCodeAgentSavedWorkflowTarget;
 
-export type XCodeAgentGetSavedWorkflowParams = XCodeAgentSavedWorkflowTarget & {
+export type ZCodeAgentGetSavedWorkflowParams = ZCodeAgentSavedWorkflowTarget & {
   name: string;
 };
 
-export type XCodeAgentUpdateSavedWorkflowMetaParams = XCodeAgentSavedWorkflowTarget & {
+export type ZCodeAgentUpdateSavedWorkflowMetaParams = ZCodeAgentSavedWorkflowTarget & {
   name: string;
-  meta: XCodeSavedWorkflowMeta;
+  meta: ZCodeSavedWorkflowMeta;
 };
 
-export type XCodeAgentDeleteSavedWorkflowParams = XCodeAgentSavedWorkflowTarget & {
+export type ZCodeAgentDeleteSavedWorkflowParams = ZCodeAgentSavedWorkflowTarget & {
   name: string;
 };
 
-export type XCodeAgentListSavedWorkflowRunsParams = XCodeAgentSavedWorkflowTarget & {
+export type ZCodeAgentListSavedWorkflowRunsParams = ZCodeAgentSavedWorkflowTarget & {
   /** 只要这个工作流名下的 run；缺省即（该 scope 下）全部。 */
   name?: string;
   /** [1, 50]；服务端钳制。 */
@@ -43,26 +43,26 @@ export type XCodeAgentListSavedWorkflowRunsParams = XCodeAgentSavedWorkflowTarge
 // workflows/move：把全局档搬回项目档，
 // **只此一向**。`workspace`
 // 必填，既是载体也是「移到项目…」选中的目标项目；同机同用户，不覆盖已存在的目标。
-export type XCodeAgentMoveSavedWorkflowParams = XCodeAgentWorkspaceTarget & {
+export type ZCodeAgentMoveSavedWorkflowParams = ZCodeAgentWorkspaceTarget & {
   name: string;
 };
 
 // 完成卡的「直接保存」与「已保存」判定（docs/dynamic-workflow/transcript-and-notifications.md
 // 「Saving the run, and running it again」）。两者都**必带 workspace**，全局档也不例外：要存的
 // 脚本在那个 agent 的 journal 里，载体不能由 services 另选一个本机运行时。
-export type XCodeAgentSaveSavedWorkflowFromRunParams = XCodeAgentWorkspaceTarget & {
+export type ZCodeAgentSaveSavedWorkflowFromRunParams = ZCodeAgentWorkspaceTarget & {
   /** 要保存的那次 run；脚本取它实际执行的那一份。 */
   runId: string;
   name: string;
-  meta: XCodeSavedWorkflowMeta;
+  meta: ZCodeSavedWorkflowMeta;
   /** 缺省 `project`。 */
-  scope?: XCodeSavedWorkflowScope;
+  scope?: ZCodeSavedWorkflowScope;
   /** 只有在已经把覆盖警告摆给用户看过之后才传 true。 */
   overwrite?: boolean;
 };
 
-export type XCodeAgentFindSavedWorkflowForRunParams = XCodeAgentWorkspaceTarget & {
+export type ZCodeAgentFindSavedWorkflowForRunParams = ZCodeAgentWorkspaceTarget & {
   runId: string;
   /** 转写自对话的候选（模型存过并认领了这次 run）；最多 8 个，由 agent 再解析一遍。 */
-  candidates?: readonly XCodeWorkflowsForRunCandidate[];
+  candidates?: readonly ZCodeWorkflowsForRunCandidate[];
 };

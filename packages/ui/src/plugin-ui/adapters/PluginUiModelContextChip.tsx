@@ -1,7 +1,7 @@
 import { PuzzleIcon, Trash2Icon } from "lucide-react";
 import type { AttachmentHoverCardContentProps } from "@/components/ai-elements/attachments.js";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { ContextAttachmentPill } from "@/v4/composer/ContextAttachmentPill.js";
 import {
   formatPluginUiContextLabel,
@@ -22,7 +22,7 @@ export function PluginUiModelContextChip({
   onRemove?: (id: string) => void;
   onRemoveAll?: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (contexts.length === 0) return null;
   const label = intl.formatMessage({ id: "pluginUi.modelContext.label" });
   const removeLabel = intl.formatMessage({ id: "pluginUi.modelContext.remove" });

@@ -10,11 +10,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   resolveWorkspaceKey,
-  type XCodeSavedWorkflowEntry,
-  type XCodeSavedWorkflowMeta,
-  type XCodeSavedWorkflowScope,
-  type XCodeWorkflowsForRunCandidate,
-  type XCodeWorkflowsSaveResult,
+  type ZCodeSavedWorkflowEntry,
+  type ZCodeSavedWorkflowMeta,
+  type ZCodeSavedWorkflowScope,
+  type ZCodeWorkflowsForRunCandidate,
+  type ZCodeWorkflowsSaveResult,
 } from "@zcode/shared";
 import { useWorkspaceServicesResolution } from "@/hooks/useWorkspaceServices.js";
 import {
@@ -38,15 +38,15 @@ export interface WorkflowRunSaveTarget {
 export interface WorkflowRunSaveHost extends WorkflowRunSaveTarget {
   runId: string;
   /** 转写自对话的候选（`buildWorkflowSaveCandidatesByRunId`）。 */
-  candidates?: readonly XCodeWorkflowsForRunCandidate[];
+  candidates?: readonly ZCodeWorkflowsForRunCandidate[];
   /** 启动成功后切到新会话；缺席即宿主不会导航（手机远控首页、静态渲染）。 */
   onNavigateToRun?: (target: SavedWorkflowLaunchTarget, sessionId: string) => void;
 }
 
 export interface WorkflowRunSaveSubmit {
   name: string;
-  scope: XCodeSavedWorkflowScope;
-  meta: XCodeSavedWorkflowMeta;
+  scope: ZCodeSavedWorkflowScope;
+  meta: ZCodeSavedWorkflowMeta;
   overwrite?: boolean;
 }
 
@@ -54,7 +54,7 @@ export interface WorkflowRunSaveController {
   /** 这次 run 的已保存工作流（推导）。`undefined` = 还没查回来。 */
   saved: WorkflowRunSavedState | undefined;
   /** 已保存的那一份；缺席即没有。 */
-  entry: XCodeSavedWorkflowEntry | undefined;
+  entry: ZCodeSavedWorkflowEntry | undefined;
   /** 这次 run 跑过的实参，给「再次运行」的实参窗做预填。 */
   runArgs: Record<string, unknown> | undefined;
   /** 老 agent 没有 `workflows/save`：弹层只留 XCode 那条路。 */
@@ -62,15 +62,15 @@ export interface WorkflowRunSaveController {
   /** 远程项目不给全局档：`~` 在 agent 机器上，中枢从不读它。 */
   scopeLocked: boolean;
   saving: boolean;
-  save: (input: WorkflowRunSaveSubmit) => Promise<XCodeWorkflowsSaveResult>;
+  save: (input: WorkflowRunSaveSubmit) => Promise<ZCodeWorkflowsSaveResult>;
   /** 名字是否已被占用（弹层输入时的前置探测）；查不动时按「不占用」处理，最终裁决在 agent。 */
-  checkNameTaken: (name: string, scope: XCodeSavedWorkflowScope) => Promise<boolean>;
+  checkNameTaken: (name: string, scope: ZCodeSavedWorkflowScope) => Promise<boolean>;
   launching: boolean;
   launchError: SavedWorkflowLaunchError | null;
   clearLaunchError: () => void;
   /** 「再次运行」：按 entry 启动；实参缺省用这次 run 跑过的那份。 */
   launch: (
-    entry: XCodeSavedWorkflowEntry,
+    entry: ZCodeSavedWorkflowEntry,
     args: Record<string, unknown>,
     target?: WorkflowRunSaveTarget,
   ) => Promise<{ ok: true } | { ok: false; error: SavedWorkflowLaunchError }>;
@@ -159,7 +159,7 @@ export function useWorkflowRunSave(host: WorkflowRunSaveHost): WorkflowRunSaveCo
   );
 
   const checkNameTaken = useCallback(
-    async (name: string, scope: XCodeSavedWorkflowScope) => {
+    async (name: string, scope: ZCodeSavedWorkflowScope) => {
       try {
         const result = await agentService.getSavedWorkflow({ ...target, name, scope });
         return result.ok;
@@ -177,7 +177,7 @@ export function useWorkflowRunSave(host: WorkflowRunSaveHost): WorkflowRunSaveCo
   });
   const launch = useCallback(
     async (
-      entry: XCodeSavedWorkflowEntry,
+      entry: ZCodeSavedWorkflowEntry,
       args: Record<string, unknown>,
       launchTarget?: WorkflowRunSaveTarget,
     ) => {

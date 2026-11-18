@@ -8,7 +8,7 @@ import {
   enablePrivateFileKeyFallback,
   prepareServerCredentialStorage,
 } from "@zcode/shared/credential-security";
-import { createSharedXCodeCredentialStore } from "../src/auth/shared-credentials.js";
+import { createSharedZCodeCredentialStore } from "../src/auth/shared-credentials.js";
 
 // 回退开关是进程级的：本文件独立运行（vitest 按文件隔离），模拟开启回退的 Linux Desktop Main。
 // 未开启回退时的默认行为（macOS/Windows/Server/独立 CLI）由 credential-security.test.ts 覆盖。
@@ -74,7 +74,7 @@ describe("Linux Desktop private file key fallback", () => {
   it("saves a login without Secret Service and reuses the private key without touching the OS store", async () => {
     const fixture = await setup();
     const first = unavailableKeyStore();
-    const store = createSharedXCodeCredentialStore({
+    const store = createSharedZCodeCredentialStore({
       filePath: fixture.file,
       cipher: createSystemCredentialCipher({ filePath: fixture.file, env: {}, ...first }),
     });
@@ -87,7 +87,7 @@ describe("Linux Desktop private file key fallback", () => {
     await expect(readFile(fixture.sourceFile, "utf8")).rejects.toHaveProperty("code", "ENOENT");
 
     const next = unavailableKeyStore();
-    const reopened = createSharedXCodeCredentialStore({
+    const reopened = createSharedZCodeCredentialStore({
       filePath: fixture.file,
       cipher: createSystemCredentialCipher({ filePath: fixture.file, env: {}, ...next }),
     });
@@ -103,7 +103,7 @@ describe("Linux Desktop private file key fallback", () => {
       fixture.file,
       JSON.stringify({ zcodejwttoken: legacy.encrypt("legacy-token"), plain: "plain-value" }),
     );
-    const store = createSharedXCodeCredentialStore({
+    const store = createSharedZCodeCredentialStore({
       filePath: fixture.file,
       cipher: createSystemCredentialCipher({
         filePath: fixture.file,

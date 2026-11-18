@@ -4,8 +4,8 @@ import {
   ZCODE_VERSION,
   ZCODE_ENV,
   ZCODE_TELEMETRY_REPORT_ENDPOINT,
-  buildXCodeSourceHeadersFromContext,
-  rewriteXCodeEndpointUrl,
+  buildZCodeSourceHeadersFromContext,
+  rewriteZCodeEndpointUrl,
   sanitizeTelemetryEventDetail,
   type TelemetryEventPayload,
   type TelemetryRendererContext,
@@ -53,7 +53,7 @@ interface TelemetryCoreDependencies {
   releaseChannel?: string;
   osVersion?: string;
   homeDir?: string;
-  resolveXCodeEndpointOrigin?: () => Promise<string> | string;
+  resolveZCodeEndpointOrigin?: () => Promise<string> | string;
   /**
    * 宿主的实时界面语言（Desktop Main 的 currentApplicationLocale）。
    * 有值时覆盖 renderer context 里的 clientLanguage：那是 Intl 系统语言，UI 切到 English 后
@@ -310,7 +310,7 @@ async function ensureDeviceMidInLockedState(
  * 确保 telemetry-state.json 里存在 deviceMid 并返回它。
  *
  * Bug 根因：远端 zcode-server 所在主机没有 Desktop main 进程，过去没有任何进程会在那里写
- * telemetry-state.json；buildXCodeSourceHeaders() 又只读不生成，于是远端发往 XCode endpoint 的
+ * telemetry-state.json；buildZCodeSourceHeaders() 又只读不生成，于是远端发往 XCode endpoint 的
  * 请求永远缺 X-Device-Mid，billing/balance 被服务端拒绝为 parameter error，Start Plan 在远程
  * 工作区被判成未开通。这里把 telemetry 上报内部的 ensure 逻辑抽成独立入口，供远端 server 启动时
  * 调用：同一个文件、同一个字段、同一把 telemetry-state.lock，与同机 CLI 得到同一个设备身份。
@@ -466,13 +466,13 @@ export function createTelemetryCore(dependencies: TelemetryCoreDependencies = {}
     });
 
     const endpoint = String(
-      rewriteXCodeEndpointUrl(
+      rewriteZCodeEndpointUrl(
         REPORT_ENDPOINT,
-        (await dependencies.resolveXCodeEndpointOrigin?.()) ?? REPORT_ENDPOINT,
+        (await dependencies.resolveZCodeEndpointOrigin?.()) ?? REPORT_ENDPOINT,
       ),
     );
 
-    const headers = buildXCodeSourceHeadersFromContext({
+    const headers = buildZCodeSourceHeadersFromContext({
       appVersion,
       platform,
       arch: dependencies.arch ?? process.arch,

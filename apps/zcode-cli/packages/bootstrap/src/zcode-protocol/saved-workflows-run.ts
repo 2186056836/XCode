@@ -27,13 +27,13 @@ import {
 import {
   zcodeWorkflowsForRunParamsSchema,
   zcodeWorkflowsSaveParamsSchema,
-  type XCodeSavedWorkflowEntry,
-  type XCodeWorkflowsForRunResult,
-  type XCodeWorkflowsSaveResult,
+  type ZCodeSavedWorkflowEntry,
+  type ZCodeWorkflowsForRunResult,
+  type ZCodeWorkflowsSaveResult,
 } from "@zcode/shared";
 import type { RunRecord } from "@zcode/dynamic-workflow";
 import { resolveDynamicWorkflowJournalStore } from "../app/dynamic-workflow-run-service.js";
-import { parseParams, type XCodeProtocolAgentServerContext } from "./server-types.js";
+import { parseParams, type ZCodeProtocolAgentServerContext } from "./server-types.js";
 
 /** 诊断回给 GUI 的上界：弹层里只放得下开头几条，完整诊断属于模型那条路。 */
 const SAVE_DIAGNOSTICS_MAX_LINES = 5;
@@ -66,7 +66,7 @@ function boundedDiagnostics(
 }
 
 /** 解析结果 → 协议 entry（与 `workflows/list` 的行同形，不含脚本正文）。 */
-function entryOf(resolved: ResolvedSavedWorkflow): XCodeSavedWorkflowEntry {
+function entryOf(resolved: ResolvedSavedWorkflow): ZCodeSavedWorkflowEntry {
   return {
     name: resolved.name,
     description: resolved.meta.description,
@@ -78,7 +78,7 @@ function entryOf(resolved: ResolvedSavedWorkflow): XCodeSavedWorkflowEntry {
 }
 
 function runRecordOf(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   runId: string,
 ): RunRecord | undefined {
   const journal = resolveDynamicWorkflowJournalStore(context.deps.sessionStore);
@@ -92,9 +92,9 @@ function runRecordOf(
  * 之前，是因为「已经有同名的了」是调用方要先回答的问题，而编译失败时本来就一个字节都不会写。
  */
 export async function saveSavedWorkflowFromRunOp(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodeWorkflowsSaveResult> {
+): Promise<ZCodeWorkflowsSaveResult> {
   const params = parseParams(zcodeWorkflowsSaveParamsSchema, rawParams);
   const cwd = params.workspace.workspacePath;
   const scope = scopeOf(params);
@@ -157,9 +157,9 @@ export async function saveSavedWorkflowFromRunOp(
  * 查不到 run 记录时只跳过 2、3（候选仍然算数）：一条查不到的 run 不该让整个查询失败。
  */
 export async function findSavedWorkflowForRunOp(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodeWorkflowsForRunResult> {
+): Promise<ZCodeWorkflowsForRunResult> {
   const params = parseParams(zcodeWorkflowsForRunParamsSchema, rawParams);
   const cwd = params.workspace.workspacePath;
   const record = runRecordOf(context, params.runId);

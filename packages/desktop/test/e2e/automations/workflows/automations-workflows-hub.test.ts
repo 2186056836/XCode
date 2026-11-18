@@ -172,7 +172,7 @@ describe("已保存工作流中枢 E2E", () => {
       timeoutMsg: "自动化页标题没有「工作流」切换",
     });
 
-    // 2) 全局视图按项目分组：默认工作区（folder 名 XCodeProject）自成一组，组头带名字，
+    // 2) 全局视图按项目分组：默认工作区（folder 名 ZCodeProject）自成一组，组头带名字，
     //    组内「通过对话创建」按钮带以 workspaceKey 收尾的 test id。
     //    group / create 的 test id 后缀是 workspaceKey（本地通常 = workspacePath），但
     //    resolveWorkspaceKey 若对本地路径做归一化（大小写 / 去尾斜杠 / realpath）后缀就不等于
@@ -206,9 +206,9 @@ describe("已保存工作流中枢 E2E", () => {
     );
     const seen = groupInfo as GroupHeaderInfo | null;
     expect(seen?.groupTestId?.startsWith(TID_WORKFLOW_PROJECT_GROUP)).toBe(true);
-    expect(seen?.text).toContain("XCodeProject");
+    expect(seen?.text).toContain("ZCodeProject");
     expect(seen?.createTestId?.startsWith(testId(TID_WORKFLOWS_CREATE_VIA_CHAT, ""))).toBe(true);
-    expect(seen?.createTestId).toContain("XCodeProject");
+    expect(seen?.createTestId).toContain("ZCodeProject");
 
     // 3) 预置文件以卡片出现：名字 + frontmatter 里的说明。
     const cardTestId = testId(TID_WORKFLOW_CARD, WORKFLOW_NAME);
@@ -227,7 +227,7 @@ describe("已保存工作流中枢 E2E", () => {
     await waitForTestIdByDom(TID_WORKFLOW_DETAIL_PROJECT, {
       timeoutMsg: "详情页标题旁没有项目归属小标",
     });
-    expect(await readTestIdText(TID_WORKFLOW_DETAIL_PROJECT)).toBe("XCodeProject");
+    expect(await readTestIdText(TID_WORKFLOW_DETAIL_PROJECT)).toBe("ZCodeProject");
     const crumbs = (await browser.execute(() => {
       const nav = document.querySelector('[data-testid="automations-main-drag-region"] nav');
       return nav

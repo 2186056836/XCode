@@ -1,7 +1,7 @@
 import { resolveWorkspaceKey } from "@zcode/shared";
 import type { WorkspaceTabState } from "@/store/tabStore.js";
 import { useRemoteProjectConnectionPresentation } from "@/project-sidebar/useRemoteProjectConnectionPresentation.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { RemoteConnectionStateIcon } from "@/remote-connection/RemoteConnectionStateIcon.js";
 import { cn } from "@/components/lib/utils.js";
 
@@ -12,7 +12,7 @@ function OfflineRemoteProjectRow({
   tab: WorkspaceTabState;
   onReconnect: (workspaceKey: string) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { presentation, busy, deviceName } = useRemoteProjectConnectionPresentation(tab);
   return (
     <button

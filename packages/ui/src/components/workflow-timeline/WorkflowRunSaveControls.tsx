@@ -10,15 +10,15 @@ import { useMemo, useRef, useState, type ReactNode } from "react";
 import { CheckIcon, ArrowUpRightIcon, PlayIcon, SaveIcon } from "lucide-react";
 import {
   resolveWorkspaceKey,
-  type XCodeSavedWorkflowEntry,
-  type XCodeWorkflowsForRunCandidate,
+  type ZCodeSavedWorkflowEntry,
+  type ZCodeWorkflowsForRunCandidate,
 } from "@zcode/shared";
 import { Button } from "@/components/ui/button.js";
 import { Spinner } from "@/components/ui/spinner.js";
 import { toast } from "@/components/ui/toast.js";
 import { cn } from "@/components/lib/utils.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useWorkflowRunSave } from "@/hooks/useWorkflowRunSave.js";
 import { useSavedWorkflowHub } from "@/v4/savedWorkflowHubContext.js";
 import { useOptionalServices } from "@/hooks/useServices.js";
@@ -39,7 +39,7 @@ export interface WorkflowRunSaveSlotsHost {
   /** run 名：弹层用它预填说明，交给 XCode 的那条消息用它指认「刚跑完的哪一个」。 */
   runName?: string;
   /** 转写里 SaveWorkflow 认领过这次 run 的候选（`buildWorkflowSaveCandidatesByRunId`）。 */
-  candidates?: readonly XCodeWorkflowsForRunCandidate[];
+  candidates?: readonly ZCodeWorkflowsForRunCandidate[];
   /**
    * 两道门（只读、灰度）都开着：缺省 false。关着时整个 trailing 缺席——写文件与起引擎都
    * 属于「Resume 被收走的地方一并收走」。芯片是事实，不受这道门影响。
@@ -63,12 +63,12 @@ export interface WorkflowRunSaveSlots {
 const SAVE_WORD_CONTAINER = "@[480px]/wf-card:inline";
 
 export function useWorkflowRunSaveSlots(host: WorkflowRunSaveSlotsHost): WorkflowRunSaveSlots {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const format = (id: string) => intl.formatMessage({ id });
   const hub = useSavedWorkflowHub();
   const anchorRef = useRef<HTMLElement | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [launchEntry, setLaunchEntry] = useState<XCodeSavedWorkflowEntry | null>(null);
+  const [launchEntry, setLaunchEntry] = useState<ZCodeSavedWorkflowEntry | null>(null);
   const [announcement, setAnnouncement] = useState<string | null>(null);
 
   const controller = useWorkflowRunSave({
@@ -313,7 +313,7 @@ function WorkflowRunSavedChip({
   label,
   onOpen,
 }: {
-  entry: XCodeSavedWorkflowEntry;
+  entry: ZCodeSavedWorkflowEntry;
   hint?: string;
   label: string;
   /** 缺席即中枢不可达（手机远控壳）：芯片画成纯文字。 */

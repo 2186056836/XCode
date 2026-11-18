@@ -57,7 +57,7 @@ export function AppView(props: {
   busy: boolean;
   cacheStats?: CacheStats;
   contextUsage: ContextUsage;
-  copy: ReturnType<typeof import("@zcode/i18n").getXCodeCopy>["tui"];
+  copy: ReturnType<typeof import("@zcode/i18n").getZCodeCopy>["tui"];
   copyCurrentSelection: () => boolean;
   draft: string;
   editorRef: React.MutableRefObject<PromptInputEditor | null>;
@@ -238,7 +238,7 @@ export function ComposerInputArea(props: {
   busy: boolean;
   contentWidth: number;
   contextUsage: ContextUsage;
-  copy: ReturnType<typeof import("@zcode/i18n").getXCodeCopy>["tui"];
+  copy: ReturnType<typeof import("@zcode/i18n").getZCodeCopy>["tui"];
   draft: string;
   editorRef: React.MutableRefObject<PromptInputEditor | null>;
   effortOptions: readonly TuiEffortOption[];

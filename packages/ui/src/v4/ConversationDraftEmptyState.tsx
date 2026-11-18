@@ -7,7 +7,7 @@
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
 import darkEmptyStateLogoUrl from "@/assets/Z.svg";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useIsOfficeMode } from "@/hooks/useInterfaceMode.js";
 import { useSettings } from "@/hooks/useSettingService.js";
 import { logger } from "@/logger.js";
@@ -90,7 +90,7 @@ export function ConversationDraftEmptyState({
   className?: string;
   compactForRemoteControl?: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const isOfficeMode = useIsOfficeMode();
   // 自定义皮肤开启时隐藏品牌 X 水印背景（背景图/皮肤自己铺底，不再叠官方 logo）。
   const { settings: appSettings } = useSettings();
@@ -188,7 +188,7 @@ export function ConversationDraftEmptyState({
           "-translate-x-1/2 -translate-y-1/2 text-foreground-subtlest",
         )}
       >
-        {!hasCustomSkin ? <XCodeEmptyStateLogo className="h-full w-full" /> : null}
+        {!hasCustomSkin ? <ZCodeEmptyStateLogo className="h-full w-full" /> : null}
       </div>
       <p
         ref={greetingContainerRef}
@@ -214,7 +214,7 @@ export function ConversationDraftEmptyState({
   );
 }
 
-function XCodeEmptyStateLogo({ className }: { className?: string }) {
+function ZCodeEmptyStateLogo({ className }: { className?: string }) {
   // 品牌 X：自 app-logo 里扣出的白色空心 X，轮廓追踪→RDP 简化成 SVG path。
   // 内联引用（同原 Z）：fill=currentColor 吃到容器 text-foreground-subtlest，
   // 深浅主题自动适配；bottom 渐隐让水印不抢背景。

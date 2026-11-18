@@ -1,9 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import type {
-  XCodeAgentMcpServer,
-  XCodeSessionImportHistory,
-  XCodeSessionImportMessage,
-  XCodeSessionStateSnapshot,
+  ZCodeAgentMcpServer,
+  ZCodeSessionImportHistory,
+  ZCodeSessionImportMessage,
+  ZCodeSessionStateSnapshot,
 } from "@zcode/shared";
 import {
   getLegacyDeletedTaskSessionSnapshotPath,
@@ -27,29 +27,29 @@ export interface ImportedClaudeHistoryRepairResult {
   title?: string;
   createdAt?: number;
   updatedAt?: number;
-  messages: XCodeSessionImportMessage[];
+  messages: ZCodeSessionImportMessage[];
   source: "legacySnapshot" | "nativeJsonl";
 }
 
 export interface ImportedClaudeSessionRepairTarget extends ImportedClaudeHistoryRepairTarget {
-  mcpServers?: XCodeAgentMcpServer[];
+  mcpServers?: ZCodeAgentMcpServer[];
 }
 
 export interface ImportedClaudeSessionRepairCreateParams {
   workspacePath: string;
   workspaceIdentity?: string;
   sessionId: string;
-  mode: XCodeSessionStateSnapshot["session"]["mode"];
-  model: XCodeSessionStateSnapshot["settings"]["model"]["current"];
+  mode: ZCodeSessionStateSnapshot["session"]["mode"];
+  model: ZCodeSessionStateSnapshot["settings"]["model"]["current"];
   thoughtLevel?: string;
   persistence: "immediate";
-  mcpServers?: XCodeAgentMcpServer[];
-  importedHistory: XCodeSessionImportHistory;
+  mcpServers?: ZCodeAgentMcpServer[];
+  importedHistory: ZCodeSessionImportHistory;
 }
 
 function toImportMessages(
   messages: readonly { role: string; content: string; timestamp?: number }[],
-): XCodeSessionImportMessage[] {
+): ZCodeSessionImportMessage[] {
   return messages
     .filter((message) => message.role === "user" || message.role === "assistant")
     .map((message) => ({
@@ -59,12 +59,12 @@ function toImportMessages(
     }));
 }
 
-function countAssistantMessages(messages: readonly XCodeSessionImportMessage[]): number {
+function countAssistantMessages(messages: readonly ZCodeSessionImportMessage[]): number {
   return messages.filter((message) => message.role === "assistant").length;
 }
 
 export function shouldRepairImportedClaudeSnapshot(
-  snapshot: Pick<XCodeSessionStateSnapshot, "messages" | "runtime" | "session">,
+  snapshot: Pick<ZCodeSessionStateSnapshot, "messages" | "runtime" | "session">,
 ): boolean {
   if (snapshot.session.status === "running" || snapshot.runtime.activeTurnId) {
     return false;
@@ -185,7 +185,7 @@ export async function resolveImportedClaudeHistoryForRepair(
 }
 
 export async function repairImportedClaudeSessionSnapshot<T>(params: {
-  snapshot: XCodeSessionStateSnapshot;
+  snapshot: ZCodeSessionStateSnapshot;
   target: ImportedClaudeSessionRepairTarget;
   createSession(input: ImportedClaudeSessionRepairCreateParams): Promise<T>;
   onRepair?(history: ImportedClaudeHistoryRepairResult): void;

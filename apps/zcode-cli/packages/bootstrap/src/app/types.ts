@@ -107,8 +107,8 @@ import type {
 import type {
   BackgroundBashOutputResult,
   SubagentRuntimeConfig,
-  XCodeModelOption,
-  XCodeToolExecResource,
+  ZCodeModelOption,
+  ZCodeToolExecResource,
 } from "@zcode/shared";
 import type { McpAppsToolVisibility } from "@zcode/shared/mcp-apps";
 import type { EffectiveModelSelectionResult } from "@zcode/shared/model-selection";
@@ -117,12 +117,12 @@ import type {
   WorkspaceHookTrustRevokeTarget,
 } from "@zcode/shared/zcode-protocol-v4";
 import type { ModelProviderSourceTitle } from "../model-config.js";
-import type { XCodeInstalledPluginData } from "../plugins.js";
+import type { ZCodeInstalledPluginData } from "../plugins.js";
 import type { SessionTranscriptMessage } from "../session-transcript.js";
 import type { NodeReplBrowserBroker } from "./node-repl-browser-broker.js";
 import type { ProviderRegistryModelSource } from "./provider-registry-model-runtime.js";
 import type { WorkspaceHookReviewCommandResult } from "./workspace-hook-review-controller.js";
-export type { XCodeModelOption } from "@zcode/shared";
+export type { ZCodeModelOption } from "@zcode/shared";
 
 export interface WorkspaceHookReviewHostContext {
   taskId: string;
@@ -145,9 +145,9 @@ export type RevokeWorkspaceHookTrustInput =
   | WorkspaceHookTrustRevokeTarget;
 
 /** 新 Session 可使用 Environment 默认选择；恢复 Session 允许保持未绑定，不补默认模型。 */
-export type XCodeAppRuntimeConfigInput = AgentRuntimeConfig;
+export type ZCodeAppRuntimeConfigInput = AgentRuntimeConfig;
 
-export interface XCodeAppOptions {
+export interface ZCodeAppOptions {
   /** 独立 CLI 的配置菜单编辑输入默认值；其他装配保留显式 Session 配置语义。 */
   modelSelectionMode?: "cli-default";
   /** 仅独立 TUI/headless 入口开启；不得由模型或项目配置指定。 */
@@ -164,7 +164,7 @@ export interface XCodeAppOptions {
   resume?: boolean;
   version?: string;
   traceContext?: TraceContext;
-  runtimeConfig?: XCodeAppRuntimeConfigInput;
+  runtimeConfig?: ZCodeAppRuntimeConfigInput;
   /**
    * stdio 协议模式的 agent 进程由 Electron host 拉起，模型服务需要看到 electron 来源。
    * 普通 CLI 不传，继续使用 cli 默认值。
@@ -212,7 +212,7 @@ export interface XCodeAppOptions {
     observer?: OfficialCommandSessionObserver,
   ) => Promise<Record<string, string>>;
   /** 资源遥测旁路；由协议宿主注入，主任务和 workflow 的执行适配器共用。 */
-  onToolExecResource?: (sample: XCodeToolExecResource) => void;
+  onToolExecResource?: (sample: ZCodeToolExecResource) => void;
   /** browser-use 控制端口；注入后 node_repl 的 agent.browsers.* 可用。缺省则不可用。 */
   browserControlPort?: BrowserControlPort;
   /** 可由协议宿主注入的进程级 node_repl Browser broker；缺省时 app 自建并拥有。 */
@@ -339,15 +339,15 @@ export interface ResumeOptions {
   persistedMessages?: MessageWithParts[];
 }
 
-export interface XCodePluginSetResult {
+export interface ZCodePluginSetResult {
   enabled: boolean;
   path: string;
   plugin: PluginMetadata;
 }
 
-export interface XCodePluginUninstallResult {
+export interface ZCodePluginUninstallResult {
   // null 表示该 plugin id 当前未安装（幂等 no-op），调用方据此提示"未安装"。
-  removed: XCodeInstalledPluginData | null;
+  removed: ZCodeInstalledPluginData | null;
 }
 
 export interface SetLocaleResult {
@@ -358,7 +358,7 @@ export interface SetLocaleResult {
   traceId: TraceContext["traceId"];
 }
 
-export interface XCodeApp {
+export interface ZCodeApp {
   readonly sessionId: SessionId;
   readonly traceId: string;
   readonly runtime: AgentRuntime;
@@ -389,9 +389,9 @@ export interface XCodeApp {
   getMode(): CollaborationMode;
   getModel(): string;
   /** current-only 协议快照精确读取当前 Registry 模型，避免枚举整个目录。 */
-  getCurrentModelOption?(): XCodeModelOption | undefined;
+  getCurrentModelOption?(): ZCodeModelOption | undefined;
   /** 只读 Registry 元数据；不要求选项完整，也不绑定执行模型。 */
-  getModelOption?(selection: ModelSelection): XCodeModelOption | undefined;
+  getModelOption?(selection: ModelSelection): ZCodeModelOption | undefined;
   getLocale(): SupportedLocale;
   getTheme(): UiThemePreference;
   getDefaultThoughtLevel(): string | undefined;
@@ -400,7 +400,7 @@ export interface XCodeApp {
   readSubagents(input?: {
     endedCursor?: string;
     endedLimit?: number;
-  }): Promise<import("@zcode/shared").XCodeSessionSubagentsResult>;
+  }): Promise<import("@zcode/shared").ZCodeSessionSubagentsResult>;
   readSubagentTranscript(
     childSessionId: string,
   ): Promise<import("./subagent-observation.js").SubagentTranscriptSnapshot>;
@@ -452,11 +452,11 @@ export interface XCodeApp {
     kind?: InputHistoryKind,
   ): Promise<InputHistoryEntry | null>;
   recallPreviousInputHistory(skip?: number): Promise<InputHistoryEntry | null>;
-  listModels(): XCodeModelOption[];
+  listModels(): ZCodeModelOption[];
   listThoughtLevels(): string[];
   listPlugins(): Promise<PluginLoadOutcome>;
-  setPluginEnabled(plugin: string, enabled: boolean): Promise<XCodePluginSetResult>;
-  uninstallPlugin(plugin: string): Promise<XCodePluginUninstallResult>;
+  setPluginEnabled(plugin: string, enabled: boolean): Promise<ZCodePluginSetResult>;
+  uninstallPlugin(plugin: string): Promise<ZCodePluginUninstallResult>;
   /**
    * Session 冻结的 Plugin 身份 catalog。
    * 在 App 创建时由 resolveStartupPlugins 结果构建一次，之后只读；
@@ -890,7 +890,7 @@ export interface ResolveLatestSessionOptions {
   sessionStore?: SessionStorePort;
 }
 
-export interface RunXCodeProtocolAgentOptions {
+export interface RunZCodeProtocolAgentOptions {
   /** 入口拥有退出时限；bootstrap 只编排取消和资源清理，不直接退出进程。 */
   lifecycle?: {
     readonly signal: AbortSignal;
@@ -908,7 +908,7 @@ export interface RunXCodeProtocolAgentOptions {
   version?: string;
 }
 
-export interface ListXCodeSessionsOptions {
+export interface ListZCodeSessionsOptions {
   directory?: string;
   env?: NodeJS.ProcessEnv;
   limit?: number;

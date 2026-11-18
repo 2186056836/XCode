@@ -10,7 +10,7 @@ import {
   type TurnInputIntentMetadata,
 } from "@zcode/contracts";
 import type { TurnAttachment } from "@zcode/core";
-import type { XCodeAutomationBotDeliveryTarget } from "@zcode/shared";
+import type { ZCodeAutomationBotDeliveryTarget } from "@zcode/shared";
 import type { SendInputOptions, SendInputResult } from "../../app/types.js";
 import { runWithSessionResidencyFinalization } from "../../session-execution/index.js";
 import type { V4CommandCoreHost, V4SessionRecordView } from "./types.js";
@@ -131,7 +131,7 @@ export interface StartPromptTurnParamsBase {
   /** sendQueuedNow 已持有 Core promotion lease，要求这次 admission 只能占用空闲位。 */
   requireIdle?: boolean;
   /** Bot 入站 turn 的稳定回推地址；仅在本 turn 内暴露给 CronCreate。 */
-  botDeliveryTarget?: XCodeAutomationBotDeliveryTarget;
+  botDeliveryTarget?: ZCodeAutomationBotDeliveryTarget;
 }
 
 export type StartPromptTurnParams = StartPromptTurnParamsBase & TurnBackgroundAttribution;

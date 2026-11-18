@@ -162,7 +162,7 @@ node_repl 宿主在 `tools/call` 内按 `session_id + turn_id` 维护一份计�
 MCP `2026-07-28` 的 `_meta` 是请求 envelope/context，不是独立授权凭证。内置链路按以下顺序校验：
 
 ```text
-tools/call _meta["com.xcode/request-context"]
+tools/call _meta["com.zcode/request-context"]
   -> node_repl 只读取宿主命名空间，不读取模型参数里的 session 字段
   -> child 使用进程私有 broker socket + 256-bit token
   -> broker 校验 token（不再按 runtimeScope 拒绝 subagent）

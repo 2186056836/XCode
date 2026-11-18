@@ -22,9 +22,9 @@
         "**/packages/desktop/test/e2e/helpers/web-remote-visibility-browser.ts",
         "**/packages/ui/src/ToolCallBlocks/renderers/resume-workflow-run.tsx",
         "**/packages/ui/src/hooks/useOnboardingRecordService.ts",
-        "**/packages/ui/src/hooks/useXCodeAgentService.ts",
-        "**/packages/ui/src/hooks/useXCodeSessionService.ts",
-        "**/packages/ui/src/hooks/useXCodeTaskService.ts",
+        "**/packages/ui/src/hooks/useZCodeAgentService.ts",
+        "**/packages/ui/src/hooks/useZCodeSessionService.ts",
+        "**/packages/ui/src/hooks/useZCodeTaskService.ts",
         "**/packages/ui/src/project-sidebar/grouped/task-row.tsx"
       ],
       "plugins": ["unicorn", "typescript", "oxc", "react"],
@@ -218,6 +218,9 @@
     "packages/formal-proof",
     "apps/zcode-cli",
     "packages/zcode-cua",
-    "docs/electron"
+    "docs/electron",
+    // vendor/cua 是官方闭源产物（producer/helper/plugin-runtime 及其 node_modules），
+    // 只按 sha256 校验、不做源码维护，扫它只会得到第三方代码自身的告警。
+    "vendor"
   ]
 }

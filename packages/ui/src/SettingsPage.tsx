@@ -25,7 +25,7 @@ import type {
   IntegratedTerminalShellSelection,
   UsageEntitlementSnapshot,
   UserInfo,
-  XCodeInteractionBehavior,
+  ZCodeInteractionBehavior,
 } from "@zcode/shared";
 import { BUILTIN_MODEL_PROVIDER_IDS, isLocale } from "@zcode/shared";
 import {
@@ -38,7 +38,7 @@ import {
 import { Button } from "@/components/ui/button.js";
 import { toast } from "@/components/ui/toast.js";
 import { DesktopWindowFrame } from "@/DesktopWindowFrame.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { logger } from "@/logger.js";
 import { getPathLeaf } from "@/lib/path.js";
@@ -116,7 +116,7 @@ import {
   SettingsHeaderBreadcrumb,
   type SettingsBreadcrumbItem,
 } from "@/settings/SettingsHeaderBreadcrumb.js";
-import { useXCodeStore } from "@/store/StoreProvider.js";
+import { useZCodeStore } from "@/store/StoreProvider.js";
 import { useTabStore } from "@/store/TabStoreProvider.js";
 import { isWorkspaceTab } from "@/store/tabStore.js";
 import type { Theme } from "@/useTheme.js";
@@ -185,7 +185,7 @@ function SettingsUsageProviderTabs({
   codingPlanSources: CodingPlanUsageSource[];
   onTabChange: (tab: UsageStatsSectionTab) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const tabItems = [
     {
       id: "app" as const,
@@ -348,7 +348,7 @@ export function SettingsPage({
   onLogout?: () => void;
   user?: UserInfo | null;
 }) {
-  const { intl, localePreference, setLocalePreference } = useXCodeIntl();
+  const { intl, localePreference, setLocalePreference } = useZCodeIntl();
   const { settingsSectionGroups, settingsSections } = useMemo(
     () =>
       createSettingsPageConfig({
@@ -453,22 +453,22 @@ export function SettingsPage({
   const [settingsBreadcrumbItems, setSettingsBreadcrumbItems] = useState<
     readonly SettingsBreadcrumbItem[]
   >([]);
-  const interfaceMode = useXCodeStore((state) => state.interfaceMode);
+  const interfaceMode = useZCodeStore((state) => state.interfaceMode);
   const setInterfaceMode = useSetInterfaceModeWithTelemetry(platform, "app.setting");
-  const theme = useXCodeStore((state) => state.theme);
-  const setTheme = useXCodeStore((state) => state.setTheme);
-  const codePreviewSettings = useXCodeStore((state) => state.codePreviewSettings);
-  const setCodePreviewSettings = useXCodeStore((state) => state.setCodePreviewSettings);
-  const fontSmoothingEnabled = useXCodeStore((state) => state.fontSmoothingEnabled);
-  const setFontSmoothingEnabled = useXCodeStore((state) => state.setFontSmoothingEnabled);
-  const uiFontSizePx = useXCodeStore((state) => state.uiFontSizePx);
-  const setUiFontSizePx = useXCodeStore((state) => state.setUiFontSizePx);
-  const hideProjectDeviceNames = useXCodeStore((state) => state.hideProjectDeviceNames);
-  const setHideProjectDeviceNames = useXCodeStore((state) => state.setHideProjectDeviceNames);
-  const notificationEnabled = useXCodeStore((state) => state.notificationEnabled);
-  const setNotificationEnabled = useXCodeStore((state) => state.setNotificationEnabled);
-  const notificationSoundEnabled = useXCodeStore((state) => state.notificationSoundEnabled);
-  const setNotificationSoundEnabled = useXCodeStore((state) => state.setNotificationSoundEnabled);
+  const theme = useZCodeStore((state) => state.theme);
+  const setTheme = useZCodeStore((state) => state.setTheme);
+  const codePreviewSettings = useZCodeStore((state) => state.codePreviewSettings);
+  const setCodePreviewSettings = useZCodeStore((state) => state.setCodePreviewSettings);
+  const fontSmoothingEnabled = useZCodeStore((state) => state.fontSmoothingEnabled);
+  const setFontSmoothingEnabled = useZCodeStore((state) => state.setFontSmoothingEnabled);
+  const uiFontSizePx = useZCodeStore((state) => state.uiFontSizePx);
+  const setUiFontSizePx = useZCodeStore((state) => state.setUiFontSizePx);
+  const hideProjectDeviceNames = useZCodeStore((state) => state.hideProjectDeviceNames);
+  const setHideProjectDeviceNames = useZCodeStore((state) => state.setHideProjectDeviceNames);
+  const notificationEnabled = useZCodeStore((state) => state.notificationEnabled);
+  const setNotificationEnabled = useZCodeStore((state) => state.setNotificationEnabled);
+  const notificationSoundEnabled = useZCodeStore((state) => state.notificationSoundEnabled);
+  const setNotificationSoundEnabled = useZCodeStore((state) => state.setNotificationSoundEnabled);
   const usageProviderSettingsRead = useProviderSettingsView();
   const usageProviderSettingsView =
     usageProviderSettingsRead.state.status === "ready"
@@ -711,10 +711,10 @@ export function SettingsPage({
         : "app",
     );
   }, [selectedUsageCodingPlanSource, usageActiveTab, usageCodingPlanSources]);
-  const setNewUserOnboardingOpen = useXCodeStore((state) => state.setNewUserOnboardingOpen);
+  const setNewUserOnboardingOpen = useZCodeStore((state) => state.setNewUserOnboardingOpen);
   // 「通用」页「打开引导」打开职业引导；迁移向导只从数据同步页「迁移」进入。
   const openOccupationOnboarding = () => setNewUserOnboardingOpen(true);
-  const requestMigrationDialog = useXCodeStore((state) => state.requestOnboardingDialog);
+  const requestMigrationDialog = useZCodeStore((state) => state.requestOnboardingDialog);
   const setActiveSettingsSection = useCallback(
     (section: SettingsSectionId, fallbackSection: SettingsSectionId = activeSection) => {
       const resolvedSection = resolveSettingsSection(section, fallbackSection);
@@ -860,8 +860,8 @@ export function SettingsPage({
   const [autoDownloadAndInstallUpdates, setAutoDownloadAndInstallUpdates] = useState(false);
   const [messageStreamShowReasoning, setMessageStreamShowReasoning] = useState(true);
   const [messageStreamShowTodos, setMessageStreamShowTodos] = useState(false);
-  const [zcodeInteractionBehavior, setXCodeInteractionBehavior] =
-    useState<XCodeInteractionBehavior>("queue");
+  const [zcodeInteractionBehavior, setZCodeInteractionBehavior] =
+    useState<ZCodeInteractionBehavior>("queue");
   const [defaultHomeDir, setDefaultHomeDir] = useState("");
   const [hostPlatform, setHostPlatform] = useState("");
 
@@ -993,7 +993,7 @@ export function SettingsPage({
     }
     setMessageStreamShowReasoning(sharedSettings.messageStreamShowReasoning ?? true);
     setMessageStreamShowTodos(sharedSettings.messageStreamShowTodos ?? false);
-    setXCodeInteractionBehavior(sharedSettings.zcodeInteractionBehavior ?? "queue");
+    setZCodeInteractionBehavior(sharedSettings.zcodeInteractionBehavior ?? "queue");
     setReceivePreviewUpdates(sharedSettings.receivePreviewUpdates ?? false);
     setAutoDownloadAndInstallUpdates(sharedSettings.autoDownloadAndInstallUpdates ?? false);
   }, [sharedSettings]);
@@ -1379,8 +1379,8 @@ export function SettingsPage({
     },
     [updateSharedSettings],
   );
-  const handleXCodeInteractionBehaviorChange = useCallback(
-    async (behavior: XCodeInteractionBehavior) => {
+  const handleZCodeInteractionBehaviorChange = useCallback(
+    async (behavior: ZCodeInteractionBehavior) => {
       await runSettingsActionAsync({
         featureId: "settings.conversation",
         action: "change_interaction_behavior",
@@ -1388,7 +1388,7 @@ export function SettingsPage({
         operation: () => updateSharedSettings({ zcodeInteractionBehavior: behavior }),
         completed: { resultSource: "shared_settings", valueAfter: behavior },
       });
-      setXCodeInteractionBehavior(behavior);
+      setZCodeInteractionBehavior(behavior);
     },
     [updateSharedSettings],
   );
@@ -1910,8 +1910,8 @@ export function SettingsPage({
                                 handleMessageStreamShowReasoningChange
                               }
                               onMessageStreamShowTodosChange={handleMessageStreamShowTodosChange}
-                              onXCodeInteractionBehaviorChange={
-                                handleXCodeInteractionBehaviorChange
+                              onZCodeInteractionBehaviorChange={
+                                handleZCodeInteractionBehaviorChange
                               }
                               onAskUserQuestionAutoResolutionEnabledChange={
                                 handleAskUserQuestionAutoResolutionEnabledChange

@@ -2,10 +2,10 @@ import { useUiPluginRecommendations } from "@/plugin-ui/index.js";
 import { useIsOfficeMode } from "@/hooks/useInterfaceMode.js";
 /* eslint-disable max-lines -- 商店列表页把搜索/公开-社区-个人分段/Featured/分类折叠聚合成一个连贯浏览面，拆散反而难以维持 1:1 布局。 */
 import { useMemo, useState } from "react";
-import type { PluginStoreOrder, XCodePluginMarketplaceSummary } from "@zcode/shared";
+import type { PluginStoreOrder, ZCodePluginMarketplaceSummary } from "@zcode/shared";
 import { isPluginStoreVisible } from "@zcode/shared";
 import { cn } from "@/components/lib/utils.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { PluginStoreAvatar } from "@/settings/PluginStoreAvatar.js";
 import { PluginStoreCard, type PluginStoreActions } from "@/settings/PluginStoreCard.js";
 import { SettingsSearchInput } from "@/settings/SettingsSearchInput.js";
@@ -44,7 +44,7 @@ export function PluginStoreListView({
 }: {
   items: StorePluginItem[];
   order?: PluginStoreOrder | null;
-  marketplaces: XCodePluginMarketplaceSummary[];
+  marketplaces: ZCodePluginMarketplaceSummary[];
   actions: PluginStoreActions;
   loading: boolean;
   query: string;
@@ -53,7 +53,7 @@ export function PluginStoreListView({
   segment: PluginStoreSegment;
   onSegmentChange: (segment: PluginStoreSegment) => void;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const isOfficeMode = useIsOfficeMode();
   const modeOrder = isOfficeMode ? order?.work : order?.code;
   const keyword = query.trim().toLowerCase();
@@ -342,7 +342,7 @@ function CollapsibleCardGroup({
   actions: PluginStoreActions;
   locale: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const visible = expanded ? items : items.slice(0, CATEGORY_VISIBLE_LIMIT);
   const hidden = expanded ? [] : items.slice(CATEGORY_VISIBLE_LIMIT);
   const hiddenNames = hidden.slice(0, 2).map((item) => resolveItemDisplayName(item, locale));
@@ -418,7 +418,7 @@ function PublicSegment({
   resolveCategoryLabel: (category: string) => string;
   onToggleGroup: (key: string) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const isEmpty = featuredItems.length === 0 && categoryGroups.length === 0;
   if (isEmpty) {
     return (
@@ -482,7 +482,7 @@ function PersonalSegment({
   locale: string;
   onToggleGroup: (key: string) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   if (groups.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-border px-4 py-3 text-ui-base text-foreground-subtle">

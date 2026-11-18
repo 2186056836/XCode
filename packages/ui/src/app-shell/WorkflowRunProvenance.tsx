@@ -8,7 +8,7 @@
 import { Fragment, memo } from "react";
 import type { WorkflowLaunchMeta } from "@zcode/shared/zcode-protocol-v4";
 import { workflowSettingsProvenanceRows } from "@/components/workflow-timeline/workflowSettingsChange.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 /** 实参值：字符串原样，其余 `JSON.stringify`（与实参窗 / 通知同一条归一化）。 */
 function formatArgValue(value: unknown): string {
@@ -30,7 +30,7 @@ export const WorkflowRunProvenance = memo(function WorkflowRunProvenance({
   /** 启动轮 / 设置轮的 startedAt；缺席即不写时刻。 */
   startedAt?: number;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const amend = meta.amend;
   const caption = intl.formatMessage({
     id:

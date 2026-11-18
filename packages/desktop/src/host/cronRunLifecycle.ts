@@ -1,6 +1,6 @@
 import type {
-  XCodeAutomationRunOutcome,
-  XCodeAutomationTrigger,
+  ZCodeAutomationRunOutcome,
+  ZCodeAutomationTrigger,
 } from "@zcode/shared";
 
 export interface CronRunLifecycleRepo {
@@ -9,11 +9,11 @@ export interface CronRunLifecycleRepo {
     automationId: string;
     workspaceKey: string;
     scheduledAt: number | null;
-    trigger: XCodeAutomationTrigger;
+    trigger: ZCodeAutomationTrigger;
   }): Promise<void>;
   markRunOutcome(
     runId: string,
-    outcome: XCodeAutomationRunOutcome,
+    outcome: ZCodeAutomationRunOutcome,
     error?: string,
   ): Promise<void>;
   markRunDispatch(params: {
@@ -30,7 +30,7 @@ export interface CronRunLifecycleIdentity {
   automationId: string;
   workspaceKey: string;
   scheduledAt: number | null;
-  trigger: XCodeAutomationTrigger;
+  trigger: ZCodeAutomationTrigger;
 }
 
 type LogWarn = (message: string, error: unknown) => void;
@@ -60,7 +60,7 @@ export function startManualClaimHeartbeat(
 export async function recordCronRunOutcomeBestEffort(
   params: CronRunLifecycleIdentity & {
     repo: CronRunLifecycleRepo;
-    outcome: XCodeAutomationRunOutcome;
+    outcome: ZCodeAutomationRunOutcome;
     error?: string;
     logWarn: LogWarn;
   },
@@ -123,7 +123,7 @@ export async function settleManualDispatchFailureBestEffort(
 export async function settleCronRunTerminalOutcome(
   params: CronRunLifecycleIdentity & {
     repo: CronRunLifecycleRepo;
-    outcome: Exclude<XCodeAutomationRunOutcome, "running">;
+    outcome: Exclude<ZCodeAutomationRunOutcome, "running">;
     error?: string;
     logWarn: LogWarn;
   },

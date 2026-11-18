@@ -2,7 +2,7 @@ import type {
   V4InteractionAnswer,
   V4InteractionRegistrationOptions,
 } from "../zcode-protocol-v4/interaction-registry.js";
-import type { XCodeProtocolAgentServerContext } from "./server-types.js";
+import type { ZCodeProtocolAgentServerContext } from "./server-types.js";
 
 /**
  * 让 legacy 反向 RPC（interaction/requestPermission 等）与 v4 resolveInteraction 命令
@@ -18,7 +18,7 @@ import type { XCodeProtocolAgentServerContext } from "./server-types.js";
  *   （resolveInteraction handler 幂等收口）。
  */
 export async function raceClientRequestWithV4Interaction<T>(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   interactionId: string,
   outerSignal: AbortSignal | undefined,
   startRequest: (signal: AbortSignal) => Promise<T>,

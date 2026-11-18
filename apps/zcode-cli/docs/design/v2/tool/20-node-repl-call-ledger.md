@@ -29,7 +29,7 @@
 
 - 可信事实只由主线程在**真实收到调用请求**时记录，冒充 Worker 的结果消息不能让它成立。这条保证的范围见
   「可信边界」：cell 仍可经 `node:inspector` 影响主线程。
-- broker 使用的会话信息只来自 core 发出的 MCP 请求（`com.xcode/request-context`），不采信 Worker 自报的值。
+- broker 使用的会话信息只来自 core 发出的 MCP 请求（`com.zcode/request-context`），不采信 Worker 自报的值。
 - 模型可见行为不变：工具结果的内容、错误文案、浏览器和 Computer Use 的执行结果都与原来一致。
 
 ## 非目标

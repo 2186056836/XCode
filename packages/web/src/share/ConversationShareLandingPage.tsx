@@ -87,11 +87,11 @@ interface Copy {
   unavailableTitle: string;
   unavailableDescription: string;
   retry: string;
-  continueInXCode: string;
+  continueInZCode: string;
   switchToDarkTheme: string;
   switchToLightTheme: string;
   continueHelp: string;
-  downloadXCode: string;
+  downloadZCode: string;
   retryOpen: string;
   /** 结果物计数；{count} 占位。中文无复数，英文分单复数。 */
   artifactCountOne: string;
@@ -136,11 +136,11 @@ const COPY: Record<ConversationShareLandingLocale, Copy> = {
     unavailableTitle: "分享不可访问",
     unavailableDescription: "当前账号没有权限，或者分享内容已不存在。",
     retry: "重试",
-    continueInXCode: "去 XCode 继续",
+    continueInZCode: "去 XCode 继续",
     switchToDarkTheme: "切换到深色主题",
     switchToLightTheme: "切换到浅色主题",
     continueHelp: "如果没有自动打开 XCode，请先下载客户端，或再次尝试打开。",
-    downloadXCode: "下载 XCode",
+    downloadZCode: "下载 XCode",
     artifactCountOne: "{count} 个结果物",
     artifactCountOther: "{count} 个结果物",
     retryOpen: "再次打开",
@@ -184,11 +184,11 @@ const COPY: Record<ConversationShareLandingLocale, Copy> = {
     unavailableDescription:
       "This account is not allowed to view the share, or it no longer exists.",
     retry: "Try again",
-    continueInXCode: "Continue in XCode",
+    continueInZCode: "Continue in XCode",
     switchToDarkTheme: "Switch to dark theme",
     switchToLightTheme: "Switch to light theme",
     continueHelp: "If XCode did not open, download the app or try opening it again.",
-    downloadXCode: "Download XCode",
+    downloadZCode: "Download XCode",
     artifactCountOne: "{count} artifact",
     artifactCountOther: "{count} artifacts",
     retryOpen: "Try again",
@@ -525,12 +525,12 @@ export function ConversationShareLandingPage({
                             : SHARE_CONTINUE_LINK_CLASS
                         }
                         href={importLink}
-                        aria-label={copy.continueInXCode}
-                        title={copy.continueInXCode}
+                        aria-label={copy.continueInZCode}
+                        title={copy.continueInZCode}
                         onClick={handleContinue}
                       >
                         <span className={headerView.continueCompact ? "sr-only" : "truncate"}>
-                          {copy.continueInXCode}
+                          {copy.continueInZCode}
                         </span>
                         <ArrowUpRightIcon
                           className={
@@ -555,7 +555,7 @@ export function ConversationShareLandingPage({
                     </span>
                     {importLink ? (
                       <span className={SHARE_CONTINUE_MEASURE_CLASS}>
-                        <span>{copy.continueInXCode}</span>
+                        <span>{copy.continueInZCode}</span>
                         <ArrowUpRightIcon
                           className="size-4 shrink-0 sm:size-5"
                           aria-hidden="true"
@@ -626,7 +626,7 @@ export function ConversationShareLandingPage({
                 {copy.retryOpen}
               </a>
               <a className="text-brand underline underline-offset-2" href={ZCODE_DOWNLOAD_URL}>
-                {copy.downloadXCode}
+                {copy.downloadZCode}
               </a>
             </div>
           </ShareContentInset>
@@ -652,7 +652,7 @@ export function ConversationShareLandingPage({
                 href={importLink}
                 onClick={handleContinue}
               >
-                <span className="truncate">{copy.continueInXCode}</span>
+                <span className="truncate">{copy.continueInZCode}</span>
                 <ArrowUpRightIcon className="size-4 shrink-0 sm:size-5" aria-hidden="true" />
               </a>
             </div>

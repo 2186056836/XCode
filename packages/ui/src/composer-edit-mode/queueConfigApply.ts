@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { isHighspeedProviderId, ZCODE_AGENT_PROVIDER, type ModelSelection } from "@zcode/shared";
 import type { CommandAck, QueueItem, SubmissionMode } from "@zcode/shared/zcode-protocol-v4";
 import { TID_V4_COMPOSER_EDIT_APPLY_QUEUE_DIALOG } from "@zcode/shared/test-ids";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { toast } from "@/components/ui/toast.js";
 import { useConfirmDialogStore } from "@/store/confirmDialogStore.js";
 import { getModeOptionLabelMessageId } from "@/chat-input-toolbar/display.js";
@@ -76,7 +76,7 @@ export function useQueueConfigApplyPrompt(params: {
   ) => Promise<CommandAck>;
 }): (submitted: QueueConfigApplySubmission, excludeQueueItemId?: string) => void {
   const { sessionId, readQueueItems, dispatchCommand } = params;
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const pendingRef = useRef<AbortController | null>(null);
   useEffect(
     () => () => {

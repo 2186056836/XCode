@@ -154,7 +154,7 @@ async function buildOutputs(skipBuild) {
   run("pnpm", ["--filter", "@zcode/web", "build"]);
 }
 
-async function stageXCodePackage({ packageRoot, version }) {
+async function stageZCodePackage({ packageRoot, version }) {
   const webDist = resolve(root, "packages", "web", "dist");
   const serverDist = resolve(root, "packages", "server", "dist");
   const agentBundle = resolve(root, "apps", "zcode-cli", "packages", "cli", "dist", "zcode.cjs");
@@ -258,7 +258,7 @@ async function main() {
     force: true,
     recursive: true,
   });
-  await stageXCodePackage({
+  await stageZCodePackage({
     packageRoot,
     version,
   });

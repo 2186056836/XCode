@@ -161,7 +161,7 @@ try {
           theme,
           events: {
             ...channels.events,
-            [`${ServiceChannels.XCodeAgent}:onDynamicConversationFrame`]: frames.event,
+            [`${ServiceChannels.ZCodeAgent}:onDynamicConversationFrame`]: frames.event,
           },
           responses: {
             ...channels.responses,
@@ -171,7 +171,7 @@ try {
               return channels.responses["window-project-changes:getCapabilities"](...args);
             },
             [`${ServiceChannels.SettingsSync}:getFirstRunPromptState`]: { handled: true },
-            [`${ServiceChannels.XCodeAgent}:helloConversationV4`]: {
+            [`${ServiceChannels.ZCodeAgent}:helloConversationV4`]: {
               kind: "hello",
               protocolVersion: V4_WIRE_PROTOCOL_VERSION,
               connectionId: bridge.bridgeSessionId,
@@ -186,17 +186,17 @@ try {
                 compression: "none",
               },
             },
-            [`${ServiceChannels.XCodeAgent}:initializeConversationV4`]: null,
-            [`${ServiceChannels.XCodeAgent}:subscribeConversationV4`]: (input) => {
+            [`${ServiceChannels.ZCodeAgent}:initializeConversationV4`]: null,
+            [`${ServiceChannels.ZCodeAgent}:subscribeConversationV4`]: (input) => {
               const subscriptionId = `sub-${bridge.bridgeSessionId}-${input.sessionId}`;
               snapshots.set(input.sessionId, () =>
                 frames.fire(taskSnapshotFrame(input.sessionId, subscriptionId)),
               );
               return { ack: { subscriptionId, mode: "snapshot", logEpoch: "e2e" } };
             },
-            [`${ServiceChannels.XCodeAgent}:unsubscribeConversationV4`]: null,
-            [`${ServiceChannels.XCodeAgent}:conversationWorkflowRunsV4`]: { runs: [] },
-            [`${ServiceChannels.XCodeAgent}:conversationPlansV4`]: { plans: [] },
+            [`${ServiceChannels.ZCodeAgent}:unsubscribeConversationV4`]: null,
+            [`${ServiceChannels.ZCodeAgent}:conversationWorkflowRunsV4`]: { runs: [] },
+            [`${ServiceChannels.ZCodeAgent}:conversationPlansV4`]: { plans: [] },
           },
         });
         bridges.set(bridge.bridgeSessionId, desktopBridge);

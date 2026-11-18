@@ -1,14 +1,14 @@
 import {
   normalizeUnknownError,
   ZCODE_AGENT_PROVIDER_NOT_READY_CODE,
-  type XCodeProvider,
-  type XCodeError,
+  type ZCodeProvider,
+  type ZCodeError,
 } from "@zcode/shared";
-import { normalizeXCodeUiError } from "@/lib/zcodeUiError.js";
+import { normalizeZCodeUiError } from "@/lib/zcodeUiError.js";
 
 export const MODEL_CONFIG_MISSING_UI_ERROR_CODE = "model_config_missing";
 
-export type ModelConfigMissingUiError = XCodeError & {
+export type ModelConfigMissingUiError = ZCodeError & {
   code: typeof MODEL_CONFIG_MISSING_UI_ERROR_CODE;
 };
 
@@ -29,7 +29,7 @@ export function isProviderNotReadyError(error: unknown): boolean {
 
 interface WorkspacePrepareErrorContext {
   workspacePath: string;
-  provider: XCodeProvider;
+  provider: ZCodeProvider;
   reason:
     | "mount"
     | "retry"
@@ -140,8 +140,8 @@ function buildDisplayErrorInput(
 export function buildWorkspacePrepareUiError(
   err: unknown,
   context: WorkspacePrepareErrorContext,
-): XCodeError & { detail?: string } {
-  const normalizedError = normalizeXCodeUiError(
+): ZCodeError & { detail?: string } {
+  const normalizedError = normalizeZCodeUiError(
     buildDisplayErrorInput(err, context.displayMessage),
     {
       fallbackCode: "WORKSPACE_PREPARE_FAILED",
@@ -160,9 +160,9 @@ export function buildWorkspacePrepareUiError(
 
 export function buildCachedWorkspacePrepareUiError(
   message: string,
-  cachedError: (XCodeError & { detail?: string }) | null | undefined,
+  cachedError: (ZCodeError & { detail?: string }) | null | undefined,
   context: WorkspacePrepareErrorContext,
-): XCodeError & { detail?: string } {
+): ZCodeError & { detail?: string } {
   if (cachedError?.message === message) {
     // Bugfix: workspaceInit 目前只缓存纯 message；页面返回命中 failed 短路时，
     // 必须复用上一轮 prepare 的结构化 code，否则模型配置缺失会重新显示 CLI 原文。

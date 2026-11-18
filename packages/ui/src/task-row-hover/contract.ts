@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import type { XCodeTaskMeta } from "@zcode/shared";
+import type { ZCodeTaskMeta } from "@zcode/shared";
 
 /**
  * 会话行悬浮卡片的输入契约。
@@ -9,7 +9,7 @@ import type { XCodeTaskMeta } from "@zcode/shared";
  */
 export interface TaskRowIdentityHoverCardProps {
   /** 会话行对应的任务事实；worktree 标签、路径、最近活动都从它派生。 */
-  task: XCodeTaskMeta;
+  task: ZCodeTaskMeta;
   /** 会话行当前显示的工作区名；worktree 任务在卡片里会被 `<仓库名> · <bucket>` 覆盖。 */
   workspaceLabel: string;
   /** 远程会话的 Host session；用于把 home 缩写和 Git 查询路由到远端。 */

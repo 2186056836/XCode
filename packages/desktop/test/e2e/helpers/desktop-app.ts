@@ -41,7 +41,7 @@ const E2E_HOME_DIR =
 // 隔离由测试 HOME 保证，目录名保持生产历史语义 .zcode。
 const E2E_STORAGE_ROOT = join(E2E_HOME_DIR, ".xcode");
 const E2E_APP_DATA_DIR = join(E2E_STORAGE_ROOT, "v2");
-export const DEFAULT_WORKSPACE = join(E2E_HOME_DIR, "XCodeProject");
+export const DEFAULT_WORKSPACE = join(E2E_HOME_DIR, "ZCodeProject");
 export const DEFAULT_CONVERSATION_WORKSPACE = join(E2E_STORAGE_ROOT, "workspace", "default");
 const SETTINGS_FILE = join(E2E_APP_DATA_DIR, "setting.json");
 const CREDENTIALS_FILE = join(E2E_APP_DATA_DIR, "credentials.json");

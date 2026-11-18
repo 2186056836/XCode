@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { getConversationShareErrorDetails } from "@/lib/conversationShareError.js";
 import { logger } from "@/logger.js";
 
@@ -54,7 +54,7 @@ const DAY_MS = 24 * HOUR_MS;
 const COPIED_FEEDBACK_MS = 1500;
 
 function useMessage() {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const msg = useCallback(
     (id: string, values?: Record<string, string | number>) =>
       intl.formatMessage({ id: `conversationShare.manage.${id}` }, values),

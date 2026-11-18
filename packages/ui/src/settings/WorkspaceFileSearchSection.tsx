@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea.js";
 import { toast } from "@/components/ui/toast.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useWorkspaceServicesResolution } from "@/hooks/useWorkspaceServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { SettingsGroupCard } from "@/settings/SettingsPageParts.js";
 import { logger } from "@/logger.js";
 
@@ -44,7 +44,7 @@ export function WorkspaceFileSearchSection({
 }
 
 function NoWorkspaceFileSearchHint() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   return (
     <p className="text-ui-base leading-6 text-foreground-subtle">
       {intl.formatMessage({ id: "settings.workspaceFileSearch.noWorkspace" })}
@@ -59,7 +59,7 @@ function ActiveWorkspaceFileSearchEditor({
   workspacePath: string;
   workspaceIdentity?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const platform = usePlatform();
   const resolution = useWorkspaceServicesResolution(workspacePath, undefined, workspaceIdentity);
   const services = resolution.services;

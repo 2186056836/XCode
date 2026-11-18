@@ -1,8 +1,8 @@
 import type {
-  XCodeConfigOption,
-  XCodePlanStep,
-  XCodeProvider,
-  XCodeTaskModeInfo,
+  ZCodeConfigOption,
+  ZCodePlanStep,
+  ZCodeProvider,
+  ZCodeTaskModeInfo,
 } from "@zcode/shared";
 
 interface PlanToolLike {
@@ -15,13 +15,13 @@ interface PlanToolLike {
 
 interface ParsedPlanTool {
   summary: string | null;
-  steps: XCodePlanStep[];
+  steps: ZCodePlanStep[];
   toolName: string | null;
 }
 
 interface ParsedPlanPayload {
   summary: string | null;
-  steps: XCodePlanStep[];
+  steps: ZCodePlanStep[];
 }
 
 const PLAN_COLLECTION_KEYS = ["plan", "steps", "entries", "todos", "items"] as const;
@@ -53,7 +53,7 @@ function firstNonEmptyString(...values: unknown[]): string | null {
   return null;
 }
 
-function normalizePlanStepStatus(value: unknown): XCodePlanStep["status"] {
+function normalizePlanStepStatus(value: unknown): ZCodePlanStep["status"] {
   if (typeof value !== "string") {
     return "pending";
   }
@@ -70,7 +70,7 @@ function normalizePlanStepStatus(value: unknown): XCodePlanStep["status"] {
   return "pending";
 }
 
-function createPlanStep(title: string, status: unknown, index: number): XCodePlanStep | null {
+function createPlanStep(title: string, status: unknown, index: number): ZCodePlanStep | null {
   const trimmedTitle = title.trim();
   if (trimmedTitle.length === 0) {
     return null;
@@ -103,7 +103,7 @@ function parsePlanMarkdown(markdown: string): ParsedPlanPayload | null {
 
   const lines = trimmed.split(/\r?\n/);
   const summaryLines: string[] = [];
-  const steps: XCodePlanStep[] = [];
+  const steps: ZCodePlanStep[] = [];
   let encounteredList = false;
 
   for (const line of lines) {
@@ -166,7 +166,7 @@ function parsePlanMarkdown(markdown: string): ParsedPlanPayload | null {
   };
 }
 
-function parsePlanStepEntry(value: unknown, index: number): XCodePlanStep | null {
+function parsePlanStepEntry(value: unknown, index: number): ZCodePlanStep | null {
   if (typeof value === "string") {
     return createPlanStep(value, "pending", index);
   }
@@ -217,7 +217,7 @@ function extractPlanPayload(
   if (Array.isArray(value)) {
     const directSteps = value
       .map((entry, index) => parsePlanStepEntry(entry, index))
-      .filter((step): step is XCodePlanStep => step !== null);
+      .filter((step): step is ZCodePlanStep => step !== null);
     if (directSteps.length > 0) {
       return {
         summary: null,
@@ -317,8 +317,8 @@ function extractToolName(raw: unknown): string | null {
 }
 
 export function getModeOptionFromConfigOptions(
-  configOptions: XCodeConfigOption[],
-): XCodeConfigOption | null {
+  configOptions: ZCodeConfigOption[],
+): ZCodeConfigOption | null {
   const modeOption = configOptions.find(
     (option) => option.category === "mode" && option.type === "select",
   );
@@ -326,7 +326,7 @@ export function getModeOptionFromConfigOptions(
 }
 
 export function getCurrentModeIdFromConfigOptions(
-  configOptions: XCodeConfigOption[],
+  configOptions: ZCodeConfigOption[],
 ): string | null {
   const modeOption = getModeOptionFromConfigOptions(configOptions);
   if (typeof modeOption?.currentValue !== "string") {
@@ -345,9 +345,9 @@ export function getCurrentModeIdFromConfigOptions(
  * @returns The provider-native mode ID, or the original semanticModeId if not found
  */
 export function resolveProviderNativeModeIdFromSemantic(
-  configOptions: XCodeConfigOption[],
+  configOptions: ZCodeConfigOption[],
   semanticModeId: string,
-  provider?: XCodeProvider,
+  provider?: ZCodeProvider,
 ): string {
   const modeOption = getModeOptionFromConfigOptions(configOptions);
   if (!modeOption?.options) {
@@ -370,7 +370,7 @@ export function resolveProviderNativeModeIdFromSemantic(
   return normalizedMatch?.value ?? semanticModeId;
 }
 
-function normalizeSessionMode(mode: string, _provider?: XCodeProvider): string {
+function normalizeSessionMode(mode: string, _provider?: ZCodeProvider): string {
   const normalized = mode.trim().toLowerCase();
   // Map known provider-native variants to canonical forms
   switch (normalized) {
@@ -401,8 +401,8 @@ function normalizeSessionMode(mode: string, _provider?: XCodeProvider): string {
 }
 
 export function getAvailableModesFromConfigOptions(
-  configOptions: XCodeConfigOption[],
-): XCodeTaskModeInfo[] {
+  configOptions: ZCodeConfigOption[],
+): ZCodeTaskModeInfo[] {
   const modeOption = getModeOptionFromConfigOptions(configOptions);
   if (!modeOption?.options) {
     return [];
@@ -416,7 +416,7 @@ export function getAvailableModesFromConfigOptions(
 }
 
 export function getModeLabelFromConfigOptions(
-  configOptions: XCodeConfigOption[],
+  configOptions: ZCodeConfigOption[],
   modeId: string | null,
 ): string | null {
   if (!modeId) {

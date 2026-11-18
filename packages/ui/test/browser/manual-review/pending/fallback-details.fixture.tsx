@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { FallbackToolCallBlock } from "@/ToolCallBlocks/renderers/fallback.js";
 import type { ToolCallBlockRenderContext } from "@/ToolCallBlocks/shared.js";
 import { buildToolDisplayModel } from "@/lib/toolDisplay.js";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { TooltipProvider } from "@/components/ui/tooltip.js";
 import "@/styles.css";
 
@@ -74,9 +74,9 @@ function Fixture() {
   );
 }
 createRoot(document.getElementById("root")!).render(
-  <XCodeIntlProvider initialLocale={locale}>
+  <ZCodeIntlProvider initialLocale={locale}>
     <TooltipProvider>
       <Fixture />
     </TooltipProvider>
-  </XCodeIntlProvider>,
+  </ZCodeIntlProvider>,
 );

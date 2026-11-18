@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button.js";
 import { Card, CardContent } from "@/components/ui/card.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 
 interface AssetsStatus {
@@ -82,7 +82,7 @@ function formatSpeed(bytesPerSecond: number): string {
 }
 
 export function DshPetAssetsCard(): React.JSX.Element | null {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const t = useCallback(
     (id: string, values?: Record<string, string | number>) =>
       intl.formatMessage({ id: `settings.dshPet.assets.${id}` }, values),

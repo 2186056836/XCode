@@ -1,38 +1,38 @@
 /* eslint-disable max-lines -- zcodeSessionService 聚合 desktop-continuous session 操作、draft lifecycle 和 task index 同步边界，拆分需要单独设计。 */
-import type { IXCodeAgentService } from "#src/zcode-agent/zcodeAgent.js";
-import type { XCodeTaskIndexSyncer } from "#src/zcode-agent/zcodeTaskIndexSyncer.js";
+import type { IZCodeAgentService } from "#src/zcode-agent/zcodeAgent.js";
+import type { ZCodeTaskIndexSyncer } from "#src/zcode-agent/zcodeTaskIndexSyncer.js";
 import { createServiceLogger } from "#src/logger/serviceLogger.js";
 import {
   createSessionTraceId,
-  type XCodeSessionStateSnapshot,
-  type XCodeWorkspaceTaskListChanged,
+  type ZCodeSessionStateSnapshot,
+  type ZCodeWorkspaceTaskListChanged,
 } from "@zcode/shared";
 import type {
-  IXCodeSessionService,
-  XCodeSessionCreateParams,
-  XCodeSessionEventsParams,
-  XCodeSessionListParams,
-  XCodeSessionMessagesParams,
-  XCodeSessionReadParams,
-  XCodeSessionReadWorkspacePresentationParams,
-  XCodeSessionResumeParams,
-  XCodeSessionSetModeParams,
-  XCodeSessionSetModelParams,
-  XCodeSessionSetThoughtLevelParams,
-  XCodeTaskTarget,
-  XCodeSessionWorkspaceTarget,
+  IZCodeSessionService,
+  ZCodeSessionCreateParams,
+  ZCodeSessionEventsParams,
+  ZCodeSessionListParams,
+  ZCodeSessionMessagesParams,
+  ZCodeSessionReadParams,
+  ZCodeSessionReadWorkspacePresentationParams,
+  ZCodeSessionResumeParams,
+  ZCodeSessionSetModeParams,
+  ZCodeSessionSetModelParams,
+  ZCodeSessionSetThoughtLevelParams,
+  ZCodeTaskTarget,
+  ZCodeSessionWorkspaceTarget,
 } from "#src/zcode-session/zcodeSession.js";
 import { formatModelPickerValue } from "#src/zcode-agent/zcodeConfigOptions.js";
-import { createXCodeSessionApiRetryRuntimeTracker } from "#src/zcode-session/zcodeSessionApiRetry.js";
+import { createZCodeSessionApiRetryRuntimeTracker } from "#src/zcode-session/zcodeSessionApiRetry.js";
 import { appendWorkspaceToFilesystemMcpServers } from "#src/session/mcpWorkspaceScope.js";
 import { repairEmptyImportedClaudeSessionSnapshot } from "#src/zcode-session/importedClaudeSessionRepair.js";
-import { createXCodeDeferredDraftRegistry } from "#src/zcode-session/zcodeSessionDraftRegistry.js";
+import { createZCodeDeferredDraftRegistry } from "#src/zcode-session/zcodeSessionDraftRegistry.js";
 import type { CuaProductMcpServerResolver } from "#src/cua-permission-broker/index.js";
 
 const logger = createServiceLogger("zcode-session-service");
 
-interface CreateXCodeSessionServiceOptions {
-  agentService: IXCodeAgentService;
+interface CreateZCodeSessionServiceOptions {
+  agentService: IZCodeAgentService;
   /**
    * 后台 task index sqlite 同步器。注入后，每次 session 被创建/恢复/发送 prompt 或
    * 订阅事件时都会通知 syncer 维护 shadow 订阅，保证 desktop-continuous 路径下
@@ -40,19 +40,19 @@ interface CreateXCodeSessionServiceOptions {
    * 主动把最新 snapshot 同步到 sqlite 并广播 workspace_task_list_changed，
    * 让侧边栏列表立刻看到 first_input title 和 updatedAt 排序刷新。
    */
-  taskIndexSyncer?: XCodeTaskIndexSyncer;
+  taskIndexSyncer?: ZCodeTaskIndexSyncer;
   cuaProductMcpServerResolver?: CuaProductMcpServerResolver;
 }
 
-export function createXCodeSessionService({
+export function createZCodeSessionService({
   agentService,
   taskIndexSyncer,
   cuaProductMcpServerResolver,
-}: CreateXCodeSessionServiceOptions): IXCodeSessionService {
-  const { withApiRetryRuntime } = createXCodeSessionApiRetryRuntimeTracker();
-  const deferredDraftSessions = createXCodeDeferredDraftRegistry();
+}: CreateZCodeSessionServiceOptions): IZCodeSessionService {
+  const { withApiRetryRuntime } = createZCodeSessionApiRetryRuntimeTracker();
+  const deferredDraftSessions = createZCodeDeferredDraftRegistry();
 
-  function notifySyncer(target: XCodeTaskTarget): void {
+  function notifySyncer(target: ZCodeTaskTarget): void {
     if (!taskIndexSyncer) {
       return;
     }
@@ -63,7 +63,7 @@ export function createXCodeSessionService({
     });
   }
 
-  function getSessionSnapshotDiagnostics(snapshot: XCodeSessionStateSnapshot) {
+  function getSessionSnapshotDiagnostics(snapshot: ZCodeSessionStateSnapshot) {
     // 日志诊断不能假设测试 mock 或未来 partial snapshot 一定带齐 messages/pendingRequestIds。
     // 原因是 readSession 的业务结果已经由 agent 层校验，服务层这里只记录观测字段；若日志读取抛错，会反过来打断
     // desktop-continuous snapshot 恢复。这里仅对诊断值做空数组统计，不修改返回给 UI 的 snapshot 本体。
@@ -82,7 +82,7 @@ export function createXCodeSessionService({
   }
 
   function readSnapshotAvailableThoughtLevels(
-    snapshot: XCodeSessionStateSnapshot,
+    snapshot: ZCodeSessionStateSnapshot,
   ): Set<string> | null {
     const thoughtLevel = snapshot.settings.thoughtLevel;
     if (!thoughtLevel.enabled) {
@@ -110,7 +110,7 @@ export function createXCodeSessionService({
   }
 
   function canReplayThoughtLevelFromResumeSnapshot(params: {
-    snapshot: XCodeSessionStateSnapshot;
+    snapshot: ZCodeSessionStateSnapshot;
     thoughtLevel: string;
   }): boolean {
     const availableThoughtLevels = readSnapshotAvailableThoughtLevels(params.snapshot);
@@ -122,14 +122,14 @@ export function createXCodeSessionService({
   // workspace_task_list_changed。旧写路径（send/steer/fork/compact/rewind pass-through）
   // 已删除，仅剩 createSession/resumeSession/setModel 等生命周期与配置 op 调用本方法。
   async function broadcastSnapshot(
-    snapshot: XCodeSessionStateSnapshot,
+    snapshot: ZCodeSessionStateSnapshot,
     tag: string,
     options: {
       modelOverride?: string;
       thoughtLevelOverride?: string;
       moveGroupedTaskToTop?: boolean;
       /** 设计修正：必填，发射点必须声明变更类别。 */
-      broadcastReason: XCodeWorkspaceTaskListChanged["reason"];
+      broadcastReason: ZCodeWorkspaceTaskListChanged["reason"];
     },
   ): Promise<void> {
     if (!taskIndexSyncer) {
@@ -152,9 +152,9 @@ export function createXCodeSessionService({
   }
 
   async function repairEmptyImportedClaudeSession(
-    snapshot: XCodeSessionStateSnapshot,
-    params: XCodeSessionResumeParams | XCodeSessionReadParams,
-  ): Promise<XCodeSessionStateSnapshot> {
+    snapshot: ZCodeSessionStateSnapshot,
+    params: ZCodeSessionResumeParams | ZCodeSessionReadParams,
+  ): Promise<ZCodeSessionStateSnapshot> {
     return withApiRetryRuntime(
       await repairEmptyImportedClaudeSessionSnapshot({
         agentService,
@@ -165,7 +165,7 @@ export function createXCodeSessionService({
   }
 
   async function withResolvedMcpServers<
-    T extends XCodeSessionCreateParams | XCodeSessionResumeParams,
+    T extends ZCodeSessionCreateParams | ZCodeSessionResumeParams,
   >(params: T): Promise<T> {
     const mcpServers = appendWorkspaceToFilesystemMcpServers(
       params.mcpServers,
@@ -187,7 +187,7 @@ export function createXCodeSessionService({
   }
 
   return {
-    async initializeWorkspace(params: XCodeSessionWorkspaceTarget) {
+    async initializeWorkspace(params: ZCodeSessionWorkspaceTarget) {
       const result = await agentService.initialize(params);
       // task index 的 v4 摄入（sessions-index/workspace-config）是
       // workspace 级常驻订阅。v4 命令路径（createSession/sendText 走 v4/command）
@@ -202,15 +202,15 @@ export function createXCodeSessionService({
       return result;
     },
 
-    getWorkspaceRuntimeIdentity(params: XCodeSessionWorkspaceTarget) {
+    getWorkspaceRuntimeIdentity(params: ZCodeSessionWorkspaceTarget) {
       return agentService.getWorkspaceRuntimeIdentity(params);
     },
 
-    readWorkspacePresentation(params: XCodeSessionReadWorkspacePresentationParams) {
+    readWorkspacePresentation(params: ZCodeSessionReadWorkspacePresentationParams) {
       return agentService.readWorkspacePresentation(params);
     },
 
-    async createSession(params: XCodeSessionCreateParams) {
+    async createSession(params: ZCodeSessionCreateParams) {
       const startedAt = Date.now();
       const sessionTraceId = params.sessionTraceId ?? createSessionTraceId();
       const agentParams = await withResolvedMcpServers({ ...params, sessionTraceId });
@@ -264,7 +264,7 @@ export function createXCodeSessionService({
       return snapshotWithRuntime;
     },
 
-    async resumeSession(params: XCodeSessionResumeParams) {
+    async resumeSession(params: ZCodeSessionResumeParams) {
       const startedAt = Date.now();
       const { broadcastSnapshot: shouldBroadcastSnapshot = true, ...resumeParams } = params;
       const agentParams = await withResolvedMcpServers(resumeParams);
@@ -371,11 +371,11 @@ export function createXCodeSessionService({
       return snapshot;
     },
 
-    listSessions(params: XCodeSessionListParams) {
+    listSessions(params: ZCodeSessionListParams) {
       return agentService.listSessions(params);
     },
 
-    async readSession(params: XCodeSessionReadParams) {
+    async readSession(params: ZCodeSessionReadParams) {
       const startedAt = Date.now();
       const snapshot = await repairEmptyImportedClaudeSession(
         withApiRetryRuntime(await agentService.readSession(params)),
@@ -393,15 +393,15 @@ export function createXCodeSessionService({
       return snapshot;
     },
 
-    readSessionMessages(params: XCodeSessionMessagesParams) {
+    readSessionMessages(params: ZCodeSessionMessagesParams) {
       return agentService.readSessionMessages(params);
     },
 
-    readSessionEvents(params: XCodeSessionEventsParams) {
+    readSessionEvents(params: ZCodeSessionEventsParams) {
       return agentService.readSessionEvents(params);
     },
 
-    promoteDeferredDraftSession(params: XCodeTaskTarget) {
+    promoteDeferredDraftSession(params: ZCodeTaskTarget) {
       const wasDeferredDraft = deferredDraftSessions.has(params);
       deferredDraftSessions.forget(params);
       if (!wasDeferredDraft) {
@@ -418,12 +418,12 @@ export function createXCodeSessionService({
       return Promise.resolve();
     },
 
-    closeSession(params: XCodeTaskTarget) {
+    closeSession(params: ZCodeTaskTarget) {
       deferredDraftSessions.forget(params);
       return agentService.closeSession(params).then(() => undefined);
     },
 
-    async closeDeferredDraftSession(params: XCodeTaskTarget) {
+    async closeDeferredDraftSession(params: ZCodeTaskTarget) {
       try {
         const closed = await agentService.closeSession({
           ...params,
@@ -450,7 +450,7 @@ export function createXCodeSessionService({
       }
     },
 
-    async setModel(params: XCodeSessionSetModelParams) {
+    async setModel(params: ZCodeSessionSetModelParams) {
       const isDeferredDraft = deferredDraftSessions.has(params);
       if (!isDeferredDraft) {
         notifySyncer(params);
@@ -471,11 +471,11 @@ export function createXCodeSessionService({
       return snapshot;
     },
 
-    async setThoughtLevel(params: XCodeSessionSetThoughtLevelParams) {
+    async setThoughtLevel(params: ZCodeSessionSetThoughtLevelParams) {
       return withApiRetryRuntime(await agentService.setThoughtLevel(params));
     },
 
-    async setMode(params: XCodeSessionSetModeParams) {
+    async setMode(params: ZCodeSessionSetModeParams) {
       return withApiRetryRuntime(await agentService.setMode(params));
     },
 

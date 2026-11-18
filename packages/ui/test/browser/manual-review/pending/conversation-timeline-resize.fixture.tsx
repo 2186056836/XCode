@@ -2,7 +2,7 @@ import { MarkdownTable } from "@/components/ai-elements/markdown-table.js";
 import { StrictMode, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { ConversationRow, UserInputRow } from "@zcode/shared/zcode-protocol-v4";
-import { XCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { DEFAULT_CODE_PREVIEW_SETTINGS } from "@/lib/codePreviewSettings.js";
 import { ConversationTimeline } from "@/v4/ConversationTimeline.js";
 import { TooltipProvider } from "@/components/ui/tooltip.js";
@@ -295,7 +295,7 @@ function Fixture() {
         : rows;
   return (
     <TooltipProvider>
-      <XCodeIntlProvider initialLocale={query.get("mobile") === "true" ? "en-US" : "zh-CN"}>
+      <ZCodeIntlProvider initialLocale={query.get("mobile") === "true" ? "en-US" : "zh-CN"}>
         <div className="flex h-dvh min-w-0 flex-col bg-background text-foreground">
           <nav className="flex shrink-0 gap-2 text-ui-caption">
             {terminalMode && (
@@ -396,7 +396,7 @@ function Fixture() {
             />
           </div>
         </div>
-      </XCodeIntlProvider>
+      </ZCodeIntlProvider>
     </TooltipProvider>
   );
 }
@@ -404,7 +404,7 @@ function Fixture() {
 function TableMotionFixture() {
   return (
     <TooltipProvider>
-      <XCodeIntlProvider initialLocale="en-US">
+      <ZCodeIntlProvider initialLocale="en-US">
         <main
           className="min-h-dvh bg-background text-foreground text-ui-base"
           data-markdown-table-layout-root="true"
@@ -437,7 +437,7 @@ function TableMotionFixture() {
             ))}
           </section>
         </main>
-      </XCodeIntlProvider>
+      </ZCodeIntlProvider>
     </TooltipProvider>
   );
 }

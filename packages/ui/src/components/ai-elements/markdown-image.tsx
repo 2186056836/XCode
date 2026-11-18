@@ -18,7 +18,7 @@ import {
 } from "@/components/ai-elements/image-thumbnail-gallery.js";
 import { cn } from "@/components/lib/utils.js";
 import { useOptionalServices } from "@/hooks/useServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { isImagePreviewPath } from "@/lib/codeViewer.js";
 import { resolveMarkdownFileLink } from "@/lib/markdownFileLink.js";
 import { logger } from "@/logger.js";
@@ -152,7 +152,7 @@ export function MarkdownImage({
   workspaceHomePath,
   ...props
 }: MarkdownImageProps) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const services = useOptionalServices();
   const resolvedSrc = typeof src === "string" ? src : "";
   const artifactRef = useMemo(() => decodeMarkdownArtifactImageSource(resolvedSrc), [resolvedSrc]);

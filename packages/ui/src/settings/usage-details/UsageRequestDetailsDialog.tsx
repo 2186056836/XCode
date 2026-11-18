@@ -1,9 +1,9 @@
-import type { XCodeUsageRequestDetailsResult } from "@zcode/shared";
+import type { ZCodeUsageRequestDetailsResult } from "@zcode/shared";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useProviderSettingsView } from "@/hooks/useProviderSettingsView.js";
 
-type DetailRow = XCodeUsageRequestDetailsResult["details"][number];
+type DetailRow = ZCodeUsageRequestDetailsResult["details"][number];
 
 function formatTimestamp(locale: string, value: number): string {
   const date = new Date(value);
@@ -58,7 +58,7 @@ export function UsageRequestDetailsDialog({
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const providerSettings = useProviderSettingsView();
   if (!detail) return null;
 

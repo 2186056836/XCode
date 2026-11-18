@@ -42,7 +42,7 @@ export function ApprovalArea({
 }: {
   approval: ApprovalPrompt;
   contentWidth?: number;
-  copy: ReturnType<typeof import("@zcode/i18n").getXCodeCopy>["tui"];
+  copy: ReturnType<typeof import("@zcode/i18n").getZCodeCopy>["tui"];
   mainSessionId?: string;
 }): React.ReactElement {
   const originSessionId = approvalOriginSessionId(approval.request.sessionId, mainSessionId);

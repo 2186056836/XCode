@@ -1,4 +1,4 @@
-import type { BotActor, XCodeStreamEvent } from "@zcode/shared";
+import type { BotActor, ZCodeStreamEvent } from "@zcode/shared";
 import {
   createBotsServiceHarness,
   createFeishuConfig,
@@ -111,7 +111,7 @@ describe("BOT-E2E-TP-03 topic interaction routing", () => {
             inputId,
             startedAt: Date.now(),
             inputOrigin: "desktop",
-          } as XCodeStreamEvent);
+          } as ZCodeStreamEvent);
           await listener({
             type: "permission_request",
             taskId: "task-e2e-bot",
@@ -128,7 +128,7 @@ describe("BOT-E2E-TP-03 topic interaction routing", () => {
                 response: { decision: "allow" },
               },
             ],
-          } as XCodeStreamEvent);
+          } as ZCodeStreamEvent);
           await listener({
             type: "elicitation_request",
             taskId: "task-e2e-bot",
@@ -136,7 +136,7 @@ describe("BOT-E2E-TP-03 topic interaction routing", () => {
             requestId: "question-cards",
             message: "Which option?",
             options: [{ value: "first", label: "First" }],
-          } as XCodeStreamEvent);
+          } as ZCodeStreamEvent);
           const posts = requests.filter(
             (r) =>
               r.method === "POST" && (r.url.endsWith("/reply") || r.url.includes("/messages?")),

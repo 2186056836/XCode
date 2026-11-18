@@ -1,4 +1,4 @@
-import type { XCodeTaskPersistStatus, XCodeTaskRuntimeStatus } from "@zcode/shared";
+import type { ZCodeTaskPersistStatus, ZCodeTaskRuntimeStatus } from "@zcode/shared";
 
 interface TaskRestoreTimestampedMessageLike {
   role: "user" | "assistant";
@@ -6,7 +6,7 @@ interface TaskRestoreTimestampedMessageLike {
 }
 
 interface ResolveTaskRuntimeStatusAfterRestoreOptions {
-  persistedStatus?: XCodeTaskPersistStatus;
+  persistedStatus?: ZCodeTaskPersistStatus;
   persistedUpdatedAt?: number;
   latestUserMessageTimestamp?: number | null;
   runtimeMainActive?: boolean;
@@ -18,7 +18,7 @@ interface ShouldShowTaskConfigLoadingOnSwitchParams {
 }
 
 export function shouldKeepTaskStreamingDuringRestore(
-  taskStatus: XCodeTaskRuntimeStatus,
+  taskStatus: ZCodeTaskRuntimeStatus,
 ): boolean {
   // Bugfix: 任务切到后台后再切回来时，如果这条 task 其实还在持续输出，
   // 恢复链路不能把它先打回 restoring/ready。
@@ -55,7 +55,7 @@ export function getLatestTaskUserMessageTimestamp(
   return latestTimestamp;
 }
 
-function toTerminalRuntimeStatus(status: XCodeTaskPersistStatus): XCodeTaskRuntimeStatus {
+function toTerminalRuntimeStatus(status: ZCodeTaskPersistStatus): ZCodeTaskRuntimeStatus {
   if (status === "running") {
     return "streaming";
   }
@@ -63,10 +63,10 @@ function toTerminalRuntimeStatus(status: XCodeTaskPersistStatus): XCodeTaskRunti
 }
 
 export function resolveTaskRuntimeStatusAfterRestore(
-  taskStatus: XCodeTaskRuntimeStatus,
+  taskStatus: ZCodeTaskRuntimeStatus,
   hasRestoredSession: boolean,
   options?: ResolveTaskRuntimeStatusAfterRestoreOptions,
-): XCodeTaskRuntimeStatus {
+): ZCodeTaskRuntimeStatus {
   if (!hasRestoredSession) {
     return "notReady";
   }

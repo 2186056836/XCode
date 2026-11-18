@@ -23,7 +23,7 @@ import {
   ZCODE_COMPATIBILITY_MANIFEST,
   compareCompatibilityVersions,
   evaluateSourceServerCompatibility,
-  isPublicXCodeErrorCode,
+  isPublicZCodeErrorCode,
   normalizeRemoteConnectionError,
   stripRemoteTargetSecrets,
 } from "@zcode/shared";
@@ -283,7 +283,7 @@ function describeLifecycleOperationFailure(
   const normalized = normalizeRemoteConnectionError(error);
   return {
     error: normalized.message,
-    ...(isPublicXCodeErrorCode(normalized.code) ? { errorCode: normalized.code } : {}),
+    ...(isPublicZCodeErrorCode(normalized.code) ? { errorCode: normalized.code } : {}),
     retryable: normalized.retryable ?? true,
   };
 }
@@ -1637,7 +1637,7 @@ export class SourceServerConnectionManager {
       )
         throw error;
       const normalized = normalizeRemoteConnectionError(error);
-      const errorCode = isPublicXCodeErrorCode(normalized.code) ? normalized.code : undefined;
+      const errorCode = isPublicZCodeErrorCode(normalized.code) ? normalized.code : undefined;
       const retryable =
         error && typeof error === "object" && "retryable" in error
           ? (error as { retryable?: unknown }).retryable
@@ -1847,7 +1847,7 @@ export class SourceServerConnectionManager {
     const errorCode =
       normalized?.code &&
       normalized.code !== "remote-connection-unknown" &&
-      isPublicXCodeErrorCode(normalized.code)
+      isPublicZCodeErrorCode(normalized.code)
         ? normalized.code
         : REMOTE_RECOVERY_BUDGET_EXHAUSTED_ERROR_CODE;
     for (const profileId of this.profileIdsForSource(sourceServerId, input.profile.profileId)) {
@@ -1907,7 +1907,7 @@ export class SourceServerConnectionManager {
         sourceServerId,
         ...this.compatibilityByProfileId.get(input.profile.profileId),
         error: normalized.message,
-        ...(isPublicXCodeErrorCode(normalized.code) ? { errorCode: normalized.code } : {}),
+        ...(isPublicZCodeErrorCode(normalized.code) ? { errorCode: normalized.code } : {}),
         retryable: false,
       });
     }
@@ -1920,7 +1920,7 @@ export class SourceServerConnectionManager {
           state: "offline",
           sourceServerId,
           error: normalized.message,
-          ...(isPublicXCodeErrorCode(normalized.code) ? { errorCode: normalized.code } : {}),
+          ...(isPublicZCodeErrorCode(normalized.code) ? { errorCode: normalized.code } : {}),
           retryable: false,
         });
       }

@@ -3,13 +3,13 @@ import type {
   ModelRequestAuth,
   ModelRequestAuthSourceInput,
 } from "@zcode/contracts";
-import type { XCodeProviderAccountAccess } from "@zcode/shared";
+import type { ZCodeProviderAccountAccess } from "@zcode/shared";
 
 /** 派发快照只固定票据与登录作用域；短期 PAT 必须在每个 HTTP attempt 向原 owner 解析。 */
 export async function refreshOffPeakRequestAuth(params: {
   auth: ModelRequestAuth;
   input: ModelRequestAuthSourceInput & { rejectedProjectTokenFingerprint?: string };
-  accountAccess: XCodeProviderAccountAccess;
+  accountAccess: ZCodeProviderAccountAccess;
   refresh?: ModelInvocationContext["refreshRuntimeHeadersBeforeAttempt"];
 }): Promise<ModelRequestAuth> {
   const { auth } = params;

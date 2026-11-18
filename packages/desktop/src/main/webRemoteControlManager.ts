@@ -15,7 +15,7 @@ import {
   classifyRemoteUsageError,
   parseRemoteWorkspaceIdentity,
   WEB_REMOTE_CONTROL_OUTBOUND_PAYLOAD_BUFFER_TIMEOUT_MS,
-  type XCodeEndpointUrls,
+  type ZCodeEndpointUrls,
   type HostPreparedProjectWorkspace,
   type HostProjectWorkspaceNavigationInput,
   resolveUnrecognizedWebRemoteControlRequest,
@@ -174,7 +174,7 @@ interface WindowControlRuntime {
 interface WebRemoteControlManagerDependencies {
   /** 当前界面语言（Main 的 currentApplicationLocale），用于 XCode endpoint 请求的 X-Client-Language。 */
   getClientLanguage?: () => string | undefined;
-  getEndpointUrls?: () => Promise<XCodeEndpointUrls> | XCodeEndpointUrls;
+  getEndpointUrls?: () => Promise<ZCodeEndpointUrls> | ZCodeEndpointUrls;
   relayWsUrl: string;
   mobileRemoteControlUrl: string;
   deviceMid: string;

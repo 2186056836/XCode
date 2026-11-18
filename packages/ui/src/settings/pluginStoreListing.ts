@@ -1,10 +1,10 @@
 import type {
   PluginStoreModeOrder,
-  XCodeAvailablePluginSummary,
-  XCodeInstalledPluginSummary,
-  XCodePluginInfo,
-  XCodePluginMarketplaceSummary,
-  XCodePluginStoreListing,
+  ZCodeAvailablePluginSummary,
+  ZCodeInstalledPluginSummary,
+  ZCodePluginInfo,
+  ZCodePluginMarketplaceSummary,
+  ZCodePluginStoreListing,
 } from "@zcode/shared";
 import {
   sortPluginStoreEntries,
@@ -36,11 +36,11 @@ export { isTrustedImageUrl } from "@/lib/trustedImageUrl.js";
  * 会把第三方条目的品牌和图标误挂到另一个 marketplace，安全降级为 slug 更可靠。
  */
 export function resolveUniquePluginListingByName(
-  plugins: readonly Pick<XCodeAvailablePluginSummary, "name" | "listing">[],
+  plugins: readonly Pick<ZCodeAvailablePluginSummary, "name" | "listing">[],
   name: string,
-): XCodePluginStoreListing | undefined {
+): ZCodePluginStoreListing | undefined {
   const normalizedName = name.trim().toLocaleLowerCase();
-  let match: XCodePluginStoreListing | undefined;
+  let match: ZCodePluginStoreListing | undefined;
   let count = 0;
   for (const plugin of plugins) {
     if (plugin.name.trim().toLocaleLowerCase() !== normalizedName) continue;
@@ -63,11 +63,11 @@ export interface StorePluginItem {
   restorable: boolean;
   /** 已安装但原 marketplace 已移除；仍可运行和管理，但不能更新。 */
   orphaned: boolean;
-  listing?: XCodePluginStoreListing;
-  summary?: XCodeAvailablePluginSummary;
+  listing?: ZCodePluginStoreListing;
+  summary?: ZCodeAvailablePluginSummary;
   /** 运行时信息（仅已发现的已安装插件有）：启用态、组件、manifest 回退字段。 */
-  info?: XCodePluginInfo;
-  installedMeta?: XCodeInstalledPluginSummary;
+  info?: ZCodePluginInfo;
+  installedMeta?: ZCodeInstalledPluginSummary;
 }
 
 // 市场和右侧推荐共用按插件的忙碌判定，避免安装一个插件时禁用整个推荐列表。
@@ -91,7 +91,7 @@ export function isItemBusy(
   );
 }
 
-export type PluginUpdateStatus = NonNullable<XCodeInstalledPluginSummary["updateStatus"]>;
+export type PluginUpdateStatus = NonNullable<ZCodeInstalledPluginSummary["updateStatus"]>;
 
 export function isPluginUpdatePending(
   updateStatus: PluginUpdateStatus | undefined,
@@ -105,7 +105,7 @@ export function isPluginUpdatePending(
  * 没有扩展摘要（不带扩展，或旧 CLI 没给）时不挡，装上后由扩展进程判「版本不兼容」。
  */
 export function isExtensionIncompatible(
-  listing: Pick<XCodePluginStoreListing, "extensionSummary"> | undefined,
+  listing: Pick<ZCodePluginStoreListing, "extensionSummary"> | undefined,
 ): boolean {
   const range = listing?.extensionSummary?.engines.zcode;
   return range !== undefined && !isExtensionEngineCompatible(range);
@@ -123,7 +123,7 @@ export function isStoreItemInstallBlocked(
  * 已装插件的 listing 来自目录最新版条目，所以这里看的是最新版的扩展摘要。
  */
 export function hasInstallableUpdate(
-  summary: Pick<XCodeInstalledPluginSummary, "updateStatus" | "listing"> | undefined,
+  summary: Pick<ZCodeInstalledPluginSummary, "updateStatus" | "listing"> | undefined,
 ): boolean {
   return isPluginUpdatePending(summary?.updateStatus) && !isExtensionIncompatible(summary?.listing);
 }
@@ -145,7 +145,7 @@ export function canUpdatePluginItem(
 export function needsPluginUpdate(
   state: {
     installedPlugins: readonly Pick<
-      XCodeInstalledPluginSummary,
+      ZCodeInstalledPluginSummary,
       "id" | "updateStatus" | "listing"
     >[];
     activeOperations: readonly { id: string }[];
@@ -213,7 +213,7 @@ export function resolveItemDescription(item: StorePluginItem, locale: string): s
 
 /** 管理列表与商店复用完整 ID 关联的展示信息，避免英文 manifest 绕过本地化。 */
 export function resolveManagedPluginDisplay(
-  plugin: XCodePluginInfo,
+  plugin: ZCodePluginInfo,
   item: StorePluginItem | undefined,
   locale: string,
 ): { name: string; description: string | undefined } {
@@ -278,9 +278,9 @@ const OFFICIAL_MARKETPLACE_ORDER = [
  * 同一时间使用本地化名称稳定兜底，避免市场源顺序随持久化数组历史漂移。
  */
 export function sortMarketplaceSources(
-  marketplaces: readonly XCodePluginMarketplaceSummary[],
+  marketplaces: readonly ZCodePluginMarketplaceSummary[],
   locale: string,
-): XCodePluginMarketplaceSummary[] {
+): ZCodePluginMarketplaceSummary[] {
   const officialRank = new Map(OFFICIAL_MARKETPLACE_ORDER.map((id, index) => [id, index]));
   return marketplaces.toSorted((left, right) => {
     const leftRank = officialRank.get(left.id);
@@ -306,7 +306,7 @@ export function sortMarketplaceSources(
  */
 export function sortPersonalMarketplaceGroups(
   groups: PersonalMarketplaceGroup[],
-  marketplaces: readonly XCodePluginMarketplaceSummary[],
+  marketplaces: readonly ZCodePluginMarketplaceSummary[],
   locale: string,
 ): PersonalMarketplaceGroup[] {
   const lastUpdatedById = new Map(
@@ -328,12 +328,12 @@ export function sortPersonalMarketplaceGroups(
  * 条目宇宙 = availablePlugins ∪ restorableBuiltins ∪ 实际发现的插件包（覆盖 inline/孤儿插件）。
  */
 export function buildStoreItems(input: {
-  marketplaces: XCodePluginMarketplaceSummary[];
+  marketplaces: ZCodePluginMarketplaceSummary[];
   marketplaceAvailabilityKnown: boolean;
-  availablePlugins: XCodeAvailablePluginSummary[];
-  installedPlugins: XCodeInstalledPluginSummary[];
-  plugins: XCodePluginInfo[];
-  restorableBuiltins: XCodeAvailablePluginSummary[];
+  availablePlugins: ZCodeAvailablePluginSummary[];
+  installedPlugins: ZCodeInstalledPluginSummary[];
+  plugins: ZCodePluginInfo[];
+  restorableBuiltins: ZCodeAvailablePluginSummary[];
 }): StorePluginItem[] {
   const infoById = new Map(input.plugins.map((plugin) => [plugin.id, plugin]));
   const metaById = new Map(input.installedPlugins.map((item) => [item.id, item]));
@@ -415,7 +415,7 @@ export function buildStoreItems(input: {
 /** 公开分段：Featured（CDN featured 名单按序）+ 分类聚合（无分类归 other，排最后）。 */
 export function selectFeaturedItems(
   publicItems: StorePluginItem[],
-  marketplaces: XCodePluginMarketplaceSummary[],
+  marketplaces: ZCodePluginMarketplaceSummary[],
 ): StorePluginItem[] {
   const byName = new Map<string, StorePluginItem>();
   for (const item of publicItems) {

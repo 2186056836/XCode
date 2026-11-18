@@ -9,12 +9,12 @@
 // 「中枢在哪」。没有 provider（手机远控壳、单测、静态回放）时芯片只是文字、启动不切页——
 // 手机远控壳本来就不提供中枢。
 import { createContext, useContext, useMemo, useRef, type ReactNode } from "react";
-import type { XCodeSavedWorkflowScope } from "@zcode/shared";
+import type { ZCodeSavedWorkflowScope } from "@zcode/shared";
 import type { SavedWorkflowLaunchTarget } from "@/settings/saved-workflows/useSavedWorkflowLauncher.js";
 
 export interface SavedWorkflowHubTarget {
   name: string;
-  scope: XCodeSavedWorkflowScope;
+  scope: ZCodeSavedWorkflowScope;
   /** 项目档所属的项目；全局档忽略它（中枢的全局组不按项目分）。 */
   workspacePath: string;
   workspaceIdentity?: string;

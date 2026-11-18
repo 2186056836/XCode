@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { PaletteIcon, WandIcon } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { useSettings } from "@/hooks/useSettingService.js";
 import { applyCustomSkin } from "@/useTheme.js";
@@ -23,7 +23,7 @@ import { toast } from "@/components/ui/toast.js";
  */
 
 export function CustomSkinSetting() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const { settings, update } = useSettings();
   const savedSkin = settings?.customSkin ?? null;
   const [studioOpen, setStudioOpen] = useState(false);

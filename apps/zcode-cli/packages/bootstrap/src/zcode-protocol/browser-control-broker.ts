@@ -8,8 +8,8 @@ import {
 import {
   protocolTraceFromTraceContext,
   requireSession,
-  type XCodeProtocolAgentServerContext,
-  type XCodeProtocolClientRequestOptions,
+  type ZCodeProtocolAgentServerContext,
+  type ZCodeProtocolClientRequestOptions,
 } from "./server-types.js";
 
 /**
@@ -42,11 +42,11 @@ interface ProtocolBrowserBrokerState {
 }
 
 const brokerStateByContext = new WeakMap<
-  XCodeProtocolAgentServerContext,
+  ZCodeProtocolAgentServerContext,
   ProtocolBrowserBrokerState
 >();
 
-function brokerState(context: XCodeProtocolAgentServerContext): ProtocolBrowserBrokerState {
+function brokerState(context: ZCodeProtocolAgentServerContext): ProtocolBrowserBrokerState {
   let state = brokerStateByContext.get(context);
   if (!state) {
     state = {
@@ -65,10 +65,10 @@ function brokerState(context: XCodeProtocolAgentServerContext): ProtocolBrowserB
  *
  * browser-client 的 agent.browsers.* 每个调用经此把一条 BrowserCommand 变成
  * XCode Protocol 的 interaction/browserExecute 反向请求，由 app（host→main webview/CDP）
- * 执行并返回结果。与 permission broker 并列注入（server-operations 的 createWorkspaceXCodeApp options）。
+ * 执行并返回结果。与 permission broker 并列注入（server-operations 的 createWorkspaceZCodeApp options）。
  */
 export function createProtocolBrowserControlBroker(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
 ): BrowserControlPort {
   const state = brokerState(context);
   const { connectionsBySession, childSessionParents } = state;
@@ -323,7 +323,7 @@ export function createProtocolBrowserControlBroker(
 }
 
 function buildBrowserRequestContext(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   state: ProtocolBrowserBrokerState,
   input: {
     sessionId: string;
@@ -365,7 +365,7 @@ function buildBrowserRequestContext(
 function buildRequestOptions(
   traceContext: TraceContext | undefined,
   signal: AbortSignal | undefined,
-): XCodeProtocolClientRequestOptions {
+): ZCodeProtocolClientRequestOptions {
   return {
     ...(signal ? { signal } : {}),
     ...(traceContext ? { trace: protocolTraceFromTraceContext(traceContext) } : {}),

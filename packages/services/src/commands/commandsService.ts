@@ -17,7 +17,7 @@ import {
   type SettingsDirectoryLocation,
   type SettingsDirectorySource,
   type UserCommand,
-  type XCodeCommand,
+  type ZCodeCommand,
 } from "@zcode/shared";
 import { DEFAULT_ENABLED_OFFICIAL_PLUGIN_IDS } from "@zcode/shared";
 import type { ICommandsService } from "./commands.js";
@@ -580,7 +580,7 @@ export function createCommandsService(_options?: CommandsServiceOptions): IComma
         : [];
 
     return {
-      commands: [...dedupedUserCommands, ...pluginCommands] as XCodeCommand[],
+      commands: [...dedupedUserCommands, ...pluginCommands] as ZCodeCommand[],
       userCommands: dedupedUserCommands,
       pluginCommands,
       capability: { userScopeAvailable: true },

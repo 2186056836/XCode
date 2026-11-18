@@ -14,7 +14,7 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu.js";
 import { FileApplicationIcon } from "@/file-menu/FileApplicationIcon.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 interface ApplicationItem {
   id: string;
@@ -47,7 +47,7 @@ export function FileApplicationSubmenu<T extends ApplicationItem>({
   onSelect: (application: T) => void;
   label?: string;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const sorted = useMemo(
     () =>
       [...applications].sort(

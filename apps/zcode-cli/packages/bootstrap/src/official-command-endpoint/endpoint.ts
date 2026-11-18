@@ -109,7 +109,7 @@ export function createOfficialCommandEndpoint(
       if (!res.writableFinished) abort.abort();
     });
 
-    const origin = options.resolveXCodeApiOrigin();
+    const origin = options.resolveZCodeApiOrigin();
     // host 按 workspace 把请求路由到本 CLI 拥有的工作区；共享 CLI 的进程 cwd 不是任何工作区，
     // 曾因此被 host 拒绝并误报为未登录。必须用发起命令的会话自己的 workspace。
     const workspace = workspaceBySession.get(sessionId)!;
@@ -145,7 +145,7 @@ export function createOfficialCommandEndpoint(
       if (typeof value === "string") headers.set(name, value);
     }
     for (const [name, value] of Object.entries(auth.headers)) headers.set(name, value);
-    if (options.appVersion) headers.set("X-XCode-App-Version", options.appVersion);
+    if (options.appVersion) headers.set("X-ZCode-App-Version", options.appVersion);
 
     const method = (req.method ?? "GET").toUpperCase();
     const hasBody = method !== "GET" && method !== "HEAD";

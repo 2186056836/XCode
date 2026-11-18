@@ -81,7 +81,7 @@ const median = (values: readonly number[]) => percentile(values, 0.5);
 
 async function createImportedSession(title: string) {
   const result = await callHandoffHost<{ session: { sessionId: string } }>(
-    ServiceChannels.XCodeAgent,
+    ServiceChannels.ZCodeAgent,
     "createSession",
     [
       {
@@ -100,7 +100,7 @@ async function createImportedSession(title: string) {
     ],
   );
   const sessionId = result.session.sessionId;
-  await callHandoffHost(ServiceChannels.XCodeTask, "resumeTask", [
+  await callHandoffHost(ServiceChannels.ZCodeTask, "resumeTask", [
     { taskId: sessionId, workspacePath: DEFAULT_WORKSPACE },
   ]);
   return sessionId;

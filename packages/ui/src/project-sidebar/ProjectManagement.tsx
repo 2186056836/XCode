@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select.js";
 import { cn } from "@/components/lib/utils.js";
 import { SettingsSearchInput } from "@/settings/SettingsSearchInput.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   buildRemoteHostWorkspaceIdentity,
   parseRemoteWorkspaceIdentity,
@@ -54,7 +54,7 @@ export function ProjectManagement() {
 }
 
 function ProjectManagementContent() {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const msg = (id: string, values?: Record<string, string | number>) =>
     intl.formatMessage({ id: `projectManagement.${id}` }, values);
   const count = (id: string, n: number, values?: Record<string, string | number>) =>

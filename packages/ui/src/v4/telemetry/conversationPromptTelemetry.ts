@@ -3,7 +3,7 @@ import {
   ZCODE_AGENT_PROVIDER,
   type TelemetryUiMode,
   type PlanIdentitySnapshot,
-  type XCodeProvider,
+  type ZCodeProvider,
 } from "@zcode/shared";
 import { buildPromptTelemetryExtraDetail } from "@/lib/messageTelemetry.js";
 import { encodeCustomModelValue } from "@/lib/zcodeCustomModelValue.js";
@@ -28,7 +28,7 @@ export { resolveLegacyRuntimeModelValue } from "@zcode/shared/conversation-telem
 /** V4 config.provider 是实际模型 provider id；agentProvider 表示 XCode 运行时。 */
 export function buildV4ConversationPromptTelemetryExtraDetail(params: {
   uiMode?: TelemetryUiMode;
-  agentProvider?: XCodeProvider;
+  agentProvider?: ZCodeProvider;
   configProvider?: string | null;
   modelName?: string | null;
   askMode?: string | null;

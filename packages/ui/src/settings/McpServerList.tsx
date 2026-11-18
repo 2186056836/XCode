@@ -1,4 +1,4 @@
-import { type McpServerStatus, type XCodeMcpServer } from "@zcode/shared";
+import { type McpServerStatus, type ZCodeMcpServer } from "@zcode/shared";
 import {
   TID_MCP_OPEN_AUTHORIZATION_BUTTON,
   TID_MCP_SERVER_ROW,
@@ -6,7 +6,7 @@ import {
 } from "@zcode/shared/test-ids";
 import { Button } from "@/components/ui/button.js";
 import { Switch } from "@/components/ui/switch.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { settingsResourceRowInteraction } from "@/settings/settingsResourceRowInteraction.js";
 import { SettingsScopeBadge } from "@/settings/SettingsScopeBadge.js";
@@ -68,14 +68,14 @@ function McpServerItem({
   onTrust,
   hideMetadata,
 }: {
-  server: XCodeMcpServer;
-  onEdit: (server: XCodeMcpServer) => void;
+  server: ZCodeMcpServer;
+  onEdit: (server: ZCodeMcpServer) => void;
   onToggle: (id: string, enabled: boolean) => void;
-  onOpenAuthorization?: (server: XCodeMcpServer) => void;
-  onTrust?: (server: XCodeMcpServer) => void;
+  onOpenAuthorization?: (server: ZCodeMcpServer) => void;
+  onTrust?: (server: ZCodeMcpServer) => void;
   hideMetadata: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const typeLabel = server.config.command
     ? "stdio"
     : (server.config.type ?? (server.config.url ? "http" : "?"));
@@ -217,17 +217,17 @@ export function McpServerList({
   emptyDescription,
   hideMetadata = false,
 }: {
-  servers: XCodeMcpServer[];
+  servers: ZCodeMcpServer[];
   onCreate: () => void;
-  onEdit: (server: XCodeMcpServer) => void;
+  onEdit: (server: ZCodeMcpServer) => void;
   onToggle: (id: string, enabled: boolean) => void;
-  onOpenAuthorization?: (server: XCodeMcpServer) => void;
-  onTrust?: (server: XCodeMcpServer) => void;
+  onOpenAuthorization?: (server: ZCodeMcpServer) => void;
+  onTrust?: (server: ZCodeMcpServer) => void;
   emptyTitle: string;
   emptyDescription: string;
   hideMetadata?: boolean;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   if (servers.length === 0) {
     return (

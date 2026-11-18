@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
-import type { XCodeUsageRequestDetailsResult } from "@zcode/shared";
+import type { ZCodeUsageRequestDetailsResult } from "@zcode/shared";
 import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { Input } from "@/components/ui/input.js";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useProviderSettingsView } from "@/hooks/useProviderSettingsView.js";
 import {
   EMPTY_USAGE_DETAILS_FILTERS,
@@ -15,7 +15,7 @@ import {
 import { UsageEmptyState } from "@/settings/usage-stats/usageStatsUiParts.js";
 import { UsageRequestDetailsDialog } from "./UsageRequestDetailsDialog.js";
 
-type DetailRow = XCodeUsageRequestDetailsResult["details"][number];
+type DetailRow = ZCodeUsageRequestDetailsResult["details"][number];
 
 const STATUS_OPTIONS: UsageDetailsStatusFilter[] = ["", "completed", "error", "cancelled", "running"];
 
@@ -64,7 +64,7 @@ function formatSpeed(
  * provider / 模型 / 账号 / 出口代理 / 耗时 / tokens。
  */
 export function UsageRequestDetailsPanel() {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const providerSettings = useProviderSettingsView();
   const {
     error,

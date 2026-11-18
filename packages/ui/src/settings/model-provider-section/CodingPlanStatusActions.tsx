@@ -7,7 +7,7 @@ import {
   CodingPlanBillingDiscountBadgePill,
   CodingPlanBillingDiscountInfoDialog,
 } from "@/CodingPlanBillingDiscount.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { CodingPlanLoginOptions } from "./codingPlanPricingCards.js";
 
 export function CodingPlanStatusActions({
@@ -35,7 +35,7 @@ export function CodingPlanStatusActions({
   onLogin?: (options?: CodingPlanLoginOptions) => void;
   onDisconnect?: () => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
 
   return (
     <div className="flex shrink-0 flex-wrap justify-start gap-2">
@@ -78,7 +78,7 @@ export function CodingPlanUpgradeAction({
   billingDiscountConfig?: CodingPlanBillingDiscountConfig;
   onUpgradePlansVisibleChange: (visible: boolean) => void;
 }) {
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const billingDiscountButtonActive = billingDiscountActive === true && !upgradePlansVisible;
 
   const upgradeButton = (

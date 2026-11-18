@@ -4,7 +4,7 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { z } from "zod";
 import {
   createConfig,
-  XCodeConfigFileSchema,
+  ZCodeConfigFileSchema,
   type ConfigFactoryOptions,
 } from "@zcode/adapters/config";
 import { resolveWorkspaceHookTrustStorePath } from "@zcode/adapters/storage";
@@ -95,7 +95,7 @@ export function createWorkspaceMcpTrust(
           if (source && source !== "project") continue;
           // 坏邻项不得拖垮列表；仍记住工作区来源，不能把校验失败误当成用户可信配置。
           requiredNames.add(name);
-          const parsed = XCodeConfigFileSchema.safeParse({ mcp: { servers: { [name]: value } } });
+          const parsed = ZCodeConfigFileSchema.safeParse({ mcp: { servers: { [name]: value } } });
           if (!parsed.success) continue;
           const config = parsed.data.mcp!.servers![name]!;
           const sourcePaths = [path];

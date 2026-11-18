@@ -4,21 +4,21 @@ import type { ModelSelection } from "@zcode/contracts";
 import {
   zcodeProviderTestModelConnectivityParamsSchema,
   zcodeWorkspaceReadPresentationParamsSchema,
-  type XCodeWorkspaceRef,
+  type ZCodeWorkspaceRef,
 } from "@zcode/shared";
-import type { XCodeApp, XCodeAppOptions } from "../app/types.js";
+import type { ZCodeApp, ZCodeAppOptions } from "../app/types.js";
 import { listProtocolSlashCommands } from "./slash-commands.js";
 import {
   parseParams,
-  type XCodeProtocolAgentServerContext,
-  type XCodeProtocolSessionRecord,
+  type ZCodeProtocolAgentServerContext,
+  type ZCodeProtocolSessionRecord,
 } from "./server-types.js";
 import { createProviderRuntimeHeadersPort } from "./provider-runtime-headers.js";
 import { offPeakLifecycleNotificationSchema } from "@zcode/shared";
 import { V4_NOTIFICATIONS } from "@zcode/shared/zcode-protocol-v4";
 
 export async function readWorkspacePresentation(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
 ) {
   const params = parseParams(zcodeWorkspaceReadPresentationParamsSchema, rawParams);
@@ -40,7 +40,7 @@ export async function readWorkspacePresentation(
 }
 
 export async function testProviderModelConnectivity(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
   abortSignal?: AbortSignal,
 ) {
@@ -53,7 +53,7 @@ export async function testProviderModelConnectivity(
   );
   const app =
     active?.app ??
-    (await createWorkspaceXCodeApp(context, params.workspace, {
+    (await createWorkspaceZCodeApp(context, params.workspace, {
       env: context.deps.env,
       eventStore: createInMemorySessionEventStore(),
       runtimeConfig: { workingDirectory: params.workspace.workspacePath },
@@ -71,14 +71,14 @@ export async function testProviderModelConnectivity(
   }
 }
 
-export async function createWorkspaceXCodeApp(
-  context: XCodeProtocolAgentServerContext,
-  workspace: XCodeWorkspaceRef,
-  options: Omit<XCodeAppOptions, "providerRegistry">,
-): Promise<XCodeApp> {
+export async function createWorkspaceZCodeApp(
+  context: ZCodeProtocolAgentServerContext,
+  workspace: ZCodeWorkspaceRef,
+  options: Omit<ZCodeAppOptions, "providerRegistry">,
+): Promise<ZCodeApp> {
   const providerRuntimeHeadersPort =
     options.providerRuntimeHeadersPort ?? createProviderRuntimeHeadersPort(context, workspace);
-  return context.deps.createXCodeApp({
+  return context.deps.createZCodeApp({
     ...options,
     // Hook Trust 等对外字段用会话所属 workspace 的 key；受管 worktree 会话 = 项目 key。
     workspaceKey: workspace.workspaceKey,
@@ -92,7 +92,7 @@ export async function createWorkspaceXCodeApp(
     providerRuntimeHeadersPort,
     runtimeConfig: {
       ...options.runtimeConfig,
-      // createXCodeApp 会把 workingDirectory 规范化为执行 cwd。把协议入口的
+      // createZCodeApp 会把 workingDirectory 规范化为执行 cwd。把协议入口的
       // workspacePath 单独注入 runtime，session 持久化才能保留本地 workspaceKey 的路径表示。
       workspacePath: workspace.workspacePath,
       // 远端 session 是 shared-host CUA 的第二层隔离边界：不能只传 workspacePath/identity，
@@ -115,16 +115,16 @@ export async function createWorkspaceXCodeApp(
 }
 
 export function hasSessionModelProvider(
-  _context: XCodeProtocolAgentServerContext,
-  record: Pick<XCodeProtocolSessionRecord, "app" | "workspace">,
+  _context: ZCodeProtocolAgentServerContext,
+  record: Pick<ZCodeProtocolSessionRecord, "app" | "workspace">,
   providerId: string,
 ): boolean {
   return record.app.listModels().some((model) => model.ref.providerId === providerId);
 }
 
 export function resolveSessionModelContextWindow(
-  _context: XCodeProtocolAgentServerContext,
-  record: Pick<XCodeProtocolSessionRecord, "app" | "workspace" | "restoredModelSelection">,
+  _context: ZCodeProtocolAgentServerContext,
+  record: Pick<ZCodeProtocolSessionRecord, "app" | "workspace" | "restoredModelSelection">,
 ): number | undefined {
   // 缺档位会让恢复选择暂不绑定 Runtime，但模型身份仍可只读查询容量，不能伪造 20 万。
   const selection = record.app.runtime.getSessionModelSelection() ?? record.restoredModelSelection;

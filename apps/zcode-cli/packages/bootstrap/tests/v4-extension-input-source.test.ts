@@ -1,5 +1,5 @@
 // 插件来源 {kind:"extension"} 的 CLI 验收（docs/design/v2/conversation-input-source.md）：
-// 真 sqlite sessionStore + XCodeProtocolAgentServer + 真 app + 可阻塞的假模型。
+// 真 sqlite sessionStore + ZCodeProtocolAgentServer + 真 app + 可阻塞的假模型。
 // 覆盖：能力位；createSession.firstInput.source 与 sendText.source 落库、进入排队项与 userInput 行；
 // 冷恢复保持来源；正文不产生来源；非法来源整条拒绝；用基线 schema 复现旧 App / 旧 CLI 的读取结果。
 import { mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createSqliteSessionStore } from "@zcode/adapters/storage";
-import { zcodeProtocolMethods, type XCodeProtocolMessage } from "@zcode/shared";
+import { zcodeProtocolMethods, type ZCodeProtocolMessage } from "@zcode/shared";
 import {
   V4_METHODS,
   V4_NOTIFICATIONS,
@@ -30,8 +30,8 @@ import {
   type ConversationSnapshot,
 } from "@zcode/shared/zcode-protocol-v4";
 import type { SessionId } from "@zcode/contracts";
-import { XCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
-import type { XCodeApp } from "../src/app/types.js";
+import { ZCodeProtocolAgentServer } from "../src/zcode-protocol/server.js";
+import type { ZCodeApp } from "../src/app/types.js";
 import {
   createRegistryBackedTestApp,
   createTestProviderRegistry,
@@ -108,14 +108,14 @@ function createGate() {
 
 async function bootServer(dbPath: string, dataBaseDir: string, gate?: Promise<void>) {
   const store = await createSqliteSessionStore({ dbPath });
-  const apps: XCodeApp[] = [];
+  const apps: ZCodeApp[] = [];
   const env = { ZCODE_DATA_BASE_DIR: dataBaseDir };
   const providerRegistry = createTestProviderRegistry([MODEL_IDENTITY]);
-  const server = new XCodeProtocolAgentServer({
+  const server = new ZCodeProtocolAgentServer({
     cwd: dataBaseDir,
     env,
     sessionStore: store,
-    createXCodeApp: async (options = {}) => {
+    createZCodeApp: async (options = {}) => {
       const app = await createRegistryBackedTestApp({
         ...options,
         // 内置 MCP 子进程与本用例无关，关闭避免进程握手噪声。
@@ -164,7 +164,7 @@ async function bootServer(dbPath: string, dataBaseDir: string, gate?: Promise<vo
   };
 }
 
-async function requestResult(server: XCodeProtocolAgentServer, message: XCodeProtocolMessage) {
+async function requestResult(server: ZCodeProtocolAgentServer, message: ZCodeProtocolMessage) {
   const response = await server.handleMessage(message);
   if (!response || !("result" in response)) {
     throw new Error(`Expected protocol success response: ${JSON.stringify(response)}`);

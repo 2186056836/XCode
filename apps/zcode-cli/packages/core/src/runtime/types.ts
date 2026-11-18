@@ -28,7 +28,7 @@ import type {
   PendingTurnAttachment,
   WorktreeCreationFact,
 } from "@zcode/contracts";
-import type { XCodeProviderAccountAccess } from "@zcode/shared";
+import type { ZCodeProviderAccountAccess } from "@zcode/shared";
 import type { EffectiveModelSelectionResult } from "@zcode/shared/model-selection";
 import type { RuntimeMessageEntry } from "../agent/message-history.js";
 import type { ProviderToolRound } from "./provider-tool-rounds/contract.js";
@@ -477,7 +477,7 @@ export type RuntimeModelFactory = (input: RuntimeModelFactoryInput) => Model;
 export interface ProviderRuntimeHeadersPort {
   shouldRefreshBeforeModelRequest?(input: { providerId: string; modelId: string }): boolean;
   refreshBeforeModelRequest(input: {
-    accountAccess?: XCodeProviderAccountAccess;
+    accountAccess?: ZCodeProviderAccountAccess;
     expectedAccountScope?: string;
     rejectedProjectTokenFingerprint?: string;
     abortSignal?: AbortSignal;

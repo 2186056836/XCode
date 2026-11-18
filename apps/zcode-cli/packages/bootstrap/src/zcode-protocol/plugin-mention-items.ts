@@ -9,15 +9,15 @@ import {
   ZCODE_PLUGIN_MENTION_ERROR_CODES,
   zcodePluginMentionItemsSchema,
   zcodePluginsMentionItemsParamsSchema,
-  type XCodePluginMentionErrorCode,
-  type XCodePluginsMentionItemsResult,
+  type ZCodePluginMentionErrorCode,
+  type ZCodePluginsMentionItemsResult,
 } from "@zcode/shared";
 import {
   ProtocolRequestError,
   parseParams,
   requireSession,
-  type XCodeProtocolAgentServerContext,
-  type XCodeProtocolSessionRecord,
+  type ZCodeProtocolAgentServerContext,
+  type ZCodeProtocolSessionRecord,
 } from "./server-types.js";
 
 const OPERATION = "plugins/mentionItems";
@@ -30,9 +30,9 @@ const SERVER_ERROR_CODE = -32000;
 const MAX_REPORTED_ISSUE_PATHS = 5;
 
 export async function getPluginMentionItems(
-  context: XCodeProtocolAgentServerContext,
+  context: ZCodeProtocolAgentServerContext,
   rawParams: unknown,
-): Promise<XCodePluginsMentionItemsResult> {
+): Promise<ZCodePluginsMentionItemsResult> {
   const params = parseParams(zcodePluginsMentionItemsParamsSchema, rawParams);
   // 会话不在内存 → -32004（sessionUnavailable）；不为候选项冷恢复会话。
   const record = requireSession(context, params.sessionId, { operation: OPERATION });
@@ -68,7 +68,7 @@ export async function getPluginMentionItems(
 
 /** 按会话冻结的 catalog 找插件，再按排序后的 server 名找第一个提供该工具的 server。 */
 async function resolveMentionToolServer(
-  record: XCodeProtocolSessionRecord,
+  record: ZCodeProtocolSessionRecord,
   pluginId: string,
   tool: string,
 ): Promise<string> {
@@ -102,12 +102,12 @@ async function resolveMentionToolServer(
 }
 
 async function callMentionTool(
-  record: XCodeProtocolSessionRecord,
+  record: ZCodeProtocolSessionRecord,
   serverName: string,
   tool: string,
   query: string,
-): Promise<XCodePluginsMentionItemsResult["items"]> {
-  let result: Awaited<ReturnType<XCodeProtocolSessionRecord["app"]["callMcpToolForUi"]>>;
+): Promise<ZCodePluginsMentionItemsResult["items"]> {
+  let result: Awaited<ReturnType<ZCodeProtocolSessionRecord["app"]["callMcpToolForUi"]>>;
   try {
     // 参数固定为 { query }。审批等待中请求就一直等；用户选「始终允许」后后续调用不再询问。
     result = await record.app.callMcpToolForUi(serverName, tool, { query });
@@ -159,7 +159,7 @@ async function callMentionTool(
 
 function mentionError(
   jsonRpcCode: number,
-  code: XCodePluginMentionErrorCode,
+  code: ZCodePluginMentionErrorCode,
   message: string,
   cause?: unknown,
 ): ProtocolRequestError {

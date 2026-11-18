@@ -16,7 +16,7 @@ import {
 } from "@zcode/shared/test-ids";
 import { toast } from "@/components/ui/toast.js";
 import { useOptionalBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
-import { useXCodeIntl } from "@/i18n/IntlProvider.js";
+import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { useConfirmDialogStore } from "@/store/confirmDialogStore.js";
 import {
@@ -51,7 +51,7 @@ export function useExtensionGrantState(pluginId: string): ExtensionGrantState | 
 
 /** 档位的显示文字：`读取会话`、`读写会话`。 */
 export function useFormatGrants(): (grants: readonly ExtensionGrant[]) => string {
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   return useCallback(
     (grants) =>
       new Intl.ListFormat(locale, { type: "conjunction" }).format(
@@ -69,7 +69,7 @@ export function useRequestExtensionGrant():
   | ((state: ExtensionGrantState) => Promise<boolean>)
   | null {
   const service = useExtensionGrantsService();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const requestConfirmation = useConfirmDialogStore((store) => store.requestConfirmation);
   const request = useCallback(
     async (state: ExtensionGrantState): Promise<boolean> => {
@@ -183,7 +183,7 @@ export function useSetExtensionNotifications():
   | ((state: ExtensionGrantState, enabled: boolean) => Promise<void>)
   | null {
   const service = useExtensionGrantsService();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const set = useCallback(
     async (state: ExtensionGrantState, enabled: boolean) => {
       if (!service) return;
@@ -209,7 +209,7 @@ export function useSetExtensionNotifications():
 /** 撤销该插件的全部授权。 */
 export function useRevokeExtensionGrant(): ((state: ExtensionGrantState) => Promise<void>) | null {
   const service = useExtensionGrantsService();
-  const { intl } = useXCodeIntl();
+  const { intl } = useZCodeIntl();
   const revoke = useCallback(
     async (state: ExtensionGrantState) => {
       if (!service) return;
@@ -239,7 +239,7 @@ export function useConfirmExtensionEnable(): (
   pluginName: string,
 ) => Promise<boolean> {
   const service = useExtensionGrantsService();
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const formatGrants = useFormatGrants();
   const requestConfirmation = useConfirmDialogStore((store) => store.requestConfirmation);
   return useCallback(
@@ -294,7 +294,7 @@ export function useDecideExtensionActivation():
   | ((plugin: { pluginId: string; name: string }) => Promise<void>)
   | null {
   const service = useExtensionGrantsService();
-  const { intl, locale } = useXCodeIntl();
+  const { intl, locale } = useZCodeIntl();
   const formatGrants = useFormatGrants();
   const requestChoice = useConfirmDialogStore((store) => store.requestChoice);
   const decide = useCallback(
