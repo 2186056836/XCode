@@ -454,6 +454,21 @@ export interface V4ComposerToolbarProps {
   onSendCompressionCommand?: (command: string) => void;
 }
 
+/**
+ * 会话 runtime 未就绪（冷会话被常驻池回收）的判定。
+ *
+ * 协议侧 `requireSession` 抛 `runtimeNotReady`；错误经 IPC 传回 renderer 后主要靠 message
+ * 识别（code 字段不保证跨进程保留），所以两处都匹配。
+ */
+function isSessionRuntimeNotReady(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const code = (error as { code?: unknown }).code;
+  return (
+    (typeof code === "string" && /runtimeNotReady|sessionUnavailable/.test(code)) ||
+    /Session runtime is not ready/.test(error.message)
+  );
+}
+
 /** 模型 / 思考深度 / context usage 簇（渲染在发送键左侧，与旧 UI 同位）。 */
 function V4ComposerModelControlsImpl({
   workspacePath,
@@ -506,6 +521,25 @@ function V4ComposerModelControlsImpl({
     services: baseServices,
   });
   const { zcodeAgentService } = useServices();
+  /**
+   * 会话级写入前先确保 runtime 就绪。
+   *
+   * 修复原因（老问题「改了聊天选择器没反应」）：空闲会话的运行时会话被常驻池回收，此时
+   * `session/setPersona` / `session/setPrefill` 会以 runtimeNotReady
+   * （"Session runtime is not ready"）被拒；调用点原来用 `.catch(() => undefined)` 把错误
+   * 吞掉，于是表现为「会话身份 / PreFill 改了毫无反应」，且只有刚建出来的会话（runtime
+   * 还热着）才生效——用户感知就是「第一条会话选的什么就是什么」。
+   *
+   * 模型选择不受影响：它随每次 sendText 作为 turn 级值下发，不依赖会话 runtime。
+   * 输入混淆同理（turn 级），它的开关读全局设置，与会话是否就绪无关。
+   */
+  const ensureSessionRuntimeReady = useCallback(
+    async (target: { sessionId: string; workspacePath: string; workspaceIdentity?: string }) => {
+      await zcodeAgentService.ensureSessionReady(target);
+    },
+    [zcodeAgentService],
+  );
+
   // 会话级身份模板：来自协议 snapshot（settings.persona）。draft 态无 sessionId，选择器不生效。
   const [personaSource, setPersonaSource] = useState<"inherit" | "session">("inherit");
   const [personaId, setPersonaId] = useState<string | null>(null);
@@ -520,15 +554,25 @@ function V4ComposerModelControlsImpl({
       return;
     }
     let cancelled = false;
-    void Promise.resolve(
+    // 冷会话（运行时常驻池已回收）读不到快照：先激活 runtime 再读，否则选择器会一直显示
+    // 「跟随全局」，而磁盘上其实存着用户当初选的模板——这正是「页面看着变了、值却没生效」。
+    const target = {
+      sessionId,
+      workspacePath,
+      ...(workspaceIdentity ? { workspaceIdentity } : {}),
+    };
+    const readSnapshot = () =>
       zcodeAgentService.readSession({
-        sessionId,
-        workspacePath,
-        ...(workspaceIdentity ? { workspaceIdentity } : {}),
+        ...target,
         messageLimit: 1,
         contentProfile: "index",
-      }),
-    )
+      });
+    void readSnapshot()
+      .catch(async (error: unknown) => {
+        if (!isSessionRuntimeNotReady(error)) throw error;
+        await ensureSessionRuntimeReady(target);
+        return readSnapshot();
+      })
       .then((snapshot) => {
         if (cancelled) return;
         setPersonaSource(snapshot.settings.persona?.source ?? "inherit");
@@ -536,11 +580,16 @@ function V4ComposerModelControlsImpl({
         setPersonaCustom(snapshot.settings.persona?.custom === true);
         setPrefillMode(snapshot.settings.prefill?.mode ?? "inherit");
       })
-      .catch(() => undefined);
+      .catch((error: unknown) => {
+        logger.warn("[v4-toolbar] 读取会话身份/PreFill 失败", {
+          error: error instanceof Error ? error.message : String(error),
+          sessionId,
+        });
+      });
     return () => {
       cancelled = true;
     };
-  }, [sessionId, workspacePath, workspaceIdentity, zcodeAgentService]);
+  }, [sessionId, workspacePath, workspaceIdentity, zcodeAgentService, ensureSessionRuntimeReady]);
   const globalCustomSystemMessages = sharedSettings?.customSystemMessages;
   const customPersonaTemplates = sharedSettings?.customPersonaTemplates ?? [];
   const CUSTOM_PERSONA_PREFIX = "custom:";
@@ -601,13 +650,23 @@ function V4ComposerModelControlsImpl({
                   personaMode: "inherit" as const,
                   ...("inherited" in selection ? { inherited: selection.inherited } : {}),
                 };
-      void Promise.resolve(zcodeAgentService.setPersona(params))
+      void (async () => {
+        await ensureSessionRuntimeReady(target);
+        return zcodeAgentService.setPersona(params);
+      })()
         .then((snapshot) => {
           setPersonaSource(snapshot.settings.persona?.source ?? "inherit");
           setPersonaId(snapshot.settings.persona?.templateId ?? null);
           setPersonaCustom(snapshot.settings.persona?.custom === true);
         })
-        .catch(() => undefined);
+        .catch((error: unknown) => {
+          // 不再静默吞掉：写失败必须留痕，否则用户只看到「点了没反应」。
+          logger.warn("[v4-toolbar] 会话身份写入失败", {
+            error: error instanceof Error ? error.message : String(error),
+            sessionId,
+            personaMode: selection.mode,
+          });
+        });
     },
     [
       resolvePersonaSelection,
@@ -616,6 +675,7 @@ function V4ComposerModelControlsImpl({
       workspaceIdentity,
       zcodeAgentService,
       onSelectDraftPersona,
+      ensureSessionRuntimeReady,
     ],
   );
 
@@ -1353,20 +1413,35 @@ function V4ComposerModelControlsImpl({
         onSelectDraftPrefill?.(mode === "inherit" ? null : mode);
         return;
       }
-      void Promise.resolve(
-        zcodeAgentService.setPrefill({
-          sessionId,
-          workspacePath,
-          ...(workspaceIdentity ? { workspaceIdentity } : {}),
-          prefillMode: mode,
-        }),
-      )
+      const target = {
+        sessionId,
+        workspacePath,
+        ...(workspaceIdentity ? { workspaceIdentity } : {}),
+      };
+      // 同上：冷会话的 runtime 未就绪时 setPrefill 会被拒，必须先激活再写。
+      void (async () => {
+        await ensureSessionRuntimeReady(target);
+        return zcodeAgentService.setPrefill({ ...target, prefillMode: mode });
+      })()
         .then((snapshot) => {
           setPrefillMode(snapshot.settings.prefill?.mode ?? "inherit");
         })
-        .catch(() => undefined);
+        .catch((error: unknown) => {
+          logger.warn("[v4-toolbar] PreFill 写入失败", {
+            error: error instanceof Error ? error.message : String(error),
+            sessionId,
+            prefillMode: mode,
+          });
+        });
     },
-    [sessionId, workspacePath, workspaceIdentity, zcodeAgentService, onSelectDraftPrefill],
+    [
+      sessionId,
+      workspacePath,
+      workspaceIdentity,
+      zcodeAgentService,
+      onSelectDraftPrefill,
+      ensureSessionRuntimeReady,
+    ],
   );
 
   const effectivePrefillMode = sessionId
