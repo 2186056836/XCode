@@ -85,12 +85,8 @@ export function getZcodeHomeRoots(): string[] {
   if (envHome) {
     homes.add(envHome);
   }
-  // 4) 旧版环境变量（旧 XCode 在 setting.json 未声明时使用）
-  const legacyEnv = process.env.ZCODE_DATA_BASE_DIR?.trim();
-  if (legacyEnv) {
-    homes.add(legacyEnv);
-  }
-  // 5) 当前数据基目录兜底
+  // 4) 当前数据基目录兜底（兼容 ZCODE_DATA_BASE_DIR 覆盖；旧 XCode 品牌化的同名字母
+  // 变量已随前缀回退合并回这一个）
   const dataBaseDir = getDataBaseDir();
   if (dataBaseDir) {
     homes.add(dataBaseDir);
