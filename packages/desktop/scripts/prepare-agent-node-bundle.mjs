@@ -597,3 +597,20 @@ stageBundledSkillPack();
 await stageBundledNpmRuntime();
 stageKoffiForCuaPlugin();
 stageSharpForNodeReplPlugin();
+
+// XCode fork：从本机已安装的官方 ZCode 包移植 Computer Use 真实实现。
+// 上面的 buildCliBundle/buildOfficialPluginRuntimes 会用占位 @zcode/zcode-cua 重新
+// 生成 node-repl-host/dist/mcp/server.js，必须在这之后再把真实 producer / Helper /
+// 插件原生依赖覆盖回去。官方包不存在时（纯开源 CI）静默跳过，保持 fail-closed。
+try {
+  const { runCommand } = await import("../../../scripts/spawn-command.mjs");
+  runCommand(process.execPath, [resolve(repoRoot, "scripts/port-official-cua.mjs")], {
+    cwd: repoRoot,
+    env: process.env,
+  });
+} catch (error) {
+  console.warn(
+    "[prepare:agent-bundle] 官方 Computer Use 产物移植跳过:",
+    error instanceof Error ? error.message : String(error),
+  );
+}

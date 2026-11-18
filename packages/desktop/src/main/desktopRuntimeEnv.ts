@@ -23,6 +23,7 @@ import {
   normalizeDynamicWorkflowMode,
   readXCodeAgentTelemetryEnv,
   sanitizeXCodeRuntimeEnv,
+  withZCodeCuaEnvAliases,
   type SourceServerArtifactPolicy,
   type XCodeRuntimeEnv,
 } from "@zcode/shared";
@@ -564,7 +565,7 @@ export function buildHostProcessEnv(hostProcessLocalEnv: Record<string, string>)
   // 少了这一行，production 包和 dev 的非法取值都会原样穿透到 Host。
   delete inheritedEnv[XCODE_DYNAMIC_WORKFLOW_MODE_ENV];
 
-  return {
+  const hostProcessEnv: Record<string, string | number | boolean | object | undefined> = {
     ...inheritedEnv,
     // OTLP 凭据只定向传到 host；host 初始化 services 时会立即捕获并从 process.env 清除，
     // 后续只在启动 Agent 时短暂注入，不会进入 Bash/MCP/tool env。
@@ -594,4 +595,10 @@ export function buildHostProcessEnv(hostProcessLocalEnv: Record<string, string>)
     ...(resolvedGlmBinaryPath ? { GLM_BINARY_PATH: resolvedGlmBinaryPath } : {}),
     ...(resolvedLarkCliBinaryPath ? { XCODE_LARK_CLI_BINARY: resolvedLarkCliBinaryPath } : {}),
   };
+  // 官方 Computer Use producer（从已安装官方包移植的闭源编译产物）按 ZCODE_CUA_*
+  // 读取环境变量，而 fork 品牌化后统一注入 XCODE_CUA_*。给所有 CUA 变量补一份
+  // ZCODE_ 别名，否则移植进来的 producer 收不到 broker socket / helper 路径，
+  // 表现为「Computer Use 一直等权限 broker」。同一套别名在 host→agent、agent→MCP
+  // server 边界也各补一次（见 withZCodeCuaEnvAliases 的调用点）。
+  return withZCodeCuaEnvAliases(hostProcessEnv);
 }

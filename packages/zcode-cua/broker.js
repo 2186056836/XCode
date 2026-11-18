@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -47,7 +47,16 @@ export async function probeHelperHealth(_socketPath, _options) {
   return { bundleId: null, pid: null };
 }
 
+// Windows 没有 Unix domain socket，broker 传输必须是命名管道。真实 Computer Use
+// producer 对管道名做 namespace pin（/^\\\\.\\pipe\\zcode-cua-helper-[0-9a-f]{8,}$/），
+// 命名不符会直接以 untrusted_socket 拒绝连接；占位包如果沿用 tmpdir 下的 .sock 路径，
+// 移植进来的 producer 与 Helper 之间永远握不上手。
+const WINDOWS_BROKER_PIPE_PREFIX = "\\\\.\\pipe\\zcode-cua-helper-";
+
 export function mintBrokerSocketPath(options = {}) {
+  if ((options.platform ?? process.platform) === "win32") {
+    return `${WINDOWS_BROKER_PIPE_PREFIX}${randomBytes(8).toString("hex")}`;
+  }
   const dir = typeof options.dir === "string" ? options.dir : tmpdir();
   return join(dir, `zcode-cua-broker-${randomUUID()}.sock`);
 }

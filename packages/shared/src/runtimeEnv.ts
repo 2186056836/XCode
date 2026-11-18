@@ -74,6 +74,12 @@ const SANITIZED_RUNTIME_ENV_KEYS = [
   "XCODE_CUA_PERMISSION_BROKER_TOKEN",
   "XCODE_CUA_PERMISSION_BROKER_REFRESH_MARKER",
   "XCODE_CUA_PLUGIN_AUTHORITY",
+  // XCode fork 移植的官方闭源 Computer Use producer 只认 ZCODE_CUA_* 变量名（见
+  // withZCodeCuaEnvAliases）。别名与 XCODE_ 原名承载同一份 broker 连接材料，必须同等剔除，
+  // 否则同一个 confused-deputy 会沿着没被品牌化的变量名复发。
+  "ZCODE_CUA_PERMISSION_BROKER_SOCKET",
+  "ZCODE_CUA_PERMISSION_BROKER_REFRESH_MARKER",
+  "ZCODE_CUA_PLUGIN_AUTHORITY",
   // 官方命令端点的地址与 token 属于某一个 session，由 agent 定向注入；从父进程继承来的
   // 值（例如嵌套运行的 agent）一律剔除，避免一个 session 拿着另一个 session 的 token。
   XCODE_OFFICIAL_ENDPOINT_ENV_KEY,
@@ -109,6 +115,9 @@ const NON_TOOL_PASSTHROUGH_RUNTIME_ENV_KEYS = [
   XCODE_CUA_BROKER_SOCKET_ENV_KEY,
   "XCODE_CUA_PERMISSION_BROKER_REFRESH_MARKER",
   "XCODE_CUA_PLUGIN_AUTHORITY",
+  "ZCODE_CUA_PERMISSION_BROKER_SOCKET",
+  "ZCODE_CUA_PERMISSION_BROKER_REFRESH_MARKER",
+  "ZCODE_CUA_PLUGIN_AUTHORITY",
   XCODE_OFFICIAL_ENDPOINT_ENV_KEY,
   XCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY,
   XCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY,
@@ -137,6 +146,26 @@ export function resolveXCodeRuntimeEnv(
 // Exported so services/node.ts can inject the Helper's plugin authority into the agent spawn env
 // (mirrors feat; the agent-side plugin host verifies the broker authority via this env var).
 export const XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY = "XCODE_CUA_PLUGIN_AUTHORITY";
+
+/**
+ * XCode fork：官方闭源 Computer Use producer 由 scripts/port-official-cua.mjs 从已安装官方
+ * ZCode 包移植而来，是未做品牌化的编译产物，只认 ZCODE_CUA_* 变量名。fork 全链路注入的是
+ * XCODE_CUA_*，直接交给 producer 会表现为「一直等权限 broker / Helper 拉不起」。
+ *
+ * 在每一处「向 producer 或 agent 注入 CUA 连接材料」的边界调用本函数补一份 ZCODE_ 别名：
+ * desktop main→host（desktopRuntimeEnv）、host→agent spawn（services/node.ts）、
+ * agent→node_repl MCP server（bootstrap/mcp-config.ts）。别名只加不覆盖——显式设置的
+ * ZCODE_ 值优先，方便本地用官方变量名调试。
+ */
+export function withZCodeCuaEnvAliases<T extends Record<string, unknown>>(env: T): T {
+  const aliased: Record<string, unknown> = { ...env };
+  for (const [key, value] of Object.entries(env)) {
+    if (!key.startsWith("XCODE_CUA_") || typeof value !== "string") continue;
+    const legacyKey = key.replace(/^XCODE_/, "ZCODE_");
+    if (!(legacyKey in aliased)) aliased[legacyKey] = value;
+  }
+  return aliased as T;
+}
 
 interface CapturedCuaBrokerCredentials {
   socket: string;

@@ -13,6 +13,7 @@ import {
   XCODE_CUA_OFFICIAL_PLUGIN_ID,
   XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
   XCODE_PLUGIN_ID_ENV_KEY,
+  withZCodeCuaEnvAliases,
 } from "@zcode/shared";
 
 export { XCODE_CUA_BROKER_SOCKET_ENV_KEY as XCODE_CUA_BROKER_SOCKET_ENV } from "@zcode/shared";
@@ -154,14 +155,17 @@ function injectCuaCredentialsIntoNodeRepl(
   const refreshMarker = captured.refreshMarker || process.env[REFRESH_MARKER_ENV]?.trim();
   return {
     ...config,
-    env: {
+    // node_repl 的 Computer Use producer 是从官方包移植的闭源产物，只认 ZCODE_CUA_* 变量名；
+    // fork 品牌化的 XCODE_CUA_* 由本文件与 services 侧注入，这里补 ZCODE_ 别名。
+    // 上游 sanitize 会从 agent 全局 env 剔除这些键，别名必须落在 server 定向 env 里才活得下来。
+    env: withZCodeCuaEnvAliases({
       ...config.env,
       [XCODE_CUA_BROKER_SOCKET_ENV_KEY]: socketPath,
       ...(refreshMarker ? { [REFRESH_MARKER_ENV]: refreshMarker } : {}),
       ...(pluginAuthority ? { [XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY]: pluginAuthority } : {}),
       [XCODE_CUA_NODE_REPL_HOST_ENV_KEY]: "1",
       [XCODE_PLUGIN_ID_ENV_KEY]: XCODE_CUA_OFFICIAL_PLUGIN_ID,
-    },
+    }),
   };
 }
 

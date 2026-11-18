@@ -51,6 +51,8 @@ export declare function probeHelperHealth(
 export interface SocketPathOptions {
   dir?: string;
   env?: Record<string, string | undefined>;
+  /** 测试/编排在非 Windows 主机上校验 Windows 传输时显式指定平台。 */
+  platform?: NodeJS.Platform;
 }
 
 export declare function mintBrokerSocketPath(options?: SocketPathOptions): string;

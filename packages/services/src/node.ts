@@ -751,6 +751,7 @@ import {
   isXCodeCuaMcpPackageArg,
   isXCodeCuaInternalFeatureEnabled,
   XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
+  withZCodeCuaEnvAliases,
   type XCodeAutomation,
   type XCodeAutomationRun,
   getCapturedXCodeAgentTelemetryEnv,
@@ -3012,6 +3013,9 @@ export function createLocalServices(options: {
             };
           }
         }
+        // 移植进来的官方 producer 只读 ZCODE_CUA_*；XCODE_ 原名给 fork 自己的
+        // plugin host / 状态查询用，别名给 producer。少这一份 producer 连不上 broker。
+        cuaProductHelperEnv = withZCodeCuaEnvAliases(cuaProductHelperEnv);
       }
       const telemetryEnv = getCapturedXCodeAgentTelemetryEnv();
       const telemetryConfigured = Boolean(

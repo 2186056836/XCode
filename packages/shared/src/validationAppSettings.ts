@@ -4,8 +4,14 @@ import {
   appToolSearchModeSchema,
   DEFAULT_APP_TOOL_SEARCH_MODE,
 } from "./app-runtime-preferences.js";
-import { SUPPORTED_LOCALES, type AppSettings } from "./protocol.js";
-import { resolvePersistedUiLocale, resolvePersistedUiLocalePreference } from "./locale.js";
+// protocol ↔ validationAppSettings ↔ locale 有环：SUPPORTED_LOCALES 必须从叶子 locale.js
+// 取。经 protocol.js 转一手，环上任一入口先求值本文件时该绑定还是 undefined，
+// z.enum(undefined) 在模块加载期就把整个 shared 及下游测试炸掉。
+import {
+  resolvePersistedUiLocale,
+  resolvePersistedUiLocalePreference,
+  SUPPORTED_LOCALES,
+} from "./locale.js";
 import { REMOTE_ASSET_INSTALL_MODES } from "./remoteAssetInstallMode.js";
 import { isKnownRemoteResourcePackageId } from "./remoteResourcePackages.js";
 import { wslUserSchema } from "./wslUserValidation.js";

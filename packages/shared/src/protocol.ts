@@ -83,8 +83,10 @@ export interface SystemInfo {
  * 新增语言的步骤见 docs/i18n/ui-locales.md。
  */
 // 1112 起 protocol ↔ validationAppSettings ↔ locale 存在模块环；唯一权威定义在
-// locale.ts（叶子），这里只 re-export，避免打包序让 z.enum 在赋值前求值。
-export { SUPPORTED_LOCALES, type Locale, type LocalePreference };
+// locale.ts（叶子）。必须写成 `export ... from "./locale.js"` 直接指向叶子：写成先 export 本
+// 文件绑定再 import，环上任一入口先求值 validationAppSettings 时该绑定尚未初始化，
+// z.enum(undefined) 在模块加载期就把整个 shared（及所有下游测试）炸掉。
+export { SUPPORTED_LOCALES, type Locale, type LocalePreference } from "./locale.js";
 import { SUPPORTED_LOCALES, type Locale, type LocalePreference } from "./locale.js";
 
 /** XCode 运行中继续输入时的交互行为 */

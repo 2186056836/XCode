@@ -11,16 +11,37 @@ import { dirname, resolve } from "node:path";
  * 不能因为缺少私有产物让开源树的入口失败。规范见 docs/desktop/computer-use-producer-detection.md。
  *
  * 构建配置（electron-builder、tsup）同步求值，这里只做一次小文件同步读取。
+ *
+ * 【XCode fork 移植】Computer Use 真实实现（producer + Windows Helper + 插件原生依赖）
+ * 由 scripts/port-official-cua.mjs 从已安装官方 ZCode 包移植为编译产物，不落在
+ * workspace 的 @zcode/zcode-cua 包里。因此除包清单判定外还要识别已移植的 Helper
+ * runtime 产物：存在即视为「真实 producer 在场」，让打包链照常暂存/校验 Helper，
+ * 否则编译产物虽在磁盘却不会被打进安装包。
+ *
+ * 锚点选 bundled-tools/<platform>/cua-helper/runtime-manifest.json：它既是 electron-builder
+ * extraResources 的打包源（→ resources/tools/cua-helper），又是 dev 模式 XCODE_CUA_DEV_ROOT
+ * 的可用根（port 脚本会一并写入 zcodeCuaRuntime 契约）。该目录被 .gitignore 忽略，
+ * 纯克隆上没有此文件，判定自然回到占位包的 fail-closed 语义。
  */
+function hasPortedWindowsCuaHelper(desktopPackageRoot) {
+  const root = resolve(desktopPackageRoot);
+  return [
+    resolve(root, "bundled-tools", "win32-x64", "cua-helper/runtime-manifest.json"),
+    resolve(root, "bundled-tools", "win32-arm64", "cua-helper/runtime-manifest.json"),
+  ].some((file) => existsSync(file));
+}
+
 export function readComputerUseProducer({ desktopPackageRoot }) {
   // 从桌面包向上查找最近的安装：闭源 hoisted 布局在仓库根，开源占位包链接在桌面包下。
   for (let dir = resolve(desktopPackageRoot); ; dir = dirname(dir)) {
     const manifestPath = resolve(dir, "node_modules", "@zcode", "zcode-cua", "package.json");
     if (existsSync(manifestPath)) {
       const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+      const placeholder =
+        manifest.zcodeCuaPlaceholder === true && !hasPortedWindowsCuaHelper(desktopPackageRoot);
       return {
         installed: true,
-        placeholder: manifest.zcodeCuaPlaceholder === true,
+        placeholder,
         manifest,
         packageRoot: dirname(manifestPath),
       };
