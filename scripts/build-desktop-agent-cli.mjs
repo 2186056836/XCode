@@ -152,10 +152,28 @@ function runBootstrapWithRemoteBuild() {
   });
 }
 
+/**
+ * 把 vendor/cua 里的官方闭源产物装回构建输出。
+ *
+ * 上面的 CLI 构建（node-repl-host 的 scripts/build.mjs --desktop-agent）会用占位
+ * @zcode/zcode-cua 重新生成 dist/mcp/server.js，而 dev 链不跑 prepare:agent-bundle
+ * （cua-vendor 原来只挂在那里），导致 dev 起起来就是占位 producer，
+ * agent.computerUse.* 与 mcp__node_repl__js 全部 fail-closed。
+ * 三条构建分支都必须在此之后装回，缺任何一条都会有「打包可用、dev 不可用」的偏差。
+ */
+function installVendoredCuaAssets() {
+  runCommand(process.execPath, [resolve(repoRoot, "scripts", "cua-vendor.mjs")], {
+    cwd: repoRoot,
+    env: process.env,
+    stdio: "inherit",
+  });
+}
+
 if (useBootstrapWithRemoteBuild) {
   runBootstrapWithRemoteBuild();
   await stageDevAgentBundle();
   stageDevCuaPluginRuntime({ env: cuaPluginRuntimeStagingEnv });
+  installVendoredCuaAssets();
   process.exit(0);
 }
 
@@ -178,6 +196,7 @@ if (!useTurboBuild) {
   });
   await stageDevAgentBundle();
   stageDevCuaPluginRuntime({ env: cuaPluginRuntimeStagingEnv });
+  installVendoredCuaAssets();
   process.exit(0);
 }
 
@@ -200,3 +219,4 @@ runCommand(
 );
 await stageDevAgentBundle();
 stageDevCuaPluginRuntime({ env: cuaPluginRuntimeStagingEnv });
+installVendoredCuaAssets();
