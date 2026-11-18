@@ -169,6 +169,15 @@ declare global {
 const bridge = window.dshPet ?? null;
 const stageEl = document.getElementById("stage") as HTMLDivElement | null;
 const petEl = document.getElementById("pet") as HTMLDivElement | null;
+/**
+ * 完整素材包的字体是否已接管。
+ *
+ * 修复原因（「选了软糖体没生效」）：它原来声明在 main() 体内第 628 行，而 applyAssetFont()
+ * 在 337 行就被调用——函数声明会提升、`let` 不会，于是每次启动都在 TDZ 里抛
+ * `ReferenceError: Cannot access 'assetFontApplied' before initialization`，
+ * 字体注入一次都没执行过。放到模块作用域，调用顺序不再影响初始化。
+ */
+let assetFontApplied = false;
 
 if (!bridge || !stageEl || !petEl) {
   console.warn("[dsh-pet-overlay] bridge missing");
@@ -624,8 +633,6 @@ async function main(b: DshPetBridge, stage: HTMLDivElement, pet: HTMLDivElement)
   /** 悬浮提示光标（窗口内坐标）：窗口随宠物移动，贴光标不漂。 */
   let tipCursor: { x: number; y: number } | null = null;
   let bubbleFadeTimer: number | null = null;
-  /** 完整素材包的字体是否已尝试接管（一次即可，失败也不重试）。 */
-  let assetFontApplied = false;
 
   /**
    * 完整素材包的字体接管。
@@ -640,14 +647,17 @@ async function main(b: DshPetBridge, stage: HTMLDivElement, pet: HTMLDivElement)
   async function applyAssetFont(): Promise<void> {
     const assetsBridge = b.assets;
     if (assetFontApplied || !assetsBridge) return;
-    assetFontApplied = true;
     try {
       const result = await assetsBridge.media({ names: [], font: true });
+      // 没装字体就保持「未接管」：素材包下载完成后主进程会重载本窗，届时再注入一次。
       if (!result.font) return;
       const style = document.createElement("style");
       style.dataset.dshAssetFont = "1";
       style.textContent = `@font-face{font-family:"ShangshouSoftCandy";src:url("${result.font}") format("truetype");font-display:swap;font-weight:400}`;
       document.head.appendChild(style);
+      // 主动加载一次，document.fonts 里能看到真实状态（失败仍回落系统字体）。
+      void document.fonts.load('400 21px "ShangshouSoftCandy"').catch(() => undefined);
+      assetFontApplied = true;
     } catch {
       /* 字体不是必需品，失败就用系统字体 */
     }
