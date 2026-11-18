@@ -392,7 +392,7 @@ try {
   if (e.code === "ACTION_UNAVAILABLE") {
     await app.getAXState({ disableDiffing: true });   // the tree lists each element's actions
   } else if (e.code === "CONTROLLER_BUSY") {
-    nodeRepl.write(`another XCode Computer Use session owns control: ${e.details.owner}`);
+    nodeRepl.write(`another ZCode Computer Use session owns control: ${e.details.owner}`);
   } else if (e.actionSent) {
     await app.getAXState();                            // may already have landed; look first
   } else throw e;

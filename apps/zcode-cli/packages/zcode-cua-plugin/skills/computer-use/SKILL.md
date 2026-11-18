@@ -249,7 +249,7 @@ Actions resolve to `undefined` on success and throw `ComputerUseError` otherwise
   decide from what you see.
 - `retry` — `"reobserve"`, `"retry"` or `"never"`.
 
-`CONTROLLER_BUSY` means another live XCode Computer Use session owns input. It is
+`CONTROLLER_BUSY` means another live ZCode Computer Use session owns input. It is
 never retryable: report the owner from the error and ask the user to close that
 session.
 

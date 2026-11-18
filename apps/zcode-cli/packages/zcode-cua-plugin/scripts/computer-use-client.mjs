@@ -579,7 +579,7 @@ function advisoryTextOf(result, treeText) {
 
 /**
  * App / Window 共享的交互面 —— `Target` 的 12 个公开成员，签名冻结。
- * 附加成员数为 0（zoom 已在评审中删除）；XCode 的附加能力只出现在选项袋里。
+ * 附加成员数为 0（zoom 已在评审中删除）；ZCode 的附加能力只出现在选项袋里。
  */
 function createTarget(ctx, binding) {
   const { call, globals } = ctx;
@@ -856,7 +856,7 @@ function resolveTextRange(binding, elementIndex, text, options) {
 
 /**
  * 键位别名规范化：接受 xdotool / X keysym 写法（模型先验多是这种写法），
- * 输出 XCode 的内部 token 集合。只做输入侧兼容，不改跨平台修饰键规则
+ * 输出 ZCode 的内部 token 集合。只做输入侧兼容，不改跨平台修饰键规则
  * （macOS cmd，Linux / Windows ctrl）。
  */
 const KEY_ALIASES = Object.freeze({
@@ -893,7 +893,7 @@ export async function setupComputerUseRuntime({ globals }) {
   const bridge = globals[BRIDGE_SYMBOL];
   if (!bridge || typeof bridge !== "object" || typeof bridge.call !== "function") {
     throw new Error(
-      "Computer Use runtime bridge is unavailable. Use Computer Use from a XCode desktop or shared-host session.",
+      "Computer Use runtime bridge is unavailable. Use Computer Use from a ZCode desktop or shared-host session.",
     );
   }
   bridge.assertAvailable?.();
@@ -1050,7 +1050,7 @@ export async function setupComputerUseRuntime({ globals }) {
     //
     // 根因：「getApp 自动输出结果」只在 kernel **持久**时划算 —— `const app = await
     // cua.getApp(...)` 跨 cell 存活，一个会话只调一次 getApp，那次展示确实省掉一次单独观察。
-    // XCode 的 node_repl 每个 cell 都是全新 Worker，绑定不跨 cell，于是**每个 cell 都要重新
+    // ZCode 的 node_repl 每个 cell 都是全新 Worker，绑定不跨 cell，于是**每个 cell 都要重新
     // getApp**，那次"顺便展示"就从"一次性省一个往返"变成了"每个 cell 都多一棵注定作废的树"。
     //
     // 代价不只是 token。真机实测（会话 sess_f14c07fd）：8 个 cell 里 5 个吐两棵树，
@@ -1172,14 +1172,14 @@ export async function setupComputerUseRuntime({ globals }) {
     },
   };
   // 未文档化成员：窗口绑定。窗口寻址各平台差异很大（有的平台没有窗口寻址，有的整套
-  // 以 Window 对象寻址），XCode 三平台统一命名，不按平台分裂公开面，
+  // 以 Window 对象寻址），ZCode 三平台统一命名，不按平台分裂公开面，
   // 所以窗口寻址留在逃逸口 + 这个未文档化入口。
   Object.defineProperty(cua, "getWindow", {
     enumerable: false,
     value: async (target, windowId) => await bindApp(target, windowId),
   });
 
-  // 入口是 `agent.computerUse`（XCode 自己的命名空间约定，与 agent.documentation /
+  // 入口是 `agent.computerUse`（ZCode 自己的命名空间约定，与 agent.documentation /
   // agent.browsers 并列），不注入裸 `cua` 全局。
   // 平铺的 14 个工具在 `agent.computerUse.computer.*` 下（COMPUTER_METHOD_NAMES）。
   const agent = (globals.agent ??= {});
