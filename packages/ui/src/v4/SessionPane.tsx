@@ -7123,6 +7123,11 @@ export function SessionPane({
                         : undefined
                     }
                     onEdit={editActionsEnabled ? composerEdit.beginUserQueryEdit : undefined}
+                    // 修复原因：assistant 消息的「编辑」按钮一直没有出现——不是 UI 组件缺逻辑，
+                    // 而是这里漏接 onEditAssistant。组件内条件是 canEditAssistant && onEditAssistant
+                    // （ConversationRowView），投影侧早已按 state=complete 下发 canEditAssistant，
+                    // handleEditAssistant 也是现成的，只有这根线断着，按钮因此永不渲染。
+                    onEditAssistant={editActionsEnabled ? handleEditAssistant : undefined}
                     canLoadOlder={
                       !state.editPresentation && timelineSnapshot
                         ? hasOlderRows(timelineSnapshot)
