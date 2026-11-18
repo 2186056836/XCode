@@ -4,7 +4,7 @@ import type { Stats } from "node:fs";
 import * as fs from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep, win32 as windowsPath } from "node:path";
 
-const DEV_ROOT_ENV = "XCODE_CUA_DEV_ROOT";
+const DEV_ROOT_ENV = "ZCODE_CUA_DEV_ROOT";
 const EXPECTED_PACKAGE_NAME = "@zcode/zcode-cua";
 const PACKAGE_JSON = "package.json";
 const PRODUCT_RUNTIME_MANIFEST = "runtime-manifest.json";

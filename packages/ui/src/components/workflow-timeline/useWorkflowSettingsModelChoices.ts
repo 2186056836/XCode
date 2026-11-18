@@ -9,7 +9,7 @@
 
 import { useCallback, useMemo } from "react";
 import { completeNewModelSelection } from "@zcode/provider";
-import { XCODE_AGENT_PROVIDER, type XCodeConfigOption } from "@zcode/shared";
+import { ZCODE_AGENT_PROVIDER, type XCodeConfigOption } from "@zcode/shared";
 import { useModelSelectionView } from "@/hooks/useModelSelectionView.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import { buildRegistryModelSelectGroups } from "@/lib/modelSelectionGroups.js";
@@ -64,7 +64,7 @@ export function useWorkflowSettingsModelChoices(scope: WorkflowSettingsModelScop
     () =>
       view === null
         ? []
-        : buildRegistryModelSelectGroups(XCODE_AGENT_PROVIDER, view, {
+        : buildRegistryModelSelectGroups(ZCODE_AGENT_PROVIDER, view, {
             apiKeyLabel: format("settings.modelProvider.apiKey"),
             apiKeyBadgeLabel: format("settings.modelProvider.connectionMode.apiKeyBadge"),
             codingPlanLabel: format("settings.modelProvider.connectionMode.codingPlan"),

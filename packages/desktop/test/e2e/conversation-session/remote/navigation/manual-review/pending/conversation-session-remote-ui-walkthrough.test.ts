@@ -54,7 +54,7 @@ import {
  */
 const MARKER = "E2E_REMOTE_UI_WALKTHROUGH";
 const artifact = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-ui-walkthrough",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-ui-walkthrough",
 );
 const dialog = `[data-testid="${TID_SSH_DIALOG}"]`;
 const run = promisify(execFile);
@@ -305,7 +305,7 @@ async function startStallServer() {
 
 /** 只允许操作本用例专属、带 r3-server 标签的目标容器，绝不碰共享的开发容器。 */
 async function ownedContainer(): Promise<string | null> {
-  const name = process.env.XCODE_E2E_SSH_CONTAINER?.trim();
+  const name = process.env.ZCODE_E2E_SSH_CONTAINER?.trim();
   if (!name || !/^zcode-r3-server-[a-z0-9-]+$/u.test(name)) return null;
   try {
     const { stdout } = await run("docker", [

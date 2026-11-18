@@ -17,7 +17,7 @@ import {
 } from "@zcode/provider";
 import {
   NodeXCodeBuiltinProviderConfigSource,
-  XCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV,
+  ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV,
 } from "@zcode/provider-node";
 import type { ProviderFamilyDomain } from "@zcode/shared";
 
@@ -54,9 +54,9 @@ async function readStandaloneCodingPlanCatalog(
           : [];
       }),
     };
-  const filePath = env[XCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]?.trim();
+  const filePath = env[ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV]?.trim();
   if (!filePath) {
-    throw new Error(`${XCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV} is required for login`);
+    throw new Error(`${ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV} is required for login`);
   }
   const source = new NodeXCodeBuiltinProviderConfigSource({
     bundledFilePath: filePath,

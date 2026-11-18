@@ -187,7 +187,7 @@ zcode-plugins-test）的官方插件直接失效，而它也不是真实屏障�
 经宿主背书的通道，而不是放宽这里。
 
 - `apps/zcode-cli/packages/adapters/src/mcp/index.ts`：`normalizeMcpToolDescriptor` 调用处按
-  `config.type === "http" && config.auth?.type === XCODE_OFFICIAL_MCP_AUTH_TYPE` 传入 official；
+  `config.type === "http" && config.auth?.type === ZCODE_OFFICIAL_MCP_AUTH_TYPE` 传入 official；
   `descriptor.ts` 透传；
 - `apps/zcode-cli/packages/core/src/mcp/index.ts` 把标记带进 `mcpPresentation`；
 - `core/src/tool/types.ts` 的 `mcpPresentation` 同步加字段。

@@ -168,7 +168,7 @@ Windows 11 x64（10.0.26200）/ Electron 41.0.3 / Chromium 146.0.7680.80。以�
 在仓库根目录的 PowerShell 中设置 case-local replay；仅模型决策回放，Electron / guest / compositor / CDP / trusted input 均为真实执行：
 
 ```powershell
-$env:XCODE_E2E_MANUAL_REVIEW = '1'
+$env:ZCODE_E2E_MANUAL_REVIEW = '1'
 $env:E2E_PROVIDER_HTTP_MODE = 'replay'
 $fixtures = Join-Path (Get-Location).Path 'packages/desktop/test/e2e/fixtures/deepseek'
 $env:E2E_PROVIDER_REPLAY_FIXTURE_PATH = "$fixtures/common.json,$fixtures/conversation-session/conversation-session-browser-zoom-coordinates.json"
@@ -179,7 +179,7 @@ DPI 扩展运行在同一 Windows 原生 Electron 上使用 `--force-device-scal
 
 ```typescript
 import { config } from "../wdio.conf.js";
-const scale = Number(process.env.XCODE_ZOOM_TEST_DPR);
+const scale = Number(process.env.ZCODE_ZOOM_TEST_DPR);
 if (![1, 1.25, 1.5, 2].includes(scale)) throw new Error("Expected DPI scale 1/1.25/1.5/2");
 for (const capability of config.capabilities as Array<Record<string, any>>) {
   capability["wdio:electronServiceOptions"].appArgs.push(`--force-device-scale-factor=${scale}`);
@@ -187,4 +187,4 @@ for (const capability of config.capabilities as Array<Record<string, any>>) {
 export { config };
 ```
 
-已有本分支构建时可设置 `XCODE_E2E_SKIP_BUILD=1`、`XCODE_E2E_SKIP_AGENT_BUILD=1`；renderer 必须使用 `VITE_XCODE_E2E_STORE_BRIDGE=1` 构建。`pnpm typecheck` 的 host 输出与 tsup bundle 共用 `out/host`，必须与原生 E2E 串行；typecheck 后若再跑 E2E，应重建 tsup，不能复用被 tsc 覆盖的 host bundle。
+已有本分支构建时可设置 `ZCODE_E2E_SKIP_BUILD=1`、`ZCODE_E2E_SKIP_AGENT_BUILD=1`；renderer 必须使用 `VITE_XCODE_E2E_STORE_BRIDGE=1` 构建。`pnpm typecheck` 的 host 输出与 tsup bundle 共用 `out/host`，必须与原生 E2E 串行；typecheck 后若再跑 E2E，应重建 tsup，不能复用被 tsc 覆盖的 host bundle。

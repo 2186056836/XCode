@@ -169,7 +169,7 @@ skippedElectronUpdateVersions?: Partial<Record<"stable" | "preview", string>>;
 ## 兼容与迁移
 
 - 旧安装包若仍按包内 `app-update.yml` 从 CDN stable feed 检查更新，不再由当前 CI 全量阶段自动刷新对应 feed。需要兼容旧包时，应由服务端 manifest 迁移策略、单独的应急发布动作或旧 feed 运维流程承接，避免把新 release 状态再次绑定到 CI 的静态 feed 覆盖。
-- 新安装包默认使用服务端 manifest provider。打包态更新入口只允许既有官方生产或测试 HTTPS 域名，其他通用后端覆盖不会授权更新源，回到官方生产入口。打包后的应用忽略 `XCODE_UPDATE_FEED_URL`、`--zcode-update-feed-url` 以及内部传入的自定义 manifest URL；深链或启动参数不得改变更新源。未打包的开发态可指定完整 manifest 接口 URL，仍由客户端覆盖 `platform` / `device_mid` / `channel` 查询参数和对应 header。`--` 后的参数不再作为更新器开关解析。
+- 新安装包默认使用服务端 manifest provider。打包态更新入口只允许既有官方生产或测试 HTTPS 域名，其他通用后端覆盖不会授权更新源，回到官方生产入口。打包后的应用忽略 `ZCODE_UPDATE_FEED_URL`、`--zcode-update-feed-url` 以及内部传入的自定义 manifest URL；深链或启动参数不得改变更新源。未打包的开发态可指定完整 manifest 接口 URL，仍由客户端覆盖 `platform` / `device_mid` / `channel` 查询参数和对应 header。`--` 后的参数不再作为更新器开关解析。
 - Windows 签名构建仍读取应用的有效 Authenticode 签名，并写入 `app-update.yml` 的 `publisherName`，以激活 electron-updater 6.8.10 的自定义签名检查入口。该字段只保留签名身份作为诊断信息，不是未来更新的 DN 白名单；不能直接删除字段，否则当前依赖会跳过验证。签名或配置读取失败时构建失败。
 - Windows 更新使用显式 Authenticode 校验：下载后及交给安装器之前均要求 Windows 返回有效签名和非空签名者；无签名、损坏、不可信证书、PowerShell 错误均拒绝。子进程仅静默模块初始化进度，避免进度 CLIXML 被误判为 stderr 错误；实际 stderr 和失败退出仍拒绝。不比较旧 DN，所以更新证书或发布者 DN 不需要用户预装过渡版。安装前使用既有 `preparing` 状态锁定目标，在退出 Host/Agent 前完成检查。
 - Windows 签名查询在普通用户权限下执行；其专用命令避免受限语言模式禁止的 .NET 方法调用，使允许 `Get-AuthenticodeSignature` 的 ConstrainedLanguage 环境也可完成查询。路径字面量必须双写 ASCII 及 PowerShell 识别的四种排版单引号（U+2018、U+2019、U+201A、U+201B），拒绝 NUL、CR、LF，避免用户名或临时目录中的撇号中断字符串或被解释为代码。PowerShell 模块或签名查询若仍被设备策略禁止、结果文件缺失或无法解析，继续拒绝下载完成或安装，不提权、不修改设备策略、不退回免检。独立子进程切换语言模式的测试只验证脚本兼容，不代表所有 WDAC/AppLocker 策略已验收。
@@ -185,7 +185,7 @@ skippedElectronUpdateVersions?: Partial<Record<"stable" | "preview", string>>;
 官方 HTTPS 清单 → 文件哈希匹配 → Windows 签名有效 → 安装
 ```
 
-`publisherName` 的旧 DN 不参与批准或拒绝，`XCODE_WINDOWS_UPDATE_TRUSTED_PUBLISHER_DNS` 过渡配置不再使用。新旧证书可以具有不同 DN，但新安装包必须具有 Windows 认可的有效 Authenticode 签名。带有效时间戳的旧签名可在证书到期后继续验证；证书吊销、不可信证书链或操作系统信任策略仍可能导致拒绝。
+`publisherName` 的旧 DN 不参与批准或拒绝，`ZCODE_WINDOWS_UPDATE_TRUSTED_PUBLISHER_DNS` 过渡配置不再使用。新旧证书可以具有不同 DN，但新安装包必须具有 Windows 认可的有效 Authenticode 签名。带有效时间戳的旧签名可在证书到期后继续验证；证书吊销、不可信证书链或操作系统信任策略仍可能导致拒绝。
 
 验收需覆盖真实旧正式包到修复包的升级、不同 DN 的有效签名通过、无签名及损坏签名拒绝、PowerShell 故障拒绝，以及缓存安装前检查。不同 DN 验证必须区分真实证书运行结果和受控替身；测试不能宣称所有 Windows 环境均已覆盖。未修改 macOS/Linux 的签名和安装链路。
 
@@ -227,16 +227,16 @@ critical 扩展还必须无 PKIjs `parsingError` 标记；DER 可解码但不符
 curl "http://intranet.example.invalid:3011/api/v1/releases/electron/manifest?platform=darwin-aarch64&channel=stable&device_mid=00000000-0000-4000-8000-000000000000"
 ```
 
-然后在仓库根目录启动桌面端。`XCODE_UPDATE_FEED_URL` 必须传完整 manifest 接口 URL，客户端会在请求时覆盖 `platform`、`channel`、`device_mid` query 和对应 header；`XCODE_AUTO_UPDATE_DEV=1` 用于在 dev Electron 内打开更新链路，`XCODE_AUTO_UPDATE_DEV_VERSION` 用于把本地应用版本压低到服务端版本以下，方便触发“发现更新”：
+然后在仓库根目录启动桌面端。`ZCODE_UPDATE_FEED_URL` 必须传完整 manifest 接口 URL，客户端会在请求时覆盖 `platform`、`channel`、`device_mid` query 和对应 header；`ZCODE_AUTO_UPDATE_DEV=1` 用于在 dev Electron 内打开更新链路，`ZCODE_AUTO_UPDATE_DEV_VERSION` 用于把本地应用版本压低到服务端版本以下，方便触发“发现更新”：
 
 ```bash
-XCODE_UPDATE_FEED_URL="http://intranet.example.invalid:3011/api/v1/releases/electron/manifest" \
-XCODE_AUTO_UPDATE_DEV=1 \
-XCODE_AUTO_UPDATE_DEV_VERSION=3.3.3 \
+ZCODE_UPDATE_FEED_URL="http://intranet.example.invalid:3011/api/v1/releases/electron/manifest" \
+ZCODE_AUTO_UPDATE_DEV=1 \
+ZCODE_AUTO_UPDATE_DEV_VERSION=3.3.3 \
 pnpm dev:desktop:prod
 ```
 
-如果要测试 preview 通道，在设置页打开“抢先体验/preview 更新”后重新检查更新即可；不要把 channel 固定写进 `XCODE_UPDATE_FEED_URL`，否则容易和 renderer 设置态不一致。
+如果要测试 preview 通道，在设置页打开“抢先体验/preview 更新”后重新检查更新即可；不要把 channel 固定写进 `ZCODE_UPDATE_FEED_URL`，否则容易和 renderer 设置态不一致。
 
 ## 验证要求
 

@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import type { CommandConfig, UserCommand, XCodeCommand } from "@zcode/shared";
 import type { IServiceAccessor } from "@zcode/services";
-import { isPluginCommand, isUserCommand, XCODE_COMMAND_AGENT_SOURCE } from "@zcode/shared";
+import { isPluginCommand, isUserCommand, ZCODE_COMMAND_AGENT_SOURCE } from "@zcode/shared";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import { toast } from "@/components/ui/toast.js";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
@@ -196,7 +196,7 @@ export function CommandsSection({
         } else {
           await formServices.commandsService.writeCommandFile({
             config,
-            agentSource: XCODE_COMMAND_AGENT_SOURCE,
+            agentSource: ZCODE_COMMAND_AGENT_SOURCE,
             storageLevel,
             workspacePath: targetWorkspacePath,
           });
@@ -423,7 +423,7 @@ export function CommandsSection({
 
           <CommandForm
             initial={editingCommand ?? undefined}
-            agentSource={editingCommand?.agentSource ?? XCODE_COMMAND_AGENT_SOURCE}
+            agentSource={editingCommand?.agentSource ?? ZCODE_COMMAND_AGENT_SOURCE}
             scopeKey={formScopeKey}
             workspaceTabs={workspaceTabs}
             onScopeKeyChange={handleFormScopeKeyChange}

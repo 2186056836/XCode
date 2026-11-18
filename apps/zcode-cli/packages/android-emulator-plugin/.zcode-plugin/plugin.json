@@ -9,10 +9,10 @@
   "mcpServers": {
     "android-emulator": {
       "command": "node",
-      "args": ["${XCODE_PLUGIN_ROOT}/dist/mcp/server.js"],
-      "cwd": "${XCODE_PROJECT_DIR}",
+      "args": ["${ZCODE_PLUGIN_ROOT}/dist/mcp/server.js"],
+      "cwd": "${ZCODE_PROJECT_DIR}",
       "env": {
-        "ANDROID_PLUGIN_DATA": "${XCODE_PLUGIN_DATA}",
+        "ANDROID_PLUGIN_DATA": "${ZCODE_PLUGIN_DATA}",
         "ANDROID_PLUGIN_SDK_PATH": "${user_config.sdk_path}",
         "ANDROID_PLUGIN_DEFAULT_AVD": "${user_config.default_avd}",
         "ANDROID_PLUGIN_API_LEVEL": "${user_config.api_level}",

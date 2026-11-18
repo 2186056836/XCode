@@ -33,7 +33,7 @@ import { openWorkspaceDraftFromSidebar } from "#e2e/helpers/workspace-agent-warm
 const CASE_MARKER = "E2E_RPN_SAME_PATH_LOCAL_TASK";
 const REPLY = "RPN_SAME_PATH_LOCAL_TASK_REPLY";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/rpn-same-path-local-task",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/rpn-same-path-local-task",
 );
 
 interface TabRow {

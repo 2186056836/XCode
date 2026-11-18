@@ -784,7 +784,7 @@ as §16 "Tool reference", the contract the tool descriptions no longer carry: `C
 three sources and its fields, the facade declarations embedded verbatim between
 `<!-- facade-dts:start -->` and `<!-- facade-dts:end -->`, the rules the compiler and the
 analyzer enforce, and the fields and rules of `AmendWorkflow`, `SaveWorkflow` and
-`EvalWorkflowSnippet`. Two reference files are read on demand through `${XCODE_SKILL_DIR}`:
+`EvalWorkflowSnippet`. Two reference files are read on demand through `${ZCODE_SKILL_DIR}`:
 `patterns.md`, a catalogue of sixteen topology shapes as fragments, whose index sends the
 reader to the pipeline shapes first (per-item chaining, streaming through channels, a feedback
 loop with a counted close) and then lists the rest (fan-out over a glob, changed-file review

@@ -58,7 +58,7 @@ function trackProjectRenders() {
 const root = fileURLToPath(new URL("../../../../../../", import.meta.url));
 const entry = "/packages/ui/test/browser/manual-review/pending/new-task-rendering.fixture.tsx";
 const artifacts =
-  process.env.XCODE_E2E_ARTIFACT_DIR ||
+  process.env.ZCODE_E2E_ARTIFACT_DIR ||
   join(root, "packages/desktop/.e2e-artifacts/new-task-rendering");
 let server, browser, origin;
 before(async () => {
@@ -116,7 +116,7 @@ before(async () => {
   });
   await server.listen();
   origin = server.resolvedUrls.local[0];
-  if (process.env.XCODE_RENDER_ELECTRON_PATH) {
+  if (process.env.ZCODE_RENDER_ELECTRON_PATH) {
     const main = join(artifacts, "renderer.cjs");
     await writeFile(
       main,
@@ -125,7 +125,7 @@ before(async () => {
     const env = { ...process.env };
     delete env.ELECTRON_RUN_AS_NODE;
     const electron = await _electron.launch({
-      executablePath: process.env.XCODE_RENDER_ELECTRON_PATH,
+      executablePath: process.env.ZCODE_RENDER_ELECTRON_PATH,
       args: [main],
       env,
     });

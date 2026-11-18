@@ -99,7 +99,7 @@ interface Copy {
 }
 
 // 站点首页本身就是下载入口，没有 /download 这个 path（单独的下载链接会 404）。
-const XCODE_DOWNLOAD_URL = "https://zcode.z.ai";
+const ZCODE_DOWNLOAD_URL = "https://zcode.z.ai";
 
 const COPY: Record<ConversationShareLandingLocale, Copy> = {
   "zh-CN": {
@@ -625,7 +625,7 @@ export function ConversationShareLandingPage({
               >
                 {copy.retryOpen}
               </a>
-              <a className="text-brand underline underline-offset-2" href={XCODE_DOWNLOAD_URL}>
+              <a className="text-brand underline underline-offset-2" href={ZCODE_DOWNLOAD_URL}>
                 {copy.downloadXCode}
               </a>
             </div>
@@ -776,7 +776,7 @@ export function ConversationShareLandingStatus({
             {isNotFound ? (
               <a
                 className="rounded-md bg-primary px-4 py-2 text-ui-base text-primary-foreground"
-                href={XCODE_DOWNLOAD_URL}
+                href={ZCODE_DOWNLOAD_URL}
               >
                 {copy.backToHome}
               </a>

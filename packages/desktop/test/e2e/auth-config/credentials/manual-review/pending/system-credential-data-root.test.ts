@@ -118,7 +118,7 @@ describe("System credential storage across a data directory change", () => {
     const bootstrapSettingsFile = join(paths.appDataDir, "setting.json");
     const keychainLink = join(paths.homeDir, "Library", "Keychains");
     const accounts = [paths.credentialsFile, customCredentialsFile].map(accountFor);
-    expect(await browser.electron.execute(() => Boolean(process.env.XCODE_CREDENTIAL_SECRET))).toBe(
+    expect(await browser.electron.execute(() => Boolean(process.env.ZCODE_CREDENTIAL_SECRET))).toBe(
       false,
     );
     try {

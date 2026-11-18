@@ -3,7 +3,7 @@
 // getXCodeAgentModeSelectOptions/getXCodeAgentAvailableModes/
 // zcodeSessionSettingsToXCodeConfigOptions；B 类，死期=波次3）。
 // 消费者：services zcodeConfigOptions/botsService、UI zcodeSessionProjection 等旧栈。
-// 2026-09 Guarded 收尾后，XCODE_AGENT_MODE_OPTIONS 成为 Desktop/手机 Composer、Automation/OffPeak
+// 2026-09 Guarded 收尾后，ZCODE_AGENT_MODE_OPTIONS 成为 Desktop/手机 Composer、Automation/OffPeak
 // 表单共用的唯一模式目录（UI zcodeSessionProjection / automationAgentConfigOptions 直接消费
 // getXCodeAgentAvailableModes / getXCodeAgentModeSelectOptions / normalizeAvailableXCodeMode）。
 // 波次3 删除这些导出前必须先把模式目录迁到非 legacy 位置，不能连带删掉目录本身。
@@ -16,7 +16,7 @@ const MODE_CONFIG_ID = "mode";
 const MODE_CONFIG_CATEGORY = "mode";
 const THOUGHT_LEVEL_CONFIG_ID = "thought_level";
 const THOUGHT_LEVEL_CONFIG_CATEGORY = "thought_level";
-const XCODE_AGENT_MODE_OPTIONS = [
+const ZCODE_AGENT_MODE_OPTIONS = [
   {
     id: "build",
     name: "Ask before changes",
@@ -39,19 +39,19 @@ const XCODE_AGENT_MODE_OPTIONS = [
   },
 ] as const satisfies readonly XCodeTaskModeInfo[];
 // 菜单隐藏 Edit 不等于删除历史值；恢复/投影不能因候选变化把旧 edit 降为 build。
-const XCODE_AGENT_MODE_ID_SET = new Set<string>([
-  ...XCODE_AGENT_MODE_OPTIONS.map((mode) => mode.id),
+const ZCODE_AGENT_MODE_ID_SET = new Set<string>([
+  ...ZCODE_AGENT_MODE_OPTIONS.map((mode) => mode.id),
   "edit",
 ]);
 
 // OpenRouter 会把 `:free` 作为模型 ID 的一部分。UI/configOptions 的展示态
 // 不能再用冒号分隔 thought level，否则草稿选择会静默截断真实 modelId。
 export function normalizeAvailableXCodeMode(mode: XCodeSessionMode): string {
-  return XCODE_AGENT_MODE_ID_SET.has(mode) ? mode : "build";
+  return ZCODE_AGENT_MODE_ID_SET.has(mode) ? mode : "build";
 }
 
 export function getXCodeAgentModeSelectOptions(): NonNullable<XCodeConfigOption["options"]> {
-  return XCODE_AGENT_MODE_OPTIONS.map((mode) => ({
+  return ZCODE_AGENT_MODE_OPTIONS.map((mode) => ({
     value: mode.id,
     name: mode.name,
     description: mode.description,
@@ -59,7 +59,7 @@ export function getXCodeAgentModeSelectOptions(): NonNullable<XCodeConfigOption[
 }
 
 export function getXCodeAgentAvailableModes(): XCodeTaskModeInfo[] {
-  return XCODE_AGENT_MODE_OPTIONS.map((mode) => ({ ...mode }));
+  return ZCODE_AGENT_MODE_OPTIONS.map((mode) => ({ ...mode }));
 }
 
 export function zcodeSessionSettingsToXCodeConfigOptions(

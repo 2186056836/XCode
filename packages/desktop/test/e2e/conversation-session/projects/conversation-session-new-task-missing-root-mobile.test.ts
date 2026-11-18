@@ -33,9 +33,9 @@ describe("手机新建任务的目录失效反馈", () => {
   it("VP-ROOT-03：目录移走后提示原因并保留项目草稿，恢复后可重试", async function () {
     this.timeout(120_000);
     await waitForWorkspaceApp(DEFAULT_WORKSPACE, 45_000);
-    const cwd = join(process.env.XCODE_E2E_HOME_DIR!, "E2E_MISSING_ROOT_MOBILE");
+    const cwd = join(process.env.ZCODE_E2E_HOME_DIR!, "E2E_MISSING_ROOT_MOBILE");
     const moved = `${cwd}-moved`;
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR!;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR!;
     await mkdir(cwd, { recursive: true });
     await $('[data-testid="project-section"]').moveTo();
     await $('[data-testid="virtual-project-add"]').click();
@@ -103,11 +103,11 @@ describe("手机新建任务的目录失效反馈", () => {
       const pairUrl = await pairing;
       if (new URL(pairUrl).hostname !== "127.0.0.1") throw new Error("Local Web fixture required");
       mobile = await chromium.launch({
-        ...(process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE
-          ? { executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
+        ...(process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE
+          ? { executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
           : { channel: "chrome" }),
         headless: true,
-        args: process.env.XCODE_E2E_BROWSER_NO_PROXY === "1" ? ["--no-proxy-server"] : [],
+        args: process.env.ZCODE_E2E_BROWSER_NO_PROXY === "1" ? ["--no-proxy-server"] : [],
       });
       const context = await mobile.newContext({
         viewport: { width: 390, height: 844 },

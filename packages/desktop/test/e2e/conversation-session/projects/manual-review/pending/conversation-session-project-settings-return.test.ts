@@ -79,10 +79,10 @@ describe(marker, () => {
   afterEach(async function () {
     if (this.currentTest?.state === "failed") {
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "failed-project-settings-return.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "failed-project-settings-return.png"),
       );
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "failed-page.txt"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "failed-page.txt"),
         await $("body").getText(),
       );
     }
@@ -162,9 +162,9 @@ describe(marker, () => {
     expect(await $$('[data-testid="virtual-project-root-row"]').length).toBe(0);
     expect(await $('[data-testid="virtual-project-device"]').getText()).not.toContain("此电脑");
     expect((await directory()).entries).toHaveLength(0);
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "returned-project.png"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "returned-project.png"));
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "return-facts.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "return-facts.json"),
       JSON.stringify(
         { name: await name(), directory: await directory(), unverified: ["WSL", "mobile"] },
         null,
@@ -246,7 +246,7 @@ describe(marker, () => {
           expect(layout.right).toBeLessThanOrEqual(layout.width);
           expect(layout.bottom).toBeLessThanOrEqual(layout.height);
           await browser.saveScreenshot(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR!, `return-${locale}-${theme}-${width}.png`),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `return-${locale}-${theme}-${width}.png`),
           );
         }
     await browser.keys("Escape");

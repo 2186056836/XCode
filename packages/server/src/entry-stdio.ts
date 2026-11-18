@@ -2,7 +2,7 @@ import { migrateApplicationStorage, createSettingService } from "@zcode/services
 import { disposeServiceResourcesAndWait, getAppConfigDir } from "@zcode/services/node";
 import type { IChannel } from "@zcode/rpc";
 import {
-  XCODE_VERSION,
+  ZCODE_VERSION,
   TOPIC_RESOURCE_RELAY_CHANNEL,
   SERVICE_AUTHORITY_MODE_ENV,
   formatLogPrefix,
@@ -37,7 +37,7 @@ console.debug = stderrConsoleLog;
 
 // --version flag: print version and exit (used by deploy version check)
 if (process.argv.includes("--version")) {
-  process.stdout.write(XCODE_VERSION + "\n");
+  process.stdout.write(ZCODE_VERSION + "\n");
   process.exit(0);
 }
 
@@ -45,7 +45,7 @@ async function main() {
   // Phase 1: Send hello message
   const hello: HelloMessage = {
     type: "zcode-hello",
-    version: XCODE_VERSION,
+    version: ZCODE_VERSION,
     platform: process.platform,
     arch: process.arch,
     pid: process.pid,

@@ -16,9 +16,9 @@ export function resolveE2EHomeDir({
   env = process.env,
 }: ResolveE2EHomeDirOptions = {}): string {
   const configuredHome =
-    env.XCODE_E2E_HOME_DIR?.trim() ||
-    env.XCODE_DATA_BASE_DIR?.trim() ||
-    env.XCODE_DESKTOP_HOME_DIR?.trim();
+    env.ZCODE_E2E_HOME_DIR?.trim() ||
+    env.ZCODE_DATA_BASE_DIR?.trim() ||
+    env.ZCODE_DESKTOP_HOME_DIR?.trim();
   return resolve(cwd, configuredHome || ".e2e-home");
 }
 
@@ -26,7 +26,7 @@ export function resolveE2EHomeDir({
  * 判断 HOME 是否为 runner 分配的隔离 E2E HOME，供直接改写磁盘夹具的 case 做安全守卫。
  * Bug 根因：旧守卫只看 basename 是否以 `.e2e-home-` 开头；直接运行 wdio 的默认 `.e2e-home`
  * 被误拒。改为任一路径段以 `.e2e-home` 开头即可：覆盖 `.e2e-home`、`.e2e-home-<runId>[-shard-N]`，
- * 以及根目录名带 `.e2e-home` 的显式 XCODE_E2E_HOME_DIR 分片子目录。
+ * 以及根目录名带 `.e2e-home` 的显式 ZCODE_E2E_HOME_DIR 分片子目录。
  * 根目录名不带 `.e2e-home` 的显式 HOME 无法与真实目录区分，保守拒绝；需要改写夹具的 case 应使用带该前缀的根。
  */
 export function isIsolatedE2EHomeDir(home: string | undefined): home is string {

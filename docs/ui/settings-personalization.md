@@ -12,7 +12,7 @@
 
 - CLI 侧 `apps/zcode-cli/packages/adapters/src/context/index.ts` 的 `resolveUserInstructions` 会把它作为 `scope: "user"` 的指令源，与 workspace `AGENTS.md` 一起注入每个会话的 Request User Context（读取上限 100KB，超出截断）。
 - 因此「保存即生效于后续所有会话」，无需协议或 CLI 改动；文件缺失或内容为空等价于未配置。
-- home 解析必须与 CLI adapter 完全一致：`env.HOME || env.USERPROFILE || os.homedir()`。不使用 `XCODE_DATA_BASE_DIR`（CLI 读该文件时忽略它），也不使用 `XCODE_DESKTOP_HOME_DIR`（agent 子进程不认）。e2e 会把 `HOME`/`USERPROFILE` 指到隔离目录，链路天然一致。
+- home 解析必须与 CLI adapter 完全一致：`env.HOME || env.USERPROFILE || os.homedir()`。不使用 `ZCODE_DATA_BASE_DIR`（CLI 读该文件时忽略它），也不使用 `ZCODE_DESKTOP_HOME_DIR`（agent 子进程不认）。e2e 会把 `HOME`/`USERPROFILE` 指到隔离目录，链路天然一致。
 - onboarding 的 CLAUDE.md 迁移（settings-sync，见 `packages/services/src/settings-sync/settingsSyncService.ts`）写同一个文件，两者共存：都只是对该文件的普通读写。
 
 ## 服务边界

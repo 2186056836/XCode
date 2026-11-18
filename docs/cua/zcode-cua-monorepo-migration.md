@@ -4,7 +4,7 @@
 
 `@zcode/zcode-cua`（CUA producer：MCP server、Helper runtime、`ax_native.node`、node_repl SDK、官方 Skill）从独立仓库 `git.example.invalid/codegeex/zcode-cua` 搬入 z-code 的 `packages/zcode-cua/`，成为普通 workspace 包：
 
-- 消费方统一 `workspace:*`，不再有 git SHA pin，也不再需要 `XCODE_CUA_GIT_TOKEN` 之类的私有仓库凭据。
+- 消费方统一 `workspace:*`，不再有 git SHA pin，也不再需要 `ZCODE_CUA_GIT_TOKEN` 之类的私有仓库凭据。
 - `dist/` 不入 git，由 `pnpm build:cua` 产出；根 `prepare` 与 CI 安装后自动构建。
 - CUA 的单测、eval 与真机 e2e 纳入 z-code CI；z-code 桌面端打包直接使用 workspace 内构建产物。
 - 许可跟随 z-code（Apache-2.0），TypeScript 等工具链对齐根仓库。
@@ -81,4 +81,4 @@ Docker / Jenkins 不再改写 git URL、不再注入 zcode-cua 凭据（Jenkins 
 - `pnpm install` 后 `packages/zcode-cua/dist` 与 `ax_native.node` 存在。
 - `pnpm typecheck`、`pnpm lint`、`pnpm test:unit`（含 cua project）、`pnpm verify:pre-push` 通过。
 - `pnpm build:cua-helper` 能产出 Helper。
-- `XCODE_CUA_DEV_MODE=1 pnpm dev:desktop` 能拉起 Helper 并完成真实 CUA 调用。
+- `ZCODE_CUA_DEV_MODE=1 pnpm dev:desktop` 能拉起 Helper 并完成真实 CUA 调用。

@@ -91,7 +91,7 @@ tools/call 结束 ──▶ ledger 条目关闭：之后带这个 token 的请�
 
 - 主线程新增一个本机 socket 服务（Linux/macOS 为 `.sock` 文件，Windows 为命名管道），转发 Worker 的
   浏览器请求到 XCode 主进程的浏览器 broker。上游地址和 token 仍由 XCode 经环境变量
-  `XCODE_NODE_REPL_BROWSER_BROKER_SOCKET` / `_TOKEN` 交给 node-repl-host，只在主线程读取；
+  `ZCODE_NODE_REPL_BROWSER_BROKER_SOCKET` / `_TOKEN` 交给 node-repl-host，只在主线程读取；
   启动 Worker 时从它的环境里去掉这两个变量。
 - 转发时用条目的 `requestMeta` 重写 `runtimeScope`、`sessionId`、`turnId`、trace，并换成上游 token。
   其余字段原样转发，上游的 schema 校验与错误不变。

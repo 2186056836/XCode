@@ -347,7 +347,7 @@ async function selectMainTimelineText(text: string): Promise<void> {
         (window as Window & { __selectionTrace?: { events: unknown[] } }).__selectionTrace?.events,
     );
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "selection-events.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "selection-events.json"),
       JSON.stringify(
         {
           text,

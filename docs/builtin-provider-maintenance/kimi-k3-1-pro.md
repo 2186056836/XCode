@@ -54,7 +54,7 @@ Status: implemented / pending-key-validation
 | `e2eRuntimePaths.test.ts`                                              | 六个 E2E 源码含被禁止的系统临时路径，复跑仍失败。                                                                       |
 | `r3RemoteSpecInventory.test.ts`                                        | 队列缺少 damaged-release 用例，复跑仍失败。                                                                             |
 | `reactStableReferences.test.ts`                                        | `SettingsScopeDevice.tsx` 内联 Context 对象，复跑仍失败。                                                               |
-| `e2eDesktopBuildCache.test.ts`                                         | 开发专用变量 `XCODE_REACT_SCAN` 被全文件扫描命中，检查与变量清单未协调，复跑仍失败。                                    |
+| `e2eDesktopBuildCache.test.ts`                                         | 开发专用变量 `ZCODE_REACT_SCAN` 被全文件扫描命中，检查与变量清单未协调，复跑仍失败。                                    |
 | `remoteFrontendOssPublish.test.ts`                                     | CI 已增加 desktop-preview include，测试精确清单未跟进，复跑仍失败。                                                     |
 | `projectPrimaryRootUnresponsive.test.ts`                               | 批量运行失败，单独复跑通过。                                                                                            |
 | `storagePreparationProtocol.test.ts`、`dev-cua-plugin-runtime.test.ts` | 缺 CLI 的 adapters/contracts 构建依赖；尝试冻结安装 CLI 依赖时，已有锁文件缺少 `@withfig/autocomplete@2.692.3` 而失败。 |

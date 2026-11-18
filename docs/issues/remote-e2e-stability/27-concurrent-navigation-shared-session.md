@@ -142,7 +142,7 @@ assertCurrent() ✖ navigation-cancelled
 ## 6. 相关现象：DSYNC-07+08 同批在 `virtual-project-add` 失败
 
 - **未复现**：7 个同批运行（4×07+08、2×07+08+04、1×高负载 07+08）中，没有一次在 `virtual-project-add` 失败。08 的原始失败工件已经不在。
-- **runner 事实**：`harness/remote/remote-wdio-env.mjs:111` 强制 `XCODE_E2E_MAX_INSTANCES=1`，所以「双 worker」实际是同一批次里**串行**执行的 0-0 和 0-1。两者共享同一个容器和同一个 run 级 `XCODE_HOME`（`workers.ndjson` 的 capturedAt 前后错开，可以证明是串行）。并不存在两个 Electron 并行抢占的情况。
+- **runner 事实**：`harness/remote/remote-wdio-env.mjs:111` 强制 `ZCODE_E2E_MAX_INSTANCES=1`，所以「双 worker」实际是同一批次里**串行**执行的 0-0 和 0-1。两者共享同一个容器和同一个 run 级 `ZCODE_HOME`（`workers.ndjson` 的 capturedAt 前后错开，可以证明是串行）。并不存在两个 Electron 并行抢占的情况。
 - **与第 2 条的关系**：`virtual-project-add` 是 `openRemoteProjectSelection` 的第一步（`ssh-remote-p0.ts:289-304`），发生在任何 connectHost 之前。第 2 条的竞态发生在保存项目之后。从阶段上看二者**不是同一根因**。高负载同批运行中确实出现过 DSYNC-07 失败，但报错是第 2 条的「remote tab … 没有收敛」，不是 `virtual-project-add`。
 - **推测（未验证）**：当时多个 worktree 的 runner 同时运行，负载很高，侧栏的 `virtual-project-add` 没能在 10s 的 `waitForClickable` 内可点。建议再遇到时保留 `failures/<cid>/…/video.webm` 和 desktop 日志再判断。修复第 2 条之后，同批失败中属于第 2 条的那部分会消失。
 

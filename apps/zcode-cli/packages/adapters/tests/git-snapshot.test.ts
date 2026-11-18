@@ -564,7 +564,7 @@ describe("resolveGitSnapshot command semantics", () => {
     process.env.GIT_CONFIG_KEY_0 = "core.pager";
     process.env.GIT_CONFIG_VALUE_0 = "evil";
     process.env.GIT_CONFIG_PARAMETERS = "'core.fsmonitor=evil'";
-    process.env.XCODE_GIT_SNAPSHOT_KEEP = "kept";
+    process.env.ZCODE_GIT_SNAPSHOT_KEEP = "kept";
     delete process.env.GIT_PROXY_COMMAND;
     process.env.PATH = [gitBinDirectory, "relative-bin", ""].join(delimiter);
     try {
@@ -590,7 +590,7 @@ describe("resolveGitSnapshot command semantics", () => {
         GIT_PROXY_COMMAND: "",
         GIT_SSH_COMMAND: "false",
         GIT_TERMINAL_PROMPT: "0",
-        XCODE_GIT_SNAPSHOT_KEEP: "kept",
+        ZCODE_GIT_SNAPSHOT_KEEP: "kept",
       });
       // 继承的 GIT_CONFIG_KEY_0 被换成加固的第一项，计数从 0 开始。
       expect(env.GIT_CONFIG_KEY_0).toBe("core.fsmonitor");

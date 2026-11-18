@@ -13,8 +13,8 @@ import {
   PlatformChannels,
   resolveHelpAppConfig,
   resolveXCodeEndpointOrigin,
-  XCODE_ENV,
-  XCODE_PRODUCT_FLAVOR,
+  ZCODE_ENV,
+  ZCODE_PRODUCT_FLAVOR,
   type AppSettings,
   type DesktopCommandId,
   type Locale,
@@ -41,8 +41,8 @@ import { openResourceManager } from "./resourceManagerWindow.js";
 
 export const HELP_TOGGLE_DEV_TOOLS_MENU_ID = "help.toggle-dev-tools";
 export const HELP_TOGGLE_XCODE_STDIO_TAP_MENU_ID = "help.toggle-zcode-stdio-tap";
-const XCODE_ENDPOINT_PROMPT_WIDTH = 460;
-const XCODE_ENDPOINT_PROMPT_HEIGHT = 210;
+const ZCODE_ENDPOINT_PROMPT_WIDTH = 460;
+const ZCODE_ENDPOINT_PROMPT_HEIGHT = 210;
 const CODING_PLAN_WEBVIEW_PARTITION = "persist:zcode-coding-plan";
 
 function resolveTargetWindow(senderWindow?: BrowserWindow | null) {
@@ -357,8 +357,8 @@ function showXCodeEndpointPromptWindow(options: {
   return new Promise((resolve) => {
     let settled = false;
     const promptWindow = new BrowserWindow({
-      width: XCODE_ENDPOINT_PROMPT_WIDTH,
-      height: XCODE_ENDPOINT_PROMPT_HEIGHT,
+      width: ZCODE_ENDPOINT_PROMPT_WIDTH,
+      height: ZCODE_ENDPOINT_PROMPT_HEIGHT,
       parent: options.parentWindow,
       modal: Boolean(options.parentWindow),
       resizable: false,
@@ -413,7 +413,7 @@ async function setXCodeEndpointOverride(options: {
   onXCodeEndpointChanged: () => Promise<void> | void;
   logger: { warn: (...args: unknown[]) => void };
 }) {
-  if (XCODE_ENV === "production") {
+  if (ZCODE_ENV === "production") {
     return;
   }
   const normalized = options.value ? normalizeXCodeEndpointOrigin(options.value) : undefined;
@@ -472,7 +472,7 @@ async function resolveCurrentXCodeEndpointOrigin(settingService: {
 }): Promise<string> {
   const settings = await settingService.get();
   return resolveXCodeEndpointOrigin({
-    env: XCODE_ENV,
+    env: ZCODE_ENV,
     envBaseOrigin: settingService.envBaseOrigin,
     overrideOrigin: settings.zcodeEndpointOrigin,
   });
@@ -596,7 +596,7 @@ export async function executeDesktopCommand(options: {
       return;
     case DesktopCommandIds.CheckForUpdates:
       // 按产品身份而不是后端环境放行：生产后端的 Preview 同样没有更新器。
-      if (XCODE_PRODUCT_FLAVOR === "production") {
+      if (ZCODE_PRODUCT_FLAVOR === "production") {
         checkForUpdateMenuClick(targetWindow);
       } else {
         options.logger.info("[auto-update] Preview 已禁用手动更新检查");

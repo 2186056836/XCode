@@ -29,7 +29,7 @@ const MODEL = { providerId: "zai", modelId: "glm-4.6", options: { reasoningLevel
 async function bootServer(root: string) {
   const store = await createSqliteSessionStore({ dbPath: join(root, "sessions.db") });
   const apps: XCodeApp[] = [];
-  const env = { XCODE_DATA_BASE_DIR: join(root, "data"), HOME: root };
+  const env = { ZCODE_DATA_BASE_DIR: join(root, "data"), HOME: root };
   const providerRegistry = createTestProviderRegistry([MODEL]);
   const notifications: ContextCompositionChangedEvent[] = [];
   const server = new XCodeProtocolAgentServer({

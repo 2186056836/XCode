@@ -36,7 +36,7 @@ const CASE_MARKER = "E2E_R3_INSTALL_FAULTS";
 // 从当前 spec 回到 desktop，保持隔离 mock-cdn 与版本文件定位正确。
 const DESKTOP_ROOT = resolve(import.meta.dirname, "../../..");
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-install-faults",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-install-faults",
 );
 
 interface FaultRecord {
@@ -53,9 +53,9 @@ interface FaultRecord {
 
 /** WDIO 每次 run 会把 mock-cdn release 硬链接到 runId 隔离目录；这里只改隔离目录里的文件，先解链再写。 */
 async function stagedReleaseDir(): Promise<string> {
-  const runId = process.env.XCODE_E2E_RUN_ID?.trim();
-  if (!runId) throw new Error(`${CASE_MARKER}: XCODE_E2E_RUN_ID 缺失`);
-  // WDIO worker 的 XCODE_VERSION 是 dev 值，staged 目录使用仓库版本；文件读取保持异步。
+  const runId = process.env.ZCODE_E2E_RUN_ID?.trim();
+  if (!runId) throw new Error(`${CASE_MARKER}: ZCODE_E2E_RUN_ID 缺失`);
+  // WDIO worker 的 ZCODE_VERSION 是 dev 值，staged 目录使用仓库版本；文件读取保持异步。
   const { version } = JSON.parse(
     await readFile(resolve(DESKTOP_ROOT, "../../package.json"), "utf8"),
   );

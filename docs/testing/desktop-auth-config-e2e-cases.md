@@ -116,7 +116,7 @@ JWT 仍按现有明确专项保留，不因为存在账号 mock 就默认注入�
 
 本轮评审回归要求：正常凭据读取不取得写锁，保留读取前后代次校验；确认恢复仍在写锁内，先核验完整备份，再推进代次并原子替换。恢复推进代次后、替换前的损坏原件仍必须解析失败，不能读为有效登录。确定性备份名已有不同字节时，保留旧备份并另建独立、核验通过的完整备份。恢复入口只允许 Desktop；手机 UI 不检查或展示本机恢复入口，手机 RPC 拒绝 inspectStore/recoverStore，普通 load/save/delete 保持原有语义。390px 桌面窗口仍可确认恢复。
 
-新增恢复代次回归：Z.ai/BigModel 的 API Key 登录分别在凭据锁和配置锁等待期间恢复，旧调用返回 `XCODE_CREDENTIAL_STORE_CHANGED`，默认配置与新空库不变，新登录仍成功；条件保存/条件删除在实际文件锁等待期间恢复，旧调用失败且不发变更通知，新调用保持“无则保存/相等才删除”语义。CLI 使用独立 auth-login 回归；条件写入使用恢复 E2E 中的独立实际文件 IO 夹具，未运行前不计覆盖。
+新增恢复代次回归：Z.ai/BigModel 的 API Key 登录分别在凭据锁和配置锁等待期间恢复，旧调用返回 `ZCODE_CREDENTIAL_STORE_CHANGED`，默认配置与新空库不变，新登录仍成功；条件保存/条件删除在实际文件锁等待期间恢复，旧调用失败且不发变更通知，新调用保持“无则保存/相等才删除”语义。CLI 使用独立 auth-login 回归；条件写入使用恢复 E2E 中的独立实际文件 IO 夹具，未运行前不计覆盖。
 
 本机恢复权限回归：`server-websocket.ts` 对 Web Server（有/无连接令牌）及 Source Server Core 分别建立真实 `/ws`，再由同一普通身份领取 capability 建立 `/ws/host`；伪造模式、领票、票据重放均不得取得整库检查/恢复能力。兼容远端 stdio、手机和远端/source-settings attachment 同样拒绝，原始字节、备份集合与恢复代次不变，普通 CRUD 保留。只有本机桌面 local MessagePort attachment 允许恢复，完整 App 的原生确认路径另行验证。覆盖源码与完整 Server release 的实际 Core 进程；未运行前不计覆盖。上一轮 3.17.118 的“受信 Desktop”正向结论已被新授权链检查推翻，不能用作网络恢复权限成立的证据。
 
@@ -126,7 +126,7 @@ JWT 仍按现有明确专项保留，不因为存在账号 mock 就默认注入�
 
 恢复专项保留为 [auth-config/credentials/manual-review/pending/credential-store-recovery.test.ts](../../packages/desktop/test/e2e/auth-config/credentials/manual-review/pending/credential-store-recovery.test.ts)，当前包含 **10 个 case**：7 个桌面恢复与交互场景、1 个条件写入/删除代次场景、1 个网络入口与本机权限边界场景、1 个旧纯归因回调代次场景（两个账号族的实际服务与文件 IO）。2026-11-02 完整单次 **10/10** 已通过（artifact：`packages/desktop/.e2e-artifacts/desktop-e2e-20261102071941569-p25646-202a4d1453c803dd`）；下述单次 9/9 为新增前的历史运行。2026-11-02 完整单次运行 **9/9** 通过，证据为 `packages/desktop/.e2e-artifacts/desktop-e2e-20261102060826266-p40462-134332e03a98a116`；其中网络 case 覆盖 9 组入口与 attachment 配置，不是 9 个独立 case。
 
-与单入口登录、系统安全存储集成后（2026-11-05）：重新登录与旧 OAuth 响应两例在登录前显式选全球区，使夹具的 hold-poll / enable-poll 作用于 zai 流程（国内 zai_cn 只受 cn-ready 控制）；重新登录以主 JWT 写入为准。双 Host 重复确认例按解密值断言，合成明文会被迁移为密文。replay 模式单次 **10/10** 通过（artifact：`packages/desktop/.e2e-artifacts/desktop-e2e-20261105121500371-p26803-4a3b2bc9274a2b3d`），运行日志确认旧 zai 轮询结果在另一 Host 恢复后以 `XCODE_CREDENTIAL_STORE_CHANGED` 被拒绝。仍为 pending，未人工转正。
+与单入口登录、系统安全存储集成后（2026-11-05）：重新登录与旧 OAuth 响应两例在登录前显式选全球区，使夹具的 hold-poll / enable-poll 作用于 zai 流程（国内 zai_cn 只受 cn-ready 控制）；重新登录以主 JWT 写入为准。双 Host 重复确认例按解密值断言，合成明文会被迁移为密文。replay 模式单次 **10/10** 通过（artifact：`packages/desktop/.e2e-artifacts/desktop-e2e-20261105121500371-p26803-4a3b2bc9274a2b3d`），运行日志确认旧 zai 轮询结果在另一 Host 恢复后以 `ZCODE_CREDENTIAL_STORE_CHANGED` 被拒绝。仍为 pending，未人工转正。
 
 以下为 2026-10-29 的历史分组证据，只覆盖当时的 8 个 case，不代表当前专项总数，也不覆盖后来新增的条件写入/删除代次及完整网络提权边界：
 
@@ -154,7 +154,7 @@ JWT 仍按现有明确专项保留，不因为存在账号 mock 就默认注入�
 
 这条 case 只验证“损坏 OAuth 凭据 -> 冷启动恢复 -> 登录渠道可见 -> 损坏登录态清理”。它不覆盖真实网页登录、OAuth callback、token refresh、购买链路、remote workspace 或模型发送。
 
-业务 token 损坏回归（2026-10-12）：通过 `XCODE_E2E_CORRUPT_OAUTH_TOKEN_PROVIDER=bigmodel` 或 `zai` 运行同一 AUTH-01，seed 保持 active provider、用户资料和共享 JWT 正常，仅业务 access token 为无法解密的密文。验证登录渠道可见、全部 OAuth 凭据清理、独立 Bot 凭据保留。默认运行仍覆盖 active provider 损坏；恢复与新登录交错、普通 IO 异常及请求取消由服务层受控测试覆盖。
+业务 token 损坏回归（2026-10-12）：通过 `ZCODE_E2E_CORRUPT_OAUTH_TOKEN_PROVIDER=bigmodel` 或 `zai` 运行同一 AUTH-01，seed 保持 active provider、用户资料和共享 JWT 正常，仅业务 access token 为无法解密的密文。验证登录渠道可见、全部 OAuth 凭据清理、独立 Bot 凭据保留。默认运行仍覆盖 active provider 损坏；恢复与新登录交错、普通 IO 异常及请求取消由服务层受控测试覆盖。
 
 限制：AUTH-01 当前只覆盖 desktop local host；remote workspace 与手机 `/remote` 的 OAuth 损坏恢复已由 service 级回归测试保护，正式 remote E2E case 待后续补充。
 
@@ -323,7 +323,7 @@ Welcome 展示 Z.ai + BigModel 登录入口
 
 2026-08-06 已执行：
 
-- `XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- --spec ./test/e2e/auth-config/session/jwt-expiry-reauthentication.test.ts`
+- `ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- --spec ./test/e2e/auth-config/session/jwt-expiry-reauthentication.test.ts`
   - 结果：通过，1 个 spec / 1 个 case passed。
   - Artifact：`packages/desktop/.e2e-artifacts/desktop-e2e-20260806040559238-p94707-95e800e8762670fe/summary.md`。
   - 运行时发现并修复：provider 启动门禁的 `open=false` 曾无条件清空 `session-expired`，导致用户确认后重新登录页被工作区覆盖；现在门禁只关闭自己拥有的 `startup-provider-required`。
@@ -451,7 +451,7 @@ Settings 的模型成员和能力唯一来源是 Local Host 的 Model Selection 
 
 ### 自动运行记录
 
-- `XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e:serial -- --spec ./test/e2e/manual-review/pending/subagent-coding-plan-login-catalog-stale.test.ts`
+- `ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e:serial -- --spec ./test/e2e/manual-review/pending/subagent-coding-plan-login-catalog-stale.test.ts`
   - 结果：通过，1 个 spec / 1 个 case passed。
   - Runtime 证据：`workspace/readState` 返回 `modelCount=5`，renderer workspace catalog 包含 `builtin:bigmodel-coding-plan/GLM-5.2` 及其 reasoning 档位，Subagent effort 控件为 supported。
   - Artifact：`packages/desktop/.e2e-artifacts/desktop-e2e-20260819-070650-011/summary.md`。
@@ -479,13 +479,13 @@ Settings 的模型成员和能力唯一来源是 Local Host 的 Model Selection 
 
 ### 2026-10-12 当前行为
 
-- 两平台通过 `XCODE_E2E_AUTH_EXPIRY_PROVIDER=bigmodel|zai` 选择合成登录身份；HTTP `401` 或 `200` 数值业务 `401` 均复用条件退出。
-- BigModel 另覆盖 `XCODE_E2E_AUTH_EXPIRY_HTTP_STATUS=200 XCODE_E2E_AUTH_EXPIRY_RESPONSE_KIND=empty`：真实 Host 收到 customerInfo 零字节200后识别远端注销。
+- 两平台通过 `ZCODE_E2E_AUTH_EXPIRY_PROVIDER=bigmodel|zai` 选择合成登录身份；HTTP `401` 或 `200` 数值业务 `401` 均复用条件退出。
+- BigModel 另覆盖 `ZCODE_E2E_AUTH_EXPIRY_HTTP_STATUS=200 ZCODE_E2E_AUTH_EXPIRY_RESPONSE_KIND=empty`：真实 Host 收到 customerInfo 零字节200后识别远端注销。
 - 确认前清理当前 OAuth/JWT/profile、保留独立 Bot 凭据；过期提示只出现一次；确认按钮为“重新登录”，直接出现 Welcome 登录入口，不执行 RelaunchApp。保留原 IPC 记录以断言没有重启命令。
 - 业务空响应经身份核验、正常身份不登出、ZAI 空身份响应证据不足、并发去重和旧核验不清新会话由服务层受控测试覆盖；Electron 不声称覆盖精确网络竞态。
 - 以下较早记录的确认重启行为属于历史验收，不是本次行为。
 
-CR-01 裸 token 核验回归：`XCODE_E2E_AUTH_VALIDATION_HEADER=1` 使用有效合成 ZAI 身份，PAT 资料读取取得组织/项目，后续业务接口按 `XCODE_E2E_AUTH_EXPIRY_HTTP_STATUS=200|403` 返回空200或普通403。全部 customerInfo 请求（包括 PAT 资料读取及异常后的身份核验）只接受裸 token，Bearer 返回401。要求真实 Host 已发出异常业务请求及正确身份核验，启动进入工作区后 OAuth/JWT 与 Bot 凭据仍存在，UI 不显示过期提示；该场景不调用网站接口，也不产生模型请求。既有真正失效后的登录入口用例继续回归，均保持 pending。
+CR-01 裸 token 核验回归：`ZCODE_E2E_AUTH_VALIDATION_HEADER=1` 使用有效合成 ZAI 身份，PAT 资料读取取得组织/项目，后续业务接口按 `ZCODE_E2E_AUTH_EXPIRY_HTTP_STATUS=200|403` 返回空200或普通403。全部 customerInfo 请求（包括 PAT 资料读取及异常后的身份核验）只接受裸 token，Bearer 返回401。要求真实 Host 已发出异常业务请求及正确身份核验，启动进入工作区后 OAuth/JWT 与 Bot 凭据仍存在，UI 不显示过期提示；该场景不调用网站接口，也不产生模型请求。既有真正失效后的登录入口用例继续回归，均保持 pending。
 
 CR-01 本地隔离 Electron 回归（2026-10-12），以下三组各 1 case passed。前两组收尾记录均为业务异常请求 5 次、异常后裸 token 身份读取 8 次、认证头拒绝 0 次；真实后端是否拒绝 Bearer 不属于此夹具验证结论。
 
@@ -508,7 +508,7 @@ CR-01 本地隔离 Electron 回归（2026-10-12），以下三组各 1 case pass
 - 候选 spec：`packages/desktop/test/e2e/auth-config/session/access-token-401-auto-logout.test.ts`。
 - manifest：`packages/desktop/test/e2e/fixtures/cases/auth-config/access-token-401-auto-logout.json`。
 - 输入：隔离 HOME 的 BigModel 旧版用户资料缓存、不同值的业务 access token 与未被判定过期的 XCode JWT，以及一个独立 Bot 凭据。
-- 动作：启动资料迁移真实发出 userinfo 请求；本地 HTTP fixture 暂停响应，待 UI 可用后返回 HTTP 401，或通过 `XCODE_E2E_AUTH_EXPIRY_HTTP_STATUS=200` 返回 HTTP 200 + `{"code":401,"msg":"登录状态已过期","success":false}`。用例确认 fixture 实际启用的状态码；其它控制面请求返回正常 200，避免 JWT 401 掩盖新增判断。
+- 动作：启动资料迁移真实发出 userinfo 请求；本地 HTTP fixture 暂停响应，待 UI 可用后返回 HTTP 401，或通过 `ZCODE_E2E_AUTH_EXPIRY_HTTP_STATUS=200` 返回 HTTP 200 + `{"code":401,"msg":"登录状态已过期","success":false}`。用例确认 fixture 实际启用的状态码；其它控制面请求返回正常 200，避免 JWT 401 掩盖新增判断。
 - 断言：fixture 确认请求用的是业务 token；原过期弹窗出现；确认前 active/token/profile/JWT 已清除且 Bot 凭据保留；确认后经 preload 发出原 RelaunchApp 命令。测试在主进程 IPC 边界截断命令，不实际执行退出/重启，避免 Host 关闭屏障干扰 WebDriver 收尾。
 - HTTP fixture 不记录凭据原文；不访问真实平台，不需要模型请求。支付、API key、旧请求与多平台判定由服务层单测覆盖。
 - desktop local 的 HTTP/Host/Renderer 链路必须自动运行通过；人工验收、手机 shared-host 与跨平台 UI 回归未完成前保持 pending，不宣称完整多端验证。
@@ -526,7 +526,7 @@ CR-01 本地隔离 Electron 回归（2026-10-12），以下三组各 1 case pass
 ### AUTH-06 自动验证记录（2026-09-08）
 
 - 服务层先在原 JWT 判断上复现 4 项失败；增加匹配后，凭据分类及既有 API client 回归共 41 项通过，另有 4 项原 OAuth logout/资料迁移清理回归通过。
-- Electron E2E 最终 1/1 通过，运行 ID：`desktop-e2e-20260908035743975-p37710-5701199aa046d5f2`。最后一次仅调整测试的 IPC 截断点，复用此前同一业务源码构建的产物（`XCODE_E2E_SKIP_BUILD=1 XCODE_E2E_SKIP_AGENT_BUILD=1`）。
+- Electron E2E 最终 1/1 通过，运行 ID：`desktop-e2e-20260908035743975-p37710-5701199aa046d5f2`。最后一次仅调整测试的 IPC 截断点，复用此前同一业务源码构建的产物（`ZCODE_E2E_SKIP_BUILD=1 ZCODE_E2E_SKIP_AGENT_BUILD=1`）。
 - 首轮并行类型检查覆盖 Host 构建输出导致启动失败；分开执行后定位到测试 mock 重启仍执行 Host 关闭屏障，引发 WebDriver 收尾超时；改在 IPC 边界记录命令后完整通过。业务实现未因这些测试环境问题扩展范围。
 - `pnpm typecheck`、`pnpm --filter @zcode/desktop typecheck:e2e`、`pnpm lint` 均通过；Lint 有 43 条既有警告，新增文件专项检查为 0 警告/0 错误。
 - 当前 fixture checker 不支持 auth/config pending spec，命令返回不支持该目录；不将此结果计为 fixture 校验通过。
@@ -548,7 +548,7 @@ Todo103 本轮运行证据记录在 staging-integration ledger。
 - 沿用现有 pending case 与合成凭据，不使用真实平台或用户文件。
 - 最终验证：`pnpm exec vitest run packages/services/test/oauthUnauthorizedLogout.test.ts packages/services/test/oauthUnauthorizedRequest.test.ts packages/services/test/nodeApiClient.test.ts packages/services/test/nodeApiClientEndpoint.test.ts packages/services/test/oauthService.test.ts`：148/148 通过，含 9 项新竞态/通知回归。
 - `pnpm typecheck`、`pnpm --filter @zcode/desktop typecheck:e2e`、`pnpm lint`、`pnpm architecture:check --changed` 通过；lint 为 46 条既有警告、0 错误。
-- `XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- --spec ./test/e2e/auth-config/session/access-token-401-auto-logout.test.ts`：最终代码重新构建 App/Agent 后 1/1 通过，未设置 skip build。制品：`packages/desktop/.e2e-artifacts/desktop-e2e-20260909071607852-p66392-b7f49a248cd9bd36/summary.json`。
+- `ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- --spec ./test/e2e/auth-config/session/access-token-401-auto-logout.test.ts`：最终代码重新构建 App/Agent 后 1/1 通过，未设置 skip build。制品：`packages/desktop/.e2e-artifacts/desktop-e2e-20260909071607852-p66392-b7f49a248cd9bd36/summary.json`。
 - macOS arm64；保留现有 IPC 拦截以验证 RelaunchApp 命令，不执行真实进程重启。手机 shared-host、Windows/Linux 和真实平台响应未补跑。
 
 - 跟进审查基线检查后，已 rebase 到 `a1fcf91ec11ab34d263b6347bc704b5dd09ac016`；WDIO 冲突保留新增的安全校验 fixture 与认证 fixture 两个按 case 启用的入口。rebase 后再次通过上述 148 项单测、typecheck、E2E typecheck、lint 和 architecture 检查，App/Agent 重新构建后 AUTH-06 为 1/1 通过。最新制品：`packages/desktop/.e2e-artifacts/desktop-e2e-20260909072706868-p75427-b55cce637bf05b15/summary.json`。
@@ -565,14 +565,14 @@ Todo103 本轮运行证据记录在 staging-integration ledger。
 - 原因：业务登录过期返回 HTTP 200 + JSON 数值 code=401，旧请求观察器没有进入退出与重启提示链路。身份、企业定价、团队订阅详情复用同一当前凭据白名单及会话队列复核。
 - 服务层 8 个相关测试文件 260/260 通过；覆盖 BigModel/ZAI 三接口、并发仅一次清理/通知、重新登录/刷新后旧响应不清理新会话、原响应正文可读、空/损坏正文及 SSE 不误判。
 - `pnpm typecheck`、`pnpm --filter @zcode/desktop typecheck:e2e`、`pnpm lint`（68 条其它文件既有警告、0 错误）、`pnpm architecture:check --changed`（0 violations）、变更代码格式检查通过。
-- pending replay 需显式传入 `E2E_PROVIDER_HTTP_MODE=replay` 和 `E2E_PROVIDER_REPLAY_FIXTURE_PATH=packages/desktop/test/e2e/fixtures/upstream/common.json`，再以 `XCODE_E2E_AUTH_EXPIRY_HTTP_STATUS=200` 或 `401` 运行本用例；没有模型请求。fixture checker 当前只支持 conversation-session/plugin，不支持此 auth-config 路径；AUTH-06 manifest 保持无模型请求声明。
+- pending replay 需显式传入 `E2E_PROVIDER_HTTP_MODE=replay` 和 `E2E_PROVIDER_REPLAY_FIXTURE_PATH=packages/desktop/test/e2e/fixtures/upstream/common.json`，再以 `ZCODE_E2E_AUTH_EXPIRY_HTTP_STATUS=200` 或 `401` 运行本用例；没有模型请求。fixture checker 当前只支持 conversation-session/plugin，不支持此 auth-config 路径；AUTH-06 manifest 保持无模型请求声明。
 - HTTP 200 + 业务 401：重新构建 App/Agent 后 1/1 通过；制品 `packages/desktop/.e2e-artifacts/desktop-e2e-20261008081902034-p54677-f19c52bf23b72057/summary.json`。
-- HTTP 401：复用上一次相同源码的 App 产物（`XCODE_E2E_SKIP_BUILD=1`）、重新构建 Agent 后 1/1 通过；制品 `packages/desktop/.e2e-artifacts/desktop-e2e-20261008082005216-p55748-74de9060da312d0b/summary.json`。
+- HTTP 401：复用上一次相同源码的 App 产物（`ZCODE_E2E_SKIP_BUILD=1`）、重新构建 Agent 后 1/1 通过；制品 `packages/desktop/.e2e-artifacts/desktop-e2e-20261008082005216-p55748-74de9060da312d0b/summary.json`。
 - 两次均验证确认前凭据清理、Bot 凭据保留、唯一原过期弹窗及确认后 RelaunchApp 命令。沿用 IPC 拦截，不声称实际进程重启；macOS arm64 验证，手机 shared-host、Windows/Linux 未实机回归。复用原 UI、广播及重启动作，不改 continuous/replayable 边界；用例保持 pending。
 
 ## HM-01～HM-04：帮助菜单应用入口
 
-用户于 2026-09-16 确认转正。正式用例 `packages/desktop/test/e2e/feedback/help/help-menu-about.test.ts`，默认 desktop E2E 收集 Preview 分支，production 使用 `XCODE_E2E_HELP_MENU_FLAVOR=production` 与 production 构建单独运行。HM-02 对下载完成状态分别验证动作文案和版本 pill，关闭重开后再次验证版本。共 4 个 case，覆盖草稿页/设置页、中英文关于窗口、更新状态及禁用/重开、真实开发包检查更新回执和 Preview 隐藏。无模型请求，无 provider replay fixture 依赖；合成更新事件仅用于菜单状态展示。完整矩阵和运行命令见 [桌面帮助菜单](../windows-caption-help-menu.md)。
+用户于 2026-09-16 确认转正。正式用例 `packages/desktop/test/e2e/feedback/help/help-menu-about.test.ts`，默认 desktop E2E 收集 Preview 分支，production 使用 `ZCODE_E2E_HELP_MENU_FLAVOR=production` 与 production 构建单独运行。HM-02 对下载完成状态分别验证动作文案和版本 pill，关闭重开后再次验证版本。共 4 个 case，覆盖草稿页/设置页、中英文关于窗口、更新状态及禁用/重开、真实开发包检查更新回执和 Preview 隐藏。无模型请求，无 provider replay fixture 依赖；合成更新事件仅用于菜单状态展示。完整矩阵和运行命令见 [桌面帮助菜单](../windows-caption-help-menu.md)。
 
 ## AUTH-07: OAuth 回调与轮询完成竞态（pending）
 
@@ -805,7 +805,7 @@ Todo103 本轮运行证据记录在 staging-integration ledger。
 2026-10-28 macOS 验证：关联 Key/Token 场景在实现前失败（旧 BigModel、Z.ai 两场景通过），实现后通过。订阅响应由 HTTP fixture 挂起时，仅修改同一身份的 revision，真实 ProviderSettings 刷新必须失败；关联记录绑定另一主体时发布 not-connected，且不请求该关联 JWT。
 
 - 核心与 OAuth 回归：`desktop-e2e-20261028121931522-p27423-afc03ce50635f590`，2 份规格、8 个场景通过。
-- Team 回归：`desktop-e2e-20261028122155858-p36372-1142636f00c5ce5c`，仅筛选 CTP-03/CTP-06，共 2 个场景通过。使用 `XCODE_E2E_MOCHA_GREP='CTP-(03|06):'`，命令行 `--mochaOpts.grep` 未被当前封装应用，先前全量尝试已中止，不记为通过。
+- Team 回归：`desktop-e2e-20261028122155858-p36372-1142636f00c5ce5c`，仅筛选 CTP-03/CTP-06，共 2 个场景通过。使用 `ZCODE_E2E_MOCHA_GREP='CTP-(03|06):'`，命令行 `--mochaOpts.grep` 未被当前封装应用，先前全量尝试已中止，不记为通过。
 - 类型、Lint、架构检查通过；HTTP 均为本地合成材料，不声称真实账号、手机、MCP 或远端已完成。
 
 ## 存量补关联与设置投影（本地已验证）

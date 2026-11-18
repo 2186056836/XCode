@@ -123,7 +123,7 @@ describe("model provider restart runtime", () => {
 
   it("通过正式 Model Selection Config 设置冷启动默认模型", async () => {
     const homeDir = await mkdtemp(join(tmpdir(), "zcode-restart-selection-"));
-    vi.stubEnv("XCODE_E2E_HOME_DIR", homeDir);
+    vi.stubEnv("ZCODE_E2E_HOME_DIR", homeDir);
     const { seedTurboAgentStartupModel } =
       await import("./e2e/helpers/model-provider-restart-runtime.js");
 

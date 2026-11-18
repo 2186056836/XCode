@@ -64,7 +64,7 @@ Sensitive login state is stored in:
 The base directory follows the Z Code desktop convention:
 
 1. Explicit data base dir passed by the caller.
-2. `XCODE_DATA_BASE_DIR`.
+2. `ZCODE_DATA_BASE_DIR`.
 3. `os.homedir()`.
 
 The file remains a JSON key/value container. System-backed encryption and migration
@@ -239,7 +239,7 @@ redact the key and render only `/login <provider>-coding-plan-api-key
 Setup uses `NodePersonalProviderConfigRepository` and
 `NodeModelSelectionConfigRepository.saveConfiguredDefault` to update the selected
 built-in account provider/model. The path is resolved from the explicit
-`personalProviderConfigPath`, then `XCODE_PERSONAL_PROVIDER_CONFIG_FILE`, then
+`personalProviderConfigPath`, then `ZCODE_PERSONAL_PROVIDER_CONFIG_FILE`, then
 the shared personal provider configuration alongside the credential store.
 Existing personal providers are preserved, including the supported legacy config
 import on first write. OAuth tokens and account API keys are not written by
@@ -308,7 +308,7 @@ HTTP client or `noBrowser` does not isolate persistence.
 Required coverage:
 
 - Credential encryption, decrypt, plaintext compatibility, ZAI logout active
-  provider behavior, and `XCODE_DATA_BASE_DIR`.
+  provider behavior, and `ZCODE_DATA_BASE_DIR`.
 - OAuth init/poll headers, envelope business errors, pending/ready/failed,
   and timeout.
 - Failed authorization uses the injected temporary store and preserves its

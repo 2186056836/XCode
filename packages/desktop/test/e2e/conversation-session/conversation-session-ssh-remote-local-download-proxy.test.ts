@@ -43,7 +43,7 @@ describe(`${CASE_MARKER}: SSH 本地下载遵循应用代理`, () => {
   let proxy: RemoteAssetHttpProxy | null = null;
   const cacheDir = resolveE2ERuntimePath(CASE_MARKER, "cache");
   const artifactDir = resolve(
-    process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/local-download-proxy",
+    process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/local-download-proxy",
   );
 
   after(async () => {
@@ -64,9 +64,9 @@ describe(`${CASE_MARKER}: SSH 本地下载遵循应用代理`, () => {
   it("SSH-P0-CONN-04 Source Server descriptor/archive 通过显式代理安装", async function () {
     this.timeout(20 * 60_000);
     // Bug 原因：worker 修改 process.env 无法影响 chromedriver 已创建的 Electron；必须在 WDIO 启动前设置。
-    expect(process.env.XCODE_DEV_REMOTE_ASSET_USE_CDN).toBe("1");
-    expect(process.env.XCODE_REMOTE_ASSET_CDN_BASE_URL).toBe(`http://${FAKE_CDN_HOST}`);
-    expect(process.env.XCODE_REMOTE_ASSET_CACHE_DIR).toBe(cacheDir);
+    expect(process.env.ZCODE_DEV_REMOTE_ASSET_USE_CDN).toBe("1");
+    expect(process.env.ZCODE_REMOTE_ASSET_CDN_BASE_URL).toBe(`http://${FAKE_CDN_HOST}`);
+    expect(process.env.ZCODE_REMOTE_ASSET_CACHE_DIR).toBe(cacheDir);
     const config = readSSHRuntimeConfig(CASE_MARKER);
     const workspacePath = config.workspacePaths[0];
     const cleanTarget = await runSSHCommand(config, 'test ! -e "$HOME/.xcode/server/current.json"');

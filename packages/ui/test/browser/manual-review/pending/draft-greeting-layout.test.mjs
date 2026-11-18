@@ -11,7 +11,7 @@ import { chromium } from "playwright-core";
 const root = fileURLToPath(new URL("../../../../../../", import.meta.url));
 const entry = "/packages/ui/test/browser/manual-review/pending/draft-greeting-layout.fixture.tsx";
 const artifacts =
-  process.env.XCODE_E2E_ARTIFACT_DIR ??
+  process.env.ZCODE_E2E_ARTIFACT_DIR ??
   join(root, "packages/desktop/.e2e-artifacts/draft-greeting-browser");
 let server, browser, origin;
 before(async () => {

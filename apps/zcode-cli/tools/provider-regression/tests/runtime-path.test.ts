@@ -144,7 +144,7 @@ it("无效 PDF 沿产品附件降级，不将无效文件直接送到供应商",
 
 it("1 pass 保留产品瞬态错误重试，报告记录实际请求次数", async () => {
   const f = await fixture();
-  vi.stubEnv("XCODE_MODEL_RETRY_BASE_DELAY_MS", "0");
+  vi.stubEnv("ZCODE_MODEL_RETRY_BASE_DELAY_MS", "0");
   try {
     await writeFile(
       f.options.listFile,

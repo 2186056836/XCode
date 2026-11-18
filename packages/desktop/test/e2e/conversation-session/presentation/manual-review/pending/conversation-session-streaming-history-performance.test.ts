@@ -22,7 +22,7 @@ import {
 } from "#e2e/helpers/v4-conversation";
 
 const CASE = "conversation-session-streaming-history-performance";
-const TURNS = Number(process.env.XCODE_E2E_STREAM_HISTORY_TURNS ?? 1000);
+const TURNS = Number(process.env.ZCODE_E2E_STREAM_HISTORY_TURNS ?? 1000);
 const percentile = (values: number[], ratio: number) =>
   [...values].sort((a, b) => a - b)[
     Math.min(values.length - 1, Math.floor(values.length * ratio))
@@ -182,7 +182,7 @@ describe("PERF04 long history streaming", () => {
   before(async function () {
     this.timeout(240000);
     replay = await startConversationModelProviderReplayServer(CASE);
-    if (process.env.XCODE_E2E_STREAM_SCAN === "1") await enableScan();
+    if (process.env.ZCODE_E2E_STREAM_SCAN === "1") await enableScan();
     await prepareV4ConversationE2E();
     await setCurrentElectronRendererContentSize(1280, 900);
     await installHandoffRpcProbe();
@@ -210,7 +210,7 @@ describe("PERF04 long history streaming", () => {
     );
     const before = await getV4TimelineScrollState();
     await startProbe();
-    const scanEnabled = process.env.XCODE_E2E_STREAM_SCAN === "1";
+    const scanEnabled = process.env.ZCODE_E2E_STREAM_SCAN === "1";
     if (!scanEnabled) await profileCommand("start");
     let completed = false;
     try {
@@ -250,7 +250,7 @@ describe("PERF04 long history streaming", () => {
           .size,
         ...data,
       };
-      const directory = process.env.XCODE_E2E_ARTIFACT_DIR;
+      const directory = process.env.ZCODE_E2E_ARTIFACT_DIR;
       if (directory) {
         await writeFile(
           join(directory, "stream-history-metrics.json"),
@@ -269,12 +269,12 @@ describe("PERF04 long history streaming", () => {
           TURNS + 1,
         );
         // 本机对比预算单独配置；Scan 观察轮只验证行为，耗时证据不混入关闭 Scan 的验收。
-        const budget = Number(process.env.XCODE_E2E_STREAM_FRAME_BUDGET_MS ?? 80);
+        const budget = Number(process.env.ZCODE_E2E_STREAM_FRAME_BUDGET_MS ?? 80);
         if (!scanEnabled) expect(metrics.frameP95Ms).toBeLessThan(budget);
       }
     }
     // 宽屏目录负责补齐千轮历史；补齐后再缩窄，验证宽度改变后的重新测高与搜索定位。
-    const searchWidth = Number(process.env.XCODE_E2E_SEARCH_VIEWPORT_WIDTH ?? 1280);
+    const searchWidth = Number(process.env.ZCODE_E2E_SEARCH_VIEWPORT_WIDTH ?? 1280);
     if (searchWidth !== 1280) await setCurrentElectronRendererContentSize(searchWidth, 900);
     // RRI08：跨虚拟窗口搜索仍须正确挂载并居中，减少屏外挂载不能只降低耗时而丢定位。
     await browser.keys([process.platform === "darwin" ? "Meta" : "Control", "f"]);
@@ -334,17 +334,17 @@ describe("PERF04 long history streaming", () => {
       audit.observer.disconnect();
       return audit.tasks;
     });
-    if (process.env.XCODE_E2E_ARTIFACT_DIR)
+    if (process.env.ZCODE_E2E_ARTIFACT_DIR)
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR, "search-long-tasks.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR, "search-long-tasks.json"),
         JSON.stringify({ query, turns: TURNS, longTasks: searchTasks }),
       );
     // 独立性能回放显式启用预算；Scan 诊断不得作为耗时验收。
-    const searchBudget = Number(process.env.XCODE_E2E_SEARCH_LONG_TASK_BUDGET_MS);
+    const searchBudget = Number(process.env.ZCODE_E2E_SEARCH_LONG_TASK_BUDGET_MS);
     if (
       Number.isFinite(searchBudget) &&
       searchBudget > 0 &&
-      process.env.XCODE_E2E_STREAM_SCAN !== "1"
+      process.env.ZCODE_E2E_STREAM_SCAN !== "1"
     )
       expect(Math.max(0, ...searchTasks)).toBeLessThan(searchBudget);
 
@@ -456,10 +456,10 @@ describe("PERF04 long history streaming", () => {
           viewportHeight: timeline.clientHeight,
         };
       });
-      if (process.env.XCODE_E2E_ARTIFACT_DIR)
+      if (process.env.ZCODE_E2E_ARTIFACT_DIR)
         await writeFile(
           join(
-            process.env.XCODE_E2E_ARTIFACT_DIR,
+            process.env.ZCODE_E2E_ARTIFACT_DIR,
             `missing-range-${missingQuery === "**" ? "markup" : "link"}.json`,
           ),
           JSON.stringify(positions, null, 2),

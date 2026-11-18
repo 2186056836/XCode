@@ -52,7 +52,7 @@ import {
 } from "@zcode/contracts";
 import { isRemoteWorkspaceIdentity, resolveXCodeRuntimeEnv } from "@zcode/shared";
 import {
-  XCODE_ATTACHMENT_FAULT_CODES,
+  ZCODE_ATTACHMENT_FAULT_CODES,
   XCodeAttachmentFaultError,
 } from "@zcode/shared/zcode-protocol-v4";
 
@@ -518,7 +518,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
       (messageEnabled
         ? createNodeSessionMailboxAdapter({
             rootDir: resolvePath(
-              (options.env ?? process.env).XCODE_MAILBOX_ROOT ?? "~/.xcode/mailbox",
+              (options.env ?? process.env).ZCODE_MAILBOX_ROOT ?? "~/.xcode/mailbox",
             ),
           })
         : undefined);
@@ -1332,7 +1332,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
         const { ref, mediaType, artifactUri } = await resolvePromptAttachment(input);
         if (artifactUri) {
           if (!artifactStore.statToolResultArtifact) {
-            throw new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.statUnsupported);
+            throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.statUnsupported);
           }
           const result = await artifactStore.statToolResultArtifact({
             uri: artifactUri,
@@ -1348,7 +1348,7 @@ export async function createXCodeApp(options: XCodeAppOptions): Promise<XCodeApp
         if (result.kind !== "file") {
           // 目录/符号链接/已消失都意味着「这个附件不再是可分享的文件」，用稳定码上抛，
           // 让 share 预检按确定分类处理，而不是靠错误文本猜。
-          throw new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.statNotFile);
+          throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.statNotFile);
         }
         return {
           totalBytes: result.sizeBytes,

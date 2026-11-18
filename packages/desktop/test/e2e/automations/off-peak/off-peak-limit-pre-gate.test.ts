@@ -18,14 +18,14 @@ import { loginWithApiKey } from "#e2e/helpers/conversation-session";
  * 闲时任务「服务端额度快照前置置灰」端到端（D39）。
  *
  * 由进程内 mock 网关驱动（wdio.conf startOffPeakE2EMock：本 spec 命中时额外设
- * XCODE_OFFPEAK_MOCK_AVAILABILITY_BLOCK_MS=3600000）。client/configs 不再下发 limit，
+ * ZCODE_OFFPEAK_MOCK_AVAILABILITY_BLOCK_MS=3600000）。client/configs 不再下发 limit，
  * UI 通过 GET /ticket/availability 得到 can_take_number=false + next_take_at。
  *
  * 断言：入口加载后创建按钮提前置灰，Tooltip 同时说明额度耗尽和服务端恢复时间。
- * 全程带 pause 并在关键态截图（XCODE_OFFPEAK_SHOT_DIR）供录屏 review。
+ * 全程带 pause 并在关键态截图（ZCODE_OFFPEAK_SHOT_DIR）供录屏 review。
  */
 // Bugfix：硬编码系统临时目录在 Windows 不可用，默认截图目录必须跟随运行平台。
-const SHOT_DIR = process.env.XCODE_OFFPEAK_SHOT_DIR ?? join(tmpdir(), "zc-offpeak-verify-shots");
+const SHOT_DIR = process.env.ZCODE_OFFPEAK_SHOT_DIR ?? join(tmpdir(), "zc-offpeak-verify-shots");
 let shotSeq = 0;
 async function shot(label: string): Promise<void> {
   shotSeq += 1;

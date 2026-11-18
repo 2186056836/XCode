@@ -2,7 +2,7 @@
 
 ## 背景
 
-App 层访问 XCode endpoint（默认 `https://zcode.z.ai`，或当前 `XCODE_BASE_URL` / `XCODE_PRODUCTION_BASE_URL` 派生 endpoint）时，需要统一携带设备标识 header，便于后端把 OAuth、client configs、billing、snapshot 等请求和既有 telemetry/ARMS 设备维度对齐。
+App 层访问 XCode endpoint（默认 `https://zcode.z.ai`，或当前 `ZCODE_BASE_URL` / `ZCODE_PRODUCTION_BASE_URL` 派生 endpoint）时，需要统一携带设备标识 header，便于后端把 OAuth、client configs、billing、snapshot 等请求和既有 telemetry/ARMS 设备维度对齐。
 
 ## 设计
 

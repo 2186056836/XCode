@@ -29,7 +29,7 @@ import {
 
 const execGit = promisify(execFile);
 const TEST_TIMEOUT_MS = 180_000;
-// E2E 的 XCODE_DATA_BASE_DIR 即 DEFAULT_WORKSPACE 的父目录；受管根目录与 Host 同一规则推导。
+// E2E 的 ZCODE_DATA_BASE_DIR 即 DEFAULT_WORKSPACE 的父目录；受管根目录与 Host 同一规则推导。
 const MANAGED_ROOT = join(dirname(DEFAULT_WORKSPACE), ".zcode", "worktrees");
 const BASELINE_FILE = join(".zcode-e2e", "managed-worktree", "baseline.md");
 const WORKTREE_MENU_ACTION = "worktrees";

@@ -147,8 +147,8 @@ describe(`${CASE}: 失效通知补发与长后台恢复原项目任务`, () => {
       : "真实后台46秒后回前台15秒内显示原task完成内容";
     it(`MRO04-${width}: ${title}`, async function () {
       this.timeout(5 * 60_000);
-      const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR;
-      if (!artifacts || !process.env.XCODE_E2E_HOME_DIR)
+      const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR;
+      if (!artifacts || !process.env.ZCODE_E2E_HOME_DIR)
         throw new Error("MRO04 requires isolated Electron runner");
       const target = await prepareMobileOnlyProject(String(width));
       const { workspacePath, pairingUrl } = target;
@@ -332,8 +332,8 @@ describe(`${CASE}: 失效通知补发与长后台恢复原项目任务`, () => {
   }
   it("MRO04-06: 运行中短后台持续收帧，回前台复用原socket与bridge完成原task", async function () {
     this.timeout(4 * 60_000);
-    const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR;
-    if (!artifacts || !process.env.XCODE_E2E_HOME_DIR)
+    const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR;
+    if (!artifacts || !process.env.ZCODE_E2E_HOME_DIR)
       throw new Error("MRO04 requires isolated Electron runner");
     const marker = "MRO04-short-390";
     const fixtureId = "mro04-mobile-short-390";
@@ -443,8 +443,8 @@ describe(`${CASE}: 失效通知补发与长后台恢复原项目任务`, () => {
   });
   it("MRO04-07: 后台多个在途ACK各收到INTERNAL，回前台先探测原socket，桌面离开期间不进失败页", async function () {
     this.timeout(4 * 60_000);
-    const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR;
-    if (!artifacts || !process.env.XCODE_E2E_HOME_DIR)
+    const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR;
+    if (!artifacts || !process.env.ZCODE_E2E_HOME_DIR)
       throw new Error("MRO04 requires isolated Electron runner");
     const marker = "MRO04-internal-390";
     const fixtureId = "mro04-mobile-internal-390";
@@ -631,8 +631,8 @@ describe(`${CASE}: 失效通知补发与长后台恢复原项目任务`, () => {
     for (const scenario of ["offline", "deleted-task", "removed-host"] as const) {
       it(`MRO04-cold-${width}-${scenario}: 首次加载和刷新使用可用workspace`, async function () {
         this.timeout(3 * 60_000);
-        const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR;
-        if (!artifacts || !process.env.XCODE_E2E_HOME_DIR)
+        const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR;
+        if (!artifacts || !process.env.ZCODE_E2E_HOME_DIR)
           throw new Error("MRO04 cold start requires isolated Electron runner");
         await prepareSSHConnectionPage(CASE);
         await startDraftFromProject(DEFAULT_WORKSPACE);

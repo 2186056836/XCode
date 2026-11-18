@@ -44,7 +44,7 @@ async function fixture(t) {
 test("clean current HEAD and deletion refs pass without a unit test baseline", async (t) => {
   const f = await fixture(t);
   for (const input of ["", f.entry(), f.entry(zero), `${f.entry()}\n${f.entry(zero)}`])
-    await checkPushWorktree(f.cwd, { ...f.env, XCODE_PRE_PUSH_STDIN: input });
+    await checkPushWorktree(f.cwd, { ...f.env, ZCODE_PRE_PUSH_STDIN: input });
 });
 
 for (const state of ["untracked", "unstaged", "staged"]) {
@@ -62,12 +62,12 @@ test("rejects malformed refs and every non-HEAD target in a multi-ref push", asy
   const f = await fixture(t);
   for (const input of [f.entry(f.first), `${f.entry()}\n${f.entry(f.first)}`])
     await assert.rejects(
-      checkPushWorktree(f.cwd, { ...f.env, XCODE_PRE_PUSH_STDIN: input }),
+      checkPushWorktree(f.cwd, { ...f.env, ZCODE_PRE_PUSH_STDIN: input }),
       /HEAD/,
     );
   for (const input of ["bad input", "refs/heads/main nope refs/heads/main nope"])
     await assert.rejects(
-      checkPushWorktree(f.cwd, { ...f.env, XCODE_PRE_PUSH_STDIN: input }),
+      checkPushWorktree(f.cwd, { ...f.env, ZCODE_PRE_PUSH_STDIN: input }),
       /无效/,
     );
 });
@@ -81,10 +81,10 @@ test("accepts annotated HEAD tags in multi-ref pushes and rejects tags of older 
     `refs/tags/${name} ${await f.git("rev-parse", name)} refs/tags/${name} ${zero}`;
   await checkPushWorktree(f.cwd, {
     ...f.env,
-    XCODE_PRE_PUSH_STDIN: `${f.entry()}\n${await tagEntry("head-tag")}`,
+    ZCODE_PRE_PUSH_STDIN: `${f.entry()}\n${await tagEntry("head-tag")}`,
   });
   await assert.rejects(
-    checkPushWorktree(f.cwd, { ...f.env, XCODE_PRE_PUSH_STDIN: await tagEntry("old-tag") }),
+    checkPushWorktree(f.cwd, { ...f.env, ZCODE_PRE_PUSH_STDIN: await tagEntry("old-tag") }),
     /HEAD/,
   );
 });

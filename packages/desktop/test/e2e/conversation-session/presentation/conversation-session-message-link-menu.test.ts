@@ -116,9 +116,9 @@ describe("消息正文链接菜单", () => {
         expect(layout.icons[0]).toContain("lucide-panel-right");
         expect(layout.icons[1]).toContain("lucide-external-link");
         expect(layout.icons[2]).toContain("lucide-copy");
-        if (process.env.XCODE_E2E_ARTIFACT_DIR) {
+        if (process.env.ZCODE_E2E_ARTIFACT_DIR) {
           await browser.saveScreenshot(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR, `message-link-menu-${width}-${theme}.png`),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR, `message-link-menu-${width}-${theme}.png`),
           );
         }
         await browser.electron.execute((electron) => electron.clipboard.clear());

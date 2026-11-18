@@ -45,7 +45,7 @@ const AUTH_ATTEMPT_SCRIPT = "/usr/local/bin/zcode-e2e-auth-attempt";
 const PAM_COUNT_LINE = `auth optional pam_exec.so quiet ${AUTH_ATTEMPT_SCRIPT}`;
 const PAM_DENY_LINE = "auth requisite pam_deny.so";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-remote-legacy-install-handoff",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-remote-legacy-install-handoff",
 );
 
 interface WizardState {

@@ -62,7 +62,7 @@ Panel 命令仍须在库注册约束后执行；取消旧帧回调，快速反�
 | STF03 | 在真实 shell 的会话 frame 内附加 800 行合成文字负载，再开关左右侧栏 | 同一负载记录帧间隔、宽度变化、CDP layout/style 次数和耗时；不把合成负载当作真实长会话             |
 | STF04 | 1400px 浅色中文、1000px 深色英文；拖动、完整视图和手机抽屉回归      | 拖动 / 未跨自动收起阈值的窗口 resize 不产生尺寸过渡；完整视图、手机保持原行为；减少动画时直接收敛 |
 
-性能采样在生产 renderer 的隔离 Electron E2E 内执行；STF01–04 固定 500ms 窗口，STF05–07 固定 1000ms 窗口。采样数据用于同设备前后比较；确定性断言检查动画存在、方向、时长、最终尺寸和生命周期清理；不得以禁止中间宽度作为通过条件。帧率不设依赖机器速度的硬门限。初始构建可使用 `XCODE_SIDEBAR_PERF_RECORD_ONLY=1` 采集负对照，不能将此模式记为回归通过。平台、负载及未验证范围随运行证据记录。
+性能采样在生产 renderer 的隔离 Electron E2E 内执行；STF01–04 固定 500ms 窗口，STF05–07 固定 1000ms 窗口。采样数据用于同设备前后比较；确定性断言检查动画存在、方向、时长、最终尺寸和生命周期清理；不得以禁止中间宽度作为通过条件。帧率不设依赖机器速度的硬门限。初始构建可使用 `ZCODE_SIDEBAR_PERF_RECORD_ONLY=1` 采集负对照，不能将此模式记为回归通过。平台、负载及未验证范围随运行证据记录。
 
 ## 富内容生产构建对照（2026-11-05）
 
@@ -101,7 +101,7 @@ A 为 `75e035372d037cb15cbe82c9e2d719ad90610392`；B 为本次实现。macOS arm
 
 负对照 `desktop-e2e-20261105120334720-p121-17eec9618444a855` 在原构建上被新断言拒绝：首个动作出现 133 段额外表格尺寸过渡，期望为 0。5 轮 B 的底部跟随、离底阅读、快速反向均通过；其余表格、输入框、标签、拖动、完整视图与共享组件回归见 [覆盖矩阵](../testing/side-pane-tabs-e2e-coverage-matrix.md)。未验证原生 Windows/Linux、手机实机远控、发布安装包及更大规模表格负载。
 
-正式入口使用默认 replay；真实对照额外提供 `XCODE_SIDEBAR_HISTORY_SNAPSHOT`，值为本地会话副本 JSON 路径，未提供时使用合成夹具且不计入真实性能结果。A/B 均通过 `VITE_XCODE_E2E_STORE_BRIDGE=1 pnpm --filter @zcode/desktop build:no-runtime-assets` 构建，依次运行同一 `sidebar-rich-content-performance.test.ts`；A 使用 `XCODE_SIDEBAR_PERF_RECORD_ONLY=1`，B 关闭该开关。
+正式入口使用默认 replay；真实对照额外提供 `ZCODE_SIDEBAR_HISTORY_SNAPSHOT`，值为本地会话副本 JSON 路径，未提供时使用合成夹具且不计入真实性能结果。A/B 均通过 `VITE_XCODE_E2E_STORE_BRIDGE=1 pnpm --filter @zcode/desktop build:no-runtime-assets` 构建，依次运行同一 `sidebar-rich-content-performance.test.ts`；A 使用 `ZCODE_SIDEBAR_PERF_RECORD_ONLY=1`，B 关闭该开关。
 
 ## 历史运行证据（2026-11-02，尺寸瞬切策略已撤回）
 

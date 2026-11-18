@@ -18,7 +18,7 @@ import {
   migrateCredentialRecord,
 } from "@zcode/shared/credential-security";
 
-const XCODE_DATA_BASE_DIR_ENV_KEY = "XCODE_DATA_BASE_DIR";
+const ZCODE_DATA_BASE_DIR_ENV_KEY = "ZCODE_DATA_BASE_DIR";
 const ZAI_PROVIDER_ID = "zai";
 const WRITE_PROBE_VALUE = "zcode-credential-write-probe";
 const credentialChangeListeners = new Map<string, Set<() => void | Promise<void>>>();
@@ -394,7 +394,7 @@ export function resolveSharedXCodeCredentialsPath(
   }
 
   const env = options.env ?? process.env;
-  const baseDir = options.baseDir ?? env[XCODE_DATA_BASE_DIR_ENV_KEY] ?? homedir();
+  const baseDir = options.baseDir ?? env[ZCODE_DATA_BASE_DIR_ENV_KEY] ?? homedir();
   return join(resolveUserPath(baseDir), ".xcode", "v2", "credentials.json");
 }
 

@@ -39,12 +39,12 @@ import pkg from 'electron-updater';
 import { initAutoUpdater, resolveUpdateFeedSourceFromStartupConfig } from './src/main/autoUpdater.ts';
 import { setSecuritySmokeOrigin } from 'security-smoke-origin';
 import { extractDeepLinkUrlFromArgs } from './src/main/desktopDeepLinkUrl.ts';
-const scenario = JSON.parse(process.env.XCODE_SECURITY_SCENARIO);
-const root = process.env.XCODE_SECURITY_ROOT;
+const scenario = JSON.parse(process.env.ZCODE_SECURITY_SCENARIO);
+const root = process.env.ZCODE_SECURITY_ROOT;
 app.setPath('userData', root);
 Object.defineProperty(app, 'isPackaged', { value: scenario.packaged });
-process.env.XCODE_AUTO_UPDATE_DEV = '1';
-process.env.XCODE_AUTO_UPDATE_DEV_VERSION = '3.17.0';
+process.env.ZCODE_AUTO_UPDATE_DEV = '1';
+process.env.ZCODE_AUTO_UPDATE_DEV_VERSION = '3.17.0';
 const { autoUpdater } = pkg;
 // 普通 Linux Electron 没有 APPIMAGE，打包态模拟不会经过产品的开发态激活逻辑。
 // 只激活隔离夹具的更新器，保留 scenario.packaged 作为更新源安全边界的被测输入。
@@ -72,7 +72,7 @@ async function listen(label) {
   const argv = ['app'];
   const env = {};
   if (scenario.input === 'argv') argv.push('--zcode-update-feed-url=' + override.url);
-  if (scenario.input === 'env') env.XCODE_UPDATE_FEED_URL = override.url;
+  if (scenario.input === 'env') env.ZCODE_UPDATE_FEED_URL = override.url;
   if (scenario.input === 'deep-link') argv.push('--', 'zcode://x', '--zcode-update-feed-url=' + override.url);
   const updateFeedSource = scenario.input === 'direct' ? { url: override.url } : resolveUpdateFeedSourceFromStartupConfig({ argv, env });
   const configPath = resolve(root, 'app-update.yml');
@@ -234,8 +234,8 @@ for (const scenario of cases) {
   await mkdir(root);
   const env = {
     ...process.env,
-    XCODE_SECURITY_SCENARIO: JSON.stringify(scenario),
-    XCODE_SECURITY_ROOT: root,
+    ZCODE_SECURITY_SCENARIO: JSON.stringify(scenario),
+    ZCODE_SECURITY_ROOT: root,
     NODE_PATH: resolve(repoRoot, "node_modules"),
   };
   delete env.ELECTRON_RUN_AS_NODE;

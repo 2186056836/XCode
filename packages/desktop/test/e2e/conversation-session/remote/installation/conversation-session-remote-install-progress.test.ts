@@ -17,7 +17,7 @@ import { prepareV4ConversationE2E } from "#e2e/helpers/v4-conversation";
 
 const CASE_MARKER = "E2E_REMOTE_INSTALL_PROGRESS";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-install-progress",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-install-progress",
 );
 
 interface Observation {
@@ -56,7 +56,7 @@ describe(`${CASE_MARKER}: 远端安装真实阶段`, () => {
     // 本机 Docker runner 每次新建 zcode-local-remote-* 容器，同样是独立命名空间；过去漏掉它，
     // 本机运行时第一行断言就失败。
     // 在本 case 内真实首装，再制造同版本新 SHA 验证更新。
-    expect(process.env.XCODE_E2E_SSH_CONTAINER).toMatch(
+    expect(process.env.ZCODE_E2E_SSH_CONTAINER).toMatch(
       /^zcode-(?:progress-e2e-|r3-server-|local-remote-)[a-z0-9-]+$/u,
     );
     const config = readSingleSSHWorkspaceRuntimeConfig(CASE_MARKER);

@@ -10,12 +10,12 @@ import {
  * 远程资源就绪判断的范围。
  * - `all`：默认（服务器队列、CI），descriptor + 四个平台 archive 都要存在，缺失时调用全平台入口。
  * - `linux`：本机 Docker runner 声明「本次只需要 Linux 目标」，只检查两个 Linux 目标，
- *   缺失时调用 `XCODE_ENV=test pnpm prepare:remote-assets:linux`，永不调用全平台入口。
+ *   缺失时调用 `ZCODE_ENV=test pnpm prepare:remote-assets:linux`，永不调用全平台入口。
  */
 export type SshRemoteReleaseScope = "all" | "linux";
 
 /** 本机 Docker runner 向 wdio 声明范围的环境变量。 */
-export const SSH_REMOTE_RELEASE_SCOPE_ENV = "XCODE_E2E_REMOTE_RELEASE_SCOPE";
+export const SSH_REMOTE_RELEASE_SCOPE_ENV = "ZCODE_E2E_REMOTE_RELEASE_SCOPE";
 
 export interface SshRemoteReleasePrepareRequest {
   /** 根 package.json 的脚本名。 */
@@ -51,8 +51,8 @@ const LINUX_RELEASE_TARGETS = SOURCE_SERVER_RELEASE_TARGETS.filter((target) =>
 
 const PREPARE_REQUESTS: Record<SshRemoteReleaseScope, SshRemoteReleasePrepareRequest> = {
   all: { script: "prepare:remote-assets", env: {} },
-  // E2E 桌面端固定 XCODE_ENV=test；远端 server 在构建时编译 XCODE_ENV，两端必须一致。
-  linux: { script: "prepare:remote-assets:linux", env: { XCODE_ENV: "test" } },
+  // E2E 桌面端固定 ZCODE_ENV=test；远端 server 在构建时编译 ZCODE_ENV，两端必须一致。
+  linux: { script: "prepare:remote-assets:linux", env: { ZCODE_ENV: "test" } },
 };
 
 export function resolveSshRemoteReleaseScope(env: NodeJS.ProcessEnv): SshRemoteReleaseScope {

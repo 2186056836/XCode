@@ -8,7 +8,7 @@ import {
   projectAccessTokenRequestFailureCode,
   ProjectAccessTokenTransientError,
 } from "./project-access-token.js";
-import { XCODE_VERSION } from "./version.js";
+import { ZCODE_VERSION } from "./version.js";
 import { isCredentialDecryptError } from "./oauth.js";
 
 const MAX_TOKEN_ISSUE_ATTEMPTS = 2;
@@ -224,7 +224,7 @@ export class ProjectAccessTokenClient {
                 {
                   method: "POST",
                   headers,
-                  body: JSON.stringify({ clientType: "zcode", clientVersion: XCODE_VERSION }),
+                  body: JSON.stringify({ clientType: "zcode", clientVersion: ZCODE_VERSION }),
                 },
               );
               break;

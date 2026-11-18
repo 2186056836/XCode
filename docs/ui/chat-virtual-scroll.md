@@ -139,7 +139,7 @@ getConversationRowsPartition(rows) = { history, tail }
 可重复的性能验收入口是 PERF04（`packages/desktop/test/e2e/conversation-session/presentation/manual-review/pending/conversation-session-streaming-history-performance.test.ts`，覆盖记录见 coverage matrix「PERF04 长历史流式渲染」）。它经 Host 导入服务建立 1000 回合 / 3000 行历史，回放 thinking 与正文流式输出，断言完成态正文逐字一致、帧间隔 P95 低于预算，并输出帧间隔、长任务和 renderer CPU profile。
 
 ```bash
-XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts \
+ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts \
   --spec ./test/e2e/conversation-session/presentation/manual-review/pending/conversation-session-streaming-history-performance.test.ts
 ```
 

@@ -17,7 +17,7 @@ import { runSSHCommand, waitForRemoteTab } from "#e2e/helpers/ssh-remote-p0";
 
 const MARKER = "E2E_SSH_ACCOUNT_ISOLATION";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-account-isolation",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-account-isolation",
 );
 
 describe(`${MARKER}: 同地址不同登录账号`, () => {

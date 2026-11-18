@@ -5,12 +5,12 @@ import { isLocale, resolvePersistedUiLocale } from "@zcode/shared";
 import type { Locale } from "@zcode/shared";
 
 /**
- * 与 settingService 的 resolveUserHomeDir 保持同一优先级：独立 Dev 实例用 XCODE_DESKTOP_HOME_DIR，
+ * 与 settingService 的 resolveUserHomeDir 保持同一优先级：独立 Dev 实例用 ZCODE_DESKTOP_HOME_DIR，
  * 否则用 HOME / USERPROFILE。不能直接用 os.homedir()，否则隔离实例会读到真实用户的设置。
  */
 function resolveBootstrapHomeDir(): string {
   const envHome =
-    process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+    process.env.ZCODE_DESKTOP_HOME_DIR?.trim() ||
     process.env.HOME?.trim() ||
     process.env.USERPROFILE?.trim();
   return envHome && envHome.length > 0 ? envHome : homedir();

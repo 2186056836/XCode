@@ -214,7 +214,7 @@ export const MARKDOWN_CONTINUE_CASES: readonly MarkdownContinueCaseDefinition[] 
     id: "zcode-file-citation",
     partial: `::zcode-file-citation{path="${FIXTURE_DIR_RELATIVE}/cita`,
     continuation: 'tion.txt" purpose="output"}\n\nXCODE_FILE_CITATION_DONE',
-    finalAnchor: "XCODE_FILE_CITATION_DONE",
+    finalAnchor: "ZCODE_FILE_CITATION_DONE",
   },
 ];
 

@@ -80,7 +80,7 @@ export function createWorkspaceHookRuntimeSecurity(input: {
     payload: WorkspaceHookAdmissionUpdatedPayload;
   }) => Promise<void>;
   emitReviewEvent?: (event: WorkspaceHookReviewLifecycleEvent) => Promise<void>;
-  /** 解析受管 worktree 数据根目录用（XCODE_DATA_BASE_DIR）；缺省 process.env。 */
+  /** 解析受管 worktree 数据根目录用（ZCODE_DATA_BASE_DIR）；缺省 process.env。 */
   env?: Record<string, string | undefined>;
   /**
    * 会话 workspaceKey（本地 = workspacePath，远程 = identity）。AdmissionUpdated 与审核 request

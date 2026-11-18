@@ -292,7 +292,7 @@ async function capture(label: string): Promise<string> {
 describe("PLM-EXT-P2C 输入框 @ 面板的插件分组", () => {
   after(async () => {
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-p2c-evidence.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-p2c-evidence.json"),
       JSON.stringify(evidence, null, 2),
     ).catch(() => undefined);
     await clearAppData();

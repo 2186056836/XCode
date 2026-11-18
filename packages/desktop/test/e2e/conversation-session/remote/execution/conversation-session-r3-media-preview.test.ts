@@ -32,7 +32,7 @@ import {
 
 const CASE_MARKER = "E2E_R3_MEDIA_PREVIEW";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-media-preview",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-media-preview",
 );
 const IMAGE_FILE = "r3-dev05-preview.png";
 // 2x2 红色 PNG（有效、可解码），用于校验预览真实加载出像素尺寸。

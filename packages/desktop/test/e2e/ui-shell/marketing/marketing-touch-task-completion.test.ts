@@ -7,7 +7,7 @@ import {
 } from "#e2e/helpers/v4-conversation";
 
 function origin() {
-  const value = process.env.XCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
+  const value = process.env.ZCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
   if (!value) throw new Error("Missing marketing fixture");
   return value;
 }

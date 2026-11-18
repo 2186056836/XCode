@@ -57,8 +57,8 @@ async function waitForRemoteTrigger() {
 describe("桌面重启后自动恢复远控", () => {
   it("AUTH-09: 上次启用目标不在窗口时仍恢复设备连接，用户停止后重启保持关闭", async function () {
     this.timeout(180_000);
-    const origin = process.env.XCODE_E2E_REMOTE_AUTH_GATE_URL;
-    const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR;
+    const origin = process.env.ZCODE_E2E_REMOTE_AUTH_GATE_URL;
+    const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (!origin || !artifacts) throw new Error("缺少远控启动恢复 fixture");
 
     // fixture 把上次启用目标写成未打开的 XCodeProject-previous；窗口只恢复 XCodeProject。

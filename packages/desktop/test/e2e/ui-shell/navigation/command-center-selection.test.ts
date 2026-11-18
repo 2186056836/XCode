@@ -21,14 +21,14 @@ describe("Command Center 重名任务选中", () => {
       ).__zcodeTabStoreE2E?.getState(),
     }));
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "command-center-state.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "command-center-state.json"),
       JSON.stringify(state, null, 2),
     );
   });
 
   before(async () => {
     await waitForWorkspaceApp(DEFAULT_WORKSPACE, 45_000);
-    const home = process.env.XCODE_E2E_HOME_DIR;
+    const home = process.env.ZCODE_E2E_HOME_DIR;
     // 同时接受统一 runner 与旧手工入口的隔离 HOME，禁止写入日常用户目录。
     if (
       !home ||
@@ -134,7 +134,7 @@ describe("Command Center 重名任务选中", () => {
       await browser.keys("Escape");
     }
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "command-center-selection.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "command-center-selection.json"),
       JSON.stringify(evidence, null, 2),
     );
   });

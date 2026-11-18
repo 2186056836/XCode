@@ -20,7 +20,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
  * 规则：桌面开发必须使用独立数据根，绝不与安装包（正式版）共用 `~/.xcode`。
  *
  * 数据根解析顺序：
- *   1. 显式环境变量 XCODE_DATA_BASE_DIR / XCODE_DESKTOP_HOME_DIR（开发者临时覆盖）；
+ *   1. 显式环境变量 ZCODE_DATA_BASE_DIR / ZCODE_DESKTOP_HOME_DIR（开发者临时覆盖）；
  *   2. 仓库根目录的 `.dev-data-root` 文件（本机 dev 数据根，不入库；当前 D:\xcode-deva）；
  *   3. 兜底：开发版自己的数据目录（与 Electron userData 同名）：
  *      Windows: %APPDATA%/XCode Dev；macOS: ~/Library/Application Support/XCode Dev；
@@ -45,16 +45,16 @@ function defaultDevDataBaseDir() {
 }
 
 const configuredDataBaseDir =
-  process.env.XCODE_DATA_BASE_DIR?.trim() ||
-  process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+  process.env.ZCODE_DATA_BASE_DIR?.trim() ||
+  process.env.ZCODE_DESKTOP_HOME_DIR?.trim() ||
   devDataBaseDirOverrideFile();
 if (configuredDataBaseDir) {
   // 关键：解析结果必须写回进程环境，子进程（Electron / link-dev-credentials）才能继承。
-  process.env.XCODE_DATA_BASE_DIR = configuredDataBaseDir;
+  process.env.ZCODE_DATA_BASE_DIR = configuredDataBaseDir;
   console.log(`[dev] isolated data root (configured): ${configuredDataBaseDir}`);
 } else {
-  process.env.XCODE_DATA_BASE_DIR = defaultDevDataBaseDir();
-  console.log(`[dev] isolated data root (auto): ${process.env.XCODE_DATA_BASE_DIR}`);
+  process.env.ZCODE_DATA_BASE_DIR = defaultDevDataBaseDir();
+  console.log(`[dev] isolated data root (auto): ${process.env.ZCODE_DATA_BASE_DIR}`);
 }
 const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
@@ -68,8 +68,8 @@ function run(command, args) {
       env: withPinnedNodePath(
         {
           ...process.env,
-          XCODE_ENV: requestedEnv,
-          XCODE_DESKTOP_AGENT_BYTECODE: agentBytecode ? "1" : "0",
+          ZCODE_ENV: requestedEnv,
+          ZCODE_DESKTOP_AGENT_BYTECODE: agentBytecode ? "1" : "0",
         },
         process.execPath,
       ),

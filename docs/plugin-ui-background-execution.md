@@ -108,7 +108,7 @@ Web / 手机 / remote 的不支持回退与 continuous / replayable 边界不变
 
 入口：`node packages/desktop/scripts/mcp-apps-host-e2e.mjs --background-only`；
 既有生命周期与回退使用 `--managed-only`。真实插件验证直接使用声明后台保留的 PhotoCraft：
-`XCODE_PHOTOCRAFT_SERVER=/path/to/photocraft/dist/server.mjs node packages/desktop/scripts/mcp-apps-host-e2e.mjs --photocraft-background-only`。
+`ZCODE_PHOTOCRAFT_SERVER=/path/to/photocraft/dist/server.mjs node packages/desktop/scripts/mcp-apps-host-e2e.mjs --photocraft-background-only`。
 macOS Electron 已验证：宿主先最小化再首次创建插件、后台初始化与编辑、跨离屏期限保留和恢复截图 `photocraft-restored.png`。
 测试外壳的白底不是插件成功证据，必须结合实际命令结果和恢复截图；该夹具不覆盖商店安装路径。
 

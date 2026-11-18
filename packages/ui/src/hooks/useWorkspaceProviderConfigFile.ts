@@ -123,7 +123,7 @@ export function useWorkspaceProviderConfigFile(
     if (!workspacePath || !enabled || !workspaceRpcEnabled) {
       requestVersionRef.current += 1;
       // Bugfix: 恢复断连远端 workspace 时，provider 配置路径读取不能抢在 remote session
-      // 绑定前访问断连代理，否则会把 XCODE_REMOTE_WORKSPACE_DISCONNECTED 记录成配置读取失败。
+      // 绑定前访问断连代理，否则会把 ZCODE_REMOTE_WORKSPACE_DISCONNECTED 记录成配置读取失败。
       setState({
         path: null,
         exists: false,

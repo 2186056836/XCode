@@ -5,7 +5,7 @@ import {
   ZAI_PROVIDER_ID,
 } from "./oauth.js";
 import { BUILTIN_MODEL_PROVIDER_IDS, type BuiltinModelProviderId } from "./model-provider-types.js";
-import { XCODE_ENV } from "./env.js";
+import { ZCODE_ENV } from "./env.js";
 import { buildBigModelCodingPlanTeamManageUrl } from "./zcodeEndpoint.js";
 
 export type ModelProviderFamilyId = "zai" | "bigmodel";
@@ -47,7 +47,7 @@ export const MODEL_PROVIDER_FAMILY_SPECS = [
     startPlanProviderId: BUILTIN_MODEL_PROVIDER_IDS.bigmodelStartPlan,
     individualCodingPlanProviderId: BUILTIN_MODEL_PROVIDER_IDS.bigmodelIndividualCodingPlan,
     teamCodingPlanProviderId: BUILTIN_MODEL_PROVIDER_IDS.bigmodelTeamCodingPlan,
-    teamCodingPlanManageUrl: buildBigModelCodingPlanTeamManageUrl({ XCODE_ENV }),
+    teamCodingPlanManageUrl: buildBigModelCodingPlanTeamManageUrl({ ZCODE_ENV }),
   },
 ] as const satisfies readonly ModelProviderFamilySpec[];
 

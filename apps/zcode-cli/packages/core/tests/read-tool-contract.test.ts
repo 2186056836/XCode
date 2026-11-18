@@ -33,7 +33,7 @@ import { createReadFileStatePathKey } from "../src/tool/read-file-state.js";
 import { createToolRegistry } from "../src/tool/registry.js";
 import type { ReadFileStateMap, ToolExecutionContext } from "../src/tool/types.js";
 
-const RUN_READ_STRICT_CONTRACT = process.env.XCODE_RUN_READ_STRICT_CONTRACT === "1";
+const RUN_READ_STRICT_CONTRACT = process.env.ZCODE_RUN_READ_STRICT_CONTRACT === "1";
 const describeReadStrictContract = RUN_READ_STRICT_CONTRACT ? describe : describe.skip;
 
 const FILE_UNCHANGED_STUB =

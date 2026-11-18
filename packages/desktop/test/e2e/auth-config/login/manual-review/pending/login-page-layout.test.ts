@@ -84,7 +84,7 @@ describe("Login page layout", () => {
         await browser.waitUntil(() =>
           browser.execute((value) => document.documentElement.lang === value, locale),
         );
-        const artifacts = join(process.env.XCODE_E2E_ARTIFACT_DIR!, "login-layout");
+        const artifacts = join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "login-layout");
         await mkdir(artifacts, { recursive: true });
         for (const [width, height] of viewports) {
           await setRendererViewport(width, height);

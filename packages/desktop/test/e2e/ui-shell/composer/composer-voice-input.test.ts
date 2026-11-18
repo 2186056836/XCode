@@ -46,7 +46,7 @@ const byId = (id: string) => $(`[data-testid="${id}"]`);
 
 // 替身由 wdio beforeSession 在 Electron 启动前启动（prepareVoiceInputFixture）。
 function mockOrigin(): string {
-  const value = process.env.XCODE_E2E_ASR_MOCK_URL;
+  const value = process.env.ZCODE_E2E_ASR_MOCK_URL;
   if (!value) throw new Error("缺少语音输入 ASR 替身");
   return value;
 }
@@ -111,7 +111,7 @@ async function waitForEditorText(expected: string, timeoutMsg: string) {
 }
 
 async function runtimeLogText(): Promise<string> {
-  const logs = await browser.electron.execute(() => process.env.XCODE_E2E_RUNTIME_LOG_DIR);
+  const logs = await browser.electron.execute(() => process.env.ZCODE_E2E_RUNTIME_LOG_DIR);
   if (!logs) throw new Error("缺少 worker 运行时日志目录");
   const names = (await readdir(logs)).filter((name) => name.endsWith(".log")).sort();
   return (await Promise.all(names.map((name) => readFile(join(logs, name), "utf8")))).join("\n");
@@ -546,7 +546,7 @@ describe("Composer 语音输入", () => {
   // 打包版会真实执行 tccutil 重置本机 XCode 的麦克风记录，只在开发版 Electron 上跑（开发版跳过 tccutil）。
   describe("macOS 重新授权", () => {
     before(function () {
-      if (process.platform !== "darwin" || process.env.XCODE_E2E_PACKAGED_APP_PATH?.trim()) {
+      if (process.platform !== "darwin" || process.env.ZCODE_E2E_PACKAGED_APP_PATH?.trim()) {
         this.skip();
       }
     });

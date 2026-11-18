@@ -48,7 +48,7 @@ For a new candidate case:
 5. Run manual/capture with:
 
 ```bash
-XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- --spec './test/e2e/conversation-session/<scenario>/manual-review/pending/<case>.test.ts'
+ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- --spec './test/e2e/conversation-session/<scenario>/manual-review/pending/<case>.test.ts'
 ```
 
 Manual/capture artifacts are review evidence, not the final test contract.

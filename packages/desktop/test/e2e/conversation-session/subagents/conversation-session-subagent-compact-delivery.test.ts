@@ -323,7 +323,7 @@ describe("BG46/BG47 子代理回传与压缩交错", () => {
         expect(trajectory.filter(isCompactRequest)).toHaveLength(trigger === "none" ? 0 : 1);
         if (trigger === "reactive") expect((await waitStage("arm", true)).statusCode).toBe(400);
       } finally {
-        const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+        const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
         if (artifactDir) {
           await mkdir(join(artifactDir, "subagent-delivery"), { recursive: true });
           await writeFile(
@@ -369,7 +369,7 @@ interface DeliveryTimingEvent {
 }
 
 async function readDeliveryTimingEvents(sessionId: string): Promise<DeliveryTimingEvent[]> {
-  const logDir = process.env.XCODE_LOG_DIR?.trim() || join(resolveE2EStorageRoot(), "cli", "log");
+  const logDir = process.env.ZCODE_LOG_DIR?.trim() || join(resolveE2EStorageRoot(), "cli", "log");
   const names = (await readdir(logDir)).filter((name) => name.endsWith(".jsonl"));
   const files = await Promise.all(names.map((name) => readFile(join(logDir, name), "utf8")));
   return files

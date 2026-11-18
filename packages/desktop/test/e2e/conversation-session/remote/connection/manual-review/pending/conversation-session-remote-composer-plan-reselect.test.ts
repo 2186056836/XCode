@@ -49,7 +49,7 @@ import { prepareV4ConversationE2E } from "#e2e/helpers/v4-conversation";
 //      远端仍是团队）→ 恢复可写 → Composer API → 个人：走原流程保存并重新推送，远端变回个人
 const CASE_MARKER = "E2E_REMOTE_PLAN_RESELECT";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-composer-plan-reselect",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-composer-plan-reselect",
 );
 const APP_DATA_PATHS = getE2EAppDataPaths();
 const SETTINGS_FILE = join(APP_DATA_PATHS.appDataDir, "setting.json");
@@ -71,7 +71,7 @@ interface ProvisioningLogEntry {
 
 /** 读取本次 Main 日志里的 Provisioning 结果；只统计 account-settings 触发的轮次。 */
 async function readAccountSettingsSyncs(): Promise<ProvisioningLogEntry[]> {
-  const directory = await browser.electron.execute(() => process.env.XCODE_E2E_RUNTIME_LOG_DIR);
+  const directory = await browser.electron.execute(() => process.env.ZCODE_E2E_RUNTIME_LOG_DIR);
   if (!directory) throw new Error(`${CASE_MARKER}: 缺少本次 Main 日志目录`);
   const markers = [
     "[provider-provisioning] Environment sync completed ",
@@ -133,7 +133,7 @@ async function readRemoteSelectionKind(container: string): Promise<string | unde
 }
 
 async function seedSignedInIndividualPlan() {
-  const mockBaseUrl = process.env.XCODE_E2E_CODING_PLAN_MOCK_URL?.trim();
+  const mockBaseUrl = process.env.ZCODE_E2E_CODING_PLAN_MOCK_URL?.trim();
   if (!mockBaseUrl) throw new Error(`${CASE_MARKER}: 缺少账号套餐 mock 地址`);
   // 旧 Electron 仍存活时改设置会被退出阶段的写回覆盖；先退出，再写夹具，再重建应用。
   await quitElectronAppGracefully();
@@ -248,7 +248,7 @@ async function closeSettingsPage() {
 
 /** 失败排查用：容器内是否能连到账号 mock，以及远端日志中与账号套餐相关的行。不收集凭据和正文。 */
 async function collectRemoteDiagnostics(container: string) {
-  const mockPort = new URL(process.env.XCODE_E2E_CODING_PLAN_MOCK_URL ?? "http://127.0.0.1:0").port;
+  const mockPort = new URL(process.env.ZCODE_E2E_CODING_PLAN_MOCK_URL ?? "http://127.0.0.1:0").port;
   const run = async (script: string) => {
     try {
       const result = await execInRemoteContainer(container, ["bash", "-c", script]);
@@ -305,11 +305,11 @@ describe(`${CASE_MARKER}: 远端 Composer 切回已生效套餐连接`, () => {
     await seedSignedInIndividualPlan();
     await prepareSSHConnectionPage(CASE_MARKER);
     await prepareV4ConversationE2E();
-    // 远端按下发的 XCODE_BASE_URL（宿主 127.0.0.1:<port>）查询套餐权益；在容器内监听同一端口转发到宿主。
+    // 远端按下发的 ZCODE_BASE_URL（宿主 127.0.0.1:<port>）查询套餐权益；在容器内监听同一端口转发到宿主。
     const tunnel = await createSSHReplayTunnel(config, CASE_MARKER, {
       username: "tunnel",
       mirrorLocalPort: true,
-      targetBaseURL: process.env.XCODE_E2E_CODING_PLAN_MOCK_URL,
+      targetBaseURL: process.env.ZCODE_E2E_CODING_PLAN_MOCK_URL,
     });
     closeTunnel = tunnel.close;
     // 远端查个人/团队套餐权益读 BIGMODEL_API_BASE_URL，它不在 Desktop 转发给远端的运行时变量里；

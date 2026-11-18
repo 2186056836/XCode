@@ -10,8 +10,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
 import {
-  XCODE_OFFICIAL_ENDPOINT_ENV_KEY,
-  XCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY,
+  ZCODE_OFFICIAL_ENDPOINT_ENV_KEY,
+  ZCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY,
 } from "@zcode/shared";
 import type {
   ExecutionPort,
@@ -203,8 +203,8 @@ export function createOfficialCommandEndpoint(
         sessionByToken.set(token, sessionId);
       }
       return {
-        [XCODE_OFFICIAL_ENDPOINT_ENV_KEY]: address,
-        [XCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY]: token,
+        [ZCODE_OFFICIAL_ENDPOINT_ENV_KEY]: address,
+        [ZCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY]: token,
       };
     },
     async close() {

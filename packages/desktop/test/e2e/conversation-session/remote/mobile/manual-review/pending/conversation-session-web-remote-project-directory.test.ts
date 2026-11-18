@@ -142,7 +142,7 @@ describe(`${CASE}: 真实 SSH bridge 保留窗口项目目录`, () => {
   let webBrowser: Browser | undefined;
   let page: Page | undefined;
   const evidence: Record<string, unknown> = {};
-  const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+  const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
 
   after(async () => {
     if (artifactDir) {
@@ -159,7 +159,7 @@ describe(`${CASE}: 真实 SSH bridge 保留窗口项目目录`, () => {
 
   it("MRO02：宽窄屏切入远端、更新和刷新后保留本机/置顶/已添加项目，隐藏未添加项目，并能返回本机", async function () {
     this.timeout(15 * 60_000);
-    if (!artifactDir || !process.env.XCODE_E2E_HOME_DIR)
+    if (!artifactDir || !process.env.ZCODE_E2E_HOME_DIR)
       throw new Error(`${CASE}: isolated HOME and artifact directory required`);
     await prepareSSHConnectionPage(CASE);
     await waitForWorkspaceApp(DEFAULT_WORKSPACE, 45_000);
@@ -232,10 +232,10 @@ describe(`${CASE}: 真实 SSH bridge 保留窗口项目目录`, () => {
     await waitForWorkspaceApp(localPath, 45_000);
     const pairingUrl = await obtainPairingUrl();
     webBrowser = await chromium.launch({
-      ...(process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE || process.env.R3_MOBILE_CHROME
+      ...(process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE || process.env.R3_MOBILE_CHROME
         ? {
             executablePath:
-              process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE || process.env.R3_MOBILE_CHROME,
+              process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE || process.env.R3_MOBILE_CHROME,
           }
         : { channel: "chrome" }),
       headless: true,

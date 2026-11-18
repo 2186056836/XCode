@@ -2,7 +2,7 @@
 // 规格：docs/design/v2/plugin-compat.md「App 读取扩展设置」。
 // 只给 App 用：不进模型可见的工具，也不记日志（值里有 secret）。
 import {
-  XCODE_PLUGIN_READ_USER_OPTIONS_ERROR_CODES,
+  ZCODE_PLUGIN_READ_USER_OPTIONS_ERROR_CODES,
   zcodePluginsReadUserOptionsParamsSchema,
   type XCodePluginsReadUserOptionsResult,
 } from "@zcode/shared";
@@ -37,7 +37,7 @@ export async function readPluginUserOptions(
       INVALID_PARAMS_CODE,
       `Plugin not installed: ${params.pluginId}`,
       {
-        code: XCODE_PLUGIN_READ_USER_OPTIONS_ERROR_CODES.pluginNotFound,
+        code: ZCODE_PLUGIN_READ_USER_OPTIONS_ERROR_CODES.pluginNotFound,
       },
     );
   }

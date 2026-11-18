@@ -23,7 +23,7 @@ import {
 } from "#e2e/helpers/remote-boundary-probe";
 
 const CASE_MARKER = "E2E_R3_BOUNDARY_ACK";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-boundary-ack");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-boundary-ack");
 const BOUNDARY = '[data-testid="source-server-boundary-dialog"]';
 const STRICT_BOUNDARY = { allowBoundaryAcknowledgement: false };
 

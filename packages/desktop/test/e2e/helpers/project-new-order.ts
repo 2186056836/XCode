@@ -78,7 +78,7 @@ export async function verifyNewProjectOrderOnMobile(): Promise<void> {
   const address = receiver.address();
   if (!address || typeof address === "string") throw new Error("PRO02: pairing receiver missing");
   let mobile: Browser | undefined;
-  const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR!;
+  const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR!;
   try {
     await installHandoffRpcProbe();
     await browser.execute((port) => {
@@ -113,11 +113,11 @@ export async function verifyNewProjectOrderOnMobile(): Promise<void> {
     if (new URL(pairUrl).hostname !== "127.0.0.1")
       throw new Error("PRO02: local Web fixture required");
     mobile = await chromium.launch({
-      ...(process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE
-        ? { executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
+      ...(process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE
+        ? { executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
         : { channel: "chrome" }),
       headless: true,
-      args: process.env.XCODE_E2E_BROWSER_NO_PROXY === "1" ? ["--no-proxy-server"] : [],
+      args: process.env.ZCODE_E2E_BROWSER_NO_PROXY === "1" ? ["--no-proxy-server"] : [],
     });
     const context = await mobile.newContext({
       viewport: { width: 390, height: 844 },

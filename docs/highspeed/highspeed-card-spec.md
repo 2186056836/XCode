@@ -589,7 +589,7 @@ Real send        -> Highspeed modelSelection+Execution -> Highspeed 推理接口
 ```
 
 Desktop E2E 按 spec 文件在 Electron 启动前注入场景（wdio `beforeSession` 写入
-`XCODE_HIGHSPEED_MOCK_SCENARIO`，映射表见 `test/e2e/helpers/highspeed-mock-env.ts`）。Mock 场景在
+`ZCODE_HIGHSPEED_MOCK_SCENARIO`，映射表见 `test/e2e/helpers/highspeed-mock-env.ts`）。Mock 场景在
 Host 进程内固定，且 draw 后有 2 分钟冷却，因此一个 spec 文件只对应一个场景、只完成一次 draw；
 新增场景必须新增 spec 文件并登记映射，未登记的 spec 不装配 Mock，避免普通会话意外抽到卡。表中用例共用
 同一套准备流程（Coding Plan 凭据、Team scope、会话模型），`hit-fast` 用例同时是资格链路的

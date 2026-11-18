@@ -5,8 +5,8 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createSqliteSessionStore } from "@zcode/adapters/storage";
 import {
-  XCODE_OFFICIAL_ENDPOINT_ENV_KEY,
-  XCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY,
+  ZCODE_OFFICIAL_ENDPOINT_ENV_KEY,
+  ZCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY,
 } from "@zcode/shared";
 import {
   SESSION_ENTRY_SESSION_FEATURES,
@@ -47,11 +47,11 @@ function postDeployment(env: Record<string, string>): Promise<number> {
   return new Promise((resolve, reject) => {
     const req = httpRequest(
       {
-        socketPath: env[XCODE_OFFICIAL_ENDPOINT_ENV_KEY],
+        socketPath: env[ZCODE_OFFICIAL_ENDPOINT_ENV_KEY],
         path: "/api/v1/sites/s-1/deployments",
         method: "POST",
         headers: {
-          Authorization: `Bearer ${env[XCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY]}`,
+          Authorization: `Bearer ${env[ZCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY]}`,
           "Content-Type": "application/json",
           "Content-Length": "2",
         },

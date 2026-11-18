@@ -33,7 +33,7 @@ describe("GUT Gen UI 调整设计面板", () => {
   before(async () => {
     server = await startUpstreamReplayServer({
       artifactPath: resolve(
-        process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts",
+        process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts",
         "gen-ui-tweaks-provider.json",
       ),
       fixturePaths: [resolve(`test/e2e/fixtures/upstream/conversation-session/${NAME}.json`)],

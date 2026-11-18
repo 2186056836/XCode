@@ -8,7 +8,7 @@ Status: in-progress
 
 ## 接入
 
-沿用 `OTEL_EXPORTER_OTLP_ENDPOINT` 及各 signal 的 endpoint/headers；不要将写入密钥放进看板。灰度由既有 client configs 的 `rendererActionTrace.localTtftEnabled` 布尔值控制，缺省 false，旧 Trace 的 enabled/sampleRatio 不决定新 TTFT 采样。应用本地诊断可设置 `XCODE_LOCAL_TTFT_ENABLED=1`；不改变旧 Renderer/Agent Trace 抽样。
+沿用 `OTEL_EXPORTER_OTLP_ENDPOINT` 及各 signal 的 endpoint/headers；不要将写入密钥放进看板。灰度由既有 client configs 的 `rendererActionTrace.localTtftEnabled` 布尔值控制，缺省 false，旧 Trace 的 enabled/sampleRatio 不决定新 TTFT 采样。应用本地诊断可设置 `ZCODE_LOCAL_TTFT_ENABLED=1`；不改变旧 Renderer/Agent Trace 抽样。
 
 专用 Metric：`zcode.local_ttft.duration`、`zcode.local_ttft.stage.duration`、`zcode.local_ttft.first_text.duration`，均为毫秒 Histogram，OTLP 使用 DELTA temporality。主样本标签为 provider、model、quality、app_version、os；stage Histogram 再增加固定 stage。provider/model 组合每个 exporter 最多保留 16 种，其余归入 other；每个 instrument 的聚合 cardinality 上限 256。高基数关联只进 Trace。默认体验看板选择 quality=complete，missing/clock_invalid 可单独查询，不能混入完整阶段分布。quality 语义：clock_invalid 只表示检测到时钟异常（负区间、休眠暂停、墙钟漂移超界）；校准缺失或过期只导致跨进程阶段缺失，记为 missing，同进程阶段与总 TTFT 仍可靠。
 
@@ -57,12 +57,12 @@ Trace service.name 为 `zcode-local-ttft`。以 `observation_id` 精确过滤得
 TTFT E2E 的 worker 在启动 Electron 前自动启动隔离 OTLP 接收器，监听 loopback 随机端口，最多保留 512 批；当前 worker 的 App/Host/CLI 继承该出口与本地诊断开关，退出时关闭接收器并恢复环境。用例读取同一地址，不依赖预先运行的固定端口服务。执行命令：
 
 ```sh
-XCODE_E2E_MANUAL_REVIEW=1 \
+ZCODE_E2E_MANUAL_REVIEW=1 \
 E2E_PROVIDER_REPLAY_FIXTURE_PATH=packages/desktop/test/e2e/fixtures/upstream/common.json,packages/desktop/test/e2e/fixtures/upstream/conversation-session/conversation-session-ttft-stages.json \
 pnpm --filter @zcode/desktop test:e2e -- --spec './test/e2e/conversation-session/telemetry/conversation-session-ttft-stages.test.ts'
 ```
 
-手工诊断仍可单独运行 `node packages/desktop/scripts/ttft-otlp-receiver.mjs`，默认监听 localhost:14318，再给手动启动的应用设置 `XCODE_LOCAL_TTFT_ENABLED=1` 与 `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:14318`。
+手工诊断仍可单独运行 `node packages/desktop/scripts/ttft-otlp-receiver.mjs`，默认监听 localhost:14318，再给手动启动的应用设置 `ZCODE_LOCAL_TTFT_ENABLED=1` 与 `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:14318`。
 
 该候选用例操作真实 Composer，断言最后收到的 protobuf Trace/Metric。第二场景在唯一的公开 transport seam 注入 250ms 命令延迟与 7s ACK 延迟；模型 fixture 在 250ms 首思考、8s 首正文，检查 root 在 ACK/terminal 之前到达且已知延迟归因正确。fault seam 只在 E2E build 生效，不生成伪造事实。
 

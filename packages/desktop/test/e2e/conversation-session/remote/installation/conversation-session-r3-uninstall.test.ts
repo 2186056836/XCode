@@ -50,7 +50,7 @@ const variant = process.env.R3_UNINSTALL_CASE ?? "preserve-data";
 if (variant !== "preserve-data" && variant !== "replace-environment") {
   throw new Error(`Unsupported R3_UNINSTALL_CASE: ${variant}`);
 }
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-uninstall");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-uninstall");
 
 async function readInstallFacts(config: SSHConnectionConfig) {
   const result = await runSSHCommand(
@@ -156,8 +156,8 @@ describe(`${CASE_MARKER}: ${variant}，卸载重装与独立环境替换`, () =>
     if (before.current === "present") {
       // 正式 CLI 卸载：收到每次确认提示后分别输入 DELETE，避免旧管道固定等待 33 秒。
       // 保留两次人工确认协议与 docker exec -i；不使用 --force 或直接删除目录代替卸载。
-      const container = process.env.XCODE_E2E_SSH_CONTAINER?.trim();
-      if (!container) throw new Error(`${CASE_MARKER}: 缺少 XCODE_E2E_SSH_CONTAINER`);
+      const container = process.env.ZCODE_E2E_SSH_CONTAINER?.trim();
+      if (!container) throw new Error(`${CASE_MARKER}: 缺少 ZCODE_E2E_SSH_CONTAINER`);
       const uninstallStarted = performance.now();
       const uninstall = await runConfirmedProcess(
         "docker",

@@ -8,13 +8,13 @@ import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { XCODE_OFFICIAL_PLUGIN_MARKETPLACE, XCODE_PLUGIN_HOST_COMMAND } from "@zcode/contracts";
+import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE, ZCODE_PLUGIN_HOST_COMMAND } from "@zcode/contracts";
 import {
-  XCODE_CUA_OFFICIAL_PLUGIN_ID,
-  XCODE_CUA_NODE_REPL_HOST_ENV_KEY,
-  XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
-  XCODE_PLUGIN_ID_ENV_KEY,
-  XCODE_RUNTIME_ENV_KEY,
+  ZCODE_CUA_OFFICIAL_PLUGIN_ID,
+  ZCODE_CUA_NODE_REPL_HOST_ENV_KEY,
+  ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
+  ZCODE_PLUGIN_ID_ENV_KEY,
+  ZCODE_RUNTIME_ENV_KEY,
   readXCodeToolEnvPassthroughEnv,
   resetCapturedXCodeCuaBrokerCredentialsForTest,
   sanitizeXCodeRuntimeEnvInPlace,
@@ -186,7 +186,7 @@ test("prepares a sanitized CLI runtime env with XCode-owned runtime keys", () =>
     NODE_ENV: "development",
     HTTP_PROXY: "http://ambient-proxy:8080",
     NODE_EXTRA_CA_CERTS: "/tmp/ambient-ca.pem",
-    XCODE_HTTP_PROXY: "http://zcode-proxy:8080",
+    ZCODE_HTTP_PROXY: "http://zcode-proxy:8080",
     no_proxy: ".example.test",
     npm_config_proxy: "http://npm-proxy:8080",
   };
@@ -194,8 +194,8 @@ test("prepares a sanitized CLI runtime env with XCode-owned runtime keys", () =>
   const env = prepareCliRuntimeEnv(sourceEnv, ["/usr/bin/node", "/workspace/bin/zcode.js"]);
   const toolEnv = readXCodeToolEnvPassthroughEnv(env);
 
-  assert.equal(env.XCODE_RUNTIME_ENV, "production");
-  assert.equal(env.XCODE_HTTP_PROXY, "http://zcode-proxy:8080");
+  assert.equal(env.ZCODE_RUNTIME_ENV, "production");
+  assert.equal(env.ZCODE_HTTP_PROXY, "http://zcode-proxy:8080");
   assert.deepEqual(toolEnv, {
     HTTP_PROXY: "http://ambient-proxy:8080",
     NODE_EXTRA_CA_CERTS: "/tmp/ambient-ca.pem",
@@ -213,24 +213,24 @@ test("prepares a sanitized CLI runtime env with XCode-owned runtime keys", () =>
 test("prepares beta CLI runtime env with beta storage root", () => {
   const env = prepareCliRuntimeEnv(
     {
-      XCODE_BETA: "1",
+      ZCODE_BETA: "1",
     },
     ["/usr/bin/node", "/workspace/bin/zcode.js"],
   );
 
-  assert.equal(env.XCODE_STORAGE_DIR, join(homedir(), ".zcode-beta"));
+  assert.equal(env.ZCODE_STORAGE_DIR, join(homedir(), ".zcode-beta"));
 });
 
 test("preserves explicit storage root when beta mode is enabled", () => {
   const env = prepareCliRuntimeEnv(
     {
-      XCODE_BETA: "1",
-      XCODE_STORAGE_DIR: "/tmp/custom-zcode-home",
+      ZCODE_BETA: "1",
+      ZCODE_STORAGE_DIR: "/tmp/custom-zcode-home",
     },
     ["/usr/bin/node", "/workspace/bin/zcode.js"],
   );
 
-  assert.equal(env.XCODE_STORAGE_DIR, "/tmp/custom-zcode-home");
+  assert.equal(env.ZCODE_STORAGE_DIR, "/tmp/custom-zcode-home");
 });
 
 test("opens the TUI by default", async () => {
@@ -284,7 +284,7 @@ test("passes developer mode, version, and workspace git branch into the TUI", as
     ...createPromptDeps(),
     cwd: () => workspaceDirectory,
     env: {
-      XCODE_RUNTIME_ENV: "development",
+      ZCODE_RUNTIME_ENV: "development",
     },
     resolveWorkspaceGitBranch: async (options) => {
       assert.equal(options.workspaceDirectory, workspaceDirectory);
@@ -4162,20 +4162,20 @@ test("official plugin host runs a seeded official plugin server main", async () 
   const pluginRoot = join(
     root,
     "cache",
-    XCODE_OFFICIAL_PLUGIN_MARKETPLACE,
+    ZCODE_OFFICIAL_PLUGIN_MARKETPLACE,
     "ios-simulator",
     "0.1.0",
   );
   const serverPath = join(pluginRoot, "dist", "mcp", "server.js");
   const outputPath = join(root, "host-output.json");
-  const originalOutputEnv = process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT;
+  const originalOutputEnv = process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT;
 
   try {
     await mkdir(join(pluginRoot, "dist", "mcp"), { recursive: true });
     await writeFile(
       join(pluginRoot, ".zcode-plugin-seed.json"),
       JSON.stringify({
-        marketplace: XCODE_OFFICIAL_PLUGIN_MARKETPLACE,
+        marketplace: ZCODE_OFFICIAL_PLUGIN_MARKETPLACE,
         plugin: "ios-simulator",
         pluginVersion: "0.1.0",
         version: 1,
@@ -4186,13 +4186,13 @@ test("official plugin host runs a seeded official plugin server main", async () 
       serverPath,
       `import { writeFile } from "node:fs/promises";
 export async function main() {
-  await writeFile(process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT, JSON.stringify({ argv: process.argv }));
+  await writeFile(process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT, JSON.stringify({ argv: process.argv }));
 }
 `,
     );
 
-    process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT = outputPath;
-    const ctx = createContext([XCODE_PLUGIN_HOST_COMMAND, serverPath]);
+    process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT = outputPath;
+    const ctx = createContext([ZCODE_PLUGIN_HOST_COMMAND, serverPath]);
     const exitCode = await run(ctx);
 
     assert.equal(exitCode, 0);
@@ -4203,9 +4203,9 @@ export async function main() {
     assert.equal(payload.argv[1], serverPath);
   } finally {
     if (originalOutputEnv === undefined) {
-      delete process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT;
+      delete process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT;
     } else {
-      process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT = originalOutputEnv;
+      process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT = originalOutputEnv;
     }
     await rm(root, { force: true, recursive: true });
   }
@@ -4216,12 +4216,12 @@ test("retired argv-based CUA host fails closed without the shared node_repl mark
   const serverPath = join(root, "server.js");
   const outputPath = join(root, "host-output.json");
   const keys = [
-    "XCODE_CUA_PERMISSION_BROKER_SOCKET",
-    "XCODE_CUA_PERMISSION_BROKER_TOKEN",
-    "XCODE_PLUGIN_HOST_TEST_OUTPUT",
-    XCODE_PLUGIN_ID_ENV_KEY,
-    XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
-    XCODE_CUA_NODE_REPL_HOST_ENV_KEY,
+    "ZCODE_CUA_PERMISSION_BROKER_SOCKET",
+    "ZCODE_CUA_PERMISSION_BROKER_TOKEN",
+    "ZCODE_PLUGIN_HOST_TEST_OUTPUT",
+    ZCODE_PLUGIN_ID_ENV_KEY,
+    ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
+    ZCODE_CUA_NODE_REPL_HOST_ENV_KEY,
   ] as const;
   const originalEnv = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
 
@@ -4231,22 +4231,22 @@ test("retired argv-based CUA host fails closed without the shared node_repl mark
       serverPath,
       `import { writeFile } from "node:fs/promises";
 export async function main() {
-  await writeFile(process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT, JSON.stringify({
-    token: process.env.XCODE_CUA_PERMISSION_BROKER_TOKEN,
+  await writeFile(process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT, JSON.stringify({
+    token: process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN,
   }));
 }
 `,
     );
-    process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT = outputPath;
-    process.env[XCODE_PLUGIN_ID_ENV_KEY] = XCODE_CUA_OFFICIAL_PLUGIN_ID;
-    process.env.XCODE_CUA_PERMISSION_BROKER_SOCKET = "/tmp/cua-broker.sock";
-    process.env.XCODE_CUA_PERMISSION_BROKER_TOKEN = "scoped-secret-token";
-    process.env[XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY] = "official-authority";
+    process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT = outputPath;
+    process.env[ZCODE_PLUGIN_ID_ENV_KEY] = ZCODE_CUA_OFFICIAL_PLUGIN_ID;
+    process.env.ZCODE_CUA_PERMISSION_BROKER_SOCKET = "/tmp/cua-broker.sock";
+    process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN = "scoped-secret-token";
+    process.env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY] = "official-authority";
     resetCapturedXCodeCuaBrokerCredentialsForTest();
     sanitizeXCodeRuntimeEnvInPlace(process.env);
-    assert.equal(process.env[XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY], undefined);
+    assert.equal(process.env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY], undefined);
 
-    const ctx = createContext([XCODE_PLUGIN_HOST_COMMAND, serverPath]);
+    const ctx = createContext([ZCODE_PLUGIN_HOST_COMMAND, serverPath]);
     const exitCode = await runPluginHostCommand(ctx, [
       serverPath,
       "--permission-broker-socket",
@@ -4275,12 +4275,12 @@ test("shared node_repl host restores the captured CUA broker credentials", async
   const serverPath = join(root, "server.js");
   const outputPath = join(root, "host-output.json");
   const keys = [
-    "XCODE_CUA_PERMISSION_BROKER_SOCKET",
-    "XCODE_CUA_PERMISSION_BROKER_TOKEN",
-    "XCODE_PLUGIN_HOST_TEST_OUTPUT",
-    XCODE_PLUGIN_ID_ENV_KEY,
-    XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
-    XCODE_CUA_NODE_REPL_HOST_ENV_KEY,
+    "ZCODE_CUA_PERMISSION_BROKER_SOCKET",
+    "ZCODE_CUA_PERMISSION_BROKER_TOKEN",
+    "ZCODE_PLUGIN_HOST_TEST_OUTPUT",
+    ZCODE_PLUGIN_ID_ENV_KEY,
+    ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
+    ZCODE_CUA_NODE_REPL_HOST_ENV_KEY,
   ] as const;
   const originalEnv = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
 
@@ -4290,23 +4290,23 @@ test("shared node_repl host restores the captured CUA broker credentials", async
       serverPath,
       `import { writeFile } from "node:fs/promises";
 export async function main() {
-  await writeFile(process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT, JSON.stringify({
-    socket: process.env.XCODE_CUA_PERMISSION_BROKER_SOCKET,
-    token: process.env.XCODE_CUA_PERMISSION_BROKER_TOKEN,
+  await writeFile(process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT, JSON.stringify({
+    socket: process.env.ZCODE_CUA_PERMISSION_BROKER_SOCKET,
+    token: process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN,
   }));
 }
 `,
     );
-    process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT = outputPath;
-    process.env[XCODE_PLUGIN_ID_ENV_KEY] = XCODE_CUA_OFFICIAL_PLUGIN_ID;
-    process.env[XCODE_CUA_NODE_REPL_HOST_ENV_KEY] = "1";
-    process.env.XCODE_CUA_PERMISSION_BROKER_SOCKET = "/tmp/cua-broker.sock";
-    process.env.XCODE_CUA_PERMISSION_BROKER_TOKEN = "scoped-secret-token";
-    process.env[XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY] = "official-authority";
+    process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT = outputPath;
+    process.env[ZCODE_PLUGIN_ID_ENV_KEY] = ZCODE_CUA_OFFICIAL_PLUGIN_ID;
+    process.env[ZCODE_CUA_NODE_REPL_HOST_ENV_KEY] = "1";
+    process.env.ZCODE_CUA_PERMISSION_BROKER_SOCKET = "/tmp/cua-broker.sock";
+    process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN = "scoped-secret-token";
+    process.env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY] = "official-authority";
     resetCapturedXCodeCuaBrokerCredentialsForTest();
     sanitizeXCodeRuntimeEnvInPlace(process.env);
 
-    const ctx = createContext([XCODE_PLUGIN_HOST_COMMAND, serverPath]);
+    const ctx = createContext([ZCODE_PLUGIN_HOST_COMMAND, serverPath]);
     assert.equal(await runPluginHostCommand(ctx, [serverPath]), 0);
     // identity 模式：恢复给宿主的只有 socket（配 authority），没有口令。环境里那个遗留
     // token 是历史键，sanitize 会连它一起剔除，因此宿主根本看不到它 —— 否则旧版 Helper
@@ -4319,8 +4319,8 @@ export async function main() {
     assert.equal(hostEnv.socket, "/tmp/cua-broker.sock");
     assert.equal(hostEnv.token, undefined);
     // 宿主只在运行期间短暂恢复，跑完父进程 env 必须回到已剔除状态。
-    assert.equal(process.env.XCODE_CUA_PERMISSION_BROKER_SOCKET, undefined);
-    assert.equal(process.env.XCODE_CUA_PERMISSION_BROKER_TOKEN, undefined);
+    assert.equal(process.env.ZCODE_CUA_PERMISSION_BROKER_SOCKET, undefined);
+    assert.equal(process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN, undefined);
   } finally {
     resetCapturedXCodeCuaBrokerCredentialsForTest();
     for (const key of keys) {
@@ -4339,12 +4339,12 @@ test("shared node_repl host launches with identity-mode credentials (socket + au
   const serverPath = join(root, "server.js");
   const outputPath = join(root, "host-output.json");
   const keys = [
-    "XCODE_CUA_PERMISSION_BROKER_SOCKET",
-    "XCODE_CUA_PERMISSION_BROKER_TOKEN",
-    "XCODE_PLUGIN_HOST_TEST_OUTPUT",
-    XCODE_PLUGIN_ID_ENV_KEY,
-    XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
-    XCODE_CUA_NODE_REPL_HOST_ENV_KEY,
+    "ZCODE_CUA_PERMISSION_BROKER_SOCKET",
+    "ZCODE_CUA_PERMISSION_BROKER_TOKEN",
+    "ZCODE_PLUGIN_HOST_TEST_OUTPUT",
+    ZCODE_PLUGIN_ID_ENV_KEY,
+    ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
+    ZCODE_CUA_NODE_REPL_HOST_ENV_KEY,
   ] as const;
   const originalEnv = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
 
@@ -4354,23 +4354,23 @@ test("shared node_repl host launches with identity-mode credentials (socket + au
       serverPath,
       `import { writeFile } from "node:fs/promises";
 export async function main() {
-  await writeFile(process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT, JSON.stringify({
-    socket: process.env.XCODE_CUA_PERMISSION_BROKER_SOCKET,
-    token: process.env.XCODE_CUA_PERMISSION_BROKER_TOKEN ?? null,
+  await writeFile(process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT, JSON.stringify({
+    socket: process.env.ZCODE_CUA_PERMISSION_BROKER_SOCKET,
+    token: process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN ?? null,
   }));
 }
 `,
     );
-    process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT = outputPath;
-    process.env[XCODE_PLUGIN_ID_ENV_KEY] = XCODE_CUA_OFFICIAL_PLUGIN_ID;
-    process.env[XCODE_CUA_NODE_REPL_HOST_ENV_KEY] = "1";
-    process.env.XCODE_CUA_PERMISSION_BROKER_SOCKET = "/tmp/cua-broker.sock";
-    delete process.env.XCODE_CUA_PERMISSION_BROKER_TOKEN;
-    process.env[XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY] = "official-authority";
+    process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT = outputPath;
+    process.env[ZCODE_PLUGIN_ID_ENV_KEY] = ZCODE_CUA_OFFICIAL_PLUGIN_ID;
+    process.env[ZCODE_CUA_NODE_REPL_HOST_ENV_KEY] = "1";
+    process.env.ZCODE_CUA_PERMISSION_BROKER_SOCKET = "/tmp/cua-broker.sock";
+    delete process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN;
+    process.env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY] = "official-authority";
     resetCapturedXCodeCuaBrokerCredentialsForTest();
     sanitizeXCodeRuntimeEnvInPlace(process.env);
 
-    const ctx = createContext([XCODE_PLUGIN_HOST_COMMAND, serverPath]);
+    const ctx = createContext([ZCODE_PLUGIN_HOST_COMMAND, serverPath]);
     assert.equal(await runPluginHostCommand(ctx, [serverPath]), 0);
     assert.deepEqual(JSON.parse(await readFile(outputPath, "utf8")), {
       socket: "/tmp/cua-broker.sock",
@@ -4392,12 +4392,12 @@ test("plugin host refuses non-official code while product broker credentials are
   const serverPath = join(root, "server.js");
   const outputPath = join(root, "host-output.json");
   const keys = [
-    "XCODE_CUA_PERMISSION_BROKER_SOCKET",
-    "XCODE_CUA_PERMISSION_BROKER_TOKEN",
-    "XCODE_PLUGIN_HOST_TEST_OUTPUT",
-    XCODE_PLUGIN_ID_ENV_KEY,
-    XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
-    XCODE_CUA_NODE_REPL_HOST_ENV_KEY,
+    "ZCODE_CUA_PERMISSION_BROKER_SOCKET",
+    "ZCODE_CUA_PERMISSION_BROKER_TOKEN",
+    "ZCODE_PLUGIN_HOST_TEST_OUTPUT",
+    ZCODE_PLUGIN_ID_ENV_KEY,
+    ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
+    ZCODE_CUA_NODE_REPL_HOST_ENV_KEY,
   ] as const;
   const originalEnv = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
 
@@ -4407,21 +4407,21 @@ test("plugin host refuses non-official code while product broker credentials are
       serverPath,
       `import { writeFile } from "node:fs/promises";
 export async function main() {
-  await writeFile(process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT, String(Boolean(process.env.XCODE_CUA_PERMISSION_BROKER_TOKEN)));
+  await writeFile(process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT, String(Boolean(process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN)));
 }
 `,
     );
-    process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT = outputPath;
-    process.env[XCODE_PLUGIN_ID_ENV_KEY] = "zcode-cua@third-party";
-    process.env.XCODE_CUA_PERMISSION_BROKER_SOCKET = "/tmp/cua-broker.sock";
-    process.env.XCODE_CUA_PERMISSION_BROKER_TOKEN = "must-not-leak";
-    process.env[XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY] = "captured-authority";
+    process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT = outputPath;
+    process.env[ZCODE_PLUGIN_ID_ENV_KEY] = "zcode-cua@third-party";
+    process.env.ZCODE_CUA_PERMISSION_BROKER_SOCKET = "/tmp/cua-broker.sock";
+    process.env.ZCODE_CUA_PERMISSION_BROKER_TOKEN = "must-not-leak";
+    process.env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY] = "captured-authority";
     resetCapturedXCodeCuaBrokerCredentialsForTest();
     sanitizeXCodeRuntimeEnvInPlace(process.env);
-    assert.equal(process.env[XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY], undefined);
+    assert.equal(process.env[ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY], undefined);
 
     const ctx = createContext([
-      XCODE_PLUGIN_HOST_COMMAND,
+      ZCODE_PLUGIN_HOST_COMMAND,
       serverPath,
       "--permission-broker-socket",
       "/tmp/cua-broker.sock",
@@ -4447,7 +4447,7 @@ test("plugin host can run an explicitly configured third-party module", async ()
   const root = await mkdtemp(join(tmpdir(), "zcode-cli-plugin-host-third-party-"));
   const serverPath = join(root, "third-party", "server.js");
   const outputPath = join(root, "third-party-output.json");
-  const originalOutputEnv = process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT;
+  const originalOutputEnv = process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT;
 
   try {
     await mkdir(join(root, "third-party"), { recursive: true });
@@ -4456,13 +4456,13 @@ test("plugin host can run an explicitly configured third-party module", async ()
       serverPath,
       `import { writeFile } from "node:fs/promises";
 export async function main() {
-  await writeFile(process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT, JSON.stringify({ argv: process.argv }));
+  await writeFile(process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT, JSON.stringify({ argv: process.argv }));
 }
 `,
     );
 
-    process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT = outputPath;
-    const ctx = createContext([XCODE_PLUGIN_HOST_COMMAND, serverPath, "--", "hello"]);
+    process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT = outputPath;
+    const ctx = createContext([ZCODE_PLUGIN_HOST_COMMAND, serverPath, "--", "hello"]);
     const exitCode = await run(ctx);
 
     assert.equal(exitCode, 0);
@@ -4472,9 +4472,9 @@ export async function main() {
     assert.deepEqual(payload.argv, [process.execPath, serverPath, "--", "hello"]);
   } finally {
     if (originalOutputEnv === undefined) {
-      delete process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT;
+      delete process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT;
     } else {
-      process.env.XCODE_PLUGIN_HOST_TEST_OUTPUT = originalOutputEnv;
+      process.env.ZCODE_PLUGIN_HOST_TEST_OUTPUT = originalOutputEnv;
     }
     await rm(root, { force: true, recursive: true });
   }
@@ -4499,7 +4499,7 @@ test("plugin host stays alive past the one-shot CLI watchdog deadline", async ()
 
     child = spawn(
       process.execPath,
-      ["--import", tsxLoaderPath, cliEntryPath, XCODE_PLUGIN_HOST_COMMAND, serverPath],
+      ["--import", tsxLoaderPath, cliEntryPath, ZCODE_PLUGIN_HOST_COMMAND, serverPath],
       {
         env: process.env,
         stdio: ["pipe", "pipe", "pipe"],
@@ -4571,7 +4571,7 @@ test("failed plugin host still exits when initialization leaves stdin active", a
 
     child = spawn(
       process.execPath,
-      ["--import", tsxLoaderPath, cliEntryPath, XCODE_PLUGIN_HOST_COMMAND, serverPath],
+      ["--import", tsxLoaderPath, cliEntryPath, ZCODE_PLUGIN_HOST_COMMAND, serverPath],
       {
         env: process.env,
         stdio: ["pipe", "pipe", "pipe"],
@@ -4801,19 +4801,19 @@ test("loads nearest dotenv without overriding shell env", async () => {
     await mkdir(nested, { recursive: true });
     await writeFile(
       join(tempRoot, ".env"),
-      ["XCODE_API_KEY=from-file", "XCODE_BASE_URL=https://example.test"].join("\n"),
+      ["ZCODE_API_KEY=from-file", "ZCODE_BASE_URL=https://example.test"].join("\n"),
     );
 
     const env: NodeJS.ProcessEnv = {
-      XCODE_API_KEY: "from-shell",
+      ZCODE_API_KEY: "from-shell",
     };
     const result = loadCliDotenv({ cwd: nested, env });
 
     assert.equal(findDotenv(nested), join(tempRoot, ".env"));
     assert.equal(result.loaded, true);
-    assert.deepEqual(result.keys.sort(), ["XCODE_API_KEY", "XCODE_BASE_URL"].sort());
-    assert.equal(env.XCODE_API_KEY, "from-shell");
-    assert.equal(env.XCODE_BASE_URL, "https://example.test");
+    assert.deepEqual(result.keys.sort(), ["ZCODE_API_KEY", "ZCODE_BASE_URL"].sort());
+    assert.equal(env.ZCODE_API_KEY, "from-shell");
+    assert.equal(env.ZCODE_BASE_URL, "https://example.test");
   } finally {
     await rm(tempRoot, { recursive: true, force: true });
   }
@@ -4843,10 +4843,10 @@ test("loads dotenv before creating the prompt app", async () => {
     env,
     loadDotenv: (options) => {
       if (options?.env) {
-        options.env.XCODE_API_KEY = "loaded-at-runtime";
+        options.env.ZCODE_API_KEY = "loaded-at-runtime";
       }
       return {
-        keys: ["XCODE_API_KEY"],
+        keys: ["ZCODE_API_KEY"],
         loaded: true,
         path: "/tmp/project/.env",
       };
@@ -4854,7 +4854,7 @@ test("loads dotenv before creating the prompt app", async () => {
   });
 
   assert.equal(exitCode, 0);
-  assert.equal(appEnv?.XCODE_API_KEY, "loaded-at-runtime");
+  assert.equal(appEnv?.ZCODE_API_KEY, "loaded-at-runtime");
   assert.equal(ctx.stdout.output(), "hello env\n");
   assert.equal(ctx.stderr.output(), "");
 });
@@ -5932,7 +5932,7 @@ test("dispatches app-server stdio command to the XCode Protocol runner without p
       assert.equal(options?.output, ctx.stdout);
       assert.equal(options?.version, "0.0.0");
       assert.equal(options?.presentationSurface, "terminal");
-      assert.equal(options?.env?.[XCODE_RUNTIME_ENV_KEY], "production");
+      assert.equal(options?.env?.[ZCODE_RUNTIME_ENV_KEY], "production");
     },
   });
 
@@ -6009,16 +6009,16 @@ test("loads dotenv for app-server only in development runtime", async () => {
   const exitCode = await run(ctx, {
     cwd: () => "/workspace",
     env: {
-      [XCODE_RUNTIME_ENV_KEY]: "development",
+      [ZCODE_RUNTIME_ENV_KEY]: "development",
     },
     loadDotenv: (options) => {
       dotenvCalls += 1;
       assert.equal(options?.cwd, "/workspace");
       if (options?.env) {
-        options.env.XCODE_API_KEY = "loaded-for-dev-protocol";
+        options.env.ZCODE_API_KEY = "loaded-for-dev-protocol";
       }
       return {
-        keys: ["XCODE_API_KEY"],
+        keys: ["ZCODE_API_KEY"],
         loaded: true,
         path: "/workspace/.env",
       };
@@ -6026,8 +6026,8 @@ test("loads dotenv for app-server only in development runtime", async () => {
     runXCodeProtocolAgent: async (options) => {
       called = true;
       assert.equal(options?.cwd, "/workspace");
-      assert.equal(options?.env?.[XCODE_RUNTIME_ENV_KEY], "development");
-      assert.equal(options?.env?.XCODE_API_KEY, "loaded-for-dev-protocol");
+      assert.equal(options?.env?.[ZCODE_RUNTIME_ENV_KEY], "development");
+      assert.equal(options?.env?.ZCODE_API_KEY, "loaded-for-dev-protocol");
     },
   });
 
@@ -6929,8 +6929,8 @@ test("storage-migrate real entrypoint honors an isolated custom database and rej
         ...process.env,
         HOME: directory,
         USERPROFILE: directory,
-        XCODE_DATA_BASE_DIR: directory,
-        XCODE_SESSION_DB_PATH: database,
+        ZCODE_DATA_BASE_DIR: directory,
+        ZCODE_SESSION_DB_PATH: database,
       },
       stdio: ["ignore", "pipe", "pipe"],
     });

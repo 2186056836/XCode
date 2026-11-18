@@ -26,7 +26,7 @@ const SERVER_BIN_SHELL = '"$HOME/.zcode/server/bin/zcode"';
 const SERVER_CURRENT_SHELL = `${SERVER_ROOT_SHELL}/current.json`;
 const SERVER_STATUS_SHELL = `${SERVER_ROOT_SHELL}/run/status.json`;
 const SERVER_DOWNGRADE_SHELL = `${SERVER_ROOT_SHELL}/downgrade.json`;
-const SOURCE_SERVER_PROBE_MARKER_PREFIX = "__XCODE_PROBE_";
+const SOURCE_SERVER_PROBE_MARKER_PREFIX = "__ZCODE_PROBE_";
 
 function buildSourceServerProbeCommand(includeReleaseIdentity: boolean): string {
   return [
@@ -68,7 +68,7 @@ function buildSourceServerProbeCommand(includeReleaseIdentity: boolean): string 
 }
 
 function readSourceServerProbeSections(output: string): Map<string, string> {
-  const parts = output.split(/__XCODE_PROBE_([A-Z]+)__\r?\n/gu);
+  const parts = output.split(/__ZCODE_PROBE_([A-Z]+)__\r?\n/gu);
   const sections = new Map<string, string>();
   for (let index = 1; index + 1 < parts.length; index += 2) {
     sections.set(parts[index]!, parts[index + 1]!.trim());

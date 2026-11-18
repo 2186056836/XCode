@@ -224,9 +224,9 @@ Host 只持有票据请求关联，完成条件始终由 CLI 决定。跨 App/CL
 - 续票交接按 `executionId + renewalId + ticketId` 确认，最近一次安装允许重复确认；终态的迟到派发只释放票，不重发 prompt。
 - 工作流的限制覆盖现有动态入口 `CreateWorkflow`、`AmendWorkflow`、`ResumeWorkflowRun`、`EvalWorkflowSnippet`，这些运行器尚未接入闲时票据；查询与保存定义仍沿用既有权限。
 
-OP10 运行夹具增加 `XCODE_E2E_OFFPEAK_EXPIRE_WAKE=1` 变体：第一次后台唤起请求返回 3102，安装新票后重试相同模型请求；断言初始指令及 Bash 均仅执行一次，并消费保存的 Bash 结果。
+OP10 运行夹具增加 `ZCODE_E2E_OFFPEAK_EXPIRE_WAKE=1` 变体：第一次后台唤起请求返回 3102，安装新票后重试相同模型请求；断言初始指令及 Bash 均仅执行一次，并消费保存的 Bash 结果。
 
-OP10 的 `XCODE_E2E_OFFPEAK_TAKEOVER=1` 变体在后台屏障放行前发送用户消息，验证既有子轮仍由闲时请求完成，而主 agent 后续后台唤起使用用户模型；默认变体只切工具栏未发送，仍用闲时模型。两种变体分别执行，不组合。
+OP10 的 `ZCODE_E2E_OFFPEAK_TAKEOVER=1` 变体在后台屏障放行前发送用户消息，验证既有子轮仍由闲时请求完成，而主 agent 后续后台唤起使用用户模型；默认变体只切工具栏未发送，仍用闲时模型。两种变体分别执行，不组合。
 
 ### 最终验证记录（2026-10-08）
 

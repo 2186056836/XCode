@@ -6,7 +6,7 @@ import {
   CUA_TARGET_APP_DISPLAY_META_KEY,
   cuaTargetAppDisplaySchema,
   nodeReplCuaAppDisplaySchema,
-  XCODE_MCP_NODE_REPL_CUA_APP_META_KEY,
+  ZCODE_MCP_NODE_REPL_CUA_APP_META_KEY,
   SEND_MESSAGE_TOOL_NAME,
   SendMessageOutputSchema,
   TASK_OUTPUT_DISPLAY_MAX_OUTPUT_CHARS,
@@ -425,7 +425,7 @@ function safeJson(value: unknown): string {
 function readNodeReplCuaApp(output: Record<string, unknown>): NodeReplCuaAppDisplay | undefined {
   const meta = isRecord(output._meta) ? output._meta : undefined;
   const parsed = nodeReplCuaAppDisplaySchema.safeParse(
-    meta?.[XCODE_MCP_NODE_REPL_CUA_APP_META_KEY],
+    meta?.[ZCODE_MCP_NODE_REPL_CUA_APP_META_KEY],
   );
   return parsed.success ? parsed.data : undefined;
 }

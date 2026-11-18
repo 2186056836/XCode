@@ -8,23 +8,22 @@ import {
   getCapturedXCodeCuaBrokerCredentials,
   isXCodeCuaMcpCommand,
   isXCodeCuaMcpPackageArg,
-  XCODE_CUA_BROKER_SOCKET_ENV_KEY,
-  XCODE_CUA_NODE_REPL_HOST_ENV_KEY,
-  XCODE_CUA_OFFICIAL_PLUGIN_ID,
-  XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
-  XCODE_PLUGIN_ID_ENV_KEY,
-  withZCodeCuaEnvAliases,
+  ZCODE_CUA_BROKER_SOCKET_ENV_KEY,
+  ZCODE_CUA_NODE_REPL_HOST_ENV_KEY,
+  ZCODE_CUA_OFFICIAL_PLUGIN_ID,
+  ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
+  ZCODE_PLUGIN_ID_ENV_KEY,
 } from "@zcode/shared";
 
-export { XCODE_CUA_BROKER_SOCKET_ENV_KEY as XCODE_CUA_BROKER_SOCKET_ENV } from "@zcode/shared";
+export { ZCODE_CUA_BROKER_SOCKET_ENV_KEY as ZCODE_CUA_BROKER_SOCKET_ENV } from "@zcode/shared";
 // 保留环境变量名供旧诊断脚本读取；迁移后的配置路径不会据此启动独立 CUA MCP。
-export const XCODE_CUA_BROKER_UNAVAILABLE_ENV = "XCODE_CUA_PERMISSION_BROKER_UNAVAILABLE";
+export const ZCODE_CUA_BROKER_UNAVAILABLE_ENV = "ZCODE_CUA_PERMISSION_BROKER_UNAVAILABLE";
 // CLI 入口会先清理 broker 凭据；shared node_repl 的可信配置随后从进程内捕获快照恢复它们。
 function resolveXCodeCuaBrokerSocket(): string | undefined {
   // captured 优先；运行时残留的 stale socket 不能覆盖可信快照。
   return (
     getCapturedXCodeCuaBrokerCredentials().socket ||
-    process.env[XCODE_CUA_BROKER_SOCKET_ENV_KEY]?.trim()
+    process.env[ZCODE_CUA_BROKER_SOCKET_ENV_KEY]?.trim()
   );
 }
 
@@ -33,7 +32,7 @@ function resolveXCodeCuaBrokerToken(): string | undefined {
 }
 
 const NODE_REPL_SERVER_NAME = "node_repl";
-const REFRESH_MARKER_ENV = "XCODE_CUA_PERMISSION_BROKER_REFRESH_MARKER";
+const REFRESH_MARKER_ENV = "ZCODE_CUA_PERMISSION_BROKER_REFRESH_MARKER";
 
 /**
  * Derive official CUA provenance from the in-memory plugin registry rather than
@@ -51,8 +50,8 @@ export function resolveTrustedOfficialCuaServerNames(
         ([name, config]) =>
           configuredServers[name] === config &&
           config.type === "stdio" &&
-          config.env?.[XCODE_PLUGIN_ID_ENV_KEY]?.trim().toLowerCase() ===
-            XCODE_CUA_OFFICIAL_PLUGIN_ID,
+          config.env?.[ZCODE_PLUGIN_ID_ENV_KEY]?.trim().toLowerCase() ===
+            ZCODE_CUA_OFFICIAL_PLUGIN_ID,
       )
       .map(([name]) => name),
   );
@@ -156,16 +155,16 @@ function injectCuaCredentialsIntoNodeRepl(
   return {
     ...config,
     // node_repl 的 Computer Use producer 是从官方包移植的闭源产物，只认 ZCODE_CUA_* 变量名；
-    // fork 品牌化的 XCODE_CUA_* 由本文件与 services 侧注入，这里补 ZCODE_ 别名。
+    // fork 品牌化的 ZCODE_CUA_* 由本文件与 services 侧注入，这里补 ZCODE_ 别名。
     // 上游 sanitize 会从 agent 全局 env 剔除这些键，别名必须落在 server 定向 env 里才活得下来。
-    env: withZCodeCuaEnvAliases({
+    env: {
       ...config.env,
-      [XCODE_CUA_BROKER_SOCKET_ENV_KEY]: socketPath,
+      [ZCODE_CUA_BROKER_SOCKET_ENV_KEY]: socketPath,
       ...(refreshMarker ? { [REFRESH_MARKER_ENV]: refreshMarker } : {}),
-      ...(pluginAuthority ? { [XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY]: pluginAuthority } : {}),
-      [XCODE_CUA_NODE_REPL_HOST_ENV_KEY]: "1",
-      [XCODE_PLUGIN_ID_ENV_KEY]: XCODE_CUA_OFFICIAL_PLUGIN_ID,
-    }),
+      ...(pluginAuthority ? { [ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY]: pluginAuthority } : {}),
+      [ZCODE_CUA_NODE_REPL_HOST_ENV_KEY]: "1",
+      [ZCODE_PLUGIN_ID_ENV_KEY]: ZCODE_CUA_OFFICIAL_PLUGIN_ID,
+    },
   };
 }
 
@@ -180,7 +179,7 @@ function isXCodeCuaStdioServer(
   // 上面的 name/command/args 三条都匹配不到。_plugin id 由 adapters resolver 权威写入 env
   // （manifest/user env 不可覆盖），用它识别 official plugin server。
   if (
-    config.env?.[XCODE_PLUGIN_ID_ENV_KEY]?.trim().toLowerCase() === XCODE_CUA_OFFICIAL_PLUGIN_ID
+    config.env?.[ZCODE_PLUGIN_ID_ENV_KEY]?.trim().toLowerCase() === ZCODE_CUA_OFFICIAL_PLUGIN_ID
   ) {
     return true;
   }

@@ -16,12 +16,12 @@ v0 能力不提供远程配置管理 UI；本地 Environment 是编辑权威，�
 ## 不变量
 
 独立 Server 发布 ready 前验证凭据安全存储。Linux 无 Secret Service 时，管理员须在
-目标服务环境配置 `XCODE_CREDENTIAL_SECRET_FILE`（目标机的受管 secret 文件，32–4096
-字节、原字节读取）或既有 `XCODE_CREDENTIAL_SECRET`，不可同时配置。systemd/launchd
+目标服务环境配置 `ZCODE_CREDENTIAL_SECRET_FILE`（目标机的受管 secret 文件，32–4096
+字节、原字节读取）或既有 `ZCODE_CREDENTIAL_SECRET`，不可同时配置。systemd/launchd
 应在服务环境持久配置文件位置，而非只在临时 shell 设置。重启时必须保留同一密钥；
 不能从 Desktop 复制系统主密钥，也不能自动降级到可推导密钥。
 Docker Web App 的 `scripts/docker-run-web-app.sh` 将显式文件只读挂载到容器；可以用
-`XCODE_CREDENTIAL_SECRET_FILE=/path/to/managed-secret scripts/docker-run-web-app.sh` 启动。
+`ZCODE_CREDENTIAL_SECRET_FILE=/path/to/managed-secret scripts/docker-run-web-app.sh` 启动。
 文件应由管理员以 0600 或受控只读 secret mount 提供，并保证容器运行用户 UID 10001
 可读取；只读挂载不会自动改变宿主文件的属主权限。程序不生成、不打印密钥；没有
 安全后端时启动失败，不接受可能写入失败的 Provisioning。
@@ -33,7 +33,7 @@ Desktop 对 SSH/WSL/Docker 按需启动显式传入 `--prepare-credentials`，�
 读取这个文件，重新连接和进程重启均沿用它，不依赖 shell 类型。仅在没有显式配置、
 已有文件和 v2 密文时创建随机密钥；在凭据锁和密钥锁内排他发布，不覆盖已有文件。
 已有 v2 数据不换密钥；旧 v1 数据先用历史规则认证解密，再迁移到随机文件密钥。
-显式 `XCODE_CREDENTIAL_SECRET` / `XCODE_CREDENTIAL_SECRET_FILE` 优先，错误的显式配置
+显式 `ZCODE_CREDENTIAL_SECRET` / `ZCODE_CREDENTIAL_SECRET_FILE` 优先，错误的显式配置
 不能回退到约定文件。不同数据根用各自配置目录，不能复制 Desktop 的系统密钥。
 文件内容按原字节读取，包括换行；从环境变量迁移时须保证字节完全相同，不能用
 自动追加换行的写法改变密钥。密钥丢失或被替换后不能恢复原密文，应独立备份管理。
@@ -298,7 +298,7 @@ Host execution admission
   `error` 不直接转抄到 Main 日志或 Renderer。
 
 - 首次连接的旧远端不支持 Provisioning capability 时返回 `unsupported`，不发送 Secret，也不发布 Remote Workspace ready。
-- HTTP `zcode-server` 只有在配置 `XCODE_SERVER_AUTH_TOKEN` 后才开放受信 Desktop Host 的
+- HTTP `zcode-server` 只有在配置 `ZCODE_SERVER_AUTH_TOKEN` 后才开放受信 Desktop Host 的
   Provisioning target；未配置认证时保持“不支持”，避免把跨 Environment 凭据写入口暴露给匿名连接。
 - R3 Source Server Core（`packages/zcode-server-cli`，`serviceAuthorityMode: "standalone-server"`）
   **始终**注册 Provisioning target：R3 ingress token（`<serverRoot>/run/ingress-token`，0600）常在，
@@ -306,7 +306,7 @@ Host execution admission
   `desktop-continuous` 连接（capability ticket + ingress token）拿到真实 `IProviderProvisioningTargetService`；
   `/ws` 的 `web-remote-replayable` 连接在 `exposeWebSocket` 中被 override 为抛错 stub
   （“Provider Provisioning 仅支持受信 Desktop Host”），Window Host 的手机 allowlist 也不含该 channel。
-  旧版 daemon（无 target）不会在 R3 主链上收到 Envelope：`XCODE_MIN_COMPATIBLE_VERSION` 默认等于
+  旧版 daemon（无 target）不会在 R3 主链上收到 Envelope：`ZCODE_MIN_COMPATIBLE_VERSION` 默认等于
   产品版本，R3 兼容门在握手阶段就判定“需升级”并先执行远端更新，更新后的 Core 才进入首连 Provisioning。
   Core 使用的 XCode Built-in Provider Config 由构建期 define 在 Core 启动时物化到 Environment 配置根
   `~/.xcode/v2/runtime/provider/bundled/zcode-builtin.json`（不写进不可变 release 目录）。运行中该文件与

@@ -141,9 +141,9 @@ async function waitForSidebarState(taskId: string, expected: Omit<SidebarState, 
         taskNavHistory: state?.taskNavHistory,
       };
     });
-    if (process.env.XCODE_E2E_ARTIFACT_DIR) {
+    if (process.env.ZCODE_E2E_ARTIFACT_DIR) {
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR, "sidebar-failure-state.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR, "sidebar-failure-state.json"),
         JSON.stringify({ taskId, expected, latest, navigation }, null, 2),
       );
       await saveStateScreenshot("sidebar-state-failure");
@@ -373,8 +373,8 @@ describe(`${CASE_MARKER}: 新建远程项目首次任务的侧栏实时状态`, 
   });
 });
 async function saveStateScreenshot(name: string) {
-  if (process.env.XCODE_E2E_ARTIFACT_DIR)
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR, `${name}.png`));
+  if (process.env.ZCODE_E2E_ARTIFACT_DIR)
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR, `${name}.png`));
 }
 /** 390px 是桌面 renderer 窄屏视觉证据，不冒充手机 replayable 路径。 */
 async function captureRemoteProjectThemes() {

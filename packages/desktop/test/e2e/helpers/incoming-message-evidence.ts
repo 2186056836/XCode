@@ -173,7 +173,7 @@ async function readPresentationFixture() {
 }
 
 async function saveWireEvidence(request: unknown, label: string): Promise<void> {
-  const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+  const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
   if (!artifactDir) return;
   const directory = join(artifactDir, "incoming-message-wire");
   await mkdir(directory, { recursive: true });

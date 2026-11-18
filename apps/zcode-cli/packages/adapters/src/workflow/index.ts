@@ -22,8 +22,8 @@ import {
 
 function resolveDataBaseDir(): string {
   return (
-    process.env.XCODE_DATA_BASE_DIR?.trim() ||
-    process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+    process.env.ZCODE_DATA_BASE_DIR?.trim() ||
+    process.env.ZCODE_DESKTOP_HOME_DIR?.trim() ||
     process.env.HOME?.trim() ||
     homedir()
   );

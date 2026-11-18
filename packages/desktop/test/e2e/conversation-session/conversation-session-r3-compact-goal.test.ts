@@ -25,7 +25,7 @@ import {
 } from "../helpers/v4-conversation.js";
 
 const CASE_MARKER = "E2E_R3_COMPACT_GOAL";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-compact-goal");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-compact-goal");
 
 async function clickGoalAction(action: "pause" | "resume"): Promise<boolean> {
   await browser.waitUntil(

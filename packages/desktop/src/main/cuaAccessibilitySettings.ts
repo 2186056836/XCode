@@ -524,7 +524,7 @@ export async function openCuaPermissionOnboarding(
     // 必须 fail-closed，绝不回退到“路径存在即用”的未验证 Helper —— 否则会引导用户把 Accessibility /
     // Screen Recording 授权给旧版本 / 坏签名 / 错误 Team / 被替换的 bundle，破坏“Helper 是独立且受
     // TeamIdentifier pinning 的授权主体”这一核心边界。dev 场景由 installer 内部的
-    // XCODE_CUA_HELPER_ALLOW_UNSIGNED_LOCAL 承接：通过 dev 校验时 ensureInstalled 会正常返回本地 app，
+    // ZCODE_CUA_HELPER_ALLOW_UNSIGNED_LOCAL 承接：通过 dev 校验时 ensureInstalled 会正常返回本地 app，
     // 根本不会进到这个 catch；只有真正校验失败才会到这里。
     return {
       success: false,

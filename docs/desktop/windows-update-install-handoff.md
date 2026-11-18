@@ -120,7 +120,7 @@ Main 进程不能在调用 `quitAndInstall()` 前按整个安装目录杀进程�
   已退出 owner 遗留的锁。正常竞争最多等待 8 秒；活跃 owner 到期后返回锁超时，只有
   owner 已退出，或锁缺少有效 PID 且当前锁自身已 stale 时才允许接管，不能沿用等待者在
   旧锁上的等待时长判断后来出现的新锁。删除权限不足时返回明确错误，禁止无限重试。
-- 等待预算耗尽统一返回 `XCODE_FILE_LOCK_TIMEOUT`。该错误码由 `@zcode/shared` 定义并由
+- 等待预算耗尽统一返回 `ZCODE_FILE_LOCK_TIMEOUT`。该错误码由 `@zcode/shared` 定义并由
   UI/服务消费者按 code 识别为瞬时锁竞争，不得依赖错误消息恰好包含 `config.json.lock`。
 - sessions-index 订阅是幂等读，可在 UI 层按锁超时重试；provider/settings 写入
   已在原子写入口内等待并恢复，不在上层盲重放非幂等写操作，失败时保留明确错误交给调用方。

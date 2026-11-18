@@ -328,7 +328,7 @@ describe("PLM-EXT-P3B 扩展的会话读连接与商店安装后的激活确认"
   after(async () => {
     evidence.screenshots = screenshots;
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-p3b-evidence.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-p3b-evidence.json"),
       JSON.stringify(evidence, null, 2),
     ).catch(() => undefined);
     await restoreHandoffProbes().catch(() => undefined);

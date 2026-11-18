@@ -21,7 +21,7 @@ import {
 
 const MARKER = "E2E_SSH_THREE_SCREEN";
 const alias = "rdux10-first-connect";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/three-screen");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/three-screen");
 
 async function clickButton(text: string) {
   await browser.waitUntil(

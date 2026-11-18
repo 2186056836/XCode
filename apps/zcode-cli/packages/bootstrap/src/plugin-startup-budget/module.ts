@@ -38,7 +38,7 @@ export function createPluginStartupBudget(
     budget?.expired.resolve();
     options.onTimeout(
       Object.assign(new Error("Plugin startup timed out"), {
-        code: "XCODE_PLUGIN_STARTUP_TIMEOUT",
+        code: "ZCODE_PLUGIN_STARTUP_TIMEOUT",
       }),
     );
   }

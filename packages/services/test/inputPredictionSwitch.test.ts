@@ -8,7 +8,7 @@ import {
 
 describe("isRemoteInputPredictionEnabled", () => {
   it('缺省开启，"1" 开启，"0" 或其它值关闭', () => {
-    expect(REMOTE_INPUT_PREDICTION_ENV).toBe("XCODE_REMOTE_INPUT_PREDICTION");
+    expect(REMOTE_INPUT_PREDICTION_ENV).toBe("ZCODE_REMOTE_INPUT_PREDICTION");
     expect(REMOTE_INPUT_PREDICTION_DEFAULT_ENABLED).toBe(true);
     expect(isRemoteInputPredictionEnabled({})).toBe(true);
     expect(isRemoteInputPredictionEnabled({ [REMOTE_INPUT_PREDICTION_ENV]: "" })).toBe(true);

@@ -32,7 +32,7 @@ const SEAM_SCRIPT = "/home/dev/.e2e-hang-readdir.cjs";
 const DEADLINE_MS = 30_000;
 const desktopRoot = process.cwd();
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-workspace-folder-unresponsive-ssh",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-workspace-folder-unresponsive-ssh",
 );
 
 // 标记文件存在时，Core 读取 HANG_DIR/.（Host admission 的探测路径）不返回；目录浏览器读取

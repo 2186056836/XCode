@@ -12,7 +12,7 @@ import {
 const byId = (id: string) => $(`[data-testid="${id}"]`);
 // 原截图写入系统临时目录，违反运行目录隔离；统一归档到本轮报告目录。
 const screenshotPath = (name: string) => {
-  const directory = process.env.XCODE_E2E_ARTIFACT_DIR;
+  const directory = process.env.ZCODE_E2E_ARTIFACT_DIR;
   if (!directory) throw new Error("Missing E2E artifact directory");
   return join(directory, name);
 };
@@ -21,7 +21,7 @@ const bannerAction = () =>
 const bannerClose = () =>
   byId("marketing-banner").$('button[aria-label="Close"], button[aria-label="关闭"]');
 const origin = () => {
-  const value = process.env.XCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
+  const value = process.env.ZCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
   if (!value) throw new Error("Missing isolated marketing fixture");
   return value;
 };

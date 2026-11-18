@@ -225,14 +225,14 @@ function redactRemainingAbsolutePaths(value: string): string {
   const protectedPaths: string[] = [];
   const protectedValue = value.replace(AGENT_CRASH_KNOWN_PATH_PLACEHOLDER_PATTERN, (match) => {
     const index = protectedPaths.push(match) - 1;
-    return `XCODE_REDACTED_PATH_${index}_TOKEN`;
+    return `ZCODE_REDACTED_PATH_${index}_TOKEN`;
   });
   const redacted = protectedValue
     .replace(AGENT_CRASH_WINDOWS_ABSOLUTE_PATH_PATTERN, "<path>")
     .replace(AGENT_CRASH_POSIX_ABSOLUTE_PATH_PATTERN, "<path>");
   return protectedPaths.reduce(
     (result, protectedPath, index) =>
-      result.replace(`XCODE_REDACTED_PATH_${index}_TOKEN`, protectedPath),
+      result.replace(`ZCODE_REDACTED_PATH_${index}_TOKEN`, protectedPath),
     redacted,
   );
 }

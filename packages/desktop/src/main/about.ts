@@ -6,10 +6,10 @@ import {
   DEFAULT_LOCALE,
   toZhOrEnLocale,
   type Locale,
-  XCODE_BUILD_TIME,
-  XCODE_COMMIT,
-  XCODE_ENV,
-  XCODE_VERSION,
+  ZCODE_BUILD_TIME,
+  ZCODE_COMMIT,
+  ZCODE_ENV,
+  ZCODE_VERSION,
 } from "@zcode/shared";
 import { createCustomAboutDialogHtml } from "./aboutWindow.js";
 
@@ -152,10 +152,10 @@ export function createAboutSnapshot(options: AboutSnapshotOptions = {}): AboutSn
   };
 
   return {
-    appVersion: normalizeValue(options.appVersion ?? buildMetadata?.appVersion ?? XCODE_VERSION),
-    buildCommitId: normalizeValue(buildMetadata?.buildCommitId ?? XCODE_COMMIT),
-    buildTime: normalizeValue(buildMetadata?.buildTime ?? XCODE_BUILD_TIME),
-    environment: normalizeValue(options.environment ?? XCODE_ENV),
+    appVersion: normalizeValue(options.appVersion ?? buildMetadata?.appVersion ?? ZCODE_VERSION),
+    buildCommitId: normalizeValue(buildMetadata?.buildCommitId ?? ZCODE_COMMIT),
+    buildTime: normalizeValue(buildMetadata?.buildTime ?? ZCODE_BUILD_TIME),
+    environment: normalizeValue(options.environment ?? ZCODE_ENV),
     electronVersion: normalizeValue(runtimeVersions.electron),
     electronBuilderVersion: resolveElectronBuilderVersion(buildMetadata),
     chromiumVersion: normalizeValue(runtimeVersions.chrome),

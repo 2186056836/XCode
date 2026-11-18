@@ -19,7 +19,7 @@ import {
   REMOTE_WORKSPACE_DIRECTORY_UNRESPONSIVE_ERROR_CODE,
   resolveWorkspaceKey,
   SOURCE_SERVER_UPDATE_IN_PROGRESS_ERROR_CODE,
-  XCODE_VERSION,
+  ZCODE_VERSION,
   type ConnectionProfile,
   type SourceServerRunningTask,
   type RemoteTarget,
@@ -1378,7 +1378,7 @@ export function useRemoteConnectionFlow(options: RemoteConnectionFlowOptions) {
     deviceBusy: reinstallDeviceBusy,
     installState: reinstallServer?.installState,
     lastSeenVersion: reinstallServer?.lastSeenVersion,
-    localVersion: XCODE_VERSION,
+    localVersion: ZCODE_VERSION,
   });
   const reinstallAvailable =
     Boolean(reinstallProfile) && reinstallAvailability.visible && reinstallAvailability.enabled;
@@ -1392,7 +1392,7 @@ export function useRemoteConnectionFlow(options: RemoteConnectionFlowOptions) {
           recognizedDeviceName ??
           activeProfileName ??
           formatRemoteLinkRailTarget(pendingRemoteTarget),
-        version: XCODE_VERSION,
+        version: ZCODE_VERSION,
         formatMessage: intl.formatMessage,
       }),
     );
@@ -2314,7 +2314,7 @@ export function useRemoteConnectionFlow(options: RemoteConnectionFlowOptions) {
       recognizedDeviceName: recognizedDeviceName,
       profileName: activeProfileName,
       recognizedDeviceMeta: recognizedServer ? formatDeviceCardMeta(recognizedServer) : undefined,
-      localVersion: XCODE_VERSION,
+      localVersion: ZCODE_VERSION,
       onUseRemoteDownload:
         pendingRemoteTarget?.kind === "ssh"
           ? () => {

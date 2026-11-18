@@ -16,7 +16,7 @@ export interface WorkspaceHookTrustIdentityFs {
 export interface ResolveWorkspaceHookTrustIdentityInput {
   workspacePath: string;
   workspaceIdentity?: string;
-  /** 数据根目录（XCODE_DATA_BASE_DIR 优先，否则 homedir）；受管根目录 = <dataBaseDir>/.zcode/worktrees。 */
+  /** 数据根目录（ZCODE_DATA_BASE_DIR 优先，否则 homedir）；受管根目录 = <dataBaseDir>/.zcode/worktrees。 */
   dataBaseDir: string;
 }
 

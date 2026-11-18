@@ -7,14 +7,14 @@ import {
 describe("MCP App formal regression selection", () => {
   it("uses Xvfb and container-only Chromium flags for isolated Linux replay", () => {
     expect(
-      resolveMcpAppsHostLaunch("electron", ["case.cjs"], { XCODE_E2E_CONTAINER: "1" }),
+      resolveMcpAppsHostLaunch("electron", ["case.cjs"], { ZCODE_E2E_CONTAINER: "1" }),
     ).toEqual({
       command: "xvfb-run",
       args: ["--auto-servernum", "electron", "case.cjs", "--no-sandbox", "--disable-dev-shm-usage"],
     });
     expect(
       resolveMcpAppsHostLaunch("electron", ["case.cjs"], {
-        XCODE_E2E_CONTAINER: "1",
+        ZCODE_E2E_CONTAINER: "1",
         DISPLAY: ":99",
       }).command,
     ).toBe("electron");

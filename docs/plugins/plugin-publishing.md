@@ -164,7 +164,7 @@ Web 与手机远控：浏览器 ─ 远控 bridge 转发（不校验）─ 桌�
 ```
 
 - 只有一层用 strict schema 解析商店信息：调用 CLI 的 services（`packages/services/src/zcode-agent/zcodeAgentService.ts` 的 `getPluginsOverview`，用 `zcodePluginsOverviewResultSchema`）。Renderer、Window Host 的远程转发、远控 bridge 都不解析，只按 TypeScript 类型读。所以 Desktop 与远端 Server 的版本差不会让解析失败：旧 Renderer 不读新键，新 Renderer 读不到时按「没有扩展摘要」处理。
-- services 与它调用的 CLI 版本可能不同：环境变量 `XCODE_AGENT_SERVER_COMMAND` 指定的 CLI，远端兜底用的已部署 CLI 二进制（`zcodeAgentProcessManager.ts` 的 `resolveDefaultXCodeAgentCommand`）。所以 CLI 不能无条件加新字段，services 也不能盲发新参数。
+- services 与它调用的 CLI 版本可能不同：环境变量 `ZCODE_AGENT_SERVER_COMMAND` 指定的 CLI，远端兜底用的已部署 CLI 二进制（`zcodeAgentProcessManager.ts` 的 `resolveDefaultXCodeAgentCommand`）。所以 CLI 不能无条件加新字段，services 也不能盲发新参数。
 
 #### 做法：能力位 + 请求参数（选定，2026-11-07）
 

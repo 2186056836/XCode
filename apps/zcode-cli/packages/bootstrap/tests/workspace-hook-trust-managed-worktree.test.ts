@@ -1,5 +1,5 @@
 // CLI 侧 Hook Trust identity 接入（docs/specs/workspace-hook-trust.md D23，docs/git/worktree.md §6.2）。
-// 真实 git 临时仓库 + XCODE_DATA_BASE_DIR 临时目录，按 <dataBaseDir>/.zcode/worktrees/<4hex>/<repo>
+// 真实 git 临时仓库 + ZCODE_DATA_BASE_DIR 临时目录，按 <dataBaseDir>/.zcode/worktrees/<4hex>/<repo>
 // 布局创建受管 worktree，验证 Trust CLI、协议授予与活跃 session 重载都按 Trust identity 工作。
 import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
@@ -67,7 +67,7 @@ async function fixture() {
   await git(source, "commit", "-q", "-m", "init");
   await mkdir(join(dataBaseDir, ".zcode", "worktrees", BUCKET), { recursive: true });
   await git(source, "worktree", "add", "-q", "--detach", worktree);
-  const env = { XCODE_DATA_BASE_DIR: dataBaseDir };
+  const env = { ZCODE_DATA_BASE_DIR: dataBaseDir };
   return { dataBaseDir, env, root, source, userConfigPath, worktree };
 }
 
@@ -136,7 +136,7 @@ describe("Workspace Hook Trust：受管 worktree 继承源仓库", () => {
 
   it("协议授予在 worktree 中按 Trust identity 评估 policy 并写入源仓库 record", async () => {
     const value = await fixture();
-    vi.stubEnv("XCODE_DATA_BASE_DIR", value.dataBaseDir);
+    vi.stubEnv("ZCODE_DATA_BASE_DIR", value.dataBaseDir);
     const pending = await inspectWorkspaceHookTrust({
       workspacePath: value.worktree,
       userConfigPath: value.userConfigPath,
@@ -172,7 +172,7 @@ describe("Workspace Hook Trust：受管 worktree 继承源仓库", () => {
 
   it("Trust 授予通知同一 Trust identity 下的源仓库与 worktree session，跳过无关 workspace", async () => {
     const value = await fixture();
-    vi.stubEnv("XCODE_DATA_BASE_DIR", value.dataBaseDir);
+    vi.stubEnv("ZCODE_DATA_BASE_DIR", value.dataBaseDir);
     const session = (workspacePath: string) => {
       const reload = vi.fn(async () => undefined);
       return {

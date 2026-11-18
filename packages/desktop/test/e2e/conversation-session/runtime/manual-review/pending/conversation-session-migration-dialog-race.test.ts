@@ -186,7 +186,7 @@ describe("E2E_DSYNC_16_MIGRATION_RACE", () => {
           return Buffer.from(png, "base64");
         },
         outputPath: join(
-          process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts",
+          process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts",
           `migration-race-${handled}.webm`,
         ),
       });

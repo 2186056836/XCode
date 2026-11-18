@@ -43,8 +43,8 @@ function loadEnvFiles(): Record<string, string> {
     }
   }
   // 真实环境变量优先级最高
-  if (process.env.XCODE_ENV) vars.XCODE_ENV = process.env.XCODE_ENV;
-  if (process.env.XCODE_BASE_URL) vars.XCODE_BASE_URL = process.env.XCODE_BASE_URL;
+  if (process.env.ZCODE_ENV) vars.ZCODE_ENV = process.env.ZCODE_ENV;
+  if (process.env.ZCODE_BASE_URL) vars.ZCODE_BASE_URL = process.env.ZCODE_BASE_URL;
   if (process.env.VITE_XCODE_BASE_URL) vars.VITE_XCODE_BASE_URL = process.env.VITE_XCODE_BASE_URL;
   // OAuth origin/client_id 由 host runtime 读取；这里保留覆盖入口，方便开发构建时观察统一 env 来源。
   if (process.env.ZAI_OAUTH_CLIENT_ID) vars.ZAI_OAUTH_CLIENT_ID = process.env.ZAI_OAUTH_CLIENT_ID;
@@ -68,9 +68,9 @@ function loadEnvFiles(): Record<string, string> {
 
 const env = loadEnvFiles();
 const { environment: zcodeEnv } = await loadBuiltinProviderConfig();
-// 安装包身份与后端环境分轴：XCODE_PREVIEW_IDENTITY=1 让生产后端的构建仍以 XCode Preview 身份打包运行。
-const zcodeProductFlavor = resolveDesktopProductFlavor({ ...process.env, XCODE_ENV: zcodeEnv });
-console.log(`[tsup] XCODE_ENV=${zcodeEnv} XCODE_PRODUCT_FLAVOR=${zcodeProductFlavor}`);
+// 安装包身份与后端环境分轴：ZCODE_PREVIEW_IDENTITY=1 让生产后端的构建仍以 XCode Preview 身份打包运行。
+const zcodeProductFlavor = resolveDesktopProductFlavor({ ...process.env, ZCODE_ENV: zcodeEnv });
+console.log(`[tsup] ZCODE_ENV=${zcodeEnv} ZCODE_PRODUCT_FLAVOR=${zcodeProductFlavor}`);
 
 function parseCsvEnv(value: string | undefined): string[] {
   return (value ?? "")
@@ -100,10 +100,10 @@ export function resolveBuildRemoteCdnReleaseRoots(runtimeEnv: Record<string, str
 export function resolveBuildPackagedAgentTelemetryEnv(
   runtimeEnv: Record<string, string | undefined>,
 ): Record<string, string> {
-  const endpoint = runtimeEnv.XCODE_PACKAGED_AGENT_OTEL_ENDPOINT?.trim();
-  const headers = runtimeEnv.XCODE_PACKAGED_AGENT_OTEL_HEADERS?.trim();
+  const endpoint = runtimeEnv.ZCODE_PACKAGED_AGENT_OTEL_ENDPOINT?.trim();
+  const headers = runtimeEnv.ZCODE_PACKAGED_AGENT_OTEL_HEADERS?.trim();
   const serviceName =
-    runtimeEnv.XCODE_PACKAGED_AGENT_OTEL_SERVICE_NAME?.trim() || "zcode-cli-agent";
+    runtimeEnv.ZCODE_PACKAGED_AGENT_OTEL_SERVICE_NAME?.trim() || "zcode-cli-agent";
 
   if (!endpoint && !headers) {
     if (
@@ -116,37 +116,37 @@ export function resolveBuildPackagedAgentTelemetryEnv(
   }
   if (!endpoint || !headers) {
     throw new Error(
-      "XCODE_PACKAGED_AGENT_OTEL_ENDPOINT and XCODE_PACKAGED_AGENT_OTEL_HEADERS must be configured together",
+      "ZCODE_PACKAGED_AGENT_OTEL_ENDPOINT and ZCODE_PACKAGED_AGENT_OTEL_HEADERS must be configured together",
     );
   }
   if (endpoint.length > 2_048) {
-    throw new Error("XCODE_PACKAGED_AGENT_OTEL_ENDPOINT exceeds 2048 characters");
+    throw new Error("ZCODE_PACKAGED_AGENT_OTEL_ENDPOINT exceeds 2048 characters");
   }
   if (headers.length > 8_192 || /[\r\n]/u.test(headers)) {
-    throw new Error("XCODE_PACKAGED_AGENT_OTEL_HEADERS is invalid");
+    throw new Error("ZCODE_PACKAGED_AGENT_OTEL_HEADERS is invalid");
   }
   if (!/^[A-Za-z0-9._:-]{1,128}$/u.test(serviceName)) {
-    throw new Error("XCODE_PACKAGED_AGENT_OTEL_SERVICE_NAME is invalid");
+    throw new Error("ZCODE_PACKAGED_AGENT_OTEL_SERVICE_NAME is invalid");
   }
 
   let parsedEndpoint: URL;
   try {
     parsedEndpoint = new URL(endpoint);
   } catch {
-    throw new Error("XCODE_PACKAGED_AGENT_OTEL_ENDPOINT must be a valid HTTP(S) URL");
+    throw new Error("ZCODE_PACKAGED_AGENT_OTEL_ENDPOINT must be a valid HTTP(S) URL");
   }
   if (
     !["http:", "https:"].includes(parsedEndpoint.protocol) ||
     parsedEndpoint.username ||
     parsedEndpoint.password
   ) {
-    throw new Error("XCODE_PACKAGED_AGENT_OTEL_ENDPOINT must be a valid HTTP(S) URL");
+    throw new Error("ZCODE_PACKAGED_AGENT_OTEL_ENDPOINT must be a valid HTTP(S) URL");
   }
   if (
-    resolveXCodeEnv(runtimeEnv.XCODE_ENV) === "production" &&
+    resolveXCodeEnv(runtimeEnv.ZCODE_ENV) === "production" &&
     parsedEndpoint.protocol !== "https:"
   ) {
-    throw new Error("XCODE_PACKAGED_AGENT_OTEL_ENDPOINT must use HTTPS in production");
+    throw new Error("ZCODE_PACKAGED_AGENT_OTEL_ENDPOINT must use HTTPS in production");
   }
 
   return {
@@ -155,7 +155,7 @@ export function resolveBuildPackagedAgentTelemetryEnv(
     OTEL_SERVICE_NAME: serviceName,
     // 只有打进正式 Desktop 安装包的 Agent 才能由构建链可信判定为 packaged；
     // source/development_bundle 不在运行时猜测，未显式注入时保持 unknown。
-    XCODE_TELEMETRY_RUNTIME_DISTRIBUTION: "packaged",
+    ZCODE_TELEMETRY_RUNTIME_DISTRIBUTION: "packaged",
   };
 }
 
@@ -163,7 +163,7 @@ export function resolveDesktopTsupBundleSecurityOptions(
   runtimeEnv: Record<string, string | undefined> = process.env,
 ) {
   const isProduction = runtimeEnv.NODE_ENV === "production";
-  const isE2ECoverageBuild = runtimeEnv.XCODE_E2E_COVERAGE === "1";
+  const isE2ECoverageBuild = runtimeEnv.ZCODE_E2E_COVERAGE === "1";
   return {
     // 发布包的 main/host/preload 之前没有随 NODE_ENV=production 压缩，
     // 产物保留大量源码注释与格式化换行，增加逆向和内部实现暴露风险。
@@ -191,35 +191,35 @@ const desktopTsupBundleSecurityOptions = resolveDesktopTsupBundleSecurityOptions
 
 function createSharedDefines() {
   return {
-    __XCODE_VERSION__: JSON.stringify(buildMetadata.appVersion),
+    __ZCODE_VERSION__: JSON.stringify(buildMetadata.appVersion),
     __ZCODE_MIN_COMPATIBLE_VERSION__: JSON.stringify(buildMetadata.minCompatibleVersion),
-    __XCODE_COMMIT__: JSON.stringify(buildMetadata.buildCommitId),
-    __XCODE_BUILD_TIME__: JSON.stringify(buildMetadata.buildTime),
-    __XCODE_ENV__: JSON.stringify(zcodeEnv),
-    __XCODE_PRODUCT_FLAVOR__: JSON.stringify(zcodeProductFlavor),
+    __ZCODE_COMMIT__: JSON.stringify(buildMetadata.buildCommitId),
+    __ZCODE_BUILD_TIME__: JSON.stringify(buildMetadata.buildTime),
+    __ZCODE_ENV__: JSON.stringify(zcodeEnv),
+    __ZCODE_PRODUCT_FLAVOR__: JSON.stringify(zcodeProductFlavor),
     ...buildTimeConfigDefines,
     // Computer Use Helper build identity — helperInstaller 读它决定下载哪个 Helper bundle。
     // 缺失时 installer 抛 "Packaged XCode is missing its embedded Computer Use Helper build identity"。
-    // CI 构建时通过 XCODE_CUA_HELPER_BUILD_ID env 注入；dev 为空串走兜底（dev helper 不走下载）。
-    __XCODE_CUA_HELPER_BUILD_ID__: JSON.stringify(
-      process.env.XCODE_CUA_HELPER_BUILD_ID?.trim() ?? "",
+    // CI 构建时通过 ZCODE_CUA_HELPER_BUILD_ID env 注入；dev 为空串走兜底（dev helper 不走下载）。
+    __ZCODE_CUA_HELPER_BUILD_ID__: JSON.stringify(
+      process.env.ZCODE_CUA_HELPER_BUILD_ID?.trim() ?? "",
     ),
     // 客户端只有一个 CDN 配置，与发布端 OSS 目标列表分离。
-    __XCODE_CDN_BASE_URL__: JSON.stringify(env.XCODE_CDN_BASE_URL?.trim() || ""),
+    __ZCODE_CDN_BASE_URL__: JSON.stringify(env.ZCODE_CDN_BASE_URL?.trim() || ""),
   };
 }
 
 // 合并修复：main 的 config 一直在调用 createMainDefines()，但这个工厂函数在「回退到 fork
 // 基线」时连同上游改动一起被删掉了，tsup 打包 config 时直接报
 // `ReferenceError: createMainDefines is not defined`，生产构建整个挂掉。
-// 这里按上游 1010 补回该工厂。刻意不补上游同处的 __XCODE_REMOTE_CDN_RELEASE_ROOTS__：
-// fork 的 createSharedDefines 已改用单一 __XCODE_CDN_BASE_URL__，全仓也没有任何消费方。
+// 这里按上游 1010 补回该工厂。刻意不补上游同处的 __ZCODE_REMOTE_CDN_RELEASE_ROOTS__：
+// fork 的 createSharedDefines 已改用单一 __ZCODE_CDN_BASE_URL__，全仓也没有任何消费方。
 function createMainDefines() {
   return {
     ...createSharedDefines(),
     // 正式安装包无法继承 GitLab Runner 或开发终端环境。这里只把 CI 提供的低权限写入配置
     // 编译进 Desktop Main，再由既有 Main -> Host -> Agent 安全边界定向传递。
-    __XCODE_PACKAGED_AGENT_TELEMETRY_ENV__: JSON.stringify(
+    __ZCODE_PACKAGED_AGENT_TELEMETRY_ENV__: JSON.stringify(
       resolveBuildPackagedAgentTelemetryEnv(process.env),
     ),
   };

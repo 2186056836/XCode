@@ -34,7 +34,7 @@ const MARKER = "E2E_RELEASE_3163_UPGRADE";
 const BASELINE_COMMIT = "a82dd43e";
 const desktopRoot = resolve(import.meta.dirname, "../../../../../..");
 const currentRoot = resolve(desktopRoot, "../..");
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR!, "release-3163-upgrade");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR!, "release-3163-upgrade");
 
 async function archiveHash(
   root: string,
@@ -51,7 +51,7 @@ async function archiveHash(
 }
 
 async function replaceRunApplication(root: string): Promise<void> {
-  const runId = process.env.XCODE_E2E_RUN_ID;
+  const runId = process.env.ZCODE_E2E_RUN_ID;
   if (!runId) throw new Error("缺少隔离 runId");
   // 只在旧 Electron 已完整退出的屏障内替换本次运行副本，保留同一 HOME 和浏览器数据。
   for (const [source, destination] of [
@@ -111,8 +111,8 @@ describe("REL3163-UPGRADE-01：真实 tag 到 staging 的桌面升级", () => {
 
   it("真实旧版创建的两个远程会话，在换包升级及再次冷启动后均可续聊", async function () {
     this.timeout(30 * 60_000);
-    const baselineRoot = process.env.XCODE_E2E_BASELINE_ROOT;
-    if (!baselineRoot) throw new Error("需要 XCODE_E2E_BASELINE_ROOT 指向真实 v3.16.3 构建");
+    const baselineRoot = process.env.ZCODE_E2E_BASELINE_ROOT;
+    if (!baselineRoot) throw new Error("需要 ZCODE_E2E_BASELINE_ROOT 指向真实 v3.16.3 构建");
     const baselineMeta = JSON.parse(
       await readFile(join(baselineRoot, "packages/desktop/out/metadata/build-meta.json"), "utf8"),
     );
@@ -122,7 +122,7 @@ describe("REL3163-UPGRADE-01：真实 tag 到 staging 的桌面升级", () => {
       await readFile(join(currentRoot, "packages/desktop/out/metadata/build-meta.json"), "utf8"),
     );
     facts.stagingBuild = stagingMeta;
-    const expectedVersion = process.env.XCODE_E2E_EXPECTED_RELEASE_VERSION;
+    const expectedVersion = process.env.ZCODE_E2E_EXPECTED_RELEASE_VERSION;
     if (expectedVersion) {
       expect(stagingMeta.appVersion).toBe(expectedVersion);
       expect(stagingMeta.minCompatibleVersion).toBe(expectedVersion);
@@ -182,12 +182,12 @@ describe("REL3163-UPGRADE-01：真实 tag 到 staging 的桌面升级", () => {
     await reloadElectronSessionPreservingBrowserProfile(browser, {
       afterElectronProcessExit: async () => {
         await replaceRunApplication(currentRoot);
-        if (process.env.XCODE_E2E_CHECK_OLD_LIFECYCLE === "1")
+        if (process.env.ZCODE_E2E_CHECK_OLD_LIFECYCLE === "1")
           await setStartupReconnectForNextBoot(false);
       },
     });
     await waitForRendererAfterColdRestart(MARKER);
-    if (process.env.XCODE_E2E_CHECK_OLD_LIFECYCLE === "1") {
+    if (process.env.ZCODE_E2E_CHECK_OLD_LIFECYCLE === "1") {
       // 旧版离线记录尚未经过新连接握手，也不能因此放行旧 CLI 不支持的生命周期命令。
       const oldSource = parseRemoteWorkspaceIdentity(tasks[0]!.identity)?.sourceServerId;
       if (!oldSource) throw new Error("旧版离线记录缺少 Source 身份");
@@ -263,7 +263,7 @@ describe("REL3163-UPGRADE-01：真实 tag 到 staging 的桌面升级", () => {
     await browser.saveScreenshot(join(artifactDir, "staging-cold-restore.png"));
     expect((await readRelease(prepared.config)).archiveSha256).toBe(newHash);
     facts.coldRestore = "both original task IDs and histories continued";
-    if (process.env.XCODE_E2E_CHECK_OLD_LIFECYCLE === "1")
+    if (process.env.ZCODE_E2E_CHECK_OLD_LIFECYCLE === "1")
       expect(facts.oldOfflineLifecycleSafe).toBe(true);
   });
 });

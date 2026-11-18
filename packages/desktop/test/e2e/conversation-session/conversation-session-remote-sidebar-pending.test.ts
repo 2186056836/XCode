@@ -21,7 +21,7 @@ import {
 
 const CASE_MARKER = "E2E_REMOTE_SIDEBAR_PENDING";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-sidebar-pending",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-sidebar-pending",
 );
 const run = promisify(execFile);
 
@@ -50,14 +50,14 @@ async function setAppearance(locale: "zh-CN" | "en-US", theme: "light" | "dark")
 }
 
 async function readRemoteCurrentSha(): Promise<string> {
-  const container = process.env.XCODE_E2E_SSH_CONTAINER?.trim();
-  if (!container) throw new Error(`${CASE_MARKER}: 缺少 XCODE_E2E_SSH_CONTAINER`);
+  const container = process.env.ZCODE_E2E_SSH_CONTAINER?.trim();
+  if (!container) throw new Error(`${CASE_MARKER}: 缺少 ZCODE_E2E_SSH_CONTAINER`);
   const { stdout } = await run(
     "docker",
     [
       "exec",
       "-u",
-      process.env.XCODE_E2E_SSH_USERNAME?.trim() || "dev",
+      process.env.ZCODE_E2E_SSH_USERNAME?.trim() || "dev",
       container,
       "bash",
       "-lc",

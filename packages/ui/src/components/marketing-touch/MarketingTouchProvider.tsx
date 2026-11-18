@@ -20,7 +20,7 @@ import {
   marketingSettingsSections,
   waitForMarketingCapability,
 } from "@/lib/marketingNavigation.js";
-import { BUILTIN_MODEL_PROVIDER_IDS, toZhOrEnLocale, XCODE_ENV } from "@zcode/shared";
+import { BUILTIN_MODEL_PROVIDER_IDS, toZhOrEnLocale, ZCODE_ENV } from "@zcode/shared";
 import { useServices } from "@/hooks/useServices.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useXCodeStore } from "@/store/StoreProvider.js";
@@ -311,7 +311,7 @@ export function MarketingTouchProvider({
       },
     });
     poller = createMarketingTouchPoller({
-      intervalMs: resolveMarketingTouchPollIntervalMs(import.meta.env.PROD, XCODE_ENV),
+      intervalMs: resolveMarketingTouchPollIntervalMs(import.meta.env.PROD, ZCODE_ENV),
       query: async () => {
         await controller.refresh();
         await controller.showPending();

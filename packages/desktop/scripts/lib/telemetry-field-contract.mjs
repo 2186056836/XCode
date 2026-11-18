@@ -223,8 +223,8 @@ export async function auditTelemetryFields({
   records,
   contractPath = DEFAULT_CONTRACT,
   repoRoot = DEFAULT_ROOT,
-  artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR,
-  sync = process.env.XCODE_E2E_TELEMETRY_FIELD_SYNC !== "0",
+  artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR,
+  sync = process.env.ZCODE_E2E_TELEMETRY_FIELD_SYNC !== "0",
 }) {
   const result = inspect(records, await loadContract(contractPath));
   if (!result.errors.length) {

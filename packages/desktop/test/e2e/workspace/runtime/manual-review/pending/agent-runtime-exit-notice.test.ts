@@ -1,6 +1,6 @@
 // 后台 runtime（app-server）意外退出后，会话底部给出原因横幅（docs/ui/agent-runtime-exit-notice.md）。
 // 复现方式与用户现场一致：直接 SIGKILL app-server 子进程。只在 Linux 上按 /proc 定位本次 E2E 的进程。
-// 运行：XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- \
+// 运行：ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- \
 //   --spec './test/e2e/workspace/runtime/manual-review/pending/agent-runtime-exit-notice.test.ts'
 // ARE-02 借用 v4 后台工作用例的回放夹具产出一个后台 Bash，并用 prlimit 让 Host 暂时无法创建子进程；需要另设
 //   E2E_PROVIDER_REPLAY_FIXTURE_PATH=packages/desktop/test/e2e/fixtures/upstream/common.json,\
@@ -103,8 +103,8 @@ describe("后台 runtime 意外退出提示", () => {
 
   it("ARE-01 SIGKILL app-server 后会话底部出现通用原因横幅，可关闭", async function () {
     this.timeout(180_000);
-    const homeDir = process.env.XCODE_E2E_HOME_DIR;
-    if (!homeDir) throw new Error("缺少 XCODE_E2E_HOME_DIR");
+    const homeDir = process.env.ZCODE_E2E_HOME_DIR;
+    if (!homeDir) throw new Error("缺少 ZCODE_E2E_HOME_DIR");
     // 发一条消息让工作区确定拉起 runtime（provider 指向不可达的占位地址，本轮请求失败无妨）。
     await prepareConversationE2E();
     await sendPrompt("E2E_ARE01 start the runtime");
@@ -129,8 +129,8 @@ describe("后台 runtime 意外退出提示", () => {
 
     const banner = $('[data-testid="agent-runtime-exit-banner"]');
     await banner.waitForDisplayed({ timeout: 30_000, timeoutMsg: "app-server 被杀后没有出现横幅" });
-    if (process.env.XCODE_E2E_ARE_SCREENSHOT) {
-      await browser.saveScreenshot(process.env.XCODE_E2E_ARE_SCREENSHOT);
+    if (process.env.ZCODE_E2E_ARE_SCREENSHOT) {
+      await browser.saveScreenshot(process.env.ZCODE_E2E_ARE_SCREENSHOT);
     }
     // Linux 的 SIGKILL 不是可判定的内存不足签名，走通用文案。
     expect(await banner.getAttribute("data-exit-cause")).toBe("unknown");
@@ -155,8 +155,8 @@ describe("后台 runtime 意外退出提示", () => {
   it("ARE-02 重连失败时原因横幅随错误面板保留；胶囊里后台 Bash 的计时冻结、取消入口隐藏", async function () {
     if (!process.env.E2E_PROVIDER_REPLAY_FIXTURE_PATH?.includes("v4-background-work")) this.skip();
     this.timeout(240_000);
-    const homeDir = process.env.XCODE_E2E_HOME_DIR;
-    if (!homeDir) throw new Error("缺少 XCODE_E2E_HOME_DIR");
+    const homeDir = process.env.ZCODE_E2E_HOME_DIR;
+    if (!homeDir) throw new Error("缺少 ZCODE_E2E_HOME_DIR");
     await prepareV4ConversationE2E({ resetDraftBeforeProvider: true });
     await sendV4Prompt("E2E_V4_BGWORK 起一个后台任务");
     try {
@@ -200,9 +200,9 @@ describe("后台 runtime 意外退出提示", () => {
           () => false,
         );
       if (!bannerShown) problems.push("重连失败后原因横幅消失了");
-      if (process.env.XCODE_E2E_ARE_SCREENSHOT) {
+      if (process.env.ZCODE_E2E_ARE_SCREENSHOT) {
         await browser.saveScreenshot(
-          process.env.XCODE_E2E_ARE_SCREENSHOT.replace(/(\.png)?$/, "-errored.png"),
+          process.env.ZCODE_E2E_ARE_SCREENSHOT.replace(/(\.png)?$/, "-errored.png"),
         );
       }
       // 胶囊仍显示断开前的后台 Bash，但计时停住、取消入口隐藏（目标执行已不存在）。

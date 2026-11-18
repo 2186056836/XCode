@@ -55,9 +55,9 @@ const PREVIEW_EXTENSION_TO_KIND: Readonly<Record<string, XCodeFileCitationPrevie
   ".webm": "video",
   ".weba": "audio",
 };
-const XCODE_FILE_CITATION_DIRECTIVE_NAME = "zcode-file-citation";
-const XCODE_FILE_CITATION_SINGLE_COLON_PREFIX_LENGTH = ":zcode".length;
-const XCODE_FILE_CITATION_SYNTAX = {
+const ZCODE_FILE_CITATION_DIRECTIVE_NAME = "zcode-file-citation";
+const ZCODE_FILE_CITATION_SINGLE_COLON_PREFIX_LENGTH = ":zcode".length;
+const ZCODE_FILE_CITATION_SYNTAX = {
   allowSingleColon: true,
   allowSmartQuotes: true,
   allowTripleColon: true,
@@ -66,8 +66,8 @@ const XCODE_FILE_CITATION_SYNTAX = {
 export function extractXCodeFileCitationDirectives(content: string): XCodeFileCitationDirective[] {
   return extractAssistantDirectives(
     content,
-    XCODE_FILE_CITATION_DIRECTIVE_NAME,
-    XCODE_FILE_CITATION_SYNTAX,
+    ZCODE_FILE_CITATION_DIRECTIVE_NAME,
+    ZCODE_FILE_CITATION_SYNTAX,
   ).map((directive) => ({
     start: directive.start,
     end: directive.end,
@@ -109,19 +109,19 @@ export function projectXCodeFileCitations(
   const protectedRanges = findMarkdownCodeRanges(content);
   const unclosedStart = findUnclosedAssistantDirectiveStart(
     content,
-    XCODE_FILE_CITATION_DIRECTIVE_NAME,
+    ZCODE_FILE_CITATION_DIRECTIVE_NAME,
     protectedRanges,
-    XCODE_FILE_CITATION_SYNTAX,
+    ZCODE_FILE_CITATION_SYNTAX,
   );
   if (unclosedStart === null) {
     const prefixStart = findAssistantDirectivePrefixStart(
       content,
-      ["code-comment", XCODE_FILE_CITATION_DIRECTIVE_NAME],
+      ["code-comment", ZCODE_FILE_CITATION_DIRECTIVE_NAME],
       protectedRanges,
       {
-        minimumSingleColonPrefixLength: XCODE_FILE_CITATION_SINGLE_COLON_PREFIX_LENGTH,
-        singleColonDirectiveNames: [XCODE_FILE_CITATION_DIRECTIVE_NAME],
-        tripleColonDirectiveNames: [XCODE_FILE_CITATION_DIRECTIVE_NAME],
+        minimumSingleColonPrefixLength: ZCODE_FILE_CITATION_SINGLE_COLON_PREFIX_LENGTH,
+        singleColonDirectiveNames: [ZCODE_FILE_CITATION_DIRECTIVE_NAME],
+        tripleColonDirectiveNames: [ZCODE_FILE_CITATION_DIRECTIVE_NAME],
       },
     );
     return prefixStart === null

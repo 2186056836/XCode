@@ -21,7 +21,7 @@ import { readHostProcesses, runSSHCommand, waitForRemoteTab } from "#e2e/helpers
 
 const CASE_MARKER = "E2E_R3_RESTART_REMOTE_SERVICE";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-restart-remote-service",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-restart-remote-service",
 );
 
 /**

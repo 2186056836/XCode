@@ -307,7 +307,7 @@ export function runtimeConfigLogContext(
       : undefined,
     runtimeFeatureBrowserUse: runtimeConfig.runtimeFeatures?.browserUse === true,
     runtimeFeatureNodeRepl: runtimeConfig.runtimeFeatures?.nodeRepl === true,
-    // 只在被改过（开发环境变量或 runtimeConfig）时出现，便于确认 XCODE_SUBAGENT_STALL_NOTIFY_MS 生效值。
+    // 只在被改过（开发环境变量或 runtimeConfig）时出现，便于确认 ZCODE_SUBAGENT_STALL_NOTIFY_MS 生效值。
     ...(runtimeConfig.subagents?.backgroundStallNotifyMs !== undefined
       ? { subagentStallNotifyMs: runtimeConfig.subagents.backgroundStallNotifyMs }
       : {}),
@@ -324,7 +324,7 @@ export function runtimeConfigLogContext(
  * - 优先级低于 `runtimeConfig.subagents.backgroundStallNotifyMs`（展开顺序在前）。
  * 生效值出现在 runtimeConfigLogContext 的 `subagentStallNotifyMs`。
  */
-export const SUBAGENT_STALL_NOTIFY_MS_ENV = "XCODE_SUBAGENT_STALL_NOTIFY_MS";
+export const SUBAGENT_STALL_NOTIFY_MS_ENV = "ZCODE_SUBAGENT_STALL_NOTIFY_MS";
 export const SUBAGENT_STALL_NOTIFY_MIN_MS = 10_000;
 
 function readSubagentStallNotifyOverride(env: NodeJS.ProcessEnv): {

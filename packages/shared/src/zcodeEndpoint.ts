@@ -75,16 +75,16 @@ export interface XCodeEndpointUrls {
 
 export interface RuntimeXCodeEndpointEnv {
   [key: string]: string | undefined;
-  XCODE_ENV?: string;
-  XCODE_BASE_URL?: string;
-  XCODE_ENDPOINT_ORIGIN?: string;
-  XCODE_TEST_BASE_URL?: string;
-  XCODE_PRODUCTION_BASE_URL?: string;
+  ZCODE_ENV?: string;
+  ZCODE_BASE_URL?: string;
+  ZCODE_ENDPOINT_ORIGIN?: string;
+  ZCODE_TEST_BASE_URL?: string;
+  ZCODE_PRODUCTION_BASE_URL?: string;
 }
 
 export interface RuntimeBigModelApiEnv {
   [key: string]: string | undefined;
-  XCODE_ENV?: string;
+  ZCODE_ENV?: string;
   BIGMODEL_API_BASE_URL?: string;
   BIGMODEL_TEST_API_BASE_URL?: string;
   BIGMODEL_PRODUCTION_API_BASE_URL?: string;
@@ -92,7 +92,7 @@ export interface RuntimeBigModelApiEnv {
 
 export interface RuntimeZaiEndpointEnv {
   [key: string]: string | undefined;
-  XCODE_ENV?: string;
+  ZCODE_ENV?: string;
   ZAI_OAUTH_ORIGIN?: string;
   ZAI_TEST_OAUTH_ORIGIN?: string;
   ZAI_PRODUCTION_OAUTH_ORIGIN?: string;
@@ -197,8 +197,8 @@ export function resolveXCodeEndpointOrigin(options?: {
 }
 
 export function resolveRuntimeXCodeEnv(env: RuntimeXCodeEndpointEnv = {}): XCodeEnv {
-  // 独立 CLI / 服务测试未注入 XCODE_ENV 时默认生产域；桌面测试包会显式下发 XCODE_ENV=test。
-  return env.XCODE_ENV?.trim().toLowerCase() === "test" ? "test" : "production";
+  // 独立 CLI / 服务测试未注入 ZCODE_ENV 时默认生产域；桌面测试包会显式下发 ZCODE_ENV=test。
+  return env.ZCODE_ENV?.trim().toLowerCase() === "test" ? "test" : "production";
 }
 
 export function resolveRuntimeXCodeEndpointOrigin(
@@ -208,14 +208,14 @@ export function resolveRuntimeXCodeEndpointOrigin(
   const zcodeEnv = resolveRuntimeXCodeEnv(env);
   const scopedBaseOrigin =
     zcodeEnv === "production"
-      ? readRuntimeEnvValue(env, "XCODE_PRODUCTION_BASE_URL")
-      : readRuntimeEnvValue(env, "XCODE_TEST_BASE_URL");
+      ? readRuntimeEnvValue(env, "ZCODE_PRODUCTION_BASE_URL")
+      : readRuntimeEnvValue(env, "ZCODE_TEST_BASE_URL");
 
   return resolveXCodeEndpointOrigin({
     env: zcodeEnv,
     envBaseOrigin:
-      readRuntimeEnvValue(env, "XCODE_BASE_URL") ??
-      readRuntimeEnvValue(env, "XCODE_ENDPOINT_ORIGIN") ??
+      readRuntimeEnvValue(env, "ZCODE_BASE_URL") ??
+      readRuntimeEnvValue(env, "ZCODE_ENDPOINT_ORIGIN") ??
       scopedBaseOrigin,
     overrideOrigin: options?.overrideOrigin,
   });
@@ -269,7 +269,7 @@ export function buildBigModelApiUrl(env: RuntimeBigModelApiEnv = {}, path: strin
 }
 
 export function buildBigModelCodingPlanPersonalManageUrl(env: RuntimeBigModelApiEnv = {}): string {
-  // 修复原因：BigModel Coding Plan 管理页要跟随 XCODE_ENV；
+  // 修复原因：BigModel Coding Plan 管理页要跟随 ZCODE_ENV；
   // 测试环境如果继续写死 bigmodel.cn，会把测试账号带到生产套餐页。
   return buildBigModelApiUrl(env, "/coding-plan/personal/overview");
 }

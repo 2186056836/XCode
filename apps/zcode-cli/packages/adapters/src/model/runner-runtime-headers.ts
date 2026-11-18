@@ -1,4 +1,4 @@
-import { XCODE_PROVIDER_CONFIG_NETWORK_ERROR, type RequestVerificationReason } from "@zcode/shared";
+import { ZCODE_PROVIDER_CONFIG_NETWORK_ERROR, type RequestVerificationReason } from "@zcode/shared";
 import type { ModelRequestAuth } from "@zcode/contracts";
 import { ModelErrorCode, ModelProtocolError } from "@zcode/contracts";
 import type { AiSdkModelTextRequest, ResolvedAiSdkModel } from "./runner-runtime.js";
@@ -10,7 +10,7 @@ export class RuntimeHeadersRefreshError extends Error {
     this.name = "RuntimeHeadersRefreshError";
     // 只信任 Host 的结构化分类；旧文案也可能来自无效配置，不能按文本扩大重试。
     this.retryable = typeof cause === "object" && cause !== null &&
-      "code" in cause && cause.code === XCODE_PROVIDER_CONFIG_NETWORK_ERROR;
+      "code" in cause && cause.code === ZCODE_PROVIDER_CONFIG_NETWORK_ERROR;
   }
 }
 

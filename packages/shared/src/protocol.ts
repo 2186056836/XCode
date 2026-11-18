@@ -513,7 +513,7 @@ export interface AppSettings {
     workspaceIdentity?: string;
     initialTaskId?: string;
   };
-  /** 设置页里的临时 endpoint override；正式/测试默认 base url 由 XCODE_BASE_URL env 管理。 */
+  /** 设置页里的临时 endpoint override；正式/测试默认 base url 由 ZCODE_BASE_URL env 管理。 */
   zcodeEndpointOrigin?: string;
   /**
    * 代理池配置：条目列表 + 轮询策略 + 当前选中项。

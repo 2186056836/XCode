@@ -219,7 +219,7 @@ function utf8Length(text: string): number {
 describe("PLM-EXT-P2E 扩展日志控制台", () => {
   after(async () => {
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-p2e-evidence.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-p2e-evidence.json"),
       JSON.stringify(evidence, null, 2),
     ).catch(() => undefined);
     await clearAppData();

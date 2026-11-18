@@ -141,7 +141,7 @@ async function fixture(root: string) {
 async function bootServer(dbPath: string, dataBaseDir: string) {
   const store = await createSqliteSessionStore({ dbPath });
   const apps: Array<{ app: XCodeApp; options: Omit<XCodeAppOptions, "providerRegistry"> }> = [];
-  const env = { XCODE_DATA_BASE_DIR: dataBaseDir };
+  const env = { ZCODE_DATA_BASE_DIR: dataBaseDir };
   const providerRegistry = createTestProviderRegistry([MODEL]);
   const server = new XCodeProtocolAgentServer({
     cwd: process.cwd(),

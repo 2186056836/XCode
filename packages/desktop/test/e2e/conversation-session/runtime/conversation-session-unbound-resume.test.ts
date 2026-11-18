@@ -232,7 +232,7 @@ describe("Todo 70：模型选择残缺不阻止历史打开", () => {
               ),
             }));
             await writeFile(
-              join(process.env.XCODE_E2E_ARTIFACT_DIR!, `unbound-resume-${index}.json`),
+              join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `unbound-resume-${index}.json`),
               JSON.stringify({ index, selection, diagnostic }, null, 2),
             );
             throw error;

@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { XCODE_OFFICIAL_PLUGIN_MARKETPLACE } from "@zcode/contracts";
+import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE } from "@zcode/contracts";
 import { describe, expect, it } from "vitest";
 import { createNodePluginAdapter } from "../src/plugins/index.js";
 
@@ -46,7 +46,7 @@ describe.each([
           dirs: official ? [] : [pluginRoot],
           enabled: true,
           enabledPlugins: official
-            ? { [`${PLUGIN_NAME}@${XCODE_OFFICIAL_PLUGIN_MARKETPLACE}`]: true }
+            ? { [`${PLUGIN_NAME}@${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE}`]: true }
             : {},
           options: {},
           suppressedBuiltins: [],

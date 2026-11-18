@@ -38,7 +38,7 @@ describe("Builtin 下载失败时的套餐操作", () => {
 
   it("BR117-F01：HTTP 下载失败后有效本地配置保留 Team 切换和 Start 模型选择", async function () {
     this.timeout(180_000);
-    const upstream = process.env.XCODE_E2E_CODING_PLAN_MOCK_URL;
+    const upstream = process.env.ZCODE_E2E_CODING_PLAN_MOCK_URL;
     if (!upstream) throw new Error("Missing isolated account control plane");
     const paths = getE2EAppDataPaths();
     let controlRequests = 0;
@@ -164,7 +164,7 @@ describe("Builtin 下载失败时的套餐操作", () => {
       // HTTP 地址应真正发起下载；服务返回 500 后仍保留本地配置和账号切换能力。
       expect(downloadRequests).toBeGreaterThan(0);
       const artifacts = join(
-        process.env.XCODE_E2E_ARTIFACT_DIR || join(process.cwd(), ".e2e-artifacts"),
+        process.env.ZCODE_E2E_ARTIFACT_DIR || join(process.cwd(), ".e2e-artifacts"),
         "builtin-refresh-failure",
       );
       await mkdir(artifacts, { recursive: true });
@@ -185,7 +185,7 @@ describe("Builtin 下载失败时的套餐操作", () => {
 });
 
 async function readRuntimeLogs(configDir: string): Promise<string> {
-  const dir = process.env.XCODE_E2E_RUNTIME_LOG_DIR?.trim() || join(configDir, "logs");
+  const dir = process.env.ZCODE_E2E_RUNTIME_LOG_DIR?.trim() || join(configDir, "logs");
   const files = await readdir(dir).catch(() => []);
   return (
     await Promise.all(

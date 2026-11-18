@@ -113,10 +113,10 @@ if (process.platform === "darwin" && existsSync(electronBinary)) {
   console.log(`[dev] Prepared macOS XCode Dev bundle: ${devBundle.appPath}`);
 }
 
-// XCODE_DEV_CDP_PORT：dev 联调时暴露 renderer 的 CDP 端口（如 9229），便于外部 UI 自动化验证。
+// ZCODE_DEV_CDP_PORT：dev 联调时暴露 renderer 的 CDP 端口（如 9229），便于外部 UI 自动化验证。
 const electronArgs = ["."];
-if (process.env.XCODE_DEV_CDP_PORT) {
-  electronArgs.push(`--remote-debugging-port=${process.env.XCODE_DEV_CDP_PORT}`);
+if (process.env.ZCODE_DEV_CDP_PORT) {
+  electronArgs.push(`--remote-debugging-port=${process.env.ZCODE_DEV_CDP_PORT}`);
 }
 
 const electron = spawn(electronCommand, electronArgs, {

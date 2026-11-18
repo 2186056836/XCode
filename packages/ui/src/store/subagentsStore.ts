@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import {
   normalizeAgentProviderToXCodeAgent,
-  XCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER,
   type XCodeProvider,
   type AgentSummary,
   type AgentsCapability,
@@ -74,7 +74,7 @@ export const useSubagentsStore = create<SubagentsStoreState>((set, get) => ({
   workspaceIdentity: null,
   loadedWorkspacePath: null,
   loadedWorkspaceIdentity: null,
-  provider: XCODE_AGENT_PROVIDER,
+  provider: ZCODE_AGENT_PROVIDER,
   loadedProvider: null,
   agents: [],
   capability: null,
@@ -90,7 +90,7 @@ export const useSubagentsStore = create<SubagentsStoreState>((set, get) => ({
     const currentState = get();
     const hasProvider = typeof providerOrSubagentsService === "string";
     const provider = normalizeAgentProviderToXCodeAgent(
-      hasProvider ? providerOrSubagentsService : XCODE_AGENT_PROVIDER,
+      hasProvider ? providerOrSubagentsService : ZCODE_AGENT_PROVIDER,
     );
     const subagentsService = hasProvider ? maybeSubagentsService : providerOrSubagentsService;
     const normalizedWorkspaceIdentity = workspaceIdentity?.trim() || null;
@@ -346,7 +346,7 @@ declare global {
 }
 
 if (shouldExposeE2EStoreBridge()) {
-  // E2E 诊断入口必须由 WDIO 显式打开，不能复用 XCODE_ENV=test，避免产品测试环境暴露可变全局 store。
+  // E2E 诊断入口必须由 WDIO 显式打开，不能复用 ZCODE_ENV=test，避免产品测试环境暴露可变全局 store。
   window.__subagentsStoreE2E = useSubagentsStore;
 }
 

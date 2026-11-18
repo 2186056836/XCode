@@ -61,6 +61,6 @@ Managed Worker：只消费文件和 Host Account，不拥有下载循环
 
 控制面与 CDN 实际 HTTP200，但新版共用下载器拒绝线上 revision19：两个模板 access 仍含 `teamApiKeyManagementUrl`。这是本轮已明确删除字段的旧发布产物，不恢复兼容。保留本地/LKG；新版本化 URL 发布由有权限的人执行，未自动上传或改线上指针。
 
-实际发布前运行：`XCODE_BUILTIN_RELEASE_TEST_FILE=/绝对路径/最终文件.json pnpm exec vitest run packages/provider-node/test/zcode-builtin-integrity.test.ts`，记录文件 hash；上传后比对下载 hash。不能用当前副本的通过代替后续 Todo113 改动的最终文件验收，也不能以 decoder 通过代替完整性断言。
+实际发布前运行：`ZCODE_BUILTIN_RELEASE_TEST_FILE=/绝对路径/最终文件.json pnpm exec vitest run packages/provider-node/test/zcode-builtin-integrity.test.ts`，记录文件 hash；上传后比对下载 hash。不能用当前副本的通过代替后续 Todo113 改动的最终文件验收，也不能以 decoder 通过代替完整性断言。
 
 本项代码、桌面刷新整链及最终文件检查已完成；手机／SSH、Windows 和真实上线验证限制仍留在 Goal，不转交102掩盖，也不宣告全部上线验收完成。

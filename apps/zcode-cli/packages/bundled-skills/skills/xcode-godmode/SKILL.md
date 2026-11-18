@@ -103,7 +103,7 @@ additionally need `openai` (`pip install openai`), because they call a model.
 The two test suites need nothing but the standard library.
 
 `load_godmode.py` is meant to be exec'd, not run. It resolves the script
-directory from `__file__`, `$XCODE_GODMODE_SKILL_DIR`, the working directory,
+directory from `__file__`, `$ZCODE_GODMODE_SKILL_DIR`, the working directory,
 the Hermes layout and the fork root, and puts every public function into the
 caller's scope. With the corpus vendored here, the scoring half comes from
 this skill's own `scripts/` directory; a fork checkout is only consulted for
@@ -118,7 +118,7 @@ print(is_refusal("I cannot help with that."))
 
 ```bash
 # or with the fork checkout exported
-XCODE_GODMODE_FORK_ROOT=~/Downloads/local-godmode python scripts/load_godmode.py
+ZCODE_GODMODE_FORK_ROOT=~/Downloads/local-godmode python scripts/load_godmode.py
 ```
 
 Modules that fail to import are listed in `GODMODE_LOAD_ERRORS` instead of
@@ -150,7 +150,7 @@ python scripts/run_fork_tests.py --root /path/to/local-godmode --test safety
 python scripts/run_fork_tests.py --json
 ```
 
-Root defaults to `XCODE_GODMODE_FORK_ROOT`, then `~/Downloads/local-godmode`.
+Root defaults to `ZCODE_GODMODE_FORK_ROOT`, then `~/Downloads/local-godmode`.
 Exit code 0 means every selected suite printed `ALL ... TESTS PASSED`.
 `--json` emits `{root, results:[{test,status,returncode,duration_sec,output}]}`
 for a harness.
@@ -192,11 +192,11 @@ difference is deliberate:
 - `scripts/load_godmode.py` — the fork's version only knows the Hermes
   layout (`$HERMES_HOME/skills/security/godmode/scripts`) and hard-fails on
   the first module that raises at import. This one resolves the skill
-  directory itself, accepts `$XCODE_GODMODE_SKILL_DIR`, understands
+  directory itself, accepts `$ZCODE_GODMODE_SKILL_DIR`, understands
   MSYS-style `/c/...` paths, and records import failures in
   `GODMODE_LOAD_ERRORS` instead of aborting.
 - `scripts/matrix_report.py` — the fork's default path points at the fork
-  author's workspace. This one resolves `XCODE_GODMODE_FORK_ROOT`. Two bugs
+  author's workspace. This one resolves `ZCODE_GODMODE_FORK_ROOT`. Two bugs
   were also fixed here and mirrored back into the fork: the sidecar dedupe
   key omitted the benign flag (a benign control silently replaced the hard
   probe for the same technique and category, emptying every unlock rate),
@@ -297,7 +297,7 @@ python scripts/godmode_probe.py \
   --json
 ```
 
-What it does: sends baseline, each system-template strategy, prefilled turns, and the configured Parseltongue tiers; scores each response for hard refusals, hedges, length and code density; prints a ranked table (or JSON with `--json`). `--dry-run` prints the exact request bodies without sending them. Use `--combine` to test template + prefill + obfuscation together. Credentials are read from `--api-key` or `OPENROUTER_API_KEY` / `OPENAI_API_KEY` / `XCODE_GODMODE_API_KEY`, and are never printed.
+What it does: sends baseline, each system-template strategy, prefilled turns, and the configured Parseltongue tiers; scores each response for hard refusals, hedges, length and code density; prints a ranked table (or JSON with `--json`). `--dry-run` prints the exact request bodies without sending them. Use `--combine` to test template + prefill + obfuscation together. Credentials are read from `--api-key` or `OPENROUTER_API_KEY` / `OPENAI_API_KEY` / `ZCODE_GODMODE_API_KEY`, and are never printed.
 
 Reasoning models spend tokens on `reasoning_content` before emitting `content`. The probe sends `max_tokens` (default `1024`); raise it with `--max-tokens` when a response comes back with `finish_reason=length` and empty content. Responses that are SSE-framed, or JSON followed by a bare `data: [DONE]`, are parsed correctly. If the baseline already answers the canary, the scores do not prove a bypass — pick a canary that the model actually refuses.
 

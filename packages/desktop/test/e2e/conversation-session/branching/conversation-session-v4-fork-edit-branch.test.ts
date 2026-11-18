@@ -73,7 +73,7 @@ describe("v4 catalog E09：fork 使用编辑后的 active branch", () => {
         return result;
       });
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "edit-presentation-frames.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "edit-presentation-frames.json"),
         JSON.stringify(frames, null, 2),
       );
       expect(frames.length).toBeGreaterThan(0);

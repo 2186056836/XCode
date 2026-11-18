@@ -20,17 +20,17 @@ process.env.GIT_CONFIG_KEY_0 = "core.autocrlf";
 process.env.GIT_CONFIG_VALUE_0 = "false";
 process.env.GIT_CONFIG_KEY_1 = "core.eol";
 process.env.GIT_CONFIG_VALUE_1 = "lf";
-process.env.XCODE_TEST_RELEASE_TARGET = process.env.XCODE_TEST_RELEASE_TARGET ?? "darwin";
-process.env.XCODE_TEST_RELEASE_ARCH = process.env.XCODE_TEST_RELEASE_ARCH ?? "aarch64";
-process.env.XCODE_TEST_CLIENT_CONFIG_PLATFORM = process.env.XCODE_TEST_CLIENT_CONFIG_PLATFORM ?? "darwin-aarch64";
+process.env.ZCODE_TEST_RELEASE_TARGET = process.env.ZCODE_TEST_RELEASE_TARGET ?? "darwin";
+process.env.ZCODE_TEST_RELEASE_ARCH = process.env.ZCODE_TEST_RELEASE_ARCH ?? "aarch64";
+process.env.ZCODE_TEST_CLIENT_CONFIG_PLATFORM = process.env.ZCODE_TEST_CLIENT_CONFIG_PLATFORM ?? "darwin-aarch64";
 // Bugfix: 桌面端会把自定义 dataBaseDir 通过环境变量注入到 host/git 子进程。
 // 很多服务层单测只通过覆盖 HOME 来隔离临时目录；若保留该变量，路径解析会继续优先命中真实 dataBaseDir，
 // 从而导致“终端本地跑通过，但应用内 git push 触发 pre-push 时大量用例误写到同一目录”。
 // 这里在测试入口统一清理，保证单测默认只受各自显式设置的 HOME / setDataBaseDir 控制。
-delete process.env.XCODE_DATA_BASE_DIR;
+delete process.env.ZCODE_DATA_BASE_DIR;
 
 afterEach(() => {
-  delete process.env.XCODE_DATA_BASE_DIR;
+  delete process.env.ZCODE_DATA_BASE_DIR;
 });
 
 vi.mock("node:os", async (importOriginal) => {

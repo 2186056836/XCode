@@ -78,8 +78,8 @@ export function requirePluginManualReview(): void {
   const runningPendingSpec = process.argv.some((arg) =>
     arg.replaceAll("\\", "/").includes("/plugins/manual-review/"),
   );
-  if (runningPendingSpec && process.env.XCODE_E2E_MANUAL_REVIEW !== "1") {
-    throw new Error("Plugin lifecycle pending specs require XCODE_E2E_MANUAL_REVIEW=1");
+  if (runningPendingSpec && process.env.ZCODE_E2E_MANUAL_REVIEW !== "1") {
+    throw new Error("Plugin lifecycle pending specs require ZCODE_E2E_MANUAL_REVIEW=1");
   }
 }
 
@@ -1129,7 +1129,7 @@ async function writeLifecyclePlugin(
       lifecycle: {
         type: "stdio",
         command: "node",
-        args: ["${XCODE_PLUGIN_ROOT}/server.mjs", version],
+        args: ["${ZCODE_PLUGIN_ROOT}/server.mjs", version],
       },
     },
     ...(withUi

@@ -92,7 +92,7 @@ describe("PDN01 deleted project new task", () => {
         });
       }
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `deleted-project-${entry}-before.json`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `deleted-project-${entry}-before.json`),
         JSON.stringify({ before, projectId, tasks: tree.tasks }, null, 2),
       );
       if (entry === "menu") {
@@ -126,7 +126,7 @@ describe("PDN01 deleted project new task", () => {
       await setV4ComposerText("E2E_DELETED_PROJECT_NEW_DRAFT");
       await waitForV4ComposerText("E2E_DELETED_PROJECT_NEW_DRAFT", "新草稿不能输入");
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `deleted-project-${entry}-after.png`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `deleted-project-${entry}-after.png`),
       );
     });
   }

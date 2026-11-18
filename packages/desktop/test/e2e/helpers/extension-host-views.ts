@@ -53,7 +53,7 @@ export async function writePluginDirsConfig(
 
 async function readExtensionLogLines(): Promise<string[]> {
   const logDir =
-    process.env.XCODE_E2E_RUNTIME_LOG_DIR?.trim() || join(resolveE2EStorageRoot(), "v2", "logs");
+    process.env.ZCODE_E2E_RUNTIME_LOG_DIR?.trim() || join(resolveE2EStorageRoot(), "v2", "logs");
   const names = (await readdir(logDir).catch(() => [] as string[]))
     .filter((name) => name.endsWith(".log"))
     .sort();

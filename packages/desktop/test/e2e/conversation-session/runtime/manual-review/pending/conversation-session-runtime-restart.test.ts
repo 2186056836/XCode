@@ -53,9 +53,9 @@ describe("单任务运行实例重启", () => {
     fixtureUrl = `http://127.0.0.1:${(fixtureServer.address() as AddressInfo).port}/restart`;
   });
   after(async () => {
-    if (mobile && process.env.XCODE_E2E_ARTIFACT_DIR)
+    if (mobile && process.env.ZCODE_E2E_ARTIFACT_DIR)
       await mobile
-        .screenshot({ path: join(process.env.XCODE_E2E_ARTIFACT_DIR, "SLR-mobile.png") })
+        .screenshot({ path: join(process.env.ZCODE_E2E_ARTIFACT_DIR, "SLR-mobile.png") })
         .catch(() => undefined);
     await webBrowser?.close();
     await browser.electron.execute((electron, url) => {
@@ -82,10 +82,10 @@ describe("单任务运行实例重启", () => {
     if (!sessionId) throw new Error("缺少持久任务身份");
     const selector = `[data-session-id="${sessionId}"]`;
     const pairingUrl = await obtainUnreadPairingUrl(
-      new URL(process.env.XCODE_WEB_REMOTE_CONTROL_URL!).origin,
+      new URL(process.env.ZCODE_WEB_REMOTE_CONTROL_URL!).origin,
     );
     webBrowser = await chromium.launch({
-      executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE,
+      executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE,
       headless: true,
       args: ["--no-sandbox"],
     });
@@ -99,7 +99,7 @@ describe("单任务运行实例重启", () => {
     mobile = await context.newPage();
     const project = `[data-project-name="${basename(DEFAULT_WORKSPACE)}"]`;
     await openMobilePairingPage(mobile, pairingUrl, {
-      artifactDir: process.env.XCODE_E2E_ARTIFACT_DIR!,
+      artifactDir: process.env.ZCODE_E2E_ARTIFACT_DIR!,
       caseMarker: "SLR03",
       phase: "restart",
       readySelector: project,
@@ -404,7 +404,7 @@ describe("单任务运行实例重启", () => {
       await $(`[data-testid="${TID_WORKSPACE_MORE_BUTTON}"]`).click();
       await $('[data-testid="task-restart"]').waitForDisplayed();
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `SLR-menu-${theme}.png`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `SLR-menu-${theme}.png`),
       );
       // 模态菜单会禁用页面命中；通过真实指针点击菜单外关闭，再等待关闭状态。
       await browser.action("pointer").move({ x: 1100, y: 400 }).down().up().perform();
@@ -412,7 +412,7 @@ describe("单任务运行实例重启", () => {
       await setV4ComposerText("/reload");
       await reloadOption.waitForDisplayed();
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `SLR-reload-${theme}.png`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `SLR-reload-${theme}.png`),
       );
       await browser.keys("Escape");
       await setV4ComposerText("");

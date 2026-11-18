@@ -9,7 +9,7 @@ import { dirname, join } from "node:path";
 import type { LogContext, LogEntry, Logger, LoggerFactory, LogRedactor } from "@zcode/contracts";
 import { LogLevel, LogLevelName } from "@zcode/contracts";
 import {
-  XCODE_RUNTIME_ENV_KEY,
+  ZCODE_RUNTIME_ENV_KEY,
   normalizeXCodeRuntimeEnv,
   createLocalTtftLogQueue,
 } from "@zcode/shared";
@@ -31,8 +31,8 @@ import { maybeThrowStorageFsFault } from "../storage/fs-fault-injection.js";
 
 function resolveDataBaseDir(): string {
   return (
-    process.env.XCODE_DATA_BASE_DIR?.trim() ||
-    process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+    process.env.ZCODE_DATA_BASE_DIR?.trim() ||
+    process.env.ZCODE_DESKTOP_HOME_DIR?.trim() ||
     process.env.HOME?.trim() ||
     homedir()
   );
@@ -209,11 +209,11 @@ export class NodeFileLogger implements Logger {
 export function createNodeLoggerFactory(options: NodeLoggerFactoryOptions = {}): NodeLoggerFactory {
   let currentLevel = options.minLevel ?? getDefaultMinLevel(options.env);
   let retentionCleanupScheduled = false;
-  const logDir = options.logDir ?? options.env?.XCODE_LOG_DIR ?? getDefaultLogDir();
+  const logDir = options.logDir ?? options.env?.ZCODE_LOG_DIR ?? getDefaultLogDir();
   const consoleStream =
     typeof options.console === "object"
       ? options.console.stream
-      : options.console === true || options.env?.XCODE_LOG_CONSOLE === "1"
+      : options.console === true || options.env?.ZCODE_LOG_CONSOLE === "1"
         ? process.stderr
         : undefined;
   const redactor = options.redactor ?? new DefaultLogRedactor();
@@ -267,7 +267,7 @@ function getDefaultMinLevel(env: NodeJS.ProcessEnv | undefined): LogLevel {
 }
 
 function isDevelopmentMode(env: NodeJS.ProcessEnv): boolean {
-  const runtimeEnv = normalizeXCodeRuntimeEnv(env[XCODE_RUNTIME_ENV_KEY]);
+  const runtimeEnv = normalizeXCodeRuntimeEnv(env[ZCODE_RUNTIME_ENV_KEY]);
   if (runtimeEnv === "development") return true;
   if (runtimeEnv === "production" || runtimeEnv === "test") return false;
 

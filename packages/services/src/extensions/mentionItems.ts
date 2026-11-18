@@ -11,7 +11,7 @@ import {
 import { zcodeProtocolErrorCodes } from "@zcode/shared";
 import type { ServiceLogger } from "#src/logger/serviceLogger.js";
 import {
-  XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE,
+  ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE,
   type IXCodeAgentService,
 } from "#src/zcode-agent/zcodeAgent.js";
 
@@ -54,7 +54,7 @@ function toolErrorCode(error: unknown): string {
     const code = (error as { code?: unknown }).code;
     if (
       code === zcodeProtocolErrorCodes.sessionUnavailable ||
-      code === XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE
+      code === ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE
     ) {
       return MENTION_ITEMS_ERROR_CODES.sessionUnavailable;
     }

@@ -61,8 +61,8 @@ console.error(prefix, message, context/Error)
   不上报，兼容 `(node:<pid>)` 前缀和下一行 `--trace-warnings` 提示；
   Error 对象形式则要求 name 为 `ExperimentalWarning` 且 message 为同一条 SQLite 固定文案。
   其他实验性警告、SQLite 数据库错误、混有其他错误的日志和未捕获异常继续上报。
-- `api` 或 `resource / api` 事件的 URL 命中配置中的 `XCODE_TELEMETRY_REPORT_ENDPOINT`、
-  `XCODE_ARMS_RUM_ENDPOINT` 时不上报，也不进入 `perf_network_window`。
+- `api` 或 `resource / api` 事件的 URL 命中配置中的 `ZCODE_TELEMETRY_REPORT_ENDPOINT`、
+  `ZCODE_ARMS_RUM_ENDPOINT` 时不上报，也不进入 `perf_network_window`。
   匹配 URL 的 origin 与 pathname，忽略 query 和 fragment；其他域名或路径的请求保留。
 - 已有 agent 生命周期包装日志与原生 crash 过滤规则继续生效；自定义指标与其他异常继续上报。
 
@@ -90,8 +90,8 @@ patch 头的目标 blob 与安装产物一致，并验证同一工作区连续�
 
 | 项                         | 位置 / 值                                                                                                            |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Endpoint                   | `XCODE_ARMS_RUM_ENDPOINT`（`packages/shared/src/env.ts`）                                                            |
-| 上报环境                   | `mapXCodeEnvToArmsRumEnv(runtimeEnv)`：本地开发运行态始终为 `local`；非本地运行态仅 `XCODE_ENV=production` 为 `prod` |
+| Endpoint                   | `ZCODE_ARMS_RUM_ENDPOINT`（`packages/shared/src/env.ts`）                                                            |
+| 上报环境                   | `mapXCodeEnvToArmsRumEnv(runtimeEnv)`：本地开发运行态始终为 `local`；非本地运行态仅 `ZCODE_ENV=production` 为 `prod` |
 | `sessionConfig.sampleRate` | `1`（100% 会话采样）                                                                                                 |
 | `autoInject`               | `true`（SDK 在 `dom-ready` 注入 Browser SDK；勿再 preload/renderer 手动 init）                                       |
 | `browserCollectors`        | `perf/webvitals/exception/whiteScreen/api/staticResource/click/longTask: true`（见 `ARMS_BROWSER_COLLECTORS`）       |
@@ -99,7 +99,7 @@ patch 头的目标 blob 与安装产物一致，并验证同一工作区连续�
 | `parseViewName`            | `file://` 取 html 文件名；http dev-server 取 pathname                                                                |
 | `tracing`                  | `arms_env=prod` 时 `enable: true`、`sample: 0.1`（0.1%）；`arms_env=local` 时 `sample: 1`                            |
 
-无 `XCODE_ARMS_*` 环境变量。
+无 `ZCODE_ARMS_*` 环境变量。
 
 ## longTask 归因摘要
 

@@ -31,7 +31,7 @@ const DEV: RemoteAccount = { user: "dev", home: "/home/dev" };
 const CONFIG_ROOT = `${DEV.home}/.xcode/v2`;
 const desktopRoot = process.cwd();
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-remote-core-start-failure",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-remote-core-start-failure",
 );
 
 async function runAsRoot(container: string, script: string): Promise<void> {

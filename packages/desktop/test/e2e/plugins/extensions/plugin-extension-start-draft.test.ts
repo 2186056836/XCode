@@ -67,7 +67,7 @@ async function waitForComposerText(expected: string, message: string): Promise<v
 describe("PLM-EXT-H2 workbench.startDraft 开预填草稿", () => {
   after(async () => {
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-h2-evidence.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-h2-evidence.json"),
       JSON.stringify(evidence, null, 2),
     ).catch(() => undefined);
     await clearAppData();

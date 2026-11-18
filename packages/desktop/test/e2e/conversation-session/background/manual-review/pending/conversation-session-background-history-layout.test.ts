@@ -22,7 +22,7 @@ import {
   selectV4TaskById,
 } from "#e2e/helpers/v4-conversation";
 
-const artifacts = () => process.env.XCODE_E2E_ARTIFACT_DIR!;
+const artifacts = () => process.env.ZCODE_E2E_ARTIFACT_DIR!;
 const EMPTY = "E2E_BG_HISTORY_EMPTY";
 const HISTORY = "E2E_BG_HISTORY_HISTORY";
 const TITLE = '[data-testid^="chat-background-result-title-"]';
@@ -32,9 +32,9 @@ const CONTENT = '[data-testid^="chat-assistant-history-content-"]';
 async function assertMobileEmptyHistory() {
   const sessionId = (await getV4PaneSnapshot()).sessionId!;
   const pairingUrl = await obtainUnreadPairingUrl(
-    new URL(process.env.XCODE_WEB_REMOTE_CONTROL_URL!).origin,
+    new URL(process.env.ZCODE_WEB_REMOTE_CONTROL_URL!).origin,
   );
-  const executablePath = process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
+  const executablePath = process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
   const mobileBrowser = await chromium.launch({
     ...(executablePath ? { executablePath } : { channel: "chrome" }),
     headless: true,

@@ -60,7 +60,7 @@ pnpm architecture:context <module-id>
 pnpm architecture:adopt <module-id> --root <dir> [--layer domain|app|adapters|ui] [--owner <group>]
 ```
 
-`--changed` 的比较基线按顺序选择：`--base <sha>` 或 `XCODE_PRE_PUSH_BASE` > CI 合并请求变量（`CI_MERGE_REQUEST_DIFF_BASE_SHA` 等）> pre-push stdin 的远端 sha > `@{upstream}` > 默认分支 merge-base（由 `scripts/architecture/default-branch.mjs` 维护，`origin/staging` 优先）> `HEAD`。报告第二行打印实际使用的基线。2026-09 review 发现首版只用 `git diff HEAD`，CI 干净 checkout 与 pre-push 时差异为空，门禁实际只检查环；已修复。
+`--changed` 的比较基线按顺序选择：`--base <sha>` 或 `ZCODE_PRE_PUSH_BASE` > CI 合并请求变量（`CI_MERGE_REQUEST_DIFF_BASE_SHA` 等）> pre-push stdin 的远端 sha > `@{upstream}` > 默认分支 merge-base（由 `scripts/architecture/default-branch.mjs` 维护，`origin/staging` 优先）> `HEAD`。报告第二行打印实际使用的基线。2026-09 review 发现首版只用 `git diff HEAD`，CI 干净 checkout 与 pre-push 时差异为空，门禁实际只检查环；已修复。
 
 `architecture:adopt` 把一个目录登记为 managed 模块：从真实 import 反推 `requires`、生成缺失的四件套骨架（`module.ts`、`contract.ts`、`contract.example.ts`、`CONTRACT.md`），不再要求或生成 App 单测、在策略文件登记并保留注释。它存在的理由是让"登记模块"比"绕过规则"更便宜。
 

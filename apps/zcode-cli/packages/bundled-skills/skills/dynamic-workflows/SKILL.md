@@ -718,7 +718,7 @@ workspace, since its rows are the chart's points.
 The complete review workflow that used to sit here — a reviewer per changed file, triage
 through one shared subagent that is fed as reviews land, a confirmer per kept finding chained
 inside the same callback, one join for the cross-file deduplication — is
-`${XCODE_SKILL_DIR}/examples.md` §5; §7 and §10 carry its rules. The open-ended form — a
+`${ZCODE_SKILL_DIR}/examples.md` §5; §7 and §10 carry its rules. The open-ended form — a
 seed that surveys and ends in a tail hole, grown fill by fill — is `examples.md` #7 (§15).
 
 ## 12. Anti-patterns
@@ -1056,13 +1056,13 @@ amend the draft as usual. Full scripts: `patterns.md` #14–#16, `examples.md` #
 
 ## Going deeper
 
-- `${XCODE_SKILL_DIR}/patterns.md` — the topology catalogue. Its index puts the pipeline
+- `${ZCODE_SKILL_DIR}/patterns.md` — the topology catalogue. Its index puts the pipeline
   shapes first: per-item chaining, streaming through channels, a feedback loop with a counted
   close. Then fan-out/fan-in, review sweeps, planner-reviewer loops, judge panels, staged
   handoffs, bounded discovery, `world.run`-gated verifier loops, model routing, and the hole
   shapes (growth by tail holes, a stage shaped by discovery, a remedy hole). Read it when you
   know the shape you want and want it written correctly.
-- `${XCODE_SKILL_DIR}/examples.md` — complete worked scripts, including a two-subagent
+- `${ZCODE_SKILL_DIR}/examples.md` — complete worked scripts, including a two-subagent
   adversarial prove/disprove loop and a repository guide grown step by step through tail
   holes. Read one when you want to see a whole script's arc.
 

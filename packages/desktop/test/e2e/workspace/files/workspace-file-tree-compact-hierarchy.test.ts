@@ -78,7 +78,7 @@ describe("工作区文件树 compact hierarchy E2E", () => {
         { timeout: 10000, timeoutMsg: `主题未切换到 ${theme}` },
       );
       await assertNestedHierarchy();
-      const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+      const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
       if (!artifactDir) throw new Error("缺少 E2E artifact 目录");
       await writeFile(
         join(artifactDir, `nested-hierarchy-${theme}.json`),

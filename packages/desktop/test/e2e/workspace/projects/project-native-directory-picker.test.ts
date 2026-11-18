@@ -158,7 +158,7 @@ describe("本地项目原生多目录选择", () => {
             width === 1200 ? "This computer" : "此电脑",
           );
           await browser.saveScreenshot(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR!, `PCFT-trust-${width}-${theme}.png`),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `PCFT-trust-${width}-${theme}.png`),
           );
         }
       }
@@ -242,7 +242,7 @@ describe("本地项目原生多目录选择", () => {
           ),
         );
         await browser.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, `native-project-${theme}.png`),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `native-project-${theme}.png`),
         );
       }
     } finally {

@@ -19,8 +19,8 @@ A command runs in the session's Bash. Every process in that session can read its
 
 | Name | Value | Set by |
 | ---- | ----- | ------ |
-| `XCODE_OFFICIAL_ENDPOINT` | Endpoint address: a Unix domain socket path on macOS/Linux, a named pipe (`\\.\pipe\zcode-official-<pid>-<random>`) on Windows | Agent, per execution request |
-| `XCODE_OFFICIAL_ENDPOINT_TOKEN` | Random per-session token (32 bytes, base64url) | Agent, per execution request |
+| `ZCODE_OFFICIAL_ENDPOINT` | Endpoint address: a Unix domain socket path on macOS/Linux, a named pipe (`\\.\pipe\zcode-official-<pid>-<random>`) on Windows | Agent, per execution request |
+| `ZCODE_OFFICIAL_ENDPOINT_TOKEN` | Random per-session token (32 bytes, base64url) | Agent, per execution request |
 
 - Precedence: the agent's execution overlay always wins over a value already in the request's `env.set`. Both keys are in the sanitized runtime env list, so values inherited from the agent's own parent process are dropped and never reach commands.
 - Requests with `env.base: "empty"` are intentionally clean and get neither key.

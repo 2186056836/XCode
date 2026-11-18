@@ -214,7 +214,7 @@ describe("设置项模糊搜索", () => {
             expect(bounds.width).toBeGreaterThan(100);
             expect(bounds.x).toBeGreaterThanOrEqual(0);
             expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
-            const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+            const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
             if (artifactDir)
               await browser.saveScreenshot(
                 join(artifactDir, `settings-search-${width}-${theme}-${locale}.png`),

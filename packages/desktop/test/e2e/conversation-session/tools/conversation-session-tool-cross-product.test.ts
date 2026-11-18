@@ -153,7 +153,7 @@ describe("会话区工具叉乘 E2E", () => {
 });
 
 function readSelectedToolCrossProductCases() {
-  const configured = process.env.XCODE_E2E_TOOL_CROSS_PRODUCT_ONLY?.trim();
+  const configured = process.env.ZCODE_E2E_TOOL_CROSS_PRODUCT_ONLY?.trim();
   if (!configured) {
     return TOOL_CROSS_PRODUCT_CASES;
   }
@@ -168,7 +168,7 @@ function readSelectedToolCrossProductCases() {
     (toolCase) => selected.has(toolCase.toolName) || selected.has(toolCase.markerName),
   );
   if (cases.length === 0) {
-    throw new Error(`XCODE_E2E_TOOL_CROSS_PRODUCT_ONLY did not match any tool: ${configured}`);
+    throw new Error(`ZCODE_E2E_TOOL_CROSS_PRODUCT_ONLY did not match any tool: ${configured}`);
   }
   return cases;
 }

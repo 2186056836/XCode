@@ -55,7 +55,7 @@ Timeline 的展示 label 单独保留，不混入严格的 Selection 契约。
 
 第一版使用 SQLite。TypeScript 层用运行时 schema 校验 `data` JSON，数据库只展开必要索引字段。
 
-默认物理路径由 `storage.sessionDbPath` 控制，默认值为 `~/.xcode/cli/db/db.sqlite`。用户配置和 `XCODE_SESSION_DB_PATH` 可以覆盖该路径；为兼容早期开发入口，`XCODE_SESSION_DB` 也作为同义环境变量解析。bootstrap 负责解析 `~` 和相对路径，业务层不得依赖 SQLite 文件名或目录结构。
+默认物理路径由 `storage.sessionDbPath` 控制，默认值为 `~/.xcode/cli/db/db.sqlite`。用户配置和 `ZCODE_SESSION_DB_PATH` 可以覆盖该路径；为兼容早期开发入口，`ZCODE_SESSION_DB` 也作为同义环境变量解析。bootstrap 负责解析 `~` 和相对路径，业务层不得依赖 SQLite 文件名或目录结构。
 
 不要把所有字段都拆成列。关键点是：
 

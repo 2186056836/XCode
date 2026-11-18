@@ -43,7 +43,7 @@ try {
       command: process.execPath,
       args: [join(root, "dist/server.mjs")],
       cwd: workspace,
-      env: { PATH: process.env.PATH ?? "", XCODE_WORKSPACE_ROOT: workspace },
+      env: { PATH: process.env.PATH ?? "", ZCODE_WORKSPACE_ROOT: workspace },
       stderr: "pipe",
     }),
   );

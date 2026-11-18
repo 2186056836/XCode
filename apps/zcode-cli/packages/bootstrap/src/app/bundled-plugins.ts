@@ -5,11 +5,11 @@ import { chmod, mkdir, readdir, realpath, readFile, writeFile } from "node:fs/pr
 import { dirname, join, resolve, sep } from "node:path";
 import { writeBundledOfficialMarketplacePartition } from "@zcode/adapters";
 import {
-  XCODE_OFFICIAL_PLUGIN_MARKETPLACE as OFFICIAL_PLUGIN_MARKETPLACE,
+  ZCODE_OFFICIAL_PLUGIN_MARKETPLACE as OFFICIAL_PLUGIN_MARKETPLACE,
   type Logger,
   type PluginLoadOutcome,
 } from "@zcode/contracts";
-import { XCODE_CUA_OFFICIAL_PLUGIN_ID } from "@zcode/shared";
+import { ZCODE_CUA_OFFICIAL_PLUGIN_ID } from "@zcode/shared";
 import {
   createOfficialPluginCacheRetryBudget,
   collectOfficialPluginSourceFiles,
@@ -187,14 +187,14 @@ export function createOfficialPluginPreparation(options?: {
               completed.set(key, { signature, facts: preparedFacts });
             return failedSeeds;
           } catch (error) {
-            if ((error as NodeJS.ErrnoException).code !== "XCODE_PLUGIN_SOURCES_CHANGED")
+            if ((error as NodeJS.ErrnoException).code !== "ZCODE_PLUGIN_SOURCES_CHANGED")
               throw error;
             lastSourceError = error;
             continue;
           }
         }
         throw Object.assign(new Error("Plugin seed sources changed", { cause: lastSourceError }), {
-          code: "XCODE_PLUGIN_SOURCES_CHANGED",
+          code: "ZCODE_PLUGIN_SOURCES_CHANGED",
         });
       });
       pending.add(run);
@@ -294,7 +294,7 @@ async function prepareBundledOfficialPlugins(
           new Error(
             `Bundled official plugin ${plugin.definition.name} is missing required seed assets: ${plugin.missingSeedPaths.join(", ")}`,
           ),
-          { code: "XCODE_PLUGIN_SEED_INCOMPLETE" },
+          { code: "ZCODE_PLUGIN_SEED_INCOMPLETE" },
         ),
         missingSeedPaths: plugin.missingSeedPaths,
         operation: "seed_plugin",
@@ -356,7 +356,7 @@ async function prepareBundledOfficialPlugins(
                   new Error(
                     `Bundled plugin asset hash mismatch: ${plugin.definition.name}/${file.path}`,
                   ),
-                  { code: "XCODE_PLUGIN_SOURCES_CHANGED" },
+                  { code: "ZCODE_PLUGIN_SOURCES_CHANGED" },
                 );
               }
               const outputPath = join(temporaryRoot, ...file.path.split("/"));
@@ -371,7 +371,7 @@ async function prepareBundledOfficialPlugins(
             // 延后枚举后，源入口可能在检查与复制之间消失；不能给残缺目录写成功 marker。
             if (!(await isSeedUsable(temporaryRoot, plugin.definition))) {
               throw Object.assign(new Error("Plugin seed source became incomplete"), {
-                code: "XCODE_PLUGIN_SOURCES_CHANGED",
+                code: "ZCODE_PLUGIN_SOURCES_CHANGED",
               });
             }
             await writeFile(
@@ -467,7 +467,7 @@ export async function resolveOfficialPluginRoots(input: {
     if (definition.name === "android-emulator") continue;
     // CUA 的 frame contract 随 wrapper 与 producer 原子升级。加载旧版本
     // cache 会把旧 block 布局接到新 consumer 上；当前 cache 不可用时宁可不注册 CUA。
-    if (`${definition.name}@${OFFICIAL_PLUGIN_MARKETPLACE}` === XCODE_CUA_OFFICIAL_PLUGIN_ID) {
+    if (`${definition.name}@${OFFICIAL_PLUGIN_MARKETPLACE}` === ZCODE_CUA_OFFICIAL_PLUGIN_ID) {
       continue;
     }
     const fallbackRoot = await findUsableOfficialPluginFallback(input.storageRoot, definition);
@@ -486,7 +486,7 @@ async function resolveSeedSource(
   } catch (error) {
     if (["ENOENT", "ENOTDIR"].includes((error as NodeJS.ErrnoException).code ?? ""))
       throw Object.assign(new Error("Plugin seed source disappeared", { cause: error }), {
-        code: "XCODE_PLUGIN_SOURCES_CHANGED",
+        code: "ZCODE_PLUGIN_SOURCES_CHANGED",
       });
     throw error;
   }

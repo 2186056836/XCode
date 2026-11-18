@@ -20,7 +20,7 @@ import {
   SOURCE_SERVER_UPGRADE_REQUIRED_ERROR_CODE,
   SOURCE_SERVER_UPDATE_IN_PROGRESS_ERROR_CODE,
   REMOTE_RECOVERY_BUDGET_EXHAUSTED_ERROR_CODE,
-  XCODE_COMPATIBILITY_MANIFEST,
+  ZCODE_COMPATIBILITY_MANIFEST,
   compareCompatibilityVersions,
   evaluateSourceServerCompatibility,
   isPublicXCodeErrorCode,
@@ -433,7 +433,7 @@ export class SourceServerConnectionManager {
       options.createAdapter ?? ((kind) => createSourceServerTransportAdapter(kind));
     this.connectServer = options.connectServer ?? connectServerRemoteOverDuplex;
     this.now = options.now ?? Date.now;
-    this.compatibilityManifest = options.compatibilityManifest ?? XCODE_COMPATIBILITY_MANIFEST;
+    this.compatibilityManifest = options.compatibilityManifest ?? ZCODE_COMPATIBILITY_MANIFEST;
   }
 
   public async connect(

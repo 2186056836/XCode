@@ -23,11 +23,11 @@ const output = options.outputDir
 await mkdir(output, { recursive: true });
 process.stdout.write(`[mcp-apps-host-e2e] artifacts: ${output}\n`);
 const fixture = join(desktop, "scripts/mcp-apps-host-fixture");
-const showcaseServer = process.env.XCODE_SHOWCASE_SERVER;
+const showcaseServer = process.env.ZCODE_SHOWCASE_SERVER;
 if (process.argv.includes("--showcase-only")) {
   if (!showcaseServer)
     throw new Error(
-      "Set XCODE_SHOWCASE_SERVER to the built Showcase dist/server.mjs from zcode-plugins",
+      "Set ZCODE_SHOWCASE_SERVER to the built Showcase dist/server.mjs from zcode-plugins",
     );
   await access(showcaseServer);
 }
@@ -191,9 +191,9 @@ for (const mode of modes) {
   await new Promise((accept, reject) => {
     const env = { ...process.env };
     if (process.argv.includes("--photocraft-background-only")) {
-      if (!env.XCODE_PHOTOCRAFT_SERVER)
-        throw new Error("Set XCODE_PHOTOCRAFT_SERVER to the built PhotoCraft dist/server.mjs");
-      env.XCODE_PHOTOCRAFT_ONLY = "1";
+      if (!env.ZCODE_PHOTOCRAFT_SERVER)
+        throw new Error("Set ZCODE_PHOTOCRAFT_SERVER to the built PhotoCraft dist/server.mjs");
+      env.ZCODE_PHOTOCRAFT_ONLY = "1";
     }
     delete env.ELECTRON_RUN_AS_NODE;
     const launch = resolveMcpAppsHostLaunch(
@@ -229,7 +229,7 @@ for (const mode of modes) {
         reject(new Error(`Electron fixture timed out (${mode})`));
       },
       mode === "background"
-        ? process.env.XCODE_PHOTOCRAFT_SERVER
+        ? process.env.ZCODE_PHOTOCRAFT_SERVER
           ? 300_000
           : 180_000
         : mode === "managed"

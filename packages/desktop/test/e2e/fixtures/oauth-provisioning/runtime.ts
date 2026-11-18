@@ -11,7 +11,7 @@ import {
   OAuthCredentialRepo,
 } from "@zcode/services/node";
 
-const base = process.env.XCODE_DATA_BASE_DIR;
+const base = process.env.ZCODE_DATA_BASE_DIR;
 if (!base?.includes("oauth-provisioning-e2e-"))
   throw new Error("isolated provisioning HOME required");
 const configDir = join(base, ".zcode", "v2");

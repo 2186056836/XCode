@@ -123,7 +123,7 @@ async function waitForInvalidTicketResponse(): Promise<{
   issuedTicketCount: number;
   requests: unknown[];
 }> {
-  const port = Number(process.env.XCODE_OFFPEAK_MOCK_PORT ?? "45197");
+  const port = Number(process.env.ZCODE_OFFPEAK_MOCK_PORT ?? "45197");
   let latest = { invalidTicketRequests: 0, issuedTicketCount: 0, requests: [] as unknown[] };
   await browser.waitUntil(
     async () => {

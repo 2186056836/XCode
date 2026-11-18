@@ -348,11 +348,11 @@ if (appArg < 0) {
 const env = {
   ...process.env,
   HOME: home,
-  XCODE_DATA_BASE_DIR: home,
-  XCODE_DESKTOP_HOME_DIR: home,
-  XCODE_DESKTOP_USER_DATA_DIR: resolve(artifact, "user-data"),
-  XCODE_DESKTOP_SESSION_DATA_DIR: resolve(artifact, "session"),
-  XCODE_DESKTOP_APPLICATION_NAME: "XCode CA Constraints Acceptance",
+  ZCODE_DATA_BASE_DIR: home,
+  ZCODE_DESKTOP_HOME_DIR: home,
+  ZCODE_DESKTOP_USER_DATA_DIR: resolve(artifact, "user-data"),
+  ZCODE_DESKTOP_SESSION_DATA_DIR: resolve(artifact, "session"),
+  ZCODE_DESKTOP_APPLICATION_NAME: "XCode CA Constraints Acceptance",
 };
 delete env.ELECTRON_RUN_AS_NODE;
 let application;

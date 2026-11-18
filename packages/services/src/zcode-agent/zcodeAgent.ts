@@ -246,7 +246,7 @@ export interface XCodeAgentWorkspaceRuntimeIdentity {
   workspaceKey: string;
 }
 
-export const XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE = "XCODE_AGENT_RUNTIME_UNAVAILABLE";
+export const ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE = "ZCODE_AGENT_RUNTIME_UNAVAILABLE";
 
 export type XCodeAgentRuntimePolicy = "start-if-needed" | "existing-only";
 

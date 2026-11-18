@@ -2,7 +2,7 @@
 // 与 plugins.ts（安装/市场/启停等管理面）分文件：本查询是会话/草稿 Picker 的只读投影，
 // 且 plugins.ts 已接近 max-lines 门禁。
 import {
-  XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
+  ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
   zcodeProtocolNotifications,
   zcodePluginsReferenceCatalogParamsSchema,
   zcodePluginsResolveSuggestedReferenceParamsSchema,
@@ -71,7 +71,7 @@ export async function getPluginReferenceCatalog(
   };
 }
 
-const SUGGESTED_PLUGIN_MARKETPLACE = XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID;
+const SUGGESTED_PLUGIN_MARKETPLACE = ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID;
 const SUGGESTED_PLUGIN_MARKETPLACE_REFRESH_TIMEOUT_MS = 10_000;
 
 /** 推荐 Prompt 的安装前可信解析；missing 必须先刷新官方目录，失败时禁止旧快照安装。 */

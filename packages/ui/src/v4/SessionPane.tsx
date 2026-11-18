@@ -37,7 +37,7 @@ import {
   BUILTIN_MODEL_PROVIDER_IDS,
   buildCustomSupplierKey,
   isRemoteWorkspaceIdentity,
-  XCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER,
 } from "@zcode/shared";
 import { TID_CHAT_EMPTY, TID_V4_SESSION_PANE, testId } from "@zcode/shared/test-ids";
 import type {
@@ -4501,7 +4501,7 @@ export function SessionPane({
         setSendSubmissionError({
           code:
             getRemoteConnectionFailureCode(error) ??
-            (runtimeModelUnavailable ? "XCODE_RUNTIME_MODEL_UNAVAILABLE" : "SEND_FAILED"),
+            (runtimeModelUnavailable ? "ZCODE_RUNTIME_MODEL_UNAVAILABLE" : "SEND_FAILED"),
           message: runtimeModelUnavailable
             ? detail
             : intl.formatMessage({ id: "chat.error.sendFailed" }),
@@ -5392,7 +5392,7 @@ export function SessionPane({
       if (!decoded?.providerId) {
         return;
       }
-      const displayProvider = provider ?? XCODE_AGENT_PROVIDER;
+      const displayProvider = provider ?? ZCODE_AGENT_PROVIDER;
       let modelValue = value;
       if (!decoded.modelName) {
         const fallbackModel =
@@ -5607,7 +5607,7 @@ export function SessionPane({
         await zcodeTaskService.restartWorkspaceProcess({
           workspacePath,
           workspaceIdentity,
-          provider: provider ?? XCODE_AGENT_PROVIDER,
+          provider: provider ?? ZCODE_AGENT_PROVIDER,
           bumpRuntimeEpoch: true,
         });
         await lease?.store.retry();
@@ -6884,7 +6884,7 @@ export function SessionPane({
 
   const { agents: presentationAgents } = useSubagents(
     workspacePath,
-    XCODE_AGENT_PROVIDER,
+    ZCODE_AGENT_PROVIDER,
     workspaceIdentity,
   );
   const agentPresentationCapabilities = useMemo(

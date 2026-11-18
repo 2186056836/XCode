@@ -8,9 +8,9 @@ import { join } from "node:path";
 import type { IChannel } from "@zcode/rpc";
 import {
   parseServiceAuthorityMode,
-  XCODE_REMOTE_HTTP_PROXY_ENV_KEY,
-  XCODE_REMOTE_NO_PROXY_ENV_KEY,
-  XCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY,
+  ZCODE_REMOTE_HTTP_PROXY_ENV_KEY,
+  ZCODE_REMOTE_NO_PROXY_ENV_KEY,
+  ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY,
 } from "@zcode/shared";
 
 export interface CreateStdioServicesOptions {
@@ -28,12 +28,12 @@ export interface RemoteAgentNetworkOptions {
 export function resolveRemoteAgentNetworkFromEnv(
   env: Record<string, string | undefined>,
 ): RemoteAgentNetworkOptions | undefined {
-  if (env[XCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY]?.trim() !== "1") {
+  if (env[ZCODE_REMOTE_RUNTIME_NETWORK_AUTHORITY_ENV_KEY]?.trim() !== "1") {
     return undefined;
   }
   return {
-    httpProxy: env[XCODE_REMOTE_HTTP_PROXY_ENV_KEY]?.trim() || undefined,
-    noProxy: env[XCODE_REMOTE_NO_PROXY_ENV_KEY]?.trim() || undefined,
+    httpProxy: env[ZCODE_REMOTE_HTTP_PROXY_ENV_KEY]?.trim() || undefined,
+    noProxy: env[ZCODE_REMOTE_NO_PROXY_ENV_KEY]?.trim() || undefined,
   };
 }
 

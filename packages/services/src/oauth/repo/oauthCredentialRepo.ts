@@ -29,7 +29,7 @@ const ACTIVE_PROVIDER_KEY = "oauth:active_provider";
 const ACTIVE_ACCOUNT_KEY = "oauth:active_account";
 const ACCOUNT_LIST_KEY = "oauth:account_list";
 const LOGIN_ATTRIBUTION_KEY = "oauth:login_attribution";
-const XCODE_JWT_TOKEN_KEY = "zcodejwttoken";
+const ZCODE_JWT_TOKEN_KEY = "zcodejwttoken";
 const SESSION_REVISION_KEY = OAUTH_SESSION_REVISION_KEY;
 const KNOWN_OAUTH_PROVIDER_IDS = [
   BIGMODEL_PROVIDER_ID,
@@ -268,7 +268,7 @@ export class OAuthCredentialRepo {
   private sessionKeys(): string[] {
     return [
       ACTIVE_PROVIDER_KEY,
-      XCODE_JWT_TOKEN_KEY,
+      ZCODE_JWT_TOKEN_KEY,
       SESSION_REVISION_KEY,
       OAUTH_LINKED_BIGMODEL_KEY,
       ...this.knownProviderIds.flatMap((provider) => [
@@ -292,7 +292,7 @@ export class OAuthCredentialRepo {
       const provider = identity[ACTIVE_PROVIDER_KEY];
       const keys = [
         ACTIVE_PROVIDER_KEY,
-        XCODE_JWT_TOKEN_KEY,
+        ZCODE_JWT_TOKEN_KEY,
         SESSION_REVISION_KEY,
         ...(provider
           ? [accessTokenKey(provider), refreshTokenKey(provider), userInfoKey(provider)]
@@ -338,7 +338,7 @@ export class OAuthCredentialRepo {
     const accessToken = snapshot[accessTokenKey(provider)];
     if (!accessToken) return null;
     const refreshToken = snapshot[refreshTokenKey(provider)];
-    const zcodeJwtToken = snapshot[XCODE_JWT_TOKEN_KEY];
+    const zcodeJwtToken = snapshot[ZCODE_JWT_TOKEN_KEY];
     let linkedBigModel: OAuthTokenSet["linkedBigModel"];
     try {
       const raw = JSON.parse(snapshot[OAUTH_LINKED_BIGMODEL_KEY] ?? "null");
@@ -373,7 +373,7 @@ export class OAuthCredentialRepo {
     const snapshot = await this.loadSessionSnapshot();
     const provider = snapshot[ACTIVE_PROVIDER_KEY];
     const profile = provider ? this.profileFromSnapshot(snapshot, provider) : null;
-    const jwt = snapshot[XCODE_JWT_TOKEN_KEY]?.trim();
+    const jwt = snapshot[ZCODE_JWT_TOKEN_KEY]?.trim();
     if (!provider || !profile || !jwt) return null;
     return {
       loginProvider: provider,
@@ -494,7 +494,7 @@ export class OAuthCredentialRepo {
     Object.assign(changes, {
       [ACTIVE_PROVIDER_KEY]: provider,
       [SESSION_REVISION_KEY]: randomUUID(),
-      [XCODE_JWT_TOKEN_KEY]: tokenSet.zcodeJwtToken ?? null,
+      [ZCODE_JWT_TOKEN_KEY]: tokenSet.zcodeJwtToken ?? null,
       [OAUTH_LINKED_BIGMODEL_KEY]: tokenSet.linkedBigModel
         ? JSON.stringify({ userId: profile.id, ...tokenSet.linkedBigModel })
         : null,
@@ -781,14 +781,14 @@ export class OAuthCredentialRepo {
         await this.credentialService.delete(refreshTokenKey(provider));
       }
       if (tokenSet.zcodeJwtToken) {
-        await this.credentialService.save(XCODE_JWT_TOKEN_KEY, tokenSet.zcodeJwtToken);
+        await this.credentialService.save(ZCODE_JWT_TOKEN_KEY, tokenSet.zcodeJwtToken);
       } else {
-        await this.credentialService.delete(XCODE_JWT_TOKEN_KEY);
+        await this.credentialService.delete(ZCODE_JWT_TOKEN_KEY);
       }
     } else {
       await this.credentialService.delete(accessTokenKey(provider));
       await this.credentialService.delete(refreshTokenKey(provider));
-      await this.credentialService.delete(XCODE_JWT_TOKEN_KEY);
+      await this.credentialService.delete(ZCODE_JWT_TOKEN_KEY);
     }
     // 关键：登录态/账号身份/套餐都读单值 oauth:{provider}:user_info，必须与激活账号镜像同步。
     const profile = await this.loadUserProfileForAccount(accountRef);
@@ -901,7 +901,7 @@ export class OAuthCredentialRepo {
   ): Promise<{ key: string; value: string }[] | null> {
     const snapshot = await this.loadSessionSnapshot();
     if (snapshot[ACTIVE_PROVIDER_KEY] !== provider) return null;
-    return [XCODE_JWT_TOKEN_KEY, accessTokenKey(provider)].map((key) => ({
+    return [ZCODE_JWT_TOKEN_KEY, accessTokenKey(provider)].map((key) => ({
       key,
       value: snapshot[key]?.trim() ?? "",
     }));
@@ -916,7 +916,7 @@ export class OAuthCredentialRepo {
       {
         [accessTokenKey(provider)]: tokenSet.accessToken,
         [refreshTokenKey(provider)]: tokenSet.refreshToken ?? null,
-        [XCODE_JWT_TOKEN_KEY]: tokenSet.zcodeJwtToken ?? null,
+        [ZCODE_JWT_TOKEN_KEY]: tokenSet.zcodeJwtToken ?? null,
         [SESSION_REVISION_KEY]: randomUUID(),
       },
       { expected: expected ?? (await this.loadSessionSnapshot()) },

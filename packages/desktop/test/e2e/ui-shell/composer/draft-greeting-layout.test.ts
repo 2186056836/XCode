@@ -4,7 +4,7 @@ import { prepareV4ConversationE2E } from "#e2e/helpers/v4-conversation";
 import { clearAppData } from "#e2e/helpers/desktop-app";
 import { clearRendererViewport, setRendererViewport } from "#e2e/helpers/renderer-viewport";
 
-const artifacts = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/draft-greeting");
+const artifacts = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/draft-greeting");
 type Sample = { width: number; height: number; font: number; lineHeight: number; inputTop: number };
 type TraceWindow = Window & { __finishGreetingTrace?: () => Sample[] };
 

@@ -71,7 +71,7 @@ describe("项目主目录失效", () => {
       afterElectronProcessExit: async () => {
         seedHistory(primary);
         const db = new DatabaseSync(
-          join(process.env.XCODE_E2E_HOME_DIR!, ".zcode/v2/tasks-index.sqlite"),
+          join(process.env.ZCODE_E2E_HOME_DIR!, ".zcode/v2/tasks-index.sqlite"),
         );
         try {
           db.prepare(
@@ -128,14 +128,14 @@ describe("项目主目录失效", () => {
         await toggle.parentElement().moveTo();
         await expectNoReason();
         await browser.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, `missing-primary-${theme}.png`),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `missing-primary-${theme}.png`),
         );
         await leaveTooltip();
         await create.parentElement().moveTo({ xOffset: -2 });
         await create.parentElement().moveTo({ xOffset: 2 });
         await waitForReason();
         await browser.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, `missing-primary-create-${theme}.png`),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `missing-primary-create-${theme}.png`),
         );
         for (const [name, button] of [
           ["multi", files],
@@ -146,7 +146,7 @@ describe("项目主目录失效", () => {
           await button.parentElement().moveTo({ xOffset: 2 });
           await waitForReason();
           await browser.saveScreenshot(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR!, `missing-primary-files-${name}-${theme}.png`),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `missing-primary-files-${name}-${theme}.png`),
           );
           await browser.execute(
             (selector) => {
@@ -192,7 +192,7 @@ describe("项目主目录失效", () => {
       expect(await create.isEnabled()).toBe(false);
       await expect(stat(primary)).rejects.toMatchObject({ code: "ENOENT" });
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "missing-primary-history.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "missing-primary-history.png"),
       );
       // 旧 E2E 只验证项目行禁用；顶部按钮和原生菜单仍会请求创建，必须独立断言可见失败反馈。
       const beforeNewTask = await readTaskState(primary);
@@ -223,7 +223,7 @@ describe("项目主目录失效", () => {
             await expect(stat(primary)).rejects.toMatchObject({ code: "ENOENT" });
             await browser.saveScreenshot(
               join(
-                process.env.XCODE_E2E_ARTIFACT_DIR!,
+                process.env.ZCODE_E2E_ARTIFACT_DIR!,
                 `missing-primary-new-task-${locale}-${theme}-${action}.png`,
               ),
             );
@@ -372,7 +372,7 @@ describe("项目主目录失效", () => {
           expect(bounds.hintLeft).toBeGreaterThanOrEqual(0);
           expect(bounds.hintRight).toBeLessThanOrEqual(390);
           await browser.saveScreenshot(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR!, `missing-primary-390-${testId}-${theme}.png`),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `missing-primary-390-${testId}-${theme}.png`),
           );
         }
       }
@@ -486,7 +486,7 @@ async function waitForReason() {
         PROJECT,
       );
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "tooltip-failure.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "tooltip-failure.png"),
       );
       throw new Error(JSON.stringify(state), { cause: error });
     });
@@ -503,7 +503,7 @@ async function leaveTooltip() {
 
 function seedHistory(workspacePath: string) {
   // 只写 runner 的隔离 HOME；复用真实 Host/CLI 两库数据合同，不 mock 消息或目录状态。
-  const home = process.env.XCODE_E2E_HOME_DIR;
+  const home = process.env.ZCODE_E2E_HOME_DIR;
   if (!home || !DEFAULT_WORKSPACE.startsWith(home)) throw new Error("isolated HOME required");
   const app = new DatabaseSync(join(home, ".zcode/v2/tasks-index.sqlite"));
   const cli = new DatabaseSync(join(home, ".zcode/cli/db/db.sqlite"));

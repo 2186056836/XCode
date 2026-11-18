@@ -139,10 +139,10 @@ export interface McpToolAnnotations {
   openWorldHint?: boolean;
 }
 
-export const XCODE_MCP_ERROR_PRESENTATION_META_KEY = "zcode/errorPresentation";
-export const XCODE_MCP_ERROR_PRESENTATION_MESSAGE_ONLY = "message-only";
+export const ZCODE_MCP_ERROR_PRESENTATION_META_KEY = "zcode/errorPresentation";
+export const ZCODE_MCP_ERROR_PRESENTATION_MESSAGE_ONLY = "message-only";
 /** MCP content 中来自模型显式 tab.screenshot() 的 image block 索引。 */
-export const XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY =
+export const ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY =
   "zcode/browserScreenshotContentIndices";
 /**
  * 本次 node_repl cell 操作的目标应用身份，供工具卡显示 App 图标。
@@ -151,9 +151,9 @@ export const XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY =
  * `zcode.cua/app-associations-v1`，投影成这里的最小形态。producer 那个键本身经
  * `nodeRepl.setResponseMeta` / `nodeRepl.emitStructuredResult` 也能到达 `_meta`，而这两个
  * API 挂在模型可见的 sandbox globals 上，因此不可信、必须在宿主侧丢弃（同
- * `XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY` 的处置）。
+ * `ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY` 的处置）。
  */
-export const XCODE_MCP_NODE_REPL_CUA_APP_META_KEY = "zcode/nodeReplCuaApp";
+export const ZCODE_MCP_NODE_REPL_CUA_APP_META_KEY = "zcode/nodeReplCuaApp";
 /**
  * 本次 node_repl cell 调用过浏览器运行时（list/execute 请求到达主线程的浏览器代理 broker，不论成败），
  * 值为 `true`。会话能力标签 `browser_use` 据此派生（docs/design/v2/model/session-features-header.md）。
@@ -164,17 +164,13 @@ export const XCODE_MCP_NODE_REPL_CUA_APP_META_KEY = "zcode/nodeReplCuaApp";
  * 「可信边界」）。不复用 `zcode/browserUse`：那个键在命令失败时也会写，且属于 Browser Use meta 契约，
  * 含义不随统计口径变化。
  */
-export const XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY = "zcode/nodeReplBrowserUse";
-/** fork 兼容别名（core 的 session-features 仍按旧名引用）。 */
-export const ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY = XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY;
+export const ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY = "zcode/nodeReplBrowserUse";
 /**
  * 本次 node_repl cell 调用过 Computer Use 运行时（任一 CUA 方法的请求到达主线程的 CUA broker，含失败和
  * broker 侧拒绝），值为 `true`。会话能力标签 `computer_use` 据此派生；写入规则同
- * `XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY`。
+ * `ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY`。
  */
-export const XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY = "zcode/nodeReplComputerUse";
-/** fork 兼容别名。 */
-export const ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY = XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY;
+export const ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY = "zcode/nodeReplComputerUse";
 /**
  * 官方 Server MCP 响应头里的 `x-request-id`，附在失败的 tool result 上（值为 string）。
  *
@@ -184,7 +180,7 @@ export const ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY = XCODE_MCP_NODE_REPL_COM
  *
  * 只在 `isError` 时附加：这是给人看的排障线索（拿它去查服务端日志），成功路径上是纯噪声。
  */
-export const XCODE_MCP_SERVER_REQUEST_ID_META_KEY = "zcode/officialMcpServerRequestId";
+export const ZCODE_MCP_SERVER_REQUEST_ID_META_KEY = "zcode/officialMcpServerRequestId";
 
 export interface McpToolDescriptor {
   alwaysLoad?: boolean;

@@ -1,6 +1,6 @@
 import {
   DEFAULT_XCODE_ENDPOINT_ORIGIN,
-  XCODE_VERSION,
+  ZCODE_VERSION,
   buildHelpAppConfigUrl,
   createHelpAppConfigReader,
   resolveOptionalXCodeAuthorization,
@@ -31,7 +31,7 @@ export async function resolveWebHelpConfig(options: ResolveWebCommunityUrlOption
       env?.VITE_XCODE_ENDPOINT_ORIGIN?.trim() ||
       DEFAULT_XCODE_ENDPOINT_ORIGIN);
   // 服务端拒绝 platform=web；浏览器省略可选平台参数，避免伪装桌面系统。
-  const url = buildHelpAppConfigUrl(endpoint, XCODE_VERSION);
+  const url = buildHelpAppConfigUrl(endpoint, ZCODE_VERSION);
   const authorization = await resolveOptionalXCodeAuthorization(
     // 可选配置读取不能顺带清理过期或残缺的登录态；恢复/登出仍由原认证入口处理。
     options.resolveXcodeJwtToken ?? (() => new BrowserOAuthCredentialRepo().loadXCodeJwtToken()),

@@ -28,7 +28,7 @@ import { openProjectFileTree } from "#e2e/helpers/project-sidebar";
 
 const CASE_MARKER = "E2E_R3_FILE_LOCAL_ACTIONS";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-file-local-actions",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-file-local-actions",
 );
 const REMOTE_FILE_NAME = "r3-dev10-remote-note.md";
 const REMOTE_FILE_MARKER = `R3_DEV10_REMOTE_CONTENT_${Math.random().toString(36).slice(2, 8)}`;

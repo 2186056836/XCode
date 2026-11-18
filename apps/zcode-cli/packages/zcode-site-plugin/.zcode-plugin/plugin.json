@@ -16,7 +16,7 @@
     "sites": {
       "type": "stdio",
       "command": "node",
-      "args": ["${XCODE_PLUGIN_ROOT}/dist/server.mjs"],
+      "args": ["${ZCODE_PLUGIN_ROOT}/dist/server.mjs"],
       "auth": {
         "type": "zcode_official",
         "provider": "jwt_token"

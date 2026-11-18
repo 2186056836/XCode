@@ -34,7 +34,7 @@ import {
 
 const CASE_MARKER = "E2E_R3_UPDATE_INFLIGHT";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-update-inflight",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-update-inflight",
 );
 
 async function readRemoteCurrentSha(container: string): Promise<string> {

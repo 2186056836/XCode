@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { writePluginTextIfChanged } from "./helpers.js";
 import { withFileLock } from "@zcode/shared/node";
-import { XCODE_OFFICIAL_PLUGIN_MARKETPLACE } from "@zcode/contracts";
+import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE } from "@zcode/contracts";
 
 const BUNDLED_PARTITION_FILE = "bundled-marketplace.json";
 const CDN_PARTITION_FILE = "cdn-marketplace.json";
@@ -54,7 +54,7 @@ export async function loadBundledOfficialPluginRoots(
   const bundledPartition = await readBundledPartition(storageRoot);
   if (!bundledPartition) return undefined;
 
-  const officialCacheRoot = resolve(storageRoot, "cache", XCODE_OFFICIAL_PLUGIN_MARKETPLACE);
+  const officialCacheRoot = resolve(storageRoot, "cache", ZCODE_OFFICIAL_PLUGIN_MARKETPLACE);
   return readPluginEntries(bundledPartition.manifest).flatMap((plugin) => {
     const name = readPluginName(plugin);
     const cachePath = typeof plugin.cachePath === "string" ? plugin.cachePath : undefined;
@@ -90,7 +90,7 @@ async function rebuildOfficialMarketplace(storageRoot: string): Promise<Record<s
   const merged = {
     ...(bundledManifest ?? {}),
     ...(cdnManifest ?? {}),
-    name: XCODE_OFFICIAL_PLUGIN_MARKETPLACE,
+    name: ZCODE_OFFICIAL_PLUGIN_MARKETPLACE,
     plugins: [...cdnPlugins, ...bundledPlugins],
   };
   await writeJsonFile(partitionPath(storageRoot, MERGED_MARKETPLACE_FILE), merged);
@@ -133,15 +133,15 @@ function isStrictDescendant(parentPath: string, childPath: string): boolean {
 }
 
 function assertOfficialManifest(manifest: Record<string, unknown>): void {
-  if (manifest.name !== XCODE_OFFICIAL_PLUGIN_MARKETPLACE) {
+  if (manifest.name !== ZCODE_OFFICIAL_PLUGIN_MARKETPLACE) {
     throw new Error(
-      `Official marketplace manifest must be named ${XCODE_OFFICIAL_PLUGIN_MARKETPLACE}`,
+      `Official marketplace manifest must be named ${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE}`,
     );
   }
 }
 
 function partitionPath(storageRoot: string, fileName: string): string {
-  return join(storageRoot, "marketplaces", XCODE_OFFICIAL_PLUGIN_MARKETPLACE, fileName);
+  return join(storageRoot, "marketplaces", ZCODE_OFFICIAL_PLUGIN_MARKETPLACE, fileName);
 }
 
 async function readJsonRecord(path: string): Promise<Record<string, unknown> | undefined> {

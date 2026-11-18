@@ -34,7 +34,7 @@ Hooks 的目标不是把业务逻辑散落到用户脚本里，而是在 agent l
 4. hook 自身的副作用通过 `HookExecutionPort`、`HttpClient`、`ExecutionPort` 等 adapter 收敛。
 5. hook 结果可以影响 agent 行为，但必须通过显式 `HookDecision`，不能直接修改 core 内部状态。
 6. hook 进度、结果、失败和阻断都进入 session event stream，UI 只消费 projection。
-7. 第一版避免新增 `XCODE_` 环境变量。配置走 config file、CLI/session override 或 SDK 注入。
+7. 第一版避免新增 `ZCODE_` 环境变量。配置走 config file、CLI/session override 或 SDK 注入。
 
 ## 非目标
 
@@ -353,7 +353,7 @@ Tool 执行路径：
 - hook 超时必须取消子进程，并记录 `hook_timeout`。
 - hook 被取消必须传播 abort signal，不留下 pending promise。
 - 用户/project hooks 后续应接入 workspace trust 或等价安全确认；P0 可以先在 TUI/CLI 中默认要求本地项目配置显式开启 `hooks.enabled`。
-- Workspace Hook Trust 的产品规格见 `docs/specs/workspace-hook-trust.md`。CLI 侧的 Trust identity（D23）只经 `@zcode/adapters/config` 的 `resolveWorkspaceHookTrustIdentityForWorkspace` 计算。它调用 `@zcode/shared/managed-worktree` 的共享 resolver，文件端口由 adapter 提供，数据根目录沿用 `XCODE_DATA_BASE_DIR`（为空时用 homedir），不新增环境变量。使用位置：
+- Workspace Hook Trust 的产品规格见 `docs/specs/workspace-hook-trust.md`。CLI 侧的 Trust identity（D23）只经 `@zcode/adapters/config` 的 `resolveWorkspaceHookTrustIdentityForWorkspace` 计算。它调用 `@zcode/shared/managed-worktree` 的共享 resolver，文件端口由 adapter 提供，数据根目录沿用 `ZCODE_DATA_BASE_DIR`（为空时用 homedir），不新增环境变量。使用位置：
   - Runtime snapshot：`createXCodeApp` 先算出 identity，再经 `createConfig({ workspaceHookTrustIdentity })` 写入 snapshot；
   - `zcode hooks trust` 命令与协议 `workspaceHookTrust/grant`：record 键与 policy 评估都用 Trust identity；
   - 审核控制器：`requestReview`、`respond`、`revokeCurrent` 的 target 带 workspaceKey，先解析成 Trust identity 再与 snapshot 比较；

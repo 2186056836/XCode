@@ -34,7 +34,7 @@ describe("BigModel Coding Plan 官网 webview 支付完成 E2E", () => {
 
     const setInventoryMode = async (mode: "hold" | "fail" | "ready") => {
       const base =
-        process.env.XCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL ??
+        process.env.ZCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL ??
         process.env.BIGMODEL_TEST_API_BASE_URL;
       if (!base) throw new Error("Missing mock URL");
       const response = await fetch(`${base}/__e2e/coding-plan/inventory-mode`, {

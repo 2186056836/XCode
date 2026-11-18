@@ -62,7 +62,7 @@ import {
   DEFAULT_XCODE_MODEL_CONTEXT_BUDGET_STRATEGY,
   GODMODE_TEMPLATES,
   PREFILL_TEMPLATES,
-  XCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
+  ZCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
   zcodeProtocolErrorCodes,
   zcodeProtocolMethods,
   zcodeSessionCancelBackgroundTaskParamsSchema,
@@ -3777,7 +3777,7 @@ async function requestSessionRuntimePreferences(
       },
       zcodeSessionRuntimePreferencesResultSchema,
       {
-        timeoutMs: XCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
+        timeoutMs: ZCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
         ...(trace ? { trace } : {}),
       },
     );
@@ -4073,7 +4073,7 @@ async function createRecord(
               subagentRuntimeConfigSchema,
               {
                 signal,
-                timeoutMs: XCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
+                timeoutMs: ZCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
                 trace: { traceId: traceContext.traceId },
               },
             );

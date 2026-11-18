@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import {
   BUILTIN_MODEL_PROVIDER_IDS,
   BUILTIN_PROVIDER_TEMPLATE_IDS,
-  XCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER,
   encodeCustomModelValue,
   type ProviderFamilyConnectionSelection,
 } from "@zcode/shared";
@@ -216,7 +216,7 @@ export async function seedPersistedModelSelection(params: {
     },
     key,
     params,
-    XCODE_AGENT_PROVIDER,
+    ZCODE_AGENT_PROVIDER,
   );
 }
 

@@ -1,5 +1,5 @@
 // D19：保留更早轮的工具记录，再编辑最新用户消息，核对真实 provider 历史。
-// 运行时指定 XCODE_E2E_UPSTREAM_CONTEXT_WINDOW=128000，避免待审默认小窗口插入自动压缩。
+// 运行时指定 ZCODE_E2E_UPSTREAM_CONTEXT_WINDOW=128000，避免待审默认小窗口插入自动压缩。
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { clearAppData } from "#e2e/helpers/desktop-app";

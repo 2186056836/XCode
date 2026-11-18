@@ -360,7 +360,7 @@ adapter spawn → 每命令 owner → 15s / 30s / …（最多 20 次）
 CLI 进程退出时在途样本直接丢弃。崩溃、强杀、断电允许丢失未上报窗口。
 
 E2E 跑的是打包构建（`app.isPackaged === true`），因此 1 分钟窗口的判据是「开发构建」或
-「`XCODE_ENV=test` 且带 `XCODE_E2E_RUN_ID`」；生产客户端始终 5 分钟。
+「`ZCODE_ENV=test` 且带 `ZCODE_E2E_RUN_ID`」；生产客户端始终 5 分钟。
 
 量级估算：每 5 分钟约 14 条（10 个角色若全部存活，约 3 个 mcp_id，1 条系统事件），每天在线 8 小时
 约 1350 条趋势事件每设备，Bash 事件按慢命令条数另计。现状约 480 到 576 条。计费按条数，效果优先。
@@ -767,7 +767,7 @@ HAVING COUNT(DISTINCT device_mid) >= 100
   停发的负向断言。遥测关键字门禁通过（56 个受保护文件、2 个已登记豁免）。
 - E2E：按用户最新要求仅运行受影响的 PRT-023 / PRT-024，命令退出码 0：PRT-023
   **1 passed（59.7s）**，PRT-024 **1 skipped**（macOS 平台条件，需 Windows 补验）。
-  使用 `XCODE_E2E_SPEC` 指定 `process-resource-telemetry-roles.test.ts` 与
+  使用 `ZCODE_E2E_SPEC` 指定 `process-resource-telemetry-roles.test.ts` 与
   `windows-agent-metric-probe-absence.test.ts`；运行 ID：
   `desktop-e2e-20260915090553275-p30388-8c6c049d47706164`。先前全量尝试已按用户要求中止，
   套餐、后台会话等失败保留在对应产物中，不作为本票受影响验收结果，不继续扩大范围。

@@ -1,11 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import {
-  XCODE_OFFICIAL_PLUGIN_MARKETPLACE,
-  XCODE_PLUGIN_HOST_COMMAND,
+  ZCODE_OFFICIAL_PLUGIN_MARKETPLACE,
+  ZCODE_PLUGIN_HOST_COMMAND,
   type McpServerConfig,
 } from "@zcode/contracts";
-import { XCODE_PLUGIN_ID_ENV_KEY } from "@zcode/shared";
+import { ZCODE_PLUGIN_ID_ENV_KEY } from "@zcode/shared";
 import {
   createOfficialPluginCacheRetryBudget,
   type OfficialPluginCacheRetryBudget,
@@ -89,7 +89,7 @@ export async function writeOfficialPluginRuntimeManifest(
     // 文档插件使用 dist/server.mjs；统一覆盖成 dist/mcp/server.js 会导致启动失败。
     mcpServer.args = [
       ...hostPrefixArgs,
-      ...serverArgs.map((arg) => arg.replaceAll("${XCODE_PLUGIN_ROOT}", input.rootPath)),
+      ...serverArgs.map((arg) => arg.replaceAll("${ZCODE_PLUGIN_ROOT}", input.rootPath)),
     ];
     mcpServer.env = {
       ...mcpServerEnv,
@@ -99,7 +99,7 @@ export async function writeOfficialPluginRuntimeManifest(
       // 权威写入插件身份（pluginName@marketplace，来自本地 plugin registry，manifest/user env 不可覆盖）。
       // 其他 official plugin 仍带上不可伪造的 plugin identity；CUA broker 凭据由 shared
       // node_repl 的可信配置注入，不再写入独立 server。
-      [XCODE_PLUGIN_ID_ENV_KEY]: `${input.pluginName}@${XCODE_OFFICIAL_PLUGIN_MARKETPLACE}`,
+      [ZCODE_PLUGIN_ID_ENV_KEY]: `${input.pluginName}@${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE}`,
     };
     mcpServers[serverKey] = mcpServer;
   }
@@ -117,12 +117,12 @@ export async function writeOfficialPluginRuntimeManifest(
 }
 
 export function officialPluginHostPrefixArgs(): string[] | undefined {
-  if (isSeaRuntime()) return [XCODE_PLUGIN_HOST_COMMAND];
+  if (isSeaRuntime()) return [ZCODE_PLUGIN_HOST_COMMAND];
 
   const entrypoint = process.argv[1];
   if (!entrypoint) return undefined;
 
-  return [...process.execArgv, resolve(entrypoint), XCODE_PLUGIN_HOST_COMMAND];
+  return [...process.execArgv, resolve(entrypoint), ZCODE_PLUGIN_HOST_COMMAND];
 }
 
 function isSeaRuntime(): boolean {

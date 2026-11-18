@@ -61,7 +61,7 @@ describe("System credential storage", () => {
       createHash("sha256").update(file).digest("hex"),
       { linux: { store: "secret-service" } },
     );
-    expect(await browser.electron.execute(() => Boolean(process.env.XCODE_CREDENTIAL_SECRET))).toBe(
+    expect(await browser.electron.execute(() => Boolean(process.env.ZCODE_CREDENTIAL_SECRET))).toBe(
       false,
     );
     try {

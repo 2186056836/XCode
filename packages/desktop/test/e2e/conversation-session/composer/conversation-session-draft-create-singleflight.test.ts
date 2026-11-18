@@ -118,9 +118,9 @@ describe("A01 草稿首发与预热共享一次创建", () => {
     expect(pane.timelineText).toContain("E2E_DRAFT_SINGLEFLIGHT_FIRST");
     await waitForV4ComposerText("E2E_PD08_NEXT_INPUT", "首发交接丢失下一条正文");
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "draft-create-commands.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "draft-create-commands.json"),
       JSON.stringify({ pending, commands, pane }, null, 2),
     );
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "draft-first-send.png"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "draft-first-send.png"));
   });
 });

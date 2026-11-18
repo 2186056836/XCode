@@ -12,10 +12,10 @@ UI 和 RPC 服务接口暂不扩展，`IFeedbackService` 继续向 UI 暴露现�
 
 默认 feedback API base 必须跟随统一的 XCode endpoint resolver：
 
-- `XCODE_ENV=production` 或未显式设置时，默认 `https://zcode.z.ai/api/v1`。
-- `XCODE_ENV=test` 时，默认 `https://zcode.z.ai/api/v1`。
-- `XCODE_BASE_URL`、`XCODE_TEST_BASE_URL`、`XCODE_PRODUCTION_BASE_URL` 等统一 endpoint 覆盖继续生效。
-- `XCODE_FEEDBACK_API_BASE` 或显式传入的 `apiBaseUrl` 只作为人工覆盖，优先级高于环境默认值。
+- `ZCODE_ENV=production` 或未显式设置时，默认 `https://zcode.z.ai/api/v1`。
+- `ZCODE_ENV=test` 时，默认 `https://zcode.z.ai/api/v1`。
+- `ZCODE_BASE_URL`、`ZCODE_TEST_BASE_URL`、`ZCODE_PRODUCTION_BASE_URL` 等统一 endpoint 覆盖继续生效。
+- `ZCODE_FEEDBACK_API_BASE` 或显式传入的 `apiBaseUrl` 只作为人工覆盖，优先级高于环境默认值。
 
 反馈 API 的 HTTP 出口必须通过 services 层统一 `ApiClient` 收口，不直接调用全局 `fetch`。统一 `ApiClient` 负责 XCode Server endpoint 重写、`x-request-id` 以及 `buildXCodeSourceHeaders()` 中的通参注入；反馈模块只在此基础上叠加接口自身关注的 header 和请求体。这样后续新增 XCode Server 通参时，只需要修改统一 API client/source headers，不需要逐个业务模块补字段。
 

@@ -2,7 +2,7 @@
 /**
  * 把正式版账号凭据链接进 dev 隔离数据目录。
  *
- * 背景：dev 用 `XCODE_DATA_BASE_DIR` 指向独立数据根时，`.xcode/v2/credentials.json`
+ * 背景：dev 用 `ZCODE_DATA_BASE_DIR` 指向独立数据根时，`.xcode/v2/credentials.json`
  * 与 `.xcode/v2/account-rotation.json` 也从零开始，于是「部分提供商没有账号」。
  * 复制一份能临时解决，但正式版刷新 token 后 dev 会拿着过期凭据。
  *
@@ -21,14 +21,14 @@ const CREDENTIAL_FILES = ["credentials.json", "account-rotation.json"];
 
 /**
  * 真实家目录：`os.homedir()` 在 Windows 读 USERPROFILE、POSIX 读 $HOME。
- * 不能用 `process.env.XCODE_DESKTOP_HOME_DIR`——那正是 dev 自己的隔离根。
+ * 不能用 `process.env.ZCODE_DESKTOP_HOME_DIR`——那正是 dev 自己的隔离根。
  */
 const realHome = homedir();
 
 function resolveDevBaseDir() {
   return (
-    process.env.XCODE_DATA_BASE_DIR?.trim() ||
-    process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+    process.env.ZCODE_DATA_BASE_DIR?.trim() ||
+    process.env.ZCODE_DESKTOP_HOME_DIR?.trim() ||
     null
   );
 }

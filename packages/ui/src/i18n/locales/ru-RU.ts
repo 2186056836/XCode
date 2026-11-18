@@ -7707,9 +7707,9 @@ const ruRU: Record<string, string> = {
     "Текущие изображения слишком велики. Удалите или сожмите изображения и повторите попытку.",
   "zcode.error.MEDIA_BUDGET_CURRENT_VIDEO_TOO_LARGE":
     "Текущие видео слишком велики. Удалите или сожмите видео и повторите попытку.",
-  "zcode.error.XCODE_RUNTIME_MODEL_UNAVAILABLE":
+  "zcode.error.ZCODE_RUNTIME_MODEL_UNAVAILABLE":
     "Текущая модель больше недоступна. Чтобы продолжить, выберите доступную модель из текущего списка.",
-  "zcode.error.XCODE_BIGMODEL_TEAM_PLAN_MEMBER_REQUIRED":
+  "zcode.error.ZCODE_BIGMODEL_TEAM_PLAN_MEMBER_REQUIRED":
     "Текущая модель недоступна. Проверьте, добавлен ли текущий аккаунт в список участников проекта.",
   "zcode.error.CLAUDE_UNKNOWN_COMMAND":
     "Claude Code не распознаёт {command}. Проверьте имя команды или переключитесь на агент/навык, который её поддерживает, и повторите попытку.",

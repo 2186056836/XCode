@@ -52,10 +52,10 @@ import {
 import { createNodeCustomCommandAdapter } from "../src/commands/index.js";
 import { createNodeSkillAdapter } from "../src/skills/index.js";
 import {
-  XCODE_AGENT_CA_CERT_ENV_KEY,
-  XCODE_HTTP_PROXY_ENV_KEY,
-  XCODE_NO_PROXY_ENV_KEY,
-  XCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY,
+  ZCODE_AGENT_CA_CERT_ENV_KEY,
+  ZCODE_HTTP_PROXY_ENV_KEY,
+  ZCODE_NO_PROXY_ENV_KEY,
+  ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY,
 } from "@zcode/shared";
 
 const execFileAsync = promisify(execFile);
@@ -425,7 +425,7 @@ describe("NodePluginAdapter", () => {
             expect(result.reason).toMatchObject(
               action === "dispose"
                 ? { name: "AbortError" }
-                : { code: "XCODE_PLUGIN_SOURCES_CHANGED" },
+                : { code: "ZCODE_PLUGIN_SOURCES_CHANGED" },
             );
         }
       } finally {
@@ -459,7 +459,7 @@ describe("NodePluginAdapter", () => {
       expect(await reader.skillFiles(link, true)).toEqual([join(link, "SKILL.md")]);
       cache.invalidate();
       await expect(reader.skillFiles(root)).rejects.toMatchObject({
-        code: "XCODE_PLUGIN_SOURCES_CHANGED",
+        code: "ZCODE_PLUGIN_SOURCES_CHANGED",
       });
     } finally {
       cache.dispose();
@@ -714,7 +714,7 @@ describe("NodePluginAdapter", () => {
             },
           }),
         ).rejects.toMatchObject(
-          action === "dispose" ? { name: "AbortError" } : { code: "XCODE_PLUGIN_SOURCES_CHANGED" },
+          action === "dispose" ? { name: "AbortError" } : { code: "ZCODE_PLUGIN_SOURCES_CHANGED" },
         );
         expect(reads).toBe(action === "dispose" ? 1 : 3);
       } finally {
@@ -951,9 +951,9 @@ describe("NodePluginAdapter", () => {
           pluginCount: 0,
         },
       ]);
-      vi.stubEnv("XCODE_HTTP_PROXY", "");
+      vi.stubEnv("ZCODE_HTTP_PROXY", "");
       vi.stubEnv(
-        XCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY,
+        ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY,
         JSON.stringify({ HTTP_PROXY: await listenServer(proxy) }),
       );
 
@@ -1182,9 +1182,9 @@ describe("NodePluginAdapter", () => {
 
   it("injects explicit XCode proxy env into marketplace Git commands", () => {
     const env = buildMarketplaceGitEnv({
-      [XCODE_AGENT_CA_CERT_ENV_KEY]: "/tmp/root-ca.pem",
-      [XCODE_HTTP_PROXY_ENV_KEY]: "127.0.0.1:7890",
-      [XCODE_NO_PROXY_ENV_KEY]: "localhost,127.0.0.1",
+      [ZCODE_AGENT_CA_CERT_ENV_KEY]: "/tmp/root-ca.pem",
+      [ZCODE_HTTP_PROXY_ENV_KEY]: "127.0.0.1:7890",
+      [ZCODE_NO_PROXY_ENV_KEY]: "localhost,127.0.0.1",
       PATH: "/usr/bin:/bin",
       http_proxy: "http://ambient-proxy:8080",
     });
@@ -1637,10 +1637,10 @@ describe("NodePluginAdapter", () => {
             "ios-simulator": {
               command: "bun",
               args: ["${CLAUDE_PLUGIN_ROOT}/src/mcp/server.ts"],
-              cwd: "${XCODE_PROJECT_DIR}",
+              cwd: "${ZCODE_PROJECT_DIR}",
               env: {
                 IOS_SIM_DEFAULT_DEVICE: "${user_config.default_device}",
-                IOS_SIM_PLUGIN_DATA: "${XCODE_PLUGIN_DATA}",
+                IOS_SIM_PLUGIN_DATA: "${ZCODE_PLUGIN_DATA}",
               },
             },
           },
@@ -2692,9 +2692,9 @@ describe("NodePluginAdapter", () => {
       let resolved: Awaited<ReturnType<typeof resolveZipPluginSource>> | undefined;
       try {
         const proxyBaseUrl = await listenLoopbackServer(proxy);
-        vi.stubEnv(XCODE_HTTP_PROXY_ENV_KEY, proxied ? proxyBaseUrl : "");
-        vi.stubEnv(XCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY, "{}");
-        vi.stubEnv(XCODE_NO_PROXY_ENV_KEY, "");
+        vi.stubEnv(ZCODE_HTTP_PROXY_ENV_KEY, proxied ? proxyBaseUrl : "");
+        vi.stubEnv(ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY, "{}");
+        vi.stubEnv(ZCODE_NO_PROXY_ENV_KEY, "");
         const download = resolveZipPluginSource({
           sha256: sha256Buffer(zipBuffer),
           url: proxied ? "http://127.0.0.2/reset.zip" : `${proxyBaseUrl}/reset.zip`,
@@ -2773,9 +2773,9 @@ describe("NodePluginAdapter", () => {
 
     try {
       const proxyBaseUrl = await listenLoopbackServer(proxy);
-      vi.stubEnv(XCODE_HTTP_PROXY_ENV_KEY, "");
-      vi.stubEnv(XCODE_NO_PROXY_ENV_KEY, "");
-      vi.stubEnv(XCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY, JSON.stringify({ HTTP_PROXY: proxyBaseUrl }));
+      vi.stubEnv(ZCODE_HTTP_PROXY_ENV_KEY, "");
+      vi.stubEnv(ZCODE_NO_PROXY_ENV_KEY, "");
+      vi.stubEnv(ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY, JSON.stringify({ HTTP_PROXY: proxyBaseUrl }));
 
       const sourceUrl = "http://127.0.0.2/captured-proxy.zip";
       resolved = await resolveZipPluginSource({
@@ -2819,7 +2819,7 @@ describe("NodePluginAdapter", () => {
         response.end();
       });
       const originBaseUrl = await listenLoopbackServer(origin);
-      vi.stubEnv(XCODE_NO_PROXY_ENV_KEY, "127.0.0.1");
+      vi.stubEnv(ZCODE_NO_PROXY_ENV_KEY, "127.0.0.1");
 
       resolved = await resolveZipPluginSource({
         headers: { "x-zcode-channel": "internal" },
@@ -2844,7 +2844,7 @@ describe("NodePluginAdapter", () => {
 
     try {
       const originBaseUrl = await listenLoopbackServer(origin);
-      vi.stubEnv(XCODE_NO_PROXY_ENV_KEY, "127.0.0.1");
+      vi.stubEnv(ZCODE_NO_PROXY_ENV_KEY, "127.0.0.1");
 
       await expect(
         resolveZipPluginSource({
@@ -3322,7 +3322,7 @@ describe("NodePluginAdapter", () => {
           pluginCount: 0,
         },
       ]);
-      vi.stubEnv("XCODE_GIT_BINARY", join(dir, "missing-git"));
+      vi.stubEnv("ZCODE_GIT_BINARY", join(dir, "missing-git"));
 
       expect(await updateMarketplace({ marketplace: "credential-market", storageRoot })).toEqual(
         [],
@@ -3575,19 +3575,19 @@ describe("NodePluginAdapter", () => {
         },
       ]);
       for (const key of [
-        XCODE_HTTP_PROXY_ENV_KEY,
+        ZCODE_HTTP_PROXY_ENV_KEY,
         "HTTP_PROXY",
         "HTTPS_PROXY",
         "ALL_PROXY",
         "http_proxy",
         "https_proxy",
         "all_proxy",
-        XCODE_AGENT_CA_CERT_ENV_KEY,
+        ZCODE_AGENT_CA_CERT_ENV_KEY,
         "NODE_EXTRA_CA_CERTS",
       ]) {
         vi.stubEnv(key, "");
       }
-      vi.stubEnv(XCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY, "{}");
+      vi.stubEnv(ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY, "{}");
       vi.stubGlobal(
         "fetch",
         vi.fn(async () => new Response("[]", { status: 200 })),
@@ -3759,19 +3759,19 @@ describe("NodePluginAdapter", () => {
         },
       ]);
       for (const key of [
-        XCODE_HTTP_PROXY_ENV_KEY,
+        ZCODE_HTTP_PROXY_ENV_KEY,
         "HTTP_PROXY",
         "HTTPS_PROXY",
         "ALL_PROXY",
         "http_proxy",
         "https_proxy",
         "all_proxy",
-        XCODE_AGENT_CA_CERT_ENV_KEY,
+        ZCODE_AGENT_CA_CERT_ENV_KEY,
         "NODE_EXTRA_CA_CERTS",
       ]) {
         vi.stubEnv(key, "");
       }
-      vi.stubEnv(XCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY, "{}");
+      vi.stubEnv(ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY, "{}");
       vi.stubGlobal(
         "fetch",
         vi.fn(async () => new Response("[]", { status: 200 })),
@@ -4569,7 +4569,7 @@ describe("NodePluginAdapter", () => {
             risky: {
               command: "node",
               env: {
-                TOKEN: "${XCODE_MISSING_TOKEN}",
+                TOKEN: "${ZCODE_MISSING_TOKEN}",
               },
             },
           },
@@ -4834,7 +4834,7 @@ describe("NodePluginAdapter", () => {
           local: {
             command: "node",
             env: {
-              TOKEN: "${XCODE_PLUGIN_TOKEN}",
+              TOKEN: "${ZCODE_PLUGIN_TOKEN}",
             },
           },
         },
@@ -5922,7 +5922,7 @@ async function writeTripletPluginFixture(
           command: "node",
           env: {
             PLUGIN_DATA: "${CLAUDE_PLUGIN_DATA}",
-            PROJECT_DIR: "${XCODE_PROJECT_DIR}",
+            PROJECT_DIR: "${ZCODE_PROJECT_DIR}",
           },
         },
       },

@@ -393,7 +393,7 @@ async function readPermissionActions(pluginId: string): Promise<string[]> {
 describe("PLM-EXT-JARVISHOST Jarvis 要的宿主能力", () => {
   after(async () => {
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-jarvishost-evidence.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-jarvishost-evidence.json"),
       JSON.stringify(evidence, null, 2),
     ).catch(() => undefined);
     await restoreMainNotificationProbe();

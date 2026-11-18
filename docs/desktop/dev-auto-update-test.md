@@ -15,14 +15,14 @@ GET /api/v1/releases/electron/manifest
 ## 启动方式
 
 ```bash
-XCODE_AUTO_UPDATE_DEV=1 \
-XCODE_AUTO_UPDATE_DEV_VERSION=3.3.1 \
+ZCODE_AUTO_UPDATE_DEV=1 \
+ZCODE_AUTO_UPDATE_DEV_VERSION=3.3.1 \
 pnpm dev:desktop:test
 ```
 
-- `pnpm dev:desktop:test` 会注入 `XCODE_ENV=test`，manifest provider 会请求测试环境 endpoint。
-- `XCODE_AUTO_UPDATE_DEV=1` 只在开发态显式开启自动更新；未设置时保持开发态不检查更新。
-- `XCODE_AUTO_UPDATE_DEV_VERSION` 用于模拟当前客户端版本，例如当前版本按 `3.3.1` 比较，测试环境 stable 返回 `3.3.2`、preview 返回 `3.3.3` 时即可验证通道切换。
+- `pnpm dev:desktop:test` 会注入 `ZCODE_ENV=test`，manifest provider 会请求测试环境 endpoint。
+- `ZCODE_AUTO_UPDATE_DEV=1` 只在开发态显式开启自动更新；未设置时保持开发态不检查更新。
+- `ZCODE_AUTO_UPDATE_DEV_VERSION` 用于模拟当前客户端版本，例如当前版本按 `3.3.1` 比较，测试环境 stable 返回 `3.3.2`、preview 返回 `3.3.3` 时即可验证通道切换。
 
 ## 行为边界
 

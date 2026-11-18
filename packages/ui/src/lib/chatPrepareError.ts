@@ -1,6 +1,6 @@
 import {
   normalizeUnknownError,
-  XCODE_AGENT_PROVIDER_NOT_READY_CODE,
+  ZCODE_AGENT_PROVIDER_NOT_READY_CODE,
   type XCodeProvider,
   type XCodeError,
 } from "@zcode/shared";
@@ -23,7 +23,7 @@ export function buildModelConfigMissingUiError(): ModelConfigMissingUiError {
 
 export function isProviderNotReadyError(error: unknown): boolean {
   return (
-    normalizeUnknownError(error).code === XCODE_AGENT_PROVIDER_NOT_READY_CODE
+    normalizeUnknownError(error).code === ZCODE_AGENT_PROVIDER_NOT_READY_CODE
   );
 }
 

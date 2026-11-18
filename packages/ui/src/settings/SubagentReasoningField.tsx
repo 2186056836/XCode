@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { CircleHelp, LoaderCircle } from "lucide-react";
-import { XCODE_AGENT_PROVIDER, type XCodeConfigOption } from "@zcode/shared";
+import { ZCODE_AGENT_PROVIDER, type XCodeConfigOption } from "@zcode/shared";
 import { ThoughtLevelCycleControl } from "@/chat-input-toolbar/ThoughtLevelCycleControl.js";
 import type { useXCodeIntl } from "@/i18n/IntlProvider.js";
 
@@ -66,7 +66,7 @@ export function SubagentReasoningField({
     <ThoughtLevelCycleControl
       intl={intl}
       option={state.option}
-      provider={XCODE_AGENT_PROVIDER}
+      provider={ZCODE_AGENT_PROVIDER}
       onCurrentValueCommit={onValueCommit}
       showInvalidCurrentValue
       disabled={!interactive}

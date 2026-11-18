@@ -95,7 +95,7 @@ RRI05–07 使用真实组件的浏览器回放，并保留必要更新的正例
 
 完整 Electron 的 PERF04、composer-draft-switching、v4-turn-navigator、v4-scroll 共 4 个规格通过，验证最终正文、草稿/附件恢复、导航预览/跳转、历史位置恢复、流式不夺回滚动以及回到底部。类型检查（含 E2E）、lint、架构检查和 fixture 合约另行通过；受影响工程测试选择为 0 项，不计为工程测试通过。
 
-任务分组的 6 个完整 Electron 场景另行通过：重载/取消空组、组内首发、移动/置顶/归档恢复、组织登记挂起时取消、整组拖拽、千行虚拟列表。组内草稿关闭回归曾暴露旧持久化闭包恢复已清除归属，已通过同生命周期实时读取组织意图修复，新增浏览器正反例。此规格的千行播种要求显式设置独立且 basename 以 `.e2e-home-` 开头的 `XCODE_E2E_HOME_DIR`；默认 `.e2e-home` 不满足其防误写检查。
+任务分组的 6 个完整 Electron 场景另行通过：重载/取消空组、组内首发、移动/置顶/归档恢复、组织登记挂起时取消、整组拖拽、千行虚拟列表。组内草稿关闭回归曾暴露旧持久化闭包恢复已清除归属，已通过同生命周期实时读取组织意图修复，新增浏览器正反例。此规格的千行播种要求显式设置独立且 basename 以 `.e2e-home-` 开头的 `ZCODE_E2E_HOME_DIR`；默认 `.e2e-home` 不满足其防误写检查。
 
 ### 搜索跳转与索引契约（2026-10-27）
 
@@ -119,7 +119,7 @@ flowchart LR
   missing --> offset
 ```
 
-回归沿用 RRI08/PERF04：先记录离窗首次搜索的失败耗时基线，再核对普通构建的 long task、CPU 与 Chromium Layout 事件。首次搜索、单命中回环、多命中切换、宽度改变、历史滚动恢复与流式滚动权都必须保留。性能预算由独立回放的 `XCODE_E2E_SEARCH_LONG_TASK_BUDGET_MS` 指定，Scan 诊断不参与耗时判定。
+回归沿用 RRI08/PERF04：先记录离窗首次搜索的失败耗时基线，再核对普通构建的 long task、CPU 与 Chromium Layout 事件。首次搜索、单命中回环、多命中切换、宽度改变、历史滚动恢复与流式滚动权都必须保留。性能预算由独立回放的 `ZCODE_E2E_SEARCH_LONG_TASK_BUDGET_MS` 指定，Scan 诊断不参与耗时判定。
 
 RRI08 的 CR-01 浏览器回归使用生产 find hook、生产索引、真实 Streamdown 与虚拟列表，覆盖 Markdown 标记和链接目标的源码命中。断言手动滚动后的 `scrollTop` 保持、粗定位次数不增长，并以屏外可见文本仍能定位/高亮、新请求仍能再次跳转为正例；两条搜索入口均覆盖桌面/手机布局和深浅主题。
 
@@ -139,4 +139,4 @@ CR-01 验证：修复前 16 个无 Range 反例全部失败（手动滚动 900�
 
 完整 Electron 最终通过 PERF04、v4-scroll、v4-turn-navigator 三个规格；另通过宽屏加载后缩至 480px 的 PERF04，覆盖宽度重测、多命中切换、单命中离窗回环和定位完成后不夺回滚动。该宽度场景修复前出现计数 1/11 而 Range=null，以及居中后被缓冲行测高推离视口的失败。430px 浏览器布局通过，Electron 最小窗口为 480px；未声明真实手机传输或 Windows/Linux 整机验证。浏览器 RRI01–05、RRI07–08 合计 14 个场景通过；typecheck（含 E2E）、lint、architecture、fixture 合约通过，lint 保留 172 个既有警告。受影响工程测试选择为 0 项，未执行工程测试。新增候选仍 pending。
 
-本轮原始 trace、CPU profile、失败基线、最终验收记录与 manifest 保存在 `packages/desktop/.e2e-artifacts/render-boundaries/search-runtime-20261027/`，不进入源码提交。沿用前述浏览器入口及 PERF04；设置 `XCODE_E2E_SEARCH_VIEWPORT_WIDTH=480` 可复核宽度变化，设置 `XCODE_E2E_SEARCH_LONG_TASK_BUDGET_MS=80` 可独立复核本机首次搜索预算。
+本轮原始 trace、CPU profile、失败基线、最终验收记录与 manifest 保存在 `packages/desktop/.e2e-artifacts/render-boundaries/search-runtime-20261027/`，不进入源码提交。沿用前述浏览器入口及 PERF04；设置 `ZCODE_E2E_SEARCH_VIEWPORT_WIDTH=480` 可复核宽度变化，设置 `ZCODE_E2E_SEARCH_LONG_TASK_BUDGET_MS=80` 可独立复核本机首次搜索预算。

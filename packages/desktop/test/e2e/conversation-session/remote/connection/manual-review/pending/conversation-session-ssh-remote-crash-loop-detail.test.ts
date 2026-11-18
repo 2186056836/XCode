@@ -31,7 +31,7 @@ const MARKER = "E2E_SSH_REMOTE_CRASH_LOOP_DETAIL";
 const DEV: RemoteAccount = { user: "dev", home: "/home/dev" };
 const desktopRoot = process.cwd();
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-remote-crash-loop-detail",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-remote-crash-loop-detail",
 );
 
 describe(`${MARKER}: crash-loop-stopped 时连接错误带出现有 Supervisor 状态`, () => {

@@ -39,7 +39,7 @@ import {
 
 const CASE_MARKER = "E2E_R3_TRANSPORT_LOSS";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-transport-loss",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-transport-loss",
 );
 const REMOTE_PERMISSION_DIR = "/home/dev/r3-workspace-a/.zcode-e2e/r3-transport-loss";
 const REMOTE_PERMISSION_FILE = `${REMOTE_PERMISSION_DIR}/permission-output.txt`;
@@ -117,8 +117,8 @@ describe(`${CASE_MARKER}: 产品 SSH 连接中断期间远端任务继续，恢�
 
   it("R3A-REC-01/03/09 running 中断连→daemon 与任务继续、A/B 自动换代；permission 阻塞跨断连恢复同 ID 并只响应一次", async function () {
     this.timeout(35 * 60_000);
-    const container = process.env.XCODE_E2E_SSH_CONTAINER?.trim();
-    if (!container) throw new Error(`${CASE_MARKER}: 缺少 XCODE_E2E_SSH_CONTAINER`);
+    const container = process.env.ZCODE_E2E_SSH_CONTAINER?.trim();
+    if (!container) throw new Error(`${CASE_MARKER}: 缺少 ZCODE_E2E_SSH_CONTAINER`);
     const prepared = await prepareSSHLifecycle(CASE_MARKER, {
       apiType: "anthropic-messages",
       tunnelUsername: "tunnel",

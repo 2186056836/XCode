@@ -5,7 +5,7 @@ import { restartIntoWorkspacePreservingProfile } from "#e2e/helpers/model-provid
 import { waitForWorkspaceApp, DEFAULT_WORKSPACE } from "../helpers/desktop-app.js";
 
 const row = (id: string) => $(`[data-testid="archive-task"][data-task-id="${id}"]`);
-const home = process.env.XCODE_E2E_HOME_DIR!;
+const home = process.env.ZCODE_E2E_HOME_DIR!;
 const ids = ["arm-alpha", "arm-beta", "arm-scheduled", "arm-loose", "arm-removed"];
 function readRow(id: string) {
   const db = new DatabaseSync(join(home, ".xcode/v2/tasks-index.sqlite"), { readOnly: true });
@@ -234,7 +234,7 @@ describe("归档管理", () => {
     });
     expect(ids.map((id) => readRow(id).archived)).toEqual(ids.map(() => 1));
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "ARM07-disabled-30-days.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "ARM07-disabled-30-days.png"),
     );
   });
   it("ARM01/05/06：分组折叠、搜索、时间排序和项目选择", async () => {
@@ -464,7 +464,7 @@ async function captureArchiveLayouts() {
         }
         await browser.saveScreenshot(
           join(
-            process.env.XCODE_E2E_ARTIFACT_DIR!,
+            process.env.ZCODE_E2E_ARTIFACT_DIR!,
             `archive-${width}-${locale}-${theme}-collapsed.png`,
           ),
         );
@@ -479,7 +479,7 @@ async function captureArchiveLayouts() {
         ).toBe(true);
         await browser.saveScreenshot(
           join(
-            process.env.XCODE_E2E_ARTIFACT_DIR!,
+            process.env.ZCODE_E2E_ARTIFACT_DIR!,
             `archive-${width}-${locale}-${theme}-expanded.png`,
           ),
         );

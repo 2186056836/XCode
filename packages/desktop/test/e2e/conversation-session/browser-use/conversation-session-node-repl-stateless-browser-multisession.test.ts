@@ -300,9 +300,9 @@ async function readMcpLogContexts(): Promise<McpLogContext[]> {
 }
 
 async function resolveMcpLogDirs(): Promise<string[]> {
-  const explicit = process.env.XCODE_LOG_DIR?.trim();
+  const explicit = process.env.ZCODE_LOG_DIR?.trim();
   if (explicit) return [explicit];
-  const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR?.trim();
+  const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR?.trim();
   if (artifactDir) {
     const runtimeLogDir = join(artifactDir, "runtime-logs");
     const workers = await readdir(runtimeLogDir, { withFileTypes: true }).catch(() => []);

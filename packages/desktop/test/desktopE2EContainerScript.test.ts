@@ -160,7 +160,7 @@ describe.skipIf(process.platform === "win32")("desktop E2E container upstream pr
 
     expect(result.status).toBe(0);
     expect(result.runArgs).toContain(
-      "XCODE_E2E_SPEC=./test/e2e/plugins/runtime/plugin-ui-session-ready.test.ts",
+      "ZCODE_E2E_SPEC=./test/e2e/plugins/runtime/plugin-ui-session-ready.test.ts",
     );
     expect(result.runArgs).toContain("E2E_PROVIDER_HTTP_MODE=replay");
   });

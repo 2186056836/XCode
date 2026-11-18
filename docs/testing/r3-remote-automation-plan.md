@@ -116,10 +116,10 @@ Mobile replayable -------+                 +-> 独立 mobile gap/snapshot
 
 隔离要求：
 
-1. 当前桌面 SSH adapter 固定远端用户 `~/.xcode/server`。CLI 虽支持 `--server-root`，该能力未贯穿桌面入口；不得把本地 `XCODE_DATA_BASE_DIR` 或两个项目目录当作远端环境隔离。
-2. 专用本地 E2E profile + 专用远端用户/容器；真实模型只将选定代表配置通过产品写入口导入隔离 profile，再由正式 Provisioning 下发。不得盲拷用户完整 `.zcode`。App数据/Chromium/CLI/Helper目录必须分别检查：旧版Helper还需要独立 `XCODE_HOME`，仅设置 `XCODE_DATA_BASE_DIR` 与 `XCODE_DESKTOP_HOME_DIR` 不足以隔离它。
+1. 当前桌面 SSH adapter 固定远端用户 `~/.xcode/server`。CLI 虽支持 `--server-root`，该能力未贯穿桌面入口；不得把本地 `ZCODE_DATA_BASE_DIR` 或两个项目目录当作远端环境隔离。
+2. 专用本地 E2E profile + 专用远端用户/容器；真实模型只将选定代表配置通过产品写入口导入隔离 profile，再由正式 Provisioning 下发。不得盲拷用户完整 `.zcode`。App数据/Chromium/CLI/Helper目录必须分别检查：旧版Helper还需要独立 `ZCODE_HOME`，仅设置 `ZCODE_DATA_BASE_DIR` 与 `ZCODE_DESKTOP_HOME_DIR` 不足以隔离它。
 3. 项目 fixture 位于各自实际 workspace 的 `.zcode-e2e/<run>/<case>`；两个 Source 使用相同 POSIX path 验证身份隔离；同时保留一个本地 workspace 作为反向污染哨兵。
-4. 专属环境串行执行 `XCODE_E2E_MAX_INSTANCES=1`；独立环境可由未来 runner 做有界并行，不能共享默认安装根、provider store、端口或录像输出。
+4. 专属环境串行执行 `ZCODE_E2E_MAX_INSTANCES=1`；独立环境可由未来 runner 做有界并行，不能共享默认安装根、provider store、端口或录像输出。
 5. systemd 容器不得因使用 private cgroup namespace 就视为完全隔离。启动前必须持久 mask `systemd-binfmt.service`，核对 Docker VM 的 binfmt 注册前后不变，并复验已有 x64 目标。未验证这些前置条件的 privileged fixture 禁止复用；不得通过手工重写共享 binfmt 来绕过失败。
 6. 故障只作用于登记的容器/用户、连接和 PID。PID 操作前复核 start time、运行路径、releaseId、归属；不再用 `zcode-server.cjs` 名字或新旧 PID 差集猜所有权。不操作宿主 sshd、系统网络或填满共享磁盘。
 7. 网络和文件故障优先外部 TCP 代理、限额测试文件系统、权限控制与已支持的服务依赖注入。若准确事务阶段没有控制点，先建测试 seam 并单测，不能靠 sleep 猜测写入窗口。
@@ -148,7 +148,7 @@ pnpm bootstrap:with-remote
 pnpm dev:desktop
 
 # 单项 pending 的现有 WDIO 入口；SSH 凭据在受控运行环境注入。
-XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- --spec './test/e2e/conversation-session/manual-review/pending/<case>.test.ts'
+ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- --spec './test/e2e/conversation-session/manual-review/pending/<case>.test.ts'
 ```
 
 `bootstrap:with-remote` 最后重新 stage remote archives，但不构建 Desktop bundle。WDIO 自身构建 E2E Desktop；开发入口验收另用 `pnpm dev:desktop`。两者必须从同一确定源码状态准备，不能将 WDIO PASS 写成已验证开发启动方式。跳过构建仅在 build receipt 的源码/配置/产物摘要匹配时允许。

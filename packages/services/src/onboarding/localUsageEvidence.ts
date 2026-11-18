@@ -64,8 +64,8 @@ function pickEnvSessionDbPath(env: NodeJS.ProcessEnv): string | undefined {
   let picked: string | undefined;
   for (const [key, value] of Object.entries(env)) {
     if (
-      (key === "XCODE_SESSION_DB_PATH" ||
-        key === "XCODE_SESSION_DB" ||
+      (key === "ZCODE_SESSION_DB_PATH" ||
+        key === "ZCODE_SESSION_DB" ||
         key === "ZCODE_SESSION_DB_PATH" ||
         key === "ZCODE_SESSION_DB") &&
       value !== undefined
@@ -177,7 +177,7 @@ export function createHasExistingLocalTask(
 
 /** 默认会话库路径：跟随数据基目录，便于 dev 隔离。 */
 function resolveDefaultSessionDbPath(home: string): string | null {
-  const baseDir = process.env.XCODE_DATA_BASE_DIR?.trim();
+  const baseDir = process.env.ZCODE_DATA_BASE_DIR?.trim();
   if (baseDir) {
     return join(baseDir, DEFAULT_SESSION_DB_RELATIVE_PATH);
   }

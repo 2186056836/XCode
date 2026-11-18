@@ -186,7 +186,7 @@ async function assertProjectOwnership(
 ) {
   const ownership = readTaskOwnership(taskId);
   await writeFile(
-    join(process.env.XCODE_E2E_ARTIFACT_DIR!, `fork-ownership-${stage}.json`),
+    join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `fork-ownership-${stage}.json`),
     JSON.stringify({ taskId, expectedProjectId, otherProjectId, ownership }, null, 2),
   );
   expect(ownership?.project_id).toBe(expectedProjectId);
@@ -214,7 +214,7 @@ async function assertProjectOwnership(
     { timeout: 30_000, timeoutMsg: `TSL41 ${stage}: fork 行不在指定项目内或重复出现在其他区域` },
   );
   await browser.saveScreenshot(
-    join(process.env.XCODE_E2E_ARTIFACT_DIR!, `fork-ownership-${stage}.png`),
+    join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `fork-ownership-${stage}.png`),
   );
 }
 
@@ -285,10 +285,10 @@ function readCliSession(sessionId: string): {
 
 async function verifyMobileFork(parentId: string, projectId: string, otherProjectId: string) {
   const pairingUrl = await obtainUnreadPairingUrl(
-    new URL(process.env.XCODE_WEB_REMOTE_CONTROL_URL!).origin,
+    new URL(process.env.ZCODE_WEB_REMOTE_CONTROL_URL!).origin,
   );
   const webBrowser = await chromium.launch({
-    executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE,
+    executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE,
     headless: true,
     args: ["--no-sandbox"],
   });
@@ -303,7 +303,7 @@ async function verifyMobileFork(parentId: string, projectId: string, otherProjec
     const page = await context.newPage();
     const projectSelector = `[data-project-id="${projectId}"]`;
     await openMobilePairingPage(page, pairingUrl, {
-      artifactDir: process.env.XCODE_E2E_ARTIFACT_DIR!,
+      artifactDir: process.env.ZCODE_E2E_ARTIFACT_DIR!,
       caseMarker: "TSL41",
       phase: "fork",
       readySelector: projectSelector,
@@ -337,11 +337,11 @@ async function verifyMobileFork(parentId: string, projectId: string, otherProjec
         .count(),
     ).toBe(0);
     await page.screenshot({
-      path: join(process.env.XCODE_E2E_ARTIFACT_DIR!, "fork-ownership-mobile.png"),
+      path: join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "fork-ownership-mobile.png"),
       fullPage: true,
     });
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "fork-ownership-mobile.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "fork-ownership-mobile.json"),
       JSON.stringify(
         { parentId, childId, projectId, ownership: readTaskOwnership(childId) },
         null,

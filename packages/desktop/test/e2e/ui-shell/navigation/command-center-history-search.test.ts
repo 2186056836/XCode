@@ -30,13 +30,13 @@ describe("Command Center Host 历史搜索", () => {
       })),
     }));
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "history-search-state.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "history-search-state.json"),
       JSON.stringify(snapshot, null, 2),
     );
   });
   before(async () => {
     await waitForWorkspaceApp(DEFAULT_WORKSPACE, 45_000);
-    home = process.env.XCODE_E2E_HOME_DIR ?? "";
+    home = process.env.ZCODE_E2E_HOME_DIR ?? "";
     // 旧 basename 守卫误拒 runner 默认的 .e2e-home；复用统一守卫，仍禁止写普通 HOME。
     if (!isIsolatedE2EHomeDir(home)) throw new Error("需要隔离 E2E HOME");
     closedWorkspace = join(home, "ClosedHistoryWorkspace");
@@ -109,7 +109,7 @@ describe("Command Center Host 历史搜索", () => {
     await searchAndExpect(marker, visibleCases);
     for (const name of visibleCases) await searchAndExpect(`${bodyMarker}_${name}`, [name]);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "history-cold-search.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "history-cold-search.png"),
     );
     await browser.keys("Escape");
   });
@@ -157,8 +157,8 @@ describe("Command Center Host 历史搜索", () => {
     const address = receiver.address();
     if (!address || typeof address === "string") throw new Error("pair receiver failed");
     const mobile = await chromium.launch({
-      ...(process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE
-        ? { executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
+      ...(process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE
+        ? { executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
         : { channel: "chrome" }),
       headless: true,
     });
@@ -202,7 +202,7 @@ describe("Command Center Host 历史搜索", () => {
       }, WEB_REMOTE_CONTROL_FIXTURE_CREDENTIALS);
       const page = await context.newPage();
       await openMobilePairingPage(page, await pairing, {
-        artifactDir: process.env.XCODE_E2E_ARTIFACT_DIR!,
+        artifactDir: process.env.ZCODE_E2E_ARTIFACT_DIR!,
         caseMarker: "CC-HISTORY-03",
         phase: "history-search",
         readySelector: '[data-testid="sidebar-search-open"]',
@@ -225,7 +225,7 @@ describe("Command Center Host 历史搜索", () => {
         );
       }
       await page.screenshot({
-        path: join(process.env.XCODE_E2E_ARTIFACT_DIR!, "history-mobile-search.png"),
+        path: join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "history-mobile-search.png"),
       });
     } finally {
       await mobile.close();

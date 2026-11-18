@@ -27,7 +27,7 @@ describe("Todo149 OpenCode Go 模板创建", () => {
   it("G149-01：按协议创建并保存假 Key，保留成员和个人身份", async function () {
     this.timeout(150_000);
     const builtinPath =
-      process.env.XCODE_BUILTIN_PROVIDER_CONFIG_FILE?.trim() ||
+      process.env.ZCODE_BUILTIN_PROVIDER_CONFIG_FILE?.trim() ||
       resolve(process.cwd(), "../../config/provider/zcode-builtin.json");
     const release = decodeXCodeBuiltinRelease(JSON.parse(await readFile(builtinPath, "utf8")));
     const repository = new NodePersonalProviderConfigRepository({

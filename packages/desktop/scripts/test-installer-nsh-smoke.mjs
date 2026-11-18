@@ -69,12 +69,12 @@ function readShortcutProperty(shortcutPath, propertyName) {
 
   const command = [
     "$shell = New-Object -ComObject WScript.Shell",
-    "$shortcut = $shell.CreateShortcut($env:XCODE_SHORTCUT_PATH)",
+    "$shortcut = $shell.CreateShortcut($env:ZCODE_SHORTCUT_PATH)",
     `[Console]::Out.Write(${propertyExpression})`,
   ].join("; ");
   return execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", command], {
     encoding: "utf-8",
-    env: { ...process.env, XCODE_SHORTCUT_PATH: shortcutPath },
+    env: { ...process.env, ZCODE_SHORTCUT_PATH: shortcutPath },
   }).trim();
 }
 

@@ -7739,9 +7739,9 @@ const jaJP: Record<string, string> = {
     "現在の画像の添付ファイルが大きすぎます。画像を削除または圧縮してから、もう一度お試しください。",
   "zcode.error.MEDIA_BUDGET_CURRENT_VIDEO_TOO_LARGE":
     "現在の動画の添付ファイルが大きすぎます。動画を削除または圧縮してから、もう一度お試しください。",
-  "zcode.error.XCODE_RUNTIME_MODEL_UNAVAILABLE":
+  "zcode.error.ZCODE_RUNTIME_MODEL_UNAVAILABLE":
     "現在のモデルは利用できなくなりました。続行するには、現在のモデル一覧から利用可能なモデルを選択してください。",
-  "zcode.error.XCODE_BIGMODEL_TEAM_PLAN_MEMBER_REQUIRED":
+  "zcode.error.ZCODE_BIGMODEL_TEAM_PLAN_MEMBER_REQUIRED":
     "現在のモデルは利用できません。現在のアカウントがプロジェクトのメンバー一覧に追加されているか確認してください。",
   "zcode.error.CLAUDE_UNKNOWN_COMMAND":
     "Claude Code は {command}を認識できません。コマンド名を確認するか、このコマンドをサポートするエージェント/スキルに切り替えてから、もう一度お試しください。",

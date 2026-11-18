@@ -8,7 +8,7 @@ import { toast } from "@/components/ui/toast.js";
 // Workspace presentation 水合只提供 mode 与 slash commands；模型候选、能力和首选值
 // 统一来自目标 Host ModelSelectionView。
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { XCODE_AGENT_PROVIDER, resolveExecutionState } from "@zcode/shared";
+import { ZCODE_AGENT_PROVIDER, resolveExecutionState } from "@zcode/shared";
 import type {
   XCodeConfigOption,
   ModelSelection,
@@ -201,7 +201,7 @@ export function useDraftConfigControl(params: {
     editScopeId = null,
   } = params;
   const workspaceKey = workspaceIdentity?.trim() || workspacePath;
-  const displayProvider = provider ?? XCODE_AGENT_PROVIDER;
+  const displayProvider = provider ?? ZCODE_AGENT_PROVIDER;
   const agentService = useXCodeAgentService(workspacePath, null, workspaceIdentity);
   useEffect(() => {
     const subscription = agentService.onDynamicPluginStartupDegraded({

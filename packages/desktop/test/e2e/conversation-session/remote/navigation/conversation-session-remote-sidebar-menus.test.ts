@@ -40,7 +40,7 @@ import {
 
 const CASE_MARKER = "E2E_REMOTE_SIDEBAR_MENUS";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-sidebar-menus",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-sidebar-menus",
 );
 
 async function buttonIn(selector: string, labels: RegExp) {

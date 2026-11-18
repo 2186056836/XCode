@@ -158,7 +158,7 @@ export function createProviderProxyFetch(options: ProviderProxyFetchOptions): Pr
   /**
    * 裸直连：自己的 node http/https + CA，**不经过全局代理链**。
    * 这是本模块所有「不走池」分支的唯一出口——配置了代理池的供应商在这里断掉与
-   * 全局 httpProxy / XCODE_HTTP_PROXY 的一切联系。
+   * 全局 httpProxy / ZCODE_HTTP_PROXY 的一切联系。
    */
   const directFetch = async (
     input: Parameters<ProviderProxyFetch>[0],

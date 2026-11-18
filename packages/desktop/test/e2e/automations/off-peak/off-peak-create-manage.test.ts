@@ -48,7 +48,7 @@ let rendererSizeSnapshot: ElectronRendererContentSizeSnapshot | undefined;
 /**
  * 闲时任务「表单创建 → 列表回显 → Pause → Continue → 删除」端到端。
  *
- * 由进程内 mock 网关驱动（wdio.conf startOffPeakE2EMock 设 XCODE_OFFPEAK_MOCK=1）：
+ * 由进程内 mock 网关驱动（wdio.conf startOffPeakE2EMock 设 ZCODE_OFFPEAK_MOCK=1）：
  * host 起网关、灰度强制开启、票据在本 spec 窗口内保持 queued。全程只碰 UI + 本地 sqlite
  * + 进程内网关的取号/状态接口，不派发模型请求，因此确定性。
  * 完整 run（派发→running→completed）、敏感批准、重启续跑见 coverage matrix 的 OPF/OPA/OPR。

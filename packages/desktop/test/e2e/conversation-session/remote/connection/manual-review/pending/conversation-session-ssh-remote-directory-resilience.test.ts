@@ -28,7 +28,7 @@ import {
 const MARKER = "E2E_SSH_DIRECTORY_RESILIENCE";
 const failure = process.env.R3_DIRECTORY_FAILURE_CASE ?? "missing";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-directory-resilience",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-directory-resilience",
 );
 
 describe(`${MARKER}: 单个目录失效不影响设备与其他项目`, () => {

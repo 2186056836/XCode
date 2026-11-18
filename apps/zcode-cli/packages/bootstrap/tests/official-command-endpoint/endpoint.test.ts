@@ -6,8 +6,8 @@ import { createServer, request, type IncomingHttpHeaders, type Server } from "no
 import { dirname } from "node:path";
 import { afterEach, assert, describe, expect, it, vi } from "vitest";
 import {
-  XCODE_OFFICIAL_ENDPOINT_ENV_KEY,
-  XCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY,
+  ZCODE_OFFICIAL_ENDPOINT_ENV_KEY,
+  ZCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY,
 } from "@zcode/shared";
 import type { ExecutionPort, ExecutionRequest } from "@zcode/contracts";
 import {
@@ -70,11 +70,11 @@ function call(
     const body = init.body;
     const req = request(
       {
-        socketPath: env[XCODE_OFFICIAL_ENDPOINT_ENV_KEY],
+        socketPath: env[ZCODE_OFFICIAL_ENDPOINT_ENV_KEY],
         path,
         method: init.method ?? "GET",
         headers: {
-          Authorization: `Bearer ${init.token ?? env[XCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY]}`,
+          Authorization: `Bearer ${init.token ?? env[ZCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY]}`,
           ...(body !== undefined ? { "Content-Length": String(Buffer.byteLength(body)) } : {}),
           ...init.headers,
         },
@@ -130,12 +130,12 @@ describe("official command endpoint", () => {
     const b = await endpoint.envForSession("session-b", WORKSPACE_B);
 
     expect(again).toEqual(a);
-    expect(b[XCODE_OFFICIAL_ENDPOINT_ENV_KEY]).toBe(a[XCODE_OFFICIAL_ENDPOINT_ENV_KEY]);
-    expect(b[XCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY]).not.toBe(
-      a[XCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY],
+    expect(b[ZCODE_OFFICIAL_ENDPOINT_ENV_KEY]).toBe(a[ZCODE_OFFICIAL_ENDPOINT_ENV_KEY]);
+    expect(b[ZCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY]).not.toBe(
+      a[ZCODE_OFFICIAL_ENDPOINT_TOKEN_ENV_KEY],
     );
     if (process.platform !== "win32") {
-      const dir = await stat(dirname(a[XCODE_OFFICIAL_ENDPOINT_ENV_KEY]!));
+      const dir = await stat(dirname(a[ZCODE_OFFICIAL_ENDPOINT_ENV_KEY]!));
       expect(dir.mode & 0o077).toBe(0);
     }
   });
@@ -277,7 +277,7 @@ describe("official command endpoint", () => {
     await expect(call(env, "/api/v1/sites/usage")).rejects.toThrow();
     expect(await endpoint.envForSession("session-a", WORKSPACE_A)).toEqual({});
     if (process.platform !== "win32") {
-      await expect(stat(dirname(env[XCODE_OFFICIAL_ENDPOINT_ENV_KEY]!))).rejects.toThrow();
+      await expect(stat(dirname(env[ZCODE_OFFICIAL_ENDPOINT_ENV_KEY]!))).rejects.toThrow();
     }
   });
 });
@@ -447,14 +447,14 @@ describe("withOfficialCommandEnv", () => {
       async (_request: ExecutionRequest, _lifecycle: { mode: string }) => ({}) as never,
     );
     const port = { ...fakePort(), runBashWithBackgroundLifecycle };
-    const wrapped = withOfficialCommandEnv(port, async () => ({ XCODE_OFFICIAL_ENDPOINT: "/s" }));
+    const wrapped = withOfficialCommandEnv(port, async () => ({ ZCODE_OFFICIAL_ENDPOINT: "/s" }));
 
     const lifecycle = (wrapped as Partial<typeof port>).runBashWithBackgroundLifecycle;
     expect(lifecycle).toBeTypeOf("function");
     await lifecycle!(request(), { mode: "explicit" });
 
     expect(runBashWithBackgroundLifecycle.mock.calls[0]![0].env).toEqual({
-      set: { XCODE_OFFICIAL_ENDPOINT: "/s" },
+      set: { ZCODE_OFFICIAL_ENDPOINT: "/s" },
     });
     expect(runBashWithBackgroundLifecycle.mock.calls[0]![1]).toEqual({ mode: "explicit" });
     const plain = withOfficialCommandEnv(fakePort(), async () => ({}));

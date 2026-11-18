@@ -25,7 +25,7 @@ import { prepareV4ConversationE2E } from "#e2e/helpers/v4-conversation";
 
 const MARKER = "E2E_SSH_HOST_CAPACITY";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-host-capacity",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-host-capacity",
 );
 const readDirectory = () =>
   callHandoffHost<RemoteProjectDirectory>(ServiceChannels.RemoteProjects, "readDirectory");

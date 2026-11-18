@@ -32,7 +32,7 @@ export async function prepareTtftOtlpFixture(
   });
   // signal 专属 endpoint/headers 优先于公共值，全部覆盖才能保证真实导出留在隔离接收器。
   const patch = {
-    XCODE_LOCAL_TTFT_ENABLED: "1",
+    ZCODE_LOCAL_TTFT_ENABLED: "1",
     OTEL_EXPORTER_OTLP_ENDPOINT: endpoint,
     OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: `${endpoint}/v1/traces`,
     OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: `${endpoint}/v1/metrics`,

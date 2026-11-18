@@ -12,7 +12,7 @@ Node 模式预编译 `apps/zcode-cli/packages/cli/dist/zcode.cjs`，生成同目
 `pnpm build:desktop-agent:bytecode`（先确保普通 CLI bundle 已更新）。
 
 构建/字节码格式由 desktop 构建脚本持有；入口选择仍由既有 Agent command resolver
-持有。Dev 启动器通过 `XCODE_DESKTOP_AGENT_BYTECODE=1` 向 Host 传递选项；它只影响
+持有。Dev 启动器通过 `ZCODE_DESKTOP_AGENT_BYTECODE=1` 向 Host 传递选项；它只影响
 Electron 内的工作区 CLI bundle，不影响显式 Agent command、SSH/WSL 的原生 Agent
 或正式打包流程。该变量不是 CLI 的产品功能参数，完整约定见
 [Agent Server spec](../../apps/zcode-cli/docs/design/v2/zcode-protocol-agent-server.md)。
@@ -72,9 +72,9 @@ pnpm bundle:desktop -- win arm64
 如果不方便传 CLI 参数，也可以使用环境变量：
 
 ```bash
-XCODE_TARGET_OS=linux XCODE_TARGET_ARCH=x64 pnpm bundle:desktop
+ZCODE_TARGET_OS=linux ZCODE_TARGET_ARCH=x64 pnpm bundle:desktop
 
-正式发版打包不再注入可配置的 generic update feed。新版客户端运行时使用服务端 manifest provider；`electron-builder` 的 generic `publish.url` 只保留本地占位。打包应用通过既有 endpoint 解析更新检查接口，忽略 `XCODE_UPDATE_FEED_URL` 和 `--zcode-update-feed-url`；只有未打包开发态可以通过这两个入口覆盖完整 manifest URL。
+正式发版打包不再注入可配置的 generic update feed。新版客户端运行时使用服务端 manifest provider；`electron-builder` 的 generic `publish.url` 只保留本地占位。打包应用通过既有 endpoint 解析更新检查接口，忽略 `ZCODE_UPDATE_FEED_URL` 和 `--zcode-update-feed-url`；只有未打包开发态可以通过这两个入口覆盖完整 manifest URL。
 ```
 
 ## 预检查
@@ -97,7 +97,7 @@ pnpm bundle:desktop -- --os mac --arch arm64 --skip-prepare --skip-build
 等价环境变量：
 
 ```bash
-XCODE_SKIP_PREPARE=1 XCODE_SKIP_BUILD=1 pnpm bundle:desktop
+ZCODE_SKIP_PREPARE=1 ZCODE_SKIP_BUILD=1 pnpm bundle:desktop
 ```
 
 ## 生产产物安全收口

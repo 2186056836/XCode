@@ -260,7 +260,7 @@ test("未显式配置 mirror 时按内网 deps 推导默认地址", () => {
   );
   assert.equal(
     resolveVerifyMirror({
-      XCODE_DEPS_BASE_URL: "https://deps.example.test/zcode/deps",
+      ZCODE_DEPS_BASE_URL: "https://deps.example.test/zcode/deps",
     }),
     "https://deps.example.test/zcode/deps/electron-builder-binaries/",
   );

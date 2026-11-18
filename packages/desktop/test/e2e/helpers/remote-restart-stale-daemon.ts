@@ -50,7 +50,7 @@ export async function installAndStartRemoteDaemon(
             `"$HOME/.xcode/server/bin/zcode" stop --wait --server-root "$HOME/.xcode/server" --json >/dev/null`,
           ]
         : []),
-      `${options.nodeOptions ? `NODE_OPTIONS='${options.nodeOptions}' ` : ""}XCODE_SERVER_SKIP_SERVICE_REGISTRATION=1 "$HOME/.xcode/server/bin/zcode" serve --daemon --server-root "$HOME/.xcode/server" --json >/dev/null`,
+      `${options.nodeOptions ? `NODE_OPTIONS='${options.nodeOptions}' ` : ""}ZCODE_SERVER_SKIP_SERVICE_REGISTRATION=1 "$HOME/.xcode/server/bin/zcode" serve --daemon --server-root "$HOME/.xcode/server" --json >/dev/null`,
     ].join("; "),
   );
 }
@@ -86,7 +86,7 @@ export async function installRemoteServerArchive(
       'mkdir -p "$b"',
       `tar -xzf ${remoteArchive} -C "$b" --strip-components=1`,
       // WSL/Docker 的 daemon 不注册 OS service，与 Desktop 的 Docker transport 一致。
-      `XCODE_SERVER_SKIP_SERVICE_REGISTRATION=1 "$b/bin/zcode" update --from-archive ${remoteArchive} --server-root "$HOME/.xcode/server" --json >/dev/null`,
+      `ZCODE_SERVER_SKIP_SERVICE_REGISTRATION=1 "$b/bin/zcode" update --from-archive ${remoteArchive} --server-root "$HOME/.xcode/server" --json >/dev/null`,
       `rm -rf "$b" ${remoteArchive}`,
     ].join("; "),
   );

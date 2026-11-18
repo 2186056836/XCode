@@ -112,7 +112,7 @@ async function releaseList() {
 describe(marker, () => {
   afterEach(async function () {
     if (this.currentTest?.state !== "failed") return;
-    const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR!;
+    const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR!;
     await browser.saveScreenshot(join(artifacts, "failure.png"));
     const state = await browser.execute(() => ({
       dialogs: Array.from(document.querySelectorAll('[role="dialog"]')).map((item) => ({
@@ -243,7 +243,7 @@ describe(marker, () => {
     await $(`[role="option"][data-device-id="${host.id}"]`).click();
     await openList();
     await pick.waitForDisplayed();
-    const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR!;
+    const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR!;
     for (const locale of ["zh-CN", "en-US"])
       for (const theme of ["light", "dark"]) {
         await browser.execute(

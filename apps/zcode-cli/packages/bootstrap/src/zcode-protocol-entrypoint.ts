@@ -54,7 +54,7 @@ import {
 import {
   createOfficialMcpTrustedOriginRegistry,
   OFFICIAL_MCP_DEV_TRUSTED_ORIGINS_ENV,
-  XCODE_WORKSPACE_IDENTITY_ENV,
+  ZCODE_WORKSPACE_IDENTITY_ENV,
   resolveRuntimeXCodeEndpointOrigin,
 } from "@zcode/shared";
 import { XCodeProtocolAgentServer } from "./zcode-protocol/server.js";
@@ -182,7 +182,7 @@ export async function runXCodeProtocolAgent(
     });
     pluginPrewarm = resolveXCodePlugins({
       pluginDiscovery,
-      workspaceIdentity: (options.env ?? process.env)[XCODE_WORKSPACE_IDENTITY_ENV]?.trim(),
+      workspaceIdentity: (options.env ?? process.env)[ZCODE_WORKSPACE_IDENTITY_ENV]?.trim(),
       env: options.env,
       logger,
       workingDirectory: options.cwd,
@@ -221,11 +221,11 @@ export async function runXCodeProtocolAgent(
       create: () =>
         prepareXCodeTelemetryEnv(runtimeEnv, {
           cliVersion: options.version,
-          productVersion: options.env?.XCODE_APP_VERSION,
+          productVersion: options.env?.ZCODE_APP_VERSION,
           runtimeSurface,
         }),
     });
-    const telemetryDeviceMid = telemetryEnv.XCODE_TELEMETRY_DEVICE_MID;
+    const telemetryDeviceMid = telemetryEnv.ZCODE_TELEMETRY_DEVICE_MID;
     mcpTelemetryTracker =
       configResult.config.features.mcp === false
         ? undefined
@@ -257,7 +257,7 @@ export async function runXCodeProtocolAgent(
     // 与下面 trustedOrigins 的 resolveXCodeApiOrigin 必须是同一个表达式，否则两侧判定分叉。
     const resolveXCodeApiOrigin = (): string =>
       resolveRuntimeXCodeEndpointOrigin(options.env ?? process.env);
-    const workspaceIdentity = (options.env ?? process.env)[XCODE_WORKSPACE_IDENTITY_ENV]?.trim();
+    const workspaceIdentity = (options.env ?? process.env)[ZCODE_WORKSPACE_IDENTITY_ENV]?.trim();
     const officialMcpAuth = {
       authHeadersPort: createOfficialMcpAuthHeadersPort({
         resolveContext: () => officialMcpAuthContext,
@@ -297,7 +297,7 @@ export async function runXCodeProtocolAgent(
         logger,
       }).resolveHeaders,
       resolveXCodeApiOrigin,
-      appVersion: endpointEnv.XCODE_APP_VERSION?.trim() || options.version,
+      appVersion: endpointEnv.ZCODE_APP_VERSION?.trim() || options.version,
       fetch: createMcpTransportFetch({ env: endpointEnv, network: configResult.config.network }),
       logger,
     });
@@ -365,7 +365,7 @@ export async function runXCodeProtocolAgent(
           env: {
             ...telemetryEnv,
             ...appOptions.env,
-            ...(telemetryDeviceMid ? { XCODE_TELEMETRY_DEVICE_MID: telemetryDeviceMid } : {}),
+            ...(telemetryDeviceMid ? { ZCODE_TELEMETRY_DEVICE_MID: telemetryDeviceMid } : {}),
           },
           ...(nodeReplBrowserBroker ? { nodeReplBrowserBroker } : {}),
           ...(mcpConnectionPool
@@ -506,7 +506,7 @@ function resolveProtocolRuntimeSurface(
   env: NodeJS.ProcessEnv,
 ): "desktop_local_host" | "remote_workspace_host" {
   // Bug 根因：入口曾无条件覆盖 Host 注入值，远程 SSH/WSL/容器 Trace 被归入本地 Desktop。
-  return env.XCODE_TELEMETRY_RUNTIME_SURFACE?.trim() === "remote_workspace_host"
+  return env.ZCODE_TELEMETRY_RUNTIME_SURFACE?.trim() === "remote_workspace_host"
     ? "remote_workspace_host"
     : "desktop_local_host";
 }

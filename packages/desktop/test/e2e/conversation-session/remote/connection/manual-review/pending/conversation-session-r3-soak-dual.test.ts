@@ -33,7 +33,7 @@ import {
 } from "#e2e/helpers/v4-conversation";
 
 const CASE_MARKER = "E2E_R3_SOAK_DUAL";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-soak-dual");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-soak-dual");
 // Linux e2e 服务器上没有 macOS 版 Chrome：用 R3_MOBILE_CHROME 指向该机 playwright 下载的
 // chromium（缺省仍回退开发机 macOS 路径），否则本 case 在服务器上直接起不了手机浏览器。
 const CHROME =
@@ -180,8 +180,8 @@ describe(`${CASE_MARKER}: Desktop continuous + Mobile replayable 同时运行的
       throw new Error(`${CASE_MARKER}: R3_SOAK2_MINUTES 必须是正数，不能跳过长稳循环`);
     }
     this.timeout((SOAK_MINUTES + 20) * 60_000);
-    const container = process.env.XCODE_E2E_SSH_CONTAINER?.trim();
-    if (!container) throw new Error(`${CASE_MARKER}: 缺少 XCODE_E2E_SSH_CONTAINER`);
+    const container = process.env.ZCODE_E2E_SSH_CONTAINER?.trim();
+    if (!container) throw new Error(`${CASE_MARKER}: 缺少 ZCODE_E2E_SSH_CONTAINER`);
     const prepared = await prepareSSHLifecycle(CASE_MARKER, {
       apiType: "anthropic-messages",
       tunnelUsername: "tunnel",

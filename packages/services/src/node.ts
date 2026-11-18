@@ -83,12 +83,12 @@ import {
   type DynamicWorkflowMode,
   type ProviderProvisioningSourceTrigger,
   toBearerAuthorization,
-  XCODE_CLIENT_LANGUAGE_ENV,
+  ZCODE_CLIENT_LANGUAGE_ENV,
 } from "@zcode/shared";
 
 export {
   materializeXCodeBuiltinProviderConfig,
-  XCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV,
+  ZCODE_BUILTIN_PROVIDER_CONFIG_FILE_ENV,
 } from "@zcode/provider-node";
 import { randomUUID } from "node:crypto";
 import { getAppConfigDir as getContentAppConfigDir } from "#src/paths.js";
@@ -136,8 +136,8 @@ export {
   parseFsFaultRulesFromEnvValue,
   resetProcessFsFaultInjectorForTests,
   setFsFaultInjectorForTests,
-  XCODE_E2E_FS_FAULTS_ALLOW_ENV,
-  XCODE_E2E_FS_FAULTS_ENV,
+  ZCODE_E2E_FS_FAULTS_ALLOW_ENV,
+  ZCODE_E2E_FS_FAULTS_ENV,
 } from "./fs/fsFaultInjection.js";
 export type {
   FsFaultCheckInput,
@@ -167,7 +167,7 @@ export {
   getGitCheckpointIndexRootDir,
   copyDataDirectory,
   validateDataBaseDirTarget,
-  XCODE_WINDOWS_APP_INSTALL_DIR_ENV,
+  ZCODE_WINDOWS_APP_INSTALL_DIR_ENV,
 } from "./paths.js";
 export { createGitService } from "./git/gitService.js";
 export { GitCommitMessageGenerator } from "./git/gitCommitMessageGenerator.js";
@@ -524,7 +524,7 @@ import {
 import { setAutoActivityLogStore } from "./marketing-touch/autoClaimLog.js";
 import { readApiJson } from "./providers/api/apiJson.js";
 import { buildXCodeSourceHeaders } from "./providers/sourceHeaders.js";
-import { XCODE_MARKETING_TOUCH_URL } from "./providers/api/apiEndpoints.js";
+import { ZCODE_MARKETING_TOUCH_URL } from "./providers/api/apiEndpoints.js";
 import { ensureDeviceMidForAccountSync } from "./device/deviceMid.js";
 import { createUpstreamModelListFetcher } from "./model-provider/upstreamModelListFetcher.js";
 import { createBroadcastService } from "./broadcast/broadcastService.js";
@@ -732,7 +732,7 @@ import { resolveBrokerSocketPath } from "@zcode/zcode-cua/broker/socketPath";
 import {
   DEFAULT_XCODE_MODEL_CONTEXT_BUDGET_STRATEGY,
   OAUTH_ACTIVE_ACCOUNT_CHANGED_BROADCAST_CHANNEL,
-  XCODE_JWT_INVALID_BROADCAST_CHANNEL,
+  ZCODE_JWT_INVALID_BROADCAST_CHANNEL,
   formatLogPrefix,
   isCredentialDecryptError,
   isBuiltinOAuthProvider,
@@ -750,17 +750,16 @@ import {
   isXCodeCuaMcpCommand,
   isXCodeCuaMcpPackageArg,
   isXCodeCuaInternalFeatureEnabled,
-  XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
-  withZCodeCuaEnvAliases,
+  ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY,
   type XCodeAutomation,
   type XCodeAutomationRun,
   getCapturedXCodeAgentTelemetryEnv,
-  XCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV,
+  ZCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV,
   ZAI_PROVIDER_ID,
   zcodeAccountAccessSchema,
   zcodeProviderAccountAccessSchema,
-  XCODE_VERSION,
-  XCODE_ENV,
+  ZCODE_VERSION,
+  ZCODE_ENV,
   buildRuntimeXCodeApiUrl,
 } from "@zcode/shared";
 
@@ -1263,12 +1262,12 @@ export function createDefaultCuaProductHelper(
   };
 }
 
-export const XCODE_CUA_BUNDLED_HELPER_APP_PATH_ENV = "XCODE_CUA_BUNDLED_HELPER_APP_PATH";
+export const ZCODE_CUA_BUNDLED_HELPER_APP_PATH_ENV = "ZCODE_CUA_BUNDLED_HELPER_APP_PATH";
 
 export function resolveBundledCuaHelperAppPath(
   env: NodeJS.ProcessEnv = process.env,
 ): string | undefined {
-  const injectedPath = env[XCODE_CUA_BUNDLED_HELPER_APP_PATH_ENV]?.trim();
+  const injectedPath = env[ZCODE_CUA_BUNDLED_HELPER_APP_PATH_ENV]?.trim();
   if (injectedPath) {
     return injectedPath;
   }
@@ -1498,7 +1497,7 @@ export function createLocalServices(options: {
   initializeRuntimeProcessEnv(options?.runtimeProcessEnvPatch);
 
   const desktopContextPromptEnabledRaw =
-    process.env[XCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV]?.trim();
+    process.env[ZCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV]?.trim();
   const desktopContextPromptEnabled =
     desktopContextPromptEnabledRaw === "1"
       ? true
@@ -1755,7 +1754,7 @@ export function createLocalServices(options: {
     zcodeBuiltinEnvironment: {
       environmentConfigRoot: resolveAppConfigDir(),
       platform: clientConfigPlatform,
-      appVersion: XCODE_VERSION,
+      appVersion: ZCODE_VERSION,
       resolveEndpointOrigin: resolveCurrentXCodeEndpointOrigin,
       onRefreshResult: (event) => {
         if (event.result === "updated")
@@ -1768,7 +1767,7 @@ export function createLocalServices(options: {
           resolveXcodeJwtToken: () => credentialService.load("zcodejwttoken"),
           endpointOrigin,
           signal,
-          appVersion: XCODE_VERSION,
+          appVersion: ZCODE_VERSION,
           platform: clientConfigPlatform,
         }),
     },
@@ -1944,7 +1943,7 @@ export function createLocalServices(options: {
         ...buildXCodeSourceHeaders({ accountRef }),
         Authorization: `Bearer ${token}`,
       };
-      const url = new URL(XCODE_MARKETING_TOUCH_URL);
+      const url = new URL(ZCODE_MARKETING_TOUCH_URL);
       url.searchParams.set("seq", "0");
       // 走账号绑定代理出口，与手动领取的 IMarketingTouchService.query 一致。
       // 装配期 holder 还没绑定（这一段在 1755 行、accountAwareApiClient 在 3200 行），
@@ -2150,8 +2149,8 @@ export function createLocalServices(options: {
   // service 创建完成后再赋值。Helper recovery 始终不能回收 Agent。
   let hasActiveTurnRef: (() => boolean) | undefined;
   const isCuaEnabledForContext = (context?: CuaProductMcpServerResolverContext): boolean =>
-    // 保留 main 原有 gate 行为（避免回归）：dev/internal 特性开启时（XCODE_CUA_DEV_MODE=1 或
-    // XCODE_CUA_PRODUCT_HELPER=1）即视为启用，不依赖 config.json 显式 enable——main 的 bootstrap
+    // 保留 main 原有 gate 行为（避免回归）：dev/internal 特性开启时（ZCODE_CUA_DEV_MODE=1 或
+    // ZCODE_CUA_PRODUCT_HELPER=1）即视为启用，不依赖 config.json 显式 enable——main 的 bootstrap
     // 用 isXCodeCuaInternalFeatureEnabled 门控 bundled plugin，与 feat 的 workspace enablement 不同。
     // 生产路径（dev mode off）回落到官方插件 workspace enablement 判定（与 feat 一致）。
     isXCodeCuaInternalFeatureEnabled(process.env) ||
@@ -2249,13 +2248,13 @@ export function createLocalServices(options: {
   // 即本文件已经用来 import buildHelperOpenArgs 的那个 subpath，可正常导入）。
   //
   // 行为等价性（别误读成安全加固）：上游是 `COMPILED_LOCAL_DEVELOPMENT_RUNTIME &&
-  // XCODE_RUNTIME_ENV!=="production"`，而那个编译期常量只有 scripts/build-cua-helper-app.mjs
+  // ZCODE_RUNTIME_ENV!=="production"`，而那个编译期常量只有 scripts/build-cua-helper-app.mjs
   // 会用 define 折叠（Helper bundle）；desktop host bundle 没有该 define，于是回退成
   // `process.env.NODE_ENV !== "production"` —— 正是复制品写的那一项。所以在**当前**打包形态下
-  // 两者逐字等价，关门靠的是 XCODE_RUNTIME_ENV=production（打包态显式注入且不传 NODE_ENV）。
+  // 两者逐字等价，关门靠的是 ZCODE_RUNTIME_ENV=production（打包态显式注入且不传 NODE_ENV）。
   //
   // 换成上游的收益是消除漂移面：折叠点、因子个数与 fail-closed 方向都由上游一处决定，
-  // 哪天 host bundle 也补上 __XCODE_LOCAL_DEVELOPMENT_RUNTIME__ define（Helper 侧已经有），
+  // 哪天 host bundle 也补上 __ZCODE_LOCAL_DEVELOPMENT_RUNTIME__ define（Helper 侧已经有），
   // 编译期门自动生效，不需要再回来改这里。
 
   const cuaStatusLaunchLog = createServiceLogger("cua-status-launch");
@@ -2997,12 +2996,12 @@ export function createLocalServices(options: {
           process.platform === "win32" ? getStableCuaPipeName() : resolveBrokerSocketPath();
         cuaProductHelperEnv = {
           [BROKER_SOCKET_ENV]: brokerSocket,
-          [XCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY]: randomBytes(16).toString("hex"),
+          [ZCODE_CUA_PLUGIN_AUTHORITY_ENV_KEY]: randomBytes(16).toString("hex"),
         };
         if (process.platform === "win32") {
           const recipe = await resolveStableCuaWinRecipe();
           if (recipe) {
-            cuaProductHelperEnv["XCODE_CUA_WIN_HELPER_RECIPE"] = JSON.stringify({
+            cuaProductHelperEnv["ZCODE_CUA_WIN_HELPER_RECIPE"] = JSON.stringify({
               ...recipe,
               hostPid: process.pid,
             });
@@ -3013,9 +3012,6 @@ export function createLocalServices(options: {
             };
           }
         }
-        // 移植进来的官方 producer 只读 ZCODE_CUA_*；XCODE_ 原名给 fork 自己的
-        // plugin host / 状态查询用，别名给 producer。少这一份 producer 连不上 broker。
-        cuaProductHelperEnv = withZCodeCuaEnvAliases(cuaProductHelperEnv);
       }
       const telemetryEnv = getCapturedXCodeAgentTelemetryEnv();
       const telemetryConfigured = Boolean(
@@ -3384,7 +3380,7 @@ export function createLocalServices(options: {
         // 401 分类后可能已完成新登录；只有队列内真正清理的旧会话才广播过期。
         if (invalidated) {
           void broadcastService.send({
-            channel: XCODE_JWT_INVALID_BROADCAST_CHANNEL,
+            channel: ZCODE_JWT_INVALID_BROADCAST_CHANNEL,
             payload: {},
           });
         }
@@ -3556,7 +3552,7 @@ export function createLocalServices(options: {
 
   const sqliteReposToClose: Array<{ close(): void }> = [];
   const marketingAssets = createMarketingAssetRegistry({
-    allowLoopback: XCODE_ENV === "test" || process.env.NODE_ENV === "development",
+    allowLoopback: ZCODE_ENV === "test" || process.env.NODE_ENV === "development",
   });
   const services = new ServiceCollection()
     .register(
@@ -3662,7 +3658,7 @@ export function createLocalServices(options: {
         resolveXcodeJwtToken: () => credentialService.load("zcodejwttoken"),
         resolveRequestContext: async () => ({
           endpointOrigin: await resolveCurrentXCodeEndpointOrigin(),
-          appVersion: XCODE_VERSION,
+          appVersion: ZCODE_VERSION,
           platform: `${process.platform}-${process.arch}`,
         }),
       }),
@@ -3755,7 +3751,7 @@ export function createLocalServices(options: {
       IHighspeedCardService,
       (() => {
         const origin = resolveRuntimeXCodeEndpointOrigin(process.env);
-        const rawMockScenario = process.env.XCODE_HIGHSPEED_MOCK_SCENARIO;
+        const rawMockScenario = process.env.ZCODE_HIGHSPEED_MOCK_SCENARIO;
         const mockScenarios = new Set<HighspeedMockScenario>([
           "hit-fast",
           "miss",
@@ -4340,5 +4336,5 @@ export { localRuntimeNetworkCapture } from "./zcode-agent/localRuntimeNetworkCap
 /** 只下发可打印 ASCII 的界面语言；缺失时不写该键，Agent 回落自身 Intl。 */
 function buildAgentClientLanguageEnv(locale: string | undefined): Record<string, string> {
   const value = locale?.trim();
-  return value && /^[\x20-\x7e]+$/.test(value) ? { [XCODE_CLIENT_LANGUAGE_ENV]: value } : {};
+  return value && /^[\x20-\x7e]+$/.test(value) ? { [ZCODE_CLIENT_LANGUAGE_ENV]: value } : {};
 }

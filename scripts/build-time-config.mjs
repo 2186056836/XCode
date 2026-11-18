@@ -7,8 +7,8 @@ import { resolve } from "node:path";
  *
  * 合并修复：本文件在「回退到 fork 基线」时被误删，但 packages/desktop/{vite,tsup}.config.ts
  * 仍然 `await import()` 它，导致 vite build 直接以 ERR_MODULE_NOT_FOUND 失败。
- * 定义名沿用 fork 的 __XCODE_* 前缀（与 packages/shared/src/env.ts 的 declare 对齐），
- * 环境变量前缀也随 fork 一起改为 XCODE_（全仓其余脚本均已是 XCODE_ 前缀）。
+ * 定义名沿用 fork 的 __ZCODE_* 前缀（与 packages/shared/src/env.ts 的 declare 对齐），
+ * 环境变量前缀也随 fork 一起改为 ZCODE_（全仓其余脚本均已是 ZCODE_ 前缀）。
  */
 export const PRIVATE_BUILD_DEFAULTS_PATH = resolve(
   import.meta.dirname,
@@ -43,18 +43,18 @@ export async function resolveBuildTimeConfig(
 ) {
   const defaults = await readPrivateDefaults(defaultsPath);
   return {
-    armsRumEndpoint: pickValue(env, defaults, "XCODE_ARMS_RUM_ENDPOINT"),
-    telemetryReportEndpoint: pickValue(env, defaults, "XCODE_TELEMETRY_REPORT_ENDPOINT"),
+    armsRumEndpoint: pickValue(env, defaults, "ZCODE_ARMS_RUM_ENDPOINT"),
+    telemetryReportEndpoint: pickValue(env, defaults, "ZCODE_TELEMETRY_REPORT_ENDPOINT"),
     autoUpdateEnabled: ENABLED_VALUES.has(
-      pickValue(env, defaults, "XCODE_AUTO_UPDATE").toLowerCase(),
+      pickValue(env, defaults, "ZCODE_AUTO_UPDATE").toLowerCase(),
     ),
   };
 }
 
 export function createBuildTimeConfigDefines(config) {
   return {
-    __XCODE_ARMS_RUM_ENDPOINT__: JSON.stringify(config.armsRumEndpoint),
-    __XCODE_TELEMETRY_REPORT_ENDPOINT__: JSON.stringify(config.telemetryReportEndpoint),
-    __XCODE_AUTO_UPDATE_ENABLED__: JSON.stringify(config.autoUpdateEnabled),
+    __ZCODE_ARMS_RUM_ENDPOINT__: JSON.stringify(config.armsRumEndpoint),
+    __ZCODE_TELEMETRY_REPORT_ENDPOINT__: JSON.stringify(config.telemetryReportEndpoint),
+    __ZCODE_AUTO_UPDATE_ENABLED__: JSON.stringify(config.autoUpdateEnabled),
   };
 }

@@ -7,7 +7,7 @@ export interface DefaultPluginMarketplace {
   lastUpdated?: string;
 }
 
-export const XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID = "zcode-plugins-official";
+export const ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID = "zcode-plugins-official";
 
 /**
  * Claude Code 官方市场（GitHub git 源）。它不是 XCode 的强依赖：GitHub 不可达时刷新必然失败，
@@ -40,9 +40,9 @@ export const DEFAULT_PLUGIN_MARKETPLACES: DefaultPluginMarketplace[] = [
   {
     // XCode 官方唯一市场：本地 seed 分片与 CDN 分片在 Agent storage 内合并。
     // CDN manifest 的 name 必须与该 canonical id 一致。
-    id: XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
+    id: ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
     source: "https://cdn-zcode.z.ai/zcode/official-plugin/marketplace.json",
-    name: XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
+    name: ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
     description: "Official XCode plugins marketplace: built-in and community plugins for XCode.",
     pluginCount: 0,
   },
@@ -58,7 +58,7 @@ export const DEFAULT_PLUGIN_MARKETPLACES: DefaultPluginMarketplace[] = [
 ];
 
 // 商店「公开」分段只有一个 XCode 官方市场 id，内置与 CDN 不再拆分身份。
-export const PUBLIC_STORE_MARKETPLACE_IDS = [XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID] as const;
+export const PUBLIC_STORE_MARKETPLACE_IDS = [ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID] as const;
 
 export function isPublicStoreMarketplaceId(id: string): boolean {
   return (PUBLIC_STORE_MARKETPLACE_IDS as readonly string[]).includes(id);

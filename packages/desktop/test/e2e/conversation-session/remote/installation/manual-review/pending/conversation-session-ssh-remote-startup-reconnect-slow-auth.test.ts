@@ -37,7 +37,7 @@ import { prepareV4ConversationE2E } from "#e2e/helpers/v4-conversation";
 const MARKER = "E2E_SSH_STARTUP_RECONNECT_SLOW_AUTH";
 const SLOW_AUTH_LINE = "auth optional pam_exec.so quiet /bin/sleep 50";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-remote-startup-reconnect-slow-auth",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-remote-startup-reconnect-slow-auth",
 );
 
 async function readCardStatus(sourceServerId: string): Promise<string | null> {

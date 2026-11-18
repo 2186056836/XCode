@@ -15,7 +15,7 @@ export type XCodePluginQueryErrorData = z.infer<typeof zcodePluginQueryErrorData
 
 // ── plugins/readUserOptions ──
 // 本插件 user 层的有效值（清单默认值 ⊕ user 层选项，含敏感值）。只给 App 的扩展 settings 能力用。
-export const XCODE_PLUGIN_READ_USER_OPTIONS_ERROR_CODES = {
+export const ZCODE_PLUGIN_READ_USER_OPTIONS_ERROR_CODES = {
   /** 插件不在 user 视图的发现结果里（JSON-RPC -32602）。 */
   pluginNotFound: "plugin_not_found",
 } as const;
@@ -36,7 +36,7 @@ export type XCodePluginsReadUserOptionsResult = z.infer<
 // ── plugins/mentionItems ──
 // 输入框 `@` 面板里 `tool` target 的候选项：CLI 在会话现有的 MCP 连接上调插件工具，
 // 按下面的严格 schema 校验 `structuredContent.items`。不设计取消，App 只采用最新 seq 的结果。
-export const XCODE_PLUGIN_MENTION_LIMITS = {
+export const ZCODE_PLUGIN_MENTION_LIMITS = {
   maxItems: 50,
   idMaxChars: 200,
   labelMaxChars: 120,
@@ -51,7 +51,7 @@ export const XCODE_PLUGIN_MENTION_LIMITS = {
  * 稳定错误码。引用类（插件、工具找不到或不可调）用 JSON-RPC -32602；
  * 执行类（授权被拒、工具报错、结果不合 schema）用 -32000。会话不在内存用 -32004（sessionUnavailable）。
  */
-export const XCODE_PLUGIN_MENTION_ERROR_CODES = {
+export const ZCODE_PLUGIN_MENTION_ERROR_CODES = {
   pluginUnavailable: "plugin_mention_plugin_unavailable",
   toolNotFound: "plugin_mention_tool_not_found",
   toolNotAppVisible: "plugin_mention_tool_not_app_visible",
@@ -61,31 +61,31 @@ export const XCODE_PLUGIN_MENTION_ERROR_CODES = {
   resultInvalid: "plugin_mention_result_invalid",
 } as const;
 export type XCodePluginMentionErrorCode =
-  (typeof XCODE_PLUGIN_MENTION_ERROR_CODES)[keyof typeof XCODE_PLUGIN_MENTION_ERROR_CODES];
+  (typeof ZCODE_PLUGIN_MENTION_ERROR_CODES)[keyof typeof ZCODE_PLUGIN_MENTION_ERROR_CODES];
 
 export const zcodePluginMentionItemSchema = z
   .object({
-    id: z.string().min(1).max(XCODE_PLUGIN_MENTION_LIMITS.idMaxChars),
-    label: z.string().min(1).max(XCODE_PLUGIN_MENTION_LIMITS.labelMaxChars),
-    description: z.string().max(XCODE_PLUGIN_MENTION_LIMITS.descriptionMaxChars).optional(),
-    icon: z.string().min(1).max(XCODE_PLUGIN_MENTION_LIMITS.iconMaxChars).optional(),
+    id: z.string().min(1).max(ZCODE_PLUGIN_MENTION_LIMITS.idMaxChars),
+    label: z.string().min(1).max(ZCODE_PLUGIN_MENTION_LIMITS.labelMaxChars),
+    description: z.string().max(ZCODE_PLUGIN_MENTION_LIMITS.descriptionMaxChars).optional(),
+    icon: z.string().min(1).max(ZCODE_PLUGIN_MENTION_LIMITS.iconMaxChars).optional(),
     // 选中后按原文插入提及块并随消息发给模型（extension-host.md §16.6）。
-    insertText: z.string().min(1).max(XCODE_PLUGIN_MENTION_LIMITS.insertTextMaxChars),
+    insertText: z.string().min(1).max(ZCODE_PLUGIN_MENTION_LIMITS.insertTextMaxChars),
   })
   .strict();
 export type XCodePluginMentionItem = z.infer<typeof zcodePluginMentionItemSchema>;
 export const zcodePluginMentionItemsSchema = z
   .array(zcodePluginMentionItemSchema)
-  .max(XCODE_PLUGIN_MENTION_LIMITS.maxItems);
+  .max(ZCODE_PLUGIN_MENTION_LIMITS.maxItems);
 
 export const zcodePluginsMentionItemsParamsSchema = z
   .object({
     sessionId: nonEmptyString,
     pluginId: nonEmptyString,
     /** 插件 MCP server 上的原始工具名，不是模型可见的 `mcp__…` 名。 */
-    tool: nonEmptyString.max(XCODE_PLUGIN_MENTION_LIMITS.toolNameMaxChars),
+    tool: nonEmptyString.max(ZCODE_PLUGIN_MENTION_LIMITS.toolNameMaxChars),
     /** `@` 后的输入，可以是空串。 */
-    query: z.string().max(XCODE_PLUGIN_MENTION_LIMITS.queryMaxChars),
+    query: z.string().max(ZCODE_PLUGIN_MENTION_LIMITS.queryMaxChars),
   })
   .strict();
 export type XCodePluginsMentionItemsParams = z.infer<typeof zcodePluginsMentionItemsParamsSchema>;

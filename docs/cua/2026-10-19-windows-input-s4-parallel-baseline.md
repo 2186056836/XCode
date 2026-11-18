@@ -3,8 +3,8 @@
 > 状态：已执行。对应 S4 计划 §6 / §9 S4.0 行（kind=parallel runner + P1-P8 +
 > 拆锁前 busy 对照数据）。runner：
 > `packages/zcode-cua/scripts/windows-harness-parallel-experiments.mjs`
-> （单测 `test/matrix/parallel-lib.test.ts`，opt-in `XCODE_CUA_HARNESS_E2E=1`，
-> 定向 `XCODE_CUA_PARALLEL_FILTER=P1,P3`）。
+> （单测 `test/matrix/parallel-lib.test.ts`，opt-in `ZCODE_CUA_HARNESS_E2E=1`，
+> 定向 `ZCODE_CUA_PARALLEL_FILTER=P1,P3`）。
 
 ## 基线结论（三连跑稳定复现）
 

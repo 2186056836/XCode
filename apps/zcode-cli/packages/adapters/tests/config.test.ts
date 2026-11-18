@@ -117,7 +117,7 @@ describe("config adapters", () => {
       const id = "visualize@zcode-plugins-official";
       const original = JSON.stringify({ plugins: { enabledPlugins: { [id]: true } } });
       const { loggerFactory, warn } = captureConfigLogger();
-      const code = stage === "rename" ? "EACCES" : "XCODE_FILE_LOCK_TIMEOUT";
+      const code = stage === "rename" ? "EACCES" : "ZCODE_FILE_LOCK_TIMEOUT";
       try {
         await writeFile(userConfigPath, original);
         const operation =
@@ -729,13 +729,13 @@ describe("config adapters", () => {
 
   it("parses the supported XCODE environment surface", () => {
     const config = parseEnvConfig({
-      XCODE_STORAGE_DIR: "/tmp/zcode",
-      XCODE_HTTP_PROXY: "http://127.0.0.1:7890",
-      XCODE_NO_PROXY: "localhost,127.0.0.1",
-      XCODE_AGENT_CA_CERT: "/tmp/zcode-ca.pem",
-      XCODE_HTTP_TIMEOUT: "1234",
-      XCODE_LOCALE: "zh-CN",
-      XCODE_LOG_FORMAT: "json",
+      ZCODE_STORAGE_DIR: "/tmp/zcode",
+      ZCODE_HTTP_PROXY: "http://127.0.0.1:7890",
+      ZCODE_NO_PROXY: "localhost,127.0.0.1",
+      ZCODE_AGENT_CA_CERT: "/tmp/zcode-ca.pem",
+      ZCODE_HTTP_TIMEOUT: "1234",
+      ZCODE_LOCALE: "zh-CN",
+      ZCODE_LOG_FORMAT: "json",
     });
 
     expect(config.model).toBeUndefined();
@@ -781,12 +781,12 @@ describe("config adapters", () => {
   it("parses session database path environment overrides", () => {
     expect(
       parseEnvConfig({
-        XCODE_SESSION_DB_PATH: "/tmp/zcode/db/db.sqlite",
+        ZCODE_SESSION_DB_PATH: "/tmp/zcode/db/db.sqlite",
       }).storage?.sessionDbPath,
     ).toBe("/tmp/zcode/db/db.sqlite");
     expect(
       parseEnvConfig({
-        XCODE_SESSION_DB: "/tmp/zcode/legacy.sqlite",
+        ZCODE_SESSION_DB: "/tmp/zcode/legacy.sqlite",
       }).storage?.sessionDbPath,
     ).toBe("/tmp/zcode/legacy.sqlite");
   });
@@ -819,8 +819,8 @@ describe("config adapters", () => {
 
   it("ignores undeclared XCODE environment switches", () => {
     const config = parseEnvConfig({
-      XCODE_LOG_LEVEL: "debug",
-      XCODE_UNDECLARED_FLAG: "1",
+      ZCODE_LOG_LEVEL: "debug",
+      ZCODE_UNDECLARED_FLAG: "1",
     });
 
     expect(config).toEqual({});
@@ -1567,7 +1567,7 @@ describe("config adapters", () => {
 
       const result = loadFileConfig(path);
       const merged = createConfig({
-        env: { XCODE_LOG_DIR: logDir },
+        env: { ZCODE_LOG_DIR: logDir },
         userConfigPath: path,
       });
 
@@ -1627,7 +1627,7 @@ describe("config adapters", () => {
       );
 
       const result = createConfig({
-        env: { XCODE_LOG_DIR: logDir },
+        env: { ZCODE_LOG_DIR: logDir },
         skipUserConfig: true,
         workingDirectory: root,
       });

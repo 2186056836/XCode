@@ -142,8 +142,8 @@ export async function resolveOffPeakCredentials(
   options: { allowMockCredentials?: boolean } = {},
 ): Promise<OffPeakCredentialSnapshot> {
   const env = deps.env ?? process.env;
-  if (options.allowMockCredentials !== false && env["XCODE_OFFPEAK_MOCK"] === "1") {
-    if (env["XCODE_OFFPEAK_MOCK_NO_PLAN"] === "1") {
+  if (options.allowMockCredentials !== false && env["ZCODE_OFFPEAK_MOCK"] === "1") {
+    if (env["ZCODE_OFFPEAK_MOCK_NO_PLAN"] === "1") {
       throw new OffPeakCodingPlanUnavailableError("connection_unavailable");
     }
     // mock 网关不校验凭证；使用确定性 metadata 让 UI 和 ticket/runtime 仍共享同一 support 形状。

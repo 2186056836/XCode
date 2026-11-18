@@ -155,7 +155,7 @@ describe("Node logging adapter", () => {
 
     try {
       const logger = createNodeLoggerFactory({
-        env: { XCODE_RUNTIME_ENV: "development" },
+        env: { ZCODE_RUNTIME_ENV: "development" },
         logDir,
       }).createLogger("test");
 
@@ -190,12 +190,12 @@ describe("Node logging adapter", () => {
     }
   });
 
-  it("ignores XCODE_LOG_LEVEL so development mode keeps debug logging", async () => {
+  it("ignores ZCODE_LOG_LEVEL so development mode keeps debug logging", async () => {
     const logDir = await mkdtemp(join(tmpdir(), "zcode-log-dev-env-ignored-"));
 
     try {
       const logger = createNodeLoggerFactory({
-        env: { XCODE_RUNTIME_ENV: "development", XCODE_LOG_LEVEL: "info" },
+        env: { ZCODE_RUNTIME_ENV: "development", ZCODE_LOG_LEVEL: "info" },
         logDir,
       }).createLogger("test");
 
@@ -230,7 +230,7 @@ describe("Node logging adapter", () => {
       cause.code = "provider_not_configured";
       cause.context = {
         apiKey: "secret-value",
-        envKey: "XCODE_API_KEY",
+        envKey: "ZCODE_API_KEY",
         providerId: "openai",
       };
 
@@ -272,7 +272,7 @@ describe("Node logging adapter", () => {
       expect(entry.error.cause.code).toBe("provider_not_configured");
       expect(entry.error.cause.message).toBe("Model provider is missing an API key: openai");
       expect(entry.error.cause.context.providerId).toBe("openai");
-      expect(entry.error.cause.context.envKey).toBe("XCODE_API_KEY");
+      expect(entry.error.cause.context.envKey).toBe("ZCODE_API_KEY");
       expect(entry.error.cause.context.apiKey).toBe("[Redacted]");
     } finally {
       await rm(logDir, { recursive: true, force: true });

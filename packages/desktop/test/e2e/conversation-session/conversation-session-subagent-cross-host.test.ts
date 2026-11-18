@@ -218,7 +218,7 @@ describe("Subagent 跨真实 Host 失效", () => {
         }
       }
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "subagent-path-evidence.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "subagent-path-evidence.json"),
         JSON.stringify(
           {
             sessions,
@@ -374,7 +374,7 @@ describe("Subagent 跨真实 Host 失效", () => {
       await saveRefreshProfile(disposalProfile, old.name);
       await waitForHostBoundary("file-held", "dispose");
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "subagent-config-control.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "subagent-config-control.json"),
         JSON.stringify({ heldSessionIds: [b] }),
       );
       const beforeClosing = (await boundaryRpcReads()).filter(

@@ -46,7 +46,7 @@ R2 不交付：
 | Supervisor           | 只拥有生命周期状态，不拥有 task/session/stream/queue/snapshot 业务状态                                                                                                                                                                                                                                                                                                                                                                                                              |
 | 监听地址             | 默认回环地址和动态端口；非回环监听必须启用鉴权                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Web / WS             | R2 实现并验证 Core 的 HTTP/WS ingress；具体远程 Transport 留给后续阶段                                                                                                                                                                                                                                                                                                                                                                                                              |
-| 数据目录             | 复用 `getXCodeDataRootDir()` 和 `XCODE_DATA_BASE_DIR`；标准目录为 `<dataRoot>/server`。OS service 必须携带内部参数 `--server-root <absolute-path>`，不得依赖注册时 shell 的环境                                                                                                                                                                                                                                                                                                     |
+| 数据目录             | 复用 `getXCodeDataRootDir()` 和 `ZCODE_DATA_BASE_DIR`；标准目录为 `<dataRoot>/server`。OS service 必须携带内部参数 `--server-root <absolute-path>`，不得依赖注册时 shell 的环境                                                                                                                                                                                                                                                                                                     |
 | Node runtime         | 沿用现有远端资产流程的 Node `v22.16.0`；Server CLI 不依赖系统 Node 或 Electron Node                                                                                                                                                                                                                                                                                                                                                                                                 |
 | 崩溃策略             | 5 次/5 分钟预算，退避 1、2、4、8、16 秒；超出后进入 `crash-loop-stopped`。ready 的 Core 连续 6 个 heartbeat 周期无 IPC 消息时由 Supervisor SIGKILL，按崩溃处理（§4.2 Core 活性）                                                                                                                                                                                                                                                                                                    |
 | Task 恢复            | Core 崩溃或更新后，运行中的 Task 中断，不自动恢复或重放输入                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -245,7 +245,7 @@ Supervisor ── SIGKILL/crash ──X IPC ──disconnect──> Core
 
 `/api/server-info.serverId` 使用 `install.json.installationId` 作为持久用户数据环境的稳定身份。只有直接调用
 Core HTTP 工厂且未提供 server root 的测试/嵌入场景才回退到 hostname；真实 Supervisor 启动的
-Core 必须通过 `XCODE_SERVER_ROOT` 校验 ownership marker 后注入 installationId。
+Core 必须通过 `ZCODE_SERVER_ROOT` 校验 ownership marker 后注入 installationId。
 
 现有 `packages/server` 中的 `/api/server-info`、`/api/rpc-host-capability`、`/ws`、`/ws/host` 等行为作为兼容性参考；新 Core 不直接导入旧入口，而是通过合同测试决定需要保留的边界。
 
@@ -359,7 +359,7 @@ staging 由 `packages/zcode-server-cli/src/packaging/stage.ts` 实现，
   `node_modules/.cache/zcode-server-cli/tools/<target>`（内网依赖源已配置时下载，未配置时解包仓库归档），
   不复用 mock-cdn 或 bundled-tools 目录（远端 macOS 固定为 rg13）；每个工具目录同时携带
   `THIRD-PARTY-NOTICES.txt` 与 `SOURCES.json`。运行时通过
-  `XCODE_SERVER_RUNTIME_ROOT` 解析；`runtime/packages` 包含当前官方插件定义中需要 seed 的七个
+  `ZCODE_SERVER_RUNTIME_ROOT` 解析；`runtime/packages` 包含当前官方插件定义中需要 seed 的七个
   plugin（browser-use、document-skills、skill-creator、zcode-guide、android-emulator、
   ios-simulator、restore-legacy-sessions）。
 - 内置技能包不变量：`stageRelease` 从独立的 `bundledSkillsDir` 参数发布
@@ -369,7 +369,7 @@ staging 由 `packages/zcode-server-cli/src/packaging/stage.ts` 实现，
   只在这里。它只属于 `agent-runtime` 组件并参与其内容哈希与归档，不写入 manifest 的 `plugins`。
   官方插件目录不提供也不覆盖技能包，发布不依赖插件缓存中是否存在同名目录。
   `stageRelease` 按 Agent 的必需文件清单 fail-closed 校验，缺任一文件时 staging 失败。
-- 官方插件 MCP runtime 不变量：凡 `plugin.json` 的 `mcpServers` 通过 `${XCODE_PLUGIN_ROOT}/...`
+- 官方插件 MCP runtime 不变量：凡 `plugin.json` 的 `mcpServers` 通过 `${ZCODE_PLUGIN_ROOT}/...`
   引用的文件（当前为 android-emulator、ios-simulator、browser-use 的 `dist/mcp/server.js`）必须随
   archive 一起发布。这些 dist 不入库，由 `scripts/build-desktop-agent-cli.mjs` 的 MCP runtime 清单在
   staging 前构建；`stageRelease` 以 plugin.json 声明为事实源 fail-closed 校验，manifest 缺失或入口
@@ -378,9 +378,9 @@ staging 由 `packages/zcode-server-cli/src/packaging/stage.ts` 实现，
 Agent 接线约定：发行包内 Core 不在 monorepo、也没有 Electron runtime。Supervisor 每次启动 Core
 时必须根据该 Core 所属 release 的 `runtime/` 重新计算接线（`runtime/node zcode.cjs app-server
 --stdio`），不得由旧 `server-cli.js` 把自动推导结果永久写入全局 `process.env`。显式配置的
-`XCODE_AGENT_SERVER_COMMAND` 仍永远优先；开发态没有 release runtime 时不注入。
+`ZCODE_AGENT_SERVER_COMMAND` 仍永远优先；开发态没有 release runtime 时不注入。
 
-Agent 版本身份：Core 启动时把自身编译期版本 `XCODE_VERSION` 写入 `XCODE_APP_VERSION`，覆盖继承值；
+Agent 版本身份：Core 启动时把自身编译期版本 `ZCODE_VERSION` 写入 `ZCODE_APP_VERSION`，覆盖继承值；
 Core 拉起的 Agent 继承该 env，模型请求的 `User-Agent` / `X-XCode-App-Version` 和遥测
 productVersion 报告 App 版本，而不是 CLI 包版本。注入点只能在 Core：升级时旧 Supervisor 会拉起
 新 release 的 Core，Supervisor 与 SSH/WSL/Docker exec 的版本都不代表该 Core。
@@ -409,8 +409,8 @@ productVersion 报告 App 版本，而不是 CLI 包版本。注入点只能在 
 ```
 
 `config/provider/zcode-builtin-<sha256>.json` 由 Core（`server-core/core.ts`）在启动时从构建期 define
-`__XCODE_BUILTIN_PROVIDER_CONFIG_JSON__` 物化（tmp + rename；同 hash 幂等，内容不一致则启动失败），
-`XCODE_BUILTIN_PROVIDER_CONFIG_FILE` 显式指定时跳过物化。它落在 server root 而不是 release 自带的
+`__ZCODE_BUILTIN_PROVIDER_CONFIG_JSON__` 物化（tmp + rename；同 hash 幂等，内容不一致则启动失败），
+`ZCODE_BUILTIN_PROVIDER_CONFIG_FILE` 显式指定时跳过物化。它落在 server root 而不是 release 自带的
 `runtime/`：release 目录不可变，同一 releaseId 重装时会重算整棵树的内容哈希，多出的物化文件会让该目录
 被判为损坏副本并在重装时整体替换；文件名含内容 hash，跨 release 共用安全。当前 `zcode uninstall` 的
 allowlist 不含 `config/`，卸载后该目录会保留并列入 `uninstalled.json.preservedPaths`。
@@ -601,7 +601,7 @@ unit name、Windows task name 和 descriptor 文件名。兼容清理旧固定 s
 
 `--server-root` 是 service/fallback daemon 使用的内部全局参数，值必须是绝对路径。CLI 的 control
 endpoint、status、release、service descriptor 和 uninstall 均从该参数解析同一个 layout；Core/Agent
-同时获得对应的 `XCODE_DATA_BASE_DIR`。因此自定义 data root 的 daemon 不得在默认 root 创建第二份
+同时获得对应的 `ZCODE_DATA_BASE_DIR`。因此自定义 data root 的 daemon 不得在默认 root 创建第二份
 status、lock、Core 或 SQLite。
 
 POSIX 稳定入口 `bin/zcode` 读取 `current.json.releaseDir`，只执行 `<root>/releases/` 下的 release；

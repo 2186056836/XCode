@@ -248,9 +248,9 @@ describe("WPL-011 remote Workspace Plugin explicit sync E2E", () => {
 
 // 本 case 会 rm -rf 远端 workspace，所以只允许重置一个约定路径，不接受任意路径。默认值
 // /root/workspace 是历史上唯一跑过的 root 目标；Linux e2e 服务器用 dev 用户，通过
-// XCODE_E2E_WPL011_WORKSPACE 指定该机的专用目录（不能指向共享 workspace 根）。
+// ZCODE_E2E_WPL011_WORKSPACE 指定该机的专用目录（不能指向共享 workspace 根）。
 const ALLOWED_REMOTE_WORKSPACE =
-  process.env.XCODE_E2E_WPL011_WORKSPACE?.trim() || "/root/workspace";
+  process.env.ZCODE_E2E_WPL011_WORKSPACE?.trim() || "/root/workspace";
 
 async function seedRemoteWorkspace(
   target: SSHConnectionConfig,

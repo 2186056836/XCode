@@ -67,9 +67,9 @@ try {
       env: {
         ...process.env,
         PNPM_CONFIG_VERIFY_DEPS_BEFORE_RUN: "false",
-        XCODE_E2E_ARTIFACT_DIR: artifactDir,
+        ZCODE_E2E_ARTIFACT_DIR: artifactDir,
         ZCODE_E2E_HOME_DIR: homeDir,
-        XCODE_E2E_RUN_ID: runId,
+        ZCODE_E2E_RUN_ID: runId,
       },
       stdio: "inherit",
     },

@@ -40,7 +40,7 @@ async function credentialGeneration(filePath: string): Promise<string> {
 async function assertCredentialGeneration(filePath: string, expected: string): Promise<void> {
   if ((await credentialGeneration(filePath)) !== expected) {
     throw Object.assign(new Error("Credential store changed; retry with the current store"), {
-      code: "XCODE_CREDENTIAL_STORE_CHANGED",
+      code: "ZCODE_CREDENTIAL_STORE_CHANGED",
     });
   }
 }

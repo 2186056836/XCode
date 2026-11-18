@@ -32,9 +32,9 @@ import { openWorkspaceDraftFromSidebar } from "#e2e/helpers/workspace-agent-warm
 // ZCT-2118215639243444224：Chrome 109 远控打开含 Hook 记录的会话，Hook 详情组件调用
 // executions.toSorted 抛 TypeError，区域错误边界显示“这块界面出了点问题”。
 // 本用例在手机 Web 打开同类会话并展开 Hook 详情；默认用新版 Chrome 做回归，
-// 设置 XCODE_E2E_MOBILE_BROWSER_EXECUTABLE 可换成低版本浏览器验证 polyfill。
+// 设置 ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE 可换成低版本浏览器验证 polyfill。
 const CASE_MARKER = "HK-MOB-01";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/hooks-mobile");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/hooks-mobile");
 const REGION_ERROR_TEXT = /这块界面出了点问题|This section ran into a problem/u;
 
 describe("Hook 详情手机 Web 远控", () => {
@@ -94,10 +94,10 @@ describe("Hook 详情手机 Web 远控", () => {
     );
     const turnId = triggerTestId.slice(TID_V4_HOOK_DETAILS_TRIGGER.length + 1);
 
-    const endpoint = process.env.XCODE_WEB_REMOTE_CONTROL_URL;
+    const endpoint = process.env.ZCODE_WEB_REMOTE_CONTROL_URL;
     if (!endpoint) throw new Error("mobile fixture missing");
     const pairingUrl = await obtainUnreadPairingUrl(new URL(endpoint).origin);
-    const executablePath = process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
+    const executablePath = process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
     const chrome = await chromium.launch({
       ...(executablePath ? { executablePath } : { channel: "chrome" }),
       headless: true,

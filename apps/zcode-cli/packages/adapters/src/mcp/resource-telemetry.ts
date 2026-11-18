@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { cpus, totalmem } from "node:os";
-import { XCODE_MCP_RESOURCE_SAMPLE_INTERVAL_MS, type XCodeMcpResourceSample } from "@zcode/shared";
+import { ZCODE_MCP_RESOURCE_SAMPLE_INTERVAL_MS, type XCodeMcpResourceSample } from "@zcode/shared";
 import {
   createProcessProbe,
   type ProcessProbe,
@@ -80,7 +80,7 @@ export function createMcpResourceTelemetry(options: McpResourceTelemetryOptions)
       }
       const intervalMs =
         previousAt === undefined
-          ? XCODE_MCP_RESOURCE_SAMPLE_INTERVAL_MS
+          ? ZCODE_MCP_RESOURCE_SAMPLE_INTERVAL_MS
           : Math.max(1, sampledAt - previousAt);
       const next = new Map<string, Map<number, number>>();
       const groups = new Map<string, XCodeMcpResourceSample>();
@@ -144,7 +144,7 @@ export function createMcpResourceTelemetry(options: McpResourceTelemetryOptions)
       try {
         handle = timer.setInterval(() => {
           void sampleNow();
-        }, XCODE_MCP_RESOURCE_SAMPLE_INTERVAL_MS);
+        }, ZCODE_MCP_RESOURCE_SAMPLE_INTERVAL_MS);
         handle.unref?.();
       } catch {
         // 保持原 tracker 的旁路语义：定时器不可用不能阻断 MCP 连接。

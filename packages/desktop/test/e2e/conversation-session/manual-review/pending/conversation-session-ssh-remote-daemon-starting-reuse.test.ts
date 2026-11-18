@@ -34,7 +34,7 @@ const SAMPLER_LOG = "/tmp/e2e-daemon-samples.log";
 const desktopRoot = process.cwd();
 const repoRoot = resolve(desktopRoot, "../..");
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-daemon-starting-reuse",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-daemon-starting-reuse",
 );
 const execFileAsync = promisify(execFile);
 

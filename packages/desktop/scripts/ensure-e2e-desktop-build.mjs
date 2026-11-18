@@ -88,12 +88,12 @@ export const E2E_DESKTOP_BUILD_ENV_NAMES = [
   "ZAI_BUSINESS_LOGIN_URL",
   "ZAI_OAUTH_CLIENT_ID",
   "ZAI_OAUTH_ORIGIN",
-  "XCODE_BASE_URL",
-  "XCODE_COMMIT",
-  "XCODE_CUA_HELPER_BUILD_ID",
-  "XCODE_ENDPOINT_ORIGIN",
-  "XCODE_ENV",
-  "XCODE_E2E_COVERAGE",
+  "ZCODE_BASE_URL",
+  "ZCODE_COMMIT",
+  "ZCODE_CUA_HELPER_BUILD_ID",
+  "ZCODE_ENDPOINT_ORIGIN",
+  "ZCODE_ENV",
+  "ZCODE_E2E_COVERAGE",
   "ZCODE_E2E_KEEP_BUILD_CACHE",
   "ZCODE_PACKAGED_AGENT_OTEL_ENDPOINT",
   "ZCODE_PACKAGED_AGENT_OTEL_HEADERS",
@@ -112,25 +112,25 @@ const WORKSPACE_DEPENDENCY_FIELDS = [
 /**
  * E2E 桌面包固定按 test 环境构建。
  *
- * bug 根因：从 XCode 客户端拉起的 shell 里带有应用自身环境（实测 XCODE_ENV=production、
- * XCODE_BASE_URL=https://zcode.z.ai）。这些变量被 tsup 当作构建输入编译进 main/host 包，
+ * bug 根因：从 XCode 客户端拉起的 shell 里带有应用自身环境（实测 ZCODE_ENV=production、
+ * ZCODE_BASE_URL=https://zcode.z.ai）。这些变量被 tsup 当作构建输入编译进 main/host 包，
  * 于是 `resolveXCodeEndpointOrigin` 走 production 分支、忽略 settings 里的 endpoint，
  * spec 用 fixture 起的本地 mock server 全部收不到请求，表现为大批配置类用例失败。
- * 构建前统一归一，runner 与本脚本共用同一结果；XCODE_BASE_URL 等运行时变量也不能进入构建。
+ * 构建前统一归一，runner 与本脚本共用同一结果；ZCODE_BASE_URL 等运行时变量也不能进入构建。
  */
 export const E2E_DESKTOP_BUILD_INHERITED_ENV_NAMES = [
-  "XCODE_BASE_URL",
-  "XCODE_RUNTIME_ENV",
-  "XCODE_APP_VERSION",
-  "XCODE_BUILD_COMMIT_ID",
-  "XCODE_PROCESS_LABEL",
-  "XCODE_DESKTOP_CONTEXT_PROMPT_ENABLED",
-  "XCODE_CUA_BUNDLED_HELPER_APP_PATH",
-  "XCODE_CUA_LAUNCHER_PID",
+  "ZCODE_BASE_URL",
+  "ZCODE_RUNTIME_ENV",
+  "ZCODE_APP_VERSION",
+  "ZCODE_BUILD_COMMIT_ID",
+  "ZCODE_PROCESS_LABEL",
+  "ZCODE_DESKTOP_CONTEXT_PROMPT_ENABLED",
+  "ZCODE_CUA_BUNDLED_HELPER_APP_PATH",
+  "ZCODE_CUA_LAUNCHER_PID",
 ];
 
 export function normalizeE2EDesktopBuildEnv(env = process.env) {
-  const normalized = { ...env, XCODE_ENV: "test" };
+  const normalized = { ...env, ZCODE_ENV: "test" };
   for (const name of E2E_DESKTOP_BUILD_INHERITED_ENV_NAMES) {
     delete normalized[name];
   }

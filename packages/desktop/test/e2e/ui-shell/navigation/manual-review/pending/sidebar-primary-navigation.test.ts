@@ -46,7 +46,7 @@ describe("桌面侧栏主导航", () => {
         );
         expect(await automation.getAttribute("aria-pressed")).toBe("false");
         await browser.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, `sidebar-navigation-${theme}-${locale}.png`),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `sidebar-navigation-${theme}-${locale}.png`),
         );
       }
     }

@@ -45,7 +45,7 @@ import {
 const CASE_MARKER = "E2E_R3_ENTRY_ATTRIBUTION";
 const REPLY = "R3_ENTRY_ATTRIBUTION_REPLY";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-entry-attribution",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-entry-attribution",
 );
 
 async function readProvisioningApplied(config: SSHConnectionConfig): Promise<number> {

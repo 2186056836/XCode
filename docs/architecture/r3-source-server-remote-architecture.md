@@ -126,7 +126,7 @@ interface SourceServerResolveWorkspaceResult {
 /** 双端构建产物内嵌的兼容清单。 */
 interface CompatibilityManifest {
   schemaVersion: 1;
-  productVersion: string; // = XCODE_VERSION
+  productVersion: string; // = ZCODE_VERSION
   minCompatibleVersion: string;
 }
 ```
@@ -990,8 +990,8 @@ EnvironmentCoordinator               (registered by                             
        └─ 兼容 → /ws/host → assertRemoteWorkspaceRpcContract → Provisioning 首连屏障（§8.3.2）
 ```
 
-- `XCODE_MIN_COMPATIBLE_VERSION` 默认等于产品版本（根 `package.json` 未声明 `zcodeCompatibility`），因此不带 Provisioning target 的旧 daemon 在握手阶段就被判「需升级」并先走 §6.3 更新，更新后的 Core 必然注册 target；R3 主链不会对 pre-Provisioning daemon 发出 Envelope。
-- `unsupported` 拒连语义按 Provisioning 事实文档原样保留，仍覆盖：本机 `ProviderProvisioningSource` 不可用（Window Host 尚无 active local services，`sourceServices` 为空）、远端 Core 未注册 target（例如 `kind:"server"` dev 直连到未配置 `XCODE_SERVER_AUTH_TOKEN` 的 `packages/server` HTTP zcode-server）。
+- `ZCODE_MIN_COMPATIBLE_VERSION` 默认等于产品版本（根 `package.json` 未声明 `zcodeCompatibility`），因此不带 Provisioning target 的旧 daemon 在握手阶段就被判「需升级」并先走 §6.3 更新，更新后的 Core 必然注册 target；R3 主链不会对 pre-Provisioning daemon 发出 Envelope。
+- `unsupported` 拒连语义按 Provisioning 事实文档原样保留，仍覆盖：本机 `ProviderProvisioningSource` 不可用（Window Host 尚无 active local services，`sourceServices` 为空）、远端 Core 未注册 target（例如 `kind:"server"` dev 直连到未配置 `ZCODE_SERVER_AUTH_TOKEN` 的 `packages/server` HTTP zcode-server）。
 - `unsupported` / `failed` / `rollback_failed` 首连一律走正式连接失败通道：不发布 Remote Workspace ready、不发送 Secret、不静默重试；Renderer 看到普通连接失败与日志，用户修正后重连即重试。
 
 #### 8.3.4 非桌面 clientMode 拒绝 stub
@@ -1015,11 +1015,11 @@ Window Host（windowHostAttachmentRpcPolicy.ts）
 
 ```text
 zcode-server-cli 构建
-  tsup define SERVER_CLI_DEFINES = { __XCODE_VERSION__, __XCODE_MIN_COMPATIBLE_VERSION__, __XCODE_BUILTIN_PROVIDER_CONFIG_JSON__ }
+  tsup define SERVER_CLI_DEFINES = { __ZCODE_VERSION__, __ZCODE_MIN_COMPATIBLE_VERSION__, __ZCODE_BUILTIN_PROVIDER_CONFIG_JSON__ }
         │
 Core 启动（server-core/core.ts runServerCore）
-  layout = resolveServerLayout(XCODE_SERVER_ROOT)
-  ├─ XCODE_BUILTIN_PROVIDER_CONFIG_FILE 显式指定 ──► 直接使用该文件
+  layout = resolveServerLayout(ZCODE_SERVER_ROOT)
+  ├─ ZCODE_BUILTIN_PROVIDER_CONFIG_FILE 显式指定 ──► 直接使用该文件
   ├─ 否则 materializeXCodeBuiltinProviderConfig({ runtimeRoot: layout.serverRoot, content })
   │     └─► ~/.xcode/server/config/provider/zcode-builtin-<sha256(content)>.json（tmp + rename；同 hash 幂等，内容不一致则失败）
   └─ 两者皆无 ──► 启动失败（fail-closed）
@@ -1166,7 +1166,7 @@ Repo 不再独立建表/补列。旧 schema、未完成计划与回退兼容规�
 ```
 
 - 迁移是纯本地、幂等、schema 解析阶段完成（沿用 `migrateLegacyWorkspaceSession` 的既有模式）；失败不阻塞 App 启动，只影响连接页展示并可重试。Directory 的 rejected initialize flight 必须清空，允许后续显式重试；Window Host 无论迁移结果如何都必须先暴露 local base attachment，禁止让 Source Server 目录故障把本地工作区一起卡死。
-- 同一 target 存在多份凭据（不同 workspace 条目各存一份）时，非敏感 target 元数据取 `lastOpenedAt` 最新条目；密码与私钥口令分别取按 `lastOpenedAt` 降序扫描后第一个“credential value 实际存在”的条目。空源不得遮蔽较旧的有效 sibling。本机无法解密的值（`XCODE_CREDENTIAL_DECRYPT_FAILED`）按“无可用值”处理：记一条 warn（不含 key 与 value），继续扫描，原记录不删除、不改写；不得因此中断迁移。其他读取错误（凭据文件损坏、IO 失败）仍让本次迁移失败并回滚。
+- 同一 target 存在多份凭据（不同 workspace 条目各存一份）时，非敏感 target 元数据取 `lastOpenedAt` 最新条目；密码与私钥口令分别取按 `lastOpenedAt` 降序扫描后第一个“credential value 实际存在”的条目。空源不得遮蔽较旧的有效 sibling。本机无法解密的值（`ZCODE_CREDENTIAL_DECRYPT_FAILED`）按“无可用值”处理：记一条 warn（不含 key 与 value），继续扫描，原记录不删除、不改写；不得因此中断迁移。其他读取错误（凭据文件损坏、IO 失败）仍让本次迁移失败并回滚。
 - 新建 Profile 与迁移使用同一凭据 seam：拥有 plaintext target 的 Host 生成 `profileId` 后，把密码/私钥口令写入 `connection-profile:<profileId>:*` 并在同一持久化操作中写入引用。迁移只有在 value 复制成功后才写新引用；空源继续表达需要交互凭据，禁止制造悬空 key。
 - R4 兼容窗口内，Renderer 为旧 Desktop 投影 stable Source workspace 时，必须把 Profile secret 物化到每个 workspace 独立的 `remote-workspace:<legacyWorkspaceKey>:*` mirror，且先写 secret、后提交 `lastWorkspaceSession` 引用。旧 key 仅用于回退兼容，当前主链仍只消费 Profile credential。
 - `sourceServerDirectoryMigrationVersion=1` 不代表 credential 一定完整；Host initialize 对 active SSH Profile 做幂等审计，仅用相同标准化 route 的 legacy siblings 修复缺失或无法解密的 canonical value，不按 alias/hostname 相似度猜测。

@@ -33,8 +33,8 @@ provider-visible output 以本文“模型 result 映射规则”为基线。
 
 `argv`、`cwd` 和 `env` 不属于 Bash tool 的模型可见输入。模型只负责拼 shell command；工作目录
 来自 session cwd，环境变量使用执行 adapter 的默认继承策略，并在其上固定设置会话上下文变量：
-`CLAUDE_CODE_SESSION_ID`、`CLAUDE_SESSION_ID`、`XCODE_SESSION_ID` 为当前会话 ID，
-`CLAUDE_PROJECT_DIR`、`XCODE_PROJECT_DIR` 为会话工作区根目录（会话创建时的工作目录，不随 `cd`
+`CLAUDE_CODE_SESSION_ID`、`CLAUDE_SESSION_ID`、`ZCODE_SESSION_ID` 为当前会话 ID，
+`CLAUDE_PROJECT_DIR`、`ZCODE_PROJECT_DIR` 为会话工作区根目录（会话创建时的工作目录，不随 `cd`
 变化）。这组变量与 hooks 的插件环境一致，自定义命令 `!` 块转交给 Bash 后、以及插件脚本在
 自身进程里读取时都依赖它们。`ExecutionPort` 可以继续保留
 `argv/cwd/env` 给 hooks、内部 runner 或后续非模型调用使用，但不得通过 Bash tool schema 暴露给模型。

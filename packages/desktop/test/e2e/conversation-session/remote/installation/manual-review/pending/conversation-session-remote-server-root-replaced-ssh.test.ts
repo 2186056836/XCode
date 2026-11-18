@@ -33,7 +33,7 @@ const SERVER_BIN = '"$HOME/.zcode/server/bin/zcode"';
 const AFTER_HEARTBEAT_MS = 15_000;
 const desktopRoot = process.cwd();
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-server-root-replaced-ssh",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-server-root-replaced-ssh",
 );
 
 /** 以 dev 身份执行，带 user manager 的 bus，等同于 SSH 会话里的 systemctl --user。 */

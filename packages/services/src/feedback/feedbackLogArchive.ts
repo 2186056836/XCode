@@ -6,8 +6,8 @@ import { pipeline } from "node:stream/promises";
 import { ZipFile } from "yazl";
 import {
   redactFeedbackText,
-  XCODE_VERSION,
-  XCODE_COMMIT,
+  ZCODE_VERSION,
+  ZCODE_COMMIT,
   CLI_MEMORY_FILE_PATTERN,
   CLI_MEMORY_MAX_FILE_BYTES,
   CLI_MEMORY_MAX_FILES,
@@ -335,8 +335,8 @@ export async function createFeedbackDiagnosticArchive(options: {
         [
           "XCode diagnostic logs",
           `timestamp: ${now.toISOString()}`,
-          `appVersion: ${XCODE_VERSION}`,
-          `commit: ${XCODE_COMMIT}`,
+          `appVersion: ${ZCODE_VERSION}`,
+          `commit: ${ZCODE_COMMIT}`,
           `node: ${process.version}`,
           `os: ${platform()} ${release()} (${arch()})`,
           `includedLogFiles: ${entries.length}`,

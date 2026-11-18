@@ -106,7 +106,7 @@ describe("Highspeed card E2E", () => {
       phase: "stable",
     });
 
-    const endpoint = process.env.XCODE_WEB_REMOTE_CONTROL_URL;
+    const endpoint = process.env.ZCODE_WEB_REMOTE_CONTROL_URL;
     if (!endpoint) throw new Error("HS-E2E-07 缺少手机 fixture");
     const pairingUrl = await obtainUnreadPairingUrl(new URL(endpoint).origin);
 
@@ -214,7 +214,7 @@ describe("Highspeed card E2E", () => {
       });
     }
 
-    const executablePath = process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
+    const executablePath = process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
     const chrome = await chromium.launch({
       ...(executablePath ? { executablePath } : { channel: "chrome" }),
       headless: true,
@@ -253,7 +253,7 @@ describe("Highspeed card E2E", () => {
         server.onMessage((message) => route.send(message));
       });
       await openMobilePairingPage(page, pairingUrl, {
-        artifactDir: process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/highspeed-thought",
+        artifactDir: process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/highspeed-thought",
         caseMarker: "HS-E2E-07",
         phase: "pairing",
         readySelector: '[data-testid="sidebar"], [data-mobile-page="chat"]',
@@ -310,7 +310,7 @@ describe("Highspeed card E2E", () => {
         { timeout: 30000, timeoutMsg: "手机调档后未捕获到 Coding Plan 实际请求" },
       );
       const request = capture!.requestJson as Record<string, unknown>;
-      const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+      const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
       if (artifactDir) {
         await writeFile(
           join(artifactDir, "highspeed-thought-request.json"),

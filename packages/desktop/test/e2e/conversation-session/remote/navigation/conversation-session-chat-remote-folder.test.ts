@@ -188,7 +188,7 @@ describe(marker, () => {
         (task) => !before.tasks.some((old) => old.taskId === task.taskId),
       );
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "old-local-submission.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "old-local-submission.json"),
         JSON.stringify(added, null, 2),
       );
       expect(added.some((task) => task.hostId === "local" && !task.projectId)).toBe(false);
@@ -208,7 +208,7 @@ describe(marker, () => {
     expect((await callHandoffHost<ProjectTree>(ServiceChannels.Project, "readTree")).tasks).toEqual(
       before.tasks,
     );
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "folder-required.png"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "folder-required.png"));
     await browser.keys("Escape");
     await picker.waitForExist({ reverse: true });
     expect(await getV4ComposerText()).toBe(marker + " must stay unsent");
@@ -267,7 +267,7 @@ describe(marker, () => {
     if ((await connectionDialog.$("details").getAttribute("open")) === null)
       await connectionDialog.$("details summary").click();
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "membership-read-failure.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "membership-read-failure.png"),
     );
     await restoreMembershipReads();
     await holdMembershipReads();
@@ -361,7 +361,7 @@ describe(marker, () => {
       expect(await picker.getSize()).toEqual(idleSize);
       expect(await pendingButton.getSize()).toEqual(idleButtonSize);
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "folder-button-loading.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "folder-button-loading.png"),
       );
       await restoreMembershipReads();
       const identity = buildServerRemoteWorkspaceIdentity({
@@ -384,7 +384,7 @@ describe(marker, () => {
     await picker.$('button[type="submit"]').click();
     await browser.waitUntil(async () => (await picker.getText()).includes("ENOENT"));
     expect(await picker.$('[data-testid="directory-browser-confirm"]').isEnabled()).toBe(false);
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "invalid-folder.png"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "invalid-folder.png"));
     expect((await callHandoffHost<ProjectTree>(ServiceChannels.Project, "readTree")).tasks).toEqual(
       before.tasks,
     );
@@ -429,7 +429,7 @@ describe(marker, () => {
       ).tasks,
     ).toEqual(before.tasks);
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "remote-first-submission.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "remote-first-submission.json"),
       JSON.stringify({ project: existing, task }, null, 2),
     );
     // 已有任务从项目菜单的新任务入口进入；重复连接仍强制选目录，不能恢复旧会话。
@@ -496,7 +496,7 @@ describe(marker, () => {
     expect(await $('[data-testid="virtual-project-save"]').isExisting()).toBe(false);
     expect(await $('[data-testid="v4-composer-send"]').isEnabled()).toBe(false);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "legacy-equivalent-folder-projects.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "legacy-equivalent-folder-projects.png"),
     );
     await restoreMembershipReads();
     await browser.keys("Escape");

@@ -31,7 +31,7 @@ describe("macOS 字体平滑", () => {
     await openAppearance();
     expect(await toggle().getAttribute("aria-checked")).toBe("true");
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "font-smoothing-enabled.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "font-smoothing-enabled.png"),
     );
     await toggle().click();
     await browser.waitUntil(async () => (await smoothing()) === "auto");

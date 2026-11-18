@@ -172,7 +172,7 @@ describe(`${CASE_MARKER}: SSH cold restart and automatic reconnect`, () => {
     );
     expect(await getV4PaneSnapshot()).toMatchObject({ sessionId: null, rowCount: 0 });
     expect(await $('[data-testid="remote-conversation-banner"]').isDisplayed()).toBe(true);
-    await browser.saveScreenshot(`${process.env.XCODE_E2E_ARTIFACT_DIR}/rdux09-cold-offline.png`);
+    await browser.saveScreenshot(`${process.env.ZCODE_E2E_ARTIFACT_DIR}/rdux09-cold-offline.png`);
 
     await requestRemoteProjectConnection(taskB.identity, CASE_MARKER);
     await waitForRemoteTab({

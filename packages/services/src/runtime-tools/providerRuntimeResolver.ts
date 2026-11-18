@@ -1,11 +1,11 @@
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, resolve as resolvePath } from "node:path";
-import { XCODE_AGENT_RUNTIME, sanitizeXCodeRuntimeEnvInPlace } from "@zcode/shared";
+import { ZCODE_AGENT_RUNTIME, sanitizeXCodeRuntimeEnvInPlace } from "@zcode/shared";
 import { getDataBaseDir, getProviderWorkspaceConfigDir } from "../paths.js";
 import { buildRuntimeProcessEnvPatch } from "./runtimeCommandEnv.js";
 
-const XCODE_AGENT_WORKDIR_ENV = "XCODE_AGENT_WORKDIR";
+const ZCODE_AGENT_WORKDIR_ENV = "ZCODE_AGENT_WORKDIR";
 
 /** 返回 provider + workspace 在应用内的专属配置目录路径 */
 export function resolveProviderConfigDir(
@@ -43,7 +43,7 @@ export function buildCleanEnv(
     env[key] = value;
   }
   // 修复原因：provider/agent runtime 子进程不能默认继承 shell 里的 NODE_ENV、代理或证书变量。
-  // 这些运行时输入必须来自 XCODE_* 显式配置或 app 设置页，避免用户环境污染模型请求和工具子进程。
+  // 这些运行时输入必须来自 ZCODE_* 显式配置或 app 设置页，避免用户环境污染模型请求和工具子进程。
   sanitizeXCodeRuntimeEnvInPlace(env);
   // Bugfix: Windows 环境变量名大小写不敏感，但 JS 普通对象区分大小写。
   // process.env 枚举时 PATH 通常以 "Path"（title case）出现，
@@ -113,7 +113,7 @@ function resolveLegacyBundledResourceRoots(moduleDir?: string): Array<string | n
 }
 
 export function findXCodeAgentRuntimeBinary(): string | null {
-  const runtime = XCODE_AGENT_RUNTIME;
+  const runtime = ZCODE_AGENT_RUNTIME;
   const entrySegments = runtime.resolveEntrySegments(process.platform);
   const resourceSegments = [runtime.bundledResourceDir, ...entrySegments];
   const envPath = process.env[runtime.binaryEnvVar];
@@ -146,7 +146,7 @@ export function findXCodeAgentRuntimeBinary(): string | null {
  * 不查 GLM_BINARY_PATH——那个 env 指向原生二进制，语义不同。
  */
 export function findXCodeAgentRuntimeNodeBundle(): string | null {
-  const runtime = XCODE_AGENT_RUNTIME;
+  const runtime = ZCODE_AGENT_RUNTIME;
   const entrySegments = runtime.resolveNodeBundleSegments();
   const resourceSegments = [runtime.bundledResourceDir, ...entrySegments];
 
@@ -172,7 +172,7 @@ export function findBinary(provider: string): string | null {
   if (provider !== "glm") {
     return null;
   }
-  // GLM 开发态：XCODE_AGENT_WORKDIR 或相邻目录发现，返回源码入口路径作为 "binary"
+  // GLM 开发态：ZCODE_AGENT_WORKDIR 或相邻目录发现，返回源码入口路径作为 "binary"
   const devEntry = findGlmDevEntry();
   if (devEntry) {
     return devEntry.agentPath;
@@ -182,7 +182,7 @@ export function findBinary(provider: string): string | null {
 
 /**
  * GLM 开发态源码入口发现。
- * 优先读取 XCODE_AGENT_WORKDIR。
+ * 优先读取 ZCODE_AGENT_WORKDIR。
  * 未设置时在 cwd 相邻目录查找 zcode-cli / glm。
  */
 interface GlmDevEntry {
@@ -210,7 +210,7 @@ function resolveGlmDevEntry(workdir: string): GlmDevEntry | null {
 }
 
 function findGlmDevEntry(): GlmDevEntry | null {
-  const workdir = process.env[XCODE_AGENT_WORKDIR_ENV];
+  const workdir = process.env[ZCODE_AGENT_WORKDIR_ENV];
   if (workdir) {
     const entry = resolveGlmDevEntry(workdir);
     if (entry) {
@@ -224,7 +224,7 @@ function findGlmDevEntry(): GlmDevEntry | null {
   const anchorDirs = [repoRoot, process.cwd()].filter((anchor): anchor is string =>
     Boolean(anchor),
   );
-  // 历史研发目录会意外抢占发行入口；自定义目录统一由 XCODE_AGENT_WORKDIR 显式指定。
+  // 历史研发目录会意外抢占发行入口；自定义目录统一由 ZCODE_AGENT_WORKDIR 显式指定。
   const candidates = ["zcode-cli", "glm"];
   const seen = new Set<string>();
   for (const anchorDir of anchorDirs) {

@@ -23,9 +23,9 @@ import { startHelpConfigFixture } from "#e2e/helpers/help-client-config-fixture"
 
 // Node 侧 shared 常量没有 renderer 的编译 define，不能据此跳过 production 分支。
 // 默认正式套件构建 Preview；production 用显式参数独立验证，不能静默跳过。
-const expectedFlavor = process.env.XCODE_E2E_HELP_MENU_FLAVOR ?? "preview";
+const expectedFlavor = process.env.ZCODE_E2E_HELP_MENU_FLAVOR ?? "preview";
 if (expectedFlavor !== "production" && expectedFlavor !== "preview") {
-  throw new Error("请设置 XCODE_E2E_HELP_MENU_FLAVOR=production 或 preview，并构建对应产品身份");
+  throw new Error("请设置 ZCODE_E2E_HELP_MENU_FLAVOR=production 或 preview，并构建对应产品身份");
 }
 const production = expectedFlavor === "production";
 

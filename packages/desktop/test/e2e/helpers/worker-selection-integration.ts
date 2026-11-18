@@ -42,14 +42,14 @@ export async function createWorkerSelectionIntegration(
   };
   // 独立 Host 不继承 Electron 设置。保持内建 HTTPS endpoint，
   // 将显式网络出口接到本轮数据面代理，避免假凭据直连或 HTTP 被官方请求安全校验拒绝。
-  const httpProxy = process.env.XCODE_HTTP_PROXY?.trim();
-  const caCertFile = process.env.XCODE_AGENT_CA_CERT?.trim();
+  const httpProxy = process.env.ZCODE_HTTP_PROXY?.trim();
+  const caCertFile = process.env.ZCODE_AGENT_CA_CERT?.trim();
   if (!httpProxy || !caCertFile) throw new Error("Worker 选择回归缺少隔离 HTTPS 数据面代理");
   await mkdir(join(home, ".xcode/cli"), { recursive: true });
   await writeFile(
     join(home, ".xcode/cli/config.json"),
     JSON.stringify({
-      network: { httpProxy, caCertFile, noProxy: process.env.XCODE_NO_PROXY },
+      network: { httpProxy, caCertFile, noProxy: process.env.ZCODE_NO_PROXY },
     }),
   );
   const runtime = new NodeProviderRegistryRuntime({
@@ -126,10 +126,10 @@ export async function createWorkerSelectionIntegration(
       env: {
         HOME: home,
         USERPROFILE: home,
-        XCODE_DATA_BASE_DIR: home,
-        XCODE_RUNTIME_ENV: "development",
-        XCODE_BUILTIN_PROVIDER_CONFIG_FILE: runtimePaths.zcodeBuiltinFilePath,
-        XCODE_PERSONAL_PROVIDER_CONFIG_FILE: runtimePaths.personalFilePath,
+        ZCODE_DATA_BASE_DIR: home,
+        ZCODE_RUNTIME_ENV: "development",
+        ZCODE_BUILTIN_PROVIDER_CONFIG_FILE: runtimePaths.zcodeBuiltinFilePath,
+        ZCODE_PERSONAL_PROVIDER_CONFIG_FILE: runtimePaths.personalFilePath,
       },
     }),
     modelSelectionReadinessSource: modelSelectionService,

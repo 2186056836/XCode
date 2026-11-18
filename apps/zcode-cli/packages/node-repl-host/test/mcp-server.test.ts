@@ -7,10 +7,10 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY,
-  XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY,
-  XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY,
-  XCODE_MCP_NODE_REPL_CUA_APP_META_KEY,
+  ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY,
+  ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY,
+  ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY,
+  ZCODE_MCP_NODE_REPL_CUA_APP_META_KEY,
 } from "@zcode/contracts";
 import { CUA_APP_ASSOCIATIONS_META_KEY } from "@zcode/zcode-cua/host-display-contract";
 import {
@@ -77,8 +77,8 @@ describe("node_repl MCP server", () => {
 
   it("captures Computer Use credentials before the plugin host restores its environment", async () => {
     const capturedRuntime = captureComputerUseRuntimeFromEnvironment({
-      XCODE_CUA_PERMISSION_BROKER_SOCKET: "/tmp/deferred-cua.sock",
-      XCODE_CUA_PERMISSION_BROKER_TOKEN: "deferred-cua-token",
+      ZCODE_CUA_PERMISSION_BROKER_SOCKET: "/tmp/deferred-cua.sock",
+      ZCODE_CUA_PERMISSION_BROKER_TOKEN: "deferred-cua-token",
     });
     expect(capturedRuntime).toBeDefined();
 
@@ -338,7 +338,7 @@ describe("node_repl MCP server", () => {
 
   it("carries no copy of the Computer Use assets", () => {
     // 宿主与两个能力插件独立之后，CUA 的 SDK 与文档只有一份，属于 computer-use 插件；
-    // 宿主按 XCODE_CUA_PLUGIN_ROOT 去取。2026-09-11 之前 browser-use 各存一份手工副本，
+    // 宿主按 ZCODE_CUA_PLUGIN_ROOT 去取。2026-09-11 之前 browser-use 各存一份手工副本，
     // 其中文档那份悄悄停在重构前的 API，兜底路径会把它发给模型。
     for (const relative of [
       "../../browser-use-plugin/scripts/computer-use-client.mjs",
@@ -509,17 +509,17 @@ describe("node_repl MCP server", () => {
       mimeType: "image/png",
     });
     expect(screenshot._meta).toMatchObject({
-      [XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY]: [0],
+      [ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY]: [0],
     });
 
     const spoofed = toMcpRunResult({
       logs: "",
       images: [{ base64: "BAUG", mimeType: "image/png" }],
       responseMeta: {
-        [XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY]: [1],
+        [ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY]: [1],
       },
     });
-    expect(spoofed._meta).not.toHaveProperty(XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY);
+    expect(spoofed._meta).not.toHaveProperty(ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY);
 
     // Worker 结果消息里的下标可以被 cell 冒充（MR !3207 评审 CR-01），账本里没有截图时一律不采信。
     const forgedRun = toMcpRunResult(
@@ -530,7 +530,7 @@ describe("node_repl MCP server", () => {
       },
       ledgerFacts(),
     );
-    expect(forgedRun._meta).not.toHaveProperty(XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY);
+    expect(forgedRun._meta).not.toHaveProperty(ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY);
   });
 
   it("projects the CUA app identity recorded in the ledger and drops the sandbox-forgeable key", () => {
@@ -551,7 +551,7 @@ describe("node_repl MCP server", () => {
     );
 
     expect(trusted._meta).toMatchObject({
-      [XCODE_MCP_NODE_REPL_CUA_APP_META_KEY]: {
+      [ZCODE_MCP_NODE_REPL_CUA_APP_META_KEY]: {
         appKey: "darwin:com.apple.notes",
         displayName: "Notes",
       },
@@ -569,7 +569,7 @@ describe("node_repl MCP server", () => {
         },
       },
     } as never);
-    expect(forgedOnly._meta ?? {}).not.toHaveProperty(XCODE_MCP_NODE_REPL_CUA_APP_META_KEY);
+    expect(forgedOnly._meta ?? {}).not.toHaveProperty(ZCODE_MCP_NODE_REPL_CUA_APP_META_KEY);
     expect(forgedOnly._meta ?? {}).not.toHaveProperty(CUA_APP_ASSOCIATIONS_META_KEY);
 
     // Worker 结果消息里的 cuaApp 可以被 cell 冒充（MR !3207 评审 CR-01），不采信。
@@ -577,14 +577,14 @@ describe("node_repl MCP server", () => {
       { logs: "", cuaApp: { appKey: "darwin:com.apple.notes" } },
       ledgerFacts(),
     );
-    expect(forgedRun._meta ?? {}).not.toHaveProperty(XCODE_MCP_NODE_REPL_CUA_APP_META_KEY);
+    expect(forgedRun._meta ?? {}).not.toHaveProperty(ZCODE_MCP_NODE_REPL_CUA_APP_META_KEY);
   });
 
   // 会话能力标签的两个 key 只按账本写（session-features-header.md「BUA/CUA 标签的补充规则」）。
   it("writes the runtime-call keys only from the ledger and drops copies the cell writes", () => {
     const forged = {
-      [XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY]: true,
-      [XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY]: true,
+      [ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY]: true,
+      [ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY]: true,
     };
     // 口径是真实尝试：cell 以错误结束也写。
     const failed = toMcpRunResult(
@@ -598,8 +598,8 @@ describe("node_repl MCP server", () => {
       { logs: "", responseMeta: forged },
       ledgerFacts({ browserUse: true }),
     );
-    expect(browserOnly._meta).toMatchObject({ [XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY]: true });
-    expect(browserOnly._meta).not.toHaveProperty(XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY);
+    expect(browserOnly._meta).toMatchObject({ [ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY]: true });
+    expect(browserOnly._meta).not.toHaveProperty(ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY);
 
     // sandbox 通道写入的同名 key、Worker 结果消息里冒充的字段（MR !3207 评审 CR-01）一律不采信。
     for (const run of [
@@ -611,8 +611,8 @@ describe("node_repl MCP server", () => {
       { logs: "", browserUse: true, computerUse: true },
     ]) {
       const result = toMcpRunResult(run as never, ledgerFacts());
-      expect(result._meta ?? {}).not.toHaveProperty(XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY);
-      expect(result._meta ?? {}).not.toHaveProperty(XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY);
+      expect(result._meta ?? {}).not.toHaveProperty(ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY);
+      expect(result._meta ?? {}).not.toHaveProperty(ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY);
     }
   });
 
@@ -632,7 +632,7 @@ describe("node_repl MCP server", () => {
     }));
 
     expect(result._meta).toMatchObject({
-      [XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY]: [0, 2],
+      [ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY]: [0, 2],
     });
     // 每个声明的下标都必须真的指向 content 里的 image block（越界或指到 text 都会让原图落盘错位）。
     for (const index of [0, 2]) {
@@ -694,7 +694,7 @@ describe("node_repl MCP server", () => {
         { type: "text", text: "=> shot" },
       ]);
       expect(result._meta).toMatchObject({
-        [XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY]: [0],
+        [ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY]: [0],
       });
       // 上游收到的是上游 token 与本次调用来自 core 的会话信息。
       expect(upstreamRequests).toHaveLength(1);
@@ -750,8 +750,8 @@ describe("node_repl MCP server", () => {
     await useRuntime.server.connect(serverTransport);
     await useClient.connect(clientTransport);
     const forged = JSON.stringify({
-      [XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY]: true,
-      [XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY]: true,
+      [ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY]: true,
+      [ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY]: true,
     });
     // CUA broker 要求 workspace 信息，缺了会在调用 runtime 之前拒绝。
     const callMeta = {
@@ -782,8 +782,8 @@ describe("node_repl MCP server", () => {
       });
       expect(cuaExecuted).toBe(1);
       expect(called._meta).toMatchObject({
-        [XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY]: true,
-        [XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY]: true,
+        [ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY]: true,
+        [ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY]: true,
       });
 
       // 只做 CUA 引导、只在代码里提到运行时、经 sandbox 通道自己写 key：都没有请求到达 broker。
@@ -803,8 +803,8 @@ describe("node_repl MCP server", () => {
       // 前提：cell 正常执行完，sandbox 通道确实生效了。
       expect(notCalled.isError).not.toBe(true);
       expect(notCalled.content).toContainEqual({ type: "text", text: "forged" });
-      expect(notCalled._meta ?? {}).not.toHaveProperty(XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY);
-      expect(notCalled._meta ?? {}).not.toHaveProperty(XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY);
+      expect(notCalled._meta ?? {}).not.toHaveProperty(ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY);
+      expect(notCalled._meta ?? {}).not.toHaveProperty(ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY);
       expect(cuaExecuted).toBe(1);
     } finally {
       await useClient.close();

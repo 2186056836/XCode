@@ -98,7 +98,7 @@ describe("Feishu runtime error Desktop UI", () => {
     expect(statusControlGap).not.toBeNull();
     expect(statusControlGap ?? -1).toBeGreaterThanOrEqual(0);
 
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR?.trim();
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR?.trim();
     if (artifactDir) {
       await browser.saveScreenshot(join(artifactDir, "BOT-E2E-CF-01-feishu-runtime-error.png"));
     }

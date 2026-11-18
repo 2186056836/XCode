@@ -30,7 +30,7 @@ import {
 } from "#e2e/helpers/v4-conversation";
 
 const CASE = "E2E_SCT03";
-const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR!;
+const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR!;
 const tools: AppControlToolEvidence = {};
 interface NavigationHistorySnapshot {
   entries: Array<{
@@ -270,8 +270,8 @@ describe(`${CASE}: explicit App session navigation`, () => {
 
     const pairUrl = await obtainUnreadPairingUrl();
     mobile = await chromium.launch({
-      ...(process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE
-        ? { executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
+      ...(process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE
+        ? { executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
         : { channel: "chrome" }),
       headless: true,
     });

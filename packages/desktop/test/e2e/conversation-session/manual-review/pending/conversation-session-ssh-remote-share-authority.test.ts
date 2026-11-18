@@ -33,7 +33,7 @@ const syntheticToken = (actor: string) =>
 const LOCAL_TOKEN = syntheticToken("ssh-guide-local-account");
 const REMOTE_TOKEN = syntheticToken("ssh-guide-remote-account");
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-share-authority",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-share-authority",
 );
 
 describe(`${MARKER}: 远端分享账号权威与未登录拒绝`, () => {
@@ -162,7 +162,7 @@ describe(`${MARKER}: 远端分享账号权威与未登录拒绝`, () => {
     // stop 是 Server 根命令，server stop 会误走旧 CLI，无法正确切换本 case 的 API 环境。
     const restarted = await runSSHCommand(
       prepared.config,
-      `"$HOME/.xcode/server/bin/zcode" stop --json; kill -TERM ${core.supervisorPid}; XCODE_BASE_URL='http://127.0.0.1:${remotePort}' "$HOME/.xcode/server/bin/zcode" serve --daemon --json`,
+      `"$HOME/.xcode/server/bin/zcode" stop --json; kill -TERM ${core.supervisorPid}; ZCODE_BASE_URL='http://127.0.0.1:${remotePort}' "$HOME/.xcode/server/bin/zcode" serve --daemon --json`,
       { timeoutMs: 60_000 },
     );
     expect(restarted.code).toBe(0);

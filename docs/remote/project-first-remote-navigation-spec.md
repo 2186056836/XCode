@@ -383,7 +383,7 @@ Root 仅持有当前项目的恢复互斥；取消项目意图后立即释放。
 - 全局 `audit:conversation-session-coverage` 未通过：37 项既有问题（27 个旧 pending fixture 元数据、旧矩阵统计/引用和生成文档）。在审计输入与 HEAD 一致的原型 worktree 上对照运行，37 项完全相同，新增问题为 0；未改写无关基线数据。
 - 新增本地 Electron E2E：`packages/desktop/test/e2e/conversation-session/projects/conversation-session-rpn-project-navigation.test.ts`，已通过。
 - E2E run：`desktop-e2e-20260916060143354-p74119-7eab82eb8a75775c`。隔离 HOME 中预置两个设备的同路径离线项目及一个历史远程 conversation；确认平铺、单一项目/任务分组、设备详情隔离、查看详情无连接副作用、Escape 不重开 tooltip、旧 conversation 不恢复、canonical 数据保留、项目名点击进入唯一连接向导。截图 `rpn-project-sidebar.png` 保存在该 run artifact 下。
-- E2E 未发 prompt、未连接真实远端；复用未改动的已构建 CLI（`XCODE_E2E_SKIP_AGENT_BUILD=1`），Desktop/UI 从当前工作树重新构建。
+- E2E 未发 prompt、未连接真实远端；复用未改动的已构建 CLI（`ZCODE_E2E_SKIP_AGENT_BUILD=1`），Desktop/UI 从当前工作树重新构建。
 - SSH helper 的普通连接流程已要求进入目录步骤，不再把向导关闭当作新建远程无项目聊天成功。
 
 新 E2E 仍位于 manual-review/pending，本轮未进行人工转正或 Docker 准入。旧设备组头/connect-and-chat 专用 pending 用例属于被替代的 UI 合同，不作为新功能验收；正式 E2E 未发现对这些撤销入口的直接引用。

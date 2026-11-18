@@ -98,7 +98,7 @@ export function classifyRemoteConnectionError(input: {
       category = "authentication";
       primaryAction = "edit-auth";
       break;
-    case "XCODE_REMOTE_WORKSPACE_DISCONNECTED":
+    case "ZCODE_REMOTE_WORKSPACE_DISCONNECTED":
       category = "disconnected";
       titleId = "remote.conversation.sendUnavailable";
       primaryAction = "connect";

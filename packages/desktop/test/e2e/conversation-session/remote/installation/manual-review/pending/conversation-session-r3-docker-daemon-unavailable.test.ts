@@ -27,7 +27,7 @@ const CONTEXT_NAME = `zcode-e2e-daemon-down-${process.pid}`;
 const MISSING_SOCKET = `/tmp/zcode-e2e-docker-missing-${process.pid}.sock`;
 const DENIED_SOCKET = `/tmp/zcode-e2e-docker-denied-${process.pid}.sock`;
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-docker-daemon-unavailable",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-docker-daemon-unavailable",
 );
 const run = promisify(execFile);
 

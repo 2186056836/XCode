@@ -2534,7 +2534,7 @@ key: the standalone CLI does not read `/client/configs`. Its mode comes from the
 Host (packages/services)
   BigModelCodingPlanSubscriptionProvider.getDynamicWorkflowClientConfig()
     ← the cached /client/configs snapshot (1 h TTL, forceRefresh bypasses it)
-    ← XCODE_DYNAMIC_WORKFLOW_MODE (local override, see below)
+    ← ZCODE_DYNAMIC_WORKFLOW_MODE (local override, see below)
     → the offer: { offeredMode, source }                     (latched once per Host process)
   settings.dynamicWorkflowMode (the user's choice, absent = follow the offer)
     ← local and standalone-server Hosts: their own settings file, read at each use
@@ -2765,7 +2765,7 @@ automations page.
 
 ### The local override
 
-One environment variable, `XCODE_DYNAMIC_WORKFLOW_MODE`, read by the Host resolver before any
+One environment variable, `ZCODE_DYNAMIC_WORKFLOW_MODE`, read by the Host resolver before any
 network call. When it holds one of the three values the resolver returns it with
 `source: "override"` and skips the fetch, so there is no TTL and no first-Host race. Desktop
 Main is the gatekeeper: in `buildHostProcessEnv` it always writes or deletes the key before
@@ -2774,7 +2774,7 @@ the Host starts, never passes it through untouched, so the Host trusts whatever 
 | Build | What Main writes into the Host env | Effect |
 |---|---|---|
 | unpackaged dev (`pnpm dev:desktop`) | the developer's shell value, if it is one of the three | any mode, for hand testing |
-| packaged preview (`XCODE_PRODUCT_FLAVOR === "preview"`, production backend) | the literal `alwaysOn` | preview users always have the feature; the server key is ignored |
+| packaged preview (`ZCODE_PRODUCT_FLAVOR === "preview"`, production backend) | the literal `alwaysOn` | preview users always have the feature; the server key is ignored |
 | packaged production | nothing; an inherited value is removed | the override cannot work |
 
 Remote Hosts started over SSH, WSL and Docker receive the same value through
@@ -2790,7 +2790,7 @@ key. **When the flag is absent the mode is `disabled`**: workflows in the standa
 opt-in. The value is read with the Host's normalizer (`normalizeDynamicWorkflowMode`: the
 exact spelling, surrounding whitespace ignored); anything else fails at the CLI entry with an
 error that names the three values, exit code 1, before any app or session exists. There is no
-environment variable and no config key; `XCODE_DYNAMIC_WORKFLOW_MODE` stays Host-only.
+environment variable and no config key; `ZCODE_DYNAMIC_WORKFLOW_MODE` stays Host-only.
 
 **Where the flag is accepted.** With `-p`/`--prompt`, with `--target`, and for the TUI (no
 command, or `tui`). Anywhere else it is an error with exit code 1: on `app-server` and

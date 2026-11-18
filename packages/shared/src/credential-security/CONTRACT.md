@@ -14,7 +14,7 @@ Linux 必须使用持久 Secret Service。显式环境密钥用于受管无桌�
 规格：docs/plans/2026-10-29-system-credential-storage.md。
 
 Server 在开放服务前调用系统 cipher 的 initialize。无桌面可显式挂载
-XCODE_CREDENTIAL_SECRET_FILE（32–4096 字节、原字节、不与直接环境密钥并用），
+ZCODE_CREDENTIAL_SECRET_FILE（32–4096 字节、原字节、不与直接环境密钥并用），
 只传文件位置，不把文件内容写入环境或日志。缺失/不可读的后端阻止 Server 就绪。
 v1 解码同时兼容 Desktop 原字符串、CLI trim 和历史默认派生规则；v2 保留原始密钥语义。
 桥协议按明文 UTF-8 字节、密文膨胀分别限流；每个可关联的回复成功或拒绝一次，

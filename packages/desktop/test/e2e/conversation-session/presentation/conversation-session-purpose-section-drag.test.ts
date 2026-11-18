@@ -33,7 +33,7 @@ describe("CWP02 分区标题拖拽", () => {
     await beginDrag(tasks, project);
     await expect($(project).$(indicator)).toHaveAttribute("data-drop-position", "before");
     await assertDragLayout(tasks);
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "section-drag-up.png"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "section-drag-up.png"));
     await browser.performActions([
       {
         type: "pointer",
@@ -137,7 +137,7 @@ describe("CWP02 分区标题拖拽", () => {
           await expect($(tasks).$(indicator)).toHaveAttribute("data-drop-position", "after");
           await assertDragLayout(project);
           await browser.saveScreenshot(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR!, `section-drag-${width}-${theme}.png`),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `section-drag-${width}-${theme}.png`),
           );
           await browser.keys("Escape");
           await browser.releaseActions();

@@ -75,7 +75,7 @@ const REMOTE_STAGE_PHASES = new Set([
   "install",
 ]);
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-update-cancel",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-update-cancel",
 );
 
 /** 当前 release 的 runtime/package.json 字节数与 sha256；损坏后字节数为 0。 */
@@ -296,9 +296,9 @@ describe(`${CASE_MARKER}: 更新的本机阶段显示下载进度并可取消`, 
   it("R3-UPDATE-CANCEL-01/02 本机下载显示进度、可取消且不写远端；远端阶段不可取消，重试后重装完成", async function () {
     this.timeout(25 * 60_000);
     // worker 修改 process.env 无法影响已创建的 Electron；三项必须由 runner 在 WDIO 启动前注入。
-    expect(process.env.XCODE_DEV_REMOTE_ASSET_USE_CDN).toBe("1");
-    expect(process.env.XCODE_REMOTE_ASSET_CDN_BASE_URL).toBe(`http://${FAKE_CDN_HOST}`);
-    expect(process.env.XCODE_REMOTE_ASSET_CACHE_DIR).toBe(cacheDir);
+    expect(process.env.ZCODE_DEV_REMOTE_ASSET_USE_CDN).toBe("1");
+    expect(process.env.ZCODE_REMOTE_ASSET_CDN_BASE_URL).toBe(`http://${FAKE_CDN_HOST}`);
+    expect(process.env.ZCODE_REMOTE_ASSET_CACHE_DIR).toBe(cacheDir);
     const config = readSSHRuntimeConfig(CASE_MARKER);
     const [workspacePath] = config.workspacePaths;
     const { version } = JSON.parse(

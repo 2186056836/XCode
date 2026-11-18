@@ -61,8 +61,8 @@ describe("remote asset staging CLI", () => {
     ["   ", "production"],
     [" TEST ", "test"],
     ["production", "production"],
-  ])("stages only Linux targets with XCODE_ENV=%s", async (input, expected) => {
-    vi.stubEnv("XCODE_ENV", input);
+  ])("stages only Linux targets with ZCODE_ENV=%s", async (input, expected) => {
+    vi.stubEnv("ZCODE_ENV", input);
     await runCli(["--linux"]);
     expect(spawn.mock.calls.map((call) => call[1])).toEqual([
       ["--filter", "@zcode/server-cli", "build"],
@@ -89,7 +89,7 @@ describe("remote asset staging CLI", () => {
       ],
     ]);
     for (const call of spawn.mock.calls) {
-      expect(call[2].env.XCODE_ENV).toBe(expected);
+      expect(call[2].env.ZCODE_ENV).toBe(expected);
     }
     expect(collect).toHaveBeenCalledWith(
       expect.objectContaining({ targets: ["linux-x64", "linux-arm64"] }),
@@ -101,20 +101,20 @@ describe("remote asset staging CLI", () => {
   });
 
   it("preserves all four targets and environment for the default entry", async () => {
-    vi.stubEnv("XCODE_ENV", undefined);
+    vi.stubEnv("ZCODE_ENV", undefined);
     await runCli([]);
     expect(spawn).toHaveBeenCalledTimes(5);
     expect(spawn.mock.calls.slice(1).map((call) => call[1][6])).toEqual(allTargets);
     for (const call of spawn.mock.calls) {
       expect(call[1]).not.toContain("--skip-component-archives");
     }
-    expect(spawn.mock.calls[0]![2].env?.XCODE_ENV).toBeUndefined();
+    expect(spawn.mock.calls[0]![2].env?.ZCODE_ENV).toBeUndefined();
     expect(collect).toHaveBeenCalledWith(expect.objectContaining({ targets: allTargets }));
   });
 
   it("rejects invalid Linux environments before invalidating or building", async () => {
-    vi.stubEnv("XCODE_ENV", "invalid");
-    await expect(runCli(["--linux"])).rejects.toThrow(/Invalid XCODE_ENV/);
+    vi.stubEnv("ZCODE_ENV", "invalid");
+    await expect(runCli(["--linux"])).rejects.toThrow(/Invalid ZCODE_ENV/);
     expect(begin).not.toHaveBeenCalled();
     expect(spawn).not.toHaveBeenCalled();
     expect(collect).not.toHaveBeenCalled();

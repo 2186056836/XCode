@@ -7,7 +7,7 @@ import type { ModelSelectionView } from "@zcode/services";
 import { completeNewModelSelection } from "@zcode/provider";
 import { FolderOpen } from "lucide-react";
 import {
-  XCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER,
   type XCodeConfigOption,
   type XCodeOffPeakTask,
   type ModelSelection,
@@ -631,7 +631,7 @@ export function OffPeakEditView({
                       复用 ConfigSelect，避免两处样式再次分叉。 */}
                   <ConfigSelect
                     option={modeOption}
-                    provider={XCODE_AGENT_PROVIDER}
+                    provider={ZCODE_AGENT_PROVIDER}
                     onValueChange={(value) => confirmMode(value, () => setMode(value))}
                     disabled={readOnly}
                     tooltipTitle={intl.formatMessage({
@@ -679,7 +679,7 @@ export function OffPeakEditView({
                     <ThoughtLevelCycleControl
                       intl={intl}
                       option={thoughtLevelOption}
-                      provider={XCODE_AGENT_PROVIDER}
+                      provider={ZCODE_AGENT_PROVIDER}
                       disabled={readOnly}
                       triggerRef={thoughtTriggerRef}
                       triggerClassName={AUTOMATION_INSTRUCTIONS_TOOLBAR_TRIGGER_CLASSNAME}

@@ -377,10 +377,10 @@ runner 与 fixture 对应当前提交。该标识保留为原始证据，不改�
 win-uia-timeout-lifecycle-cua.test.ts、win-uia-patterns-cua.test.ts、win-gtk-click-cua.test.ts。
 
 复跑时先按矩阵规范构建 fixture、native 与 producer，再串行执行以下命令；
-XCODE_CUA_HARNESS_E2E=1 是真实测试的显式开关：
+ZCODE_CUA_HARNESS_E2E=1 是真实测试的显式开关：
 
 ```powershell
-$env:XCODE_CUA_HARNESS_E2E = '1'
+$env:ZCODE_CUA_HARNESS_E2E = '1'
 corepack pnpm --filter @zcode/zcode-cua exec vitest run test/native/win-uia-timeout-lifecycle-cua.test.ts test/native/win-uia-patterns-cua.test.ts test/native/win-gtk-click-cua.test.ts --maxWorkers 1
 node packages/zcode-cua/scripts/windows-harness-matrix-baseline.mjs
 ```

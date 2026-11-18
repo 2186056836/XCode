@@ -59,7 +59,7 @@ export { SETTINGS_SECTION_GROUPS, SETTINGS_SECTIONS };
 export { isSettingsSectionAvailable };
 
 const TASK_AUTO_ARCHIVE_DAY_OPTIONS = [3, 7, 14, 30] as const;
-const XCODE_INTERACTION_BEHAVIOR_OPTIONS: readonly XCodeInteractionBehavior[] = ["queue", "guide"];
+const ZCODE_INTERACTION_BEHAVIOR_OPTIONS: readonly XCodeInteractionBehavior[] = ["queue", "guide"];
 
 /**
  * 归档偏好与归档列表集中展示，设置值和保存动作继续由 SettingsPage 持有。
@@ -904,7 +904,7 @@ export function AgentBehaviorSectionContent({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {XCODE_INTERACTION_BEHAVIOR_OPTIONS.map((behavior) => (
+                {ZCODE_INTERACTION_BEHAVIOR_OPTIONS.map((behavior) => (
                   <SelectItem key={behavior} value={behavior}>
                     {intl.formatMessage({
                       id: `settings.zcodeInteractionBehavior.option.${behavior}`,

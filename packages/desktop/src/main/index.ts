@@ -84,14 +84,14 @@ import {
   type AppSettings,
   type appSettingsPatchSchema,
   PlatformChannels,
-  XCODE_ENV,
-  XCODE_PRODUCT_FLAVOR,
-  XCODE_AUTO_UPDATE_ENABLED,
+  ZCODE_ENV,
+  ZCODE_PRODUCT_FLAVOR,
+  ZCODE_AUTO_UPDATE_ENABLED,
   DEFAULT_XCODE_ENDPOINT_ORIGIN,
   DEFAULT_LOCALE,
   toZhOrEnLocale,
   TEST_XCODE_ENDPOINT_ORIGIN,
-  XCODE_VERSION,
+  ZCODE_VERSION,
   buildXCodeEndpointUrls,
   resolveWebRemoteControlRelayWsUrl,
   resolveXCodeEndpointOrigin,
@@ -325,7 +325,7 @@ const localMediaPreviewPathRegistry = createLocalMediaPreviewPathRegistry();
 // e2e 由 Chromedriver 管理远程调试端口；如果这里继续固定到 9229，
 // 会和开发态已打开的 XCode Dev 抢端口，导致 WebDriver session 创建前白屏超时。
 // 仅本地开发运行默认开启远程调试端口，并允许 e2e 通过环境变量交给 Chromedriver 接管。
-if (!app.isPackaged && process.env.XCODE_DISABLE_FIXED_REMOTE_DEBUGGING_PORT !== "1") {
+if (!app.isPackaged && process.env.ZCODE_DISABLE_FIXED_REMOTE_DEBUGGING_PORT !== "1") {
   app.commandLine.appendSwitch("remote-debugging-port", "9229");
 }
 
@@ -787,7 +787,7 @@ const appTelemetryCredentialService = createCredentialService();
 const autoUpdateCredentialService = createCredentialService();
 async function resolveCurrentXCodeEndpointOrigin() {
   return resolveXCodeEndpointOrigin({
-    env: XCODE_ENV,
+    env: ZCODE_ENV,
     envBaseOrigin: resolveXCodeEndpointEnvBaseOrigin(hostProcessLocalEnv),
     overrideOrigin: (await mainSettingService.get()).zcodeEndpointOrigin,
   });
@@ -934,7 +934,7 @@ const deviceMid = ensureDesktopDeviceMidSync();
 // 帮助和灰度共用当前凭据来源，但分别维护各自裁剪后的配置缓存。
 const readHelpConfig = createDesktopHelpConfigReader({
   resolveXcodeJwtToken: () => autoUpdateCredentialService.load("zcodejwttoken"),
-  appVersion: XCODE_VERSION || app.getVersion(),
+  appVersion: ZCODE_VERSION || app.getVersion(),
   deviceMid,
   getClientLanguage: () => currentApplicationLocale,
   resolveEndpointOrigin: resolveCurrentXCodeEndpointOrigin,
@@ -943,7 +943,7 @@ const readHelpConfig = createDesktopHelpConfigReader({
 // 各自独立缓存/去重，服务端按 data.configs.<key> 区分功能）。
 const electronClientConfigsFetcher = createElectronDesktopContextPromptConfigFetcher({
   resolveXcodeJwtToken: () => autoUpdateCredentialService.load("zcodejwttoken"),
-  appVersion: XCODE_VERSION || app.getVersion(),
+  appVersion: ZCODE_VERSION || app.getVersion(),
   deviceMid,
   getClientLanguage: () => currentApplicationLocale,
   resolveEndpointOrigin: resolveCurrentXCodeEndpointOrigin,
@@ -958,7 +958,7 @@ const rendererActionTraceRollout = createRendererActionTraceRollout({
 });
 const localTtftExporter = createLocalTtftExporter({
   env: { ...hostProcessLocalEnv, ...process.env },
-  version: XCODE_VERSION || app.getVersion(),
+  version: ZCODE_VERSION || app.getVersion(),
   logger,
 });
 ipcMain.on(PlatformChannels.ReportLocalTtftBatch, (_event, batch: unknown) =>
@@ -976,13 +976,13 @@ const armsUserIdentitySync = createArmsUserIdentitySync({
   deviceMid,
   setUser: (user) => armsRum.setConfig("user", user),
 });
-const webRemoteControlAppVersion = XCODE_VERSION || app.getVersion();
+const webRemoteControlAppVersion = ZCODE_VERSION || app.getVersion();
 const defaultXCodeEndpointUrls = buildXCodeEndpointUrls(DEFAULT_XCODE_ENDPOINT_ORIGIN, {
   appVersion: webRemoteControlAppVersion,
 });
 const webRemoteControlRelayWsEnvOverride =
-  process.env["XCODE_WEB_REMOTE_CONTROL_RELAY_WS_URL"]?.trim();
-const webRemoteControlUrlEnvOverride = process.env["XCODE_WEB_REMOTE_CONTROL_URL"]?.trim();
+  process.env["ZCODE_WEB_REMOTE_CONTROL_RELAY_WS_URL"]?.trim();
+const webRemoteControlUrlEnvOverride = process.env["ZCODE_WEB_REMOTE_CONTROL_URL"]?.trim();
 
 function extractOpenWorkspacePathFromDeepLinkUrl(url: string): string | null {
   try {
@@ -1410,7 +1410,7 @@ async function prepareAppQuit(reason: string, kind: AppShutdownKind = "normal"):
 
 function exitPreparedApp(reason: string): never | void {
   logger.info(`[app-quit] exiting prepared app (${reason})`);
-  if (process.env.XCODE_E2E_RUN_ID?.trim()) {
+  if (process.env.ZCODE_E2E_RUN_ID?.trim()) {
     flushMainE2ECoverage((error) => {
       logger.warn("[e2e-coverage] main coverage flush failed", error);
     });
@@ -1632,7 +1632,7 @@ function shouldConfirmAppQuit() {
   // 开发环境里的普通会话经常需要重启 Electron，只在 production 下拦截，避免打断调试。
   // 正在创建的 worktree 关闭后无法恢复，任何环境都要确认。
   return (
-    (XCODE_ENV === "production" && getRunningAgentSessionCount() > 0) ||
+    (ZCODE_ENV === "production" && getRunningAgentSessionCount() > 0) ||
     getCreatingWorktreeCount() > 0
   );
 }
@@ -1665,7 +1665,7 @@ function confirmWindowCloseWithQuitBlockers(win: BrowserWindow): boolean {
 
 function confirmAppQuit(originWindow?: BrowserWindow | null) {
   if (!shouldConfirmAppQuit()) {
-    logger.info(`[app-quit] quit confirmation skipped in ${XCODE_ENV}`);
+    logger.info(`[app-quit] quit confirmation skipped in ${ZCODE_ENV}`);
     return true;
   }
 
@@ -1747,7 +1747,7 @@ async function executeDesktopCommandForApp(
 }
 
 async function resolveXCodeEndpointSelection(): Promise<"production" | "test" | "custom"> {
-  if (XCODE_ENV === "production") {
+  if (ZCODE_ENV === "production") {
     return "production";
   }
   const origin = await resolveCurrentXCodeEndpointOrigin();
@@ -2391,10 +2391,10 @@ app.whenReady().then(async () => {
       : {}),
     logger: console,
     // e2e L05（配额）：只在 e2e run 里允许缩小注册表容量。
-    ...(process.env.XCODE_E2E_RUN_ID?.trim() &&
-    Number.isInteger(Number(process.env.XCODE_E2E_PLUGIN_SANDBOX_MAX_ENTRIES)) &&
-    Number(process.env.XCODE_E2E_PLUGIN_SANDBOX_MAX_ENTRIES) > 0
-      ? { registryMaxEntries: Number(process.env.XCODE_E2E_PLUGIN_SANDBOX_MAX_ENTRIES) }
+    ...(process.env.ZCODE_E2E_RUN_ID?.trim() &&
+    Number.isInteger(Number(process.env.ZCODE_E2E_PLUGIN_SANDBOX_MAX_ENTRIES)) &&
+    Number(process.env.ZCODE_E2E_PLUGIN_SANDBOX_MAX_ENTRIES) > 0
+      ? { registryMaxEntries: Number(process.env.ZCODE_E2E_PLUGIN_SANDBOX_MAX_ENTRIES) }
       : {}),
   });
   installBrowserLocalPreview(session.fromPartition(EMBEDDED_BROWSER_PARTITION));
@@ -2476,7 +2476,7 @@ app.whenReady().then(async () => {
     // 打包态必须与 NSIS 快捷方式使用同一 AUMID，否则 Shell 把它们当成不同应用。
     // 使用构建期产品身份，不依赖用户机器环境；开发态继续保持独立身份。
     app.setAppUserModelId(
-      resolveWindowsAppUserModelIdForFlavor(XCODE_PRODUCT_FLAVOR, { isPackaged: app.isPackaged }),
+      resolveWindowsAppUserModelIdForFlavor(ZCODE_PRODUCT_FLAVOR, { isPackaged: app.isPackaged }),
     );
   }
 
@@ -2536,7 +2536,7 @@ app.whenReady().then(async () => {
   // 不向 Preview 渠道提供更新。构建期未启用自动更新时同样不更新
   // （见 docs/desktop/build-time-optional-capabilities.md）。
   void initAutoUpdater({
-    enabled: XCODE_PRODUCT_FLAVOR === "production" && XCODE_AUTO_UPDATE_ENABLED,
+    enabled: ZCODE_PRODUCT_FLAVOR === "production" && ZCODE_AUTO_UPDATE_ENABLED,
     onBeforeQuitAndInstall: async () => {
       notifyStabilityLifecycle("update_install");
       await prepareAppQuit("auto-update quitAndInstall", "update-install");
@@ -2754,7 +2754,7 @@ app.whenReady().then(async () => {
     armsCustomContext: {
       deviceMid,
       platform: process.platform,
-      appVersion: XCODE_VERSION,
+      appVersion: ZCODE_VERSION,
       armsEnv: mapXCodeEnvToArmsRumEnv(desktopRuntimeEnv),
     },
     finalArmsCustomEventE2EEnabled: shouldEnableE2ETestBridge(process.env),
@@ -2803,24 +2803,24 @@ app.whenReady().then(async () => {
   configureDesktopStabilityTelemetry({
     deviceMid,
     platform: process.platform,
-    appVersion: XCODE_VERSION,
+    appVersion: ZCODE_VERSION,
     armsEnv: mapXCodeEnvToArmsRumEnv(desktopRuntimeEnv),
   });
   configureDesktopResourceTelemetry({
     deviceMid,
     platform: process.platform,
-    appVersion: XCODE_VERSION,
+    appVersion: ZCODE_VERSION,
     armsEnv: mapXCodeEnvToArmsRumEnv(desktopRuntimeEnv),
   });
   configureDesktopMcpTelemetry({
     deviceMid,
-    appVersion: XCODE_VERSION,
+    appVersion: ZCODE_VERSION,
     armsEnv: mapXCodeEnvToArmsRumEnv(desktopRuntimeEnv),
   });
   configureDesktopNetworkTelemetry({
     deviceMid,
     platform: process.platform,
-    appVersion: XCODE_VERSION,
+    appVersion: ZCODE_VERSION,
     armsEnv: mapXCodeEnvToArmsRumEnv(desktopRuntimeEnv),
   });
   registerDesktopStabilityMonitors(logger, crashCapturePaths);
@@ -2830,7 +2830,7 @@ app.whenReady().then(async () => {
   const defaultDataBaseDir = process.env.HOME?.trim() || homedir();
   registerDesktopXCodeDataSizeTelemetry({
     context: {
-      appVersion: XCODE_VERSION,
+      appVersion: ZCODE_VERSION,
       armsEnv: mapXCodeEnvToArmsRumEnv(desktopRuntimeEnv),
       dataRootKind:
         resolve(getDataBaseDir()) === resolve(defaultDataBaseDir) ? "default" : "custom",
@@ -2847,14 +2847,14 @@ app.whenReady().then(async () => {
   registerDesktopNetworkTelemetry(logger);
 
   // 本地未打包 dev 构建（app.isPackaged === false）必须跳过远端强制升级 gate。
-  // 原因：force-update gate 只看 XCODE_ENV === "production"，但 dev 构建（如 dev:desktop:cua
+  // 原因：force-update gate 只看 ZCODE_ENV === "production"，但 dev 构建（如 dev:desktop:cua
   // 连真实后端测 computer use）虽指向 production 后端，版本号却滞后于线上 release（feature
   // 分支不 bump 版本），会被 release minimalVersion 误判为"需强制升级"而启动秒退。force-update
   // 是面向打包发布客户端的安全门，对未打包 dev 运行时无意义。打包版 app.isPackaged === true，
   // gate 照常生效，对真实用户零影响。
   const skipForceUpdateForLocalDevRuntime = !app.isPackaged;
   const forceUpdateGuardResult =
-    XCODE_PRODUCT_FLAVOR === "production" && !skipForceUpdateForLocalDevRuntime
+    ZCODE_PRODUCT_FLAVOR === "production" && !skipForceUpdateForLocalDevRuntime
       ? await maybeBlockStartupForForceUpdate({
           resolveXcodeJwtToken: () => autoUpdateCredentialService.load("zcodejwttoken"),
           locale: currentApplicationLocale,
@@ -2865,7 +2865,7 @@ app.whenReady().then(async () => {
           },
         })
       : { blocked: false };
-  if (XCODE_PRODUCT_FLAVOR !== "production") {
+  if (ZCODE_PRODUCT_FLAVOR !== "production") {
     logger.info("[force-update] Preview 跳过远端强制升级检查");
   } else if (skipForceUpdateForLocalDevRuntime) {
     logger.info("[force-update] 本地 dev 构建（未打包）跳过远端强制升级检查");

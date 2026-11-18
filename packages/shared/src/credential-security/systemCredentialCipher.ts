@@ -68,7 +68,7 @@ function unavailable(): Error {
   // 系统库锁定/缺失不能冒充密文损坏，否则既有 OAuth 恢复逻辑会误删登录。
   return Object.assign(
     new Error(
-      "System credential storage is unavailable. Unlock the OS credential store and restart to retry; headless servers require Secret Service, XCODE_CREDENTIAL_SECRET, or a readable XCODE_CREDENTIAL_SECRET_FILE of 32–4096 bytes. Do not configure both managed secret sources.",
+      "System credential storage is unavailable. Unlock the OS credential store and restart to retry; headless servers require Secret Service, ZCODE_CREDENTIAL_SECRET, or a readable ZCODE_CREDENTIAL_SECRET_FILE of 32–4096 bytes. Do not configure both managed secret sources.",
     ),
     { code: "CREDENTIAL_SECURE_STORAGE_UNAVAILABLE" },
   );
@@ -103,7 +103,7 @@ function legacyKeyCandidates(env: Readonly<Record<string, string | undefined>>):
     /* 兼容旧版本的同一默认推导规则。 */
   }
   const fallback = `zcode-credential-fallback:${platform()}:${homedir()}:${username}`;
-  const secret = env.XCODE_CREDENTIAL_SECRET;
+  const secret = env.ZCODE_CREDENTIAL_SECRET;
   // 旧 Desktop 使用原字符串，旧 CLI 会 trim；不能让共用 decoder 破坏任一端升级。
   // GCM 认证决定正确历史密钥，绝不把解密失败的密文作为明文返回。
   // 首次配置随机密钥时，旧记录仍可能使用默认派生密钥，必须先读旧值再迁移。
@@ -143,9 +143,9 @@ async function resolveManagedSecret(
   discoverDefault = false,
 ): Promise<string | undefined> {
   const env = options.env ?? process.env;
-  if (env.XCODE_CREDENTIAL_SECRET && env.XCODE_CREDENTIAL_SECRET_FILE) throw unavailable();
-  if (env.XCODE_CREDENTIAL_SECRET) return env.XCODE_CREDENTIAL_SECRET;
-  const explicit = env.XCODE_CREDENTIAL_SECRET_FILE;
+  if (env.ZCODE_CREDENTIAL_SECRET && env.ZCODE_CREDENTIAL_SECRET_FILE) throw unavailable();
+  if (env.ZCODE_CREDENTIAL_SECRET) return env.ZCODE_CREDENTIAL_SECRET;
+  const explicit = env.ZCODE_CREDENTIAL_SECRET_FILE;
   if (!explicit && !discoverDefault) return undefined;
   const path = explicit || join(dirname(resolve(options.filePath)), "credential-secret");
   const metadata = await stat(path).catch((error) => {
@@ -406,7 +406,7 @@ export function createSystemCredentialCipher(
         const { legacySecret } = await getKey(true);
         return createLegacyCredentialCipher({
           ...env,
-          XCODE_CREDENTIAL_SECRET: legacySecret,
+          ZCODE_CREDENTIAL_SECRET: legacySecret,
         }).decrypt(value);
       }
       const parts = value.slice(SYSTEM_PREFIX.length).split(":");
@@ -432,7 +432,7 @@ export async function prepareServerCredentialStorage(
   options: Pick<SystemCredentialCipherOptions, "filePath" | "env">,
 ): Promise<void> {
   const env = options.env ?? process.env;
-  if (env.XCODE_CREDENTIAL_SECRET || env.XCODE_CREDENTIAL_SECRET_FILE) return;
+  if (env.ZCODE_CREDENTIAL_SECRET || env.ZCODE_CREDENTIAL_SECRET_FILE) return;
   const filePath = resolve(options.filePath);
   const secretPath = join(dirname(filePath), "credential-secret");
   // 与迁移保持同一锁序，避免迁移持有凭据锁并等待密钥锁时互相阻塞。
@@ -495,7 +495,7 @@ export async function createLegacyServerCredentialCipher(
     if (raw.includes(SYSTEM_PREFIX)) throw unavailable();
     const env = options.env ?? process.env;
     const secret = await resolveManagedSecret(options, true);
-    const keys = legacyKeyCandidates({ ...env, XCODE_CREDENTIAL_SECRET: secret });
+    const keys = legacyKeyCandidates({ ...env, ZCODE_CREDENTIAL_SECRET: secret });
     let values: string[] = [];
     try {
       values = Object.values(JSON.parse(raw || "{}")).filter(
@@ -516,7 +516,7 @@ export async function createLegacyServerCredentialCipher(
           }
         }),
       ) ??
-      (env.XCODE_CREDENTIAL_SECRET || env.XCODE_CREDENTIAL_SECRET_FILE
+      (env.ZCODE_CREDENTIAL_SECRET || env.ZCODE_CREDENTIAL_SECRET_FILE
         ? keys[0]!
         : legacyKeyCandidates(env)[0]!);
     const cipher = createLegacyCipher(keys, writeKey);
@@ -543,7 +543,7 @@ export async function createServerCredentialCipher(
     // 首句保留操作方法，确保 Supervisor 有界错误摘要和 Desktop 连接详情仍能展示。
     throw Object.assign(
       new Error(
-        `Remote credential storage unavailable. Restore or create the correct private (0600), 32–4096 byte credential-secret file in the remote XCode config directory (${dirname(defaultFile)}), then reconnect. Or configure XCODE_CREDENTIAL_SECRET_FILE before starting the remote service. Existing encrypted data requires its original key.`,
+        `Remote credential storage unavailable. Restore or create the correct private (0600), 32–4096 byte credential-secret file in the remote XCode config directory (${dirname(defaultFile)}), then reconnect. Or configure ZCODE_CREDENTIAL_SECRET_FILE before starting the remote service. Existing encrypted data requires its original key.`,
         { cause: error },
       ),
       { code: "CREDENTIAL_SECURE_STORAGE_UNAVAILABLE" },

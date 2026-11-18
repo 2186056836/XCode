@@ -189,7 +189,7 @@ Node REPL 工具摘要：图标与动作标题使用 foreground-subtle，标题�
 
 颜色选择器各选项使用 20×20px 空闲眨眼 WorkflowAgentFace 代替圆点，显示对应配置颜色；保留 radio 语义、颜色名称和键盘焦点；选中态使用 28px 圆角方框与 2px border 描边，描边内侧与 20px 头像间保留 2px 留白，匹配头像轮廓，不改变保存流程。
 
-会话摘要颜色配置必须复用 useSubagents(workspacePath, XCODE_AGENT_PROVIDER) 的作用域读取与加载，不自行遍历上下文缓存，也不借用其他工作区全局列表。设置保存沿用现有刷新链更新缓存；摘要订阅同一配置。无配置时才采用工具显式颜色或名称散列。
+会话摘要颜色配置必须复用 useSubagents(workspacePath, ZCODE_AGENT_PROVIDER) 的作用域读取与加载，不自行遍历上下文缓存，也不借用其他工作区全局列表。设置保存沿用现有刷新链更新缓存；摘要订阅同一配置。无配置时才采用工具显式颜色或名称散列。
 
 思考、普通工具与 CUA的整行 summary 在支持 hover 的设备上悬停时，所有非扫光文字（含状态、计数、耗时）显示为 foreground；运行中的扫光文字继续保留扫光，移开恢复原有颜色。唯一文字例外是子智能体名称，保持身份色；其任务描述仍参与 hover。普通工具、CUA 与思考的矢量图标在 hover 时也使用 foreground；原色图片图标、子智能体身份头像和箭头保持原色，不影响展开详情或 tooltip。
 

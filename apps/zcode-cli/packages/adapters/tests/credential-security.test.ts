@@ -47,9 +47,9 @@ describe("system credential security", () => {
       const secret = " historical-file-secret-0123456789 \n";
       const path = explicit ? fixture.file + ".key" : join(fixture.file, "..", "credential-secret");
       await writeFile(path, secret, { mode: 0o600 });
-      const old = createLegacyCredentialCipher({ XCODE_CREDENTIAL_SECRET: secret });
+      const old = createLegacyCredentialCipher({ ZCODE_CREDENTIAL_SECRET: secret });
       await writeFile(fixture.file, JSON.stringify({ token: old.encrypt("old-file-identity") }));
-      const env = explicit ? { XCODE_CREDENTIAL_SECRET_FILE: path } : {};
+      const env = explicit ? { ZCODE_CREDENTIAL_SECRET_FILE: path } : {};
       const cipher = await createLegacyServerCredentialCipher({ filePath: fixture.file, env });
       const candidate = createSharedXCodeCredentialStore({ filePath: fixture.file, cipher });
       expect(await candidate.load("token")).toBe("old-file-identity");
@@ -66,7 +66,7 @@ describe("system credential security", () => {
       await expect(
         createLegacyServerCredentialCipher({
           filePath: fixture.file,
-          env: { XCODE_CREDENTIAL_SECRET: secret, XCODE_CREDENTIAL_SECRET_FILE: path },
+          env: { ZCODE_CREDENTIAL_SECRET: secret, ZCODE_CREDENTIAL_SECRET_FILE: path },
         }),
       ).rejects.toHaveProperty("code", "CREDENTIAL_SECURE_STORAGE_UNAVAILABLE");
     },
@@ -211,8 +211,8 @@ describe("system credential security", () => {
     expect(await readFile(secretPath, "utf8")).toBe("existing-key-bytes\n");
     await rm(secretPath);
     for (const env of [
-      { XCODE_CREDENTIAL_SECRET: "explicit" },
-      { XCODE_CREDENTIAL_SECRET_FILE: secretPath },
+      { ZCODE_CREDENTIAL_SECRET: "explicit" },
+      { ZCODE_CREDENTIAL_SECRET_FILE: secretPath },
     ]) {
       await prepareServerCredentialStorage({ ...options, env });
       await expect(stat(secretPath)).rejects.toHaveProperty("code", "ENOENT");
@@ -275,7 +275,7 @@ describe("system credential security", () => {
     await expect(
       createServerCredentialCipher({
         filePath: fixture.file,
-        env: { XCODE_CREDENTIAL_SECRET_FILE: fixture.file + ".missing" },
+        env: { ZCODE_CREDENTIAL_SECRET_FILE: fixture.file + ".missing" },
         keyStore,
       }),
     ).rejects.toHaveProperty("code", "CREDENTIAL_SECURE_STORAGE_UNAVAILABLE");
@@ -291,10 +291,10 @@ describe("system credential security", () => {
       for (const source of ["desktop", "cli"]) {
         const fixture = await setup();
         const old = createLegacyCredentialCipher({
-          XCODE_CREDENTIAL_SECRET: source === "cli" ? secret.trim() : secret,
+          ZCODE_CREDENTIAL_SECRET: source === "cli" ? secret.trim() : secret,
         });
         await writeFile(fixture.file, JSON.stringify({ token: old.encrypt("legacy-value") }));
-        const env = { XCODE_CREDENTIAL_SECRET: secret };
+        const env = { ZCODE_CREDENTIAL_SECRET: secret };
         const store = createSharedXCodeCredentialStore({ filePath: fixture.file, env });
         expect(await store.load("token"), `${source}/${secret.length}`).toBe("legacy-value");
         expect(JSON.parse(await readFile(fixture.file, "utf8")).token).toMatch(/^enc:v2:env:/);
@@ -308,7 +308,7 @@ describe("system credential security", () => {
     const fixture = await setup();
     const secretPath = fixture.file + ".secret";
     await writeFile(secretPath, "a".repeat(32) + "\n", { mode: 0o600 });
-    const env = { XCODE_CREDENTIAL_SECRET_FILE: secretPath };
+    const env = { ZCODE_CREDENTIAL_SECRET_FILE: secretPath };
     const cipher = createSystemCredentialCipher({ filePath: fixture.file, env });
     await cipher.initialize();
     const store = createSharedXCodeCredentialStore({ filePath: fixture.file, cipher });
@@ -325,8 +325,8 @@ describe("system credential security", () => {
     const fixture = await setup();
     const secretPath = fixture.file + ".secret";
     for (const env of [
-      { XCODE_CREDENTIAL_SECRET_FILE: secretPath },
-      { XCODE_CREDENTIAL_SECRET_FILE: secretPath, XCODE_CREDENTIAL_SECRET: "another" },
+      { ZCODE_CREDENTIAL_SECRET_FILE: secretPath },
+      { ZCODE_CREDENTIAL_SECRET_FILE: secretPath, ZCODE_CREDENTIAL_SECRET: "another" },
     ]) {
       await expect(
         createSystemCredentialCipher({ filePath: fixture.file, env }).initialize(),
@@ -336,7 +336,7 @@ describe("system credential security", () => {
     await expect(
       createSystemCredentialCipher({
         filePath: fixture.file,
-        env: { XCODE_CREDENTIAL_SECRET_FILE: secretPath },
+        env: { ZCODE_CREDENTIAL_SECRET_FILE: secretPath },
       }).initialize(),
     ).rejects.toHaveProperty("code", "CREDENTIAL_SECURE_STORAGE_UNAVAILABLE");
   });
@@ -381,7 +381,7 @@ describe("system credential security", () => {
     expect(fixture.writes()).toBe(1);
     await expect(reopened.decrypt("enc:v9:broken")).rejects.toHaveProperty(
       "code",
-      "XCODE_CREDENTIAL_DECRYPT_FAILED",
+      "ZCODE_CREDENTIAL_DECRYPT_FAILED",
     );
   });
   it("preserves records when the system key store is locked and does not treat it as a logout", async () => {
@@ -423,7 +423,7 @@ describe("system credential security", () => {
       `${JSON.stringify({ pid: process.pid, createdAt: Date.now(), token: `${process.pid}-foreign` })}\n`,
     );
     const cipher = createSystemCredentialCipher({ filePath: fixture.file, env: {}, keyStore });
-    await expect(cipher.encrypt("token")).rejects.toHaveProperty("code", "XCODE_FILE_LOCK_TIMEOUT");
+    await expect(cipher.encrypt("token")).rejects.toHaveProperty("code", "ZCODE_FILE_LOCK_TIMEOUT");
     expect(reads).toBe(0);
     await rm(lock, { recursive: true });
     const encrypted = await cipher.encrypt("token");
@@ -433,10 +433,10 @@ describe("system credential security", () => {
   }, 20_000);
   it("migrates old values, preserves an unrelated broken legacy field, and retains atomic session CAS", async () => {
     const fixture = await setup();
-    const legacy = createLegacyCredentialCipher({ XCODE_CREDENTIAL_SECRET: "migration-test" });
+    const legacy = createLegacyCredentialCipher({ ZCODE_CREDENTIAL_SECRET: "migration-test" });
     const cipher = createSystemCredentialCipher({
       filePath: fixture.file,
-      env: { XCODE_CREDENTIAL_SECRET: "migration-test" },
+      env: { ZCODE_CREDENTIAL_SECRET: "migration-test" },
       keyStore: fixture.keyStore,
     });
     await writeFile(
@@ -482,7 +482,7 @@ describe("system credential security", () => {
   });
   it("rejects authentication-tag tampering and reads an empty legacy value", async () => {
     const fixture = await setup();
-    const env = { XCODE_CREDENTIAL_SECRET: "empty-legacy-test" };
+    const env = { ZCODE_CREDENTIAL_SECRET: "empty-legacy-test" };
     const legacy = createLegacyCredentialCipher(env);
     const cipher = createSystemCredentialCipher({ filePath: fixture.file, env });
     expect(await cipher.decrypt(legacy.encrypt(""))).toBe("");
@@ -494,14 +494,14 @@ describe("system credential security", () => {
       encrypted.slice(offset + 1);
     await expect(cipher.decrypt(tampered)).rejects.toHaveProperty(
       "code",
-      "XCODE_CREDENTIAL_DECRYPT_FAILED",
+      "ZCODE_CREDENTIAL_DECRYPT_FAILED",
     );
   });
   it("does not partially migrate when an existing v2 credential belongs to another key source", async () => {
     const fixture = await setup();
     const configured = createSystemCredentialCipher({
       filePath: fixture.file,
-      env: { XCODE_CREDENTIAL_SECRET: "old-managed-key" },
+      env: { ZCODE_CREDENTIAL_SECRET: "old-managed-key" },
     });
     const record = { existing: await configured.encrypt("preserve"), legacy: "legacy-value" };
     await writeFile(fixture.file, JSON.stringify(record));
@@ -586,7 +586,7 @@ describe("system credential key sharing for a copied data root", () => {
     const sourceKeys = countingKeyStore();
     const targetKeys = countingKeyStore(Buffer.alloc(32, 9).toString("base64url"));
     const env: Record<string, string> =
-      kind === "managed" ? { XCODE_CREDENTIAL_SECRET: "managed-secret-for-copy-test" } : {};
+      kind === "managed" ? { ZCODE_CREDENTIAL_SECRET: "managed-secret-for-copy-test" } : {};
     const sourceCipher = createSystemCredentialCipher({
       filePath: source.file,
       env,

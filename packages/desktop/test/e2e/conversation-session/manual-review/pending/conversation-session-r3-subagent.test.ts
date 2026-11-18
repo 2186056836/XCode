@@ -57,9 +57,9 @@ import {
 } from "../../../helpers/v4-conversation.js";
 
 const CASE_MARKER = "E2E_R3_SUBAGENT";
-// 远端用例前置：Server 启动时设置 XCODE_DYNAMIC_WORKFLOW_MODE=alwaysOn；WDIO 也为本文件开启。
+// 远端用例前置：Server 启动时设置 ZCODE_DYNAMIC_WORKFLOW_MODE=alwaysOn；WDIO 也为本文件开启。
 // 常驻 Server 不继承客户端环境；本用例验证会话归属，灰度另有专用用例。
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-subagent");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-subagent");
 const REMOTE_RELEASE_DIR = "/home/dev/r3-workspace-a/.zcode-e2e/r3-subagent";
 const REMOTE_RELEASE_FILE = `${REMOTE_RELEASE_DIR}/release-child`;
 
@@ -119,7 +119,7 @@ describe(`${CASE_MARKER}: 远端 Agent、工作流 actor 与辅助对话的项�
 
   it("R3A-TASK-06 子会话与父 task 同 Source、独立 session；从 Agent 行打开子会话；父 task 停止后父/子状态收口；工作流 actor 可读、辅助对话可续发", async function () {
     this.timeout(30 * 60_000);
-    expect(await browser.electron.execute(() => process.env.XCODE_DYNAMIC_WORKFLOW_MODE)).toBe(
+    expect(await browser.electron.execute(() => process.env.ZCODE_DYNAMIC_WORKFLOW_MODE)).toBe(
       "alwaysOn",
     );
     const prepared = { config: readSSHRuntimeConfig(CASE_MARKER) };

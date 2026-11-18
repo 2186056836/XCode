@@ -398,8 +398,8 @@ turn finally: restore user model ── clear active override ─────┴
 用 agent-browser 隔离实例对 Figma「自动化 & 闲时任务」页全部 idle 相关帧逐一实测后收敛：
 
 1. **已补实现（Figma 有、spec 已列或不冲突）**：丢弃草稿弹窗（4889-1942，spec §5 本就要求"沿用 scheduled"——但 scheduled 自身未实现，闲时先行）；History tab 表格化（Instructions/Triggered/Status/Duration + 行菜单，4866-2819）+ 创建态空态「No history yet.」（4866-3106）；权限下拉两行样式 + 选中 ✓（4835-4974，复用主 composer `mode.description.glm.*` 文案）；未开启完全访问右上提示（4970-2055）。
-2. **达上限置灰 = 反应式（过渡态，已被 D38 取代）**：当前客户端无配额查询 API（四接口契约无此端点），"Free tier limit reached" 置灰只能在创建收到 3103 后置位、下次创建成功清除。mock 网关补 `XCODE_OFFPEAK_MOCK_QUOTA_COUNT` 注入以便验收。**后续计划**：新增配额查询接口后，改为在入口打开/创建按钮渲染前主动查配额，不再依赖 3103 失败事件做反应式置灰。当前实现仅作为无配额接口前的兜底方案。
-3. **非 coding plan 锁定态 = 客户端按当前时刻注册表判定（2026-07-16 用户拍板，推翻本条初版"暂缓"；资格真源已被 D40 取代）**：当时约定不等服务端 entitlement 字段——无有效订阅时 `codingPlanProviderAvailability` 已把 coding plan provider 置 `systemDisabledReason` 并实时同步 renderer 注册表，UI 判 `hasActiveCodingPlanProvider`（zai/bigmodel coding plan + bigmodel 团队套餐连接；Start plan 不算）即可，零新增请求。锁优先于达上限置灰；注册表加载中不闪锁。mock 演示走 `codingPlanActive` 强制通道（`XCODE_OFFPEAK_MOCK_NO_PLAN=1` 演示锁态），真实路径不下发该字段。D40 进一步证明广泛扫描注册表会与 runtime credential 分叉，现状改为 host 解析当前 selected connection 后向 UI 返回脱敏 support。
+2. **达上限置灰 = 反应式（过渡态，已被 D38 取代）**：当前客户端无配额查询 API（四接口契约无此端点），"Free tier limit reached" 置灰只能在创建收到 3103 后置位、下次创建成功清除。mock 网关补 `ZCODE_OFFPEAK_MOCK_QUOTA_COUNT` 注入以便验收。**后续计划**：新增配额查询接口后，改为在入口打开/创建按钮渲染前主动查配额，不再依赖 3103 失败事件做反应式置灰。当前实现仅作为无配额接口前的兜底方案。
+3. **非 coding plan 锁定态 = 客户端按当前时刻注册表判定（2026-07-16 用户拍板，推翻本条初版"暂缓"；资格真源已被 D40 取代）**：当时约定不等服务端 entitlement 字段——无有效订阅时 `codingPlanProviderAvailability` 已把 coding plan provider 置 `systemDisabledReason` 并实时同步 renderer 注册表，UI 判 `hasActiveCodingPlanProvider`（zai/bigmodel coding plan + bigmodel 团队套餐连接；Start plan 不算）即可，零新增请求。锁优先于达上限置灰；注册表加载中不闪锁。mock 演示走 `codingPlanActive` 强制通道（`ZCODE_OFFPEAK_MOCK_NO_PLAN=1` 演示锁态），真实路径不下发该字段。D40 进一步证明广泛扫描注册表会与 runtime credential 分叉，现状改为 host 解析当前 selected connection 后向 UI 返回脱敏 support。
 4. **维持作废**：「超出排队时间」自动分组 + 自动放回队列 toast（4866-2175 局部，被 D 决策 §266 推翻）；对话中轻流量入口帧（4828-1642，D30-4 v1 作废）；All tab idle 卡 Est.（D30-1）。
 
 ## D36 达上限置灰 = 配置额度 + 本地记录预判（2026-07-16 用户拍板，已被 D39 取代）

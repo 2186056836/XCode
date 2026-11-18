@@ -11,7 +11,7 @@
 单跑：
 
 ```bash
-XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts --spec './test/e2e/conversation-session/manual-review/pending/conversation-session-compact-auto.test.ts'
+ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts --spec './test/e2e/conversation-session/manual-review/pending/conversation-session-compact-auto.test.ts'
 ```
 
 - Summary: `packages/desktop/.e2e-artifacts/desktop-e2e-20260623-153459-510/summary.md`
@@ -19,7 +19,7 @@ XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.t
 批量顺序跑：
 
 ```bash
-XCODE_E2E_MANUAL_REVIEW=1 XCODE_E2E_SPEC='<remaining pending specs>' pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts
+ZCODE_E2E_MANUAL_REVIEW=1 ZCODE_E2E_SPEC='<remaining pending specs>' pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts
 ```
 
 - Summary: `packages/desktop/.e2e-artifacts/desktop-e2e-20260623-154027-061/summary.md`
@@ -28,7 +28,7 @@ XCODE_E2E_MANUAL_REVIEW=1 XCODE_E2E_SPEC='<remaining pending specs>' pnpm --filt
 补跑后发现的 pending spec：
 
 ```bash
-XCODE_E2E_MANUAL_REVIEW=1 XCODE_E2E_SPEC='./test/e2e/conversation-session/manual-review/pending/conversation-session-running-send-now.test.ts' pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts
+ZCODE_E2E_MANUAL_REVIEW=1 ZCODE_E2E_SPEC='./test/e2e/conversation-session/manual-review/pending/conversation-session-running-send-now.test.ts' pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts
 ```
 
 - Summary: `packages/desktop/.e2e-artifacts/desktop-e2e-20260623-160950-505/summary.md`
@@ -36,7 +36,7 @@ XCODE_E2E_MANUAL_REVIEW=1 XCODE_E2E_SPEC='./test/e2e/conversation-session/manual
 人工干扰后复跑确认的 pending spec：
 
 ```bash
-XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts --spec './test/e2e/conversation-session/context/conversation-session-compact-interrupted.test.ts'
+ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts --spec './test/e2e/conversation-session/context/conversation-session-compact-interrupted.test.ts'
 ```
 
 - Summary: `packages/desktop/.e2e-artifacts/desktop-e2e-20260623-163701-534/summary.md`
@@ -44,7 +44,7 @@ XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.t
 剥离 auto compact retry 后复跑确认的 pending spec：
 
 ```bash
-XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts --spec './test/e2e/conversation-session/manual-review/pending/conversation-session-compact-auto.test.ts'
+ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts --spec './test/e2e/conversation-session/manual-review/pending/conversation-session-compact-auto.test.ts'
 ```
 
 - Summary: `packages/desktop/.e2e-artifacts/desktop-e2e-20260624-042921-602/summary.md`
@@ -52,7 +52,7 @@ XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.t
 补充 compact running toast 断言并转正的 edit spec：
 
 ```bash
-XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts --spec './test/e2e/conversation-session/editing/manual-review/pending/conversation-session-edit.test.ts'
+ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts --spec './test/e2e/conversation-session/editing/manual-review/pending/conversation-session-edit.test.ts'
 ```
 
 - Manual summary: `packages/desktop/.e2e-artifacts/desktop-e2e-20260624-064810-462/summary.md`
@@ -115,7 +115,7 @@ pnpm --filter @zcode/core exec vitest run tests/runtime-compact.test.ts -t "retr
 | Spec                                                       | 原因                                                                                                                                                                                       |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `conversation-session-compact-auto.test.ts`                | 2026-06-24 复跑通过。G01 已剥离为首次 compact 成功主路径，G08-G10 retry 覆盖改由 `apps/zcode-cli/packages/core/tests/runtime-compact.test.ts` 承担；尚未执行默认路径迁移和默认 gate 复跑。 |
-| `conversation-session-compact-timeline-projection.test.ts` | pending 路径下通过，但移到默认路径复跑时两个测试都直接失败：spec 内仍要求 `XCODE_E2E_MANUAL_REVIEW=1`。需要先去掉 manual-only 依赖或补默认 replay 口径后再迁移。                           |
+| `conversation-session-compact-timeline-projection.test.ts` | pending 路径下通过，但移到默认路径复跑时两个测试都直接失败：spec 内仍要求 `ZCODE_E2E_MANUAL_REVIEW=1`。需要先去掉 manual-only 依赖或补默认 replay 口径后再迁移。                           |
 | `conversation-session-compact-interrupted.test.ts`         | 2026-06-24 复跑通过，确认前一次失败来自人工干扰；尚未执行默认路径迁移和默认 gate 复跑。                                                                                                    |
 | `conversation-session-model-switch-auto-compact.test.ts`   | pending 路径下通过，但移到默认路径复跑时 N06 捕获不到 auto compact 完成后的完整请求。需要先补默认 replay/capture 口径后再迁移。                                                            |
 | `conversation-session-running-send-now.test.ts`            | 4 个测试全部通过，但最后一条标题和断言明确是在复现当前 bug：连续快速点击立即引导会重复发送并消费未点 queue item。该断言不能作为默认验收语义，需要先改成理想产品语义断言后再迁移。          |

@@ -661,7 +661,7 @@ interface GenerationMetrics {
 - Main 推给 Window Host 的状态：`starting`（正在启动：读网络设置、fork，还未就绪）、`running`、`restarting`（退避中）、`stopped`（预算耗尽）。
 - **崩溃预算**：5 分钟内最多自动重启 3 次，退避 1s、2s、4s；第 4 次崩溃时停止，不再自动重启。上限从退避表的长度推出，两者只有一个来源。
 - **存活探测**：Main 每 5 秒经 parentPort 发一次探测。连续 3 次（15 秒）没有回应，判为卡死：杀掉进程，计入崩溃预算。探测由扩展进程的事件循环回应，所以一个扩展写了死循环也能发现。所有构建行为相同（P1 不支持给扩展进程挂断点调试）。
-- **环境变量白名单**：扩展进程不继承 Window Host 的环境（里面有遥测凭据与 OAuth 配置，`main/desktopRuntimeEnv.ts:160-172`）。只传：`PATH`、`HOME`、`USERPROFILE`、`TMPDIR`、`TEMP`、`TMP`、`LANG`、`LC_ALL`、`LC_CTYPE`、`SystemRoot`、`windir`、`APPDATA`、`LOCALAPPDATA`、`NODE_ENV`，以及 `XCODE_PROCESS_LABEL=extension-host`。白名单在监管器里一处定义。代理、No Proxy 与 `NODE_EXTRA_CA_CERTS` 不在白名单里，只由设置页注入（见下一条）。
+- **环境变量白名单**：扩展进程不继承 Window Host 的环境（里面有遥测凭据与 OAuth 配置，`main/desktopRuntimeEnv.ts:160-172`）。只传：`PATH`、`HOME`、`USERPROFILE`、`TMPDIR`、`TEMP`、`TMP`、`LANG`、`LC_ALL`、`LC_CTYPE`、`SystemRoot`、`windir`、`APPDATA`、`LOCALAPPDATA`、`NODE_ENV`，以及 `ZCODE_PROCESS_LABEL=extension-host`。白名单在监管器里一处定义。代理、No Proxy 与 `NODE_EXTRA_CA_CERTS` 不在白名单里，只由设置页注入（见下一条）。
   - 事实：系统在子进程启动时还会注入少量键，不来自 Window Host 的环境，也不含凭据。macOS 上实测为 `MACH_PORT_RENDEZVOUS_PEER_VALDATION`（Chromium 子进程启动器）与 `__CF_USER_TEXT_ENCODING`（CoreFoundation）。白名单约束的是 Main 传给扩展进程的环境，不清理这些系统键。
 - **网络跟随设置页**（P4 H3，§18.1）：监管器每次启动扩展进程前，经 Main 的设置服务读一次设置页的 HTTP 代理、No Proxy 与自定义证书（与 Window Host 读的是同一个 `~/.zcode/v2/setting.json`）。翻译方式与 CLI 给工具子进程的相同（`apps/zcode-cli/packages/adapters/src/network/subprocess-env.ts`）：
   - 代理：裸 `host:port` 补 `http://`，写 `HTTP_PROXY`、`HTTPS_PROXY` 与两个小写形式。No Proxy：按逗号拆开、去掉空项，写 `NO_PROXY`、`no_proxy`。证书路径写 `NODE_EXTRA_CA_CERTS`。
@@ -1520,7 +1520,7 @@ Window Host 会话镜像 ──► onDidChangeInteractions ──► 插件     
   - 插件被禁用：静态表里没有这个视图，标签显示「不可用」，实例释放（与其他扩展视图相同）；标签照样跟着切换工作区，直到用户关掉。
   - 标签页的 `data-extension-view-scope` 为 `app`。E2E：打开 app 视图，切换焦点会话、切换工作区再切回，实例 id 都不变。
 - **H6 `ctx.extension.dataPath`**：
-  - 路径只有一个定义：CLI 发现插件时算出的 `PluginMetadata.dataPath`（`<CLI 插件存储根>/data/<净化后的插件 id>`，与 MCP server 的 `${XCODE_PLUGIN_DATA}` 同一个值）。CLI 的 `plugins/list` 每项多一个可选字段 `dataPath`（CLI 规格见 [插件兼容 · Storage Layout](../../apps/zcode-cli/docs/design/v2/plugin-compat.md#storage-layout)）；App 不自己拼路径。
+  - 路径只有一个定义：CLI 发现插件时算出的 `PluginMetadata.dataPath`（`<CLI 插件存储根>/data/<净化后的插件 id>`，与 MCP server 的 `${ZCODE_PLUGIN_DATA}` 同一个值）。CLI 的 `plugins/list` 每项多一个可选字段 `dataPath`（CLI 规格见 [插件兼容 · Storage Layout](../../apps/zcode-cli/docs/design/v2/plugin-compat.md#storage-layout)）；App 不自己拼路径。
   - Window Host 读静态表时把它放进扩展声明（`extensionDeclarationSchema.dataPath`，只给扩展进程，不进推给 Renderer 的静态表）。
   - 扩展进程在调 `activate` 前 `mkdir -p` 这个目录，所以扩展拿到时目录已存在。声明里没有 `dataPath`（`plugins/list` 来自不报告它的旧 CLI）时激活失败，原因写明；建目录失败同样激活失败，日志只记错误码。
   - 插件卸载后由 CLI 按现有规则删除 `data` 目录（Storage Layout）；扩展进程不删。

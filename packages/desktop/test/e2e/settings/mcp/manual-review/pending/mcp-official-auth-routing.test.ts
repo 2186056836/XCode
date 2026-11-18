@@ -23,7 +23,7 @@ import { runOfficialMcpRoutingRuntime } from "#e2e/helpers/mcp-official-auth-rou
 const paths = getE2EAppDataPaths();
 const rowId = testId(TID_PLUGIN_MCP_SERVER_ROW, OFFICIAL_AUTH_ROUTING_SERVER);
 const artifactDir =
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? join(paths.homeDir, "official-mcp-artifacts");
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? join(paths.homeDir, "official-mcp-artifacts");
 
 async function openSettings() {
   await clickTestIdByDom(TID_TASK_SETTINGS_BUTTON);
@@ -64,7 +64,7 @@ describe("官方 MCP 设置探测授权路由（候选）", () => {
         await browser.execute(() => document.body.innerText),
       );
     }
-    const fixtureUrl = process.env.XCODE_E2E_OFFICIAL_AUTH_ROUTING_URL;
+    const fixtureUrl = process.env.ZCODE_E2E_OFFICIAL_AUTH_ROUTING_URL;
     expect(fixtureUrl).toBeTruthy();
     const evidence = (await (await fetch(`${fixtureUrl}/__e2e/status`)).json()) as {
       requests: Array<{ method: string; authenticated: boolean }>;
@@ -96,7 +96,7 @@ describe("官方 MCP 设置探测授权路由（候选）", () => {
   it("OMCP-SETTINGS-04: 手机设置通过同一 Host 探测，手机不接收授权头", async function () {
     this.timeout(180_000);
     await clickTestIdByDom(TID_SETTINGS_BACK_BUTTON);
-    const webUrl = process.env.XCODE_WEB_REMOTE_CONTROL_URL;
+    const webUrl = process.env.ZCODE_WEB_REMOTE_CONTROL_URL;
     if (!webUrl) throw new Error("Missing loopback mobile frontend");
     const pairingUrl = await obtainUnreadPairingUrl(new URL(webUrl).origin);
     const mobile = await chromium.launch({ channel: "chrome", headless: true });

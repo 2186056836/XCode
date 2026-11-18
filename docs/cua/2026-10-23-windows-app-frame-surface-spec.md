@@ -613,7 +613,7 @@ WSF 编号是本 spec 的需求 ID；实施时先登记到 harness 矩阵与 `pa
 - 标准菜单用真 TrackPopupMenu，必须有级联与业务命令。框架菜单与标准菜单分别验证，不能互相代替。
 - 跨进程面板用双进程原生 fixture；辅助进程创建真实文件对话框并指定主窗 owner，启动后先证明实际 PID 和关系。不成立则准备失败，不能放宽断言。
 - 浏览器复用 `withFixture`、临时 profile、上传页面与 DOM oracle，作为真实应用兼容格。调研已实测 Chromium 文件选择器 HWND 属独立 pid，§2.4 又实测了网盘面板同 pid——fixture 断言写"逐窗断言实际 pid"，两种形态都可能出现，不预设唯一结论。
-- mac M14–M17 蓝本照抄**结构**：身份 → 单次派发 → 回执 → 应用 oracle 四层断言链、精确路径工作流（预填避免目录翻找）、前台哨兵证后台（`list_apps` 断言 `active=false`，后台是证明的不是假设的）、预算与清理断言（panel 阶段 ≤15 次 CUA 调用、0 次脚本旁路）、`XCODE_CUA_TS_SERVER_DIST` 新旧 dist 前后对比；不复制其平台身份假设（AX 血统 / CGWindowID 是 mac 概念）。已知取舍沿用：宿主极简、真实导航被精确路径绕过、跨进程宿主测一种浏览器——压测的是身份/派发/回执契约，不是 UI 复杂度。任务包 patch lane 不能代替行为 evaluator。
+- mac M14–M17 蓝本照抄**结构**：身份 → 单次派发 → 回执 → 应用 oracle 四层断言链、精确路径工作流（预填避免目录翻找）、前台哨兵证后台（`list_apps` 断言 `active=false`，后台是证明的不是假设的）、预算与清理断言（panel 阶段 ≤15 次 CUA 调用、0 次脚本旁路）、`ZCODE_CUA_TS_SERVER_DIST` 新旧 dist 前后对比；不复制其平台身份假设（AX 血统 / CGWindowID 是 mac 概念）。已知取舍沿用：宿主极简、真实导航被精确路径绕过、跨进程宿主测一种浏览器——压测的是身份/派发/回执契约，不是 UI 复杂度。任务包 patch lane 不能代替行为 evaluator。
 
 ### 8.3 真机测试步骤
 
@@ -654,7 +654,7 @@ WSF 编号是本 spec 的需求 ID；实施时先登记到 harness 矩阵与 `pa
 | WSF-17 候选/装饰子集     | 无 owner 的同 exe 遮挡窗以失败原因进入候选，不进入 capture_surfaces；SysShadow 类名 fixture 直接过滤；layered+TRANSPARENT fixture 降权汇总且不进候选/来源                                                   |
 | 生命周期                 | popup 关闭由状态文件确认，随后 MCP 新帧不再含弹层或合成证据；所有本轮 fixture/helper 正常退出                                                                                                               |
 
-可重复入口：`XCODE_CUA_HARNESS_E2E=1 pnpm exec vitest run packages/zcode-cua/test/matrix/windows-frame-surface.cua.test.ts`（PowerShell 用 `$env:XCODE_CUA_HARNESS_E2E='1'` 设置）；仅跑探针可用 `XCODE_CUA_WINDOWS_FRAME_COMPOSITE_LIVE=1 pnpm --filter @zcode/zcode-cua smoke:windows:frame-composite --output <本地证据目录>`。目录包含报告（系统版本、时间、产物 SHA-256、HWND/PID/父属关系、逐点结果）和六幅 PNG。以上不代表 WSF-01–17 全量产品验收。
+可重复入口：`ZCODE_CUA_HARNESS_E2E=1 pnpm exec vitest run packages/zcode-cua/test/matrix/windows-frame-surface.cua.test.ts`（PowerShell 用 `$env:ZCODE_CUA_HARNESS_E2E='1'` 设置）；仅跑探针可用 `ZCODE_CUA_WINDOWS_FRAME_COMPOSITE_LIVE=1 pnpm --filter @zcode/zcode-cua smoke:windows:frame-composite --output <本地证据目录>`。目录包含报告（系统版本、时间、产物 SHA-256、HWND/PID/父属关系、逐点结果）和六幅 PNG。以上不代表 WSF-01–17 全量产品验收。
 
 验证记录：定向单测 95/95、真机 harness 1/1、typecheck、lint（0 error）和架构检查通过。`test:unit:affected --base 19b1bfe645` 选中 2616/2616，按仓库合同跳过全量 UT；上述定向测试另行执行。旧 screen-capture smoke 因 broker 已无 `list_displays` 在准备阶段失败，换回 HEAD 原始 fixture 后同样失败，不算本轮通过项。宿主 pnpm 11 会自动尝试重装现有依赖；验证命令临时使用 `pnpm_config_pm_on_fail=ignore`、`pnpm_config_verify_deps_before_run=warn`，未改安装目录或仓库配置。原始结果见 真机证据 JSON（`2026-10-25-windows-frame-harness.json`，仅存本地）。
 
@@ -666,7 +666,7 @@ WSF 编号是本 spec 的需求 ID；实施时先登记到 harness 矩阵与 `pa
 
 12 组业务场景覆盖默认面板、显式主窗 blocker、面板菜单命令、文件确认、Escape、Cancel 与关闭按钮。每组检查实际面板图/树、frame 的 actual/presentation、关闭后回到逻辑主窗和主窗输入零变化；菜单业务命令恰好一次，取消没有文件提交。每组产品调用 4–7 次，结束核实 fixture/helper 正常退出。关闭与 accepted 分别记录，不把消失认作 confirmed；回执精化仍由第 6 步完成。
 
-验证入口：`XCODE_CUA_HARNESS_E2E=1 pnpm exec vitest run packages/zcode-cua/test/matrix/windows-panel-surface.cua.test.ts --maxWorkers 1`。`XCODE_CUA_PANEL_EVIDENCE_DIR` 可保存报告与面板/菜单 PNG。脱敏轨迹见 第 3 步真机证据（`2026-10-25-windows-panel-harness.json`，仅存本地）。异进程 fixture 使用同一系统宿主 exe，真实应用的不同 exe 面板、跨进程 child 输入、后台零焦点与生命周期重开等仍待后续验收。
+验证入口：`ZCODE_CUA_HARNESS_E2E=1 pnpm exec vitest run packages/zcode-cua/test/matrix/windows-panel-surface.cua.test.ts --maxWorkers 1`。`ZCODE_CUA_PANEL_EVIDENCE_DIR` 可保存报告与面板/菜单 PNG。脱敏轨迹见 第 3 步真机证据（`2026-10-25-windows-panel-harness.json`，仅存本地）。异进程 fixture 使用同一系统宿主 exe，真实应用的不同 exe 面板、跨进程 child 输入、后台零焦点与生命周期重开等仍待后续验收。
 
 本步验证：受影响 UT（起点 `bb638093da`）选中 101/2619 个规格，1129 条通过、1 条 opt-in 真机测试默认跳过；另行开启真机门控后该测试通过（内含 12 组）。新增与相邻定向 UT 36/36；根 typecheck、producer 增量类型检查、lint（0 error，仓库已有 warning）及架构检查通过。D1 原生合成 smoke 的十项断言和清理回归通过。所有通过项均来自本分支重建的 addon/helper/server；不代表真实应用端到端验收完成。
 
@@ -686,7 +686,7 @@ WSF 编号是本 spec 的需求 ID；实施时先登记到 harness 矩阵与 `pa
 
 业务结果：无遮挡的元素、UIA、PostMessage、SendInput 和透明穿透各执行一次目标菜单命令；遮挡、z 序变更与旧帧各执行零次。旧元素 ref 关闭后拒绝，重开签发新 ref，只有新 ref 的命令计数为 1。PostMessage 多击在菜单已消费首击并关闭后保留 possibly_sent，不重放；关闭本身不被认作 confirmed。模型可见回执的完整化仍由第 6 步完成。
 
-入口：`XCODE_CUA_HARNESS_E2E=1 pnpm exec vitest run packages/zcode-cua/test/matrix/windows-menu-surface.cua.test.ts --maxWorkers 1`；`XCODE_CUA_MENU_EVIDENCE_DIR` 保存报告与逐级 PNG。脱敏证据见 第 4 步真机证据（`2026-10-25-windows-menu-harness.json`，仅存本地）。第 3 步 12 组和 D1 十项断言另行回归通过。跨框架真实菜单、child 实际接收者、D3 独立候选物理级边界与全部未顺延项继续纳入第 5/6 步及真实应用验收，不据这 9 组扩大通过范围。
+入口：`ZCODE_CUA_HARNESS_E2E=1 pnpm exec vitest run packages/zcode-cua/test/matrix/windows-menu-surface.cua.test.ts --maxWorkers 1`；`ZCODE_CUA_MENU_EVIDENCE_DIR` 保存报告与逐级 PNG。脱敏证据见 第 4 步真机证据（`2026-10-25-windows-menu-harness.json`，仅存本地）。第 3 步 12 组和 D1 十项断言另行回归通过。跨框架真实菜单、child 实际接收者、D3 独立候选物理级边界与全部未顺延项继续纳入第 5/6 步及真实应用验收，不据这 9 组扩大通过范围。
 
 受影响 UT 以 `d02bfbac7c` 为起点选中 119 个规格。初轮 1281 条通过，8 条失败均来自旧 CGEvent/系统 AX 测试未固定平台、在 Windows 宿主上套用 macOS ABI；按既定 Windows 精确 HWND 方案将该段固定为 darwin，该文件定向 29/29 通过。随后复跑全部 119 个官方选中规格，1289 条通过、1 条 opt-in 真机格默认跳过；真机格另行开启门控通过。Windows 的同源 S 路由另由新单测和上述真机三条坐标路径覆盖。类型检查、lint（0 error、234 条已有 warning）、显式 producer lint（0 warning/error）和架构检查通过。原生 addon、helper、server 均已重建。
 
@@ -712,7 +712,7 @@ WSF 编号是本 spec 的需求 ID；实施时先登记到 harness 矩阵与 `pa
 
 `test/matrix/windows-operation-surface.cua.test.ts` 执行 14 组真实 HWND 场景：唯一 owner=0 菜单、坐标、首次接管、双候选、非菜单窗口、重开、换宿主、不确定发送、跨 PID child、隐藏到可见、同链继续操作、真实 UIA Expand 级联、并发会话和官方共享 host runtime。所有被测输入经过正式 MCP/runtime → broker → native；fixture 控制只准备窗口状态，独立业务 oracle 记录命令与勾选。正例目标命令恰好一次，拒绝格零命令。级联 provider 同时提供 Invoke/Expand，独立记录实际调用 Expand，不以普通 Invoke 冒充展开。每组产品调用不超过 15 次，helper/fixture/child 退出与临时目录移除均单独核实。
 
-入口：`XCODE_CUA_HARNESS_E2E=1 pnpm exec vitest run packages/zcode-cua/test/matrix/windows-operation-surface.cua.test.ts packages/zcode-cua/test/matrix/windows-operation-native-cua.test.ts --maxWorkers 1`；`XCODE_CUA_OPERATION_EVIDENCE_DIR` 保存报告与逐级 PNG。最终重建产物的 14 组及 native 显式退出测试通过；之前的第 3 步 12 组、第 4 步 9 组与 D1 捕获回归也通过。脱敏证据见 第 5 步真机证据（`2026-10-25-windows-operation-harness.json`，仅存本地）。这些是 fixture 产品链路结果；真实应用与第 6 步的模型回执、后台无焦点、D7 和未顺延缺口继续验收。
+入口：`ZCODE_CUA_HARNESS_E2E=1 pnpm exec vitest run packages/zcode-cua/test/matrix/windows-operation-surface.cua.test.ts packages/zcode-cua/test/matrix/windows-operation-native-cua.test.ts --maxWorkers 1`；`ZCODE_CUA_OPERATION_EVIDENCE_DIR` 保存报告与逐级 PNG。最终重建产物的 14 组及 native 显式退出测试通过；之前的第 3 步 12 组、第 4 步 9 组与 D1 捕获回归也通过。脱敏证据见 第 5 步真机证据（`2026-10-25-windows-operation-harness.json`，仅存本地）。这些是 fixture 产品链路结果；真实应用与第 6 步的模型回执、后台无焦点、D7 和未顺延缺口继续验收。
 
 验证：起点 `580e6fc5d6` 的官方 affected 清单为 146 个规格，完整复跑 1434 条通过、27 条跳过（含原生 opt-in 与仅 macOS 合同），无 worker 错误。此前失败来自旧 AF_UNIX/TCC/Gatekeeper 格未限定平台及显示名格使用 macOS 标识；按各自既有平台合同同步测试，Windows named pipe 另有实际覆盖，不改安装/认证业务。新增关联定向 UT 33/33；根类型检查、lint（0 error，234 条已有 warning）、显式 producer lint（0 warning/error）和架构检查通过。全仓 CRLF 格式环境问题仍见 §9.3；本步新文件格式检查与 diff 空白检查通过。
 
@@ -742,7 +742,7 @@ D1 像素回归的一次红灯经 PNG 确认是捕获到的系统鼠标箭头覆
 
 最终重建产物的真机组通过：面板 12、菜单 9、操作关联 17、后台/D7 2、边界 4，共 44 组；另有 D1 合成与 native 退出回归。操作关联新增了宿主前台的物理菜单、80 层跨 PID child、同 exe 双实例各自恰好一次命令；边界覆盖完整小窗组与混合尺寸、输入白名单、捕获期移动/换 owner、负坐标 GDI 图案与坐标命令。后台无 focus 的普通键、组合键和无元素 type 本轮按 TS 预检时期口径均拒绝、零接收计数——该结果反映的是已废除的旧行为，现行契约见 §5.4/E33：focus_missing → not_sent → 自动升级前台，WSF-09 与 receipt smoke 已翻转为升级形态并复跑通过，不得按本句把硬拒绝重新固化为验收标准；D7 两类原生编辑器完整读回，三类负例不伪报 confirmed，前台哨兵无额外切换。
 
-最终入口：设置 `XCODE_CUA_HARNESS_E2E=1` 后执行 `pnpm exec vitest run packages/zcode-cua/test/matrix/windows-panel-surface.cua.test.ts packages/zcode-cua/test/matrix/windows-menu-surface.cua.test.ts packages/zcode-cua/test/matrix/windows-operation-surface.cua.test.ts packages/zcode-cua/test/matrix/windows-operation-native-cua.test.ts packages/zcode-cua/test/matrix/windows-frame-surface.cua.test.ts packages/zcode-cua/test/matrix/windows-receipt-boundary.cua.test.ts --maxWorkers 1`，6 文件/7 测试通过。14 工具另由设置 `XCODE_CUA_WINDOWS_TOOL_SURFACE_LIVE=1` 后执行 `node packages/zcode-cua/scripts/windows-tool-surface-live-smoke.mjs` 验证，所有工具、业务计数/读回和清理均通过。旧 API、sideband 和图文相邻顺序按现行合同同步，未恢复已删除的工具。原图和完整报告保留本机；脱敏身份、逐级派发/回执、业务结果、截图哈希及一致的 native/helper/server 哈希见 第 6 步真机证据（`2026-10-25-windows-receipt-boundary-harness.json`，仅存本地）。
+最终入口：设置 `ZCODE_CUA_HARNESS_E2E=1` 后执行 `pnpm exec vitest run packages/zcode-cua/test/matrix/windows-panel-surface.cua.test.ts packages/zcode-cua/test/matrix/windows-menu-surface.cua.test.ts packages/zcode-cua/test/matrix/windows-operation-surface.cua.test.ts packages/zcode-cua/test/matrix/windows-operation-native-cua.test.ts packages/zcode-cua/test/matrix/windows-frame-surface.cua.test.ts packages/zcode-cua/test/matrix/windows-receipt-boundary.cua.test.ts --maxWorkers 1`，6 文件/7 测试通过。14 工具另由设置 `ZCODE_CUA_WINDOWS_TOOL_SURFACE_LIVE=1` 后执行 `node packages/zcode-cua/scripts/windows-tool-surface-live-smoke.mjs` 验证，所有工具、业务计数/读回和清理均通过。旧 API、sideband 和图文相邻顺序按现行合同同步，未恢复已删除的工具。原图和完整报告保留本机；脱敏身份、逐级派发/回执、业务结果、截图哈希及一致的 native/helper/server 哈希见 第 6 步真机证据（`2026-10-25-windows-receipt-boundary-harness.json`，仅存本地）。
 
 以 `8691e6780f` 为起点重新计算官方 affected 清单：144 个规格，1407 条通过、29 条按各自门控跳过；真机门控已另行运行，不用 skip 充数。根类型检查、lint（0 error、234 条既有 warning）、producer 显式 lint（0 error、10 条既有测试 warning）、架构检查及 diff 自检通过。新增文件和修改后的 smoke 脚本格式检查通过；全仓 CRLF 基线问题仍见 §9.3。这里只登记 fixture 与工具回归，不能替代下节真实应用，也不覆盖单屏环境无法执行的多屏/拓扑和其他 OS 原生验证。
 

@@ -688,7 +688,7 @@ Adapters 与根目录 typecheck、根目录 lint、架构和改动文件格式�
 复跑 Desktop：
 
 ```bash
-XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- --spec test/e2e/conversation-session/manual-review/pending/conversation-session-toolsearch.test.ts
+ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- --spec test/e2e/conversation-session/manual-review/pending/conversation-session-toolsearch.test.ts
 ```
 
 ### 提交前复核（2026-09-17）

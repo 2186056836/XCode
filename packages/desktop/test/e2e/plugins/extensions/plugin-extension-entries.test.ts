@@ -315,7 +315,7 @@ async function stopExtensionHost(): Promise<string> {
 describe("PLM-EXT-P2B 插件入口：主导航与文件查看器", () => {
   after(async () => {
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-p2b-evidence.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-p2b-evidence.json"),
       JSON.stringify(evidence, null, 2),
     ).catch(() => undefined);
     await clearAppData();

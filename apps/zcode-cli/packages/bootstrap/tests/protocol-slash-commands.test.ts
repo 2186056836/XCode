@@ -43,7 +43,7 @@ describe("protocol slash command surface", () => {
             skillRoots: [],
           }),
         },
-        env: { XCODE_ENV: "test", XCODE_STORAGE_DIR: join(tempRoot, "storage") },
+        env: { ZCODE_ENV: "test", ZCODE_STORAGE_DIR: join(tempRoot, "storage") },
         homeDirectory: home,
         skipUserConfig: true,
         workingDirectory: workspace,
@@ -87,7 +87,7 @@ describe("protocol slash command surface", () => {
       await writeCommand(userCommands, "plan", "Reserved Plan action", "Should not expand.");
 
       const options = {
-        env: { XCODE_ENV: "test", XCODE_STORAGE_DIR: join(tempRoot, "storage") },
+        env: { ZCODE_ENV: "test", ZCODE_STORAGE_DIR: join(tempRoot, "storage") },
         homeDirectory: home,
         skipUserConfig: true,
         workingDirectory: workspace,
@@ -126,7 +126,7 @@ describe("protocol slash command surface", () => {
       await mkdir(userCommands, { recursive: true });
       await writeCommand(userCommands, "workflow", "Shadowing workflow", "Should not expand.");
       const options = {
-        env: { XCODE_ENV: "test", XCODE_STORAGE_DIR: join(tempRoot, "storage") },
+        env: { ZCODE_ENV: "test", ZCODE_STORAGE_DIR: join(tempRoot, "storage") },
         homeDirectory: home,
         skipUserConfig: true,
         workingDirectory: workspace,
@@ -229,7 +229,7 @@ describe("protocol slash command surface", () => {
       // 项目配置会剥离 plugins.dirs（工作区不能引入插件根目录），测试插件只能经用户配置加载；
       // homeDirectory 指向临时目录，不读本机用户命令。
       const prompt = await resolveXCodeCustomCommandPrompt("/ralph-loop build demo", {
-        env: { XCODE_ENV: "test", XCODE_STORAGE_DIR: join(tempRoot, "storage") },
+        env: { ZCODE_ENV: "test", ZCODE_STORAGE_DIR: join(tempRoot, "storage") },
         homeDirectory: join(tempRoot, "home"),
         userConfigPath: configPath,
         workingDirectory: workspace,
@@ -258,7 +258,7 @@ describe("protocol slash command surface", () => {
           "```!", `echo \"$${variable}\"`, "```",
         ].join("\n"));
         const prompt = await resolveXCodeCustomCommandPrompt("/runtime-context", {
-          env: { XCODE_ENV: "test", XCODE_STORAGE_DIR: join(tempRoot, "storage") },
+          env: { ZCODE_ENV: "test", ZCODE_STORAGE_DIR: join(tempRoot, "storage") },
           homeDirectory: home,
           skipUserConfig: true,
           workingDirectory: tempRoot,

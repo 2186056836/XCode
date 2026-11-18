@@ -27,7 +27,7 @@ import { skipOccupationOnboardingIfPresent } from "#e2e/helpers/occupation-onboa
 
 const CASE_NAME = "conversation-session-composer-provider-identity";
 const evidence = join(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? join(process.cwd(), ".e2e-artifacts"),
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? join(process.cwd(), ".e2e-artifacts"),
   CASE_NAME,
 );
 async function settledSnapshot() {

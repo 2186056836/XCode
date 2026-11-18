@@ -119,9 +119,9 @@ describe("套餐导航名称与身份回归", () => {
             { timeout: 15000, timeoutMsg: `详情标题错误：${entry.title}` },
           );
         }
-        if (process.env.XCODE_E2E_ARTIFACT_DIR) {
+        if (process.env.ZCODE_E2E_ARTIFACT_DIR) {
           await browser.saveScreenshot(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR, `plan-nav-${family}-${locale}-wide.png`),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR, `plan-nav-${family}-${locale}-wide.png`),
           );
         }
         await setCurrentElectronRendererContentSize(600, 800);
@@ -139,9 +139,9 @@ describe("套餐导航名称与身份回归", () => {
           await expect($('[data-slot="tooltip-content"]')).toHaveText(entry.label);
           await browser.keys("Escape");
         }
-        if (process.env.XCODE_E2E_ARTIFACT_DIR) {
+        if (process.env.ZCODE_E2E_ARTIFACT_DIR) {
           await browser.saveScreenshot(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR, `plan-nav-${family}-${locale}-narrow.png`),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR, `plan-nav-${family}-${locale}-narrow.png`),
           );
         }
       });

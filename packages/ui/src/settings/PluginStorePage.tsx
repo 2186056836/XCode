@@ -46,7 +46,7 @@ import {
   resolvePluginDisplayName,
   type StorePluginItem,
 } from "@/settings/pluginStoreListing.js";
-import { XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID } from "@zcode/shared";
+import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID } from "@zcode/shared";
 import { PluginUninstallConfirmDialog } from "@/settings/PluginUninstallConfirmDialog.js";
 import { usePluginUninstall } from "@/settings/usePluginUninstall.js";
 import { claimMarketplaceAutoRefresh } from "@/settings/officialMarketplaceAutoRefresh.js";
@@ -179,13 +179,13 @@ export function PluginStorePage({
   // 否则新上架插件要等用户手动点刷新才可见；以 10 分钟窗口节流，并在发起时占位防抖（失败/在飞不重复），
   // 判据见 officialMarketplaceAutoRefresh。状态放模块级而非组件 ref，因为每次进入都是重新挂载。
   useEffect(() => {
-    const official = marketplaces.find((item) => item.id === XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID);
+    const official = marketplaces.find((item) => item.id === ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID);
     if (
       official &&
-      claimMarketplaceAutoRefresh(XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID, official.lastUpdated)
+      claimMarketplaceAutoRefresh(ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID, official.lastUpdated)
     ) {
       void updateMarketplace(
-        XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
+        ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
         withPluginTelemetry(pluginManagementService, {
           trigger: "automatic",
           client_kind: isWebRemoteControl ? "mobile" : "desktop",

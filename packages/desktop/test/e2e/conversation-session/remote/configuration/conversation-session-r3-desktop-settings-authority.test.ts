@@ -34,7 +34,7 @@ const CASE_MARKER = "E2E_R3_DESKTOP_SETTINGS_AUTHORITY";
 const paths = getE2EAppDataPaths();
 const customRoot = resolveE2ERuntimePath("r3-desktop-settings-authority", "data");
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-desktop-settings-authority",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-desktop-settings-authority",
 );
 const hardwareSelector =
   '[role="switch"][aria-label="Chrome 硬件加速"], [role="switch"][aria-label="Chrome hardware acceleration"]';

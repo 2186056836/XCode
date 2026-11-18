@@ -30,7 +30,7 @@ const MARKER = "E2E_REMOTE_RESTART_STALE_DAEMON_SSH";
 const DEV: RemoteAccount = { user: "dev", home: "/home/dev" };
 const desktopRoot = process.cwd();
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-restart-stale-daemon-ssh",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-restart-stale-daemon-ssh",
 );
 
 describe(`${MARKER}: 远端重启后复用残留 ready 快照`, () => {

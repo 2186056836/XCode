@@ -39,7 +39,7 @@
 
 完整时序、错误映射、文案表和验收矩阵见 [Relay V2 手机首次进入与恢复](./relay-v2-pairing.md#手机首次进入与恢复05)。
 
-本地 `pnpm dev:web-remote-control` 保留 Vite root base，桌面默认二维码地址同步为 `http://localhost:5173/remote/v4`；手机调试时用 `XCODE_WEB_REMOTE_CONTROL_URL` 指向可访问的同一路径，并配置对应 `VITE_DEV_ORIGIN`。避免使用不在 OAuth 回跳白名单中的 `/remote` 别名丢失 SID。
+本地 `pnpm dev:web-remote-control` 保留 Vite root base，桌面默认二维码地址同步为 `http://localhost:5173/remote/v4`；手机调试时用 `ZCODE_WEB_REMOTE_CONTROL_URL` 指向可访问的同一路径，并配置对应 `VITE_DEV_ORIGIN`。避免使用不在 OAuth 回跳白名单中的 `/remote` 别名丢失 SID。
 
 ### 独立测试入口的登录回跳
 

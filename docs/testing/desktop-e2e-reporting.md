@@ -7,7 +7,7 @@
 本机运行：
 
 ```bash
-XCODE_E2E_SPEC=./test/e2e/infrastructure/smoke/e2ecase-regression.test.ts pnpm --filter @zcode/desktop test:e2e
+ZCODE_E2E_SPEC=./test/e2e/infrastructure/smoke/e2ecase-regression.test.ts pnpm --filter @zcode/desktop test:e2e
 ```
 
 容器运行：
@@ -18,14 +18,14 @@ pnpm run test:e2e:container
 
 可用环境变量：
 
-- `XCODE_E2E_RUN_ID`：固定本次报告目录名
-- `XCODE_E2E_ARTIFACT_DIR`：指定报告输出目录
-- `XCODE_E2E_REPORT_VIEWER_BASE_URL`：生成 `files.viewerUrl` 时使用的 Vite viewer 地址，默认 `http://127.0.0.1:4173/`
-- `XCODE_E2E_PERF_SAMPLE_INTERVAL_MS`：Electron 进程采样间隔，默认 3000ms
+- `ZCODE_E2E_RUN_ID`：固定本次报告目录名
+- `ZCODE_E2E_ARTIFACT_DIR`：指定报告输出目录
+- `ZCODE_E2E_REPORT_VIEWER_BASE_URL`：生成 `files.viewerUrl` 时使用的 Vite viewer 地址，默认 `http://127.0.0.1:4173/`
+- `ZCODE_E2E_PERF_SAMPLE_INTERVAL_MS`：Electron 进程采样间隔，默认 3000ms
 - `PERF_SAMPLE_INTERVAL_SECONDS`：容器 `docker stats` 采样间隔，默认 3s
-- `XCODE_E2E_COVERAGE=1`：启用 renderer / main / host / CLI 四运行域源码覆盖率
+- `ZCODE_E2E_COVERAGE=1`：启用 renderer / main / host / CLI 四运行域源码覆盖率
 
-Electron 进程采样通过 WDIO 的 Electron session 调用 `app.getAppMetrics()`，因此采样窗口从 session ready 后开始；容器采样由外层 Docker 脚本启动，能覆盖镜像运行和测试启动阶段。需要让两条曲线使用同一采样节奏时，可同时设置 `XCODE_E2E_PERF_SAMPLE_INTERVAL_MS=1000` 和 `PERF_SAMPLE_INTERVAL_SECONDS=1`。极短 case 可能只产生开始/结束点，长时间 regression 才会形成连续趋势。
+Electron 进程采样通过 WDIO 的 Electron session 调用 `app.getAppMetrics()`，因此采样窗口从 session ready 后开始；容器采样由外层 Docker 脚本启动，能覆盖镜像运行和测试启动阶段。需要让两条曲线使用同一采样节奏时，可同时设置 `ZCODE_E2E_PERF_SAMPLE_INTERVAL_MS=1000` 和 `PERF_SAMPLE_INTERVAL_SECONDS=1`。极短 case 可能只产生开始/结束点，长时间 regression 才会形成连续趋势。
 
 ## 产物
 
@@ -37,7 +37,7 @@ Electron 进程采样通过 WDIO 的 Electron session 调用 `app.getAppMetrics(
 - `lifecycle-events.ndjson`：prepare/worker/session/hook/complete 的耗时；失败事件必须同时记录 `status=failed` 与错误摘要
 - `perf/process-samples-*.ndjson`：通过 Electron `app.getAppMetrics()` 采集 main / renderer / GPU / utility 进程 CPU 和内存
 - `perf/container-samples.ndjson`：容器模式下通过 `docker stats` 采集 CPU、内存、网络 IO、块 IO 和 PID 数
-- `coverage/ui-renderer-istanbul-raw.json`：`XCODE_E2E_COVERAGE=1` 时从 renderer `globalThis.__coverage__` 采集的 Istanbul 原始覆盖率数据
+- `coverage/ui-renderer-istanbul-raw.json`：`ZCODE_E2E_COVERAGE=1` 时从 renderer `globalThis.__coverage__` 采集的 Istanbul 原始覆盖率数据
 - `coverage/ui-renderer-summary.json` / `coverage/ui-renderer-summary.md`：renderer UI 源码级覆盖率摘要
 - `coverage/ui-renderer-html/index.html`：Istanbul HTML 覆盖率报告，可查看总覆盖率、逐文件覆盖率和逐行命中状态
 - `coverage/lcov.info`：LCOV 覆盖率报告，供 CI 或其它 coverage 工具消费
@@ -69,7 +69,7 @@ http://127.0.0.1:4173/?summary=%2F%40fs%2FUsers%2Fdev%2Fworkspace%2Fz-code%2Fpac
 - CPU 趋势图：容器 CPU 和 Electron 各 process type CPU 维度叠加展示
 - Memory 趋势图：容器内存和 Electron 各 process type memory 维度叠加展示
 - case 明细、spec、环境和 artifact 路径
-- `XCODE_E2E_COVERAGE=1` 时展示 renderer UI coverage 的总览、逐文件摘要和 Istanbul HTML / LCOV / JSON 入口
+- `ZCODE_E2E_COVERAGE=1` 时展示 renderer UI coverage 的总览、逐文件摘要和 Istanbul HTML / LCOV / JSON 入口
 
 ## 边界
 
@@ -81,10 +81,10 @@ Node 不能在 promise continuation 执行前静默退出 0。正常 `onComplete
 summary；guard 超时只作为基础设施失败兜底，必须先从现有 NDJSON 写出失败 summary，再以
 非零退出，不能把缺 summary 的空跑当作成功。
 
-renderer UI coverage 默认关闭，只在显式设置 `XCODE_E2E_COVERAGE=1` 时启用：
+renderer UI coverage 默认关闭，只在显式设置 `ZCODE_E2E_COVERAGE=1` 时启用：
 
 ```bash
-XCODE_E2E_COVERAGE=1 pnpm --filter @zcode/desktop test:e2e -- --spec ./test/e2e/conversation-session/execution/conversation-session-running-actions.test.ts
+ZCODE_E2E_COVERAGE=1 pnpm --filter @zcode/desktop test:e2e -- --spec ./test/e2e/conversation-session/execution/conversation-session-running-actions.test.ts
 ```
 
 需要把正式、`manual-review` 一次跑完并生成四域报告时，使用仓库入口：
@@ -93,13 +93,13 @@ XCODE_E2E_COVERAGE=1 pnpm --filter @zcode/desktop test:e2e -- --spec ./test/e2e/
 pnpm test:e2e:all:coverage
 ```
 
-入口会同时设置 `XCODE_E2E_COVERAGE=1` 和 `XCODE_E2E_MANUAL_REVIEW=1`。每个 worker
+入口会同时设置 `ZCODE_E2E_COVERAGE=1` 和 `ZCODE_E2E_MANUAL_REVIEW=1`。每个 worker
 再按自身 spec 隔离 provider：正式 case 与已有 case-local fixture 的 pending case 使用 replay；
 缺 fixture 的 pending case 和 `upstream-provider.test.ts` 使用 capture。单 worker 不允许混用两种模式。
 独立真实 provider smoke 仅在同时配置了 `E2E_PROVIDER_BASE_URL` 与真实 `E2E_PROVIDER_API_KEY`（非 replay 占位值）时纳入；
 否则入口会精确排除该外部 smoke 并打印原因，避免把缺 key 的 401 误报成产品回归。SSH 环境齐全时包含 SSH case；环境不齐时仅排除 SSH case，并在其余范围内继续全量执行。
 
-renderer coverage 在 `XCODE_E2E_COVERAGE=1` 时由 Vite 在构建阶段插入 Istanbul instrumentation。E2E 结束时，reporter 通过 WebdriverIO `browser.getPuppeteer()` 连接真实 renderer target，从页面里的 `globalThis.__coverage__` 读取 counter，再生成 Istanbul 标准报告。
+renderer coverage 在 `ZCODE_E2E_COVERAGE=1` 时由 Vite 在构建阶段插入 Istanbul instrumentation。E2E 结束时，reporter 通过 WebdriverIO `browser.getPuppeteer()` 连接真实 renderer target，从页面里的 `globalThis.__coverage__` 读取 counter，再生成 Istanbul 标准报告。
 
 coverage 插桩必须发生在源码级 `pre` transform 阶段，直接对原始 `.ts` / `.tsx` AST 生成 Istanbul counter。不要改回 post-transform 的通用 Vite Istanbul 插件；那类插件依赖 Vite/React/esbuild 合并 sourcemap 反推源码位置，已验证会把生成后的 JS 覆盖点映射到 `import`、`interface` 等非运行时代码行，导致逐行 HTML 和总覆盖率口径都被污染。
 
@@ -112,7 +112,7 @@ E2E summary 和 e2e-report viewer 只展示覆盖率总览、逐文件摘要和 
 
 ## 跨进程源码覆盖率合同
 
-`XCODE_E2E_COVERAGE=1` 必须采集同一次 Desktop E2E run 中的四个运行域，且分别出具报告：
+`ZCODE_E2E_COVERAGE=1` 必须采集同一次 Desktop E2E run 中的四个运行域，且分别出具报告：
 
 - `renderer`：`packages/ui/src` 与 `packages/desktop/src/renderer` 的 Istanbul 源码覆盖率。
 - `main`：Electron main 及其打包进 main graph 的一方源码覆盖率。

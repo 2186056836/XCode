@@ -22,7 +22,7 @@ import type { V4CommandCoreHost, V4SessionRecordView } from "./types.js";
 export const MODEL_UNAVAILABLE_REASON_CODE = "modelUnavailable";
 
 /** 旧协议与 restoreWarning 共用的稳定错误 code；Renderer 按它本地化，不展示 Registry 内部文案。 */
-export const RUNTIME_MODEL_UNAVAILABLE_ERROR_CODE = "XCODE_RUNTIME_MODEL_UNAVAILABLE";
+export const RUNTIME_MODEL_UNAVAILABLE_ERROR_CODE = "ZCODE_RUNTIME_MODEL_UNAVAILABLE";
 
 type ModelCatalogRecord = Pick<V4SessionRecordView, "app">;
 

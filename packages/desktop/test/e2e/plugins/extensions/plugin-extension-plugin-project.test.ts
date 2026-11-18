@@ -49,7 +49,7 @@ const PROMPTS = {
   later: "E2E_P3C2_LATER: reply with the later marker.",
   recreated: "E2E_P3C2_RECREATED: reply with the recreated marker.",
 } as const;
-const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd();
+const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd();
 
 interface CreateResult {
   creation?: string;

@@ -7,14 +7,14 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import WebSocket from "ws";
 import { Emitter, VSBuffer, SocketProtocol, type ISocket, type IServerChannel } from "@zcode/rpc";
-import { XCODE_RPC_HOST_CAPABILITY_HEADER } from "@zcode/shared";
+import { ZCODE_RPC_HOST_CAPABILITY_HEADER } from "@zcode/shared";
 
 const childMode = process.argv.includes("--stdio-child");
 const home = childMode
-  ? process.env.XCODE_DATA_BASE_DIR!
+  ? process.env.ZCODE_DATA_BASE_DIR!
   : await mkdtemp(join(tmpdir(), "credential-rpc-"));
-process.env.XCODE_DATA_BASE_DIR = home;
-process.env.XCODE_DESKTOP_HOME_DIR = home;
+process.env.ZCODE_DATA_BASE_DIR = home;
+process.env.ZCODE_DESKTOP_HOME_DIR = home;
 const { createHttpServer } = await import("@zcode/server");
 const { createStdioServer } = await import("@zcode/server/stdio");
 const { createCoreHttpServer } =
@@ -128,11 +128,11 @@ try {
       const response = await fetch(`${base}/api/rpc-host-capability${auth}`, { method: "POST" });
       assert.equal(response.status, 200);
       const capability = (await response.json()) as { capability: string };
-      const hostHeaders = { [XCODE_RPC_HOST_CAPABILITY_HEADER]: capability.capability };
+      const hostHeaders = { [ZCODE_RPC_HOST_CAPABILITY_HEADER]: capability.capability };
       await assert.rejects(connect(`${base.replace("http:", "ws:")}/ws/host${auth}`), /401/);
       await assert.rejects(
         connect(`${base.replace("http:", "ws:")}/ws/host${auth}`, {
-          [XCODE_RPC_HOST_CAPABILITY_HEADER]: "synthetic-forged-ticket",
+          [ZCODE_RPC_HOST_CAPABILITY_HEADER]: "synthetic-forged-ticket",
         }),
         /401/,
       );

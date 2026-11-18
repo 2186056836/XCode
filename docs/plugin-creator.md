@@ -98,7 +98,7 @@ UI/草稿 owner：管理和商店组件负责展示/入口，Root 负责新任�
 
 - UI 定向单测 66 条、bootstrap 54 条、分发资产 92 条、Node scaffold/SEA 6 条通过；最小、Skills、MCP、hooks、组合五种脚手架均通过实际构建的 XCode CLI 校验。
 - Electron E2E `plugin-localization-creator.test.ts` 通过：两处菜单、真实引用与尾空格/焦点、未发送、返回后草稿恢复、中文和拼音搜索、添加来源成功/失败保留输入/取消；覆盖 1440px 中文浅色和 480px 英文深色。480px 是 Electron 最小窗口宽度，进入共享 UI 手机断点；未代替真实手机远控验证。
-- 当前基线 WDIO 注入的自定义 agent command 不支持 storage startup。此轮使用临时 WDIO 配置清空 `XCODE_AGENT_SERVER_COMMAND`、`XCODE_AGENT_SERVER_ARGS_JSON`（包括 worker runnerEnv），复用原 hooks 和已构建 bundle，恢复内置 Agent 启动；未修改生产 runtime 或仓库 E2E 配置。
+- 当前基线 WDIO 注入的自定义 agent command 不支持 storage startup。此轮使用临时 WDIO 配置清空 `ZCODE_AGENT_SERVER_COMMAND`、`ZCODE_AGENT_SERVER_ARGS_JSON`（包括 worker runnerEnv），复用原 hooks 和已构建 bundle，恢复内置 Agent 启动；未修改生产 runtime 或仓库 E2E 配置。
 - 根 typecheck、CLI typecheck、根 lint（初次验证 47 个既有 warning、0 error）、架构检查通过。初次 CLI 全量 lint 未通过：所报告的 103 个文件与初始 staging 基线 `94cc393296` 内容完全一致；本次改动的 CLI 脚本和定义单独 lint 为 0 warning、0 error。
 - feature graph 保留 4 条既有悬空边，无新增悬空边，新 code seeds 均存在；本 worktree 无 Codegraph 索引。未生成正式安装包、未连接真实 SSH/手机；已验证各分发资产清单及打包 fixture，远端身份/attachment 切换由定向单测覆盖。
 - 扩展门禁已补齐远端部署 fixture 的 creator 清单、旧创建按钮断言和 E2E 隔离路径；对应回归通过。合并 staging `c32957bdad` 后，92 条 UI/导航定向测试、根 typecheck、lint（51 warning、0 error）和架构检查通过；Electron E2E 运行记录为 `desktop-e2e-20260916-110001-302`。本机通过 uv 启动 MR helper 时需确保其子进程 PATH 优先使用 Node 24.14.0，避免 Homebrew Node 26 覆盖仓库运行时。

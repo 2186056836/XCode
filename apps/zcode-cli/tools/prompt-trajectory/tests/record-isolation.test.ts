@@ -10,7 +10,7 @@ import type { RequestEntry, TrajectoryJsonlEntry } from "../src/types.js";
 // 本文件跑真实录制，与 `record` 命令一样依赖已构建的 bootstrap dist。
 // 临时目录指向测试自己的沙箱：录制用的隔离家目录和工作区都落在沙箱里，结束后整体删除。
 
-const ENV_KEYS = ["HOME", "USERPROFILE", "XCODE_STORAGE_DIR", "TMPDIR", "TMP", "TEMP"] as const;
+const ENV_KEYS = ["HOME", "USERPROFILE", "ZCODE_STORAGE_DIR", "TMPDIR", "TMP", "TEMP"] as const;
 const ISOLATED_HOME_PREFIX = "zcode-prompt-trajectory-home-";
 
 function fixture(overrides: Partial<PromptTrajectoryFixture> = {}): PromptTrajectoryFixture {
@@ -92,7 +92,7 @@ describe("prompt trajectory recording environment", () => {
     const storage = join(sandbox, "user-storage");
     process.env.HOME = home;
     delete process.env.USERPROFILE;
-    process.env.XCODE_STORAGE_DIR = storage;
+    process.env.ZCODE_STORAGE_DIR = storage;
     const homesBefore = await isolatedHomes();
 
     await record(fixture());
@@ -106,7 +106,7 @@ describe("prompt trajectory recording environment", () => {
     // 恢复原值；原来没有的变量要删掉，不能留下字符串 "undefined"。
     equal(process.env.HOME, home);
     equal(Object.hasOwn(process.env, "USERPROFILE"), false);
-    equal(process.env.XCODE_STORAGE_DIR, storage);
+    equal(process.env.ZCODE_STORAGE_DIR, storage);
   });
 
   it("restores the environment when recording fails", async () => {
@@ -114,12 +114,12 @@ describe("prompt trajectory recording environment", () => {
     const profile = join(sandbox, "failing-profile");
     process.env.HOME = home;
     process.env.USERPROFILE = profile;
-    delete process.env.XCODE_STORAGE_DIR;
+    delete process.env.ZCODE_STORAGE_DIR;
 
     await rejects(record({ name: "missing-model", steps: [] }), /missing upstreamBaseURL/u);
 
     deepStrictEqual(
-      [process.env.HOME, process.env.USERPROFILE, Object.hasOwn(process.env, "XCODE_STORAGE_DIR")],
+      [process.env.HOME, process.env.USERPROFILE, Object.hasOwn(process.env, "ZCODE_STORAGE_DIR")],
       [home, profile, false],
     );
   });

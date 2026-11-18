@@ -1,4 +1,4 @@
-const XCODE_PROCESS_PREFIX = "zcode";
+const ZCODE_PROCESS_PREFIX = "zcode";
 const MAX_PROCESS_NAME_SEGMENT_LENGTH = 24;
 
 function sanitizeProcessNameSegment(value: string | null | undefined): string | null {
@@ -22,7 +22,7 @@ function joinXCodeProcessName(...segments: Array<string | null | undefined>): st
   const sanitizedSegments = segments
     .map((segment) => sanitizeProcessNameSegment(segment))
     .filter((segment): segment is string => Boolean(segment));
-  return [XCODE_PROCESS_PREFIX, ...sanitizedSegments].join("-");
+  return [ZCODE_PROCESS_PREFIX, ...sanitizedSegments].join("-");
 }
 
 function pickWorkspaceTag(workspacePath: string | null | undefined): string | undefined {

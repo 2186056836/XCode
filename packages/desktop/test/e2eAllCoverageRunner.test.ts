@@ -18,8 +18,8 @@ describe("all E2E coverage runner", () => {
     expect(plan.command).toBe(process.platform === "win32" ? "pnpm.cmd" : "pnpm");
     expect(plan.env).toMatchObject({
       KEEP_ME: "1",
-      XCODE_E2E_COVERAGE: "1",
-      XCODE_E2E_MANUAL_REVIEW: "1",
+      ZCODE_E2E_COVERAGE: "1",
+      ZCODE_E2E_MANUAL_REVIEW: "1",
     });
     expect(plan.args).toEqual([
       "test:e2e",

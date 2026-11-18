@@ -316,5 +316,5 @@ function stripCacheControl<T>(value: T): T {
 }
 
 function artifactPath(name: string): string {
-  return join(process.env.XCODE_E2E_ARTIFACT_DIR ?? join(process.cwd(), ".e2e-artifacts"), name);
+  return join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? join(process.cwd(), ".e2e-artifacts"), name);
 }

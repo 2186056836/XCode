@@ -29,12 +29,9 @@ export function stageDevCuaPluginRuntime({
   desktopPackageRoot = resolve(repositoryRoot, "packages", "desktop"),
   pluginRoot = resolve(repositoryRoot, "apps", "zcode-cli", "packages", "zcode-cua-plugin"),
 } = {}) {
-  // fork 品牌化后统一注入 XCODE_CUA_DEV_MODE（build-desktop-agent-cli 的
-  // cuaPluginRuntimeStagingEnv 写的就是这个键）；上游的 ZCODE_ 名字保留兜底，
-  // 否则这段 dev staging 会因为键名不符永远命中 return，Sharp 一直不进 plugin。
-  const devModeRequested =
-    env.XCODE_CUA_DEV_MODE === "1" || env.ZCODE_CUA_DEV_MODE === "1";
-  if (!devModeRequested) return [];
+  // dev 链由 build-desktop-agent-cli 的 cuaPluginRuntimeStagingEnv 注入这个键；
+  // 缺失时直接跳过暂存，否则 Sharp 一直不进 plugin。
+  if (env.ZCODE_CUA_DEV_MODE !== "1") return [];
   // 开源占位包不提供 Computer Use 原生能力，也不随附 Sharp：没有真实 producer 时不暂存。
   if (!isRealComputerUseProducerInstalled({ desktopPackageRoot })) return [];
 

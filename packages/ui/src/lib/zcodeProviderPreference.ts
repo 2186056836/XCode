@@ -1,6 +1,6 @@
 import {
   normalizeAgentProviderToXCodeAgent,
-  XCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER,
   type XCodeProvider,
 } from "@zcode/shared";
 import { ZCODE_AGENT_PROVIDERS } from "./zcodeProviders.js";
@@ -31,7 +31,7 @@ function isAgentProvider(value: unknown): value is XCodeProvider {
 export function readLastSelectedAgentProvider(storage: StorageLike | null = getBrowserStorage()): XCodeProvider | null {
   const rawValue = storage?.getItem(LAST_SELECTED_AGENT_PROVIDER_STORAGE_KEY);
   if (!isAgentProvider(rawValue)) {
-    return XCODE_AGENT_PROVIDER;
+    return ZCODE_AGENT_PROVIDER;
   }
 
   // Bugfix: 单 XCode Agent 迁移后，旧本地存储里已移除的第三方 provider 值不能再参与首屏预热。

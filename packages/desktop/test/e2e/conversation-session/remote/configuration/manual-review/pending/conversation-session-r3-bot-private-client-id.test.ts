@@ -24,7 +24,7 @@ import { waitForV4ConversationState } from "#e2e/helpers/v4-conversation";
 const CASE_MARKER = "E2E_R3_BOT_PRIVATE";
 const SEND_MARKER = `${CASE_MARKER}_TELEGRAM`;
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-bot-private-client-id",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-bot-private-client-id",
 );
 
 describe(`${CASE_MARKER}: Telegram 私聊输入投到远端 workspace 不被 clientId 检查拒绝`, () => {

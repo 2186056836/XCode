@@ -46,7 +46,7 @@ export async function seedSidebarRichContentFixture(options: {
       assistantOutputTokens: 100,
     },
   });
-  const source = process.env.XCODE_SIDEBAR_HISTORY_SNAPSHOT;
+  const source = process.env.ZCODE_SIDEBAR_HISTORY_SNAPSHOT;
   let metadata = { source: "synthetic", sha256: "", messages: 2, parts: 2 };
   if (source) {
     const bytes = await readFile(source);

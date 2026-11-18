@@ -5,7 +5,7 @@ import { TID_TASK_SETTINGS_BUTTON, TID_SETTINGS_BACK_BUTTON } from "@zcode/share
 import { DEFAULT_WORKSPACE, waitForWorkspaceApp } from "#e2e/helpers/desktop-app";
 import { restartIntoWorkspacePreservingProfile } from "#e2e/helpers/model-provider-restart-runtime";
 
-const home = process.env.XCODE_E2E_HOME_DIR!;
+const home = process.env.ZCODE_E2E_HOME_DIR!;
 const DAY = 86_400_000;
 // 2026-09-15 裁决：自动归档纯按最后活动时间，置顶与运行中除外；未读、error 不再保护旧任务。
 const fixtures = [
@@ -146,7 +146,7 @@ describe("当前任务元数据与自动归档", () => {
       timeout: 30_000,
     });
     expect(await activeTask()).toBe(cold);
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "AMT01-cold-title.png"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "AMT01-cold-title.png"));
   });
   it("AMT02/AMT05：升级关闭旧开关，用户重新开启后归档超期任务，重启保留选择", async () => {
     // 旧 Host 退出后再写升级输入，避免退出时的设置持久化覆盖 fixture。
@@ -178,7 +178,7 @@ describe("当前任务元数据与自动归档", () => {
     expect(facts(oldRead).archived).toBe(0);
     expect(facts(oldUnread).archived).toBe(0);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "AMT05-upgrade-disabled.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "AMT05-upgrade-disabled.png"),
     );
     await toggle.click();
     await browser.waitUntil(
@@ -211,10 +211,10 @@ describe("当前任务元数据与自动归档", () => {
     expect(await item(recent).isDisplayed()).toBe(true);
     expect(await header().getText()).toContain("E2E_AMT_RECENT");
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "AMT02-auto-archive.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "AMT02-auto-archive.png"),
     );
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "AMT-facts.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "AMT-facts.json"),
       JSON.stringify(
         {
           oldRead: facts(oldRead),
@@ -238,7 +238,7 @@ describe("当前任务元数据与自动归档", () => {
       taskAutoArchiveResetVersion: 1,
     });
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "AMT05-reenabled-restart.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "AMT05-reenabled-restart.png"),
     );
   });
 });

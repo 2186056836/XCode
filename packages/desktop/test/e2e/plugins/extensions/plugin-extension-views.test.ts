@@ -108,7 +108,7 @@ async function readRenderedReports(): Promise<Array<Record<string, unknown>>> {
 describe("PLM-EXT-2B 扩展视图、context 组成与生成速率", () => {
   after(async () => {
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-2b-evidence.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-2b-evidence.json"),
       JSON.stringify(evidence, null, 2),
     ).catch(() => undefined);
     await clearAppData();

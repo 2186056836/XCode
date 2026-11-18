@@ -133,10 +133,10 @@ export {
   type SessionsIndexReconcileResult,
 } from "../zcode-protocol-v4/sessions-index.js";
 
-export const XCODE_PROTOCOL_NAME = "XCode Protocol" as const;
-export const XCODE_PROTOCOL_VERSION = 1 as const;
+export const ZCODE_PROTOCOL_NAME = "XCode Protocol" as const;
+export const ZCODE_PROTOCOL_VERSION = 1 as const;
 // V4 wire 与 legacy 主协议并存；禁止为了 V4 physical framing 改写 legacy 版本。
-export const XCODE_PROTOCOL_V4_WIRE_VERSION = 3 as const;
+export const ZCODE_PROTOCOL_V4_WIRE_VERSION = 3 as const;
 export const zcodeRuntimeCapabilitiesSchema = z.object({
   highspeedCardOwner: z.boolean().optional(),
   pluginDiscoveryUi: z.boolean().optional(),
@@ -628,7 +628,7 @@ export const zcodeMcpTelemetryEventSchema = z.discriminatedUnion("kind", [
 export type XCodeMcpTelemetryEvent = z.infer<typeof zcodeMcpTelemetryEventSchema>;
 
 /** MCP 每五分钟只探测一次，周期由生产者与设备总量过期判据共用。 */
-export const XCODE_MCP_RESOURCE_SAMPLE_INTERVAL_MS = 5 * 60_000;
+export const ZCODE_MCP_RESOURCE_SAMPLE_INTERVAL_MS = 5 * 60_000;
 
 export const zcodeMcpResourceSampleSchema = z
   .object({
@@ -1476,8 +1476,8 @@ export const zcodeSessionStateSnapshotSchema = z
   .object({
     protocol: z
       .object({
-        name: z.literal(XCODE_PROTOCOL_NAME),
-        version: z.literal(XCODE_PROTOCOL_VERSION),
+        name: z.literal(ZCODE_PROTOCOL_NAME),
+        version: z.literal(ZCODE_PROTOCOL_VERSION),
       })
       .strict(),
     session: zcodeSessionInfoSchema,
@@ -2181,7 +2181,7 @@ export const zcodeSubagentsReadRuntimeConfigParamsSchema = z
   .object({ sessionId: nonEmptyString, workspace: zcodeWorkspaceRefSchema.optional() })
   .strict();
 
-export const XCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS = 15_000;
+export const ZCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS = 15_000;
 
 export const zcodeSessionRequestRuntimePreferencesParamsSchema = z
   .object({
@@ -2971,7 +2971,7 @@ export type XCodeProviderRuntimeHeadersCancelled = z.infer<
 >;
 
 // 标准 JSON-RPC error 保留旧版 schema 兼容，不向严格校验的 response 增加字段。
-export const XCODE_PROVIDER_CONFIG_NETWORK_ERROR = -32032;
+export const ZCODE_PROVIDER_CONFIG_NETWORK_ERROR = -32032;
 
 export const zcodeProviderRuntimeHeadersErrorCode = {
   configNetwork: "request_verification_config_network",
@@ -3196,7 +3196,7 @@ export const zcodePluginInfoSchema = z
     mcpServerNames: z.array(z.string()),
     hookDetails: z.array(zcodePluginHookDetailSchema).optional(),
     rootPath: z.string(),
-    // 插件的持久数据目录（CLI 的 PluginMetadata.dataPath，与 ${XCODE_PLUGIN_DATA} 同值）。
+    // 插件的持久数据目录（CLI 的 PluginMetadata.dataPath，与 ${ZCODE_PLUGIN_DATA} 同值）。
     // 扩展的 ctx.extension.dataPath 只取它，App 不自己拼路径；旧 CLI 不报告时缺省。
     dataPath: z.string().optional(),
     userConfig: z.record(z.string(), zcodePluginUserConfigOptionSchema).optional(),
@@ -3484,13 +3484,13 @@ export const zcodeWorkflowsDeleteResultSchema = z.union([
 ]);
 export type XCodeWorkflowsDeleteResult = z.infer<typeof zcodeWorkflowsDeleteResultSchema>;
 
-export const XCODE_WORKFLOWS_RUNS_MAX_LIMIT = 50;
+export const ZCODE_WORKFLOWS_RUNS_MAX_LIMIT = 50;
 export const zcodeWorkflowsRunsParamsSchema = z
   .object({
     workspace: zcodeWorkspaceRefSchema,
     /** 只要这个名字的 run（`dwf_run.name` 字面等值）；缺省即本项目全部 run。 */
     name: nonEmptyString.optional(),
-    limit: z.number().int().min(1).max(XCODE_WORKFLOWS_RUNS_MAX_LIMIT),
+    limit: z.number().int().min(1).max(ZCODE_WORKFLOWS_RUNS_MAX_LIMIT),
     // 缺省 `project`：只查 `dwf_run.cwd === workspacePath` 的 run。`global` 时**不**按 cwd 过滤，
     // 跨所有项目取该名字的运行历史（全局工作流在任何项目里跑，历史因此跨 cwd）；结果行带 `cwd`
     // 供 GUI 标项目。`workspace` 语义同 list（全局档只当载体）。
@@ -3665,14 +3665,14 @@ export const zcodeWorkflowsForRunCandidateSchema = z
   .strict();
 export type XCodeWorkflowsForRunCandidate = z.infer<typeof zcodeWorkflowsForRunCandidateSchema>;
 /** 候选上界：一次 run 在一段对话里被存过的次数远小于它。 */
-export const XCODE_WORKFLOWS_FOR_RUN_MAX_CANDIDATES = 8;
+export const ZCODE_WORKFLOWS_FOR_RUN_MAX_CANDIDATES = 8;
 export const zcodeWorkflowsForRunParamsSchema = z
   .object({
     workspace: zcodeWorkspaceRefSchema,
     runId: nonEmptyString,
     candidates: z
       .array(zcodeWorkflowsForRunCandidateSchema)
-      .max(XCODE_WORKFLOWS_FOR_RUN_MAX_CANDIDATES)
+      .max(ZCODE_WORKFLOWS_FOR_RUN_MAX_CANDIDATES)
       .optional(),
   })
   .strict();
@@ -4859,8 +4859,6 @@ export type XCodeSessionSetPrefillParams = z.infer<typeof zcodeSessionSetPrefill
 export type XCodeProviderRefreshRegistryParams = z.infer<
   typeof zcodeProviderRefreshRegistryParamsSchema
 >;
-
-export const ZCODE_WORKFLOWS_FOR_RUN_MAX_CANDIDATES = 8;
 
 export const zcodeProxyPoolEntrySchema = z
   .object({

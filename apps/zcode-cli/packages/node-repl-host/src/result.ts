@@ -1,8 +1,8 @@
 import {
-  XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY,
-  XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY,
-  XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY,
-  XCODE_MCP_NODE_REPL_CUA_APP_META_KEY,
+  ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY,
+  ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY,
+  ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY,
+  ZCODE_MCP_NODE_REPL_CUA_APP_META_KEY,
 } from "@zcode/contracts/mcp";
 import { isOfficialCuaImageRefText } from "@zcode/zcode-cua/frame-contract";
 import { CUA_APP_ASSOCIATIONS_META_KEY } from "@zcode/zcode-cua/host-display-contract";
@@ -105,7 +105,7 @@ export function toMcpRunResult(
   if (embedded?._meta) Object.assign(responseMeta, embedded._meta);
   // 该 key 决定 core 是否把原图落盘，不能允许 REPL 代码通过
   // setResponseMeta 伪造来源；只接受按账本里真实截图匹配出的下标（见下）。
-  delete responseMeta[XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY];
+  delete responseMeta[ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY];
   // 同款处置：producer 的应用元数据决定工具卡显示哪个 App 的名称和图标。它经
   // `projectToHost` -> `nodeRepl.emitStructuredResult` 到达上面的合并循环，而那个 API 挂在模型
   // 可见的 REPL globals 上 —— cell 里自己 emit 一份就能让卡片声称操作了别的应用。因此这里
@@ -113,15 +113,15 @@ export function toMcpRunResult(
   // 修复原因（MR !3207 评审 CR-01）：原来取 run.cuaApp、run.browserScreenshotImageIndices，而 run 是
   // Worker 的结果消息，cell 能经 worker_threads 冒充它；这两个字段现在一律忽略。
   delete responseMeta[CUA_APP_ASSOCIATIONS_META_KEY];
-  delete responseMeta[XCODE_MCP_NODE_REPL_CUA_APP_META_KEY];
+  delete responseMeta[ZCODE_MCP_NODE_REPL_CUA_APP_META_KEY];
   const cuaApp = facts.cuaApps.at(-1);
-  if (cuaApp) responseMeta[XCODE_MCP_NODE_REPL_CUA_APP_META_KEY] = cuaApp;
+  if (cuaApp) responseMeta[ZCODE_MCP_NODE_REPL_CUA_APP_META_KEY] = cuaApp;
   // 同款处置：core 据这两个键给会话打 browser_use / computer_use 标签。cell 经可写 meta 通道写的同名键
   // 一律丢弃，只按两个 broker 记进账本的事实写回（session-features-header.md「BUA/CUA 标签的补充规则」）。
-  delete responseMeta[XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY];
-  delete responseMeta[XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY];
-  if (facts.browserUse) responseMeta[XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY] = true;
-  if (facts.computerUse) responseMeta[XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY] = true;
+  delete responseMeta[ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY];
+  delete responseMeta[ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY];
+  if (facts.browserUse) responseMeta[ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY] = true;
+  if (facts.computerUse) responseMeta[ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY] = true;
   // Anthropic 兼容网关（如 bigmodel MaaS）只解析 tool_result.content 开头的连续
   // image block，一旦先遇到 text 就丢弃后面的图，模型只能看到 image_ref 元数据而看不到画面
   // （实测 [image]/[image,text] 可见，[text,image]/[text,image,text] 不可见）。
@@ -203,7 +203,7 @@ export function toMcpRunResult(
               : {}),
             ...(browserScreenshotContentIndices && browserScreenshotContentIndices.length > 0
               ? {
-                  [XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY]:
+                  [ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY]:
                     browserScreenshotContentIndices,
                 }
               : {}),

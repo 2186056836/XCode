@@ -1,4 +1,4 @@
-export const XCODE_KNOWN_TOOL_NAMES = [
+export const ZCODE_KNOWN_TOOL_NAMES = [
   "Read",
   "Write",
   "Edit",
@@ -39,7 +39,7 @@ export const XCODE_KNOWN_TOOL_NAMES = [
   "submit_result",
 ] as const;
 
-export type XCodeKnownToolName = (typeof XCODE_KNOWN_TOOL_NAMES)[number];
+export type XCodeKnownToolName = (typeof ZCODE_KNOWN_TOOL_NAMES)[number];
 
 export type XCodeToolFamily =
   | "file-read"
@@ -97,7 +97,7 @@ const TOOL_FAMILY_BY_NAME: Record<XCodeKnownToolName, XCodeToolFamily> = {
 };
 
 const TOOL_NAME_BY_LOWER = new Map<string, XCodeKnownToolName>(
-  XCODE_KNOWN_TOOL_NAMES.map((toolName) => [toolName.toLowerCase(), toolName]),
+  ZCODE_KNOWN_TOOL_NAMES.map((toolName) => [toolName.toLowerCase(), toolName]),
 );
 
 export function normalizeXCodeToolName(

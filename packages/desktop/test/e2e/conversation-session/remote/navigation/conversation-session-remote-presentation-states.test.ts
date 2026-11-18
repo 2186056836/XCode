@@ -91,7 +91,7 @@ describe(`${CASE_MARKER}: 远程连接展示`, () => {
       { timeout: 20_000 },
     );
     const artifactDir = resolve(
-      process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-presentation-states",
+      process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-presentation-states",
     );
     await mkdir(artifactDir, { recursive: true });
     for (const locale of ["zh-CN", "en-US"] as const) {

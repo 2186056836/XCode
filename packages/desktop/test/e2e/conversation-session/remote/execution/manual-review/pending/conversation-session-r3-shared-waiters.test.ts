@@ -35,11 +35,11 @@ import { prepareV4ConversationE2E } from "#e2e/helpers/v4-conversation";
 
 const CASE_MARKER = "E2E_R3_SHARED_WAITERS";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-shared-waiters",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-shared-waiters",
 );
 
 async function readHostConnectRequests(): Promise<Set<string>> {
-  const directory = process.env.XCODE_E2E_RUNTIME_LOG_DIR;
+  const directory = process.env.ZCODE_E2E_RUNTIME_LOG_DIR;
   if (!directory) throw new Error(`${CASE_MARKER}: 缺少本 worker 的日志目录`);
   const files = (await readdir(directory)).filter((name) => name.endsWith(".log"));
   const ids = new Set<string>();

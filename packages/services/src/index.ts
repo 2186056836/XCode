@@ -162,13 +162,13 @@ export {
   IXCodeAgentService,
   type XCodeAgentGenerateWorkspaceTextParams,
   type XCodeAgentLocalRuntimeChildProcesses,
-  XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE,
+  ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE,
 } from "./zcode-agent/zcodeAgent.js";
 export {
   isXCodeAgentModelSelectionBasisUnsupportedError,
   XCodeAgentModelSelectionBasisUnsupportedError,
   isXCodeAgentMcpStatusModeUnsupportedError,
-  XCODE_AGENT_MCP_STATUS_MODE_UNSUPPORTED_ERROR_CODE,
+  ZCODE_AGENT_MCP_STATUS_MODE_UNSUPPORTED_ERROR_CODE,
   XCodeAgentMcpStatusModeUnsupportedError,
 } from "./zcode-agent/zcodeAgentErrors.js";
 export {

@@ -370,8 +370,8 @@ describe("bashHandler", () => {
         CLAUDE_CODE_SESSION_ID: "sess_test",
         CLAUDE_PROJECT_DIR: projectRoot,
         CLAUDE_SESSION_ID: "sess_test",
-        XCODE_PROJECT_DIR: projectRoot,
-        XCODE_SESSION_ID: "sess_test",
+        ZCODE_PROJECT_DIR: projectRoot,
+        ZCODE_SESSION_ID: "sess_test",
       },
     });
     expect(capturedRequest?.timeoutMs).toBe(123);
@@ -536,7 +536,7 @@ describe("bashHandler", () => {
     expect(requests).toHaveLength(2);
     for (const request of requests) {
       expect(request.env?.set?.CLAUDE_PROJECT_DIR).toBe(projectRoot);
-      expect(request.env?.set?.XCODE_SESSION_ID).toBe("sess_test");
+      expect(request.env?.set?.ZCODE_SESSION_ID).toBe("sess_test");
     }
   });
 

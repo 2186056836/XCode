@@ -70,7 +70,7 @@ import { selectTaskOrganizeMode } from "#e2e/helpers/workspace-agent-warmup";
 // 当前 tab 切回旧目录；同设备首连时还会先接管连接，使最新查看报 project.navigation-cancelled。
 const CASE_MARKER = "E2E_RPN18_CONCURRENT_REMOTE_TASK_NAVIGATION";
 const artifactDir = join(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/rpn-18-concurrent-remote-task-navigation",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/rpn-18-concurrent-remote-task-navigation",
 );
 const ERROR_TOAST = /Error:|renderer attachment|navigation-cancelled/u;
 type Handler = (...args: unknown[]) => Promise<unknown>;
@@ -635,7 +635,7 @@ const connectHostRequests = () =>
 
 /** 本次运行的 Main 日志（含 Host 转发行），按文件名排序拼接。 */
 async function readMainLogLines(): Promise<string[]> {
-  const directory = await browser.electron.execute(() => process.env.XCODE_E2E_RUNTIME_LOG_DIR);
+  const directory = await browser.electron.execute(() => process.env.ZCODE_E2E_RUNTIME_LOG_DIR);
   if (!directory) throw new Error(`${CASE_MARKER}: 缺少本次 Main 日志目录`);
   const files = (await readdir(directory)).filter((name) => name.endsWith(".log")).sort();
   const contents = await Promise.all(files.map((name) => readFile(join(directory, name), "utf8")));

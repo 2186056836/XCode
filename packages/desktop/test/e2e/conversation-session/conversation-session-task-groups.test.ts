@@ -12,7 +12,7 @@ import {
   waitForV4ComposerText,
 } from "#e2e/helpers/v4-conversation";
 import { installHandoffRpcProbe, callHandoffHost } from "#e2e/helpers/remote-project-handoff-probe";
-import { ServiceChannels, XCODE_AGENT_PROVIDER } from "@zcode/shared";
+import { ServiceChannels, ZCODE_AGENT_PROVIDER } from "@zcode/shared";
 import { TID_TASK_ITEM, testId } from "@zcode/shared/test-ids";
 
 declare global {
@@ -61,7 +61,7 @@ describe("任务分组独立视图", () => {
   afterEach(async function () {
     if (this.currentTest?.state === "failed") {
       const failureName = `task-groups-failure-${this.currentTest?.title.split("：")[0]?.replaceAll("/", "_")}`;
-      await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, `${failureName}.png`));
+      await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `${failureName}.png`));
       const layout = await browser.execute(() => {
         const root = document.querySelector('[data-testid="task-grouped-view"]');
         const viewport = root?.closest("[data-scroll-mask]");
@@ -87,7 +87,7 @@ describe("任务分组独立视图", () => {
         };
       });
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `${failureName}.json`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `${failureName}.json`),
         JSON.stringify(layout, null, 2),
       );
       process.stderr.write(
@@ -204,7 +204,7 @@ describe("任务分组独立视图", () => {
           (locale === "zh-CN" ? "新建分组" : "New group"),
       );
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `task-groups-${theme}.png`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `task-groups-${theme}.png`),
       );
     }
     await renamed.$('[data-testid="task-group-menu"]').click({ button: "right" });
@@ -496,7 +496,7 @@ describe("任务分组独立视图", () => {
       "readTree",
     );
     const cwd = tree.tasks[0]?.workspacePath;
-    const home = process.env.XCODE_E2E_HOME_DIR;
+    const home = process.env.ZCODE_E2E_HOME_DIR;
     // 批量 runner 的 runId 可以自定义；仍只允许写入隔离 E2E HOME。
     if (!home || !basename(home).startsWith(".e2e-home-") || !cwd)
       throw new Error("隔离 HOME 和真实任务目录 required");
@@ -524,7 +524,7 @@ describe("任务分组独立视图", () => {
           id,
           now + i,
           now + i,
-          XCODE_AGENT_PROVIDER,
+          ZCODE_AGENT_PROVIDER,
         );
         member.run(group.id, cwd, cwd, id, i, now, now, now);
       }
@@ -575,7 +575,7 @@ describe("任务分组独立视图", () => {
     });
     expect(Math.abs(geometry.header - geometry.top)).toBeLessThan(40);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "task-groups-long-list.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "task-groups-long-list.png"),
     );
     await scroll(false);
     const header = $('[data-task-group-title="E2E_LARGE_GROUP"]');

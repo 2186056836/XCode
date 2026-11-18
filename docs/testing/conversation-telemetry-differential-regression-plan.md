@@ -178,7 +178,7 @@ payload。这里的“已验证”不等于 formal E2E 晋升：新差分 spec �
 
 ### 隔离运行
 
-旧版和当前版本使用独立的 `XCODE_E2E_HOME_DIR`、network capture、artifact 和 runtime log 目录。
+旧版和当前版本使用独立的 `ZCODE_E2E_HOME_DIR`、network capture、artifact 和 runtime log 目录。
 同一 case 配对串行运行，避免端口、协议注册、provider replay 与机器负载互相干扰。每次 artifact 记录：
 
 - legacy/current git SHA、构建版本和 case ID。
@@ -223,7 +223,7 @@ payload。这里的“已验证”不等于 formal E2E 晋升：新差分 spec �
 及[界面模式归属](../monitoring/conversation-telemetry-v4.md#界面模式归属)。
 
 默认自动更新该合同文件，产生可审查的工作区 diff，不自动提交或推送。
-`XCODE_E2E_TELEMETRY_FIELD_SYNC=0` 可用于只读 CI；仍查询并报告依据。并发更新使用独占锁、
+`ZCODE_E2E_TELEMETRY_FIELD_SYNC=0` 可用于只读 CI；仍查询并报告依据。并发更新使用独占锁、
 持锁后重读和原子替换；锁被占用或文件不可写时只报告本轮未归并，不覆盖其他运行的写入。
 日常运行不改双版本 golden，也不把字段值复制到白名单。
 
@@ -244,12 +244,12 @@ pnpm --filter @zcode/desktop e2e:telemetry:fields --capture <capture.json> --art
 pnpm --filter @zcode/desktop e2e:telemetry:fields --capture <capture.json> --artifact-dir <report-directory> --no-sync
 ```
 
-独立命令的输入使用本例 `XCODE_TELEMETRY_PARITY_CAPTURE_PATH` 生成的
+独立命令的输入使用本例 `ZCODE_TELEMETRY_PARITY_CAPTURE_PATH` 生成的
 `{ "eventReport": [...] }`。调用者只应提供已经通过消息关系断言的本轮 capture；
 命令检查字段合同，不替代真实 E2E。读取未知事件或非法 detail 会报错，不能据此归并。
 
 本例只验证普通 generation step；离线回放可用现有
-`XCODE_DYNAMIC_WORKFLOW_MODE=disabled` 固定关闭动态工作流灰度。2026-10-27 的默认回放
+`ZCODE_DYNAMIC_WORKFLOW_MODE=disabled` 固定关闭动态工作流灰度。2026-10-27 的默认回放
 现场中，真实 `client/configs` 请求耗时超过首轮发送等待，输入框未清空，尚未进入字段检查。
 固定该无关维度不延长超时、不重发消息，也不表示已覆盖动态工作流模式。
 

@@ -36,7 +36,7 @@ export const OAUTH_SESSION_REVISION_KEY = "oauth:session_revision" as const;
 export const CREDENTIAL_DECRYPT_ERROR_PREFIX = "凭据解密失败：" as const;
 
 /** 凭据解密失败稳定错误码 */
-export const CREDENTIAL_DECRYPT_ERROR_CODE = "XCODE_CREDENTIAL_DECRYPT_FAILED" as const;
+export const CREDENTIAL_DECRYPT_ERROR_CODE = "ZCODE_CREDENTIAL_DECRYPT_FAILED" as const;
 
 /** 判断错误是否来自本地凭据解密失败 */
 export function isCredentialDecryptError(error: unknown): boolean {
@@ -192,7 +192,7 @@ export interface OAuthWebsiteSession {
 export type OAuthSessionState = "signed-in" | "signed-out";
 
 /** Host 在检测到 XCode JWT 失效后通知 Renderer 展示确认并重启。 */
-export const XCODE_JWT_INVALID_BROADCAST_CHANNEL = "auth:zcode-jwt-invalid";
+export const ZCODE_JWT_INVALID_BROADCAST_CHANNEL = "auth:zcode-jwt-invalid";
 
 /**
  * Host 侧激活账号变更（含失败换号的自动跟随切换）后通知 Renderer

@@ -55,7 +55,7 @@ export function createComposerSubmissionConfig(
 }
 
 /** 与 CLI 旧协议拒绝、restoreWarning 共用的稳定 code；ChatErrorBanner 按它本地化。 */
-export const SESSION_MODEL_UNAVAILABLE_ERROR_CODE = "XCODE_RUNTIME_MODEL_UNAVAILABLE";
+export const SESSION_MODEL_UNAVAILABLE_ERROR_CODE = "ZCODE_RUNTIME_MODEL_UNAVAILABLE";
 
 /** 会话原选择在当前 Registry 视图里解析不出可执行模型的三种原因；档位问题不属于「模型不可用」。 */
 const SESSION_MODEL_UNAVAILABLE_ISSUES = new Set<ModelSelectionView["selectionIssue"]>([

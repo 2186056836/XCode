@@ -28,7 +28,7 @@ import { createReadFileStatePathKey } from "../src/tool/read-file-state.js";
 import { createToolRegistry } from "../src/tool/registry.js";
 import type { ReadFileStateMap, ToolExecutionContext } from "../src/tool/types.js";
 
-const RUN_WRITE_STRICT_CONTRACT = process.env.XCODE_RUN_WRITE_STRICT_CONTRACT === "1";
+const RUN_WRITE_STRICT_CONTRACT = process.env.ZCODE_RUN_WRITE_STRICT_CONTRACT === "1";
 const describeWriteStrictContract = RUN_WRITE_STRICT_CONTRACT ? describe : describe.skip;
 const WRITE_STORAGE_SUFFIX =
   " (file state is current in your context \u2014 no need to Read it back)";

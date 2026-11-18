@@ -59,12 +59,12 @@ import { prepareV4ConversationE2E } from "#e2e/helpers/v4-conversation";
  */
 const MARKER = "E2E_DSYNC_DEMO_WALKTHROUGH";
 const artifact = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/data-sync-demo",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/data-sync-demo",
   "data-sync-demo",
 );
 const run = promisify(execFile);
-const FFMPEG = process.env.XCODE_E2E_FFMPEG_PATH?.trim() || "ffmpeg";
-const FFPROBE = process.env.XCODE_E2E_FFPROBE_PATH?.trim() || "ffprobe";
+const FFMPEG = process.env.ZCODE_E2E_FFMPEG_PATH?.trim() || "ffmpeg";
+const FFPROBE = process.env.ZCODE_E2E_FFPROBE_PATH?.trim() || "ffprobe";
 const WINDOW = { width: 1440, height: 900 };
 const NARROW_WIDTH = 720;
 const FRAME_INTERVAL_MS = 200;

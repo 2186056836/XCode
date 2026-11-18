@@ -230,12 +230,12 @@ async function exportLogsFromHelpMenu(): Promise<string> {
 }
 
 describe("导出日志 JSONL 脱敏", () => {
-  const homeDir = process.env.XCODE_E2E_HOME_DIR;
+  const homeDir = process.env.ZCODE_E2E_HOME_DIR;
   const rolloutDir = homeDir ? join(homeDir, ".zcode", "cli", "rollout") : "";
   const cliLogDir = homeDir ? join(homeDir, ".zcode", "cli", "log") : "";
 
   before(async () => {
-    if (!homeDir) throw new Error("缺少 XCODE_E2E_HOME_DIR，无法在隔离 HOME 中放置样本");
+    if (!homeDir) throw new Error("缺少 ZCODE_E2E_HOME_DIR，无法在隔离 HOME 中放置样本");
     await mkdir(rolloutDir, { recursive: true });
     await writeFile(
       join(rolloutDir, ROLLOUT_FILE),

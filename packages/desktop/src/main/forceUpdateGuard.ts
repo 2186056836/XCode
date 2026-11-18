@@ -1,6 +1,6 @@
 import {
   DEFAULT_XCODE_ENDPOINT_ORIGIN,
-  XCODE_VERSION,
+  ZCODE_VERSION,
   buildXCodeEndpointUrls,
   getForceUpdateMinimalVersionFromConfig,
   resolveForceUpdateRequirement,
@@ -12,7 +12,7 @@ import {
 import { requestForceAutoUpdate, type ForceAutoUpdateState } from "./autoUpdater.js";
 import { showForceUpdatePrompt } from "./forceUpdatePrompt.js";
 
-const XCODE_CLIENT_CONFIG_API_PATH = "/api/v1/client/configs";
+const ZCODE_CLIENT_CONFIG_API_PATH = "/api/v1/client/configs";
 const FORCE_UPDATE_CONFIG_REQUEST_TIMEOUT_MS = 10_000;
 const FORCE_UPDATE_CONFIG_MAX_RESPONSE_BYTES = 1024 * 1024;
 
@@ -51,9 +51,9 @@ export function resolveForceUpdateClientConfigUrl(
   endpointOrigin = DEFAULT_XCODE_ENDPOINT_ORIGIN,
 ): string {
   const url = new URL(
-    `${buildXCodeEndpointUrls(endpointOrigin).origin}${XCODE_CLIENT_CONFIG_API_PATH}`,
+    `${buildXCodeEndpointUrls(endpointOrigin).origin}${ZCODE_CLIENT_CONFIG_API_PATH}`,
   );
-  url.searchParams.set("app_version", XCODE_VERSION);
+  url.searchParams.set("app_version", ZCODE_VERSION);
   url.searchParams.set("platform", `${process.platform}-${process.arch}`);
   return url.toString();
 }
@@ -166,7 +166,7 @@ export async function resolveDesktopForceUpdateRequirement(options: {
 }): Promise<ForceUpdateRequirement | null> {
   const resolveFromConfig = (config: unknown) =>
     resolveForceUpdateRequirement({
-      currentVersion: XCODE_VERSION,
+      currentVersion: ZCODE_VERSION,
       forceUpdate: {
         minimalVersion:
           getForceUpdateMinimalVersionFromClientConfig(config) ??
@@ -231,8 +231,8 @@ export async function maybeBlockStartupForForceUpdate(
   options: ForceUpdateGuardOptions,
 ): Promise<ForceUpdateGuardResult> {
   // XCode fork：禁用更新检测——强更门不拉远端 manifest、不阻止启动、不弹强更对话框。
-  const XCODE_FORK_AUTO_UPDATES_DISABLED = true;
-  if (XCODE_FORK_AUTO_UPDATES_DISABLED) {
+  const ZCODE_FORK_AUTO_UPDATES_DISABLED = true;
+  if (ZCODE_FORK_AUTO_UPDATES_DISABLED) {
     return { blocked: false };
   }
   const requirement = await resolveDesktopForceUpdateRequirement({

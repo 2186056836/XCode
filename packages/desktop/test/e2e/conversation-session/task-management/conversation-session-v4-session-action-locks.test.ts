@@ -74,9 +74,9 @@ describe("O22 fork 与文件撤销的 session 锁", () => {
   });
 
   after(async () => {
-    if (mobile && process.env.XCODE_E2E_ARTIFACT_DIR)
+    if (mobile && process.env.ZCODE_E2E_ARTIFACT_DIR)
       await mobile
-        .screenshot({ path: join(process.env.XCODE_E2E_ARTIFACT_DIR, "SAL-mobile.png") })
+        .screenshot({ path: join(process.env.ZCODE_E2E_ARTIFACT_DIR, "SAL-mobile.png") })
         .catch(() => undefined);
     await mobileBrowser?.close();
     await browser.electron.restoreAllMocks();
@@ -207,7 +207,7 @@ async function recordSurfaces(entry: {
   desktop: LockSurface;
   phone: LockSurface | null;
 }) {
-  const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+  const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
   if (!artifactDir) return;
   await appendFile(join(artifactDir, "SAL-surfaces.jsonl"), `${JSON.stringify(entry)}\n`);
 }
@@ -279,9 +279,9 @@ async function waitForFileContent(expected: string) {
 
 async function openMobileSession(taskId: string): Promise<{ browser: Browser; page: Page }> {
   const pairingUrl = await obtainUnreadPairingUrl(
-    new URL(process.env.XCODE_WEB_REMOTE_CONTROL_URL!).origin,
+    new URL(process.env.ZCODE_WEB_REMOTE_CONTROL_URL!).origin,
   );
-  const executablePath = process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
+  const executablePath = process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
   const chrome = await chromium.launch({
     ...(executablePath ? { executablePath } : { channel: "chrome" }),
     headless: true,
@@ -297,7 +297,7 @@ async function openMobileSession(taskId: string): Promise<{ browser: Browser; pa
   const page = await context.newPage();
   const taskItem = `[data-testid="${testId(TID_TASK_ITEM, taskId)}"]`;
   await openMobilePairingPage(page, pairingUrl, {
-    artifactDir: process.env.XCODE_E2E_ARTIFACT_DIR!,
+    artifactDir: process.env.ZCODE_E2E_ARTIFACT_DIR!,
     caseMarker: "SAL",
     phase: "session-locks",
     readySelector: taskItem,

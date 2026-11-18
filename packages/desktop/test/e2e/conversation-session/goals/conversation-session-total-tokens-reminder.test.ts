@@ -316,8 +316,8 @@ function expectProjection(requests: Request[], mcs: boolean) {
 
 // 去掉快照 system 里的预算行。node:sqlite 只提供同步接口；调用时应用已退出，没有并发写入。
 function rewriteSnapshotWithoutLine(sessionId: string) {
-  const home = process.env.XCODE_E2E_HOME_DIR;
-  if (!home) throw new Error("缺少 XCODE_E2E_HOME_DIR");
+  const home = process.env.ZCODE_E2E_HOME_DIR;
+  if (!home) throw new Error("缺少 ZCODE_E2E_HOME_DIR");
   const database = new DatabaseSync(join(home, ".zcode", "cli", "db", "db.sqlite"));
   try {
     const id = `${sessionId}:runtime-prompt-snapshot`;

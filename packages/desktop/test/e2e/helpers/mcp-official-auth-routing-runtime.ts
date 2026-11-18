@@ -19,7 +19,7 @@ export async function runOfficialMcpRoutingRuntime(artifactDir: string): Promise
   const paths = getE2EAppDataPaths();
   const home = await mkdtemp(join(paths.homeDir, "mcp-auth-runtime-"));
   const previous = getDataBaseDir();
-  const origin = process.env.XCODE_E2E_OFFICIAL_AUTH_ROUTING_URL;
+  const origin = process.env.ZCODE_E2E_OFFICIAL_AUTH_ROUTING_URL;
   assert(origin, "Missing controlled MCP origin");
   const evidenceFile = join(home, "rejected-requests.ndjson");
   const cliRoot = join(home, ".xcode", "cli");
@@ -57,8 +57,8 @@ export async function runOfficialMcpRoutingRuntime(artifactDir: string): Promise
         env: {
           HOME: home,
           USERPROFILE: home,
-          XCODE_DATA_BASE_DIR: home,
-          XCODE_OFFICIAL_MCP_DEV_TRUSTED_ORIGINS: origin,
+          ZCODE_DATA_BASE_DIR: home,
+          ZCODE_OFFICIAL_MCP_DEV_TRUSTED_ORIGINS: origin,
         },
       }),
       officialMcpTrustedOrigins: createOfficialMcpTrustedOriginRegistry({

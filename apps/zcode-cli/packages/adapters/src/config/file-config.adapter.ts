@@ -66,7 +66,7 @@ const DEFAULT_BASE_DIR = "~/.xcode/cli";
  * Resolve path with ~ expansion.
  *
  * `~/.xcode/**` 展开到「数据基目录」而不是 `os.homedir()`：`storage.sessionDbPath` 的默认值
- * 就是 `~/.xcode/cli/db/db.sqlite`，dev/e2e 实例用 `XCODE_DATA_BASE_DIR` 指向隔离目录时，
+ * 就是 `~/.xcode/cli/db/db.sqlite`，dev/e2e 实例用 `ZCODE_DATA_BASE_DIR` 指向隔离目录时，
  * 若这里仍按真实家目录展开，agent 会把会话库写回正式版数据目录，两边的使用明细互相污染
  * （与 `storage/session-store/paths.ts` 的 `getDefaultSessionDbPath()` 保持同一解析链）。
  *
@@ -82,11 +82,11 @@ export function resolvePath(path: string): string {
   return resolve(path);
 }
 
-/** 数据基目录：XCODE_DATA_BASE_DIR > XCODE_DESKTOP_HOME_DIR > HOME > homedir()。 */
+/** 数据基目录：ZCODE_DATA_BASE_DIR > ZCODE_DESKTOP_HOME_DIR > HOME > homedir()。 */
 function resolveDataBaseDir(): string {
   return (
-    process.env.XCODE_DATA_BASE_DIR?.trim() ||
-    process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+    process.env.ZCODE_DATA_BASE_DIR?.trim() ||
+    process.env.ZCODE_DESKTOP_HOME_DIR?.trim() ||
     process.env.HOME?.trim() ||
     homedir()
   );

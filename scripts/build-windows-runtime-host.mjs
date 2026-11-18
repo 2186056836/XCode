@@ -12,7 +12,7 @@ const source = join(root, "scripts/windows-runtime-host");
 export function resolveRuntimeHostBuild(
   arch,
   hostPlatform = process.platform,
-  compiler = process.env.XCODE_WINDOWS_CXX,
+  compiler = process.env.ZCODE_WINDOWS_CXX,
 ) {
   if (arch !== "x64" && arch !== "arm64")
     throw new Error(`Unsupported runtime host architecture: ${arch}`);
@@ -77,7 +77,7 @@ function cmakeAvailable() {
 }
 
 function findMingwGxx(arch) {
-  if (process.env.XCODE_WINDOWS_CXX) return process.env.XCODE_WINDOWS_CXX;
+  if (process.env.ZCODE_WINDOWS_CXX) return process.env.ZCODE_WINDOWS_CXX;
   const roots = [process.env.MINGW_ROOT, "D:/mingw64", "C:/mingw64", "C:/msys64/mingw64"]
     .filter(Boolean);
   const name = arch === "arm64" ? "aarch64-w64-mingw32-g++.exe" : "x86_64-w64-mingw32-g++.exe";
@@ -196,7 +196,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const args = process.argv.slice(2);
   const arch =
     args.find((arg) => arg.startsWith("--arch="))?.slice(7) ||
-    process.env.XCODE_TARGET_ARCH ||
+    process.env.ZCODE_TARGET_ARCH ||
     process.arch;
   const outputDir =
     args.find((arg) => arg.startsWith("--output-dir="))?.slice(13) ||

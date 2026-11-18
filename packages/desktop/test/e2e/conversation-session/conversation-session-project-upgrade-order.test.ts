@@ -27,7 +27,7 @@ describe("虚拟项目升级顺序", () => {
     await expect($(`[data-testid="task-item-${CURRENT_IMPORTED_TASK_ID}"]`)).toHaveText(
       expect.stringContaining("E2E_CURRENT_IMPORTED"),
     );
-    const home = process.env.XCODE_E2E_HOME_DIR;
+    const home = process.env.ZCODE_E2E_HOME_DIR;
     if (!home) throw new Error("isolated E2E HOME required");
     const db = new DatabaseSync(join(home, ".xcode/v2/tasks-index.sqlite"), { readOnly: true });
     try {
@@ -110,7 +110,7 @@ describe("虚拟项目升级顺序", () => {
       db.close();
     }
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "project-upgrade-order.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "project-upgrade-order.png"),
     );
     await browser.refresh();
     try {
@@ -125,7 +125,7 @@ describe("虚拟项目升级顺序", () => {
       await $('[data-project-name="empty-saved"]').waitForExist({ timeout: 45_000 });
     } catch (error) {
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "project-upgrade-refresh-failed.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "project-upgrade-refresh-failed.png"),
       );
       process.stderr.write(
         `VP28 refresh state: ${JSON.stringify(await browser.execute(() => ({ text: document.body.innerText.slice(0, 2000), url: location.href })))}\n`,
@@ -138,7 +138,7 @@ describe("虚拟项目升级顺序", () => {
       $('[data-testid="conversation-section"] [data-testid="task-item-e2e-order-a-history"]'),
     ).toHaveText(expect.stringContaining("E2E_ORDER_a-history"));
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "project-upgrade-refreshed.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "project-upgrade-refreshed.png"),
     );
   });
 
@@ -158,7 +158,7 @@ describe("虚拟项目升级顺序", () => {
     await unpinned.$('button[data-testid^="task-archive-"]').click();
     await unpinned.waitForExist({ reverse: true });
     const db = new DatabaseSync(
-      join(process.env.XCODE_E2E_HOME_DIR!, ".xcode/v2/tasks-index.sqlite"),
+      join(process.env.ZCODE_E2E_HOME_DIR!, ".xcode/v2/tasks-index.sqlite"),
       { readOnly: true },
     );
     try {

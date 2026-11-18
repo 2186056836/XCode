@@ -18,7 +18,7 @@ const CASE_TIMEOUT_MS = 180_000;
 const PROMPT_MARKER = "E2E_AUTO_ARCHIVED_TASK_BROWSER_TABS";
 const REPLY_MARKER = "AUTO_ARCHIVED_TASK_BROWSER_TABS_OK";
 const DAY = 86_400_000;
-const home = process.env.XCODE_E2E_HOME_DIR!;
+const home = process.env.ZCODE_E2E_HOME_DIR!;
 
 let fixtureServer: Server | null = null;
 let fixtureUrl = "";

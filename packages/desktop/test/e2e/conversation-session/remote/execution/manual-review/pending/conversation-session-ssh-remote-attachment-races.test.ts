@@ -22,7 +22,7 @@ import {
 const MARKER = "E2E_SSH_ATTACHMENT_RACES";
 const scenario = process.env.R3_ATTACHMENT_RACE_CASE ?? "cancel";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-attachment-races",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-attachment-races",
 );
 
 async function createUploadGate(target: { host: string; port: number }) {

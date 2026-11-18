@@ -23,7 +23,7 @@ export interface WorkspaceHookTrustCliTarget {
   workspacePath: string;
   workspaceIdentity?: string;
   userConfigPath?: string;
-  /** 解析受管 worktree 的数据根目录（XCODE_DATA_BASE_DIR）；缺省 process.env。 */
+  /** 解析受管 worktree 的数据根目录（ZCODE_DATA_BASE_DIR）；缺省 process.env。 */
   env?: Record<string, string | undefined>;
 }
 

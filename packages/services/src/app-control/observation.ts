@@ -19,7 +19,7 @@ import {
 } from "@zcode/shared/zcode-protocol-v4";
 import { zcodeProtocolErrorCodes, zcodeTurnStartedEventPayloadSchema } from "@zcode/shared";
 import {
-  XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE,
+  ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE,
   type IXCodeAgentService,
 } from "#src/zcode-agent/zcodeAgent.js";
 import { withTrustedXCodeAgentV4Connection } from "#src/zcode-agent/zcodeAgentConnectionScope.js";
@@ -76,7 +76,7 @@ export async function readAppLiveSummary(
   } catch (error) {
     const code = (error as { code?: unknown })?.code;
     if (
-      code === XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE ||
+      code === ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE ||
       code === zcodeProtocolErrorCodes.sessionUnavailable
     )
       return undefined;
@@ -316,7 +316,7 @@ export async function observeAppConversation(
             // 不能让该清理错误覆盖 wait 的 unknown 和已完成结果。其他清理失败仍须传播。
             const code = (error as { code?: unknown } | null)?.code;
             if (
-              code !== XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE &&
+              code !== ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE &&
               code !== zcodeProtocolErrorCodes.sessionUnavailable
             )
               throw error;

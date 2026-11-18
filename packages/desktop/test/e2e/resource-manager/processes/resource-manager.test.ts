@@ -155,7 +155,7 @@ describe("资源管理器", () => {
           ).toBe(true);
           await browser.saveScreenshot(
             join(
-              process.env.XCODE_E2E_ARTIFACT_DIR!,
+              process.env.ZCODE_E2E_ARTIFACT_DIR!,
               `resource-manager-${theme}-${locale}-${width}.png`,
             ),
           );

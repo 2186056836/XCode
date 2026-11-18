@@ -10,7 +10,7 @@ import type {
   XCodePluginComponentKind,
   XCodePluginsDescribeResult,
 } from "@zcode/shared";
-import { isPluginCommand, isUserCommand, XCODE_COMMAND_AGENT_SOURCE } from "@zcode/shared";
+import { isPluginCommand, isUserCommand, ZCODE_COMMAND_AGENT_SOURCE } from "@zcode/shared";
 import type { PluginComponentDisplayGroup } from "@/settings/PluginComponentGroups.js";
 
 export interface ResourceGroups<TLocal, TPlugin> {
@@ -181,7 +181,7 @@ export function groupCommandsByPlugin(
   for (const command of commands) {
     if (
       isUserCommand(command) &&
-      command.agentSource === XCODE_COMMAND_AGENT_SOURCE &&
+      command.agentSource === ZCODE_COMMAND_AGENT_SOURCE &&
       normalizedQueryMatches(query, [command.name, command.description, command.prompt])
     ) {
       local.push(command);

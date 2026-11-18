@@ -169,7 +169,7 @@ describe("TTFT02 真实发送诊断到最终 OTLP", () => {
     });
     const processes = await browser.electron.execute((electron) => electron.app.getAppMetrics());
     runtimeEvidence.push({ renderer, processes });
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (artifactDir)
       await writeFile(
         join(artifactDir, "ttft-diagnostics-performance.json"),
@@ -265,7 +265,7 @@ describe("TTFT02 真实发送诊断到最终 OTLP", () => {
           .flatMap((point) => point.attributes ?? [])
           .some((attribute) => forbidden.has(attribute.key)),
       ).toBe(false);
-      const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+      const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
       if (artifactDir)
         await writeFile(
           join(artifactDir, "ttft-diagnostics-otlp.json"),

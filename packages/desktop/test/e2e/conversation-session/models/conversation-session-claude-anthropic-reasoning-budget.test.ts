@@ -55,7 +55,7 @@ const CLAUDE_ANTHROPIC_XHIGH_LEVEL = "xhigh";
 const CLAUDE_ANTHROPIC_LOW_BUDGET_TOKENS = 4000;
 const CLAUDE_ANTHROPIC_XHIGH_BUDGET_TOKENS = 32000;
 const E2E_PROVIDER_RUNTIME_FILE = resolve(
-  process.env.XCODE_E2E_NETWORK_CAPTURE_DIR?.trim() ||
+  process.env.ZCODE_E2E_NETWORK_CAPTURE_DIR?.trim() ||
     resolve(homedir(), "..", ".e2e-network-capture"),
   "upstream-runtime.json",
 );

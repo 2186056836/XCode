@@ -2,7 +2,7 @@ import { createServiceLogger } from "@zcode/services/node";
 import { createHash } from "node:crypto";
 import { collectMobilePushEvents, type MobilePushEvent } from "@zcode/shared/web-remote-relay";
 import type { IDisposable } from "@zcode/rpc";
-import { XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE, type IXCodeAgentService } from "@zcode/services";
+import { ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE, type IXCodeAgentService } from "@zcode/services";
 import {
   PROTOCOL_V4_LIMITS,
   sessionsIndexTopic,
@@ -38,7 +38,7 @@ function isRuntimeUnavailableError(error: unknown): boolean {
   return (
     typeof error === "object" &&
     error !== null &&
-    (error as { code?: unknown }).code === XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE
+    (error as { code?: unknown }).code === ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE
   );
 }
 

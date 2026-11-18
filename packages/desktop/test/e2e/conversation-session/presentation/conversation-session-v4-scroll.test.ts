@@ -22,7 +22,7 @@ import {
   waitForV4TimelineContaining,
 } from "#e2e/helpers/v4-conversation";
 
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/scroll-edges");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/scroll-edges");
 
 describe("v4 M5④ 门禁：长会话虚拟滚动", () => {
   const HISTORY_TURNS = 14;

@@ -11,7 +11,7 @@ import {
   ReasoningContent,
 } from "@/components/ai-elements/reasoning.js";
 import type { IServiceAccessor } from "@zcode/services";
-import { XCODE_AGENT_PROVIDER } from "@zcode/shared";
+import { ZCODE_AGENT_PROVIDER } from "@zcode/shared";
 import { ServiceProvider } from "@/hooks/useServices.js";
 import { TabStoreProvider } from "@/store/TabStoreProvider.js";
 import { useToolPresentationHostCapabilities } from "@/hooks/useToolPresentationHostCapabilities.js";
@@ -117,7 +117,7 @@ if (params.has("hostColors")) {
   const foreignContext = {
     workspacePath: "/workspace",
     workspaceIdentity: "other-device",
-    provider: XCODE_AGENT_PROVIDER,
+    provider: ZCODE_AGENT_PROVIDER,
     agents: [{ id: "general-purpose", name: "general-purpose", color: "green" }],
     capability: null,
     loading: false,

@@ -499,7 +499,7 @@ async function readAutoCompactContexts(
   sessionId: string,
   event: "compact.auto.skipped" | "compact.auto.started",
 ): Promise<Record<string, unknown>[]> {
-  const logDir = process.env.XCODE_LOG_DIR?.trim() || join(paths.storageRoot, "cli", "log");
+  const logDir = process.env.ZCODE_LOG_DIR?.trim() || join(paths.storageRoot, "cli", "log");
   const files = await readdir(logDir).catch(() => []);
   const contexts: Record<string, unknown>[] = [];
   for (const file of files) {

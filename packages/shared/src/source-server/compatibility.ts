@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { XCODE_VERSION } from "../version.js";
+import { ZCODE_VERSION } from "../version.js";
 
-declare const __XCODE_MIN_COMPATIBLE_VERSION__: string;
+declare const __ZCODE_MIN_COMPATIBLE_VERSION__: string;
 
-export const XCODE_MIN_COMPATIBLE_VERSION =
-  typeof __XCODE_MIN_COMPATIBLE_VERSION__ !== "undefined"
-    ? __XCODE_MIN_COMPATIBLE_VERSION__
-    : XCODE_VERSION;
+export const ZCODE_MIN_COMPATIBLE_VERSION =
+  typeof __ZCODE_MIN_COMPATIBLE_VERSION__ !== "undefined"
+    ? __ZCODE_MIN_COMPATIBLE_VERSION__
+    : ZCODE_VERSION;
 
 /**
  * 远端服务支持设备卡停止 / 重启合同（`zcode stop --wait` 等，RDLC-01）的首个版本，桌面端据此做版本门禁。
@@ -30,8 +30,8 @@ export const compatibilityManifestSchema = z
 export type CompatibilityManifest = z.infer<typeof compatibilityManifestSchema>;
 
 export function createCompatibilityManifest(
-  productVersion = XCODE_VERSION,
-  minCompatibleVersion = XCODE_MIN_COMPATIBLE_VERSION,
+  productVersion = ZCODE_VERSION,
+  minCompatibleVersion = ZCODE_MIN_COMPATIBLE_VERSION,
 ): CompatibilityManifest {
   return compatibilityManifestSchema.parse({
     schemaVersion: 1,
@@ -40,7 +40,7 @@ export function createCompatibilityManifest(
   });
 }
 
-export const XCODE_COMPATIBILITY_MANIFEST = Object.freeze(createCompatibilityManifest());
+export const ZCODE_COMPATIBILITY_MANIFEST = Object.freeze(createCompatibilityManifest());
 
 interface ParsedVersion {
   major: number;

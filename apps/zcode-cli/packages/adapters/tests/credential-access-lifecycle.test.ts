@@ -174,7 +174,7 @@ describe("system credential access lifecycle", () => {
         encrypt: () => "",
         decrypt: () => {
           throw Object.assign(new Error("private native detail"), {
-            code: "XCODE_CREDENTIAL_DECRYPT_FAILED",
+            code: "ZCODE_CREDENTIAL_DECRYPT_FAILED",
           });
         },
       },

@@ -251,12 +251,12 @@ describe(marker, () => {
   afterEach(async function () {
     if (this.currentTest?.state === "failed") {
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "background-failure.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "background-failure.png"),
       );
       const details = $('//summary[contains(.,"组件堆栈")]');
       if (await details.isExisting()) await details.click();
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "background-failure.txt"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "background-failure.txt"),
         await $("body").getText(),
       );
     }
@@ -421,7 +421,7 @@ describe(marker, () => {
     const noticeContinue = $('//div[@id="zcode-toast-host"]//button[normalize-space(.)="继续"]');
     await noticeContinue.waitForDisplayed({ timeout: 90_000 });
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "background-completion-notice.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "background-completion-notice.png"),
     );
     await noticeContinue.click();
     await $('[data-testid="virtual-project-name"]').waitForDisplayed();
@@ -603,7 +603,7 @@ describe(marker, () => {
       ).tasks,
     ).toEqual(beforeLocal.tasks);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "background-resume-validation-pending.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "background-resume-validation-pending.png"),
     );
     await releaseSourceReads();
     await picker.waitForDisplayed();
@@ -612,7 +612,7 @@ describe(marker, () => {
     const confirmFolder = picker.$('[data-testid="directory-browser-confirm"]');
     await confirmFolder.waitForEnabled();
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "background-explicit-folder.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "background-explicit-folder.png"),
     );
     await confirmFolder.click();
     const identity = buildServerRemoteWorkspaceIdentity({
@@ -665,7 +665,7 @@ describe(marker, () => {
       ).tasks,
     ).toEqual(beforeLocal.tasks);
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "background-remote-first-submission.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "background-remote-first-submission.json"),
       JSON.stringify({ project: existing, task: sent }, null, 2),
     );
     await localRow.moveTo();
@@ -714,7 +714,7 @@ describe(marker, () => {
         );
         await settle();
         await browser.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, `background-${locale}-${theme}.png`),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `background-${locale}-${theme}.png`),
         );
         expect(await failed.isDisplayed()).toBe(true);
       }
@@ -726,7 +726,7 @@ describe(marker, () => {
     expect(await $('[data-testid="remote-connection-minimized"]').isExisting()).toBe(false);
     await back();
     // Docker 使用独立远端环境；同一 Host 与前一来源串行验收。
-    const container = process.env.XCODE_E2E_SSH_CONTAINER;
+    const container = process.env.ZCODE_E2E_SSH_CONTAINER;
     if (!container) throw new Error("Dedicated Docker container is required");
     await browser.electron.execute((electron) =>
       electron.BrowserWindow.getAllWindows()
@@ -782,7 +782,7 @@ describe(marker, () => {
     ).toBe(true);
     expect((await directory()).entries).toHaveLength(1);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "background-docker-complete.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "background-docker-complete.png"),
     );
   });
 });

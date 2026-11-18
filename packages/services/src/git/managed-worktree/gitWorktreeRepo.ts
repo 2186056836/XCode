@@ -143,7 +143,7 @@ export function parseWorktreeListPorcelain(output: string): PorcelainWorktree[] 
 
 export function createGitWorktreeRepo(options: {
   commandProvider: GitCommandProvider;
-  /** 数据根目录（与 CLI 一致：XCODE_DATA_BASE_DIR 优先，否则 homedir）。 */
+  /** 数据根目录（与 CLI 一致：ZCODE_DATA_BASE_DIR 优先，否则 homedir）。 */
   dataBaseDir: () => string;
   platform?: NodeJS.Platform;
 }): GitWorktreeRepo {

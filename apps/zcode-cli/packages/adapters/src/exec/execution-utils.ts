@@ -4,8 +4,8 @@ import type { ExecutionRequest } from "@zcode/contracts";
 
 function resolveDataBaseDir(): string {
   return (
-    process.env.XCODE_DATA_BASE_DIR?.trim() ||
-    process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+    process.env.ZCODE_DATA_BASE_DIR?.trim() ||
+    process.env.ZCODE_DESKTOP_HOME_DIR?.trim() ||
     process.env.HOME?.trim() ||
     homedir()
   );
@@ -25,7 +25,7 @@ export const DEFAULT_PROGRESS_INTERVAL_MS = 1_000;
 export const DEFAULT_PROGRESS_TAIL_BYTES = 4 * 1024;
 
 export function resolveDefaultOutputRootDir(processEnv: NodeJS.ProcessEnv = process.env): string {
-  const storageRoot = processEnv.XCODE_STORAGE_DIR?.trim() || join(resolveDataBaseDir(), ".xcode");
+  const storageRoot = processEnv.ZCODE_STORAGE_DIR?.trim() || join(resolveDataBaseDir(), ".xcode");
   return join(storageRoot, "cli", "exec");
 }
 

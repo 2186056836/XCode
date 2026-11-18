@@ -39,7 +39,7 @@ describe("虚拟项目旧产品体验", () => {
     }));
     await writeFile(
       join(
-        process.env.XCODE_E2E_ARTIFACT_DIR!,
+        process.env.ZCODE_E2E_ARTIFACT_DIR!,
         `project-behavior-${this.currentTest?.title.replace(/[^a-z0-9]+/gi, "-")}.json`,
       ),
       JSON.stringify(
@@ -52,7 +52,7 @@ describe("虚拟项目旧产品体验", () => {
   before(async function () {
     this.timeout(60_000);
     await waitForWorkspaceApp(DEFAULT_WORKSPACE, 45_000);
-    const home = process.env.XCODE_E2E_HOME_DIR;
+    const home = process.env.ZCODE_E2E_HOME_DIR;
     if (
       !home ||
       ![".e2e-home-", "zcode-project-behavior-e2e-"].some((prefix) =>
@@ -253,7 +253,7 @@ describe("虚拟项目旧产品体验", () => {
           return window.__projectDeletionTrace!.orders;
         });
         await writeFile(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, `project-deletion-${entry}.json`),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `project-deletion-${entry}.json`),
           JSON.stringify(orders, null, 2),
         );
         const before = orders[0]!;
@@ -273,7 +273,7 @@ describe("虚拟项目旧产品体验", () => {
         await restartIntoWorkspacePreservingProfile(activeWorkspace, {
           afterElectronProcessExit: () => {
             const db = new DatabaseSync(
-              join(process.env.XCODE_E2E_HOME_DIR!, ".xcode/v2/tasks-index.sqlite"),
+              join(process.env.ZCODE_E2E_HOME_DIR!, ".xcode/v2/tasks-index.sqlite"),
             );
             try {
               db.prepare("UPDATE projects SET deleted=0 WHERE project_id=?").run(targetId);
@@ -296,7 +296,7 @@ describe("虚拟项目旧产品体验", () => {
       await restartIntoWorkspacePreservingProfile(activeWorkspace, {
         afterElectronProcessExit: () => {
           const db = new DatabaseSync(
-            join(process.env.XCODE_E2E_HOME_DIR!, ".xcode/v2/tasks-index.sqlite"),
+            join(process.env.ZCODE_E2E_HOME_DIR!, ".xcode/v2/tasks-index.sqlite"),
           );
           try {
             db.prepare("UPDATE tasks SET project_id=? WHERE task_id='e2e-behavior-6'").run(id);
@@ -379,7 +379,7 @@ describe("虚拟项目旧产品体验", () => {
         false,
       );
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "task-section-inset.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "task-section-inset.json"),
         JSON.stringify(layouts, null, 2),
       );
       for (const layout of layouts) {
@@ -506,7 +506,7 @@ describe("虚拟项目旧产品体验", () => {
     ).toBe(true);
     await assertDropIndicator("e2e-empty-b", "after");
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "project-insertion-pointer.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "project-insertion-pointer.png"),
     );
     await browser.performActions([
       {
@@ -545,7 +545,7 @@ describe("虚拟项目旧产品体验", () => {
     expect(await order()).toEqual(after);
     await $(rowSelector).$('[data-testid="virtual-project-toggle"]').click();
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "sidebar-regression.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "sidebar-regression.json"),
       JSON.stringify({ geometry, motion, before, pointerOrder, after }, null, 2),
     );
   });
@@ -646,7 +646,7 @@ describe("虚拟项目旧产品体验", () => {
       true,
     );
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "sidebar-view-icons.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "sidebar-view-icons.png"),
     );
     await $('[data-testid="sidebar-view-timeline"]').click();
     const timeline = $('[data-testid="project-timeline-tasks"]');
@@ -682,7 +682,7 @@ describe("虚拟项目旧产品体验", () => {
     ).toBe(true);
     expect(await timeline.$$("[data-timeline-date-heading]").length).toBe(2);
     const db = new DatabaseSync(
-      join(process.env.XCODE_E2E_HOME_DIR!, ".xcode/v2/tasks-index.sqlite"),
+      join(process.env.ZCODE_E2E_HOME_DIR!, ".xcode/v2/tasks-index.sqlite"),
     );
     let expected: string[];
     try {
@@ -725,10 +725,10 @@ describe("虚拟项目旧产品体验", () => {
     expect(await $('[data-testid="task-item-e2e-behavior-6"]').isExisting()).toBe(false);
     expect(await readNavigation()).toEqual(before);
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "sidebar-view.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "sidebar-view.json"),
       JSON.stringify({ before, expected, actual }, null, 2),
     );
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "sidebar-recent.png"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "sidebar-recent.png"));
     await captureLayouts(undefined, "sidebar-recent");
     await $('[data-testid="sidebar-view-menu"]').click();
     await $('[data-testid="sidebar-view-projects"]').click();
@@ -812,7 +812,7 @@ describe("虚拟项目旧产品体验", () => {
     const before = await readNavigation();
     const close = await sampleProjectMotion(false);
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "project-collapse-close.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "project-collapse-close.json"),
       JSON.stringify(close, null, 2),
     );
     expect(close.some((frame) => frame.height > 1 && frame.height < close[0]!.height - 1)).toBe(
@@ -831,7 +831,7 @@ describe("虚拟项目旧产品体验", () => {
     expect(await $(rowSelector).$$(taskSelector).length).toBe(5);
     expect(await readNavigation()).toEqual(before);
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "project-collapse-motion.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "project-collapse-motion.json"),
       JSON.stringify({ close, open, reverse }, null, 2),
     );
   });
@@ -907,7 +907,7 @@ describe("虚拟项目旧产品体验", () => {
   });
 
   it("VP31：41 个项目拖拽启动保持响应，取消不改顺序", async () => {
-    const home = process.env.XCODE_E2E_HOME_DIR!;
+    const home = process.env.ZCODE_E2E_HOME_DIR!;
     const db = new DatabaseSync(join(home, ".xcode/v2/tasks-index.sqlite"));
     try {
       const insert = db.prepare(
@@ -1011,7 +1011,7 @@ describe("虚拟项目旧产品体验", () => {
       return sample;
     });
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "project-drag-performance.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "project-drag-performance.json"),
       JSON.stringify({ projects: coords.order.length, ...sample }, null, 2),
     );
     expect(sample.gaps.length).toBeGreaterThan(5);
@@ -1139,7 +1139,7 @@ async function assertDropIndicator(project: string, edge: "before" | "after") {
     );
   });
   await writeFile(
-    join(process.env.XCODE_E2E_ARTIFACT_DIR!, "insertion-diagnostics.json"),
+    join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "insertion-diagnostics.json"),
     JSON.stringify(
       await browser.execute(() => ({
         width: innerWidth,
@@ -1294,7 +1294,7 @@ async function captureLayouts(
         expect(toolbar.inside).toBe(true);
         await browser.saveScreenshot(
           join(
-            process.env.XCODE_E2E_ARTIFACT_DIR!,
+            process.env.ZCODE_E2E_ARTIFACT_DIR!,
             `${prefix ?? (beforeCapture ? "project-insertion" : "project-behavior")}-${width}-${theme}.png`,
           ),
         );

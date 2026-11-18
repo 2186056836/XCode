@@ -27,7 +27,7 @@ The core rule is:
   workspace/system rollback are separate capabilities.
 - Do not infer recovery state from UI text. Recovery uses session events,
   message history, tool parts, and ledger records.
-- Do not add a new `XCODE_` environment variable for this feature without a
+- Do not add a new `ZCODE_` environment variable for this feature without a
   separate config spec. Initial rollout should use an existing capability gate or
   typed config/session option.
 

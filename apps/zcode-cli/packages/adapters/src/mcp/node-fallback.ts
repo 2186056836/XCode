@@ -11,8 +11,8 @@ import type { Logger } from "@zcode/contracts";
  * shim 内容是静态的，机器路径全部经由下面两个环境变量传入：AppImage 每次启动挂载点都不同，
  * 若把路径写进文件，每次启动都会产生新目录，且多个 app 版本会互相覆盖同一份 shim。
  */
-export const NODE_FALLBACK_EXEC_PATH_ENV_KEY = "XCODE_NODE_FALLBACK_EXEC_PATH";
-export const NODE_FALLBACK_NPM_ROOT_ENV_KEY = "XCODE_NODE_FALLBACK_NPM_ROOT";
+export const NODE_FALLBACK_EXEC_PATH_ENV_KEY = "ZCODE_NODE_FALLBACK_EXEC_PATH";
+export const NODE_FALLBACK_NPM_ROOT_ENV_KEY = "ZCODE_NODE_FALLBACK_NPM_ROOT";
 const NODE_FALLBACK_DIRECTORY_NAME = "node-fallback";
 /** shim 布局版本：shim 内容变化必须升级，保证正在执行的 shim 不会被改写成新内容。 */
 const NODE_FALLBACK_SHIM_LAYOUT = "v1";

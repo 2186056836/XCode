@@ -12,14 +12,14 @@ export type { WindowsRuntimeHost } from "#src/windows-runtime-host/contract.js";
 
 async function resolveHelper(): Promise<string> {
   const resources = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
-  const candidates = process.env.XCODE_RUNTIME_HOST_PATH
-    ? [process.env.XCODE_RUNTIME_HOST_PATH]
+  const candidates = process.env.ZCODE_RUNTIME_HOST_PATH
+    ? [process.env.ZCODE_RUNTIME_HOST_PATH]
     : [
         ...(resources ? [join(resources, "tools/runtime-host/zcode-runtime-host.exe")] : []),
-        ...(process.env.XCODE_SERVER_RUNTIME_ROOT
+        ...(process.env.ZCODE_SERVER_RUNTIME_ROOT
           ? [
               join(
-                process.env.XCODE_SERVER_RUNTIME_ROOT,
+                process.env.ZCODE_SERVER_RUNTIME_ROOT,
                 "tools/runtime-host/zcode-runtime-host.exe",
               ),
             ]

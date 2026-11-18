@@ -19,7 +19,7 @@ import {
 } from "#e2e/helpers/ssh-remote-p0";
 
 const CASE_MARKER = "E2E_R3_MOBILE_STARTUP_RESTORE";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-startup");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-startup");
 const CHROME =
   process.env.R3_MOBILE_CHROME?.trim() ||
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -48,7 +48,7 @@ async function onlineDevices(origin: string) {
 describe(`${CASE_MARKER}: 上次远控目标是 SSH 项目，重启时远端离线`, () => {
   it("AUTH-09-R: 远端离线时恢复设备连接，手机可配对，远端恢复后手机进入该项目，桌面弹窗沿用原连接", async function () {
     this.timeout(15 * 60_000);
-    const origin = process.env.XCODE_E2E_REMOTE_AUTH_GATE_URL;
+    const origin = process.env.ZCODE_E2E_REMOTE_AUTH_GATE_URL;
     if (!origin) throw new Error(`${CASE_MARKER}: 缺少 loopback relay fixture`);
     const container = readRemoteDockerContainer(CASE_MARKER);
     const config = readSSHRuntimeConfig(CASE_MARKER);

@@ -21,7 +21,7 @@ import type { EntitlementPresentation } from "#e2e/fixtures/entitlement-presenta
 
 const paths = getE2EAppDataPaths();
 const base = () => {
-  const value = process.env.XCODE_CODING_PLAN_TEAM_MOCK_BASE_URL;
+  const value = process.env.ZCODE_CODING_PLAN_TEAM_MOCK_BASE_URL;
   if (!value) throw new Error("missing business mock");
   return value;
 };
@@ -162,10 +162,10 @@ describe("套餐权益展示与购买入口", () => {
   afterEach(async function () {
     if (this.currentTest?.state === "failed") {
       console.log("[entitlement-presentation] visible page:", await $("body").getText());
-      if (process.env.XCODE_E2E_ARTIFACT_DIR)
+      if (process.env.ZCODE_E2E_ARTIFACT_DIR)
         await browser.saveScreenshot(
           join(
-            process.env.XCODE_E2E_ARTIFACT_DIR,
+            process.env.ZCODE_E2E_ARTIFACT_DIR,
             `${this.currentTest.title.replace(/[^a-zA-Z0-9-]/g, "_")}.png`,
           ),
         );

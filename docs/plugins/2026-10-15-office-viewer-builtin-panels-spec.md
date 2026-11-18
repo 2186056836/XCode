@@ -144,7 +144,7 @@ Chrome / Skia 打印出的 PDF 常把部分汉字的 ToUnicode 写成部首兼�
 ### 8.1 宿主
 
 - 插件 manifest 的 stdio / http MCP server 可声明 `"isolation": "workspace"`。插件 MCP 解析（`adapters/src/plugins/mcp.ts`）只对官方市场（`zcode-plugins-official`）插件透传该字段；其他插件的声明被忽略，保持 session isolation（`docs/mcp-platform-boundary.md`）。
-- 连接池沿用 node_repl 的共享规则：键为 server 名 + workspaceKey + 解析后的配置（`adapters/src/mcp/pool.ts`），每个 session 持有一个 lease，最后一个 lease 释放后按既有 grace 关闭。`${XCODE_PROJECT_DIR}` 不同的 session 配置不同，仍各起一份。
+- 连接池沿用 node_repl 的共享规则：键为 server 名 + workspaceKey + 解析后的配置（`adapters/src/mcp/pool.ts`），每个 session 持有一个 lease，最后一个 lease 释放后按既有 grace 关闭。`${ZCODE_PROJECT_DIR}` 不同的 session 配置不同，仍各起一份。
 - 官方插件运行时 manifest 重写（`official-plugin-runtime.ts`）保留 `isolation`。
 - 四个插件升版（0.2.1，pdf 0.2.2）：同版本缓存目录里的旧 `dist/server.mjs` 不区分 session，不能在新 manifest 下被共享。
 

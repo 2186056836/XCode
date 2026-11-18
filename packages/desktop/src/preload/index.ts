@@ -37,7 +37,7 @@ function parseDeviceIdFromArgs(): string {
 }
 
 // 在 contextBridge 建立之前就暴露同步值，让 renderer 在 React 渲染前就能读到
-contextBridge.exposeInMainWorld("__XCODE_DEVICE_ID__", parseDeviceIdFromArgs());
+contextBridge.exposeInMainWorld("__ZCODE_DEVICE_ID__", parseDeviceIdFromArgs());
 
 import type {
   AppSettings,

@@ -22,11 +22,11 @@ const { environment: zcodeEnv, content: zcodeBuiltinProviderConfigJson } =
   await loadBuiltinProviderConfig();
 
 export const SERVER_HTTP_DEFINES = {
-  __XCODE_VERSION__: JSON.stringify(version),
+  __ZCODE_VERSION__: JSON.stringify(version),
   // 兼容版本下限沿用 Z 形态宏名：shared/src/source-server/compatibility.ts 声明的就是 __ZCODE_MIN_COMPATIBLE_VERSION__。
   __ZCODE_MIN_COMPATIBLE_VERSION__: JSON.stringify(minCompatibleVersion),
-  __XCODE_ENV__: JSON.stringify(zcodeEnv),
-  __XCODE_BUILTIN_PROVIDER_CONFIG_JSON__: JSON.stringify(zcodeBuiltinProviderConfigJson),
+  __ZCODE_ENV__: JSON.stringify(zcodeEnv),
+  __ZCODE_BUILTIN_PROVIDER_CONFIG_JSON__: JSON.stringify(zcodeBuiltinProviderConfigJson),
 };
 
 function createSharedDefines() {

@@ -129,7 +129,7 @@ export const readRootPackageVersion = async ({ root = projectRoot } = {}) => {
 
 export const resolveBuildOptions = (args = [], env = process.env) => {
   const desktopAgent = args.includes(desktopAgentBuildFlag);
-  const e2eCoverage = env.XCODE_E2E_COVERAGE === "1";
+  const e2eCoverage = env.ZCODE_E2E_COVERAGE === "1";
 
   return {
     // desktop-agent 正常发布仍需压缩且不携带 map；E2E coverage

@@ -69,14 +69,14 @@ test endpoint:       wss://zcode.z.ai/api/v1/remote/ws2
 local/custom:        ws://localhost:3030/api/v1/remote/ws2
 ```
 
-`XCODE_WEB_REMOTE_CONTROL_RELAY_WS_URL` 仍是桌面 relay 的最高优先级显式调试覆盖，必须指向 V2
+`ZCODE_WEB_REMOTE_CONTROL_RELAY_WS_URL` 仍是桌面 relay 的最高优先级显式调试覆盖，必须指向 V2
 入口。没有覆盖时，localhost/custom endpoint 同样从各自 origin 推导 relay。当前桌面版本生成
-`/remote/v4` 二维码；`XCODE_WEB_REMOTE_CONTROL_URL` 用于显式调试覆盖。
+`/remote/v4` 二维码；`ZCODE_WEB_REMOTE_CONTROL_URL` 用于显式调试覆盖。
 
 开发时可以把手机页指向本地 web：
 
 ```bash
-XCODE_WEB_REMOTE_CONTROL_URL=http://localhost:5173/remote/v4 \
+ZCODE_WEB_REMOTE_CONTROL_URL=http://localhost:5173/remote/v4 \
 pnpm dev:web-remote-control
 ```
 

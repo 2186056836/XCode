@@ -114,7 +114,7 @@ async function measureAddingForm() {
 }
 
 async function captureAddingForms(kind: string) {
-  const artifacts = resolve(process.env.XCODE_E2E_ARTIFACT_DIR!);
+  const artifacts = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR!);
   await mkdir(artifacts, { recursive: true });
   for (const locale of ["zh-CN", "en-US"]) {
     for (const theme of ["light", "dark"]) {
@@ -309,9 +309,9 @@ describe(`${marker}: 设置内连接独立完成`, () => {
   it("RDUX15-10/18/21 SSH 添加、普通重连与在线复用、Docker 添加保持设置和项目数量", async function () {
     this.timeout(15 * 60_000);
     const config = readSSHRuntimeConfig(marker);
-    const container = process.env.XCODE_E2E_SSH_CONTAINER;
-    if (!container) throw new Error(`${marker}: XCODE_E2E_SSH_CONTAINER required`);
-    const home = process.env.XCODE_E2E_HOME_DIR;
+    const container = process.env.ZCODE_E2E_SSH_CONTAINER;
+    if (!container) throw new Error(`${marker}: ZCODE_E2E_SSH_CONTAINER required`);
+    const home = process.env.ZCODE_E2E_HOME_DIR;
     if (!home) throw new Error("isolated E2E home required");
     await mkdir(resolve(home, ".ssh"), { recursive: true });
     await writeFile(
@@ -510,7 +510,7 @@ describe(`${marker}: 设置内连接独立完成`, () => {
       async () => !(await $("body").getText()).includes("已直接使用现有连接"),
       { timeout: 15_000, timeoutMsg: "复用提示未收起" },
     );
-    const artifacts = resolve(process.env.XCODE_E2E_ARTIFACT_DIR!);
+    const artifacts = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR!);
     await mkdir(artifacts, { recursive: true });
     for (const locale of ["zh-CN", "en-US"]) {
       for (const theme of ["light", "dark"]) {
@@ -681,7 +681,7 @@ describe(`${marker}: 设置内连接独立完成`, () => {
       TID_SSH_USERNAME_INPUT,
     );
     await browser.saveScreenshot(
-      resolve(process.env.XCODE_E2E_ARTIFACT_DIR!, "edit-host-validation-focus.png"),
+      resolve(process.env.ZCODE_E2E_ARTIFACT_DIR!, "edit-host-validation-focus.png"),
     );
 
     // 恢复真实线路，保存成功后弹窗关闭。

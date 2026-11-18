@@ -37,7 +37,7 @@ export async function createWebRemoteVisibilityBrowser(
 ) {
   const caseMarker = options.caseMarker ?? "MRO03";
   const executablePath =
-    process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE || process.env.R3_MOBILE_CHROME;
+    process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE || process.env.R3_MOBILE_CHROME;
   const chrome = await chromium.launch({
     ...(executablePath ? { executablePath } : { channel: "chrome" }),
     headless: false,

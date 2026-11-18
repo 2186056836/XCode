@@ -405,7 +405,7 @@ interface ManagedWorktreeCreation {
     <仓库名>/                    linked worktree，`.git` 是一个文件
 ```
 
-- 数据根目录与 Host、CLI 一致：`XCODE_DATA_BASE_DIR` 优先，否则 homedir。bucket 只有 4 位，用来控制 Windows 路径长度。
+- 数据根目录与 Host、CLI 一致：`ZCODE_DATA_BASE_DIR` 优先，否则 homedir。bucket 只有 4 位，用来控制 Windows 路径长度。
 - 受管判定：路径符合两级布局；出现在源仓库的 `git worktree list --porcelain` 中；`.git` 是文件且 `git rev-parse --git-common-dir` 指向源仓库。不满足的条目不显示，也不允许删除。
 - 项目主目录可能是仓库的子目录（monorepo）。worktree 总是检出整个仓库，任务 cwd 取 `<worktree 根>/<主目录相对仓库 toplevel 的路径>`。起点中没有这个子目录时，创建失败（`start-ref-missing-subdir`）。
 
@@ -701,7 +701,7 @@ forkAssistant: {
 
 ## 12. 验收场景
 
-桌面 E2E：`packages/desktop/test/e2e/git/worktrees/manual-review/pending/git-managed-worktree.test.ts` 覆盖 WT-01、WT-05、WT-08、WT-09、WT-29、WT-30、WT-34、WT-35，状态为 manual-review 待人工评审，评审后按 `e2e-case-lifecycle` 转正。回放命令：`XCODE_E2E_MANUAL_REVIEW=1 E2E_PROVIDER_HTTP_MODE=replay E2E_PROVIDER_REPLAY_FIXTURE_PATH=packages/desktop/test/e2e/fixtures/upstream/git/managed-worktree.json pnpm --filter @zcode/desktop test:e2e -- --spec './test/e2e/git/worktrees/manual-review/pending/git-managed-worktree.test.ts'`；fixture 是合成的固定回复，用例不依赖模型内容。2026-11-04 macOS 回放 4/4 通过。其余场景尚无桌面 E2E；WT-31 / WT-32 的竞态只有 CLI 侧 `session/releaseUnderDirectory` 的独立测试，Host 租约未做并发 E2E。CLI 侧另有独立测试（会话 cwd、历史标记、fork 到 cwd、冷恢复、sessions-index、权限与记忆派生）。WT-36 / WT-37 / WT-38 由 CLI 集成测试 `apps/zcode-cli/packages/bootstrap/tests/v4-worktree-cwd.test.ts` 覆盖（WT-36 只在大小写不敏感的文件系统上执行）；WT-39 由 CLI 的 `official-mcp-auth-port`、`mcp-connection-pool`、`mcp-tool-bridge` 测试覆盖会话 key 的传递，Host 注入 workspace 的一侧没有自动化测试；这四项都没有桌面 E2E。未实跑 Windows / Linux，未做深浅主题视觉验收。
+桌面 E2E：`packages/desktop/test/e2e/git/worktrees/manual-review/pending/git-managed-worktree.test.ts` 覆盖 WT-01、WT-05、WT-08、WT-09、WT-29、WT-30、WT-34、WT-35，状态为 manual-review 待人工评审，评审后按 `e2e-case-lifecycle` 转正。回放命令：`ZCODE_E2E_MANUAL_REVIEW=1 E2E_PROVIDER_HTTP_MODE=replay E2E_PROVIDER_REPLAY_FIXTURE_PATH=packages/desktop/test/e2e/fixtures/upstream/git/managed-worktree.json pnpm --filter @zcode/desktop test:e2e -- --spec './test/e2e/git/worktrees/manual-review/pending/git-managed-worktree.test.ts'`；fixture 是合成的固定回复，用例不依赖模型内容。2026-11-04 macOS 回放 4/4 通过。其余场景尚无桌面 E2E；WT-31 / WT-32 的竞态只有 CLI 侧 `session/releaseUnderDirectory` 的独立测试，Host 租约未做并发 E2E。CLI 侧另有独立测试（会话 cwd、历史标记、fork 到 cwd、冷恢复、sessions-index、权限与记忆派生）。WT-36 / WT-37 / WT-38 由 CLI 集成测试 `apps/zcode-cli/packages/bootstrap/tests/v4-worktree-cwd.test.ts` 覆盖（WT-36 只在大小写不敏感的文件系统上执行）；WT-39 由 CLI 的 `official-mcp-auth-port`、`mcp-connection-pool`、`mcp-tool-bridge` 测试覆盖会话 key 的传递，Host 注入 workspace 的一侧没有自动化测试；这四项都没有桌面 E2E。未实跑 Windows / Linux，未做深浅主题视觉验收。
 
 | ID    | 场景                                                                | 预期                                                                                                              |
 | ----- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |

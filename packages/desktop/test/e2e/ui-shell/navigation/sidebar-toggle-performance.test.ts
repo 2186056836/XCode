@@ -9,9 +9,9 @@ import { clearRendererViewport, setRendererViewport } from "#e2e/helpers/rendere
 const leftToggle = 'button[aria-label="切换侧边栏"], button[aria-label="Toggle sidebar"]';
 const rightToggle = '[data-testid="side-pane-toggle"]';
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/sidebar-performance",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/sidebar-performance",
 );
-const recordOnly = process.env.XCODE_SIDEBAR_PERF_RECORD_ONLY === "1";
+const recordOnly = process.env.ZCODE_SIDEBAR_PERF_RECORD_ONLY === "1";
 
 describe("STF 左右侧栏开关布局性能", () => {
   before(async () => {
@@ -296,7 +296,7 @@ describe("STF 左右侧栏开关布局性能", () => {
       await click(rightToggle);
       // 录屏与采样分开，避免 capturePage 的开销进入性能数字。
       const recording =
-        process.env.XCODE_E2E_RECORD_SIDEBARS === "1"
+        process.env.ZCODE_E2E_RECORD_SIDEBARS === "1"
           ? await startElectronWindowRecording({
               outputPath: join(artifactDir, `sidebar-motion-${theme}.webm`),
               frameIntervalMs: 16,

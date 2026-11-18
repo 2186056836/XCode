@@ -7560,9 +7560,9 @@ const koKR: Record<string, string> = {
     "현재 이미지 첨부 파일이 너무 큽니다. 이미지를 제거하거나 압축한 후 다시 시도하세요.",
   "zcode.error.MEDIA_BUDGET_CURRENT_VIDEO_TOO_LARGE":
     "현재 동영상 첨부 파일이 너무 큽니다. 동영상을 제거하거나 압축한 후 다시 시도하세요.",
-  "zcode.error.XCODE_RUNTIME_MODEL_UNAVAILABLE":
+  "zcode.error.ZCODE_RUNTIME_MODEL_UNAVAILABLE":
     "현재 모델을 더 이상 사용할 수 없습니다. 계속하려면 현재 모델 목록에서 사용 가능한 모델을 선택하세요.",
-  "zcode.error.XCODE_BIGMODEL_TEAM_PLAN_MEMBER_REQUIRED":
+  "zcode.error.ZCODE_BIGMODEL_TEAM_PLAN_MEMBER_REQUIRED":
     "현재 모델을 사용할 수 없습니다. 현재 계정이 프로젝트 구성원 목록에 추가되었는지 확인하세요.",
   "zcode.error.CLAUDE_UNKNOWN_COMMAND":
     "Claude Code가 {command}을(를) 인식하지 못합니다. 명령 이름을 확인하거나, 이를 지원하는 에이전트/스킬로 전환한 후 다시 시도하세요.",

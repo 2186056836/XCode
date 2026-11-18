@@ -111,7 +111,7 @@ async function setMemory(enabled: boolean, read: () => Promise<boolean>): Promis
 }
 
 async function captureLayouts(): Promise<void> {
-  const root = process.env.XCODE_E2E_ARTIFACT_DIR;
+  const root = process.env.ZCODE_E2E_ARTIFACT_DIR;
   if (!root) throw new Error(`${CASE_MARKER}: 缺少工件目录`);
   const dir = resolve(root, "memory-devices");
   await mkdir(dir, { recursive: true });

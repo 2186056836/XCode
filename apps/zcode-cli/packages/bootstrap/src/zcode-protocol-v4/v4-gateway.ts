@@ -86,7 +86,7 @@ import type {
 import {
   DELIVERY_PROFILES,
   PROTOCOL_V4_LIMITS,
-  XCODE_ATTACHMENT_FAULT_CODES,
+  ZCODE_ATTACHMENT_FAULT_CODES,
   XCodeAttachmentFaultError,
   readXCodeAttachmentFaultCode,
   encodeTopicWireFrames,
@@ -612,7 +612,7 @@ const MISSING_ATTACHMENT_FS_CODES = new Set<FileSystemErrorCode>([
 function toShareStatFault(error: unknown): unknown {
   if (readXCodeAttachmentFaultCode(error)) return error;
   if (isFileSystemPortError(error) && MISSING_ATTACHMENT_FS_CODES.has(error.code)) {
-    return new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.shareStatNotFound, {
+    return new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.shareStatNotFound, {
       cause: error,
     });
   }
@@ -2302,7 +2302,7 @@ export class ConversationV4Gateway {
   ): Promise<V4ConversationAttachmentReadResult> {
     const params = v4ConversationAttachmentReadParamsSchema.parse(rawParams);
     if (!this.host.readSessionAttachment) {
-      throw new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.readUnsupported);
+      throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.readUnsupported);
     }
     const existingReady = this.readyFlights.get(params.sessionId);
     const publisher = existingReady
@@ -2317,11 +2317,11 @@ export class ConversationV4Gateway {
           candidate.rowId === params.target.rowId && candidate.entityId === params.target.entityId,
       );
     if (row?.kind !== "userInput") {
-      throw new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.shareReadNotAuthorized);
+      throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.shareReadNotAuthorized);
     }
     const attachment = row.attachments?.[params.attachmentIndex];
     if (!attachment || (attachment.ref !== params.ref && attachment.previewRef !== params.ref)) {
-      throw new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.shareReadNotAuthorized);
+      throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.shareReadNotAuthorized);
     }
     const messageId = publisher.getMessageIdForRow(row.rowId) ?? undefined;
     let payload: { bytes: Uint8Array; mediaType: string };
@@ -2355,7 +2355,7 @@ export class ConversationV4Gateway {
   ): Promise<V4ConversationAttachmentStatResult> {
     const params = v4ConversationAttachmentStatParamsSchema.parse(rawParams);
     if (!this.host.statSessionAttachment) {
-      throw new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.statUnsupported);
+      throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.statUnsupported);
     }
     const existingReady = this.readyFlights.get(params.sessionId);
     const publisher = existingReady
@@ -2370,11 +2370,11 @@ export class ConversationV4Gateway {
           candidate.rowId === params.target.rowId && candidate.entityId === params.target.entityId,
       );
     if (row?.kind !== "userInput") {
-      throw new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.shareStatNotAuthorized);
+      throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.shareStatNotAuthorized);
     }
     const attachment = row.attachments?.[params.attachmentIndex];
     if (!attachment || (attachment.ref !== params.ref && attachment.previewRef !== params.ref)) {
-      throw new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.shareStatNotAuthorized);
+      throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.shareStatNotAuthorized);
     }
     const messageId = publisher.getMessageIdForRow(row.rowId) ?? undefined;
     let result: { totalBytes: number; mediaType: string; mtimeMs?: number };
@@ -2394,7 +2394,7 @@ export class ConversationV4Gateway {
     // 于是 share 预检把「已知容量超限」这个确定阻断降级成 deferred 并静默丢内容。
     // 上限放宽后仍需要一个显式出口：真的超过协议可表达范围时给出稳定码。
     if (result.totalBytes > PROTOCOL_V4_LIMITS.attachmentStatMaxBytes) {
-      throw new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.shareStatTooLarge);
+      throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.shareStatTooLarge);
     }
     return v4ConversationAttachmentStatResultSchema.parse(result);
   }
@@ -2563,10 +2563,10 @@ export class ConversationV4Gateway {
             mime.split(";", 1)[0]?.trim().toLowerCase() === "text/plain"
           )
         ) {
-          throw new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.previewNotMedia);
+          throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.previewNotMedia);
         }
         if (result.bytes.byteLength > maxBytes) {
-          throw new XCodeAttachmentFaultError(XCODE_ATTACHMENT_FAULT_CODES.previewTooLarge);
+          throw new XCodeAttachmentFaultError(ZCODE_ATTACHMENT_FAULT_CODES.previewTooLarge);
         }
         const current = this.binaryReadCache.get(key);
         if (current) {

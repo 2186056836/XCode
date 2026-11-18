@@ -210,7 +210,7 @@ async function waitForAnswerBubble(text: string) {
 }
 
 async function saveThemeScreenshots(name: string) {
-  const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+  const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
   if (!artifactDir) return;
   for (const theme of ["zai-light", "zai-dark"]) {
     await browser.execute((value) => {

@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { connect } from "node:net";
 
-// 远端容器操作 helper：本机 Docker runner 与服务器 runner 都注入 XCODE_E2E_SSH_CONTAINER，
+// 远端容器操作 helper：本机 Docker runner 与服务器 runner 都注入 ZCODE_E2E_SSH_CONTAINER，
 // 用例用这些 helper 读写容器内文件、注入权限故障、模拟设备离线/恢复，不区分运行宿主。
 // 默认以 dev 用户执行（远端 zcode-server 的运行用户），这样权限故障对产品真实生效。
 
@@ -19,10 +19,10 @@ export interface RemoteContainerExecResult {
 
 /** 读取 runner 注入的容器名；缺失时说明需要用本机 Docker runner 或服务器队列运行。 */
 export function readRemoteDockerContainer(caseMarker: string): string {
-  const container = process.env.XCODE_E2E_SSH_CONTAINER?.trim();
+  const container = process.env.ZCODE_E2E_SSH_CONTAINER?.trim();
   if (!container) {
     throw new Error(
-      `${caseMarker}: 缺少 XCODE_E2E_SSH_CONTAINER；请用本机 Docker 远端 runner 或服务器队列运行`,
+      `${caseMarker}: 缺少 ZCODE_E2E_SSH_CONTAINER；请用本机 Docker 远端 runner 或服务器队列运行`,
     );
   }
   return container;
@@ -129,7 +129,7 @@ export async function takeRemoteDeviceOffline(container: string): Promise<void> 
 
 /**
  * 让设备恢复：启动容器并等待 sshd 发出握手横幅。runner 把端口固定写进 -p，
- * 容器 stop/start 后主机端口不变，用例可以继续使用原来的 XCODE_E2E_SSH_PORT。
+ * 容器 stop/start 后主机端口不变，用例可以继续使用原来的 ZCODE_E2E_SSH_PORT。
  */
 export async function bringRemoteDeviceOnline(
   container: string,

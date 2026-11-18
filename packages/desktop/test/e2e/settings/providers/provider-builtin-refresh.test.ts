@@ -67,7 +67,7 @@ describe("Todo127 Built-in 设置刷新整链", () => {
       await mkdir(root, { recursive: true });
       // afterSession 会清理隔离工作区，验收证据必须写到报告目录。
       const artifacts = join(
-        process.env.XCODE_E2E_ARTIFACT_DIR || join(process.cwd(), ".e2e-artifacts"),
+        process.env.ZCODE_E2E_ARTIFACT_DIR || join(process.cwd(), ".e2e-artifacts"),
         "provider-builtin-refresh",
       );
       await mkdir(artifacts, { recursive: true });

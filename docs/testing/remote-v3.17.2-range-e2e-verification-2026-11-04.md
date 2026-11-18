@@ -38,7 +38,7 @@
 | `09a44a38e14` `76b5538e4d5` `aa8136c1cfa` | DSYNC-09-01～05 | 5/5 通过（`local-docker-20261104160910-361164`） |
 | `7cd54617545` | AUTH-09 | 通过（`desktop-e2e-20261104162730712-p89168-8767adab241ff745`） |
 | `d8ffd0558c8` `7e61900cab3` | AUTH-09-R（离线 SSH 目标、手机、第 6 步弹窗） | 通过（`local-docker-20261104160911-648172`） |
-| `142faf84612` `754f846c4e9` `06850cdb772` `bdf273ccd19` | MRO04 远端终端（`XCODE_E2E_MRO04_REMOTE=1`） | 2/2 通过（`local-docker-20261104172748-c238d7`） |
+| `142faf84612` `754f846c4e9` `06850cdb772` `bdf273ccd19` | MRO04 远端终端（`ZCODE_E2E_MRO04_REMOTE=1`） | 2/2 通过（`local-docker-20261104172748-c238d7`） |
 | `b9ab416d23d` | status panel、v4 scroll、held queue | 通过（`desktop-e2e-20261104-160020-550`） |
 | `8237935aa07` `ab66f1db2a3` `351e5a523a2` | 设置页窄屏、usage 图表、供应商标题 | US-AU-01～05、UP-00～02、MP-UI-01～05 通过（同上）；390px 截图正常 |
 | `613750fb786` | `e2eConversationPreparation.test.ts` | 8/8 通过 |
@@ -80,7 +80,7 @@
 2. **并发 runner 共用模型回放抓包目录**（`harness/remote/local-docker.mjs`）
    - 现象：R3A-UPG-03/04 与 R3A-BLD-11 报“首发没有到达 provider”。抓包记录里出现了其他运行的 fixture（`ssh-cold-reconnect-*`、`r3-restart-remote-service-*`）。
    - 原因：wdio 默认把 `upstream-runtime.json`、`upstream-provider.json` 写到固定的 `.e2e-network-capture`，并发运行会互相覆盖。
-   - 修改：按 runId 设置 `XCODE_E2E_NETWORK_CAPTURE_DIR`。先补回归测试（red 后 green），再并发重跑两个用例，均通过。
+   - 修改：按 runId 设置 `ZCODE_E2E_NETWORK_CAPTURE_DIR`。先补回归测试（red 后 green），再并发重跑两个用例，均通过。
 3. **两份手机 fixture 互相抢匹配**（`conversation-session-r3-mobile.json`）
    - 原因：r3-mobile 的宽匹配 `E2E_R3_MOBILE_` 也会命中 `E2E_R3_MOBILE_PERMISSION_*` 请求，同一次运行时 R3A-MOB-01 与 R3A-MOB-04 都失败。
    - 修改：在 title/main 两条宽匹配中排除 permission 标记。修改后两份 spec 同一次运行 3/3 通过。

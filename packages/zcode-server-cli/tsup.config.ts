@@ -17,10 +17,10 @@ const { loadBuiltinProviderConfig } = await import(
 const { content: zcodeBuiltinProviderConfigJson } = await loadBuiltinProviderConfig();
 
 export const SERVER_CLI_DEFINES = {
-  __XCODE_VERSION__: JSON.stringify(rootPackageJson.version),
+  __ZCODE_VERSION__: JSON.stringify(rootPackageJson.version),
   // 兼容版本下限沿用 Z 形态宏名：shared/src/source-server/compatibility.ts 声明的就是 __ZCODE_MIN_COMPATIBLE_VERSION__。
   __ZCODE_MIN_COMPATIBLE_VERSION__: JSON.stringify(minCompatibleVersion),
-  __XCODE_BUILTIN_PROVIDER_CONFIG_JSON__: JSON.stringify(zcodeBuiltinProviderConfigJson),
+  __ZCODE_BUILTIN_PROVIDER_CONFIG_JSON__: JSON.stringify(zcodeBuiltinProviderConfigJson),
 };
 
 export default defineConfig({

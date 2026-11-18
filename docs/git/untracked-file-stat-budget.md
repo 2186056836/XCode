@@ -55,7 +55,7 @@ CommandInbox、owner、snapshot、desktop continuous 或 mobile replayable 链�
 资源回归独立运行命令：
 
 ```bash
-XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts \
+ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop exec wdio run wdio.conf.ts \
   --spec ./test/e2e/conversation-session/projects/conversation-session-git-review-entry.test.ts \
   --mochaOpts.grep 'Git 自动刷新'
 ```

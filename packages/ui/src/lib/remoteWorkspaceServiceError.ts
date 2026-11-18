@@ -1,5 +1,5 @@
 import { isPublicXCodeErrorCode } from "@zcode/shared";
-export const REMOTE_WORKSPACE_DISCONNECTED_ERROR_CODE = "XCODE_REMOTE_WORKSPACE_DISCONNECTED";
+export const REMOTE_WORKSPACE_DISCONNECTED_ERROR_CODE = "ZCODE_REMOTE_WORKSPACE_DISCONNECTED";
 
 export function createRemoteWorkspaceDisconnectedError(): Error & {
   code: typeof REMOTE_WORKSPACE_DISCONNECTED_ERROR_CODE;

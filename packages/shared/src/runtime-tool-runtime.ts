@@ -22,17 +22,17 @@ function resolvePlatformBinaryName(binaryName: string, platform: string): string
 
 export const RUNTIME_TOOL_RUNTIME: Record<RuntimeToolId, RuntimeToolRuntimeDescriptor> = {
   bfs: {
-    binaryEnvVar: "XCODE_BFS_BINARY",
+    binaryEnvVar: "ZCODE_BFS_BINARY",
     bundledResourceDir: "bfs",
     resolveEntrySegments: (platform) => [resolvePlatformBinaryName("bfs", platform)],
   },
   ripgrep: {
-    binaryEnvVar: "XCODE_RG_BINARY",
+    binaryEnvVar: "ZCODE_RG_BINARY",
     bundledResourceDir: "ripgrep",
     resolveEntrySegments: (platform) => [resolvePlatformBinaryName("rg", platform)],
   },
   ugrep: {
-    binaryEnvVar: "XCODE_UGREP_BINARY",
+    binaryEnvVar: "ZCODE_UGREP_BINARY",
     bundledResourceDir: "ugrep",
     resolveEntrySegments: (platform) => [resolvePlatformBinaryName("ugrep", platform)],
   },

@@ -1,7 +1,7 @@
 import { delimiter, dirname } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UnauthorizedError } from "@modelcontextprotocol/client";
-import { XCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY } from "@zcode/shared";
+import { ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY } from "@zcode/shared";
 import type { SharedXCodeCredentialStore } from "../src/auth/shared-credentials.js";
 
 const {
@@ -1043,7 +1043,7 @@ describe("createMcpAdapter", () => {
     const adapter = createMcpAdapter({
       env: {
         PATH: dirname(process.execPath),
-        XCODE_AGENT_CA_CERT: "/tmp/root-ca.pem",
+        ZCODE_AGENT_CA_CERT: "/tmp/root-ca.pem",
       },
       network: {
         httpProxy: "127.0.0.1:8888",
@@ -1083,7 +1083,7 @@ describe("createMcpAdapter", () => {
   it("appends the injected node fallback after the server env", async () => {
     const resolve = vi.fn(async () => ({
       binDir: "/fallback/bin",
-      env: { XCODE_NODE_FALLBACK_EXEC_PATH: "/electron" },
+      env: { ZCODE_NODE_FALLBACK_EXEC_PATH: "/electron" },
     }));
     const adapter = createMcpAdapter({
       env: { PATH: dirname(process.execPath) },
@@ -1099,14 +1099,14 @@ describe("createMcpAdapter", () => {
 
     const options = capturedStdioOptions[0] as { env?: Record<string, string> };
     expect(options.env?.PATH).toBe(["/plugin/bin", "/fallback/bin"].join(delimiter));
-    expect(options.env?.XCODE_NODE_FALLBACK_EXEC_PATH).toBe("/electron");
+    expect(options.env?.ZCODE_NODE_FALLBACK_EXEC_PATH).toBe("/electron");
     expect(resolve).toHaveBeenCalledTimes(1);
   });
 
   it("restores captured user network env into stdio MCP transports", async () => {
     const adapter = createMcpAdapter({
       env: {
-        [XCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY]: JSON.stringify({
+        [ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY]: JSON.stringify({
           NODE_EXTRA_CA_CERTS: "/tmp/user-ca.pem",
           http_proxy: "http://user-proxy:8080",
         }),
@@ -1126,13 +1126,13 @@ describe("createMcpAdapter", () => {
       PATH: dirname(process.execPath),
       http_proxy: "http://user-proxy:8080",
     });
-    expect(options.env?.[XCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY]).toBeUndefined();
+    expect(options.env?.[ZCODE_TOOL_ENV_PASSTHROUGH_ENV_KEY]).toBeUndefined();
   });
 
   it("passes proxy-aware fetch into HTTP and SSE MCP transports", async () => {
     const adapter = createMcpAdapter({
       env: {
-        XCODE_HTTP_PROXY: "http://127.0.0.1:8888",
+        ZCODE_HTTP_PROXY: "http://127.0.0.1:8888",
       },
       network: {},
     });

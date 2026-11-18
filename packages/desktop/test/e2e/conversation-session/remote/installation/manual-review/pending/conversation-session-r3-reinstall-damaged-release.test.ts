@@ -24,7 +24,7 @@ import { prepareV4ConversationE2E } from "#e2e/helpers/v4-conversation";
 
 const CASE_MARKER = "E2E_R3_REINSTALL_DAMAGED_RELEASE";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-reinstall-damaged-release",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-reinstall-damaged-release",
 );
 // 重装要上传完整 archive 再启动远端服务；本机 Docker 远端通常一分钟内完成，留足余量。
 const REINSTALL_TIMEOUT_MS = 5 * 60_000;
@@ -118,7 +118,7 @@ async function setTheme(theme: "light" | "dark"): Promise<void> {
 
 /** 深浅主题截图，供人工复核新入口在错误面板与菜单中的可辨识度；结束后恢复浅色。 */
 async function captureThemeScreenshots(name: string): Promise<void> {
-  const root = process.env.XCODE_E2E_ARTIFACT_DIR?.trim();
+  const root = process.env.ZCODE_E2E_ARTIFACT_DIR?.trim();
   if (!root) return;
   const dir = resolve(root, "r3-reinstall-damaged-release");
   await mkdir(dir, { recursive: true });

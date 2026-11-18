@@ -64,7 +64,7 @@ const PROMPTS = {
 } as const;
 const QUESTION = "E2E_P3E_ASK_QUESTION: which answer?";
 const ANSWER = "E2E_P3E_ANSWER_B";
-const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd();
+const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd();
 
 interface Op {
   name: string;

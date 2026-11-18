@@ -18,7 +18,7 @@ vi.mock("../../../scripts/intranetDefaults.mjs", async (importOriginal) => {
     ...actual,
     resolveIntranetDepsBaseUrl: (env?: NodeJS.ProcessEnv) => {
       if (!mocks.intranetConfigured) {
-        throw new Error("Configure XCODE_DEPS_BASE_URL or INTRANET_MACHINE_HOST");
+        throw new Error("Configure ZCODE_DEPS_BASE_URL or INTRANET_MACHINE_HOST");
       }
       return resolveActual({ INTRANET_MACHINE_HOST: "intranet-deps.example", ...env });
     },

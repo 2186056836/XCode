@@ -9,9 +9,9 @@ import type {
 } from "@zcode/shared";
 import {
   buildRuntimeXCodeApiUrl,
-  XCODE_BUILD_TIME,
-  XCODE_COMMIT,
-  XCODE_VERSION,
+  ZCODE_BUILD_TIME,
+  ZCODE_COMMIT,
+  ZCODE_VERSION,
 } from "@zcode/shared";
 import { Emitter } from "@zcode/rpc";
 import { arch, platform, release, type as osType } from "node:os";
@@ -27,7 +27,7 @@ import {
 import { cleanupLogArchive, prepareCompactLogArchive } from "./compactLogArchive.js";
 import { getFeedbackAttachmentDir } from "../paths.js";
 
-const XCODE_JWT_TOKEN_KEY = "zcodejwttoken";
+const ZCODE_JWT_TOKEN_KEY = "zcodejwttoken";
 const FEEDBACK_ACCESS_TOKEN_KEY = "zcodefeedbackaccesstoken";
 
 export interface CreateFeedbackServiceOptions {
@@ -61,16 +61,16 @@ function anonymousRequestAuth(accessToken: string): FeedbackRequestAuth {
 function resolveApiBaseUrl(explicit?: string): string {
   return (
     explicit?.trim() ||
-    process.env.XCODE_FEEDBACK_API_BASE?.trim() ||
+    process.env.ZCODE_FEEDBACK_API_BASE?.trim() ||
     buildRuntimeXCodeApiUrl(process.env, "/api/v1")
   );
 }
 
 function buildDeviceSnapshot(): FeedbackDeviceInfo {
   return {
-    appVersion: XCODE_VERSION,
-    buildCommitId: XCODE_COMMIT,
-    buildTime: XCODE_BUILD_TIME,
+    appVersion: ZCODE_VERSION,
+    buildCommitId: ZCODE_COMMIT,
+    buildTime: ZCODE_BUILD_TIME,
     nodeVersion: process.version,
     osType: osType(),
     osPlatform: platform(),
@@ -97,7 +97,7 @@ export function createFeedbackService(options: CreateFeedbackServiceOptions): IF
   // 已登录只带 JWT，未登录只带 access token。两者都没有时调用方不能发请求：
   // 服务端会把不带凭证的请求按通参里的 X-Device-Mid 当成旧版身份。
   async function loadRequestAuth(): Promise<FeedbackRequestAuth | undefined> {
-    const jwtToken = await loadCredential(XCODE_JWT_TOKEN_KEY);
+    const jwtToken = await loadCredential(ZCODE_JWT_TOKEN_KEY);
     if (jwtToken) {
       return userRequestAuth(jwtToken);
     }
@@ -149,7 +149,7 @@ export function createFeedbackService(options: CreateFeedbackServiceOptions): IF
     input: CreateFeedbackTicketInput,
     signal: AbortSignal,
   ): Promise<FeedbackTicketDetail> {
-    const jwtToken = await loadCredential(XCODE_JWT_TOKEN_KEY);
+    const jwtToken = await loadCredential(ZCODE_JWT_TOKEN_KEY);
     if (jwtToken) {
       return httpClient.create(input, userRequestAuth(jwtToken).headers, { signal });
     }

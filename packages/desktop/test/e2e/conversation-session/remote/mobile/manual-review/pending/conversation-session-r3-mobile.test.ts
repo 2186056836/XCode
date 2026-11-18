@@ -53,7 +53,7 @@ import {
 } from "#e2e/helpers/v4-conversation";
 
 const CASE_MARKER = "E2E_R3_MOBILE";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-mobile");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-mobile");
 // Linux e2e 服务器上没有 macOS 版 Chrome：用 R3_MOBILE_CHROME 指向该机 playwright 下载的
 // chromium（缺省仍回退开发机 macOS 路径），否则本 case 在服务器上直接起不了手机浏览器。
 const CHROME =
@@ -340,8 +340,8 @@ describe(`${CASE_MARKER}: 手机 viewport 经真实 relay 配对，选择 SSH ta
 
   it("R3A-MOB-01/02/03/07 配对成功且 Host/SSH/Agent 数不增；手机断网恢复独立 replay、桌面 continuous 持续；双端交替输入同一 FIFO 无丢失重复；手机无新建远程能力", async function () {
     this.timeout(40 * 60_000);
-    const container = process.env.XCODE_E2E_SSH_CONTAINER?.trim();
-    if (!container) throw new Error(`${CASE_MARKER}: 缺少 XCODE_E2E_SSH_CONTAINER`);
+    const container = process.env.ZCODE_E2E_SSH_CONTAINER?.trim();
+    if (!container) throw new Error(`${CASE_MARKER}: 缺少 ZCODE_E2E_SSH_CONTAINER`);
     const prepared = await prepareSSHLifecycle(CASE_MARKER, {
       apiType: "anthropic-messages",
       tunnelUsername: "tunnel",

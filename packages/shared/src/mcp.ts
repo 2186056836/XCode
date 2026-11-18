@@ -7,13 +7,13 @@ import type { SettingsDirectoryLocation } from "./settings-source.js";
 import type { McpServerFailureKind, WorkspaceMcpTrustReview } from "./zcode-protocol/index.js";
 
 // CUA official plugin 身份常量（port 自 feat；UI 设置面板 + bootstrap 复用以避免字面量漂移）。
-export const XCODE_CUA_OFFICIAL_PLUGIN_ID = "computer-use@zcode-plugins-official";
+export const ZCODE_CUA_OFFICIAL_PLUGIN_ID = "computer-use@zcode-plugins-official";
 // CUA server 身份串（port 自 feat mcp.ts）：server key = 模型可见工具前缀段（刻意不带 zcode-）；
 // namespace name = official plugin 运行时命名空间 plugin:<pluginId>:<serverKey>。
-export const XCODE_CUA_OFFICIAL_MCP_NAMESPACE_NAME = "plugin:computer-use:computer-use";
+export const ZCODE_CUA_OFFICIAL_MCP_NAMESPACE_NAME = "plugin:computer-use:computer-use";
 // 插件身份 env key：resolver（adapters/src/plugins/mcp.ts）权威写入 loaded.id，manifest/user env 不可覆盖。
 // bootstrap + cli/plugin-host-command.ts 复用此常量识别 official zcode-cua plugin server，避免字面量漂移。
-export const XCODE_PLUGIN_ID_ENV_KEY = "XCODE_PLUGIN_ID";
+export const ZCODE_PLUGIN_ID_ENV_KEY = "ZCODE_PLUGIN_ID";
 
 export type McpSource =
   | "mcp"

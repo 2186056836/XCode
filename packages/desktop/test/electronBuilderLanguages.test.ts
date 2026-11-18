@@ -6,7 +6,7 @@ afterEach(() => {
 });
 
 it("语言包白名单按各平台的文件名书写，macOS 不会把 lproj 全部删掉", async () => {
-  vi.stubEnv("XCODE_TARGET_OS", "darwin");
+  vi.stubEnv("ZCODE_TARGET_OS", "darwin");
   const { default: config } = await import("../electron-builder.config.js");
 
   // Windows/Linux：locales/<name>.pak

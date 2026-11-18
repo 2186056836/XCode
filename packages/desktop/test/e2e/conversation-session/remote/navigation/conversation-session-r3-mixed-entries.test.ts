@@ -26,7 +26,7 @@ import {
 
 const CASE_MARKER = "E2E_R3_MIXED_ENTRIES";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-mixed-entries",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-mixed-entries",
 );
 
 interface TabRow {

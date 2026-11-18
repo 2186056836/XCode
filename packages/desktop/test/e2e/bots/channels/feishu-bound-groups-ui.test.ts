@@ -77,7 +77,7 @@ describe("bound groups Desktop controls", () => {
     // 保留话题记录；关闭授权不能把历史数量清空。
     expect(await row.getText()).toMatch(/2/);
     await row.scrollIntoView({ block: "center" });
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (artifactDir) await browser.saveScreenshot(join(artifactDir, "BOT-E2E-GR-UI-01.png"));
   });
 });

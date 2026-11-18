@@ -35,7 +35,7 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const officialRoot =
-  process.env.XCODE_CUA_OFFICIAL_ROOT?.trim() ||
+  process.env.ZCODE_CUA_OFFICIAL_ROOT?.trim() ||
   "C:/Users/Administrator/AppData/Local/Programs/ZCode/resources";
 const log = (...args) => console.log("[cua-vendor]", ...args);
 
@@ -103,7 +103,7 @@ async function seedFromOfficialInstall(platformKey) {
 }
 
 /**
- * dev 侧 `resolveWindowsCuaRuntime` 走 XCODE_CUA_DEV_ROOT 契约：根目录 package.json 必须
+ * dev 侧 `resolveWindowsCuaRuntime` 走 ZCODE_CUA_DEV_ROOT 契约：根目录 package.json 必须
  * 声明 `@zcode/zcode-cua` 且带 `zcodeCuaRuntime.{schema,windows.{entry,nativeAddon}}`。
  * 官方产物里只有 runtime-manifest.json（产品链用），没有这份 dev 契约，所以按 manifest 合成，
  * 让 helper 目录本身就是一个可用的 dev root。
@@ -203,7 +203,7 @@ async function invalidateStaleProducerCaches(vendorRoot) {
   const expectedHash = await sha256(vendoredProducer);
 
   const dataRoots = [
-    process.env.XCODE_DATA_BASE_DIR?.trim() ? join(process.env.XCODE_DATA_BASE_DIR.trim(), ".xcode") : undefined,
+    process.env.ZCODE_DATA_BASE_DIR?.trim() ? join(process.env.ZCODE_DATA_BASE_DIR.trim(), ".xcode") : undefined,
     join(homedir(), ".xcode"),
   ].filter((root) => typeof root === "string" && root.length > 0);
 

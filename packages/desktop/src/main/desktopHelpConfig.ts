@@ -5,7 +5,7 @@ import {
   createHelpAppConfigReader,
   resolveOptionalXCodeAuthorization,
   type XCodeJwtTokenResolver,
-  XCODE_ENV,
+  ZCODE_ENV,
 } from "@zcode/shared";
 
 export function createDesktopHelpConfigReader(options: {
@@ -37,7 +37,7 @@ export function createDesktopHelpConfigReader(options: {
           deviceMid: options.deviceMid,
           platform: process.platform,
           arch: process.arch,
-          releaseChannel: XCODE_ENV,
+          releaseChannel: ZCODE_ENV,
           sourceTitle: "electron",
         }),
       },

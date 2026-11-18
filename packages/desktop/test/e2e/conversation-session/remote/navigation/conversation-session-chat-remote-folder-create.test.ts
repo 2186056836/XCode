@@ -79,7 +79,7 @@ async function captureAppearance() {
     expect(await $('[data-testid="project-folder-trust-confirm"]').isClickable()).toBe(true);
     expect((await trust.getLocation()).x).toBeGreaterThanOrEqual(0);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, `create-trust-${locale}-${theme}-${width}.png`),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `create-trust-${locale}-${theme}-${width}.png`),
     );
   }
   await browser.electron.execute((electron) => {
@@ -126,7 +126,7 @@ describe(marker, () => {
         (task) => !before.tasks.some((old) => old.taskId === task.taskId),
       );
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "old-local-submission.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "old-local-submission.json"),
         JSON.stringify(added, null, 2),
       );
       expect(added.some((task) => task.hostId === "local" && !task.projectId)).toBe(false);
@@ -206,7 +206,7 @@ describe(marker, () => {
     await picker.$('button[type="submit"]').click();
     await browser.waitUntil(async () => (await picker.getText()).includes("ENOENT"));
     expect(await picker.$('[data-testid="directory-browser-confirm"]').isEnabled()).toBe(false);
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "invalid-folder.png"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "invalid-folder.png"));
     expect((await callHandoffHost<ProjectTree>(ServiceChannels.Project, "readTree")).tasks).toEqual(
       before.tasks,
     );
@@ -250,7 +250,7 @@ describe(marker, () => {
       ).tasks,
     ).toEqual(before.tasks);
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "remote-first-submission.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "remote-first-submission.json"),
       JSON.stringify({ project: existing, task }, null, 2),
     );
     // 已有任务从项目菜单的新任务入口进入；重复连接仍强制选目录，不能恢复旧会话。

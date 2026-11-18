@@ -337,12 +337,12 @@ for (const [width, locale, theme] of [
   });
 }
 
-if (process.env.XCODE_UI_RECOMMENDATIONS_LIVE_CONFIG_URL) {
+if (process.env.ZCODE_UI_RECOMMENDATIONS_LIVE_CONFIG_URL) {
   test("staging client config drives side pane recommendations", async () => {
     const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
     page.setDefaultTimeout(15000);
     try {
-      const response = await page.request.get(process.env.XCODE_UI_RECOMMENDATIONS_LIVE_CONFIG_URL);
+      const response = await page.request.get(process.env.ZCODE_UI_RECOMMENDATIONS_LIVE_CONFIG_URL);
       assert.equal(response.status(), 200);
       const envelope = await response.json();
       assert.equal(envelope.code, 0);

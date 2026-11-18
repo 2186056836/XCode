@@ -15,7 +15,7 @@ import {
 } from "@zcode/adapters/config";
 import {
   isDiscoverableOfficialPlugin,
-  XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
+  ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
   type XCodeWorkspaceRef,
 } from "@zcode/shared";
 import {
@@ -137,7 +137,7 @@ export function createProtocolPluginDiscoveryPort(
     resolve,
     refresh: async (request) => {
       const lastUpdated = (await getXCodePluginsOverview(options)).marketplaces.find(
-        (market) => market.id === XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
+        (market) => market.id === ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
       )?.lastUpdated;
       return officialPluginCatalogRefresh.ensure(
         storageRoot,
@@ -146,7 +146,7 @@ export function createProtocolPluginDiscoveryPort(
           const result = await updateXCodePluginMarketplace({
             ...options,
             pluginStorageRoot: storageRoot,
-            marketplace: XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
+            marketplace: ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
             abortSignal: signal,
           });
           invalidate();
@@ -173,7 +173,7 @@ export function createProtocolPluginDiscoveryPort(
               pluginStorageRoot: lock.root,
               pluginStorageLock: lock,
               pluginName: current.name,
-              marketplace: XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
+              marketplace: ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
               scope: "user",
               abortSignal: context.signal,
             });

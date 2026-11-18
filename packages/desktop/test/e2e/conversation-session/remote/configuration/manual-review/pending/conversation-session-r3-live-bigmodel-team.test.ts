@@ -20,7 +20,7 @@ import {
 } from "#e2e/helpers/v4-conversation";
 
 const CASE_MARKER = "E2E_R3_LIVE_TEAM";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-live-team");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-live-team");
 const TEAM_PROVIDER_ID = "account:bigmodel-team-coding-plan";
 // 原小写 API 名称无法匹配当前菜单与运行记录使用的规范 Model ID。
 const TEAM_MODEL_ID = "GLM-5.3-Flash";

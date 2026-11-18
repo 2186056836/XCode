@@ -60,7 +60,7 @@ function resolveDefaultReportIntervalMs(): number {
     return 60_000;
   }
   // E2E 跑的是打包构建，没有这个短窗口就无法在一次用例里观察到趋势事件。
-  if (process.env.XCODE_ENV === "test" && process.env.XCODE_E2E_RUN_ID?.trim()) {
+  if (process.env.ZCODE_ENV === "test" && process.env.ZCODE_E2E_RUN_ID?.trim()) {
     return 60_000;
   }
   return 300_000;
@@ -214,8 +214,8 @@ function auditDisabledAgentMetricProbe(logger: ResourceLogger | undefined): void
   if (
     agentMetricProbeDisabledAuditLogged ||
     process.platform !== "win32" ||
-    process.env.XCODE_ENV !== "test" ||
-    !process.env.XCODE_E2E_RUNTIME_LOG_DIR?.trim()
+    process.env.ZCODE_ENV !== "test" ||
+    !process.env.ZCODE_E2E_RUNTIME_LOG_DIR?.trim()
   ) {
     return;
   }

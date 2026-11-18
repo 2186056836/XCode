@@ -26,7 +26,7 @@ import {
 
 const CASE_MARKER = "E2E_R3_ATTACHMENTS";
 const E2E_HOME_DIR = dirname(DEFAULT_WORKSPACE);
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-attachments");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-attachments");
 const NATIVE_FILE = "r3-dev04-native.txt";
 const NATIVE_MARKER = `R3_NATIVE_MARKER_${Math.random().toString(36).slice(2, 10)}`;
 const nativePath = resolve(DEFAULT_WORKSPACE, ".zcode-e2e/r3-attachments", NATIVE_FILE);

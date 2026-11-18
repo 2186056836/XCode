@@ -101,7 +101,7 @@ describe("系统目录打开项目", () => {
       (await readProjects()).filter((item) => item.roots.some((entry) => entry.rootPath === warm)),
     ).toHaveLength(1);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "OFP02-project-reused.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "OFP02-project-reused.png"),
     );
   });
   it("OFP01: argv 冷启动先创建项目再初始化草稿", async function () {
@@ -124,7 +124,7 @@ describe("系统目录打开项目", () => {
       (await readProjects()).filter((item) => item.roots.some((entry) => entry.rootPath === cold)),
     ).toHaveLength(1);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "OFP01-cold-project.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "OFP01-cold-project.png"),
     );
   });
 });

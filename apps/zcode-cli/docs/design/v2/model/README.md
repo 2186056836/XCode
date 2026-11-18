@@ -307,14 +307,14 @@ OpenAI-compatible 回放一致的契约：
 
 原则：
 
-- XCode 自有环境变量继续使用 `XCODE_` 前缀。
+- XCode 自有环境变量继续使用 `ZCODE_` 前缀。
 - 如果没有加载到包含模型配置的 `~/.xcode/cli/config.json`、项目配置、session 配置或 CLI override，模型请求必须失败，错误码为 `model_config_missing`。
-- `modelCatalog.overrides` 和 `XCODE_API_KEY` 都不能单独让模型变成可用；它们只提供能力元数据或密钥 fallback。
-- `XCODE_MODEL` 是唯一能从环境变量声明当前可运行模型的入口。存在非空 `XCODE_MODEL` 时，env scope 生成一个完整的 main model target，并按配置优先级覆盖 user/project `config.json` 中的 `model` 配置；这等价于本次进程忽略文件里的模型选择和 provider 连接。CLI/session override 仍高于 env。
-- env model target 默认使用 `anthropic` adapter。`XCODE_MODEL` 可以是裸 model id，此时 provider id 默认为 `anthropic`；也可以是 `provider/model`，此时 provider id 取斜杠前缀，但 adapter kind 仍为 `anthropic`，用于 Anthropic-compatible gateway。`XCODE_BASE_URL` 只在 `XCODE_MODEL` 生效时作为该 target 的 base URL；单独设置 `XCODE_BASE_URL` 不会让模型可用，也不改写文件配置。
-- 非空但无法解析的 `XCODE_MODEL` 是配置错误，启动必须失败并保留原始 parse error cause；不能静默回落到文件模型配置。
-- env model target 不把 `XCODE_API_KEY` 写进 runtime config。API key 继续在 model registry 边界按现有 fallback 解析：标准 provider key、provider 派生 key、最后 `XCODE_API_KEY`。
-- API key 优先从 `model.apiKey` / `model.main.apiKey` / `model.lite.apiKey` 读取；配置未提供时，adapter 可以从环境变量 fallback，例如 provider 派生 key、标准 provider key 或 `XCODE_API_KEY`。
+- `modelCatalog.overrides` 和 `ZCODE_API_KEY` 都不能单独让模型变成可用；它们只提供能力元数据或密钥 fallback。
+- `ZCODE_MODEL` 是唯一能从环境变量声明当前可运行模型的入口。存在非空 `ZCODE_MODEL` 时，env scope 生成一个完整的 main model target，并按配置优先级覆盖 user/project `config.json` 中的 `model` 配置；这等价于本次进程忽略文件里的模型选择和 provider 连接。CLI/session override 仍高于 env。
+- env model target 默认使用 `anthropic` adapter。`ZCODE_MODEL` 可以是裸 model id，此时 provider id 默认为 `anthropic`；也可以是 `provider/model`，此时 provider id 取斜杠前缀，但 adapter kind 仍为 `anthropic`，用于 Anthropic-compatible gateway。`ZCODE_BASE_URL` 只在 `ZCODE_MODEL` 生效时作为该 target 的 base URL；单独设置 `ZCODE_BASE_URL` 不会让模型可用，也不改写文件配置。
+- 非空但无法解析的 `ZCODE_MODEL` 是配置错误，启动必须失败并保留原始 parse error cause；不能静默回落到文件模型配置。
+- env model target 不把 `ZCODE_API_KEY` 写进 runtime config。API key 继续在 model registry 边界按现有 fallback 解析：标准 provider key、provider 派生 key、最后 `ZCODE_API_KEY`。
+- API key 优先从 `model.apiKey` / `model.main.apiKey` / `model.lite.apiKey` 读取；配置未提供时，adapter 可以从环境变量 fallback，例如 provider 派生 key、标准 provider key 或 `ZCODE_API_KEY`。
 - 不暴露 `apiKeyEnv` 作为用户配置字段。环境变量名是 adapter 内部兼容策略，不进入长期用户配置面。
 - `headers` 支持自定义 string map，原样传给 provider adapter，但日志、错误和 session event 必须经过敏感字段 redaction。
 - CLI 入口负责在运行时从当前工作目录向上查找最近的 `.env` 并加载到环境中；已存在的 shell 环境变量优先，不被 `.env` 覆盖。
@@ -392,7 +392,7 @@ OpenAI-compatible 回放一致的契约：
 模型请求的来源 header（`buildCliXCodeSourceHeaders`，以及 provider endpoint routing 配置 GET
 复用的共享来源 header）中，`X-Client-Language` 按以下优先级取值：
 
-1. 环境变量 `XCODE_CLIENT_LANGUAGE`：Desktop 启动 Agent 子进程时写入当前界面语言
+1. 环境变量 `ZCODE_CLIENT_LANGUAGE`：Desktop 启动 Agent 子进程时写入当前界面语言
    （BCP-47，如 `zh-CN`、`en-US`、`ja-JP`、`ru-RU`、`ko-KR`）。
    - 用途：Agent 进程的 `Intl` 只代表系统语言；App 从 Finder/Dock 启动时没有 `LANG`，
      Node ICU 回退为 `en-US`，界面选了日语/俄语/韩语时模型请求仍发 `en-US`。
@@ -794,7 +794,7 @@ Retry 语义以用户可理解的“重试次数”为默认配置口径，默�
 
 `insufficient_quota` 的终止语义不得依赖 `Retry-After` 是否存在或等待时长；`Retry-After` 只沿用既有解析与诊断用途，不参与业务码的 `retryable` 判断。Kimi 的 `engine_overloaded_error` / `rate_limit_reached_error` 与 Anthropic 的 `overloaded_error` / `rate_limit_error` 等瞬时容量与速率 code 必须继续可重试。
 
-模型 I/O 诊断轨迹按 session 落到 `~/.xcode/cli/{debug,rollout}/model-io-<sessionId>.jsonl`。这不是产品 timeline，也不进入 session 恢复链；它只用于调试真实 provider request/response。开发模式由 `XCODE_RUNTIME_ENV=development` 判定，`NODE_ENV` 不参与 XCode 运行时判定。默认使用 bounded 策略：生产态限制 session 文件数和单文件体积，开发态限制单文件体积，并对重复请求上下文使用 `full` / `delta` / `tail` 压缩。App Settings 的“完整保留模型 I/O”默认关闭；开启后从下一次模型 attempt 起不执行文件淘汰、单文件重置、消息压缩或生产字段裁剪。Header 与 request metadata 的凭据脱敏在两种模式下都必须保留，记录失败不能影响模型请求主路径。完整设置合同见 `docs/model-io-full-retention-setting.md`。
+模型 I/O 诊断轨迹按 session 落到 `~/.xcode/cli/{debug,rollout}/model-io-<sessionId>.jsonl`。这不是产品 timeline，也不进入 session 恢复链；它只用于调试真实 provider request/response。开发模式由 `ZCODE_RUNTIME_ENV=development` 判定，`NODE_ENV` 不参与 XCode 运行时判定。默认使用 bounded 策略：生产态限制 session 文件数和单文件体积，开发态限制单文件体积，并对重复请求上下文使用 `full` / `delta` / `tail` 压缩。App Settings 的“完整保留模型 I/O”默认关闭；开启后从下一次模型 attempt 起不执行文件淘汰、单文件重置、消息压缩或生产字段裁剪。Header 与 request metadata 的凭据脱敏在两种模式下都必须保留，记录失败不能影响模型请求主路径。完整设置合同见 `docs/model-io-full-retention-setting.md`。
 
 当 provider 返回 HTTP 200 但业务协议失败时，adapter 必须把它当作模型请求失败，而不是让 AI SDK 把空结果或 `finishReason: other` 继续向上游传播。兼容判断放在 provider HTTP fetch 边界：若 JSON 响应体包含 `success: false`，或 `code` / `error_code` 存在且不是 `0` / `"0"`，则抛出 provider business error。用户可见错误消息优先使用 `msg`，其次使用 `message`，再其次使用嵌套 `error.message`；没有安全消息时使用通用 provider 业务错误文案。该错误经过 Model Runner 归一为 `model_request_failed`，并保留原始 cause、业务 `statusCode` / provider code 的安全摘要，以及用于 retry 归因的 response headers。业务错误默认不自动重试，但当业务错误可以安全映射为 `HTTP 5xx` 时，应视作 provider server error，复用统一 retry budget；当 provider 业务错误的结构化 code 明确表示上游网络失败时，例如 BigModel 兼容层返回 `code=1234` 且用户可见 message 通常为“网络错误，错误id ...，请稍后重试”，或 provider 明确返回 `network_error` / `network_error_retryable`，应归一为 `network_error` 并复用统一 retry budget；BigModel 文档中表示临时账号访问异常、调用流程异常、并发/频率/平台流量限制或模型访问过载的 `1120` / `1230` / `1302` / `1303` / `1305` / `1312` 也复用统一 retry budget。4xx、权限、套餐、长期 quota reset 和其他未映射到 `5xx`、网络失败、限流或过载的业务错误仍保持非重试。诊断日志只能进入结构化日志摘要，包含 `requestId`、`traceId`、finish reason、usage、文本长度、tool call 数、stream chunk 计数和 provider body 的安全摘要，不记录完整 prompt、完整 headers 或大体积 response body。
 
@@ -851,9 +851,9 @@ network/cache/parallel-tool/retry budget 全部提升为独立稳定 capability 
 
 - `provider/model` 解析，model id 内含 `/` 时仍正确。
 - `lite` 未配置时解析到 `main`。
-- `XCODE_MODEL` + `XCODE_BASE_URL` 生成 Anthropic adapter 的 env model target，并覆盖文件 model 配置。
-- 非法 `XCODE_MODEL` 会产生配置错误，而不是回退到 `config.json`。
-- `XCODE_MODEL` 不把 `XCODE_API_KEY` 存入 runtime config，registry 仍能通过 `XCODE_API_KEY` fallback 取得密钥。
+- `ZCODE_MODEL` + `ZCODE_BASE_URL` 生成 Anthropic adapter 的 env model target，并覆盖文件 model 配置。
+- 非法 `ZCODE_MODEL` 会产生配置错误，而不是回退到 `config.json`。
+- `ZCODE_MODEL` 不把 `ZCODE_API_KEY` 存入 runtime config，registry 仍能通过 `ZCODE_API_KEY` fallback 取得密钥。
 - schema 拒绝 `small_model`、`model.small` 和 inline model target。
 - provider 未配置、model 不存在、env key 缺失。
 - OpenAI-compatible provider baseURL 配置。

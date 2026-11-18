@@ -35,7 +35,7 @@ import {
 
 const CASE_MARKER = "E2E_R3_STALE_GENERATION";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-stale-generation",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-stale-generation",
 );
 
 describe(`${CASE_MARKER}: 旧连接代际的回包/close 迟到不得覆盖新 session`, () => {

@@ -96,9 +96,9 @@ describe("PA158 审批完全访问", () => {
           code: "ENOENT",
         });
       };
-      if (process.env.XCODE_E2E_ARTIFACT_DIR) {
+      if (process.env.ZCODE_E2E_ARTIFACT_DIR) {
         await browser.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR, "permission-full-access.png"),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR, "permission-full-access.png"),
         );
       }
       if (target === "yolo") {

@@ -292,7 +292,7 @@ view=messages ─▶ Host 转发 CLI 的 session/messages
 | `create_session`                  | 文件写入卡                                   | 命中 `(?:^\|_)(?:edit\|…\|create\|save\|…)(?:_\|$)`              |
 | 其余 8 个                         | 兜底卡，名字首字母被大写成 `Send_to_session` | 未命中任何规则                                                   |
 
-根因在 `packages/ui/src/lib/toolIdentity.ts` 的 `resolveLegacyKindFamily`：它为历史会话的 `kind` 字段保留了一组按**下划线边界**匹配的前缀启发式。新工具名不在 `XCODE_KNOWN_TOOL_NAMES` 里，identity 解析走到这一层，`read_` / `list_` / `create_` / `open_` 被当成文件和搜索动作。兜底卡的首字母大写则来自 `renderers/fallback.tsx`。
+根因在 `packages/ui/src/lib/toolIdentity.ts` 的 `resolveLegacyKindFamily`：它为历史会话的 `kind` 字段保留了一组按**下划线边界**匹配的前缀启发式。新工具名不在 `ZCODE_KNOWN_TOOL_NAMES` 里，identity 解析走到这一层，`read_` / `list_` / `create_` / `open_` 被当成文件和搜索动作。兜底卡的首字母大写则来自 `renderers/fallback.tsx`。
 
 规则：
 

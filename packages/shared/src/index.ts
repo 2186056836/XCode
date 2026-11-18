@@ -51,9 +51,9 @@ export type {
   LegacyPersistedLocalePreference,
   PersistedSettingsLocaleFields,
 } from "./locale.js";
-export { XCODE_VERSION, XCODE_COMMIT, XCODE_BUILD_TIME } from "./version.js";
+export { ZCODE_VERSION, ZCODE_COMMIT, ZCODE_BUILD_TIME } from "./version.js";
 export {
-  XCODE_PLATFORM_APP_VERSION,
+  ZCODE_PLATFORM_APP_VERSION,
   PLATFORM_APP_VERSION_TTL_MS,
   fetchLatestPlatformAppVersion,
   getPlatformAppVersion,
@@ -96,16 +96,16 @@ export {
   serializeShortcutBinding,
 } from "./shortcutCommands.js";
 export {
-  XCODE_ENV,
-  XCODE_PRODUCT_FLAVOR,
-  XCODE_APP_VERSION_ENV,
-  XCODE_BUILD_COMMIT_ID_ENV,
-  XCODE_CLIENT_LANGUAGE_ENV,
+  ZCODE_ENV,
+  ZCODE_PRODUCT_FLAVOR,
+  ZCODE_APP_VERSION_ENV,
+  ZCODE_BUILD_COMMIT_ID_ENV,
+  ZCODE_CLIENT_LANGUAGE_ENV,
   RUNTIME_XCODE_DEBUG,
-  XCODE_TELEMETRY_REPORT_ENDPOINT,
-  XCODE_ARMS_RUM_ENDPOINT,
-  XCODE_AUTO_UPDATE_ENABLED,
-  XCODE_TELEMETRY_ENABLED,
+  ZCODE_TELEMETRY_REPORT_ENDPOINT,
+  ZCODE_ARMS_RUM_ENDPOINT,
+  ZCODE_AUTO_UPDATE_ENABLED,
+  ZCODE_TELEMETRY_ENABLED,
   mapXCodeEnvToArmsRumEnv,
   normalizeXCodeEnv,
   normalizeXCodeProductFlavor,

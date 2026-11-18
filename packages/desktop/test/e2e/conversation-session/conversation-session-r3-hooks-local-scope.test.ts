@@ -29,7 +29,7 @@ import { prepareV4ConversationE2E, startNewV4Draft } from "../helpers/v4-convers
 
 const CASE_MARKER = "E2E_R3_HOOKS_LOCAL_SCOPE";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-hooks-local-scope",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-hooks-local-scope",
 );
 const LOCAL_MARKER = "E2E_R3_HOOKS_LOCAL_SCOPE_LOCAL";
 const REMOTE_MARKER = "E2E_R3_HOOKS_LOCAL_SCOPE_REMOTE";

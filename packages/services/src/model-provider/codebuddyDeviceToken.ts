@@ -15,7 +15,7 @@
  * 失败一律优雅降级：返回 null，调用方不注入该头（与参考实现一致）。取不到 token
  * 不是错误 —— 机器上没装 WorkBuddy 桌面端就是取不到，签到仍应照常工作。
  *
- * 安装目录发现（不写死）：XCODE_TURING_SDK_DIR 环境变量 > LOCALAPPDATA/Programs 下的
+ * 安装目录发现（不写死）：ZCODE_TURING_SDK_DIR 环境变量 > LOCALAPPDATA/Programs 下的
  * WorkBuddy / WorkBuddyAI > 其余常见安装根（APPDATA / Program Files / 用户目录 / 盘根）。
  * 区域的偏好不同：CN 走 WorkBuddy（channelId 109144），Intl 走 WorkBuddyAI
  * （channelId 400111，产品名 workbuddy-ai）—— 与官方两个发行版各自的 SDK 对应；
@@ -45,7 +45,7 @@ const FAILURE_TTL_MS = 300_000;
 const RUN_TIMEOUT_MS = 8_000;
 
 /** 显式指定 SDK / 安装目录（排障逃生门，与参考实现的 WORKBUDDY_TURING_SDK_DIR 同义）。 */
-const ENV_SDK_DIR = "XCODE_TURING_SDK_DIR";
+const ENV_SDK_DIR = "ZCODE_TURING_SDK_DIR";
 
 /** 兜底值：只在安装包里读不到时使用。 */
 const FALLBACK_CHANNEL_ID = 109144;
@@ -64,12 +64,12 @@ const HELPER_FILENAME = "xcode-turing-device-token-v1.cjs";
 const HELPER_SOURCE = `"use strict";
 // 每次运行独立校验 SDK，失败只让本进程退出（调用方按「无 token」优雅降级）。
 const path = require("node:path");
-const sdkDir = process.env.XCODE_TURING_SDK_DIR;
-const channelId = Number(process.env.XCODE_TURING_CHANNEL_ID || 0);
-const productName = process.env.XCODE_TURING_PRODUCT_NAME || "WorkBuddy";
-const productVersion = process.env.XCODE_TURING_VERSION || "5.5.4";
+const sdkDir = process.env.ZCODE_TURING_SDK_DIR;
+const channelId = Number(process.env.ZCODE_TURING_CHANNEL_ID || 0);
+const productName = process.env.ZCODE_TURING_PRODUCT_NAME || "WorkBuddy";
+const productVersion = process.env.ZCODE_TURING_VERSION || "5.5.4";
 (async () => {
-  if (!sdkDir) throw new Error("missing XCODE_TURING_SDK_DIR");
+  if (!sdkDir) throw new Error("missing ZCODE_TURING_SDK_DIR");
   process.env.PATH = [sdkDir, path.join(sdkDir, "build", "Release"), process.env.PATH || ""].join(path.delimiter);
   const turing = require(sdkDir);
   if (typeof turing.getLoadError === "function") {
@@ -274,10 +274,10 @@ function runHelper(install: TuringInstall): Promise<string | null> {
           ...process.env,
           // 宿主是 Electron 时把自身当 Node 用（纯 Node 下该变量无副作用）。
           ELECTRON_RUN_AS_NODE: "1",
-          XCODE_TURING_SDK_DIR: install.sdkDir,
-          XCODE_TURING_CHANNEL_ID: String(install.channelId),
-          XCODE_TURING_PRODUCT_NAME: install.productName,
-          XCODE_TURING_VERSION: install.version,
+          ZCODE_TURING_SDK_DIR: install.sdkDir,
+          ZCODE_TURING_CHANNEL_ID: String(install.channelId),
+          ZCODE_TURING_PRODUCT_NAME: install.productName,
+          ZCODE_TURING_VERSION: install.version,
           PATH: [install.sdkDir, join(install.sdkDir, "build", "Release"), process.env.PATH ?? ""].join(
             delimiter,
           ),

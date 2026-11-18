@@ -126,6 +126,6 @@ function readContinueTurnSnapshot(): Promise<ContinueTurnSnapshot> {
 }
 
 function readManualReviewHoldMs(): number {
-  const parsed = Number(process.env.XCODE_E2E_MANUAL_REVIEW_HOLD_MS ?? "0");
+  const parsed = Number(process.env.ZCODE_E2E_MANUAL_REVIEW_HOLD_MS ?? "0");
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
 }

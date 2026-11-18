@@ -41,7 +41,7 @@ const COLD = "E2E_ATTACHMENT_RESUME_COLD";
 describe("AR01 attachment cold resume", () => {
   afterEach(async function () {
     if (this.currentTest?.state !== "failed") return;
-    const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR ?? join(process.cwd(), ".e2e-artifacts");
+    const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR ?? join(process.cwd(), ".e2e-artifacts");
     await browser.saveScreenshot(join(artifacts, "attachment-resume-failure.png"));
     console.info(
       "AR01 failure UI",

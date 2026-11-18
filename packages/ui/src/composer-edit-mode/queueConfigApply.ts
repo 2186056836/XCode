@@ -1,7 +1,7 @@
 // 编辑提交后把新模型/mode 应用到其他排队消息（docs/ui/composer-edit-mode.md「提交后应用到其他排队消息」）。
 // 候选项与要带的字段只从当前投影派生；弹窗确认时按当时投影重算，不缓存弹窗打开时的列表。
 import { useCallback, useEffect, useRef } from "react";
-import { isHighspeedProviderId, XCODE_AGENT_PROVIDER, type ModelSelection } from "@zcode/shared";
+import { isHighspeedProviderId, ZCODE_AGENT_PROVIDER, type ModelSelection } from "@zcode/shared";
 import type { CommandAck, QueueItem, SubmissionMode } from "@zcode/shared/zcode-protocol-v4";
 import { TID_V4_COMPOSER_EDIT_APPLY_QUEUE_DIALOG } from "@zcode/shared/test-ids";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
@@ -91,7 +91,7 @@ export function useQueueConfigApplyPrompt(params: {
       const initial = items ? planQueueConfigApply(items, submitted, excludeQueueItemId) : null;
       if (!sessionId || !initial) return;
       const modeLabelId = initial.mode
-        ? getModeOptionLabelMessageId(XCODE_AGENT_PROVIDER, { value: initial.mode })
+        ? getModeOptionLabelMessageId(ZCODE_AGENT_PROVIDER, { value: initial.mode })
         : null;
       const modeLabel = modeLabelId ? intl.formatMessage({ id: modeLabelId }) : initial.mode;
       const reasoning = initial.modelSelection?.options?.reasoningLevel;

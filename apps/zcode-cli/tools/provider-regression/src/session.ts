@@ -94,7 +94,7 @@ export async function executeSessionCase(input: {
   try {
     signal.throwIfAborted();
     app = await createXCodeApp({
-      env: { ...process.env, XCODE_STORAGE_DIR: directory },
+      env: { ...process.env, ZCODE_STORAGE_DIR: directory },
       skipUserConfig: true,
       pluginStorageRoot: join(directory, "plugins"),
       sourceTitle: "electron",

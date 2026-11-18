@@ -42,8 +42,8 @@ async function runDaemonLauncher(
     {
       env: {
         ...process.env,
-        XCODE_DATA_BASE_DIR: layout.dataBaseDir,
-        XCODE_SERVER_ROOT: layout.serverRoot,
+        ZCODE_DATA_BASE_DIR: layout.dataBaseDir,
+        ZCODE_SERVER_ROOT: layout.serverRoot,
       },
       stdio: ["ignore", "pipe", "pipe"],
     },

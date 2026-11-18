@@ -1,13 +1,13 @@
 import {
-  XCODE_AGENT_PROVIDER,
-  XCODE_AGENT_PROVIDER_LABEL,
+  ZCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER_LABEL,
   type XCodeProvider,
 } from "@zcode/shared";
 
-export const ZCODE_AGENT_PROVIDERS: XCodeProvider[] = [XCODE_AGENT_PROVIDER];
+export const ZCODE_AGENT_PROVIDERS: XCodeProvider[] = [ZCODE_AGENT_PROVIDER];
 
 export const ZCODE_AGENT_PROVIDER_LABELS: Record<XCodeProvider, string> = {
-  glm: XCODE_AGENT_PROVIDER_LABEL,
+  glm: ZCODE_AGENT_PROVIDER_LABEL,
 };
 
 export function supportsXCodeSessionFork(provider: XCodeProvider): boolean {

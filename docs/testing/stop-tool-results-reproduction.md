@@ -36,7 +36,7 @@ sequenceDiagram
 运行：
 
 ```sh
-XCODE_E2E_MANUAL_REVIEW=1 XCODE_E2E_DEEPSEEK_CONTEXT_WINDOW=128000 \
+ZCODE_E2E_MANUAL_REVIEW=1 ZCODE_E2E_DEEPSEEK_CONTEXT_WINDOW=128000 \
 pnpm --filter @zcode/desktop test:e2e -- --spec \
 './test/e2e/conversation-session/execution/conversation-session-stop-tool-results.test.ts'
 ```
@@ -71,7 +71,7 @@ sequenceDiagram
 
 2026-09-24 Desktop run `desktop-e2e-20260924064058170-p71167-286d64339dbaed74`：文本 Stop 对照通过，图片 Stop 组在下一轮报 `AI_MissingToolResultsError`，缺全部三个 Read 结果。后者只复现已知图片问题，不证明 `ZCT-2102451151499956224` 读取过图片。
 
-补充完整 run：`desktop-e2e-20260924070659985-p94983-c3e14a5ec032c9c8`，macOS 本地 Electron，4 组中 2 通过、2 复现失败。复用此前正式构建的同一生产代码，设置 `XCODE_E2E_SKIP_BUILD=1 XCODE_E2E_SKIP_AGENT_BUILD=1`；不跳过实际 Electron 测试。
+补充完整 run：`desktop-e2e-20260924070659985-p94983-c3e14a5ec032c9c8`，macOS 本地 Electron，4 组中 2 通过、2 复现失败。复用此前正式构建的同一生产代码，设置 `ZCODE_E2E_SKIP_BUILD=1 ZCODE_E2E_SKIP_AGENT_BUILD=1`；不跳过实际 Electron 测试。
 
 | 输入 / 故障                        | 结果                                                 | 下一轮实际网络请求           |
 | ---------------------------------- | ---------------------------------------------------- | ---------------------------- |
@@ -132,7 +132,7 @@ flowchart TD
 本次验收基于 `0e40230d34` 上的工作区 diff。
 正式 macOS Electron run `desktop-e2e-20260924081102510-p55865-08e6cb00c4a7ad50`，**4/4 通过**。
 生产构建来自同工作区 run `desktop-e2e-20260924080555672-p50144-04be77cd4f3ebe33`，
-最终 run 使用 `XCODE_E2E_SKIP_BUILD=1 XCODE_E2E_SKIP_AGENT_BUILD=1` 复用该构建；其间只修改测试配置和断言，
+最终 run 使用 `ZCODE_E2E_SKIP_BUILD=1 ZCODE_E2E_SKIP_AGENT_BUILD=1` 复用该构建；其间只修改测试配置和断言，
 未修改生产代码。根 typecheck 与 Electron 构建/运行按顺序执行。
 
 首轮修复后运行 3/4 通过：图片续聊成功，但新增图片 wire 断言失败，因为 replay 模型默认只支持文本，

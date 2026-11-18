@@ -45,7 +45,7 @@ const CASE_NAME = "conversation-session-offpeak-create";
 const MARKER = "E2E_OFFPEAK_CHAT_CREATE";
 const TASK_TITLE = "E2E_OFFPEAK_DIGEST";
 const UPDATED_TASK_TITLE = "E2E_OFFPEAK_DIGEST_EDITED";
-// wdio.conf startOffPeakE2EMock：spec 名含 offpeak → XCODE_OFFPEAK_MOCK=1，
+// wdio.conf startOffPeakE2EMock：spec 名含 offpeak → ZCODE_OFFPEAK_MOCK=1，
 // 隔离 Built-in 单模型白名单 GLM-5.2，票据 60s 内保持 queued，位次为 1。
 const MOCK_ALLOWED_MODEL = "GLM-5.2";
 
@@ -67,9 +67,9 @@ describe("会话内 OffPeakCreate 闲时任务卡片与直达编辑 E2E", () => 
 
     await prepareV4ConversationE2E({ resetDraftBeforeProvider: true });
     // 修复原因：默认回放强制录屏会在无 ffmpeg 的 runner 上于业务通过后报 spawn ffmpeg ENOENT；
-    // 仅人工审核需要视频，与 DCA-V1-06 一致按 XCODE_E2E_MANUAL_REVIEW=1 启用。
+    // 仅人工审核需要视频，与 DCA-V1-06 一致按 ZCODE_E2E_MANUAL_REVIEW=1 启用。
     const recording =
-      process.env.XCODE_E2E_MANUAL_REVIEW === "1"
+      process.env.ZCODE_E2E_MANUAL_REVIEW === "1"
         ? await startElectronWindowRecording({
             frameIntervalMs: 200,
             outputPath: resolveArtifactPath(`${CASE_NAME}.webm`),
@@ -357,7 +357,7 @@ async function readTestIdValue(currentTestId: string): Promise<string> {
 
 function resolveArtifactPath(fileName: string) {
   return resolve(
-    process.env.XCODE_E2E_ARTIFACT_DIR?.trim() ||
+    process.env.ZCODE_E2E_ARTIFACT_DIR?.trim() ||
       process.env.CODEX_E2E_ARTIFACT_DIR?.trim() ||
       join(process.cwd(), ".e2e-artifacts", CASE_NAME),
     fileName,

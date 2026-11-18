@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createSqliteSessionStore } from "@zcode/adapters/storage";
 import {
   BUILTIN_MODEL_PROVIDER_IDS,
-  XCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
+  ZCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
   zcodeProtocolMethods,
   zcodeMessagePartSchema,
   zcodeSessionCancelBackgroundTaskResultSchema,
@@ -4126,13 +4126,13 @@ describe("XCodeProtocolAgentServer", () => {
         params: { workspace },
       });
 
-      await vi.advanceTimersByTimeAsync(XCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS);
+      await vi.advanceTimersByTimeAsync(ZCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS);
 
       await expect(resultPromise).resolves.toMatchObject({
         error: {
           code: -32022,
           data: {
-            timeoutMs: XCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
+            timeoutMs: ZCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
           },
         },
       });

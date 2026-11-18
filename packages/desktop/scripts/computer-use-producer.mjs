@@ -19,7 +19,7 @@ import { dirname, resolve } from "node:path";
  * 否则编译产物虽在磁盘却不会被打进安装包。
  *
  * 锚点选 bundled-tools/<platform>/cua-helper/runtime-manifest.json：它既是 electron-builder
- * extraResources 的打包源（→ resources/tools/cua-helper），又是 dev 模式 XCODE_CUA_DEV_ROOT
+ * extraResources 的打包源（→ resources/tools/cua-helper），又是 dev 模式 ZCODE_CUA_DEV_ROOT
  * 的可用根（port 脚本会一并写入 zcodeCuaRuntime 契约）。该目录被 .gitignore 忽略，
  * 纯克隆上没有此文件，判定自然回到占位包的 fail-closed 语义。
  */

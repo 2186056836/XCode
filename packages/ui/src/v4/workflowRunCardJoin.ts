@@ -1,7 +1,7 @@
 import { workflowRunStepCounts, type WorkflowRunState } from "@zcode/shared/zcode-protocol-v4";
 import type { ConversationRow, ConversationRowsPartition } from "@zcode/shared/zcode-protocol-v4";
 import {
-  XCODE_WORKFLOWS_FOR_RUN_MAX_CANDIDATES,
+  ZCODE_WORKFLOWS_FOR_RUN_MAX_CANDIDATES,
   type XCodeWorkflowsForRunCandidate,
 } from "@zcode/shared";
 import type { WorkflowCausalityGraphData } from "@/components/workflow-graph/types.js";
@@ -302,7 +302,7 @@ export function buildWorkflowSaveCandidatesByRunId(
     // 同名重存（改了元数据再存一次）只留一个候选：解析一遍与解析三遍答案相同。
     if (list.some((entry) => entry.name === found.candidate.name)) continue;
     // 协议的候选上界在这里就守住：超出部分留最早的那几个（先存下的那份更可能还在）。
-    if (list.length >= XCODE_WORKFLOWS_FOR_RUN_MAX_CANDIDATES) continue;
+    if (list.length >= ZCODE_WORKFLOWS_FOR_RUN_MAX_CANDIDATES) continue;
     list.push(found.candidate);
     byRunId.set(found.runId, list);
   }

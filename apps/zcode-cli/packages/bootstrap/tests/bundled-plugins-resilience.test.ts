@@ -282,7 +282,7 @@ describe("bundled official plugin cache resilience", () => {
     try {
       const prepared = resolveOfficialPluginRoots({ storageRoot, logger: createLogger() });
       if (corrupt)
-        await expect(prepared).rejects.toMatchObject({ code: "XCODE_PLUGIN_SOURCES_CHANGED" });
+        await expect(prepared).rejects.toMatchObject({ code: "ZCODE_PLUGIN_SOURCES_CHANGED" });
       else await prepared;
       const marker = join(storageRoot, SKILL_CREATOR_CACHE_SUFFIX, ".zcode-plugin-seed.json");
       expect(existsSync(marker)).toBe(!corrupt);
@@ -579,7 +579,7 @@ describe("bundled official plugin cache resilience", () => {
     await createVersionedSource(storageRoot);
     faults.omitSeedManifest = true;
     await expect(resolveOfficialPluginRoots({ storageRoot })).rejects.toMatchObject({
-      code: "XCODE_PLUGIN_SOURCES_CHANGED",
+      code: "ZCODE_PLUGIN_SOURCES_CHANGED",
     });
     expect(
       existsSync(join(storageRoot, SKILL_CREATOR_CACHE_SUFFIX, ".zcode-plugin-seed.json")),
@@ -685,7 +685,7 @@ describe("bundled official plugin cache resilience", () => {
     faults.afterSeedLock = () => preparation.invalidate();
     try {
       await expect(resolveOfficialPluginRoots({ storageRoot, preparation })).rejects.toMatchObject({
-        code: "XCODE_PLUGIN_SOURCES_CHANGED",
+        code: "ZCODE_PLUGIN_SOURCES_CHANGED",
       });
       faults.afterSeedLock = undefined;
       await expect(resolveOfficialPluginRoots({ storageRoot, preparation })).resolves.toEqual([]);
@@ -843,7 +843,7 @@ describe("bundled official plugin cache resilience", () => {
       "Official plugin cache operation degraded",
       expect.objectContaining({
         degraded: true,
-        errorCode: "XCODE_PLUGIN_SEED_INCOMPLETE",
+        errorCode: "ZCODE_PLUGIN_SEED_INCOMPLETE",
         // browser-use 不再携带 node_repl 宿主产物（那是 node-repl-host 的），
         // 它自己必需的运行时资产是 browser-client。
         missingSeedPaths: expect.arrayContaining(["scripts/browser-client.mjs"]),
@@ -900,7 +900,7 @@ describe("bundled official plugin cache resilience", () => {
     expect(logger.warn).toHaveBeenCalledWith(
       "Official plugin cache operation degraded",
       expect.objectContaining({
-        errorCode: "XCODE_PLUGIN_SEED_INCOMPLETE",
+        errorCode: "ZCODE_PLUGIN_SEED_INCOMPLETE",
         operation: "seed_plugin",
         pluginId: "browser-use@zcode-plugins-official",
       }),
@@ -936,7 +936,7 @@ describe("bundled official plugin cache resilience", () => {
       "Official plugin cache operation degraded",
       expect.objectContaining({
         degraded: true,
-        errorCode: "XCODE_PLUGIN_SEED_LOCK_TIMEOUT",
+        errorCode: "ZCODE_PLUGIN_SEED_LOCK_TIMEOUT",
         operation: "seed_plugin",
         pluginId: "browser-use@zcode-plugins-official",
       }),
@@ -993,7 +993,7 @@ describe("bundled official plugin cache resilience", () => {
     expect(logger.warn).toHaveBeenCalledWith(
       "Official plugin cache operation degraded",
       expect.objectContaining({
-        errorCode: "XCODE_PLUGIN_SEED_LOCK_TIMEOUT",
+        errorCode: "ZCODE_PLUGIN_SEED_LOCK_TIMEOUT",
         operation: "seed_plugin",
         pluginId: "browser-use@zcode-plugins-official",
       }),

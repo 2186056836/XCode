@@ -7,8 +7,8 @@ import {
 import { setRendererViewport, clearRendererViewport } from "#e2e/helpers/renderer-viewport";
 import { SIDEBAR_RICH_SESSION_ID } from "#e2e/helpers/sidebar-rich-content-fixture";
 
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/sidebar-rich");
-const recordOnly = process.env.XCODE_SIDEBAR_PERF_RECORD_ONLY === "1";
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/sidebar-rich");
+const recordOnly = process.env.ZCODE_SIDEBAR_PERF_RECORD_ONLY === "1";
 const leftToggle = 'button[aria-label="切换侧边栏"],button[aria-label="Toggle sidebar"]';
 const rightToggle = '[data-testid="side-pane-toggle"]';
 
@@ -30,12 +30,12 @@ describe("STF05–07 富内容会话侧栏性能", () => {
     );
     await mkdir(artifactDir, { recursive: true });
     const metadata = await readFile(
-      join(process.env.XCODE_E2E_HOME_DIR!, "sidebar-rich-fixture.json"),
+      join(process.env.ZCODE_E2E_HOME_DIR!, "sidebar-rich-fixture.json"),
       "utf8",
     );
     await writeFile(join(artifactDir, "sidebar-rich-fixture.json"), metadata);
     expect(await browser.getUrl()).toContain("/renderer/index.html");
-    if (process.env.XCODE_SIDEBAR_TRACE === "1") {
+    if (process.env.ZCODE_SIDEBAR_TRACE === "1") {
       await metrics();
       const url = await browser.getUrl();
       await browser.electron.execute(async (electron, url) => {
@@ -51,7 +51,7 @@ describe("STF05–07 富内容会话侧栏性能", () => {
     }
   });
   after(async () => {
-    if (process.env.XCODE_SIDEBAR_TRACE === "1") {
+    if (process.env.ZCODE_SIDEBAR_TRACE === "1") {
       const url = await browser.getUrl();
       const trace = await browser.electron.execute(async (electron, url) => {
         const api = electron.BrowserWindow.getAllWindows().find(

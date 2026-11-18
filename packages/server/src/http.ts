@@ -32,9 +32,9 @@ import {
   formatLogPrefix,
   serverRemoteInfoOutputSchema,
   SERVER_REMOTE_PROTOCOL_VERSION,
-  XCODE_RPC_HOST_CAPABILITY_HEADER,
-  XCODE_COMPATIBILITY_MANIFEST,
-  XCODE_VERSION,
+  ZCODE_RPC_HOST_CAPABILITY_HEADER,
+  ZCODE_COMPATIBILITY_MANIFEST,
+  ZCODE_VERSION,
   type BotProvider,
   type ServerRemoteInfo,
   type ServerRemoteWorkspaceInfo,
@@ -162,7 +162,7 @@ function readTrimmedEnv(name: string): string | undefined {
 
 export function resolveHttpServerId(options: HttpServerOptions = {}): string {
   return (
-    options.serverId?.trim() || readTrimmedEnv("XCODE_SERVER_ID") || hostname() || "zcode-server"
+    options.serverId?.trim() || readTrimmedEnv("ZCODE_SERVER_ID") || hostname() || "zcode-server"
   );
 }
 
@@ -170,7 +170,7 @@ function resolveServerWorkspaces(options: HttpServerOptions): ServerRemoteWorksp
   if (options.workspaces) {
     return options.workspaces;
   }
-  const workspacePath = readTrimmedEnv("XCODE_SERVER_WORKSPACE") || process.cwd();
+  const workspacePath = readTrimmedEnv("ZCODE_SERVER_WORKSPACE") || process.cwd();
   return [
     {
       path: workspacePath,
@@ -182,14 +182,14 @@ function resolveServerWorkspaces(options: HttpServerOptions): ServerRemoteWorksp
 function createServerInfo(options: HttpServerOptions): ServerRemoteInfo {
   return serverRemoteInfoOutputSchema.parse({
     serverId: resolveHttpServerId(options),
-    ...(options.name?.trim() || readTrimmedEnv("XCODE_SERVER_NAME")
-      ? { name: options.name?.trim() || readTrimmedEnv("XCODE_SERVER_NAME") }
+    ...(options.name?.trim() || readTrimmedEnv("ZCODE_SERVER_NAME")
+      ? { name: options.name?.trim() || readTrimmedEnv("ZCODE_SERVER_NAME") }
       : {}),
-    version: XCODE_VERSION,
+    version: ZCODE_VERSION,
     protocolVersion: SERVER_REMOTE_PROTOCOL_VERSION,
-    authRequired: options.authRequired ?? Boolean(readTrimmedEnv("XCODE_SERVER_TOKEN")),
+    authRequired: options.authRequired ?? Boolean(readTrimmedEnv("ZCODE_SERVER_TOKEN")),
     workspaces: resolveServerWorkspaces(options),
-    compatibility: XCODE_COMPATIBILITY_MANIFEST,
+    compatibility: ZCODE_COMPATIBILITY_MANIFEST,
     migration: { failedPathCount: options.migrationFailedPathCount ?? 0 },
     identity: { osUser: resolveServerOsUser(), hostname: hostname() },
     capabilities: {
@@ -394,7 +394,7 @@ export function createHttpServer(
     },
   }));
   app.use("/ws/host", async (c, next) => {
-    const capability = c.req.header(XCODE_RPC_HOST_CAPABILITY_HEADER);
+    const capability = c.req.header(ZCODE_RPC_HOST_CAPABILITY_HEADER);
     if (!hostCapabilities.consume(capability)) {
       return c.json({ error: "Invalid or expired host capability" }, 401);
     }

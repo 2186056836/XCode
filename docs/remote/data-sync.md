@@ -566,16 +566,16 @@ DataSyncDialog（Renderer）
 
 - 目标：在开发者自己的机器上，用真实的 Linux 远端包和真实的 Linux 容器验证数据同步。不依赖专用 Linux 服务器、VPN 或真实账号；只有「远端会话能否使用推送内容」一组用例需要模型回放（见下文覆盖内容最后一项）。开发机可以是 macOS 或 Linux；当前主要开发机是 Apple Silicon Mac，Docker 容器为 linux/arm64。
 - 运行步骤：
-  1. **打 Linux 远端包**：`XCODE_ENV=test pnpm prepare:remote-assets:linux`，只构建 `linux-x64` 和 `linux-arm64`，写入当前版本的 mock-cdn 发布目录。必须用 `test`，与 E2E 桌面端的 `XCODE_ENV=test` 一致：`XCODE_ENV` 在构建时编译进远端 server，两端不一致时会连不同的后端域，远端的 E2E 测试钩子也会被关闭。
+  1. **打 Linux 远端包**：`ZCODE_ENV=test pnpm prepare:remote-assets:linux`，只构建 `linux-x64` 和 `linux-arm64`，写入当前版本的 mock-cdn 发布目录。必须用 `test`，与 E2E 桌面端的 `ZCODE_ENV=test` 一致：`ZCODE_ENV` 在构建时编译进远端 server，两端不一致时会连不同的后端域，远端的 E2E 测试钩子也会被关闭。
   2. **新建 Linux 容器模拟远程机器**：复用现有远程 harness 的 SSH 目标镜像（sshd + `dev` 用户），端口只绑定 `127.0.0.1`，每次运行新建，并设置随机密码。
-  3. **E2E 在容器上做实际验证**：Electron 在开发机本地原生运行，通过 `XCODE_E2E_SSH_*` 环境变量合同经 SSH 连接容器；首次连接时把对应架构的 Linux 包安装进容器，在真实的远端 zcode-server 上执行推送；远端断言用 docker exec 读取容器内的 `~/.zcode`。
+  3. **E2E 在容器上做实际验证**：Electron 在开发机本地原生运行，通过 `ZCODE_E2E_SSH_*` 环境变量合同经 SSH 连接容器；首次连接时把对应架构的 Linux 包安装进容器，在真实的远端 zcode-server 上执行推送；远端断言用 docker exec 读取容器内的 `~/.zcode`。
 - 本机 E2E 只需要 Linux 包，不触发全平台的远程资源构建，也不能误用开发时打的 production 包。
 
 ```text
 开发机（本机）
- ├─ ① XCODE_ENV=test pnpm prepare:remote-assets:linux ──▶ mock-cdn/releases/<版本>/（linux-x64、linux-arm64）
+ ├─ ① ZCODE_ENV=test pnpm prepare:remote-assets:linux ──▶ mock-cdn/releases/<版本>/（linux-x64、linux-arm64）
  ├─ ② docker：新建 Linux 容器（sshd + dev 用户，127.0.0.1:<端口>）
- └─ ③ wdio + Electron（XCODE_ENV=test）
+ └─ ③ wdio + Electron（ZCODE_ENV=test）
         ├─ SSH ──▶ 容器：安装 Linux 包 → 启动远端 zcode-server → 数据同步推送
         └─ 断言 ── docker exec ──▶ 容器内 /home/dev/.zcode
 ```

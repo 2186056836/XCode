@@ -71,10 +71,10 @@ export async function startAgent(
       // 正式回归隔离用户配置，不能读取本机 MCP、认证或把日志写入真实用户目录。
       HOME: data,
       USERPROFILE: data,
-      XCODE_LOG_DIR: join(data, "logs"),
-      XCODE_DATA_BASE_DIR: data,
+      ZCODE_LOG_DIR: join(data, "logs"),
+      ZCODE_DATA_BASE_DIR: data,
       ZCODE_SESSION_DB: join(data, "session.sqlite"),
-      XCODE_STORAGE_DIR: data,
+      ZCODE_STORAGE_DIR: data,
       LANG: "en_US.UTF-8",
       ...providerEnv,
     },

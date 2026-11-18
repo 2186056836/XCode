@@ -61,7 +61,7 @@ export class ClaudeNativeSessionImportRepo {
     }
 
     // 关键业务逻辑：扫描 Claude Code 原生历史目录 ~/.claude/projects，不是 zcode 自己的数据目录。
-    // 当 XCODE_DATA_BASE_DIR 把 .xcode 放到别处时，原生 .claude 往往仍在真实用户 HOME 下。
+    // 当 ZCODE_DATA_BASE_DIR 把 .xcode 放到别处时，原生 .claude 往往仍在真实用户 HOME 下。
     return [...homes].map((homePath) => join(homePath, ".claude", "projects"));
   }
 

@@ -60,7 +60,7 @@ async function managedWorktreeFixture() {
   await git(source, "commit", "-q", "-m", "init");
   await mkdir(join(dataBaseDir, ".zcode", "worktrees", BUCKET), { recursive: true });
   await git(source, "worktree", "add", "-q", "--detach", worktree);
-  return { dataBaseDir, env: { XCODE_DATA_BASE_DIR: dataBaseDir }, root, source, worktree };
+  return { dataBaseDir, env: { ZCODE_DATA_BASE_DIR: dataBaseDir }, root, source, worktree };
 }
 
 describe("resolveWorkspaceHookTrustIdentityForWorkspace", () => {
@@ -84,11 +84,11 @@ describe("resolveWorkspaceHookTrustIdentityForWorkspace", () => {
         env: value.env,
       }),
     ).resolves.toBe(value.source);
-    // XCODE_DATA_BASE_DIR 指向别处时，同一路径不在受管根目录下，不继承。
+    // ZCODE_DATA_BASE_DIR 指向别处时，同一路径不在受管根目录下，不继承。
     await expect(
       resolveWorkspaceHookTrustIdentityForWorkspace({
         workspacePath: value.worktree,
-        env: { XCODE_DATA_BASE_DIR: join(value.root, "other-data") },
+        env: { ZCODE_DATA_BASE_DIR: join(value.root, "other-data") },
       }),
     ).resolves.toBe(value.worktree);
   });

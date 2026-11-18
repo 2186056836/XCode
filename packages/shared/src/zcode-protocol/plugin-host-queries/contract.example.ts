@@ -3,7 +3,7 @@
  * 或把失败的 data 按稳定码分支（不读错误文本）。
  */
 import {
-  XCODE_PLUGIN_READ_USER_OPTIONS_ERROR_CODES,
+  ZCODE_PLUGIN_READ_USER_OPTIONS_ERROR_CODES,
   zcodePluginQueryErrorDataSchema,
   zcodePluginsReadUserOptionsResultSchema,
   type XCodePluginsReadUserOptionsResult,
@@ -17,6 +17,6 @@ export function exampleReadUserOptionsResult(raw: unknown): XCodePluginsReadUser
 export function exampleIsPluginNotFound(errorData: unknown): boolean {
   const parsed = zcodePluginQueryErrorDataSchema.safeParse(errorData);
   return (
-    parsed.success && parsed.data.code === XCODE_PLUGIN_READ_USER_OPTIONS_ERROR_CODES.pluginNotFound
+    parsed.success && parsed.data.code === ZCODE_PLUGIN_READ_USER_OPTIONS_ERROR_CODES.pluginNotFound
   );
 }

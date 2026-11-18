@@ -52,7 +52,7 @@ import {
 
 const CASE_MARKER = "E2E_R3_SERVER_UPDATE";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-server-update",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-server-update",
 );
 const run = promisify(execFile);
 const updateScenario = process.env.R3_SERVER_UPDATE_CASE ?? "cancel";
@@ -61,8 +61,8 @@ const updateScenario = process.env.R3_SERVER_UPDATE_CASE ?? "cancel";
 async function dockerSh(
   command: string,
 ): Promise<{ code: number | null; stdout: string; stderr: string }> {
-  const container = process.env.XCODE_E2E_SSH_CONTAINER?.trim();
-  if (!container) throw new Error(`${CASE_MARKER}: 缺少 XCODE_E2E_SSH_CONTAINER`);
+  const container = process.env.ZCODE_E2E_SSH_CONTAINER?.trim();
+  if (!container) throw new Error(`${CASE_MARKER}: 缺少 ZCODE_E2E_SSH_CONTAINER`);
   try {
     const result = await run("docker", ["exec", "-u", "dev", container, "bash", "-lc", command], {
       maxBuffer: 1 << 22,

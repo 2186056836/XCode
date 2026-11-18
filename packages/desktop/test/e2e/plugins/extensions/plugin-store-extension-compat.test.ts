@@ -145,7 +145,7 @@ async function captureStoreViews(label: "zh-CN-zai-light" | "en-US-zai-dark"): P
 
 describe("PLM-EXT-STORE 商店按插件 API 版本挡住不兼容的扩展插件", () => {
   after(async () => {
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (artifactDir) {
       await writeFile(
         join(artifactDir, "plm-ext-store-evidence.json"),

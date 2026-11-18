@@ -85,7 +85,7 @@ const DOS_MAGIC = 0x5a4d;
 
 test("includes the production XCode Built-in Provider Config as a SEA asset", async () => {
   const root = fileURLToPath(new URL("../../../../..", import.meta.url));
-  const assets = await collectSeaProviderConfigAssets({ root, env: { XCODE_ENV: "production" } });
+  const assets = await collectSeaProviderConfigAssets({ root, env: { ZCODE_ENV: "production" } });
   const zcodeBuiltinFilePath = assets[SEA_XCODE_BUILTIN_PROVIDER_CONFIG_ASSET_KEY];
 
   assert.ok(zcodeBuiltinFilePath);

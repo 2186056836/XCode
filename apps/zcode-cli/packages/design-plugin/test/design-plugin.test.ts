@@ -216,7 +216,7 @@ describe("design 官方插件内容与加载", () => {
     });
 
     it("在没有 Node 的 PATH 下输出合法的 additionalContext：只是指向 design 技能的指针，写明 base directory", () => {
-      const run = runHook({ XCODE_PLUGIN_ROOT: pluginRoot.replace(/\/$/, "") });
+      const run = runHook({ ZCODE_PLUGIN_ROOT: pluginRoot.replace(/\/$/, "") });
       expect(run.status).toBe(0);
       const out = JSON.parse(run.stdout);
       expect(out.hookSpecificOutput.hookEventName).toBe("SessionStart");
@@ -246,7 +246,7 @@ describe("design 官方插件内容与加载", () => {
       const run = spawnSync("sh", [join(hooksDir, "run-hook.cmd"), "design-rules"], {
         encoding: "utf8",
         timeout: 20000,
-        env: { PATH: `${bin}:/usr/bin:/bin`, XCODE_PLUGIN_ROOT: pluginRoot.replace(/\/$/, "") },
+        env: { PATH: `${bin}:/usr/bin:/bin`, ZCODE_PLUGIN_ROOT: pluginRoot.replace(/\/$/, "") },
       });
       expect(run.status).toBe(0);
       const ctx: string = JSON.parse(run.stdout).hookSpecificOutput.additionalContext;
@@ -254,7 +254,7 @@ describe("design 官方插件内容与加载", () => {
     });
 
     it("入口缺失或路径错误时静默退出 0，不阻塞会话", () => {
-      const run = runHook({ XCODE_PLUGIN_ROOT: join(pluginRoot, "does-not-exist") });
+      const run = runHook({ ZCODE_PLUGIN_ROOT: join(pluginRoot, "does-not-exist") });
       expect(run.status).toBe(0);
       expect(run.stdout).toBe("");
     });

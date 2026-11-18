@@ -109,7 +109,7 @@ export async function executeCredentialCipherRequest(
     };
   } catch (error) {
     const code = (error as { code?: string })?.code;
-    const decryptFailed = code === "XCODE_CREDENTIAL_DECRYPT_FAILED";
+    const decryptFailed = code === "ZCODE_CREDENTIAL_DECRYPT_FAILED";
     const invalid = code === "CREDENTIAL_CIPHER_INVALID_PAYLOAD";
     // 只返回受控错误；原生异常可能含系统细节，不能穿过凭据桥或进入日志。
     return {

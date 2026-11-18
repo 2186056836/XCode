@@ -258,7 +258,7 @@ describe("PLG plugin 引用：@ 面板 plugins 分组与 plugin_reference remind
     expect(serialized).toContain(PLUGIN_STABLE_ID);
     expect((serialized.match(/<plugin_reference>/g) ?? []).length).toBe(1);
     // identifiers-only：禁injected 字段（路径、插件环境变量、rootPath 字段名）不得进入 provider 输入。
-    expect(serialized).not.toContain("XCODE_PLUGIN_ROOT");
+    expect(serialized).not.toContain("ZCODE_PLUGIN_ROOT");
     expect(serialized).not.toContain('"rootPath"');
 
     // reminder 是 model-only：用户可见时间线不得渲染 plugin_reference 标签。

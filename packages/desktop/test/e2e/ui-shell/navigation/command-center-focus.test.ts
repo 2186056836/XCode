@@ -42,7 +42,7 @@ async function emulate(width?: number, forcedColors = false) {
 describe("组合输入框焦点", () => {
   afterEach(async () => {
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "command-center-focus-dialogs.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "command-center-focus-dialogs.json"),
       JSON.stringify(
         await browser.execute(() =>
           Array.from(document.querySelectorAll('[role="dialog"], [role="alertdialog"]')).map(
@@ -170,7 +170,7 @@ describe("组合输入框焦点", () => {
         sameColor: true,
       });
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `sidebar-title-actions-${theme}.png`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `sidebar-title-actions-${theme}.png`),
       );
       const dragStart = await browser.execute(() => {
         const region = document.querySelector<HTMLElement>(
@@ -217,7 +217,7 @@ describe("组合输入框焦点", () => {
       expect(await hint.$('[data-slot="kbd"]').getText()).toMatch(/K/);
       expect(await hint.getText()).not.toContain(" · ");
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `sidebar-search-tooltip-${theme}.png`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `sidebar-search-tooltip-${theme}.png`),
       );
       await search.click();
       const input = $('[role="dialog"] [cmdk-input]');
@@ -257,7 +257,7 @@ describe("组合输入框焦点", () => {
           width,
         });
         await browser.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, `command-center-focus-${theme}-${width}.png`),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `command-center-focus-${theme}-${width}.png`),
         );
       }
       await browser.keys("Escape");
@@ -328,7 +328,7 @@ describe("组合输入框焦点", () => {
             if (width === 390) expect(focusStyle.inputSize).toBeGreaterThanOrEqual(16);
             await browser.saveScreenshot(
               join(
-                process.env.XCODE_E2E_ARTIFACT_DIR!,
+                process.env.ZCODE_E2E_ARTIFACT_DIR!,
                 `project-focus-${theme}-${width}-${forcedColors ? "forced" : "normal"}.png`,
               ),
             );

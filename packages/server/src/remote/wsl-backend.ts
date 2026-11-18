@@ -50,7 +50,7 @@ export interface ResolvedWSLIdentity {
 
 const WSL_COMMAND = "wsl.exe";
 const WSL_EXEC_MAX_BUFFER = 8 * 1024 * 1024;
-const WSL_IDENTITY_SENTINEL = "__XCODE_WSL_IDENTITY__";
+const WSL_IDENTITY_SENTINEL = "__ZCODE_WSL_IDENTITY__";
 // Bug 原因：身份探测曾用 `bash -lc` 并按行解析；profile 里的 echo 先于身份输出，被当成
 // distro/user 写进设备 Profile，此后每次连接都报“未找到名为 … 的 WSL distro”。身份只依赖
 // WSL 注入的 $WSL_DISTRO_NAME、id 与 $HOME，不需要登录环境；哨兵隔开 wsl.exe 或 shell 的其余输出。

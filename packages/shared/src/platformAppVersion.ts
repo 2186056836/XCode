@@ -42,7 +42,7 @@ export function getPlatformAppVersionAgeMs(now = Date.now()): number {
 
 /** 官方发布通道 → manifest 的 channel 参数（官方 mapReleaseChannelToApiValue 同值）。 */
 function resolveChannelValue(env: NodeJS.ProcessEnv): string {
-  return (env.XCODE_ENV ?? "").trim().toLowerCase() === "preview"
+  return (env.ZCODE_ENV ?? "").trim().toLowerCase() === "preview"
     ? RELEASE_CHANNEL_PREVIEW
     : RELEASE_CHANNEL_STABLE;
 }
@@ -158,4 +158,4 @@ export function stopPlatformAppVersionRefresh(): void {
  * 官方 ZCode 平台版本（兼容旧名）。取缓存值；尚未刷到时是内置基线。
  * @deprecated 新代码用 {@link getPlatformAppVersion} 表达语义，值相同。
  */
-export const XCODE_PLATFORM_APP_VERSION = PLATFORM_APP_VERSION_BASELINE;
+export const ZCODE_PLATFORM_APP_VERSION = PLATFORM_APP_VERSION_BASELINE;

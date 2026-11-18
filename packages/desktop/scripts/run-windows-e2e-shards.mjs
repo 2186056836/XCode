@@ -160,7 +160,7 @@ export function createWindowsE2ERunId({ timestamp, processId, entropy }) {
 
 function createBuildEnv(env) {
   const { NODE_OPTIONS: _nodeOptions, ...buildEnv } = env;
-  // 修复原因：从 XCode 客户端 shell 运行时，构建会继承 XCODE_ENV=production / XCODE_BASE_URL，
+  // 修复原因：从 XCode 客户端 shell 运行时，构建会继承 ZCODE_ENV=production / ZCODE_BASE_URL，
   // 把它们固化进 agent 与桌面包，导致 E2E 打生产域、fixture endpoint 失效。
   return normalizeE2EDesktopBuildEnv({
     ...buildEnv,
@@ -188,14 +188,14 @@ export function createWindowsE2EShardPlan({
   // 修复原因：只有 ISO 毫秒的自动 ID 会让同毫秒启动的 runner 共享 HOME/artifact/network。
   // 显式 ID 保持原语义；自动 ID 同时加入 PID 和随机熵，测试可注入固定值稳定验证。
   const runId =
-    env.XCODE_E2E_RUN_ID?.trim() ||
+    env.ZCODE_E2E_RUN_ID?.trim() ||
     createWindowsE2ERunId({
       entropy: runIdEntropy ?? randomBytes(8).toString("hex"),
       processId,
       timestamp: runIdTimestamp,
     });
   const artifactRoot = resolve(
-    env.XCODE_E2E_ARTIFACT_DIR?.trim() || join(desktopDir, ".e2e-artifacts", runId),
+    env.ZCODE_E2E_ARTIFACT_DIR?.trim() || join(desktopDir, ".e2e-artifacts", runId),
   );
   const explicitHomeRoot = env.ZCODE_E2E_HOME_DIR?.trim();
   // 修复原因：单 shard runner 也可能并发启动；默认 HOME 若固定为 `.e2e-home`，
@@ -249,8 +249,8 @@ export function createWindowsE2EShardPlan({
     const childEnv = {
       ...env,
       ZCODE_E2E_HOME_DIR: childHomeDir,
-      XCODE_E2E_RUN_ID: childRunId,
-      XCODE_E2E_ARTIFACT_DIR: artifactDir,
+      ZCODE_E2E_RUN_ID: childRunId,
+      ZCODE_E2E_ARTIFACT_DIR: artifactDir,
       ZCODE_E2E_NETWORK_CAPTURE_DIR: sharded
         ? join(artifactDir, "network-capture")
         : resolve(

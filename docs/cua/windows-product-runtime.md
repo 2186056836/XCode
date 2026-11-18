@@ -6,7 +6,7 @@
 Windows x64/arm64 的 XCode 安装包能够按需启动本机 Computer Use Helper，并复用现有
 `@zcode/protocol`、CUA broker、官方 `zcode-cua` 插件和桌面本地 host 生命周期。
 
-源码开发仍允许使用 `XCODE_CUA_DEV_ROOT` 覆盖产品资源；产品安装包默认只读取自身
+源码开发仍允许使用 `ZCODE_CUA_DEV_ROOT` 覆盖产品资源；产品安装包默认只读取自身
 `resources/tools/cua-helper`，不搜索相邻目录、不下载 Helper、不回退到 macOS 实现。
 
 ## 设计结论
@@ -21,7 +21,7 @@ Windows 沿用 macOS 已验证的“Agent 只连接 broker、Helper 独立持有
 ```text
 构建期
 
-固定提交的 @zcode/zcode-cua（或构建期显式 XCODE_CUA_HELPER_RUNTIME_PACKAGE_DIR）
+固定提交的 @zcode/zcode-cua（或构建期显式 ZCODE_CUA_HELPER_RUNTIME_PACKAGE_DIR）
   ├─ package.json:zcodeCuaRuntime.windows.entry
   ├─ package.json:zcodeCuaRuntime.windows.nativeAddon
   └─ 外置运行依赖 express / sharp
@@ -51,7 +51,7 @@ electron-builder extraResources + Windows signExts(.node/.dll)
 
 官方 CUA 插件启用
   -> host 延迟解析 Windows runtime
-     -> 若 XCODE_CUA_DEV_ROOT 非空：严格使用显式源码根
+     -> 若 ZCODE_CUA_DEV_ROOT 非空：严格使用显式源码根
      -> 否则：严格使用 process.resourcesPath/tools/cua-helper
         -> 校验 manifest / win32 / arch / Electron 版本 / 文件哈希
            -> Electron.exe + ELECTRON_RUN_AS_NODE=1 fork windows-helper.js
@@ -128,12 +128,12 @@ manifest schema 版本为 `1`，字段固定为：
 x64 产物误装进 arm64 包。
 
 发布依赖必须固定到可从远端获取的 `zcode-cua` 精确 commit；不能使用分支浮动引用、
-相邻目录猜测或安装时临时编译。`XCODE_CUA_DEV_ROOT` 只作为显式本地开发覆盖。
+相邻目录猜测或安装时临时编译。`ZCODE_CUA_DEV_ROOT` 只作为显式本地开发覆盖。
 
 ## 运行时准入与失败语义
 
 1. 平台不是 `win32` 时，Windows resolver 返回稳定的 `unsupported-platform`。
-2. `XCODE_CUA_DEV_ROOT` 非空时必须是绝对路径，并继续执行 package/entry/addon 校验；
+2. `ZCODE_CUA_DEV_ROOT` 非空时必须是绝对路径，并继续执行 package/entry/addon 校验；
    配错后 fail closed，不回退产品资源。
 3. 未设置开发覆盖时必须存在绝对 `resourcesPath`，产品根固定派生为
    `tools/cua-helper`。
@@ -181,7 +181,7 @@ staging manifest（未签名字节 hash）
 - source override 与 packaged runtime 两种解析路径；
 - 配错 source override 不回退；
 - manifest schema/platform/arch/Electron/hash 任一不匹配均 fail closed；
-- Windows 特性在无 `XCODE_CUA_DEV_ROOT` 时仍可创建延迟产品 host；
+- Windows 特性在无 `ZCODE_CUA_DEV_ROOT` 时仍可创建延迟产品 host；
 - 非 desktop-local 与 remote workspace identity 继续拒绝创建；
 - staging 的 x64/arm64 PE machine 校验；
 - source/staging 拒绝 symlink、junction/reparse point 造成的物理越界；
@@ -202,18 +202,18 @@ Windows `--dir` 验收必须显式加载仓库的非默认配置文件名；裸�
 `extraMetadata.version` 注入前错误报告 desktop `package.json` 缺少 version。正确命令为：
 
 ```powershell
-Remove-Item Env:XCODE_CUA_DEV_ROOT -ErrorAction SilentlyContinue
-$env:XCODE_CUA_HELPER_RUNTIME_PACKAGE_DIR='D:\path\to\zcode-cua'
-$env:XCODE_SKIP_REMOTE_ASSETS='1'
-$env:XCODE_TARGET_OS='win32'
-$env:XCODE_TARGET_ARCH='x64'
+Remove-Item Env:ZCODE_CUA_DEV_ROOT -ErrorAction SilentlyContinue
+$env:ZCODE_CUA_HELPER_RUNTIME_PACKAGE_DIR='D:\path\to\zcode-cua'
+$env:ZCODE_SKIP_REMOTE_ASSETS='1'
+$env:ZCODE_TARGET_OS='win32'
+$env:ZCODE_TARGET_ARCH='x64'
 pnpm --filter @zcode/desktop build
 pnpm --filter @zcode/desktop exec electron-builder `
   --config electron-builder.config.js --win --x64 --dir
-Remove-Item Env:XCODE_CUA_HELPER_RUNTIME_PACKAGE_DIR
+Remove-Item Env:ZCODE_CUA_HELPER_RUNTIME_PACKAGE_DIR
 ```
 
-本机通过显式 `XCODE_CUA_HELPER_RUNTIME_PACKAGE_DIR` 选择本地 producer 完成
+本机通过显式 `ZCODE_CUA_HELPER_RUNTIME_PACKAGE_DIR` 选择本地 producer 完成
 `@zcode/zcode-cua` staging；workspace/lockfile 仍保持远端可获取的精确 pinned dependency，目标为
 win32/x64，addon PE machine 为 `0x8664`。产物资源目录为
 `<workspace>\packages\desktop\dist\win-unpacked\resources`，manifest 为

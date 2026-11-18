@@ -13,7 +13,7 @@ import {
   isNetworkFailure,
 } from "#src/providers/api/networkErrorClassifier.js";
 import {
-  XCODE_PROVIDER_CONFIG_NETWORK_ERROR,
+  ZCODE_PROVIDER_CONFIG_NETWORK_ERROR,
   zcodeProviderRuntimeHeadersErrorCode,
 } from "@zcode/shared";
 import { RemoteConversationTelemetry } from "#src/conversation-telemetry/remoteConversationTelemetry.js";
@@ -91,17 +91,17 @@ import {
   subagentRuntimeConfigSchema,
   zcodeSubagentsReadRuntimeConfigParamsSchema,
   type SubagentRuntimeConfig,
-  XCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
+  ZCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
   formatLogPrefix,
   resolveWorkspaceKey,
   type TraceId,
-  XCODE_AGENT_PROVIDER,
-  XCODE_AGENT_PROVIDER_NOT_READY_CODE,
-  XCODE_AGENT_PROVIDER_NOT_READY_REASON,
-  XCODE_MODEL_REASONING_SEPARATOR,
+  ZCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER_NOT_READY_CODE,
+  ZCODE_AGENT_PROVIDER_NOT_READY_REASON,
+  ZCODE_MODEL_REASONING_SEPARATOR,
   isRemoteWorkspaceIdentity,
-  XCODE_PROTOCOL_NAME,
-  XCODE_PROTOCOL_VERSION,
+  ZCODE_PROTOCOL_NAME,
+  ZCODE_PROTOCOL_VERSION,
   zcodeMcpListResultSchema,
   zcodeWorkspaceMcpTrustResultSchema,
   zcodePermissionRequestParamsSchema,
@@ -231,7 +231,7 @@ import {
   mergeAutomationMutationToolDenylist,
   mergeOffPeakMutationToolDenylist,
 } from "#src/zcode-agent/automationToolPolicy.js";
-import { XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE } from "./zcodeAgent.js";
+import { ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE } from "./zcodeAgent.js";
 import { createContextCompositionClient } from "#src/zcode-agent/contextCompositionClient.js";
 import {
   createPluginHostQueriesClient,
@@ -420,7 +420,7 @@ import {
   workspaceConfigTopic,
   workspaceConfigTopicWireCandidateSchema,
   utf8JsonByteLength,
-  XCODE_ATTACHMENT_FAULT_CODES,
+  ZCODE_ATTACHMENT_FAULT_CODES,
   XCodeAttachmentFaultError,
   type CommandAck,
   type ConversationTopicWireCandidate,
@@ -972,7 +972,7 @@ function formatModelSelectionForLog(ref: ModelSelection | undefined): string | n
 
   const base = `${ref.providerId}/${ref.modelId}`;
   const reasoningLevel = ref.options?.reasoningLevel;
-  return reasoningLevel ? `${base}${XCODE_MODEL_REASONING_SEPARATOR}${reasoningLevel}` : base;
+  return reasoningLevel ? `${base}${ZCODE_MODEL_REASONING_SEPARATOR}${reasoningLevel}` : base;
 }
 
 function sessionEventKey(params: XCodeAgentSessionTarget): string {
@@ -1101,14 +1101,14 @@ function sessionNotResidentError(sessionId: string): Error {
 }
 
 function createRuntimeUnavailableError(params: XCodeAgentWorkspaceTarget): Error & {
-  code: typeof XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE;
+  code: typeof ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE;
   workspaceKey: string;
 } {
   const error = new Error("XCode Agent runtime is not running.") as Error & {
-    code: typeof XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE;
+    code: typeof ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE;
     workspaceKey: string;
   };
-  error.code = XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE;
+  error.code = ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE;
   error.workspaceKey = resolveWorkspaceKey(params);
   return error;
 }
@@ -1846,7 +1846,7 @@ export function createXCodeAgentService(
     isRuntimeUnavailableError: (error) =>
       error instanceof Error &&
       "code" in error &&
-      error.code === XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE,
+      error.code === ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE,
     resolveWorkspaceKey,
     logger,
   });
@@ -2381,7 +2381,7 @@ export function createXCodeAgentService(
       });
       if (configFailureCode === zcodeProviderRuntimeHeadersErrorCode.configNetwork) {
         await pending.client.respondError(pending.protocolRequestId, {
-          code: XCODE_PROVIDER_CONFIG_NETWORK_ERROR,
+          code: ZCODE_PROVIDER_CONFIG_NETWORK_ERROR,
           message: errorMessage,
         });
         return;
@@ -2418,7 +2418,7 @@ export function createXCodeAgentService(
       requestId,
       scope: pending.request.scope,
       sessionId: pending.request.sessionId,
-      timeoutMs: XCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
+      timeoutMs: ZCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
       workspaceKey: pending.workspaceKey,
     });
     void pending.client
@@ -2426,7 +2426,7 @@ export function createXCodeAgentService(
         code: -32022,
         message: "Session runtime preferences request timed out",
         data: {
-          timeoutMs: XCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
+          timeoutMs: ZCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
         },
       })
       .catch((error: unknown) => {
@@ -3608,7 +3608,7 @@ export function createXCodeAgentService(
             workspace,
             timeout: setTimeout(
               () => expireSessionRuntimePreferencesRequest(requestId),
-              XCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
+              ZCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
             ),
             workspaceKey: resolveWorkspaceKey(workspace),
           });
@@ -4506,10 +4506,10 @@ export function createXCodeAgentService(
     snapshot?: XCodeAgentProviderReadinessSnapshot;
     workspace: XCodeAgentWorkspaceTarget;
   }): Error & {
-    code: typeof XCODE_AGENT_PROVIDER_NOT_READY_CODE;
+    code: typeof ZCODE_AGENT_PROVIDER_NOT_READY_CODE;
     data: {
       providerCount: number;
-      reason: typeof XCODE_AGENT_PROVIDER_NOT_READY_REASON;
+      reason: typeof ZCODE_AGENT_PROVIDER_NOT_READY_REASON;
       revision: string | null;
       workspaceKey: string;
       workspacePath: string;
@@ -4517,19 +4517,19 @@ export function createXCodeAgentService(
   } {
     const workspaceKey = resolveWorkspaceKey(params.workspace);
     const error = new Error("当前没有可用的模型供应商和模型，请先登录或配置 API Key。") as Error & {
-      code: typeof XCODE_AGENT_PROVIDER_NOT_READY_CODE;
+      code: typeof ZCODE_AGENT_PROVIDER_NOT_READY_CODE;
       data: {
         providerCount: number;
-        reason: typeof XCODE_AGENT_PROVIDER_NOT_READY_REASON;
+        reason: typeof ZCODE_AGENT_PROVIDER_NOT_READY_REASON;
         revision: string | null;
         workspaceKey: string;
         workspacePath: string;
       };
     };
-    error.code = XCODE_AGENT_PROVIDER_NOT_READY_CODE;
+    error.code = ZCODE_AGENT_PROVIDER_NOT_READY_CODE;
     error.data = {
       providerCount: params.snapshot?.providerCount ?? 0,
-      reason: XCODE_AGENT_PROVIDER_NOT_READY_REASON,
+      reason: ZCODE_AGENT_PROVIDER_NOT_READY_REASON,
       revision: params.snapshot?.revision ?? null,
       workspaceKey,
       workspacePath: params.workspace.workspacePath,
@@ -4539,10 +4539,10 @@ export function createXCodeAgentService(
 
   function isProviderNotReadyError(
     error: unknown,
-  ): error is Error & { code: typeof XCODE_AGENT_PROVIDER_NOT_READY_CODE } {
+  ): error is Error & { code: typeof ZCODE_AGENT_PROVIDER_NOT_READY_CODE } {
     return (
       error instanceof Error &&
-      (error as { code?: unknown }).code === XCODE_AGENT_PROVIDER_NOT_READY_CODE
+      (error as { code?: unknown }).code === ZCODE_AGENT_PROVIDER_NOT_READY_CODE
     );
   }
 
@@ -5244,8 +5244,8 @@ export function createXCodeAgentService(
         return {
           available: true,
           workspaceKey,
-          protocolName: XCODE_PROTOCOL_NAME,
-          protocolVersion: XCODE_PROTOCOL_VERSION,
+          protocolName: ZCODE_PROTOCOL_NAME,
+          protocolVersion: ZCODE_PROTOCOL_VERSION,
           transportKind: client.transportKind === "websocket" ? "websocket" : "stdio",
         };
       } catch (error) {
@@ -5265,10 +5265,10 @@ export function createXCodeAgentService(
         return {
           available: false,
           workspaceKey,
-          protocolName: XCODE_PROTOCOL_NAME,
-          protocolVersion: XCODE_PROTOCOL_VERSION,
+          protocolName: ZCODE_PROTOCOL_NAME,
+          protocolVersion: ZCODE_PROTOCOL_VERSION,
           reason: error instanceof Error ? error.message : String(error),
-          ...(providerNotReady ? { reasonCode: XCODE_AGENT_PROVIDER_NOT_READY_REASON } : {}),
+          ...(providerNotReady ? { reasonCode: ZCODE_AGENT_PROVIDER_NOT_READY_REASON } : {}),
         };
       }
     },
@@ -6392,7 +6392,7 @@ export function createXCodeAgentService(
           }
           return {
             pid: runtime.pid,
-            provider: XCODE_AGENT_PROVIDER,
+            provider: ZCODE_AGENT_PROVIDER,
             workspacePath: runtime.workspacePath,
             ...(runtime.lane ? { lane: runtime.lane } : {}),
             children,
@@ -7968,7 +7968,7 @@ export function createXCodeAgentService(
     async conversationAttachmentReadV4(params: XCodeAgentConversationAttachmentReadParams) {
       if (!readTrustedXCodeAgentV4Connection(params)) {
         throw new XCodeAttachmentFaultError(
-          XCODE_ATTACHMENT_FAULT_CODES.shareReadConnectionUntrusted,
+          ZCODE_ATTACHMENT_FAULT_CODES.shareReadConnectionUntrusted,
         );
       }
       const wireParams = v4ConversationAttachmentReadParamsSchema.parse({
@@ -7991,7 +7991,7 @@ export function createXCodeAgentService(
     async conversationAttachmentStatV4(params: XCodeAgentConversationAttachmentStatParams) {
       if (!readTrustedXCodeAgentV4Connection(params)) {
         throw new XCodeAttachmentFaultError(
-          XCODE_ATTACHMENT_FAULT_CODES.shareStatConnectionUntrusted,
+          ZCODE_ATTACHMENT_FAULT_CODES.shareStatConnectionUntrusted,
         );
       }
       const wireParams = v4ConversationAttachmentStatParamsSchema.parse({
@@ -8234,7 +8234,7 @@ export function createXCodeAgentService(
         if (
           error instanceof Error &&
           "code" in error &&
-          error.code === XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE
+          error.code === ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE
         ) {
           return { kind: "unavailable", workId: params.workId };
         }

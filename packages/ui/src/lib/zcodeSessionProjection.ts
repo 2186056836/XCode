@@ -24,7 +24,7 @@ import {
   formatModelPickerValue as formatSharedModelSelection,
   resolveXCodeVisibleSessionTitle,
   textFromXCodeMessageParts,
-  XCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER,
   zcodeBackgroundTaskNotificationFailureText,
   zcodeBackgroundTaskNotificationToolUpdateStatus,
   appendXCodeStreamingToolInputDelta,
@@ -100,7 +100,7 @@ const STREAMING_TOOL_INPUT_INFO_LOG_LINE_BUCKET = 50;
 const streamingToolInputProjectionLogBuckets = new Map<string, number>();
 const COMPACTION_PROJECTION_DIAG_LIMIT = 200;
 const compactionProjectionDiagSignatures = new Set<string>();
-const XCODE_AGENT_MODE_OPTIONS = getSharedAgentAvailableModes();
+const ZCODE_AGENT_MODE_OPTIONS = getSharedAgentAvailableModes();
 
 export interface ZCodeSessionEventProjectionState extends XCodeToolProjectionMemory {
   activePromptInputIdBySession?: Map<string, InputId>;
@@ -797,7 +797,7 @@ export function zcodeSessionSnapshotToTaskMeta(snapshot: XCodeSessionStateSnapsh
     mode: fromXCodeMode(snapshot.session.mode),
     model: formatModelPickerValue(resolveTaskMetaModelSelectionFromSnapshot(snapshot)),
     thoughtLevel: snapshot.settings.thoughtLevel.current,
-    provider: XCODE_AGENT_PROVIDER,
+    provider: ZCODE_AGENT_PROVIDER,
     status: deriveXCodeTaskStatusFromSessionSnapshot(snapshot),
     lastError: snapshot.projection.lastError
       ? {
@@ -3333,7 +3333,7 @@ function fromXCodeMode(mode: XCodeSessionMode): XCodeTaskMode {
 }
 
 function getXCodeAgentModeSelectOptions(): NonNullable<XCodeConfigOption["options"]> {
-  return XCODE_AGENT_MODE_OPTIONS.map((mode) => ({
+  return ZCODE_AGENT_MODE_OPTIONS.map((mode) => ({
     value: mode.id,
     name: mode.name,
     description: mode.description,
@@ -3341,7 +3341,7 @@ function getXCodeAgentModeSelectOptions(): NonNullable<XCodeConfigOption["option
 }
 
 function getXCodeAgentAvailableModes(): XCodeTaskModeInfo[] {
-  return XCODE_AGENT_MODE_OPTIONS.map((mode) => ({ ...mode }));
+  return ZCODE_AGENT_MODE_OPTIONS.map((mode) => ({ ...mode }));
 }
 
 function fromXCodeGoal(goal: unknown): XCodeTaskGoal {

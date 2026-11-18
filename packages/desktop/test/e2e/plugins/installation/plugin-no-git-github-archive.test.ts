@@ -34,7 +34,7 @@ describe("PLM-LC-011 Desktop real Claude plugin HTTP install without Git", () =>
     // 全局空草稿不挂载 workspace App，旧测试 action 因此不存在；先进入项目草稿。
     await waitForWorkspaceApp(getE2EAppDataPaths().workspace, 45000);
     await startDraftFromProject(getE2EAppDataPaths().workspace);
-    const gitBinary = await browser.electron.execute(() => process.env.XCODE_GIT_BINARY ?? "");
+    const gitBinary = await browser.electron.execute(() => process.env.ZCODE_GIT_BINARY ?? "");
     expect(gitBinary).toContain("missing-bin");
     expect(existsSync(gitBinary)).toBe(false);
 

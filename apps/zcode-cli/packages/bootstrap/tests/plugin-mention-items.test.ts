@@ -11,7 +11,7 @@ import type {
 import { CoreErrorType, createCoreError } from "@zcode/contracts";
 import type { McpAppsToolVisibility } from "@zcode/shared/mcp-apps";
 import {
-  XCODE_PLUGIN_MENTION_ERROR_CODES,
+  ZCODE_PLUGIN_MENTION_ERROR_CODES,
   zcodePluginsMentionItemsResultSchema,
   zcodeProtocolErrorCodes,
   zcodeProtocolMethods,
@@ -156,7 +156,7 @@ describe("plugins/mentionItems", () => {
     const stub = createStub({ catalog: catalog as unknown as PluginReferenceCatalog });
     await expect(getPluginMentionItems(stub.context, params())).rejects.toMatchObject({
       code: INVALID_PARAMS,
-      data: { code: XCODE_PLUGIN_MENTION_ERROR_CODES.pluginUnavailable },
+      data: { code: ZCODE_PLUGIN_MENTION_ERROR_CODES.pluginUnavailable },
     });
     expect(stub.callTool).not.toHaveBeenCalled();
   });
@@ -165,14 +165,14 @@ describe("plugins/mentionItems", () => {
     const missing = createStub({ visibility: {} });
     await expect(getPluginMentionItems(missing.context, params())).rejects.toMatchObject({
       code: INVALID_PARAMS,
-      data: { code: XCODE_PLUGIN_MENTION_ERROR_CODES.toolNotFound },
+      data: { code: ZCODE_PLUGIN_MENTION_ERROR_CODES.toolNotFound },
     });
     expect(missing.callTool).not.toHaveBeenCalled();
 
     const modelOnly = createStub({ visibility: { [TOOL_SERVER]: ["model"] } });
     await expect(getPluginMentionItems(modelOnly.context, params())).rejects.toMatchObject({
       code: INVALID_PARAMS,
-      data: { code: XCODE_PLUGIN_MENTION_ERROR_CODES.toolNotAppVisible },
+      data: { code: ZCODE_PLUGIN_MENTION_ERROR_CODES.toolNotAppVisible },
     });
     expect(modelOnly.callTool).not.toHaveBeenCalled();
   });
@@ -211,7 +211,7 @@ describe("plugins/mentionItems", () => {
     const rejectedIsError = getPluginMentionItems(isError.context, params());
     await expect(rejectedIsError).rejects.toMatchObject({
       code: SERVER_ERROR,
-      data: { code: XCODE_PLUGIN_MENTION_ERROR_CODES.toolFailed },
+      data: { code: ZCODE_PLUGIN_MENTION_ERROR_CODES.toolFailed },
     });
     await expect(rejectedIsError).rejects.not.toThrow(LEAK_MARKER);
 
@@ -222,7 +222,7 @@ describe("plugins/mentionItems", () => {
     });
     await expect(getPluginMentionItems(thrown.context, params())).rejects.toMatchObject({
       code: SERVER_ERROR,
-      data: { code: XCODE_PLUGIN_MENTION_ERROR_CODES.toolFailed },
+      data: { code: ZCODE_PLUGIN_MENTION_ERROR_CODES.toolFailed },
     });
   });
 
@@ -260,7 +260,7 @@ describe("plugins/mentionItems", () => {
       );
       expect(error).toMatchObject({
         code: SERVER_ERROR,
-        data: { code: XCODE_PLUGIN_MENTION_ERROR_CODES.resultInvalid },
+        data: { code: ZCODE_PLUGIN_MENTION_ERROR_CODES.resultInvalid },
       });
       expect(String((error as Error).message)).not.toContain(LEAK_MARKER);
       expect(JSON.stringify((error as { data?: unknown }).data)).not.toContain(LEAK_MARKER);
@@ -281,7 +281,7 @@ describe("plugins/mentionItems authorization", () => {
     );
     expect(error).toMatchObject({
       code: SERVER_ERROR,
-      data: { code: XCODE_PLUGIN_MENTION_ERROR_CODES.toolDenied },
+      data: { code: ZCODE_PLUGIN_MENTION_ERROR_CODES.toolDenied },
     });
     // 拒绝原因可能来自用户反馈或 hook，不转进错误信息。
     expect(String((error as Error).message)).not.toContain(LEAK_MARKER);

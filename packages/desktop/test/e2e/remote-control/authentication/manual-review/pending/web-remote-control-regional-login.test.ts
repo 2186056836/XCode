@@ -17,9 +17,9 @@ async function remoteStatus(): Promise<WebRemoteControlStatus> {
 describe("中国区桌面与手机 Web 共享身份", () => {
   it("AUTH-CN-MOBILE: 已登录手机连接中国区桌面，补关联后保留连接，退出后撤销", async function () {
     this.timeout(180_000);
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
-    const relay = process.env.XCODE_E2E_REMOTE_AUTH_GATE_URL;
-    const web = process.env.XCODE_WEB_REMOTE_CONTROL_URL;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
+    const relay = process.env.ZCODE_E2E_REMOTE_AUTH_GATE_URL;
+    const web = process.env.ZCODE_WEB_REMOTE_CONTROL_URL;
     if (!artifactDir || !relay || !web) throw new Error("缺少隔离手机/relay配置");
     await waitForWorkspaceApp(DEFAULT_WORKSPACE, 60_000);
     const pairingUrl = await obtainUnreadPairingUrl(new URL(web).origin);

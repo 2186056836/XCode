@@ -60,7 +60,7 @@ ErrorBoundary 都用它，不再各写 `startsWith("zh")`。
   `resolvePersistedUiLocale` / `resolvePersistedUiLocalePreference` 把新字段合并回内存的
   `locale` / `localePreference`；新字段只有在“降级后等于旧字段”时才采信，否则以旧字段为准
   （旧字段被手改或被只认旧字段的写入者改过）。内存 `AppSettings` 不含新字段，`locale` 始终是真实语言，
-  所以 X-Client-Language、`XCODE_CLIENT_LANGUAGE`、遥测、Host 兜底等消费方不感知这层转换。
+  所以 X-Client-Language、`ZCODE_CLIENT_LANGUAGE`、遥测、Host 兜底等消费方不感知这层转换。
 - 直读原始 JSON 的地方也必须新字段优先：Main 冷启动同步读取（`desktopApplicationLocaleBootstrap.ts`）
   用 `resolvePersistedUiLocale`；其它读设置的地方都经 `settingService` / `appSettingsSchema`。
 - 旧版本 schema 的顶层 `z.object` 默认 strip（无 `.strict()` / `.passthrough()`），读到新字段不报错，

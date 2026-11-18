@@ -80,7 +80,7 @@ const CASE_REPLY = "R3_PROVISIONING_GUI_REPLY";
 // 未知自定义模型只继承 Built-in 兜底的 disabled 档位；产品要求切模后显式选择，未选时发送键禁用。
 const B05_THOUGHT_LEVEL = "disabled";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-provisioning-gui",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-provisioning-gui",
 );
 const REMOTE_SYNC_TIMEOUT_MS = 90_000;
 
@@ -239,7 +239,7 @@ async function assertConnectedSyncFailureRecovery(options: {
   facts: Record<string, unknown>;
 }): Promise<void> {
   const { config, desktopTarget, task, sibling, provider, facts } = options;
-  const directory = await browser.electron.execute(() => process.env.XCODE_E2E_RUNTIME_LOG_DIR);
+  const directory = await browser.electron.execute(() => process.env.ZCODE_E2E_RUNTIME_LOG_DIR);
   if (!directory) throw new Error(`${CASE_MARKER}: 缺少本次 Main 日志目录`);
   const beforeEvents = await readSyncEvents(directory);
   const keys = [...new Set(beforeEvents.map((event) => event.environmentKey))];
@@ -642,7 +642,7 @@ describe(`${CASE_MARKER}: 本地 Provider 保存/删除/断线期间修改经 Pr
 
     // 先对账先前已提交的同步全部收口，避免把旧成功日志误当成本次被扣留的 RPC 返回。
     const logDirectory = await browser.electron.execute(
-      () => process.env.XCODE_E2E_RUNTIME_LOG_DIR,
+      () => process.env.ZCODE_E2E_RUNTIME_LOG_DIR,
     );
     if (!logDirectory) throw new Error(`${CASE_MARKER}: 缺少本次 Main 日志目录`);
     await browser.waitUntil(

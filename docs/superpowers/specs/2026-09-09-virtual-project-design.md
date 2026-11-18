@@ -243,7 +243,7 @@ PRO02：已有项目 A/B 的手动顺序与 Host 默认顺序不同；手机保�
 
 #### 2026-10-15 旧执行后端会话可见性修复
 
-项目树与既有任务列表/Controller 使用同一执行后端准入规则：只读取 `tasks.provider = XCODE_AGENT_PROVIDER`（当前为 `glm`）的任务。此列是执行后端，不是模型供应商；新导入到当前 CLI 的会话仍保留，不能按 `migration_source` 或标题过滤。项目、置顶、未归类、时间线、归档与未读展示均消费该 Host 项目树，远端在所属 Host 执行相同读取。
+项目树与既有任务列表/Controller 使用同一执行后端准入规则：只读取 `tasks.provider = ZCODE_AGENT_PROVIDER`（当前为 `glm`）的任务。此列是执行后端，不是模型供应商；新导入到当前 CLI 的会话仍保留，不能按 `migration_source` 或标题过滤。项目、置顶、未归类、时间线、归档与未读展示均消费该 Host 项目树，远端在所属 Host 执行相同读取。
 
 根因：迁移为旧行补齐 `cli_*` 后，项目仓库漏掉旧列表的 provider 过滤，使旧后端行可见，Controller 操作前的列表却找不到它。修复只收口读取，不删除旧行、不重写 provider/时间/组织态、不改已发布 migration/checksum；已有迁移 ledger 的库同样立即生效。不按目录是否存在或是否打开 tab 隐藏正常历史。
 
@@ -1282,7 +1282,7 @@ Host readTree + CLI 时间镜像 -> 纯选择器 -> 项目列表 / 最近更新�
 
 桌面验证：`desktop-e2e-20260915131918480-p99856-ceccb6286a056017`，8/8 通过；含 SBV01–05、旧项目交互及 1200/390px 明暗主题截图。相关单测 7 文件 / 45 条通过；`pnpm typecheck`、`pnpm lint`（47 条既有 warning，0 error）及 desktop E2E 类型检查通过。相对 HEAD 的架构检查 0 违规；默认相对 origin/staging 仍有开工前已存在的 `packages/ui/src/root/resolveConversationWorkspaceTarget.ts` 未受管文件错误，本次不改其模块归属。
 
-手机验证：`desktop-e2e-20260915133055419-p10183-be1302f33f03e81a`，1/1 通过；Chrome for Testing 以 390×844、hasTouch/isMobile 访问本仓 Web，经真实 relay/shared-host 完成搜索、两种视图与刷新恢复、任务重开和连续切换保留当前任务，桌面 task 标记及 Host/tab 数断言通过。用例使用隔离 HOME 与既有 synthetic provider fixture；新入口使用 touch tap，菜单关闭后继续下一操作。取 Host 证据后关闭资源管理器，避免检查器持续采样干扰待启动 CLI。通过 `XCODE_E2E_BROWSER_NO_PROXY=1` 与 `XCODE_E2E_MOBILE_BROWSER_EXECUTABLE` 选用测试浏览器直连，未关闭 TLS 校验。
+手机验证：`desktop-e2e-20260915133055419-p10183-be1302f33f03e81a`，1/1 通过；Chrome for Testing 以 390×844、hasTouch/isMobile 访问本仓 Web，经真实 relay/shared-host 完成搜索、两种视图与刷新恢复、任务重开和连续切换保留当前任务，桌面 task 标记及 Host/tab 数断言通过。用例使用隔离 HOME 与既有 synthetic provider fixture；新入口使用 touch tap，菜单关闭后继续下一操作。取 Host 证据后关闭资源管理器，避免检查器持续采样干扰待启动 CLI。通过 `ZCODE_E2E_BROWSER_NO_PROXY=1` 与 `ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE` 选用测试浏览器直连，未关闭 TLS 校验。
 
 范围说明：手机证据为浏览器触屏模拟中的真实 shared-host 链路，不是实体手机；Windows/Linux 快捷键由单测覆盖，未在对应操作系统跑 GUI。跨 Host 同路径/同 taskId 的排序身份由单测覆盖，未新增 SSH/WSL 真机验证。默认 staging 架构基线问题保持单独记录，不记为本次增量通过。
 

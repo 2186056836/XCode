@@ -76,7 +76,7 @@ describe(`${CASE_MARKER}: 断线会话与原地重连`, () => {
         DRAFT,
       ),
     ).toBe(true);
-    const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/rdux08");
+    const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/rdux08");
     await mkdir(artifactDir, { recursive: true });
     const originalSize = await browser.electron.execute((electron) =>
       electron.BrowserWindow.getAllWindows()

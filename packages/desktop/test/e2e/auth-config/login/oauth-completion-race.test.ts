@@ -52,10 +52,10 @@ describe("OAuth 双路径完成竞态", () => {
       { timeout: 60_000 },
     );
     await browser.keys("Escape");
-    const baseUrl = process.env.XCODE_E2E_OAUTH_RACE_URL!;
+    const baseUrl = process.env.ZCODE_E2E_OAUTH_RACE_URL!;
     await fetch(`${baseUrl}/__e2e/disable-poll`, { method: "POST" });
     const before = await readCredentials();
-    const logDir = await browser.electron.execute(() => process.env.XCODE_E2E_RUNTIME_LOG_DIR);
+    const logDir = await browser.electron.execute(() => process.env.ZCODE_E2E_RUNTIME_LOG_DIR);
     if (!logDir) throw new Error("缺少 E2E 日志目录");
     const readCompletions = async () => {
       const logs = await Promise.all(
@@ -110,7 +110,7 @@ describe("OAuth 双路径完成竞态", () => {
   });
 
   it("区域切换选择实际登录渠道，中国区仅改写官网中转地址", async () => {
-    const baseUrl = process.env.XCODE_E2E_OAUTH_RACE_URL!;
+    const baseUrl = process.env.ZCODE_E2E_OAUTH_RACE_URL!;
     const openExternal = await browser.electron.mock("shell", "openExternal");
     await openExternal.mockClear();
     await openExternal.mockResolvedValue(undefined);
@@ -190,7 +190,7 @@ describe("OAuth 双路径完成竞态", () => {
   });
 
   it("本地期限先清除 flow 后进入可重试失败态，重新登录后继续等待", async () => {
-    const baseUrl = process.env.XCODE_E2E_OAUTH_RACE_URL!;
+    const baseUrl = process.env.ZCODE_E2E_OAUTH_RACE_URL!;
     const openExternal = await browser.electron.mock("shell", "openExternal");
     await openExternal.mockClear();
     await openExternal.mockResolvedValue(undefined);
@@ -229,7 +229,7 @@ describe("OAuth 双路径完成竞态", () => {
 
   it("AUTH-07: 浏览器唤起兑换失败后使用已到达的 polling 结果，保留归因", async function () {
     this.timeout(120_000);
-    const baseUrl = process.env.XCODE_E2E_OAUTH_RACE_URL;
+    const baseUrl = process.env.ZCODE_E2E_OAUTH_RACE_URL;
     if (!baseUrl) throw new Error("缺少 OAuth race HTTP fixture");
     const openExternal = await browser.electron.mock("shell", "openExternal");
     await openExternal.mockClear();
@@ -346,7 +346,7 @@ describe("OAuth 双路径完成竞态", () => {
     await waitForTestIdByDom(TID_OAUTH_LOGIN_BUTTON);
     await fetch(`${baseUrl}/__e2e/complete-token`, { method: "POST" });
     // 等待真实 RPC 回调完成后再发起下一次登录，避免新登录掩盖取消的 UI 结果。
-    const logDir = await browser.electron.execute(() => process.env.XCODE_E2E_RUNTIME_LOG_DIR);
+    const logDir = await browser.electron.execute(() => process.env.ZCODE_E2E_RUNTIME_LOG_DIR);
     if (!logDir) throw new Error("缺少 E2E 日志目录");
     await browser.waitUntil(
       async () => {
@@ -456,8 +456,8 @@ describe("OAuth 双路径完成竞态", () => {
   });
 
   it("先到兑换慢成功不被后到轮询快失败取消", async () => {
-    const baseUrl = process.env.XCODE_E2E_OAUTH_RACE_URL!;
-    const logDir = await browser.electron.execute(() => process.env.XCODE_E2E_RUNTIME_LOG_DIR);
+    const baseUrl = process.env.ZCODE_E2E_OAUTH_RACE_URL!;
+    const logDir = await browser.electron.execute(() => process.env.ZCODE_E2E_RUNTIME_LOG_DIR);
     if (!logDir) throw new Error("缺少 E2E 日志目录");
     const failureCount = async () => {
       const logs = await Promise.all(
@@ -527,7 +527,7 @@ describe("OAuth 双路径完成竞态", () => {
   });
 
   it("旧 flow 本地期限过期后，新 flow 由回调完成，后续查询不按旧期限报过期", async () => {
-    const baseUrl = process.env.XCODE_E2E_OAUTH_RACE_URL!;
+    const baseUrl = process.env.ZCODE_E2E_OAUTH_RACE_URL!;
     await fetch(`${baseUrl}/__e2e/short-expiry?enabled=true`, { method: "POST" });
     try {
       // 真实 Renderer→Host RPC 固定顺序：首个查询挂起到期限之后，Host 定时器先清除旧 flow。
@@ -599,7 +599,7 @@ describe("OAuth 双路径完成竞态", () => {
     ["expired-init", "已过期的初始化响应仍拒绝启动"],
   ] as const) {
     it(title, async () => {
-      const baseUrl = process.env.XCODE_E2E_OAUTH_RACE_URL!;
+      const baseUrl = process.env.ZCODE_E2E_OAUTH_RACE_URL!;
       const originalHandle = await browser.getWindowHandle();
       const credentialsFile = getE2EAppDataPaths().credentialsFile;
       const originalCredentials = await readFile(credentialsFile, "utf8");
@@ -617,7 +617,7 @@ describe("OAuth 双路径完成竞态", () => {
         await writeFile(credentialsFile, "{}", "utf8");
         await openFaultInjectedHostWindow(
           fileURLToPath(new URL("../../helpers/oauth-polling-clock-faults.cjs", import.meta.url)),
-          { XCODE_E2E_OAUTH_CLOCK_CASE: clockCaseId },
+          { ZCODE_E2E_OAUTH_CLOCK_CASE: clockCaseId },
         );
         await browser.waitUntil(
           async () => {
@@ -724,7 +724,7 @@ describe("OAuth 双路径完成竞态", () => {
         await attempt(() => openExternal.mockRestore());
         await attempt(() =>
           writeFile(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR!, `oauth-clock-${mode}.json`),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `oauth-clock-${mode}.json`),
             JSON.stringify({ status, cleanupErrors: cleanupErrors.map(String) }),
           ),
         );
@@ -733,7 +733,7 @@ describe("OAuth 双路径完成竞态", () => {
     });
   }
   it("中国区保存一个主体及关联 BigModel，不使用全球区业务换证", async () => {
-    const baseUrl = process.env.XCODE_E2E_OAUTH_RACE_URL!;
+    const baseUrl = process.env.ZCODE_E2E_OAUTH_RACE_URL!;
     const before = await (await fetch(`${baseUrl}/__e2e/status`)).json();
     await fetch(`${baseUrl}/__e2e/cn-ready?ready=false`, { method: "POST" });
     const callback = await browser.execute(async (id) => {
@@ -846,7 +846,7 @@ describe("OAuth 双路径完成竞态", () => {
     });
   });
   it("补关联只更新同一主体，缺失/失败保留旧状态，退出丢弃在途结果", async () => {
-    const baseUrl = process.env.XCODE_E2E_OAUTH_RACE_URL!;
+    const baseUrl = process.env.ZCODE_E2E_OAUTH_RACE_URL!;
     await fetch(`${baseUrl}/__e2e/profile-mode?mode=linked`, { method: "POST" });
     const projected = await browser.execute(async (id) => {
       const element = document.querySelector(`[data-testid="${id}"]`)!;
@@ -927,7 +927,7 @@ describe("OAuth 双路径完成竞态", () => {
 describe("Global 主体恢复边界", () => {
   it("Global显式恢复只补展示，不把上游sub写成XCode主ID", async function () {
     this.timeout(90_000);
-    const baseUrl = process.env.XCODE_E2E_OAUTH_RACE_URL!;
+    const baseUrl = process.env.ZCODE_E2E_OAUTH_RACE_URL!;
     await fetch(`${baseUrl}/__e2e/global-subject-probe?enabled=true`, { method: "POST" });
     const file = getE2EAppDataPaths().credentialsFile;
     await writeFile(
@@ -994,7 +994,7 @@ async function readCredentials(): Promise<Record<string, string>> {
   >;
   const cipher = createSystemCredentialCipher({
     filePath: getE2EAppDataPaths().credentialsFile,
-    env: { XCODE_CREDENTIAL_SECRET: "oauth-completion-race-fixture" },
+    env: { ZCODE_CREDENTIAL_SECRET: "oauth-completion-race-fixture" },
   });
   return Object.fromEntries(
     await Promise.all(

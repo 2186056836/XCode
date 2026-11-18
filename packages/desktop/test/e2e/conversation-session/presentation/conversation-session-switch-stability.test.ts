@@ -31,7 +31,7 @@ import {
   selectUpstreamThoughtLevelValue,
 } from "#e2e/helpers/upstream-provider";
 const evidence: unknown[] = [];
-const out = process.env.XCODE_E2E_ARTIFACT_DIR!;
+const out = process.env.ZCODE_E2E_ARTIFACT_DIR!;
 
 async function installProbe() {
   await browser.execute(() => {
@@ -134,7 +134,7 @@ async function mark(label: string) {
 
 async function verifyMobileSwitch(taskId: string, expectedTitle: string) {
   const pairingUrl = await obtainUnreadPairingUrl(
-    new URL(process.env.XCODE_WEB_REMOTE_CONTROL_URL!).origin,
+    new URL(process.env.ZCODE_WEB_REMOTE_CONTROL_URL!).origin,
   );
   const mobile = await chromium.launch({ channel: "chrome", headless: true });
   try {

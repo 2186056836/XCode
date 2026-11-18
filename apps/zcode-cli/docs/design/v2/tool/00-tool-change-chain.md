@@ -123,8 +123,8 @@ CMD、前缀/通配授权不放行、完整授权、Plan 拒绝、审批拒绝�
 ## Bash 注入会话上下文环境变量（2026-11-01）
 
 Bash handler → `createExecutionRequest` → `ExecutionRequest.env.set`：每次 Bash 调用（前台、显式后台、
-超时转后台）都设置 `CLAUDE_CODE_SESSION_ID` / `CLAUDE_SESSION_ID` / `XCODE_SESSION_ID`（当前会话 ID）与
-`CLAUDE_PROJECT_DIR` / `XCODE_PROJECT_DIR`（会话工作区根目录 `workspaceRoot`），其余变量仍按 adapter 默认
+超时转后台）都设置 `CLAUDE_CODE_SESSION_ID` / `CLAUDE_SESSION_ID` / `ZCODE_SESSION_ID`（当前会话 ID）与
+`CLAUDE_PROJECT_DIR` / `ZCODE_PROJECT_DIR`（会话工作区根目录 `workspaceRoot`），其余变量仍按 adapter 默认
 继承。原因：自定义命令的 `!` 块改为转交模型经 Bash 执行（[custom-commands.md](../custom-commands.md)
 「Dynamic expansion」），原来只由命令解析阶段的 shell 执行器提供这组变量；插件脚本（例如在自身进程里
 读取会话 ID 区分会话的 stop hook 状态文件）需要在 Bash 里拿到同样的值。变量名与值与 hooks 的
@@ -916,7 +916,7 @@ current turn model capability
 ### Windows CUA 开发运行时接入（已确认）
 
 Windows 本地源码开发环境新增的仅是 Host backend 对 Windows Computer Use Helper 的
-admission / execution route。它在 `win32` 上显式校验 `XCODE_CUA_DEV_ROOT` 的
+admission / execution route。它在 `win32` 上显式校验 `ZCODE_CUA_DEV_ROOT` 的
 package、Helper entry 和 native addon，并使用 `process.execPath` 加
 `ELECTRON_RUN_AS_NODE=1` 启动 Helper；该阶段不得注入 broker token。
 
@@ -1550,7 +1550,7 @@ Tool Agent Trace 统一在单调用 Executor 外层建立，handler 不单独埋
 
 核对项：
 
-- 新配置优先走 config/session/project/CLI 参数；新增 `XCODE_` 环境变量前必须先写 spec。
+- 新配置优先走 config/session/project/CLI 参数；新增 `ZCODE_` 环境变量前必须先写 spec。
 - model capability、provider kind、MCP capability、plugin namespace、subagent tool pool 是否影响 tool 可见性。
 - 删除旧实现时，导出入口、tests、docs、migration、legacy aliases 是否同步处理。
 - dynamic tool / MCP tool 必须经过 capability 声明、schema normalization、命名空间隔离和权限收口。
@@ -2088,7 +2088,7 @@ Computer Use 收进 `node_repl` 后，`mcp__node_repl__js` 的 display 需要额
   `NodeReplRunResult.cuaApp`，再由 `toMcpRunResult` 落到 `_meta["zcode/nodeReplCuaApp"]`。
   沙箱可写通道送来的 producer 键必须删除（`nodeRepl.setResponseMeta` /
   `nodeRepl.emitStructuredResult` 都在模型可见 globals 上），处置同
-  `XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY`。
+  `ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY`。
 - 三处 strict schema 必须同集：contracts 的 `toolResultDisplayPayloadSchema`、shared 的
   `toolCallDisplaySchema`，以及 `toProtocolToolCallDisplay` 的放行名单（`node_repl_images`
   已在名单内，扩字段不需要改它）。

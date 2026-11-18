@@ -531,7 +531,7 @@ describe("AI SDK Provider execution", () => {
     await expect(response.json()).resolves.toEqual(body);
   });
 
-  it("routes provider fetch through explicit XCODE_HTTP_PROXY env", async () => {
+  it("routes provider fetch through explicit ZCODE_HTTP_PROXY env", async () => {
     const proxyRequests: string[] = [];
     const upstream = http.createServer((request, response) => {
       response.writeHead(200, { "content-type": "application/json" });
@@ -571,7 +571,7 @@ describe("AI SDK Provider execution", () => {
       const proxyBaseUrl = await listenServer(proxy);
       const fetch = createProviderBusinessErrorFetch({
         env: {
-          XCODE_HTTP_PROXY: proxyBaseUrl,
+          ZCODE_HTTP_PROXY: proxyBaseUrl,
         },
         providerId: "local",
         providerKind: "openai-compatible",
@@ -611,7 +611,7 @@ describe("AI SDK Provider execution", () => {
       const proxyBaseUrl = await listenServer(proxy);
       const fetch = createProviderBusinessErrorFetch({
         env: {
-          XCODE_HTTP_PROXY: proxyBaseUrl,
+          ZCODE_HTTP_PROXY: proxyBaseUrl,
         },
         noProxy: "127.0.0.1",
         providerId: "local",

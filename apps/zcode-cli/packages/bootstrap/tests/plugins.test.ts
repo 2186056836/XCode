@@ -10,7 +10,7 @@ import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createConfig } from "@zcode/adapters/config";
 import { DEFAULT_ENABLED_OFFICIAL_PLUGIN_IDS } from "@zcode/shared";
-import { XCODE_PLUGIN_HOST_COMMAND } from "@zcode/contracts";
+import { ZCODE_PLUGIN_HOST_COMMAND } from "@zcode/contracts";
 import type { Logger, PluginDiscoverRequest } from "@zcode/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { resolveStartupPlugins } from "../src/app/startup-marks.js";
@@ -1436,7 +1436,7 @@ describe("XCode plugins", () => {
         if (entry === "prepare-failed")
           vi.spyOn(pluginPreparation, "prepare").mockRejectedValue(
             Object.assign(new Error("Plugin startup timed out"), {
-              code: "XCODE_PLUGIN_STARTUP_TIMEOUT",
+              code: "ZCODE_PLUGIN_STARTUP_TIMEOUT",
             }),
           );
         else await pluginPreparation.resolvePlugins(() => new Promise(() => {}));
@@ -1464,7 +1464,7 @@ describe("XCode plugins", () => {
                 marketplace: "zcode-plugins-official",
                 pluginName: "skill-creator",
               });
-        await expect(restore).rejects.toMatchObject({ code: "XCODE_PLUGIN_STARTUP_TIMEOUT" });
+        await expect(restore).rejects.toMatchObject({ code: "ZCODE_PLUGIN_STARTUP_TIMEOUT" });
         expect(await readFile(userConfigPath, "utf8")).toBe(before);
         expect(existsSync(join(options.pluginStorageRoot, "installed_plugins.json"))).toBe(false);
       } finally {
@@ -1973,7 +1973,7 @@ describe("XCode plugins", () => {
           IOS_SIM_UI_BACKEND: "auto",
         },
       });
-      expect(server?.args?.at(-2)).toBe(XCODE_PLUGIN_HOST_COMMAND);
+      expect(server?.args?.at(-2)).toBe(ZCODE_PLUGIN_HOST_COMMAND);
       expect(server?.args?.at(-1)).toContain(
         join(
           "cache",
@@ -2070,7 +2070,7 @@ describe("XCode plugins", () => {
       ]) {
         expect(server?.env).not.toHaveProperty(unusedEnv);
       }
-      expect(server?.args?.at(-2)).toBe(XCODE_PLUGIN_HOST_COMMAND);
+      expect(server?.args?.at(-2)).toBe(ZCODE_PLUGIN_HOST_COMMAND);
       expect(server?.args?.at(-1)).toContain(
         join(
           "cache",

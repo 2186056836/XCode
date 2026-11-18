@@ -9,7 +9,7 @@ import type {
 import {
   OAUTH_ACTIVE_ACCOUNT_CHANGED_BROADCAST_CHANNEL,
   resolveProviderFamilyDomainFromOAuthProvider,
-  XCODE_JWT_INVALID_BROADCAST_CHANNEL,
+  ZCODE_JWT_INVALID_BROADCAST_CHANNEL,
 } from "@zcode/shared";
 import type { IServiceAccessor } from "@zcode/services";
 import { useAlertDialog } from "@/hooks/useAlertDialog.js";
@@ -198,7 +198,7 @@ export function useRootOAuthEffects({
     let promptPending = false;
     const disposable = services.broadcastService.onMessage((message) => {
 
-      if (message.channel !== XCODE_JWT_INVALID_BROADCAST_CHANNEL || disposed || promptPending) {
+      if (message.channel !== ZCODE_JWT_INVALID_BROADCAST_CHANNEL || disposed || promptPending) {
         return;
       }
       promptPending = true;

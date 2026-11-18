@@ -19,7 +19,7 @@ test(
     const fixtureRoot = await mkdtemp(resolve(cacheRoot, "react-scan-"));
     const artifactRoot = resolve(desktopRoot, ".e2e-artifacts", `react-scan-dev-${Date.now()}`);
     await mkdir(artifactRoot, { recursive: true });
-    const previousFlag = process.env.XCODE_REACT_SCAN;
+    const previousFlag = process.env.ZCODE_REACT_SCAN;
     const errors = [];
     let app;
     let server;
@@ -62,7 +62,7 @@ test(
       );
 
       for (const enabled of [true, false]) {
-        process.env.XCODE_REACT_SCAN = enabled ? "1" : "0";
+        process.env.ZCODE_REACT_SCAN = enabled ? "1" : "0";
         server = await createServer({
           configFile: resolve(desktopRoot, "vite.config.ts"),
           root: fixtureRoot,
@@ -111,7 +111,7 @@ test(
         server = undefined;
       }
 
-      process.env.XCODE_REACT_SCAN = "1";
+      process.env.ZCODE_REACT_SCAN = "1";
       const result = await build({
         configFile: resolve(desktopRoot, "vite.config.ts"),
         root: fixtureRoot,
@@ -141,8 +141,8 @@ test(
     } finally {
       await app?.close();
       await server?.close();
-      if (previousFlag === undefined) delete process.env.XCODE_REACT_SCAN;
-      else process.env.XCODE_REACT_SCAN = previousFlag;
+      if (previousFlag === undefined) delete process.env.ZCODE_REACT_SCAN;
+      else process.env.ZCODE_REACT_SCAN = previousFlag;
       await rm(fixtureRoot, { recursive: true, force: true });
     }
   },

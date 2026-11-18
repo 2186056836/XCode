@@ -282,7 +282,7 @@ export function registerIncomingMessageActiveCases(): void {
               trajectory.filter((request) => request.fixtureId === `${fixture}-${stage}`),
             ).toHaveLength(1);
           }
-          const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+          const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
           if (artifactDir) {
             await mkdir(join(artifactDir, "incoming-message-wire"), { recursive: true });
             await writeFile(

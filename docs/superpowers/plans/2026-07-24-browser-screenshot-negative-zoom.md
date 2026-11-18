@@ -617,7 +617,7 @@ logical `1280 × 720` viewport with `dontSetVisibleSize: true`.
 Temporarily execute the baseline branch before applying capture scale:
 
 ```powershell
-$env:XCODE_SCREENSHOT_SMOKE_SCALE_FACTOR='1.25'
+$env:ZCODE_SCREENSHOT_SMOKE_SCALE_FACTOR='1.25'
 pnpm --filter @zcode/desktop test:browser-screenshot-surface-smoke
 ```
 
@@ -649,9 +649,9 @@ Capture, validate, and restore the normal metrics override in `finally`.
 Run:
 
 ```powershell
-$env:XCODE_SCREENSHOT_SMOKE_SCALE_FACTOR='1.25'
+$env:ZCODE_SCREENSHOT_SMOKE_SCALE_FACTOR='1.25'
 pnpm --filter @zcode/desktop test:browser-screenshot-surface-smoke
-Remove-Item Env:XCODE_SCREENSHOT_SMOKE_SCALE_FACTOR
+Remove-Item Env:ZCODE_SCREENSHOT_SMOKE_SCALE_FACTOR
 ```
 
 Expected stdout:

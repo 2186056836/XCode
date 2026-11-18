@@ -6,7 +6,7 @@ import {
   createPluginAgentStateId,
   parsePluginSubagentModelSelectionOverrides,
   DEFAULT_ENABLED_OFFICIAL_PLUGIN_IDS,
-  XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
+  ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
   modelSelectionSchema,
   type SubagentRuntimeConfig,
   type AgentCreateParams,
@@ -287,7 +287,7 @@ export async function collectAgentMarkdownPaths(
 }
 
 function resolveCapabilities(options?: SubagentsServiceOptions): AgentsCapability {
-  const isDesktopRuntime = options?.isDesktopRuntime ?? Boolean(process.env.XCODE_PROCESS_LABEL);
+  const isDesktopRuntime = options?.isDesktopRuntime ?? Boolean(process.env.ZCODE_PROCESS_LABEL);
   if (isDesktopRuntime) {
     return { userScopeAvailable: true };
   }
@@ -442,13 +442,13 @@ async function readEnabledPluginRecords(
       config.enabledPlugins[record.id] === true &&
       // 卸载抑制优先于遗留的安装/启用记录，不能只在缓存兜底时检查而复活官方插件。
       !(
-        record.id.endsWith(`@${XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID}`) &&
+        record.id.endsWith(`@${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID}`) &&
         config.suppressedBuiltins.includes(record.id)
       ),
   );
   const seenIds = new Set(installed.map((record) => record.id));
   for (const cacheRoot of await scanOfficialPluginCacheRoots(pluginStorageRoot)) {
-    const id = `${cacheRoot.name}@${XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID}`;
+    const id = `${cacheRoot.name}@${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID}`;
     if (seenIds.has(id) || config.suppressedBuiltins.includes(id)) continue;
     const enabled = config.enabledPlugins[id] ?? DEFAULT_ENABLED_OFFICIAL_PLUGIN_IDS.has(id);
     if (!enabled) continue;

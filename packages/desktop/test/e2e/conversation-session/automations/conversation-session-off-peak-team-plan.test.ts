@@ -125,7 +125,7 @@ async function createOffPeakTask() {
 }
 
 async function waitForOffPeakRequest(): Promise<OffPeakRequestRecord[]> {
-  const port = Number(process.env.XCODE_OFFPEAK_MOCK_PORT ?? "45197");
+  const port = Number(process.env.ZCODE_OFFPEAK_MOCK_PORT ?? "45197");
   let records: OffPeakRequestRecord[] = [];
   await browser.waitUntil(
     async () => {

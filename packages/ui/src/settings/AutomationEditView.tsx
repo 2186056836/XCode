@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import {
-  XCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER,
   type XCodeAutomation,
   type XCodeAutomationRun,
   type XCodeAutomationScheduleRule,
@@ -1471,7 +1471,7 @@ export function AutomationEditView({
   const modelSelectGroups = useMemo(() => {
     if (!modelSelectionView) return [];
     return buildAutomationModelSelectGroups({
-      selectedProvider: XCODE_AGENT_PROVIDER,
+      selectedProvider: ZCODE_AGENT_PROVIDER,
       labels: {
         apiKeyLabel: intl.formatMessage({ id: "settings.modelProvider.apiKey" }),
         apiKeyBadgeLabel: intl.formatMessage({
@@ -2639,7 +2639,7 @@ export function AutomationEditView({
                         "w-fit max-w-56 min-w-0 shrink justify-start gap-1 px-2",
                       )}
                       labelVisibilityClassName="inline-flex min-w-0 truncate text-left"
-                      provider={XCODE_AGENT_PROVIDER}
+                      provider={ZCODE_AGENT_PROVIDER}
                       restoreFocusSelector={null}
                     />
                   </div>
@@ -2686,7 +2686,7 @@ export function AutomationEditView({
                       <ThoughtLevelCycleControl
                         intl={intl}
                         option={thoughtLevelOption}
-                        provider={XCODE_AGENT_PROVIDER}
+                        provider={ZCODE_AGENT_PROVIDER}
                         triggerRef={thoughtTriggerRef}
                         indicatorClassName="hidden @xl/composer:block"
                         triggerClassName={cn(

@@ -54,7 +54,7 @@ describe("输入框项目选择器", () => {
     await menu.$("input").setValue(names[6]!);
     expect(await menuNames()).toEqual([names[6]]);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "project-composer-search.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "project-composer-search.png"),
     );
     await menu.$("[data-project-id]").click();
     const trigger = $('[data-testid="composer-workspace-trigger"]');
@@ -74,13 +74,13 @@ describe("输入框项目选择器", () => {
     await browser.keys("Backspace");
     await browser.waitUntil(async () => (await menuNames()).length === sidebarNames.length);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "project-composer-directory.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "project-composer-directory.png"),
     );
     const checked = menu.$('[data-project-id][aria-checked="true"]');
     expect(await checked.getAttribute("data-project-name")).toBe("E2E_PROJECT_PICKER_RENAMED");
     expect((await menuNames()).includes(names[6]!)).toBe(false);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "project-composer-directory.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "project-composer-directory.png"),
     );
     await browser.keys("Escape");
     await $(
@@ -154,7 +154,7 @@ async function captureMenuLayouts() {
         expect(bounds.footerBottom).toBeLessThanOrEqual(bounds.bottom);
         expect(bounds.scrolls).toBe(true);
         await browser.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, `project-composer-${width}-${value}.png`),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `project-composer-${width}-${value}.png`),
         );
       }
     }

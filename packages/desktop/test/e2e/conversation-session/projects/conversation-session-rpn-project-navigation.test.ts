@@ -81,7 +81,7 @@ async function completeInitialOnboarding() {
 describe(`${CASE_MARKER}: 项目平铺与远程无项目入口停用`, () => {
   afterEach(async () => {
     const artifactDir = resolve(
-      process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/rpn-project-navigation",
+      process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/rpn-project-navigation",
     );
     await mkdir(artifactDir, { recursive: true });
     await browser.saveScreenshot(resolve(artifactDir, "rpn-final.png"));
@@ -243,7 +243,7 @@ describe(`${CASE_MARKER}: 项目平铺与远程无项目入口停用`, () => {
       (await readSettings()).remoteConversationWorkspaceBySourceServerId?.[SOURCE_A]?.workspacePath,
     ).toBe(CHAT_PATH);
     const artifactDir = resolve(
-      process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/rpn-project-navigation",
+      process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/rpn-project-navigation",
     );
     await mkdir(artifactDir, { recursive: true });
     await browser.saveScreenshot(resolve(artifactDir, "rpn-project-sidebar.png"));

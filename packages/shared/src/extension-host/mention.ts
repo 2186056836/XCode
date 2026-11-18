@@ -1,6 +1,6 @@
 import { z } from "zod";
 import {
-  XCODE_PLUGIN_MENTION_LIMITS,
+  ZCODE_PLUGIN_MENTION_LIMITS,
   zcodePluginMentionItemsSchema,
 } from "#src/zcode-protocol/plugin-host-queries/contract.js";
 import { resolvedScopeSchema } from "#src/extension-host/slots.js";
@@ -18,7 +18,7 @@ export const provideMentionItemsInputSchema = z.strictObject({
   /** 条目全局 id `<pluginId>/<itemId>`：必须是静态表里 composer.mention 的可用条目。 */
   entry: z.string().min(1),
   /** `@` 后的输入，可以是空串。 */
-  query: z.string().max(XCODE_PLUGIN_MENTION_LIMITS.queryMaxChars),
+  query: z.string().max(ZCODE_PLUGIN_MENTION_LIMITS.queryMaxChars),
   /** 当前会话（草稿为预热会话）；没有会话时为工作区。tool 条目要求会话。 */
   scope: resolvedScopeSchema,
   seq: z.number().int().nonnegative(),
@@ -27,7 +27,7 @@ export type ProvideMentionItemsInput = z.infer<typeof provideMentionItemsInputSc
 
 /**
  * Window Host 产生的错误码。tool 条目另有 CLI 的稳定码（`plugin_mention_*`，见
- * XCODE_PLUGIN_MENTION_ERROR_CODES），原样带回。Renderer 只按码分支，不读错误文本。
+ * ZCODE_PLUGIN_MENTION_ERROR_CODES），原样带回。Renderer 只按码分支，不读错误文本。
  */
 export const MENTION_ITEMS_ERROR_CODES = {
   /** 条目不在静态表里，或不是 composer.mention 的条目（清单刚变）。 */

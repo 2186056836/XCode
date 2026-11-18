@@ -490,7 +490,7 @@ async function finishChromiumImeComposition() {
 async function startRendererCpuProfile() {
   await sendRendererProfilerCommand({ command: "start" });
   return async () => {
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (!artifactDir) return;
     const serialized = await sendRendererProfilerCommand({ command: "stop" });
     expect(serialized.length).toBeGreaterThan(100);
@@ -522,7 +522,7 @@ async function sendRendererProfilerCommand(input: { command: "start" | "stop" })
 }
 
 async function writeJsonArtifact(fileName: string, value: unknown) {
-  const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+  const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
   if (!artifactDir) return;
   await writeFile(join(artifactDir, fileName), JSON.stringify(value, null, 2));
 }
@@ -568,7 +568,7 @@ describeWindows("CTP02 Windows composer typing performance", () => {
 
   it("keeps real character and backspace input responsive for short and long drafts", async () => {
     await prepareV4ConversationE2E({ skipProvider: true });
-    if (process.env.XCODE_E2E_COMPOSER_CPU_PROFILE === "1") {
+    if (process.env.ZCODE_E2E_COMPOSER_CPU_PROFILE === "1") {
       const stopProfile = await startRendererCpuProfile();
       try {
         await writeMetrics({ profileBatch: await runTypingBatch(LONG_DRAFT) });

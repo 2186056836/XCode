@@ -97,7 +97,7 @@ const HOOK_LOG = join(DEFAULT_WORKSPACE, ".e2e-dsync-18-hooks.log");
 const HOOK_FORM = '[data-testid="hooks-form"]';
 const SCOPE_TRIGGER = '[data-plugin-scope-trigger="true"]';
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/dsync-18-local-runtime",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/dsync-18-local-runtime",
   "dsync-18",
 );
 
@@ -541,7 +541,7 @@ async function writeInlinePlugin(homeDir: string): Promise<void> {
         version: "1.0.0",
         description: "local runtime inline plugin",
         mcpServers: {
-          rt: { type: "stdio", command: "node", args: ["${XCODE_PLUGIN_ROOT}/server.cjs"] },
+          rt: { type: "stdio", command: "node", args: ["${ZCODE_PLUGIN_ROOT}/server.cjs"] },
         },
       },
       null,

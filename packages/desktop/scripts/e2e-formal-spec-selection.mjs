@@ -7,20 +7,20 @@ export const SSH_FORMAL_SPEC_GLOB =
 export const MANUAL_REVIEW_SPEC_GLOB = "./test/e2e/**/manual-review/**/*.test.ts";
 
 const REQUIRED_SSH_E2E_ENV = [
-  "XCODE_E2E_SSH_HOST",
-  "XCODE_E2E_SSH_USERNAME",
-  "XCODE_E2E_SSH_PASSWORD",
+  "ZCODE_E2E_SSH_HOST",
+  "ZCODE_E2E_SSH_USERNAME",
+  "ZCODE_E2E_SSH_PASSWORD",
 ];
 
 export function hasRequiredSshE2EEnvironment(env) {
   return REQUIRED_SSH_E2E_ENV.every((name) => env[name]?.trim());
 }
 
-// 修复原因：远程队列 case 由 harness 按 case 准备干净目标（XCODE_E2E_SSH_CONTAINER 是其标记）。
+// 修复原因：远程队列 case 由 harness 按 case 准备干净目标（ZCODE_E2E_SSH_CONTAINER 是其标记）。
 // Windows CI 只有共享 SSH 凭据时仍纳入它们，多个分片在同一主机上互相升级/抢占，
 // 表现为"更新中"、source-server-upgrade-required 与缺少容器。没有 harness 时整体排除。
 function hasSshHarnessE2EEnvironment(env) {
-  return hasRequiredSshE2EEnvironment(env) && Boolean(env.XCODE_E2E_SSH_CONTAINER?.trim());
+  return hasRequiredSshE2EEnvironment(env) && Boolean(env.ZCODE_E2E_SSH_CONTAINER?.trim());
 }
 
 function isRemoteQueueFormalSpec(spec) {

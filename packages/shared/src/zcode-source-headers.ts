@@ -1,6 +1,6 @@
 import { DEFAULT_XCODE_ENDPOINT_ORIGIN } from "./zcodeEndpoint.js";
 
-export const XCODE_SOURCE_HEADERS = {
+export const ZCODE_SOURCE_HEADERS = {
   "User-Agent": "XCode/unknown",
   "HTTP-Referer": DEFAULT_XCODE_ENDPOINT_ORIGIN,
   "X-Title": "Z Code@electron",
@@ -43,7 +43,7 @@ export function buildXCodeSourceHeadersFromContext(
   const sourceTitle = normalizeXCodeSourceHeaderValue(options.sourceTitle) ?? "electron";
 
   return {
-    ...XCODE_SOURCE_HEADERS,
+    ...ZCODE_SOURCE_HEADERS,
     "HTTP-Referer": endpointOrigin,
     "User-Agent": `XCode/${appVersion ?? "unknown"}`,
     // 操作系统为 zcode.z.ai（ZCode 平台），线上 HTTP 头必须保持 X-ZCode- 前缀，

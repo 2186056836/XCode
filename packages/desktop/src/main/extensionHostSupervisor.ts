@@ -123,7 +123,7 @@ export function buildExtensionHostEnv(
   if (noProxy) setEnv(env, NO_PROXY_ENV_KEYS, noProxy, platform);
   const caCertPath = network.caCertPath?.trim();
   if (caCertPath) setEnv(env, CA_ENV_KEYS, caCertPath, platform);
-  env.XCODE_PROCESS_LABEL = "extension-host";
+  env.ZCODE_PROCESS_LABEL = "extension-host";
   return env;
 }
 

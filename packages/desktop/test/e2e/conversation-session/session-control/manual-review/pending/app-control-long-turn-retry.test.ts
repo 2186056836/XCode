@@ -39,7 +39,7 @@ const COLD_SESSION = "session_e2e_sct06_cold";
 const COLD_TITLE = "E2E_SCT06_COLD_TITLE";
 const COLD_USER_TEXT = "E2E_SCT06_COLD_USER";
 const COLD_ASSISTANT_TEXT = "E2E_SCT06_COLD_ASSISTANT";
-const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR!;
+const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR!;
 const tools: AppControlToolEvidence = {};
 const assertions: Record<string, unknown> = {};
 const evidence = { tools, assertions };
@@ -94,7 +94,7 @@ async function readTree(): Promise<ProjectTree> {
 describe(`${CASE}: App session tools on a long turn and a retried creation`, () => {
   // 冷会话必须在 Host 启动前落盘，否则 Host 的 source snapshot 不含这一行。
   before(async () => {
-    const home = process.env.XCODE_E2E_HOME_DIR ?? "";
+    const home = process.env.ZCODE_E2E_HOME_DIR ?? "";
     if (!basename(home).startsWith(".e2e-home-")) throw new Error("需要隔离 E2E HOME");
     await restartIntoWorkspacePreservingProfile(DEFAULT_WORKSPACE, {
       afterElectronProcessExit: async () => {

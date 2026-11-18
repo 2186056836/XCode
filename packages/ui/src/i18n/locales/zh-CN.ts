@@ -7581,9 +7581,9 @@ const zhCN: Record<string, string> = {
     "当前图片附件过大，请移除部分图片或压缩后重试。",
   "zcode.error.MEDIA_BUDGET_CURRENT_VIDEO_TOO_LARGE":
     "当前视频附件过大，请移除部分视频或压缩后重试。",
-  "zcode.error.XCODE_RUNTIME_MODEL_UNAVAILABLE":
+  "zcode.error.ZCODE_RUNTIME_MODEL_UNAVAILABLE":
     "当前使用的模型已不可用，请从当前模型列表中选择一个可用模型后继续。",
-  "zcode.error.XCODE_BIGMODEL_TEAM_PLAN_MEMBER_REQUIRED":
+  "zcode.error.ZCODE_BIGMODEL_TEAM_PLAN_MEMBER_REQUIRED":
     "当前模型不可用，请检查是否已将当前账号添加到项目成员列表",
   "zcode.error.CLAUDE_UNKNOWN_COMMAND":
     "Claude Code 未知命令 {command}。请确认命令名称，或切换到支持该命令的 Agent/技能后重试。",

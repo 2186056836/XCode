@@ -69,7 +69,7 @@ async function assertAppReportHeaders(authenticated: boolean) {
       eventExtraDetail: {},
     });
   }, marker);
-  const origin = process.env.XCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
+  const origin = process.env.ZCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
   const reports = (await (await fetch(`${origin}/__e2e/marketing/telemetry`)).json()) as Array<
     Record<string, unknown>
   >;
@@ -91,7 +91,7 @@ async function assertAppReportHeaders(authenticated: boolean) {
 
 describe("Rewards website embedded integration", () => {
   it("REF-11: Banner 和独立弹窗 navigate rewards 打开邀请页并各上报一次", async () => {
-    const origin = process.env.XCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
+    const origin = process.env.ZCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
     if (!origin) throw new Error("Missing isolated App fixture");
     const assets = (await (await fetch(`${origin}/__e2e/marketing/assets`)).json()) as Record<
       string,
@@ -159,7 +159,7 @@ describe("Rewards website embedded integration", () => {
     }
   });
   it("REF-02/03/04: 菜单打开隔离网页，主题不重载、语言路由切换、关闭", async () => {
-    const origin = process.env.XCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
+    const origin = process.env.ZCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
     if (!origin) throw new Error("Missing isolated App fixture");
     await fetch(`${origin}/__e2e/marketing/reset`, {
       method: "POST",
@@ -201,9 +201,9 @@ describe("Rewards website embedded integration", () => {
     expect(await entry.getText()).toMatch(/^(邀请好友\s*奖励|Refer a friend\s*Rewards)$/);
     expect(await entry.$('[data-testid="rewards-reward-badge"]').isExisting()).toBe(true);
     // 截图只写入运行器提供的产物目录，避免系统临时目录破坏跨平台隔离。
-    if (process.env.XCODE_E2E_ARTIFACT_DIR)
+    if (process.env.ZCODE_E2E_ARTIFACT_DIR)
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR, "rewards-reward-menu.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR, "rewards-reward-menu.png"),
       );
     const order = await browser.execute(() => {
       const entry = document.querySelector('[data-testid="rewards-menu-item"]');
@@ -285,14 +285,14 @@ describe("Rewards website embedded integration", () => {
               .getBoundingClientRect().top,
         ),
       ).toBe(before.headerTop);
-      if (process.env.XCODE_E2E_ARTIFACT_DIR)
+      if (process.env.ZCODE_E2E_ARTIFACT_DIR)
         await browser.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR, `rewards-scroll-${theme}.png`),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR, `rewards-scroll-${theme}.png`),
         );
       await guestValue(`window.scrollTo(0, 0)`);
-      if (theme === "zai-light" && process.env.XCODE_E2E_ARTIFACT_DIR)
+      if (theme === "zai-light" && process.env.ZCODE_E2E_ARTIFACT_DIR)
         await browser.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR, "rewards-embedded-light.png"),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR, "rewards-embedded-light.png"),
         );
     }
     for (const locale of ["zh-CN", "en-US"]) {
@@ -310,7 +310,7 @@ describe("Rewards website embedded integration", () => {
         { timeout: 30000 },
       );
     }
-    const directory = process.env.XCODE_E2E_ARTIFACT_DIR;
+    const directory = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (!directory) throw new Error("Missing artifact directory");
     await browser.saveScreenshot(join(directory, "rewards-embedded-dark.png"));
     await $('[data-testid="rewards-surface"]')
@@ -356,7 +356,7 @@ describe("Rewards website embedded integration", () => {
     await $('[data-testid="rewards-surface"]').waitForExist({ reverse: true });
   });
   it("REF-12: 匿名营销导航打开登录，取消后不打开邀请页并保留 confirm 上报", async () => {
-    const origin = process.env.XCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
+    const origin = process.env.ZCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
     if (!origin) throw new Error("Missing isolated App fixture");
     const byId = (id: string) => $(`[data-testid="${id}"]`);
     // 复用匿名营销用例的真实退出流程，只阻止测试进程退出，不伪造登录状态。
@@ -465,7 +465,7 @@ describe("Rewards website embedded integration", () => {
       zcodejwttoken: "e2e-cn-zcode-jwt",
     });
     await writeFile(credentialsFile, JSON.stringify(saved), "utf8");
-    const origin = process.env.XCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
+    const origin = process.env.ZCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
     await fetch(`${origin}/__e2e/marketing/reset`, {
       method: "POST",
       body: JSON.stringify({ popup: false, banner: false }),

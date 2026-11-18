@@ -5,9 +5,9 @@ import { readdir, readFile, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { rootCertificates } from "node:tls";
 import {
-  XCODE_AGENT_CA_CERT_ENV_KEY,
-  XCODE_HTTP_PROXY_ENV_KEY,
-  XCODE_NO_PROXY_ENV_KEY,
+  ZCODE_AGENT_CA_CERT_ENV_KEY,
+  ZCODE_HTTP_PROXY_ENV_KEY,
+  ZCODE_NO_PROXY_ENV_KEY,
 } from "@zcode/shared";
 import { Proxy } from "http-mitm-proxy";
 import type { IContext } from "http-mitm-proxy";
@@ -726,9 +726,9 @@ function buildProxyEnv(
     SSL_CERT_FILE: caBundlePath,
     // Bugfix: agent provider fetch 会过滤标准 HTTP_PROXY/HTTPS_PROXY，只认
     // XCode 显式网络出口配置；否则真实模型请求会直连上游，capture artifact 为空。
-    [XCODE_AGENT_CA_CERT_ENV_KEY]: caCertPath,
-    [XCODE_HTTP_PROXY_ENV_KEY]: proxyUrl,
-    [XCODE_NO_PROXY_ENV_KEY]: noProxy,
+    [ZCODE_AGENT_CA_CERT_ENV_KEY]: caCertPath,
+    [ZCODE_HTTP_PROXY_ENV_KEY]: proxyUrl,
+    [ZCODE_NO_PROXY_ENV_KEY]: noProxy,
   };
 }
 

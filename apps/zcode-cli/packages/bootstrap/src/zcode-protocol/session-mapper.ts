@@ -1,7 +1,7 @@
 import {
   GODMODE_TEMPLATES,
-  XCODE_PROTOCOL_NAME,
-  XCODE_PROTOCOL_VERSION,
+  ZCODE_PROTOCOL_NAME,
+  ZCODE_PROTOCOL_VERSION,
   getXCodeGoalActiveIterationCount,
   zcodeApiRetryFromModelNetworkStatusPayload,
   zcodeApiRetryFromStreamRecoveryPayload,
@@ -107,8 +107,8 @@ export async function buildSessionSnapshot(input: {
     messages,
     projection: mapSessionProjection(projection),
     protocol: {
-      name: XCODE_PROTOCOL_NAME,
-      version: XCODE_PROTOCOL_VERSION,
+      name: ZCODE_PROTOCOL_NAME,
+      version: ZCODE_PROTOCOL_VERSION,
     },
     runtime: mapRuntimeState({
       activeTurn,

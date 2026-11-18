@@ -20,7 +20,7 @@ import { prepareV4ConversationE2E } from "#e2e/helpers/v4-conversation";
 const MARKER = "E2E_SSH_RESOURCE_SETTINGS";
 const resource = process.env.R3_RESOURCE_SETTINGS_CASE ?? "command";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-resource-settings",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-resource-settings",
 );
 const name = `ssh-guide-${resource}`;
 

@@ -19,7 +19,7 @@ import {
 
 const CASE_MARKER = "E2E_R3_INSTALL_ENVIRONMENT";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-install-environment",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-install-environment",
 );
 type InstallEnvironmentCase = "noexec-tmp" | "no-tar" | "no-forwarding" | "old-glibc";
 const SUBCASE = (process.env.R3_INSTALL_ENV_CASE ?? "") as InstallEnvironmentCase;

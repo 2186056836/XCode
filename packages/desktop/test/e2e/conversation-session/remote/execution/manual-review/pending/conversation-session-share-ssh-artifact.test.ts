@@ -61,7 +61,7 @@ describe(`${CASE_MARKER}: Desktop SSH 产物分享`, () => {
   });
 
   after(async () => {
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR!;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR!;
     await mkdir(artifactDir, { recursive: true });
     await writeFile(resolve(artifactDir, "share-ssh.json"), JSON.stringify(facts, null, 2));
     await runSSHCommand(config, `rm -rf -- '${workspacePath}'`).catch(() => undefined);

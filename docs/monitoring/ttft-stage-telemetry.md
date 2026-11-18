@@ -284,7 +284,7 @@ Renderer actual continuous content receipt ← Host passthrough ← content fram
 
 CLI 与 Renderer 使用 `performance.timeOrigin + performance.now()` 表达单调 epoch；命令查询返回进程实例和采样时钟，用 Renderer 往返区间给出 offset 和最大误差，最多 10ms、有效期 60 秒。校准不等待用户发送；传输握手、CLI 检查点和实际内容帧到达时若校准已过期都会重新探测。无可信校准时保留总 TTFT 和同进程 interval，跨进程阶段不进入成功分布，质量记为 missing 而非 clock_invalid。每个 interval 检查顺序和质量，不钳零。
 
-灰度配置独立 `localTtftEnabled`，缺省 false；本机验证可显式设置 `XCODE_LOCAL_TTFT_ENABLED=1`。配置由 Desktop 注入 Renderer，同一次发送携带至 CLI，不独立随机采样。Renderer 最多 128 个在途观测，CLI 分别保留最多 128 个活跃事实和 128 个末态事实、每个最多 6 个主阶段，5 分钟过期明确记为 expired 而非 failed；每批最多 32 条，出口最多 32 批，网络超时 3 秒。毫秒 Histogram 边界为 1、5、10、20、50、100、200、500、1000、2000、5000、10000、30000、60000、300000。
+灰度配置独立 `localTtftEnabled`，缺省 false；本机验证可显式设置 `ZCODE_LOCAL_TTFT_ENABLED=1`。配置由 Desktop 注入 Renderer，同一次发送携带至 CLI，不独立随机采样。Renderer 最多 128 个在途观测，CLI 分别保留最多 128 个活跃事实和 128 个末态事实、每个最多 6 个主阶段，5 分钟过期明确记为 expired 而非 failed；每批最多 32 条，出口最多 32 批，网络超时 3 秒。毫秒 Histogram 边界为 1、5、10、20、50、100、200、500、1000、2000、5000、10000、30000、60000、300000。
 
 Ticket 01 只支持本地持续前台空闲发送无重试。排队/引导、重试、取消、失败、后台、恢复、关联缺失分别标记，不伪装完整样本。ARMS 平台查询验收单独记录；本地 OTLP 通过不能将平台验收勾选完成。
 

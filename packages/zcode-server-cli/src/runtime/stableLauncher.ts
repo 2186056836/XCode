@@ -45,13 +45,13 @@ function stableWindowsLauncher(bootstrap?: StableLauncherBootstrap): string {
     : "echo No current XCode Server release 1>&2\r\nexit /b 1\r\n";
   return `@echo off\r
 set "ROOT=%~dp0.."\r
-set "XCODE_SERVER_ROOT=%ROOT%"\r
-powershell -NoProfile -NonInteractive -Command "$root=[IO.Path]::GetFullPath($env:XCODE_SERVER_ROOT); $current=Join-Path $root 'current.json'; if (Test-Path -LiteralPath $current) { $j=Get-Content -Raw -LiteralPath $current ^| ConvertFrom-Json; if ($j.releaseDir) { $release=[IO.Path]::GetFullPath([string]$j.releaseDir); $releases=[IO.Path]::GetFullPath((Join-Path $root 'releases')); if (-not $release.StartsWith($releases + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { exit 1 } } }"\r
+set "ZCODE_SERVER_ROOT=%ROOT%"\r
+powershell -NoProfile -NonInteractive -Command "$root=[IO.Path]::GetFullPath($env:ZCODE_SERVER_ROOT); $current=Join-Path $root 'current.json'; if (Test-Path -LiteralPath $current) { $j=Get-Content -Raw -LiteralPath $current ^| ConvertFrom-Json; if ($j.releaseDir) { $release=[IO.Path]::GetFullPath([string]$j.releaseDir); $releases=[IO.Path]::GetFullPath((Join-Path $root 'releases')); if (-not $release.StartsWith($releases + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { exit 1 } } }"\r
 if errorlevel 1 (\r
   echo Invalid current XCode Server release 1>&2\r
   exit /b 1\r
 )\r
-for /f "delims=" %%I in ('powershell -NoProfile -Command "$path=Join-Path $env:XCODE_SERVER_ROOT 'current.json'; if (Test-Path -LiteralPath $path) { $j=Get-Content -Raw -LiteralPath $path ^| ConvertFrom-Json; $j.releaseDir }"') do set "RELEASE_DIR=%%I"\r
+for /f "delims=" %%I in ('powershell -NoProfile -Command "$path=Join-Path $env:ZCODE_SERVER_ROOT 'current.json'; if (Test-Path -LiteralPath $path) { $j=Get-Content -Raw -LiteralPath $path ^| ConvertFrom-Json; $j.releaseDir }"') do set "RELEASE_DIR=%%I"\r
 if not "%RELEASE_DIR%"=="" (\r
   "%RELEASE_DIR%\\runtime\\node.exe" "%RELEASE_DIR%\\runtime\\server-cli.js" %*\r
   exit /b %ERRORLEVEL%\r

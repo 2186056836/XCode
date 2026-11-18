@@ -124,7 +124,7 @@ async function pushSkillsAndWait(): Promise<void> {
 
 /** 深浅主题 × 中英文 × 宽 / 窄窗口截图，供人工复核标签可读性和窄窗口横向标签。 */
 async function captureDialogScreenshots(): Promise<void> {
-  const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR?.trim();
+  const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR?.trim();
   if (!artifactDir) return;
   const dir = resolve(artifactDir, "dsync-04");
   await mkdir(dir, { recursive: true });

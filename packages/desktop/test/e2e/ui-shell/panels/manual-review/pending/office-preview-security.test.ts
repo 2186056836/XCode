@@ -48,7 +48,7 @@ describe("内置 Office 预览安全边界", () => {
     if (this.currentTest?.state !== "failed") return;
     await browser.saveScreenshot(
       join(
-        process.env.XCODE_E2E_ARTIFACT_DIR ?? ROOT,
+        process.env.ZCODE_E2E_ARTIFACT_DIR ?? ROOT,
         `${this.currentTest.title.slice(0, 5)}-failure.png`,
       ),
     );
@@ -131,7 +131,7 @@ describe("内置 Office 预览安全边界", () => {
     ).toEqual({ injected: false, executed: 0 });
     // 仅替代系统路径选择；真实执行打印和文件写入，覆盖同一渲染器的导出入口。
     const exportedPath = join(
-      process.env.XCODE_E2E_ARTIFACT_DIR ?? ROOT,
+      process.env.ZCODE_E2E_ARTIFACT_DIR ?? ROOT,
       "office-preview-export.pdf",
     );
     const saveDialog = await browser.electron.mock("dialog", "showSaveDialog");

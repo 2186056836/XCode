@@ -38,7 +38,7 @@ const FIFO_KEEPER = "/home/dev/.zcode/e2e-command-fifo.pid";
 const CONFIG = "/home/dev/.zcode/cli/config.json";
 const A_MARKER = "AUTHORITY_A_ONLY";
 const B_MARKER = "AUTHORITY_B_ONLY";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR!, "command-authority-race");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR!, "command-authority-race");
 
 async function selectUserScope(sourceId: string): Promise<void> {
   const key = `source-user:${sourceId}`;

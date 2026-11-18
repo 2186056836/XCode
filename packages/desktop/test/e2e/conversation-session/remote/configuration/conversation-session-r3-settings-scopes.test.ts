@@ -49,7 +49,7 @@ import { prepareV4ConversationE2E, startNewV4Draft } from "#e2e/helpers/v4-conve
 
 const CASE_MARKER = "E2E_R3_SETTINGS_SCOPES";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-settings-scopes",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-settings-scopes",
 );
 const AGENT_NAME = "r3-remote-conversation-agent";
 const AGENT_NAME_PROJECT = "r3-remote-project-agent";

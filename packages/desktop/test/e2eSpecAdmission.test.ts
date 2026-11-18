@@ -134,10 +134,10 @@ describe("desktop E2E environment-gated formal spec admission", () => {
 
   it("keeps explicit SSH runs fail-closed and admits configured default runs", () => {
     const env = {
-      XCODE_E2E_SSH_HOST: "ssh.example.test",
-      XCODE_E2E_SSH_USERNAME: "root",
-      XCODE_E2E_SSH_PASSWORD: "secret-from-test-env",
-      XCODE_E2E_SSH_CONTAINER: "zcode-r3-server-example",
+      ZCODE_E2E_SSH_HOST: "ssh.example.test",
+      ZCODE_E2E_SSH_USERNAME: "root",
+      ZCODE_E2E_SSH_PASSWORD: "secret-from-test-env",
+      ZCODE_E2E_SSH_CONTAINER: "zcode-r3-server-example",
     };
     expect(hasRequiredSshE2EEnvironment(env)).toBe(true);
     expect(resolveEnvironmentGatedFormalSpecExcludes({ env, targeted: false })).toEqual([]);
@@ -147,9 +147,9 @@ describe("desktop E2E environment-gated formal spec admission", () => {
   it("requires the harness container for queued remote targets", () => {
     // 远程队列按 case 准备干净目标；只有共享 SSH 凭据的 runner 不能运行这些用例。
     const credentials = {
-      XCODE_E2E_SSH_HOST: "ssh.example.test",
-      XCODE_E2E_SSH_USERNAME: "root",
-      XCODE_E2E_SSH_PASSWORD: "secret-from-test-env",
+      ZCODE_E2E_SSH_HOST: "ssh.example.test",
+      ZCODE_E2E_SSH_USERNAME: "root",
+      ZCODE_E2E_SSH_PASSWORD: "secret-from-test-env",
     };
     const queued =
       "./test/e2e/conversation-session/remote/configuration/conversation-session-r3-model-switch.test.ts";
@@ -172,7 +172,7 @@ describe("desktop E2E environment-gated formal spec admission", () => {
     expect(
       isFormalSpecAdmittedByEnvironment(queued, {
         ...credentials,
-        XCODE_E2E_SSH_CONTAINER: "zcode-r3-server-example",
+        ZCODE_E2E_SSH_CONTAINER: "zcode-r3-server-example",
       }),
     ).toBe(true);
     expect(

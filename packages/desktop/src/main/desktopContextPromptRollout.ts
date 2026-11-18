@@ -3,8 +3,8 @@ import {
   buildXCodeSourceHeadersFromContext,
   resolveOptionalXCodeAuthorization,
   type XCodeJwtTokenResolver,
-  XCODE_ENV,
-  XCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV,
+  ZCODE_ENV,
+  ZCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV,
 } from "@zcode/shared";
 import {
   createSingleFeatureRollout,
@@ -12,7 +12,7 @@ import {
   type SingleFeatureRolloutLogger,
 } from "./singleFeatureRollout.js";
 
-export { XCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV };
+export { ZCODE_DESKTOP_CONTEXT_PROMPT_ENABLED_ENV };
 
 export type DesktopContextPromptRolloutLogger = SingleFeatureRolloutLogger;
 export const DESKTOP_CONTEXT_PROMPT_REQUEST_TIMEOUT_MS = 3_000;
@@ -130,7 +130,7 @@ export function createElectronDesktopContextPromptConfigFetcher(options: {
         deviceMid: options.deviceMid,
         endpointOrigin,
         platform: process.platform,
-        releaseChannel: XCODE_ENV,
+        releaseChannel: ZCODE_ENV,
         sourceTitle: "electron",
       });
       for (const [name, value] of Object.entries(sourceHeaders)) {

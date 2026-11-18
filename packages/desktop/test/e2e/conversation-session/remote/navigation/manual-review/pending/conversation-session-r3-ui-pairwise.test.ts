@@ -9,7 +9,7 @@ import {
 import { connectSSHWorkspace, readSSHRuntimeConfig } from "#e2e/helpers/ssh-remote-p0";
 import { prepareV4ConversationE2E } from "#e2e/helpers/v4-conversation";
 const CASE_MARKER = "E2E_R3_UI_PAIRWISE";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-ui-pairwise");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-ui-pairwise");
 const NARROW = { width: 960, height: 700 };
 
 /** Electron 下 WebDriver setWindowSize 不可用（Browser.getWindowForTarget 缺失），改经 main 进程设置主窗口尺寸。 */

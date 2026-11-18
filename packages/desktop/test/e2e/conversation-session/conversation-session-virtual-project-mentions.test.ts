@@ -26,7 +26,7 @@ describe("虚拟项目 Composer 候选", () => {
   });
   it("VP14：多 root 文件分别可选，# 在全局草稿显示已有项目任务", async () => {
     await waitForWorkspaceApp(DEFAULT_WORKSPACE, 45_000);
-    const home = process.env.XCODE_E2E_HOME_DIR!;
+    const home = process.env.ZCODE_E2E_HOME_DIR!;
     // 同时接受统一 runner 与旧手工入口的隔离 HOME，禁止写入日常用户目录。
     if (
       !home ||
@@ -82,12 +82,12 @@ describe("虚拟项目 Composer 候选", () => {
       const toggle = project.$('[data-testid="virtual-project-toggle"]');
       await toggle.$(".lucide-folders-open").waitForExist();
       await project.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `VP14-folders-open-${theme}.png`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `VP14-folders-open-${theme}.png`),
       );
       await toggle.click();
       await toggle.$(".lucide-folders").waitForExist();
       await project.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `VP14-folders-closed-${theme}.png`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `VP14-folders-closed-${theme}.png`),
       );
       await toggle.click();
       await workspaceTrigger.$(".lucide-folders").waitForExist();
@@ -95,7 +95,7 @@ describe("虚拟项目 Composer 候选", () => {
       const menu = $('[data-testid="composer-project-menu"]');
       await menu.$('[data-project-name="E2E_VP14_PROJECT"] .lucide-folders').waitForDisplayed();
       await menu.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `VP14-folders-composer-${theme}.png`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `VP14-folders-composer-${theme}.png`),
       );
       await browser.keys("Escape");
       await menu.waitForDisplayed({ reverse: true });
@@ -115,14 +115,14 @@ describe("虚拟项目 Composer 候选", () => {
       expect(placement.editLeft).toBeGreaterThanOrEqual(placement.branchRight);
       await setInputValueByTestIdDom(TID_V4_COMPOSER_INPUT, "E2E_COMPOSER_EDIT_DRAFT");
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `VP14-composer-edit-${theme}.png`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `VP14-composer-edit-${theme}.png`),
       );
       await edit.click();
       const name = $('[data-testid="virtual-project-name"]');
       await name.waitForDisplayed();
       expect(await name.getValue()).toBe("E2E_VP14_PROJECT");
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `VP14-project-editor-${theme}.png`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `VP14-project-editor-${theme}.png`),
       );
       await name.setValue("E2E_EDIT_CANCELLED");
       await $('//button[normalize-space(.)="Cancel" or normalize-space(.)="取消"]').click();
@@ -213,7 +213,7 @@ describe("虚拟项目 Composer 候选", () => {
     await panel.$(`[data-option-id="session:${taskId}"]`).waitForDisplayed();
     expect(await panel.getText()).toContain("E2E_VP14_PROJECT");
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP14-project-mentions.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP14-project-mentions.png"),
     );
     // # 候选验证结束后清空查询；只按 Escape 会在项目切换恢复草稿时再次弹出候选并遮住项目入口。
     await setInputValueByTestIdDom(TID_V4_COMPOSER_INPUT, "");
@@ -304,10 +304,10 @@ describe("虚拟项目 Composer 候选", () => {
         await moveSessionPointer(`${sourceSelector} [data-testid="virtual-project-toggle"]`);
         await sourceIndicator.waitForDisplayed();
         await browser.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, `VP15-project-drop-${theme}.png`),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `VP15-project-drop-${theme}.png`),
         );
         await project.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, `VP15-project-drop-panel-${theme}.png`),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `VP15-project-drop-panel-${theme}.png`),
         );
         await moveSessionPointer(`${targetSelector} [data-testid="virtual-project-toggle"]`);
         await destination.$('[data-testid="project-session-drop-target"]').waitForDisplayed();
@@ -359,7 +359,7 @@ describe("虚拟项目 Composer 候选", () => {
       await row.click();
       await $('//*[normalize-space(.)="E2E_VP14_READY" and not(*)]').waitForDisplayed();
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP15-project-move.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP15-project-move.png"),
       );
     } finally {
       await browser.releaseActions();

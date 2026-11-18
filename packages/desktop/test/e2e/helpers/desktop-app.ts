@@ -31,9 +31,9 @@ import { projectSectionSelector } from "./project-sidebar.js";
 
 const DEFAULT_E2E_HOME_DIR = resolve(process.cwd(), ".e2e-home");
 const E2E_HOME_DIR =
-  process.env.XCODE_E2E_HOME_DIR?.trim() ||
-  process.env.XCODE_DATA_BASE_DIR?.trim() ||
-  process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+  process.env.ZCODE_E2E_HOME_DIR?.trim() ||
+  process.env.ZCODE_DATA_BASE_DIR?.trim() ||
+  process.env.ZCODE_DESKTOP_HOME_DIR?.trim() ||
   // 修复原因：WDIO worker 环境不稳定时，helper 曾回落到真实 HOME，
   // 导致 provider 诊断和清理读写开发者本机配置，而不是当前 e2e sandbox。
   DEFAULT_E2E_HOME_DIR;
@@ -545,7 +545,7 @@ export async function readE2ECredentialValue(key: string): Promise<string | unde
 }
 
 export async function clearAppData() {
-  if (process.env.XCODE_E2E_DEFER_APP_DATA_CLEANUP === "1") {
+  if (process.env.ZCODE_E2E_DEFER_APP_DATA_CLEANUP === "1") {
     // 修复原因：普通 spec 的 after hook 先 app.quit 会抢在 ChromeDriver
     // deleteSession 前销毁 browsing context，导致每个 worker 都支付断连超时。
     // WDIO afterSession 会在进程退出后删除 app data，此处只交还关闭所有权。
@@ -605,7 +605,7 @@ async function removeAppDataWithRetry() {
       if (!isRetryableRemoveError(error) || attempt === REMOVE_APP_DATA_MAX_ATTEMPTS) {
         if (
           !isRetryableRemoveError(error) ||
-          process.env.XCODE_E2E_STRICT_APP_DATA_CLEANUP === "1"
+          process.env.ZCODE_E2E_STRICT_APP_DATA_CLEANUP === "1"
         ) {
           throw error;
         } else {
@@ -675,7 +675,7 @@ function listWindowsLeftoverE2EProcessPids() {
     return collectWindowsE2EProcessTreePids(output, {
       currentPid: process.pid,
       homeDir: E2E_HOME_DIR,
-      runId: process.env.XCODE_E2E_RUN_ID,
+      runId: process.env.ZCODE_E2E_RUN_ID,
     });
   } catch {
     return [];

@@ -196,7 +196,7 @@ async function waitForGeneration(from: number, label: string) {
 describe("PLM-EXT-H3 扩展进程的网络跟随设置页", () => {
   after(async () => {
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-h3-evidence.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-h3-evidence.json"),
       JSON.stringify(evidence, null, 2),
     ).catch(() => undefined);
     await proxy?.stop();
@@ -207,7 +207,7 @@ describe("PLM-EXT-H3 扩展进程的网络跟随设置页", () => {
   it("代理与自定义证书从设置页进入扩展进程，重新加载扩展后生效", async function () {
     this.timeout(600000);
     requirePluginManualReview();
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd();
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd();
     proxy = await startE2ENetworkCaptureProxy({
       artifactPath: join(artifactDir, "plm-ext-h3-network-capture.json"),
       caDir: join(artifactDir, "plm-ext-h3-ca"),

@@ -180,9 +180,9 @@ describe("会话区 Background Notification Batch E2E", () => {
         (sum, message) => sum + JSON.stringify(message).length,
         0,
       );
-      if (process.env.XCODE_E2E_ARTIFACT_DIR) {
+      if (process.env.ZCODE_E2E_ARTIFACT_DIR) {
         await writeFile(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR, `task-notification-usage-${label}.json`),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR, `task-notification-usage-${label}.json`),
           JSON.stringify({ launchUsage, batchUsage, expectedIncrease }, null, 2),
           "utf8",
         );

@@ -18,7 +18,7 @@ describe("TSL08: unavailable startup project opens an unclassified draft", () =>
   const { homeDir } = getE2EAppDataPaths();
   const workspacePath = join(homeDir, "E2E_UNAVAILABLE_PROJECT");
   const movedPath = `${workspacePath}-moved`;
-  const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR!;
+  const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR!;
 
   after(async () => {
     await clearAppData();

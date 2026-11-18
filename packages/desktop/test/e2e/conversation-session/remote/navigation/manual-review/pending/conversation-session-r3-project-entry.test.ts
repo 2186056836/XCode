@@ -18,10 +18,10 @@ describe(`${marker}: R3 首连后显式添加项目`, () => {
     this.timeout(120_000);
     const config = ssh.readSSHRuntimeConfig(marker);
     await v4.prepareV4ConversationE2E({ skipProvider: true });
-    const artifact = resolve(process.env.XCODE_E2E_ARTIFACT_DIR!);
+    const artifact = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR!);
     await mkdir(artifact, { recursive: true });
     const recording =
-      process.env.XCODE_E2E_FAILURE_ARTIFACTS === "1"
+      process.env.ZCODE_E2E_FAILURE_ARTIFACTS === "1"
         ? undefined
         : await recorder.startElectronWindowRecording({
             outputPath: resolve(artifact, "project-entry.webm"),

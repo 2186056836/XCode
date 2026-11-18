@@ -10,7 +10,7 @@ import {
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ModelTextResult } from "@zcode/contracts";
-import { XCODE_RUNTIME_ENV_KEY, normalizeXCodeRuntimeEnv } from "@zcode/shared";
+import { ZCODE_RUNTIME_ENV_KEY, normalizeXCodeRuntimeEnv } from "@zcode/shared";
 import { redactAnthropicRequestMetadata } from "./anthropic-request-metadata.js";
 import type { EnvRecord } from "./model-execution.js";
 import { sanitizeModelIODebugRecord } from "./runner-debug-redaction.js";
@@ -34,8 +34,8 @@ import type {
 
 function resolveDataBaseDir(): string {
   return (
-    process.env.XCODE_DATA_BASE_DIR?.trim() ||
-    process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+    process.env.ZCODE_DATA_BASE_DIR?.trim() ||
+    process.env.ZCODE_DESKTOP_HOME_DIR?.trim() ||
     process.env.HOME?.trim() ||
     homedir()
   );
@@ -72,13 +72,13 @@ interface ModelIOCompactionState {
 const modelIOCompactionStates = new Map<string, ModelIOCompactionState>();
 
 export function shouldRecordModelIO(env: EnvRecord): boolean {
-  // 开发态与生产态都记录(分别落到 debug / rollout 目录);仅测试态(XCODE_RUNTIME_ENV=test)不写,
+  // 开发态与生产态都记录(分别落到 debug / rollout 目录);仅测试态(ZCODE_RUNTIME_ENV=test)不写,
   // 避免单测产生磁盘副作用。未设时按生产处理(记录到 rollout,带条数上限)。
   return normalizeRuntimeEnv(env) !== "test";
 }
 
 // 判定当前是否开发态,用于选择落盘目录(debug vs rollout)。
-// 直接看 XCODE_RUNTIME_ENV === "development";dev 桌面/CLI 启动时已注入该变量。
+// 直接看 ZCODE_RUNTIME_ENV === "development";dev 桌面/CLI 启动时已注入该变量。
 export function isDevelopmentModelIOEnv(env: EnvRecord): boolean {
   return normalizeRuntimeEnv(env) === "development";
 }
@@ -174,7 +174,7 @@ export function recordGenerateTextDebug(input: {
  *
  * 背景（bug：开发态桌面 agent 始终走流式，model-io 一直为空）：
  * 只在非流式 `runGenerateText` 里写 model-io 会让桌面/协议端默认 `modelStreaming: "on"` 的
- * 每个 turn（`streamText`）即便 XCODE_RUNTIME_ENV=development 也从不落盘。流式路径同样要记录。
+ * 每个 turn（`streamText`）即便 ZCODE_RUNTIME_ENV=development 也从不落盘。流式路径同样要记录。
  *
  * 与 generate 路径的关键差异：StreamTextResult 的 text/toolResults/sources/response 等聚合字段是 **promise**，
  * 必须等 fullStream 读完后再 await；toolResults/sources 的归一化期望数组，
@@ -470,9 +470,9 @@ async function settleModelIOValueWithTimeout<T>(
   }
 }
 
-// 归一化 XCODE_RUNTIME_ENV；未设置时返回 undefined,由调用方按生产处理。
+// 归一化 ZCODE_RUNTIME_ENV；未设置时返回 undefined,由调用方按生产处理。
 function normalizeRuntimeEnv(env: EnvRecord): string | undefined {
-  return normalizeXCodeRuntimeEnv(env[XCODE_RUNTIME_ENV_KEY]);
+  return normalizeXCodeRuntimeEnv(env[ZCODE_RUNTIME_ENV_KEY]);
 }
 
 function writeModelIODebugRecord(

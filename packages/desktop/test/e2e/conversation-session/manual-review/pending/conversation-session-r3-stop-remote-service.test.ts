@@ -21,7 +21,7 @@ import { prepareV4ConversationE2E } from "#e2e/helpers/v4-conversation";
 
 const CASE_MARKER = "E2E_R3_STOP_REMOTE_SERVICE";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-stop-remote-service",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-stop-remote-service",
 );
 // 连接管理器的在线重试档位为 2/4/8 秒；多等一段余量，覆盖完整一个自动重试周期。
 const AUTOMATIC_RETRY_CYCLE_MS = 2_000 + 4_000 + 8_000 + 6_000;
@@ -113,7 +113,7 @@ async function setTheme(theme: "light" | "dark"): Promise<void> {
 
 /** 深浅主题截图，供人工复核 destructive 菜单项与确认弹窗的可辨识度；结束后恢复浅色。 */
 async function captureThemeScreenshots(name: string): Promise<void> {
-  const root = process.env.XCODE_E2E_ARTIFACT_DIR?.trim();
+  const root = process.env.ZCODE_E2E_ARTIFACT_DIR?.trim();
   if (!root) return;
   const dir = resolve(root, "r3-stop-remote-service");
   await mkdir(dir, { recursive: true });
@@ -155,7 +155,7 @@ interface ConfirmOverflowProbe {
  * 断言说明区纵向滚动、长路径不横向溢出、按钮仍在视口内，并截图复核可滚动。
  */
 async function probeConfirmDialogLayouts(): Promise<ConfirmOverflowProbe> {
-  const root = process.env.XCODE_E2E_ARTIFACT_DIR?.trim();
+  const root = process.env.ZCODE_E2E_ARTIFACT_DIR?.trim();
   const dir = root ? resolve(root, "r3-stop-remote-service") : undefined;
   if (dir) await mkdir(dir, { recursive: true });
   const capture = async (name: string) => {

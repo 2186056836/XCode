@@ -15,7 +15,7 @@ import { waitForWorkspaceApp, DEFAULT_WORKSPACE } from "#e2e/helpers/desktop-app
  * （文件夹不存在 / 没有会话 / 两个超过 90 天）、一个置顶的久未使用项目和一个已软删除且目录不存在的项目；
  * 另有一个独占目录、带会话文件的活跃项目，供 PJM07 彻底删除数据。
  */
-const home = process.env.XCODE_E2E_HOME_DIR!;
+const home = process.env.ZCODE_E2E_HOME_DIR!;
 const DAY = 86_400_000;
 const PROJECTS = [
   { id: "pjm-active", name: "PJM 活跃", lastActive: 1 },
@@ -181,7 +181,7 @@ describe("项目管理", () => {
     await setLocaleAndTheme("zh-CN", "zai-light");
     // 在进入设置前从首页配对；设置页和首页各有 footer，不能用全局定位器猜测当前入口。
     pairingUrl = await obtainUnreadPairingUrl(
-      new URL(process.env.XCODE_WEB_REMOTE_CONTROL_URL!).origin,
+      new URL(process.env.ZCODE_WEB_REMOTE_CONTROL_URL!).origin,
     );
   });
 
@@ -297,7 +297,7 @@ describe("项目管理", () => {
     const devices = await dialog.$$('[data-testid="project-management-confirm-device"]');
     expect(devices).toHaveLength(1);
     await expect(devices[0]!).toHaveText(expect.stringContaining("3 个项目"));
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "PJM03-confirm.png"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "PJM03-confirm.png"));
     await dialog.$('[data-testid="project-management-confirm-remove"]').click();
     await dialog.waitForExist({ reverse: true });
     await browser.waitUntil(() => readProjects()["pjm-idle"] === 1);
@@ -405,17 +405,17 @@ describe("项目管理", () => {
               };
             });
             await writeFile(
-              join(process.env.XCODE_E2E_ARTIFACT_DIR!, "PJM06-layout.json"),
+              join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "PJM06-layout.json"),
               JSON.stringify(layout, null, 2),
             );
             await browser.saveScreenshot(
-              join(process.env.XCODE_E2E_ARTIFACT_DIR!, "PJM06-layout.png"),
+              join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "PJM06-layout.png"),
             );
           }
           expect(fits).toBe(true);
           await browser.saveScreenshot(
             join(
-              process.env.XCODE_E2E_ARTIFACT_DIR!,
+              process.env.ZCODE_E2E_ARTIFACT_DIR!,
               `project-management-${width}-${locale}-${theme}.png`,
             ),
           );
@@ -436,7 +436,7 @@ describe("项目管理", () => {
           expect(editorFits).toBe(true);
           await browser.saveScreenshot(
             join(
-              process.env.XCODE_E2E_ARTIFACT_DIR!,
+              process.env.ZCODE_E2E_ARTIFACT_DIR!,
               `project-editor-${width}-${locale}-${theme}.png`,
             ),
           );
@@ -471,7 +471,7 @@ describe("项目管理", () => {
     await expect(confirm).toBeDisabled();
     await dialog.$('[data-testid="project-management-confirm-data-word"]').setValue("删除");
     await expect(confirm).toBeEnabled();
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "PJM07-confirm.png"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "PJM07-confirm.png"));
     await confirm.click();
     await dialog.waitForExist({ reverse: true });
     // 结果 toast 不带撤销；项目行在无引用后删除，不进入「已移除的项目」。
@@ -496,8 +496,8 @@ describe("项目管理", () => {
   it("PJM09：手机远控从项目管理编辑，共享 Host 保存后桌面同步", async function () {
     this.timeout(120_000);
     const mobile = await chromium.launch({
-      ...(process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE
-        ? { executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
+      ...(process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE
+        ? { executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
         : { channel: "chrome" }),
       headless: true,
     });
@@ -511,7 +511,7 @@ describe("项目管理", () => {
       await seedMobileFixtureLogin(context);
       const page = await context.newPage();
       await openMobilePairingPage(page, pairingUrl, {
-        artifactDir: process.env.XCODE_E2E_ARTIFACT_DIR!,
+        artifactDir: process.env.ZCODE_E2E_ARTIFACT_DIR!,
         caseMarker: "PJM09",
         phase: "project-edit",
         readySelector: '[data-project-name="PJM 编辑完成"]',
@@ -546,7 +546,7 @@ describe("项目管理", () => {
           theme === "zai-light" ? "PJM 编辑完成" : "PJM 手机编辑",
         );
         await page.screenshot({
-          path: join(process.env.XCODE_E2E_ARTIFACT_DIR!, `PJM09-mobile-${theme}.png`),
+          path: join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `PJM09-mobile-${theme}.png`),
         });
         if (theme === "zai-light") {
           await name.fill("PJM 手机编辑");

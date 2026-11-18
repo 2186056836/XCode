@@ -14,7 +14,7 @@ export interface ConnectRemoteFailure {
 export async function readConnectRemoteFailures(): Promise<ConnectRemoteFailure[]> {
   // E2E reporter 把 desktop 日志重定向到 worker 专属目录；未接入 reporter 时落在隔离 HOME。
   const logDir =
-    process.env.XCODE_E2E_RUNTIME_LOG_DIR?.trim() || join(resolveE2EStorageRoot(), "v2", "logs");
+    process.env.ZCODE_E2E_RUNTIME_LOG_DIR?.trim() || join(resolveE2EStorageRoot(), "v2", "logs");
   const failures: ConnectRemoteFailure[] = [];
   const names = await readdir(logDir).catch(() => []);
   for (const name of names.filter((entry) => entry.endsWith(".log")).sort()) {
@@ -54,7 +54,7 @@ const REMOTE_WORKSPACE_UNRESPONSIVE_MESSAGE = "Remote workspace directory did no
  */
 export async function countRemoteWorkspaceUnresponsiveFailures(): Promise<number> {
   const logDir =
-    process.env.XCODE_E2E_RUNTIME_LOG_DIR?.trim() || join(resolveE2EStorageRoot(), "v2", "logs");
+    process.env.ZCODE_E2E_RUNTIME_LOG_DIR?.trim() || join(resolveE2EStorageRoot(), "v2", "logs");
   let count = 0;
   const names = await readdir(logDir).catch(() => []);
   for (const name of names.filter((entry) => entry.endsWith(".log")).sort()) {

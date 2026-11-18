@@ -51,7 +51,7 @@ describe(`${CASE_MARKER}: 连接失败与反馈日志`, () => {
       /\/Users\/|[A-Za-z]:\\Users\\|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/iu,
     );
     const artifactDir = resolve(
-      process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-log-contract",
+      process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-log-contract",
     );
     await mkdir(artifactDir, { recursive: true });
     for (const theme of ["light", "dark"]) {

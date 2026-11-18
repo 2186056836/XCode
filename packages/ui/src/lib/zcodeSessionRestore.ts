@@ -35,7 +35,7 @@ function isRuntimeModelUnavailableError(error: unknown): boolean {
     typeof error === "object" &&
     error !== null &&
     "code" in error &&
-    error.code === "XCODE_RUNTIME_MODEL_UNAVAILABLE"
+    error.code === "ZCODE_RUNTIME_MODEL_UNAVAILABLE"
   );
 }
 
@@ -157,7 +157,7 @@ export async function readDesktopContinuousSessionRestoreSnapshot(params: {
       ...(runtimeModelUnavailable
         ? {
             restoreWarning: normalizeXCodeUiError(error, {
-              fallbackCode: "XCODE_RUNTIME_MODEL_UNAVAILABLE",
+              fallbackCode: "ZCODE_RUNTIME_MODEL_UNAVAILABLE",
               taskId: params.sessionId,
             }),
           }

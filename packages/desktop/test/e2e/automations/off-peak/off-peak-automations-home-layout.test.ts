@@ -183,7 +183,7 @@ describe("Automations 空首页 Figma 布局 E2E", () => {
     assertTemplateGrid(layout.idleGrid, "Idle-time task template", 3);
     assertTemplateGrid(layout.scheduledGrid, "Scheduled task template", 4);
 
-    if (process.env.XCODE_E2E_VISUAL_CAPTURE === "1") {
+    if (process.env.ZCODE_E2E_VISUAL_CAPTURE === "1") {
       await browser.saveScreenshot(join(tmpdir(), "zcode-automations-home-4798-2443.png"));
     }
   });

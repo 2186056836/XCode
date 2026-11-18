@@ -88,7 +88,7 @@ describe("session persistence", () => {
       };
       try {
         const app = await createXCodeApp({
-          env: { XCODE_STORAGE_DIR: tempRoot },
+          env: { ZCODE_STORAGE_DIR: tempRoot },
           loggerFactory,
           ...(modelSelectionMode ? { modelSelectionMode } : {}),
           modelExecutor: {
@@ -485,7 +485,7 @@ describe("session persistence", () => {
       app = await createXCodeApp({
         env: {
           HOME: tempRoot,
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         modelExecutor: {
           async generateText(request: { messages: Array<{ content: unknown; role: string }> }) {
@@ -639,7 +639,7 @@ describe("session persistence", () => {
     try {
       const app = await createXCodeApp({
         env: {
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         modelExecutor: {
           async generateText() {
@@ -722,7 +722,7 @@ describe("session persistence", () => {
     try {
       const app = await createXCodeApp({
         env: {
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         eventStore,
         modelExecutor: {
@@ -780,7 +780,7 @@ describe("session persistence", () => {
     try {
       const app = await createXCodeApp({
         env: {
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         eventStore,
         modelExecutor: {
@@ -914,7 +914,7 @@ describe("session persistence", () => {
     try {
       const app = await createXCodeApp({
         env: {
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         modelExecutor: {
           async generateText() {
@@ -962,7 +962,7 @@ describe("session persistence", () => {
     try {
       const app = await createXCodeApp({
         env: {
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         eventStore,
         modelExecutor: {
@@ -1043,7 +1043,7 @@ describe("session persistence", () => {
     try {
       const app = await createXCodeApp({
         env: {
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         modelExecutor: {
           async generateText() {
@@ -1124,7 +1124,7 @@ describe("session persistence", () => {
           options: { reasoningLevel: "high" },
         },
         env: {
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         modelExecutor: {
           setModelIoFullRetentionEnabled() {},
@@ -1216,7 +1216,7 @@ describe("session persistence", () => {
         env: {
           PATH: shellDir,
           SHELL: join(shellDir, "fish"),
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         modelExecutor: {
           setModelIoFullRetentionEnabled() {},
@@ -1305,7 +1305,7 @@ describe("session persistence", () => {
       await workflowStore.writeSnapshot(snapshot);
       const app = await createXCodeApp({
         env: {
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         modelExecutor: {
           setModelIoFullRetentionEnabled() {},
@@ -1349,7 +1349,7 @@ describe("session persistence", () => {
       const latest = await resolveLatestSession({
         directory: tempRoot,
         env: {
-          XCODE_SESSION_DB_PATH: dbPath,
+          ZCODE_SESSION_DB_PATH: dbPath,
         },
       });
 
@@ -1380,7 +1380,7 @@ describe("session persistence", () => {
       await expect(
         createXCodeApp({
           env: {
-            XCODE_SESSION_DB_PATH: dbPath,
+            ZCODE_SESSION_DB_PATH: dbPath,
           },
           runtimeConfig: {
             workingDirectory: tempRoot,
@@ -1416,7 +1416,7 @@ describe("session persistence", () => {
         runXCodeProtocolAgent({
           env: {
             ...providerEnv,
-            XCODE_SESSION_DB_PATH: dbPath,
+            ZCODE_SESSION_DB_PATH: dbPath,
           },
           input: createNeverEndingReadable(),
           output,
@@ -1442,9 +1442,9 @@ describe("session persistence", () => {
       await runXCodeProtocolAgent({
         env: {
           ...providerEnv,
-          XCODE_LOG_DIR: join(tempRoot, "log"),
-          XCODE_SESSION_DB_PATH: dbPath,
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_LOG_DIR: join(tempRoot, "log"),
+          ZCODE_SESSION_DB_PATH: dbPath,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         input,
         output,
@@ -1478,9 +1478,9 @@ describe("session persistence", () => {
       await runXCodeProtocolAgent({
         env: {
           ...providerEnv,
-          XCODE_LOG_DIR: logDir,
-          XCODE_SESSION_DB_PATH: dbPath,
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_LOG_DIR: logDir,
+          ZCODE_SESSION_DB_PATH: dbPath,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         input: createClosableReadable(),
         output,
@@ -1522,7 +1522,7 @@ describe("session persistence", () => {
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         modelExecutor: {
           async generateText(request: { messages: Array<{ role: string; content: string }> }) {
@@ -1612,7 +1612,7 @@ describe("session persistence", () => {
         // 持久化测试不读取操作者配置，避免真实插件和 MCP 混入会话生命周期。
         skipUserConfig: true,
         env: {
-          XCODE_STORAGE_DIR: tempRoot,
+          ZCODE_STORAGE_DIR: tempRoot,
         },
         eventStore,
         executionPort,
@@ -2139,7 +2139,7 @@ describe("session persistence", () => {
 
     try {
       const firstApp = await createXCodeApp({
-        env: { XCODE_STORAGE_DIR: tempRoot },
+        env: { ZCODE_STORAGE_DIR: tempRoot },
         modelExecutor: createWriteModelExecutor(firstFile, "hello") as never,
         runtimeConfig: {
           mode: "yolo",
@@ -2154,7 +2154,7 @@ describe("session persistence", () => {
       expect(await readFile(firstFile, "utf8")).toBe("hello");
 
       const resumedApp = await createXCodeApp({
-        env: { XCODE_STORAGE_DIR: tempRoot },
+        env: { ZCODE_STORAGE_DIR: tempRoot },
         modelExecutor: createWriteModelExecutor(secondFile, "world") as never,
         resume: true,
         runtimeConfig: {

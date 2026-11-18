@@ -53,7 +53,7 @@ zcodeCredentialFormat: 2；恢复旧 current 指针、应用旧制品、崩溃�
 
 首次从旧 Supervisor 在线更新时，候选新 Core 由旧 owner 托管，若立刻迁移会先于
 新回滚保护生效。新 Supervisor 在 fork Core 时显式传入内部环境标记
-XCODE_SERVER_CREDENTIAL_FORMAT=2；旧 owner 没有此标记时，候选
+ZCODE_SERVER_CREDENTIAL_FORMAT=2；旧 owner 没有此标记时，候选
 Core 暂时注入仅 v1 的兼容 cipher，不迁移且拒绝已有 v2，直到既有 handoff 重启为新
 Supervisor 后再使用 v2。标记只属于进程装配，不是用户配置，不改变外部协议。
 因此旧 owner 失败可安全回滚；新 owner 写入 v2 后只能回滚到支持 v2 的制品。
@@ -98,7 +98,7 @@ RPC 帧，修正探针为字节读取后通过，两轮测试进程及临时目�
 远端构建和相关原生依赖/Docker 工程测试 6/6 通过。未在真实 SSH/WSL/Linux 容器执行。
 
 - 独立 Server（未由 Desktop 请求准备密钥）在开放 HTTP/stdio 服务前初始化凭据后端。没有系统库时，管理员须显式
-  提供 `XCODE_CREDENTIAL_SECRET` 或 `XCODE_CREDENTIAL_SECRET_FILE`；二者不可同时设置。
+  提供 `ZCODE_CREDENTIAL_SECRET` 或 `ZCODE_CREDENTIAL_SECRET_FILE`；二者不可同时设置。
   文件是管理员管理的只读 secret，32–4096 字节，按原字节读取、不 trim，不自动生成或
   写入凭据目录。文件内容只留在 owner 内存，不注入子进程；子进程继承文件位置。
   Docker 启动脚本挂载该文件并传递文件位置；缺少配置时明确停止，不恢复弱密钥兜底。
@@ -132,7 +132,7 @@ CLI 类型 34 项任务、根/CLI lint 与架构检查通过。新增断言仍�
   私有文件密钥回退”改用私有文件密钥；其他平台与进程不变。
 - 同一规范化凭据路径对应一个系统凭据条目；开发、正式、测试目录相互隔离。
   创建密钥复用跨进程锁，首次并发启动不得产生互不兼容的密钥。
-- 保留既有 `XCODE_CREDENTIAL_SECRET`，作为明确配置的无桌面/受管环境密钥来源；
+- 保留既有 `ZCODE_CREDENTIAL_SECRET`，作为明确配置的无桌面/受管环境密钥来源；
   不自动生成弱密钥、不把密钥写到普通配置/日志/环境变量。Desktop 请求的远端随机密钥
   仅保存在上述私有专用文件，不为子进程注入主密钥。
 - 读取旧明文和 `enc:v1` 使用既有解码规则；正常读取时在文件锁内迁移可读旧记录。

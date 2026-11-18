@@ -37,12 +37,12 @@ async function openRemoteControlDialog(label: string) {
 describe("桌面远控登录门禁", () => {
   it("AUTH-08: 未登录时只展示登录入口，四种主题语言组合无HTTP或WS连接", async function () {
     this.timeout(180_000);
-    const baseUrl = process.env.XCODE_E2E_REMOTE_AUTH_GATE_URL;
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+    const baseUrl = process.env.ZCODE_E2E_REMOTE_AUTH_GATE_URL;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (!baseUrl || !artifactDir) throw new Error("缺少远控门禁 fixture 或产物目录");
     const endpoint = await browser.electron.execute(() => ({
-      origin: process.env.XCODE_ENDPOINT_ORIGIN,
-      relay: process.env.XCODE_WEB_REMOTE_CONTROL_RELAY_WS_URL,
+      origin: process.env.ZCODE_ENDPOINT_ORIGIN,
+      relay: process.env.ZCODE_WEB_REMOTE_CONTROL_RELAY_WS_URL,
     }));
     expect(endpoint.origin).toBe(baseUrl);
     expect(endpoint.relay).toBe(`${baseUrl.replace("http:", "ws:")}/api/v1/remote/ws2`);
@@ -108,8 +108,8 @@ describe("桌面远控登录门禁", () => {
 
   it("AUTH-08: 远控401保留全局用户时，登录按钮仍启动当前渠道OAuth并停留在等待页", async function () {
     this.timeout(90_000);
-    const baseUrl = process.env.XCODE_E2E_REMOTE_AUTH_GATE_URL;
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+    const baseUrl = process.env.ZCODE_E2E_REMOTE_AUTH_GATE_URL;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (!baseUrl || !artifactDir) throw new Error("缺少远控门禁 fixture 或产物目录");
     const openExternal = await browser.electron.mock("shell", "openExternal");
     await openExternal.mockResolvedValue(undefined);

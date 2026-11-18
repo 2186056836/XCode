@@ -28,7 +28,7 @@ import {
 } from "#e2e/helpers/v4-conversation";
 
 const CASE_MARKER = "E2E_R3_LIVE_ZAPI";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-live-zapi");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-live-zapi");
 const LIVE_PROVIDER_ID = "e2e-r3-live-zapi";
 const LIVE_PROVIDER_NAME = "R3 Live ZAPI";
 const LIVE_MODEL_ID = "GLM-5.3";
@@ -200,8 +200,8 @@ describe(`${CASE_MARKER}: API Key 代表（ZAPI / GLM-5.3）经 Provisioning 到
 
   it("R3A-LIVE-01/03 本机导入 → 真实 SSH 同步 → 远端首发/续发 → 断线恢复后新请求仍命中 GLM-5.3", async function () {
     this.timeout(30 * 60_000);
-    const container = process.env.XCODE_E2E_SSH_CONTAINER?.trim();
-    if (!container) throw new Error(`${CASE_MARKER}: 缺少 XCODE_E2E_SSH_CONTAINER`);
+    const container = process.env.ZCODE_E2E_SSH_CONTAINER?.trim();
+    if (!container) throw new Error(`${CASE_MARKER}: 缺少 ZCODE_E2E_SSH_CONTAINER`);
     const config = readSSHRuntimeConfig(CASE_MARKER);
     const workspaceA = config.workspacePaths[0];
     await prepareV4ConversationE2E({ skipProvider: true });

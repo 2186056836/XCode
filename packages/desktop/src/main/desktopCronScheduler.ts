@@ -64,7 +64,7 @@ export function spawnCronScheduler(deps: CronSchedulerDeps): CronSchedulerHandle
     execArgv: ["--no-warnings"],
     env: {
       ...buildHostProcessEnv(deps.hostProcessLocalEnv),
-      XCODE_PROCESS_LABEL: "scheduler",
+      ZCODE_PROCESS_LABEL: "scheduler",
     },
   });
 

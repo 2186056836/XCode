@@ -18,7 +18,7 @@ import { selectTaskOrganizeMode } from "#e2e/helpers/workspace-agent-warmup";
 
 const MARKER = "E2E_SSH_PROJECT_ORDER";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-project-order",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-project-order",
 );
 const readOrder = () =>
   browser.execute(() =>

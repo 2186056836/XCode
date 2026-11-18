@@ -5,14 +5,14 @@ import {
   buildXCodeSourceHeadersFromContext,
   resolveRuntimeXCodeEndpointOrigin,
   resolveRuntimeXCodeEnv,
-  XCODE_APP_VERSION_ENV,
+  ZCODE_APP_VERSION_ENV,
 } from "@zcode/shared";
 import {
   resolveClientLanguageForHeaders,
   type ModelProviderSourceTitle,
 } from "./model-config.js";
 
-const XCODE_DATA_BASE_DIR_ENV_KEY = "XCODE_DATA_BASE_DIR";
+const ZCODE_DATA_BASE_DIR_ENV_KEY = "ZCODE_DATA_BASE_DIR";
 const cachedDeviceMidByStateFile = new Map<string, string>();
 
 interface CreateProviderEndpointRoutingSourceHeadersOptions {
@@ -27,7 +27,7 @@ export async function createProviderEndpointRoutingSourceHeaders(
   const env = options.env ?? process.env;
   const deviceMid = await readExistingDeviceMid(resolveTelemetryStateFile(env));
   return buildXCodeSourceHeadersFromContext({
-    appVersion: env[XCODE_APP_VERSION_ENV] ?? options.appVersion,
+    appVersion: env[ZCODE_APP_VERSION_ENV] ?? options.appVersion,
     arch: readOsArch(),
     // 与模型请求同一取值规则：先认 Desktop 下发的界面语言，再回落 Intl。
     clientLanguage: resolveClientLanguageForHeaders(env) ?? "unknown",
@@ -46,7 +46,7 @@ function resolveClientTimezone(): string {
 }
 
 function resolveTelemetryStateFile(env: NodeJS.ProcessEnv): string {
-  const dataBaseDir = env[XCODE_DATA_BASE_DIR_ENV_KEY]?.trim() || homedir();
+  const dataBaseDir = env[ZCODE_DATA_BASE_DIR_ENV_KEY]?.trim() || homedir();
   return join(dataBaseDir, ".zcode", "v2", "telemetry-state.json");
 }
 

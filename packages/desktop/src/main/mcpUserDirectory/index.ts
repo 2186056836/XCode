@@ -36,7 +36,7 @@ interface DirectoryMcpDescriptor {
   configKeyName: McpConfigKeyName;
 }
 
-const XCODE_MCP_DESCRIPTOR: DirectoryMcpDescriptor = {
+const ZCODE_MCP_DESCRIPTOR: DirectoryMcpDescriptor = {
   source: "zcodeagentmcp",
   directorySource: "zcode",
   userConfigDirSegments: [".xcode", "cli"],
@@ -67,7 +67,7 @@ function resolveUserHomeDir(): string {
 }
 
 const DIRECTORY_MCP_DESCRIPTORS: readonly DirectoryMcpDescriptor[] = [
-  XCODE_MCP_DESCRIPTOR,
+  ZCODE_MCP_DESCRIPTOR,
   AGENTS_MCP_DESCRIPTOR,
 ];
 
@@ -88,7 +88,7 @@ function buildDirectoryConfigPath(
 }
 
 function getUserCliConfigPath(): string {
-  return buildDirectoryConfigPath(XCODE_MCP_DESCRIPTOR, "user");
+  return buildDirectoryConfigPath(ZCODE_MCP_DESCRIPTOR, "user");
 }
 
 function buildDirectoryMcpLocation(
@@ -347,7 +347,7 @@ async function readDirectoryServersFromPreferredSources(
   workspacePath?: string,
 ): Promise<NativeMcpServerRecord[]> {
   const zcodeServers = await readDirectoryServersFromFile(
-    XCODE_MCP_DESCRIPTOR,
+    ZCODE_MCP_DESCRIPTOR,
     scope,
     workspacePath,
   );
@@ -364,8 +364,8 @@ async function updateZCodeServersInFile(
   workspacePath: string | undefined,
   update: (servers: Record<string, Record<string, unknown>>) => void,
 ): Promise<void> {
-  const filePath = buildDirectoryConfigPath(XCODE_MCP_DESCRIPTOR, scope, workspacePath);
-  const key = XCODE_MCP_DESCRIPTOR.configKeyName;
+  const filePath = buildDirectoryConfigPath(ZCODE_MCP_DESCRIPTOR, scope, workspacePath);
+  const key = ZCODE_MCP_DESCRIPTOR.configKeyName;
   await updateJsonObjectFile(filePath, (current) => {
     const servers = { ...migrateLegacyEnableFlag(readServerMapFromJson(current, key)).servers };
     update(servers);
@@ -400,7 +400,7 @@ export async function saveCliMcpToUserDirectory(
     const scope: Exclude<McpScope, "common"> = payload.projectPath ? "workspace" : "user";
     const location =
       payload.location ??
-      buildDirectoryMcpLocation(XCODE_MCP_DESCRIPTOR, scope, payload.projectPath);
+      buildDirectoryMcpLocation(ZCODE_MCP_DESCRIPTOR, scope, payload.projectPath);
     await writeServerEnabledToFile(
       findDescriptorByLocation(location),
       location,

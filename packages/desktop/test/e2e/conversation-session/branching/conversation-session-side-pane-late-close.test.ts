@@ -148,9 +148,9 @@ describe("侧栏迟到关闭与 App 重挂", () => {
     );
     const after = await runTerminalProbe("LATE_CLOSE_AFTER");
     expect([...after.matchAll(/PTY_OWNER=(\d+)/gu)].at(-1)?.[1]).toBe(pid);
-    if (process.env.XCODE_E2E_ARTIFACT_DIR) {
+    if (process.env.ZCODE_E2E_ARTIFACT_DIR) {
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR, "side-pane-late-close.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR, "side-pane-late-close.png"),
       );
     }
   });

@@ -20,7 +20,7 @@ import { selectTaskOrganizeMode } from "#e2e/helpers/workspace-agent-warmup";
 
 const MARKER = "E2E_REMOTE_PROJECT_READ_FAILED";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-project-read-failed",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-project-read-failed",
 );
 const FAILED_LABELS = ["连接失败", "Connection failed"];
 

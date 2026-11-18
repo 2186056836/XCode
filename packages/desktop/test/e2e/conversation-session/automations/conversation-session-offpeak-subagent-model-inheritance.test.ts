@@ -72,7 +72,7 @@ describe("闲时后台 subagent 模型继承与唤起 E2E", () => {
   it("OP10/IL01/IL02: foreground 与 background 继承闲时模型，主轮结束等待后台唤起，发送普通消息才切回用户模型", async function () {
     this.timeout(300000);
 
-    const handoffFault = process.env.XCODE_E2E_OFFPEAK_HANDOFF_FAULT === "1";
+    const handoffFault = process.env.ZCODE_E2E_OFFPEAK_HANDOFF_FAULT === "1";
     if (handoffFault) {
       const { windowId } = await openFaultInjectedHostWindow(
         fileURLToPath(new URL("../../helpers/offpeak-host-faults.cjs", import.meta.url)),
@@ -85,7 +85,7 @@ describe("闲时后台 subagent 模型继承与唤起 E2E", () => {
     }
     await prepareV4ConversationE2E();
 
-    const takeover = process.env.XCODE_E2E_OFFPEAK_TAKEOVER === "1";
+    const takeover = process.env.ZCODE_E2E_OFFPEAK_TAKEOVER === "1";
     const title = `E2E_OFFPEAK_SUBAGENTS_${Date.now()}`;
     await createOffPeakTask({
       instructions: `${OFFPEAK_PARENT_MARKER}: verify the foreground subagent provider matrix.`,
@@ -117,8 +117,8 @@ describe("闲时后台 subagent 模型继承与唤起 E2E", () => {
       await waitForV4AssistantMessageContaining(ORDINARY_REPLY_TOKEN);
     }
     // 主轮已结束但后台仍在等待。显式放行真实子请求，证明通知能另起续跑轮。
-    const port = Number(process.env.XCODE_OFFPEAK_MOCK_PORT ?? "45197");
-    const expireOnWake = handoffFault || process.env.XCODE_E2E_OFFPEAK_EXPIRE_WAKE === "1";
+    const port = Number(process.env.ZCODE_OFFPEAK_MOCK_PORT ?? "45197");
+    const expireOnWake = handoffFault || process.env.ZCODE_E2E_OFFPEAK_EXPIRE_WAKE === "1";
     const release = await fetch(`http://127.0.0.1:${port}/__e2e/off-peak/release-background`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -288,7 +288,7 @@ async function recordComposerSelection(stage: string): Promise<void> {
     ),
   }));
   await writeFile(
-    join(process.env.XCODE_E2E_ARTIFACT_DIR!, `offpeak-selection-${stage}.json`),
+    join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `offpeak-selection-${stage}.json`),
     JSON.stringify(diagnostic, null, 2),
   );
 }
@@ -336,7 +336,7 @@ async function waitForOffPeakScenarioCompletion(): Promise<OffPeakMockRequestRec
 }
 
 async function readOffPeakMockRequests(): Promise<OffPeakMockRequestRecord[]> {
-  const port = Number(process.env.XCODE_OFFPEAK_MOCK_PORT ?? "45197");
+  const port = Number(process.env.ZCODE_OFFPEAK_MOCK_PORT ?? "45197");
   try {
     const response = await fetch(`http://127.0.0.1:${port}/__e2e/off-peak/requests`);
     if (!response.ok) return [];

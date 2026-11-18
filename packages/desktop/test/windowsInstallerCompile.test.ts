@@ -113,7 +113,7 @@ it("compiles real UAC calls when the plugin directory follows the custom include
     await mkdir(generatedDir, { recursive: true });
     await writeFile(
       generatedDefine,
-      `!define XCODE_INSTALLER_PROCESS_HELPER "${import.meta.filename.replaceAll("$", "$$")}"\n`,
+      `!define ZCODE_INSTALLER_PROCESS_HELPER "${import.meta.filename.replaceAll("$", "$$")}"\n`,
       "utf8",
     );
     try {
@@ -128,7 +128,7 @@ it("compiles real UAC calls when the plugin directory follows the custom include
         execFileAsync(compiler, officialDefineArgs, {
           env: { ...process.env, ...makeNsis.env },
         }),
-      ).rejects.toThrow(/XCODE_INSTALLER_PROCESS_HELPER or generated define/);
+      ).rejects.toThrow(/ZCODE_INSTALLER_PROCESS_HELPER or generated define/);
     } finally {
       await rm(generatedDir, { recursive: true, force: true });
     }

@@ -166,7 +166,7 @@ describe("Linux Desktop private file key fallback", () => {
     const unavailable = unavailableKeyStore();
     const cipher = createSystemCredentialCipher({
       filePath: fixture.file,
-      env: { XCODE_CREDENTIAL_SECRET: "explicit-managed-secret-0123456789" },
+      env: { ZCODE_CREDENTIAL_SECRET: "explicit-managed-secret-0123456789" },
       ...unavailable,
     });
     expect(await cipher.encrypt("token")).toMatch(/^enc:v2:env:/);

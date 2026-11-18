@@ -24,7 +24,7 @@ import {
   waitForV4UserMessageContaining,
 } from "#e2e/helpers/v4-conversation";
 
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/composer-width");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/composer-width");
 let completedTaskId: string;
 
 const WIDE_VIEWPORT = { width: 1800, height: 1000 };
@@ -185,10 +185,10 @@ describe("会话区 status panel inline layout E2E", () => {
 
   it("手机 Web 打开历史对话和刷新时输入区无布局过渡，深浅主题均不溢出", async function () {
     this.timeout(180000);
-    const endpoint = process.env.XCODE_WEB_REMOTE_CONTROL_URL;
+    const endpoint = process.env.ZCODE_WEB_REMOTE_CONTROL_URL;
     if (!endpoint || !completedTaskId) throw new Error("mobile fixture or completed task missing");
     const pairingUrl = await obtainUnreadPairingUrl(new URL(endpoint).origin);
-    const executablePath = process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
+    const executablePath = process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
     const chrome = await chromium.launch({
       ...(executablePath ? { executablePath } : { channel: "chrome" }),
       headless: true,

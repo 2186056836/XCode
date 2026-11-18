@@ -132,11 +132,11 @@ const SHELL_TEXT_VARIABLES = [
   "CLAUDE_PLUGIN_DATA",
   "CLAUDE_PLUGIN_ROOT",
   "CLAUDE_SKILL_DIR",
-  "XCODE_PLUGIN_DATA",
-  "XCODE_PLUGIN_ID",
-  "XCODE_PLUGIN_NAME",
-  "XCODE_PLUGIN_ROOT",
-  "XCODE_SKILL_DIR",
+  "ZCODE_PLUGIN_DATA",
+  "ZCODE_PLUGIN_ID",
+  "ZCODE_PLUGIN_NAME",
+  "ZCODE_PLUGIN_ROOT",
+  "ZCODE_SKILL_DIR",
 ].join("|");
 // `${...}` 里变量名前的 `#`/`!`（取长度、间接引用）与变量名后除 `}` 以外的部分（`:-x`、`%/` 等）
 // 都是修饰符写法。
@@ -225,7 +225,7 @@ function resolveShellTextVariable(
   let value: string;
   if (name.endsWith("_PLUGIN_ROOT")) value = plugin.rootPath;
   else if (name.endsWith("_PLUGIN_DATA")) value = plugin.dataPath;
-  else if (name === "XCODE_PLUGIN_ID") value = plugin.id;
+  else if (name === "ZCODE_PLUGIN_ID") value = plugin.id;
   else value = plugin.name;
   // Windows 路径改用正斜杠：值以文本写进命令，由 shell 解析。Git Bash 会去掉引号外的反斜杠，
   // 未加引号的 `bash ${CLAUDE_PLUGIN_ROOT}/x.sh` 会变成 `C:Usersdev...`；原来按环境变量展开没有这个问题。

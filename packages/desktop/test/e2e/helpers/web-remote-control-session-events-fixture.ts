@@ -112,12 +112,12 @@ export async function prepareWebRemoteControlSessionEventsFixture(options: {
     ...(process.env[CODING_PLAN_TEAM_MOCK_BASE_URL_ENV]
       ? {}
       : { BIGMODEL_API_BASE_URL: relay.httpUrl }),
-    XCODE_E2E_REMOTE_AUTH_GATE_URL: relay.httpUrl,
-    XCODE_BASE_URL: relay.httpUrl,
-    XCODE_ENDPOINT_ORIGIN: relay.httpUrl,
-    XCODE_TEST_BASE_URL: relay.httpUrl,
-    XCODE_WEB_REMOTE_CONTROL_RELAY_WS_URL: relay.wsUrl,
-    XCODE_WEB_REMOTE_CONTROL_URL: options.webUrl ?? `${relay.httpUrl}/remote/v4`,
+    ZCODE_E2E_REMOTE_AUTH_GATE_URL: relay.httpUrl,
+    ZCODE_BASE_URL: relay.httpUrl,
+    ZCODE_ENDPOINT_ORIGIN: relay.httpUrl,
+    ZCODE_TEST_BASE_URL: relay.httpUrl,
+    ZCODE_WEB_REMOTE_CONTROL_RELAY_WS_URL: relay.wsUrl,
+    ZCODE_WEB_REMOTE_CONTROL_URL: options.webUrl ?? `${relay.httpUrl}/remote/v4`,
   };
   const previous = Object.fromEntries(Object.keys(envPatch).map((key) => [key, process.env[key]]));
   Object.assign(process.env, envPatch);
@@ -156,7 +156,7 @@ export async function prepareWebRemoteControlSessionEventsFixture(options: {
         }
         if (!origin) return;
         // 独立夹具可能避开已占用端口，手机配对必须使用 Vite 实际监听的端口。
-        process.env.XCODE_WEB_REMOTE_CONTROL_URL = new URL(
+        process.env.ZCODE_WEB_REMOTE_CONTROL_URL = new URL(
           new URL(options.webUrl!).pathname,
           origin,
         ).href;

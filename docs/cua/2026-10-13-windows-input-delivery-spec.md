@@ -384,7 +384,7 @@ action_sent=true，禁止重放；异步回执 sent=0 或发送前失败沿用�
 | CR2-E01 | 两个真实 WinForms 窗口，分别输入 50/51 单位 CJK | 独立控件 oracle 全文匹配；50 恢复原窗，51 留在目标；保存运行记录 |
 
 离线验收：windows-foreground-text-restore.test.ts；真机验收：
-native/win-foreground-text-restore-cua.test.ts（XCODE_CUA_HARNESS_E2E=1，
+native/win-foreground-text-restore-cua.test.ts（ZCODE_CUA_HARNESS_E2E=1，
 消费 build:cua 产物）。真机用例只证明这些目标与负载，不承诺任意目标消费完成。
 
 WPF `UIElement.Focus()` 抢前台已修（2026-10-20，§6.1 账本条目随修复移除）：
@@ -867,7 +867,7 @@ pasteboard_read_timed_out / pasteboard_changed_during_paste` 与 mac
      形状不变）。跨语言别名（mac .lproj）在 Windows 无平台等价物（Appx 多语言藏
      resources.pri），如实记为平台差异。
    - **真机冒烟 `smoke:windows:list-apps`**（opt-in
-     `XCODE_CUA_WINDOWS_LIST_APPS_LIVE=1`，Helper→broker→MCP 全链）：计算器
+     `ZCODE_CUA_WINDOWS_LIST_APPS_LIVE=1`，Helper→broker→MCP 全链）：计算器
      （packaged：AFH 拆分/AUMID 显示名/图标按窗口/隐式拉起）+ winver.exe（经典
      Win32：无 AUMID/降级链）+ explorer 常驻条目（name === FileDescription，绝
      不等于任何指向 explorer.exe 的快捷方式标签）三锚点，双内置应用零 fixture

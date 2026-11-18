@@ -25,7 +25,7 @@ describe("E2E_PROJECT_DEVICE_VISIBILITY", () => {
     await $(toggleSelector).waitForDisplayed();
     expect(await $(toggleSelector).getAttribute("aria-checked")).toBe("true");
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "device-name-hidden.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "device-name-hidden.png"),
     );
     await $(toggleSelector).click();
     expect(await $(toggleSelector).getAttribute("aria-checked")).toBe("false");

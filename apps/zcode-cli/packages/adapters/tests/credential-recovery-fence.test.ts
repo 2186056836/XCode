@@ -117,7 +117,7 @@ it("另一个进程已取得的旧读取在恢复后同样失效", async () => {
     });
     const response = once(child, "message");
     child.send("release");
-    expect((await response)[0]).toEqual({ type: "failed", code: "XCODE_CREDENTIAL_STORE_CHANGED" });
+    expect((await response)[0]).toEqual({ type: "failed", code: "ZCODE_CREDENTIAL_STORE_CHANGED" });
   } finally {
     child.kill();
     await rm(root, { recursive: true, force: true });

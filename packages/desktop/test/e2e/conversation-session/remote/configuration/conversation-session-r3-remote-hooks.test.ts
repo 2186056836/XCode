@@ -23,7 +23,7 @@ import {
 import { openWorkspaceDraftFromSidebar } from "#e2e/helpers/workspace-agent-warmup";
 
 const CASE_MARKER = "E2E_R3_REMOTE_HOOKS";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-remote-hooks");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-remote-hooks");
 const REMOTE_MARKER_DIR = "/home/dev/r3-workspace-a/.zcode-e2e/r3-hooks";
 const REMOTE_MARKER_FILE = `${REMOTE_MARKER_DIR}/marker.txt`;
 const HOOK_MARKER = "R3_DEV08_USER_PROMPT_HOOK";

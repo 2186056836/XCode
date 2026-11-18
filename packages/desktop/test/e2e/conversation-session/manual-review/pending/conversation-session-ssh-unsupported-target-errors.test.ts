@@ -16,7 +16,7 @@ import {
 
 const MARKER = "E2E_SSH_UNSUPPORTED_TARGET_ERRORS";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-unsupported-target-errors",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-unsupported-target-errors",
 );
 
 interface TargetCase {
@@ -41,7 +41,7 @@ interface TargetCase {
 const CASES: TargetCase[] = [
   {
     id: "RDUX-11-05",
-    env: "XCODE_E2E_SSH_SECOND_FACTOR_TARGET",
+    env: "ZCODE_E2E_SSH_SECOND_FACTOR_TARGET",
     title: "服务器要求额外验证",
     reason: "当前只支持密码、私钥和 SSH agent 登录",
     forbidden: ["请检查 SSH 用户名、密码或私钥"],
@@ -49,7 +49,7 @@ const CASES: TargetCase[] = [
   {
     // 登录 shell 模拟中文 PowerShell：GBK 报错里带英文 CommandNotFoundException 特征。
     id: "RDUX-11-07",
-    env: "XCODE_E2E_SSH_WINDOWS_SHELL_TARGET",
+    env: "ZCODE_E2E_SSH_WINDOWS_SHELL_TARGET",
     title: "不支持该设备的系统",
     reason: "WSL",
     forbidden: ["远端环境检查失败", "�"],
@@ -57,7 +57,7 @@ const CASES: TargetCase[] = [
   {
     // 登录 shell 只输出 GBK 报错（中文 cmd 的“系统找不到指定的路径。”）后非零退出。
     id: "RDUX-11-08",
-    env: "XCODE_E2E_SSH_GARBLED_SHELL_TARGET",
+    env: "ZCODE_E2E_SSH_GARBLED_SHELL_TARGET",
     title: "远端环境检查失败",
     reason: "设备环境不满足安装要求",
     forbidden: ["不支持该设备的系统"],
@@ -68,7 +68,7 @@ const CASES: TargetCase[] = [
     // 用户确认安装后 release resolver 才拒绝该架构。
     // Bug 场景：原因写成“Linux / macOS”，脱敏把空格后的 `/` 当作路径，详细信息只剩“Linux [redacted-path]”。
     id: "RDUX-11-10",
-    env: "XCODE_E2E_SSH_RISCV64_TARGET",
+    env: "ZCODE_E2E_SSH_RISCV64_TARGET",
     title: "不支持该设备的系统",
     reason: "远程连接只支持 Linux 和 macOS",
     forbidden: ["下载失败", "远端环境检查失败"],
@@ -117,10 +117,10 @@ const { Server: SSHServer } = ssh2;
 
 // RDUX-11-09：Linux x64、未安装的环境探测输出；改正密码后连接停在安装确认，证明认证已通过。
 const NOT_INSTALLED_PROBE_OUTPUT =
-  "__XCODE_PROBE_PLATFORM__\nLinux\n__XCODE_PROBE_ARCH__\nx86_64\n" +
-  "__XCODE_PROBE_ROOT__\n/home/dev/.xcode/server\n__XCODE_PROBE_KERNEL__\nLinux\n" +
-  "__XCODE_PROBE_LIBC__\nglibc 2.35\n__XCODE_PROBE_INSTALLED__\n0\n" +
-  "__XCODE_PROBE_VERSION__\n\n__XCODE_PROBE_STATUS__\n\n__XCODE_PROBE_END__\n";
+  "__ZCODE_PROBE_PLATFORM__\nLinux\n__XCODE_PROBE_ARCH__\nx86_64\n" +
+  "__ZCODE_PROBE_ROOT__\n/home/dev/.xcode/server\n__XCODE_PROBE_KERNEL__\nLinux\n" +
+  "__ZCODE_PROBE_LIBC__\nglibc 2.35\n__XCODE_PROBE_INSTALLED__\n0\n" +
+  "__ZCODE_PROBE_VERSION__\n\n__XCODE_PROBE_STATUS__\n\n__XCODE_PROBE_END__\n";
 
 /**
  * 同一次 keyboard-interactive 交换里最多连问 3 次 `Password:` 的模拟服务端。

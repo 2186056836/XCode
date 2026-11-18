@@ -29,7 +29,7 @@ import {
 
 const MARKER = "E2E_REMOTE_PROJECT_HANDOFF";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-project-handoff",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-project-handoff",
 );
 const management = <T>(command: string, args: unknown[] = []) =>
   callHandoffHost<T>(ServiceChannels.SourceServerManagement, command, args);

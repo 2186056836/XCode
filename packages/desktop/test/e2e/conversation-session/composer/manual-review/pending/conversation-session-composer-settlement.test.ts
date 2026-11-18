@@ -176,11 +176,11 @@ describe("CST Composer 首发结算与提示交接", () => {
         pane: await getV4PaneSnapshot(),
       });
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "composer-settlement.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "composer-settlement.json"),
         JSON.stringify(evidence, null, 2),
       );
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `composer-settlement-${evidence.length}.png`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `composer-settlement-${evidence.length}.png`),
       );
       await browser.execute(() => window.__composerSettlementProbe?.restore());
     }
@@ -249,7 +249,7 @@ describe("CST Composer 首发结算与提示交接", () => {
   it("CST05 手机 Enter 换行，按钮首发清空且提示连续", async function () {
     this.timeout(150_000);
     const pairingUrl = await obtainUnreadPairingUrl(
-      new URL(process.env.XCODE_WEB_REMOTE_CONTROL_URL!).origin,
+      new URL(process.env.ZCODE_WEB_REMOTE_CONTROL_URL!).origin,
     );
     const mobileBrowser = await chromium.launch({ channel: "chrome", headless: true });
     try {
@@ -261,7 +261,7 @@ describe("CST Composer 首发结算与提示交接", () => {
       await seedMobileFixtureLogin(context);
       const page = await context.newPage();
       await openMobilePairingPage(page, pairingUrl, {
-        artifactDir: process.env.XCODE_E2E_ARTIFACT_DIR!,
+        artifactDir: process.env.ZCODE_E2E_ARTIFACT_DIR!,
         caseMarker: "CST05",
         phase: "first-send",
         readySelector: '[data-testid="sidebar"], [data-mobile-page="chat"]',
@@ -323,7 +323,7 @@ describe("CST Composer 首发结算与提示交接", () => {
           .some((frame) => frame.placeholder === newTaskPlaceholder),
       ).toBe(false);
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "composer-settlement-mobile.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "composer-settlement-mobile.json"),
         JSON.stringify({ newTaskPlaceholder, frames }, null, 2),
       );
       for (const theme of ["zai-light", "zai-dark"]) {
@@ -342,7 +342,7 @@ describe("CST Composer 首发结算与提示交接", () => {
         expect(await editor.innerText()).toBe(`next unsent ${theme}`);
         await page.screenshot({
           path: join(
-            process.env.XCODE_E2E_ARTIFACT_DIR!,
+            process.env.ZCODE_E2E_ARTIFACT_DIR!,
             `composer-settlement-mobile-${theme}.png`,
           ),
         });
@@ -352,7 +352,7 @@ describe("CST Composer 首发结算与提示交接", () => {
         .contexts()[0]
         ?.pages()[0]
         ?.screenshot({
-          path: join(process.env.XCODE_E2E_ARTIFACT_DIR!, "composer-settlement-mobile-final.png"),
+          path: join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "composer-settlement-mobile-final.png"),
         });
       await mobileBrowser.close();
     }

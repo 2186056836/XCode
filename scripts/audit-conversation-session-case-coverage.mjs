@@ -16,7 +16,7 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 function resolveFormalAdmissionRoot() {
   const override =
-    process.env.XCODE_CONVERSATION_SESSION_FORMAL_ADMISSION_ROOT?.trim();
+    process.env.ZCODE_CONVERSATION_SESSION_FORMAL_ADMISSION_ROOT?.trim();
   if (!override) {
     return REPO_ROOT;
   }
@@ -24,7 +24,7 @@ function resolveFormalAdmissionRoot() {
   // audit 可被指向空目录并静默跳过正式用例；NODE_ENV=test 不是可信测试进程证明。
   if (!process.env.NODE_TEST_CONTEXT) {
     throw new Error(
-      "XCODE_CONVERSATION_SESSION_FORMAL_ADMISSION_ROOT is test-only and requires NODE_TEST_CONTEXT",
+      "ZCODE_CONVERSATION_SESSION_FORMAL_ADMISSION_ROOT is test-only and requires NODE_TEST_CONTEXT",
     );
   }
   return resolve(override);

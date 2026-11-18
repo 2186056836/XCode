@@ -39,7 +39,7 @@ import {
   resolveWorkspaceKey,
   resolveXCodeVisibleSessionTitle,
   textFromXCodeMessageParts,
-  XCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER,
   zcodeBackgroundTaskNotificationFailureText,
   zcodeBackgroundTaskNotificationToolUpdateStatus,
   appendXCodeStreamingToolInputDelta,
@@ -220,7 +220,7 @@ type XCodeTerminalStreamEvent =
   | Extract<XCodeStreamEvent, { type: "task_complete" }>
   | Extract<XCodeStreamEvent, { type: "task_error" }>;
 
-const GLM_PROVIDER: XCodeProvider = XCODE_AGENT_PROVIDER;
+const GLM_PROVIDER: XCodeProvider = ZCODE_AGENT_PROVIDER;
 const EMPTY_SLASH_COMMANDS: XCodeSlashCommand[] = [];
 const logger = createServiceLogger("zcode-task-service");
 const ASK_USER_QUESTION_TOOL_NAME = "AskUserQuestion";
@@ -247,7 +247,7 @@ function formatXCodeAgentLogDate(now: Date): string {
 }
 
 function resolveXCodeAgentCurrentLogFilePath(now = new Date()): string {
-  const configuredLogDir = process.env.XCODE_LOG_DIR?.trim();
+  const configuredLogDir = process.env.ZCODE_LOG_DIR?.trim();
   const logDir = configuredLogDir || join(homedir(), ".xcode", "cli", "log");
   return join(logDir, `zcode-${formatXCodeAgentLogDate(now)}.jsonl`);
 }
@@ -310,7 +310,7 @@ export function createXCodeTaskServiceAdapter(
     throw Object.assign(
       new Error(`XCode task service adapter does not support IXCodeTaskService.${name} yet.`),
       {
-        code: "XCODE_AGENT_UNSUPPORTED_LEGACY_TASK_METHOD",
+        code: "ZCODE_AGENT_UNSUPPORTED_LEGACY_TASK_METHOD",
       },
     );
   }
@@ -1014,7 +1014,7 @@ export function createXCodeTaskServiceAdapter(
     const target = taskTargets.get(taskId);
     if (!target) {
       throw Object.assign(new Error(`XCode session target is not loaded: ${taskId}`), {
-        code: "XCODE_SESSION_TARGET_NOT_FOUND",
+        code: "ZCODE_SESSION_TARGET_NOT_FOUND",
       });
     }
     return target;

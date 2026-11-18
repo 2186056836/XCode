@@ -99,7 +99,7 @@ async function expectOnDataSyncPage(): Promise<void> {
 
 /** 深浅主题 × 中英文的设备列表截图，供人工复核状态点在两种主题下可辨识。 */
 async function captureDeviceListScreenshots(label: string): Promise<void> {
-  const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR?.trim();
+  const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR?.trim();
   if (!artifactDir) return;
   const dir = resolve(artifactDir, "dsync-05");
   await mkdir(dir, { recursive: true });

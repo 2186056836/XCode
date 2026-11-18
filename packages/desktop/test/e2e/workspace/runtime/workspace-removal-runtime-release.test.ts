@@ -85,7 +85,7 @@ describe("项目软删除与应用退出 E2E", () => {
         (result) => result.stdout,
         () => "所有跟踪进程已被回收",
       );
-      await writeFile(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "quit-process-state.txt"), state);
+      await writeFile(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "quit-process-state.txt"), state);
     }
     const renamed = `${removable}-renamed`;
     // 进程退出屏障之后只操作一次，禁止靠重命名重试掩盖资源未释放。

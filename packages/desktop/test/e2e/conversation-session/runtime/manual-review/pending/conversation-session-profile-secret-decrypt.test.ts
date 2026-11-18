@@ -27,7 +27,7 @@ import { prepareV4ConversationE2E } from "#e2e/helpers/v4-conversation";
 
 const MARKER = "E2E_PROFILE_SECRET_DECRYPT";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/profile-secret-decrypt",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/profile-secret-decrypt",
 );
 // IV/AuthTag 长度合法、内容为零：本机任何密钥都无法通过 GCM 校验（与 LRCD-01 相同的构造）。
 const UNDECRYPTABLE_VALUE = [

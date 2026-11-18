@@ -27,7 +27,7 @@ import {
 
 const marker = "E2E_REMOTE_ACCESSIBILITY";
 const artifact = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-accessibility",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-accessibility",
 );
 const dialog = '[data-testid="ssh-dialog"]';
 

@@ -149,7 +149,7 @@ describe("BigModel 登录后 Subagent runtime catalog 滞后", () => {
 });
 
 async function readCodingPlanMockRequests(): Promise<unknown[]> {
-  const baseUrl = process.env.XCODE_E2E_CODING_PLAN_MOCK_URL?.trim();
+  const baseUrl = process.env.ZCODE_E2E_CODING_PLAN_MOCK_URL?.trim();
   if (!baseUrl) {
     return [];
   }

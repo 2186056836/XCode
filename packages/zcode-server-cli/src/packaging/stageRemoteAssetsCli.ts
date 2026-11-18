@@ -42,11 +42,11 @@ async function main(): Promise<void> {
   if (linuxOnly) {
     // Linux 开发入口与 dev:desktop 共用 production 默认值，避免远端模型配置退回 test。
     // 原全平台入口继续沿用通用构建器的环境选择规则。
-    const zcodeEnv = env.XCODE_ENV?.trim().toLowerCase() || "production";
+    const zcodeEnv = env.ZCODE_ENV?.trim().toLowerCase() || "production";
     if (zcodeEnv !== "test" && zcodeEnv !== "production") {
-      throw new Error(`Invalid XCODE_ENV for prepare:remote-assets:linux: ${zcodeEnv}`);
+      throw new Error(`Invalid ZCODE_ENV for prepare:remote-assets:linux: ${zcodeEnv}`);
     }
-    env.XCODE_ENV = zcodeEnv;
+    env.ZCODE_ENV = zcodeEnv;
   }
   const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
   const repoRoot = resolve(packageRoot, "../..");

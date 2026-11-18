@@ -1,5 +1,5 @@
 import {
-  XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
+  ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
   type XCodePluginsResolveSuggestedReferenceResult,
 } from "@zcode/shared";
 
@@ -45,7 +45,7 @@ export function resolveDraftSuggestedPluginFlowStage(
   const { status } = result;
   if (
     (status === "ready" || status === "disabled" || status === "missing") &&
-    (result.marketplace !== XCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID ||
+    (result.marketplace !== ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID ||
       result.sourceTrust !== "official" ||
       !result.pluginName)
   ) {

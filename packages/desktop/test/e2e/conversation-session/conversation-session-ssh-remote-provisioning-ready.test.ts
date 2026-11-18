@@ -14,7 +14,7 @@ const marker = "E2E_R3_SSH_READY";
 const providerId = "e2e-r3-ssh-ready";
 const providerName = "R3 SSH Ready";
 const modelId = "e2e-r3-ssh-ready-model";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-ssh-ready");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-ssh-ready");
 let tunnel: { baseURL: string; close(): Promise<void> } | undefined;
 
 describe(`${marker}: Provider 首连与远端项目对话`, () => {
@@ -42,7 +42,7 @@ describe(`${marker}: Provider 首连与远端项目对话`, () => {
     await mkdir(artifactDir, { recursive: true });
     // 不打开 Process Monitor，保证显式录制持续绑定主窗口。
     const recording =
-      process.env.XCODE_E2E_FAILURE_ARTIFACTS === "1"
+      process.env.ZCODE_E2E_FAILURE_ARTIFACTS === "1"
         ? undefined
         : await recorder.startElectronWindowRecording({
             outputPath: resolve(artifactDir, "main-flow.webm"),

@@ -26,7 +26,7 @@ describe("desktop E2E build cache", () => {
     mkdirSync(resolve(ROOT, "src"), { recursive: true });
     writeFileSync(resolve(ROOT, "src/main.ts"), "export const value = 1;\n");
     const base = createE2EDesktopBuildFingerprint({
-      env: { VITE_XCODE_E2E_STORE_BRIDGE: "1", XCODE_ENV: "test" },
+      env: { VITE_XCODE_E2E_STORE_BRIDGE: "1", ZCODE_ENV: "test" },
       gitHead: "head-a",
       inputPaths: ["src"],
       repoRoot: ROOT,
@@ -35,7 +35,7 @@ describe("desktop E2E build cache", () => {
     writeFileSync(resolve(ROOT, "src/main.ts"), "export const value = 2;\n");
     expect(
       createE2EDesktopBuildFingerprint({
-        env: { VITE_XCODE_E2E_STORE_BRIDGE: "1", XCODE_ENV: "test" },
+        env: { VITE_XCODE_E2E_STORE_BRIDGE: "1", ZCODE_ENV: "test" },
         gitHead: "head-a",
         inputPaths: ["src"],
         repoRoot: ROOT,
@@ -43,7 +43,7 @@ describe("desktop E2E build cache", () => {
     ).not.toBe(base);
     expect(
       createE2EDesktopBuildFingerprint({
-        env: { VITE_XCODE_E2E_STORE_BRIDGE: "1", XCODE_ENV: "test" },
+        env: { VITE_XCODE_E2E_STORE_BRIDGE: "1", ZCODE_ENV: "test" },
         gitHead: "head-b",
         inputPaths: ["src"],
         repoRoot: ROOT,
@@ -64,7 +64,7 @@ describe("desktop E2E build cache", () => {
     for (const envName of E2E_DESKTOP_BUILD_ENV_NAMES) {
       expect(
         createE2EDesktopBuildFingerprint({
-          env: { [envName]: envName === "XCODE_E2E_COVERAGE" ? "1" : "changed" },
+          env: { [envName]: envName === "ZCODE_E2E_COVERAGE" ? "1" : "changed" },
           gitHead: "head-a",
           inputPaths: ["src"],
           repoRoot: ROOT,
@@ -74,7 +74,7 @@ describe("desktop E2E build cache", () => {
     }
     expect(
       createE2EDesktopBuildFingerprint({
-        env: { XCODE_ENV: "" },
+        env: { ZCODE_ENV: "" },
         gitHead: "head-a",
         inputPaths: ["src"],
         repoRoot: ROOT,
@@ -97,7 +97,7 @@ describe("desktop E2E build cache", () => {
       )) {
         // Vite 配置同时包含 serve/build；Scan 仅用于 serve，不应让生产构建缓存失效。
         // 只排除此文件的开发开关，build 分支不装配 Scan 由 viteRendererConfig.test.ts 验证。
-        if (configPath === "packages/desktop/vite.config.ts" && match[1] === "XCODE_REACT_SCAN") {
+        if (configPath === "packages/desktop/vite.config.ts" && match[1] === "ZCODE_REACT_SCAN") {
           continue;
         }
         referencedEnvNames.add(match[1]);
@@ -120,7 +120,7 @@ describe("desktop E2E build cache", () => {
     const base = fingerprint({});
 
     for (const value of ["", "0", "1"]) {
-      expect(fingerprint({ XCODE_REACT_SCAN: value })).toBe(base);
+      expect(fingerprint({ ZCODE_REACT_SCAN: value })).toBe(base);
     }
   });
 
@@ -143,7 +143,7 @@ describe("desktop E2E build cache", () => {
     );
     writeFileSync(resolve(ROOT, "packages/desktop/src/main.ts"), "export const desktop = 1;\n");
     writeFileSync(resolve(ROOT, "packages/server/src/index.ts"), "export const server = 1;\n");
-    writeFileSync(resolve(ROOT, ".env"), "XCODE_BASE_URL=https://one.example\n");
+    writeFileSync(resolve(ROOT, ".env"), "ZCODE_BASE_URL=https://one.example\n");
     writeFileSync(resolve(ROOT, ".env.production"), "CDN_DOMAIN=one.example\n");
 
     const inputPaths = resolveE2EDesktopBuildInputPaths({ repoRoot: ROOT });
@@ -157,10 +157,10 @@ describe("desktop E2E build cache", () => {
     expect(fingerprint()).not.toBe(base);
 
     writeFileSync(resolve(ROOT, "packages/server/src/index.ts"), "export const server = 1;\n");
-    writeFileSync(resolve(ROOT, ".env"), "XCODE_BASE_URL=https://two.example\n");
+    writeFileSync(resolve(ROOT, ".env"), "ZCODE_BASE_URL=https://two.example\n");
     expect(fingerprint()).not.toBe(base);
 
-    writeFileSync(resolve(ROOT, ".env"), "XCODE_BASE_URL=https://one.example\n");
+    writeFileSync(resolve(ROOT, ".env"), "ZCODE_BASE_URL=https://one.example\n");
     writeFileSync(resolve(ROOT, ".env.production"), "CDN_DOMAIN=two.example\n");
     expect(fingerprint()).not.toBe(base);
   });

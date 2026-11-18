@@ -4,7 +4,7 @@ import { access, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs
 import { fileURLToPath } from "node:url";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import type { Readable, Writable } from "node:stream";
-import { isPublicXCodeErrorCode, XCODE_VERSION } from "@zcode/shared";
+import { isPublicXCodeErrorCode, ZCODE_VERSION } from "@zcode/shared";
 import { prepareServerCredentialStorage } from "@zcode/shared/credential-security";
 import { SourceServerWorkspaceAliasRepo } from "@zcode/services/node";
 import {
@@ -94,7 +94,7 @@ async function acquireLifecycleCommandLock(
 }
 
 export function serviceRegistrationEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  return env.XCODE_SERVER_SKIP_SERVICE_REGISTRATION !== "1";
+  return env.ZCODE_SERVER_SKIP_SERVICE_REGISTRATION !== "1";
 }
 
 export function daemonStartupMode(env: NodeJS.ProcessEnv = process.env): "service" | "fallback" {
@@ -126,7 +126,7 @@ export async function runServerCli(
     if (command === "version" || command === "--version") {
       // Bug 原因：Server --version 过去落入 legacy delegate，实际输出取决于旁边的 Agent
       // zcode.cjs，Desktop probe 无法稳定判断 Server compatibility。
-      stdout(io, json ? { product: "zcode-server", version: XCODE_VERSION } : XCODE_VERSION);
+      stdout(io, json ? { product: "zcode-server", version: ZCODE_VERSION } : ZCODE_VERSION);
       return 0;
     }
     const proxyStdioRequested =
@@ -397,8 +397,8 @@ async function runServe(
           stdio: "ignore",
           env: {
             ...process.env,
-            XCODE_DATA_BASE_DIR: layout.dataBaseDir,
-            XCODE_SERVER_ROOT: layout.serverRoot,
+            ZCODE_DATA_BASE_DIR: layout.dataBaseDir,
+            ZCODE_SERVER_ROOT: layout.serverRoot,
           },
         },
       );
@@ -501,8 +501,8 @@ async function runServe(
           : process.execPath;
         const inheritedEnv = {
           ...process.env,
-          XCODE_DATA_BASE_DIR: layout.dataBaseDir,
-          XCODE_SERVER_ROOT: layout.serverRoot,
+          ZCODE_DATA_BASE_DIR: layout.dataBaseDir,
+          ZCODE_SERVER_ROOT: layout.serverRoot,
         };
         const releaseWiring = runtimeRoot
           ? createReleaseAgentWiring(runtimeRoot, runtimeNode, inheritedEnv)
@@ -513,14 +513,14 @@ async function runServe(
             ...inheritedEnv,
             [SERVER_CREDENTIAL_FORMAT_ENV]: String(SERVER_CREDENTIAL_FORMAT),
             ...releaseWiring,
-            ...(runtimeRoot ? { XCODE_SERVER_RUNTIME_ROOT: runtimeRoot } : {}),
-            ...(release?.releaseId ? { XCODE_SERVER_RELEASE_ID: release.releaseId } : {}),
+            ...(runtimeRoot ? { ZCODE_SERVER_RUNTIME_ROOT: runtimeRoot } : {}),
+            ...(release?.releaseId ? { ZCODE_SERVER_RELEASE_ID: release.releaseId } : {}),
           },
           stdio: ["ignore", "ignore", "ignore", "ipc"],
         });
       },
     },
-    version: XCODE_VERSION,
+    version: ZCODE_VERSION,
     ...(supervisorReleaseId ? { supervisorReleaseId } : {}),
     serviceRegistered,
     onStopped: () => {
@@ -597,12 +597,12 @@ async function runControl(
   } catch (error: unknown) {
     if (command === "status") {
       const persisted = await readPersistedStatusDetailed(layout);
-      result = persisted.status ?? createStoppedServerStatus(XCODE_VERSION);
+      result = persisted.status ?? createStoppedServerStatus(ZCODE_VERSION);
     } else if (command === "stop") {
       // 快照缺失表示 daemon 从未写出过状态，按已停止输出。
       result =
         (await readStatusForStopWithoutControl(layout, error)) ??
-        createStoppedServerStatus(XCODE_VERSION);
+        createStoppedServerStatus(ZCODE_VERSION);
     } else {
       throw error;
     }
@@ -628,7 +628,7 @@ async function runStopAndWait(
     io,
     isStoppedServerStatus(status)
       ? status
-      : createStoppedServerStatus(XCODE_VERSION, {
+      : createStoppedServerStatus(ZCODE_VERSION, {
           serviceRegistered: status?.serviceRegistered ?? false,
         }),
   );
@@ -740,7 +740,7 @@ async function finishUninstall(
     // 让并发 Supervisor 在删除 run 目录的最后窗口也会 fail-closed。
     await writeFile(
       layout.uninstalledFile,
-      `${JSON.stringify({ uninstalled: true, uninstalledAt: Date.now(), version: XCODE_VERSION, preservedPaths }, null, 2)}\n`,
+      `${JSON.stringify({ uninstalled: true, uninstalledAt: Date.now(), version: ZCODE_VERSION, preservedPaths }, null, 2)}\n`,
       { encoding: "utf8", mode: 0o600 },
     );
     await uninstallLock.release();
@@ -829,7 +829,7 @@ async function recordSupervisorStartupFailure(
     await mkdir(layout.runDir, { recursive: true, mode: 0o700 });
     await writeFile(
       temporary,
-      `${JSON.stringify({ pid: process.pid, version: XCODE_VERSION, at: Date.now(), message })}\n`,
+      `${JSON.stringify({ pid: process.pid, version: ZCODE_VERSION, at: Date.now(), message })}\n`,
       { encoding: "utf8", mode: 0o600 },
     );
     await rename(temporary, layout.supervisorStartupFailureFile);
@@ -905,7 +905,7 @@ async function readControlStatus(
 
 async function delegateLegacyCli(argv: readonly string[], io: CliIO): Promise<number> {
   const candidate =
-    process.env.XCODE_LEGACY_CLI_ENTRY?.trim() ||
+    process.env.ZCODE_LEGACY_CLI_ENTRY?.trim() ||
     join(dirname(fileURLToPath(import.meta.url)), "zcode.cjs");
   try {
     await access(candidate);

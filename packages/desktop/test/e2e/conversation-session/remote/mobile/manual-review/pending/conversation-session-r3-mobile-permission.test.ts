@@ -37,7 +37,7 @@ import {
 
 const CASE_MARKER = "E2E_R3_MOBILE_PERMISSION";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-mobile-permission",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-mobile-permission",
 );
 // Linux e2e 服务器上没有 macOS 版 Chrome：用 R3_MOBILE_CHROME 指向该机 playwright 下载的
 // chromium（缺省仍回退开发机 macOS 路径），否则本 case 在服务器上直接起不了手机浏览器。
@@ -189,8 +189,8 @@ describe(`${CASE_MARKER}: 权限阻塞在手机端呈现、重建手机 bridge �
 
   it("R3A-MOB-04 远端 Write 权限 pending → 手机显示同一阻塞；关闭手机上下文重建 bridge 后阻塞仍在且同一 ID；手机允许后桌面与手机都清除、远端工具真实执行且只执行一次", async function () {
     this.timeout(40 * 60_000);
-    const container = process.env.XCODE_E2E_SSH_CONTAINER?.trim();
-    if (!container) throw new Error(`${CASE_MARKER}: 缺少 XCODE_E2E_SSH_CONTAINER`);
+    const container = process.env.ZCODE_E2E_SSH_CONTAINER?.trim();
+    if (!container) throw new Error(`${CASE_MARKER}: 缺少 ZCODE_E2E_SSH_CONTAINER`);
     const prepared = await prepareSSHLifecycle(CASE_MARKER, {
       apiType: "anthropic-messages",
       tunnelUsername: "tunnel",

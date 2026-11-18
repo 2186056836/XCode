@@ -5430,7 +5430,7 @@ nodes:
     codeSeeds:
       - symbol: "SubmitResultToolCallBlock"
         file: "packages/ui/src/ToolCallBlocks/renderers/submit-result.tsx"
-      - symbol: "XCODE_KNOWN_TOOL_NAMES"
+      - symbol: "ZCODE_KNOWN_TOOL_NAMES"
         file: "packages/shared/src/tool-identity.ts"
       - symbol: "SUBMIT_RESULT_TOOL_NAME"
         file: "apps/zcode-cli/packages/contracts/src/tools/submit-result.ts"
@@ -6663,7 +6663,7 @@ edges:
     to: "boundary.packaged-desktop-runtime"
     type: "uses-stable-root-in"
     rank: "must-inspect"
-    condition: "Packaged Stable and packaged Preview both use the stable profile and .zcode root; XCODE_ENV does not select storage."
+    condition: "Packaged Stable and packaged Preview both use the stable profile and .zcode root; ZCODE_ENV does not select storage."
   - from: "persistence.desktop-user-data-root"
     to: "boundary.workspace-key"
     type: "must-not-rewrite-workspace-project-config"
@@ -7226,7 +7226,7 @@ edges:
     to: "persistence.telemetry-device-mid"
     type: "reads-creates"
     rank: "must-inspect"
-    condition: "The actual local or remote Agent runtime uses its own XCODE_DATA_BASE_DIR and shares the deviceMid field with Desktop/telemetry when colocated."
+    condition: "The actual local or remote Agent runtime uses its own ZCODE_DATA_BASE_DIR and shares the deviceMid field with Desktop/telemetry when colocated."
   - from: "service.telemetry-core"
     to: "persistence.telemetry-device-mid"
     type: "shares-device-identity-with"
@@ -9156,7 +9156,7 @@ edges:
     to: "surface.workflow-actor-transcript"
     type: "renders-in"
     rank: "must-inspect"
-    condition: 'The actor transcript is a nested read-only SessionPane, so submit_result renders through the SAME ToolCallBlocks registry as the main conversation — one renderer fixes both surfaces; there is nothing pane-specific to special-case. Routing requires the literal snake_case name "submit_result" in XCODE_KNOWN_TOOL_NAMES (family workflow) plus a toolName dispatch inside resolveRenderer''s workflow case (RespondToCoordinator precedent). Pure read-time projection: the payload lives entirely in input.result (output is only {status:"accepted"}), real models often submit it as a JSON-string (engine scheduler leniency mirrored read-side, one lenient JSON.parse max), and no display-union member is added — that union requires four-file lockstep and a missing member degrades silently.'
+    condition: 'The actor transcript is a nested read-only SessionPane, so submit_result renders through the SAME ToolCallBlocks registry as the main conversation — one renderer fixes both surfaces; there is nothing pane-specific to special-case. Routing requires the literal snake_case name "submit_result" in ZCODE_KNOWN_TOOL_NAMES (family workflow) plus a toolName dispatch inside resolveRenderer''s workflow case (RespondToCoordinator precedent). Pure read-time projection: the payload lives entirely in input.result (output is only {status:"accepted"}), real models often submit it as a JSON-string (engine scheduler leniency mirrored read-side, one lenient JSON.parse max), and no display-union member is added — that union requires four-file lockstep and a missing member degrades silently.'
 
   - from: "capability.official-server-mcp"
     to: "capability.plan-entitlements"

@@ -25,18 +25,18 @@ const artifacts = resolve(repoRoot, "packages/desktop/.e2e-artifacts/memory-sett
 const root = await mkdtemp(resolve(tmpdir(), "memory-settings-mobile-"));
 await mkdir(artifacts, { recursive: true });
 const targets = {};
-const previousDesktopHome = process.env.XCODE_DESKTOP_HOME_DIR;
+const previousDesktopHome = process.env.ZCODE_DESKTOP_HOME_DIR;
 try {
   for (const name of ["local", "remote"]) {
     // SettingService 按实例捕获 home，不读取 dataBaseDir；必须在构造前隔离实际目录。
-    process.env.XCODE_DESKTOP_HOME_DIR = resolve(root, name);
+    process.env.ZCODE_DESKTOP_HOME_DIR = resolve(root, name);
     const settings = createSettingService();
     await settings.update({ memoryEnabled: false, locale: "zh-CN" });
     targets[name] = settings;
   }
 } finally {
-  if (previousDesktopHome === undefined) delete process.env.XCODE_DESKTOP_HOME_DIR;
-  else process.env.XCODE_DESKTOP_HOME_DIR = previousDesktopHome;
+  if (previousDesktopHome === undefined) delete process.env.ZCODE_DESKTOP_HOME_DIR;
+  else process.env.ZCODE_DESKTOP_HOME_DIR = previousDesktopHome;
 }
 let catalogReads = 0;
 const entryId = resolve(repoRoot, "packages/desktop/memory-mobile-entry.js");

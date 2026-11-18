@@ -8,14 +8,14 @@ import {
 } from "@zcode/shared";
 import { readApiJson } from "#src/providers/api/apiJson.js";
 import {
-  XCODE_MARKETING_TOUCH_REPORT_URL,
-  XCODE_MARKETING_TOUCH_URL,
+  ZCODE_MARKETING_TOUCH_REPORT_URL,
+  ZCODE_MARKETING_TOUCH_URL,
 } from "#src/providers/api/apiEndpoints.js";
 import { buildXCodeSourceHeaders } from "#src/providers/sourceHeaders.js";
 import type { ICredentialService } from "#src/credential/credential.js";
 import type { IMarketingTouchService } from "#src/marketing-touch/marketingTouch.js";
 
-const XCODE_JWT_TOKEN_KEY = "zcodejwttoken";
+const ZCODE_JWT_TOKEN_KEY = "zcodejwttoken";
 // X-Client-Language 必须是真实界面语言（含 ja-JP/ru-RU/ko-KR），不能先降级成中英。
 const localeSchema = z.enum(SUPPORTED_LOCALES);
 // 序号属于本次服务进程启动，不能随组件、账号或服务实例重建而归零。
@@ -56,7 +56,7 @@ export function createMarketingTouchService(options: {
    * 拿到的就是激活账号的投放，再拿别的账号的凭据去领，服务端自然判无活动。
    */
   async function context(locale: Locale, accountRef?: string) {
-    const tokenKey = accountRef ? `zcodejwt:${accountRef}` : XCODE_JWT_TOKEN_KEY;
+    const tokenKey = accountRef ? `zcodejwt:${accountRef}` : ZCODE_JWT_TOKEN_KEY;
     const identityKey = accountRef ?? "__active__";
     const token = (await options.credentialService.load(tokenKey))?.trim() || "";
     // 身份内 token 变化（重新登录/换绑）才换 scope；不同账号互不影响。
@@ -77,7 +77,7 @@ export function createMarketingTouchService(options: {
   return {
     async query({ locale, accountRef }) {
       const identity = await context(locale, accountRef);
-      const url = new URL(XCODE_MARKETING_TOUCH_URL);
+      const url = new URL(ZCODE_MARKETING_TOUCH_URL);
       url.searchParams.set("seq", String(bootRequestSeq++));
       const response = await readApiJson<unknown>(
         options.accountApiClient?.(accountRef) ?? options.apiClient,
@@ -102,7 +102,7 @@ export function createMarketingTouchService(options: {
       if (identity.scope !== parsed.scope) throw new Error("marketing_identity_changed");
       const response = await readApiJson<unknown>(
         options.apiClient,
-        XCODE_MARKETING_TOUCH_REPORT_URL,
+        ZCODE_MARKETING_TOUCH_REPORT_URL,
         {
           method: "POST",
           headers: { ...identity.headers, "Content-Type": "application/json" },

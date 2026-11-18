@@ -49,7 +49,7 @@ import {
 
 const CASE = "E2E_MRO04";
 const mobileRows = ".terminal-xterm-shell:visible .xterm-rows";
-const remote = process.env.XCODE_E2E_MRO04_REMOTE === "1";
+const remote = process.env.ZCODE_E2E_MRO04_REMOTE === "1";
 
 async function desktopText(sidePane = false) {
   return browser.execute(
@@ -222,7 +222,7 @@ describe("MRO04: 手机远控终端与桌面隔离", () => {
   let mobilePage: Page | undefined;
   let tunnel: ReplayTunnel | undefined;
   const evidence: Record<string, unknown> = {};
-  const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR;
+  const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR;
 
   after(async () => {
     if (artifacts) {
@@ -288,14 +288,14 @@ describe("MRO04: 手机远控终端与桌面隔离", () => {
       if (!taskId) throw new Error(`${CASE}: remote persisted task required`);
     }
     const pairingUrl = await obtainUnreadPairingUrl(
-      new URL(process.env.XCODE_WEB_REMOTE_CONTROL_URL!).origin,
+      new URL(process.env.ZCODE_WEB_REMOTE_CONTROL_URL!).origin,
     );
     webBrowser = await chromium.launch({
-      ...(process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE
-        ? { executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
+      ...(process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE
+        ? { executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
         : { channel: "chrome" }),
       headless: true,
-      args: process.env.XCODE_E2E_BROWSER_NO_PROXY === "1" ? ["--no-proxy-server"] : [],
+      args: process.env.ZCODE_E2E_BROWSER_NO_PROXY === "1" ? ["--no-proxy-server"] : [],
     });
     const context = await webBrowser.newContext({
       recordVideo: { dir: artifacts, size: { width: 390, height: 844 } },

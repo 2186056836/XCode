@@ -8,7 +8,7 @@ import {
 import {
   isBuiltinModelProviderId,
   resolveRuntimeXCodeEndpointOrigin,
-  XCODE_VERSION,
+  ZCODE_VERSION,
 } from "@zcode/shared";
 import { dirname, join } from "node:path";
 import {
@@ -17,7 +17,7 @@ import {
   resolveNodeProviderRuntimePaths,
   downloadXCodeBuiltinRelease,
   resolveXCodeBuiltinClientPlatform,
-  XCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV,
+  ZCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV,
   type XCodeBuiltinRefreshEvent,
 } from "@zcode/provider-node";
 import {
@@ -57,7 +57,7 @@ export async function startProcessProviderRegistryRuntime(
     : undefined;
   let standaloneAccount: AccountProviderService | undefined;
   const bundledFile = options.standalone
-    ? env[XCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV]?.trim()
+    ? env[ZCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE_ENV]?.trim()
     : undefined;
   const runtime = new NodeProviderRegistryRuntime({
     ...paths,
@@ -75,7 +75,7 @@ export async function startProcessProviderRegistryRuntime(
               downloadXCodeBuiltinRelease({
                 endpointOrigin,
                 signal,
-                appVersion: XCODE_VERSION,
+                appVersion: ZCODE_VERSION,
                 platform: resolveXCodeBuiltinClientPlatform(),
                 request: options.standalone?.request ?? globalThis.fetch,
                 resolveXcodeJwtToken: () => credentialStore?.load("zcodejwttoken"),

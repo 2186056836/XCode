@@ -150,7 +150,7 @@ only when the final installation is removed.
 
 `plugins/list` reports this directory as the optional `dataPath` of each plugin
 (the same `PluginMetadata.dataPath` that MCP servers and hooks receive as
-`${XCODE_PLUGIN_DATA}`). The App passes it to the plugin's extension as
+`${ZCODE_PLUGIN_DATA}`). The App passes it to the plugin's extension as
 `ctx.extension.dataPath` (docs/plugins/extension-host.md §18.1 H6) and never
 derives the path itself. The CLI does not create the directory when listing;
 the extension host creates it before activation.
@@ -578,8 +578,8 @@ MCP config file. It is valid inside `.zcode-plugin/plugin.json`, for example:
   "mcpServers": {
     "ios-simulator": {
       "command": "node",
-      "args": ["${XCODE_PLUGIN_ROOT}/dist/mcp/server.js"],
-      "cwd": "${XCODE_PROJECT_DIR}"
+      "args": ["${ZCODE_PLUGIN_ROOT}/dist/mcp/server.js"],
+      "cwd": "${ZCODE_PROJECT_DIR}"
     }
   }
 }
@@ -634,13 +634,13 @@ Plugin component config may reference:
 ${CLAUDE_PLUGIN_ROOT}
 ${CLAUDE_PLUGIN_DATA}
 ${CLAUDE_PROJECT_DIR}
-${XCODE_PLUGIN_ROOT}
-${XCODE_PLUGIN_DATA}
-${XCODE_PROJECT_DIR}
+${ZCODE_PLUGIN_ROOT}
+${ZCODE_PLUGIN_DATA}
+${ZCODE_PROJECT_DIR}
 ${user_config.KEY}
 ${GITHUB_TOKEN}
 ${TOKEN_PLAN_API_TOKEN}
-${XCODE_SOME_ENV}
+${ZCODE_SOME_ENV}
 ```
 
 Claude and XCode variable names are synonyms. MCP secret sinks (`stdio.env`,
@@ -652,7 +652,7 @@ placeholder.
 
 Arbitrary process environment variables are intentionally not expanded in
 model-visible or process-list-visible fields such as `command`, `args`, `cwd`,
-`url`, OAuth `clientId`, or OAuth `scope`. Existing `XCODE_*` runtime wiring
+`url`, OAuth `clientId`, or OAuth `scope`. Existing `ZCODE_*` runtime wiring
 variables remain available in those fields for backward compatibility.
 
 `userConfig` defaults are used when no explicit plugin option exists. Sensitive

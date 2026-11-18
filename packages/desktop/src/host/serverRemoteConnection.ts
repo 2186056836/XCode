@@ -11,7 +11,7 @@ import {
 } from "@zcode/rpc";
 import type { IServiceAccessor } from "@zcode/services";
 import {
-  XCODE_RPC_HOST_CAPABILITY_HEADER,
+  ZCODE_RPC_HOST_CAPABILITY_HEADER,
   TOPIC_RESOURCE_RELAY_CHANNEL,
   serverRemoteHostCapabilitySchema,
   serverRemoteInfoSchema,
@@ -264,7 +264,7 @@ function connectNodeWebSocket(
     const socket = new WebSocket(authenticatedUrl(wsUrl, target), {
       headers: {
         ...(token ? { authorization: `Bearer ${token}` } : {}),
-        [XCODE_RPC_HOST_CAPABILITY_HEADER]: capability,
+        [ZCODE_RPC_HOST_CAPABILITY_HEADER]: capability,
       },
     });
     let settled = false;
@@ -393,7 +393,7 @@ export async function connectServerRemoteOverDuplex(
       url: endpoints.hostWsUrl,
       headers: {
         ...authorization,
-        [XCODE_RPC_HOST_CAPABILITY_HEADER]: capability.data.capability,
+        [ZCODE_RPC_HOST_CAPABILITY_HEADER]: capability.data.capability,
       },
       createConnection: options.createConnection,
       agent,

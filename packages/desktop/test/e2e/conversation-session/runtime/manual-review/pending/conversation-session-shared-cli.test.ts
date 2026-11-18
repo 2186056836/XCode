@@ -71,9 +71,9 @@ describe("无项目工作区共享 CLI", () => {
   let webBrowser: Browser | undefined;
   let mobile: Page | undefined;
   after(async () => {
-    if (mobile && process.env.XCODE_E2E_ARTIFACT_DIR)
+    if (mobile && process.env.ZCODE_E2E_ARTIFACT_DIR)
       await mobile
-        .screenshot({ path: join(process.env.XCODE_E2E_ARTIFACT_DIR, "STCLI-mobile.png") })
+        .screenshot({ path: join(process.env.ZCODE_E2E_ARTIFACT_DIR, "STCLI-mobile.png") })
         .catch(() => undefined);
     await webBrowser?.close();
     await browser.electron.restoreAllMocks();
@@ -156,10 +156,10 @@ describe("无项目工作区共享 CLI", () => {
     await sendAndFinish("E2E_SHARED_CLI_A_RESTARTED");
 
     const pairingUrl = await obtainUnreadPairingUrl(
-      new URL(process.env.XCODE_WEB_REMOTE_CONTROL_URL!).origin,
+      new URL(process.env.ZCODE_WEB_REMOTE_CONTROL_URL!).origin,
     );
     webBrowser = await chromium.launch({
-      executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE,
+      executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE,
       headless: true,
       args: ["--no-sandbox"],
     });
@@ -172,7 +172,7 @@ describe("无项目工作区共享 CLI", () => {
     await seedMobileFixtureLogin(context);
     mobile = await context.newPage();
     await openMobilePairingPage(mobile, pairingUrl, {
-      artifactDir: process.env.XCODE_E2E_ARTIFACT_DIR!,
+      artifactDir: process.env.ZCODE_E2E_ARTIFACT_DIR!,
       caseMarker: "STCLI07",
       phase: "shared",
       readySelector: `[data-testid="${testId(TID_TASK_ITEM, taskB!)}"]`,

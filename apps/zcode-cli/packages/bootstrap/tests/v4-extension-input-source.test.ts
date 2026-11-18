@@ -109,7 +109,7 @@ function createGate() {
 async function bootServer(dbPath: string, dataBaseDir: string, gate?: Promise<void>) {
   const store = await createSqliteSessionStore({ dbPath });
   const apps: XCodeApp[] = [];
-  const env = { XCODE_DATA_BASE_DIR: dataBaseDir };
+  const env = { ZCODE_DATA_BASE_DIR: dataBaseDir };
   const providerRegistry = createTestProviderRegistry([MODEL_IDENTITY]);
   const server = new XCodeProtocolAgentServer({
     cwd: dataBaseDir,

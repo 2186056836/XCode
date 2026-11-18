@@ -20,7 +20,7 @@ import { selectV4TaskById } from "../../../helpers/v4-conversation.js";
 
 const CASE_MARKER = "E2E_R3_CONNECTIVITY_TEST";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-connectivity-test",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-connectivity-test",
 );
 
 async function openModelProviderSettings(): Promise<void> {

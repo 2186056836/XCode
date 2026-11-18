@@ -379,7 +379,7 @@ describe(`${marker}: WSL 默认参数与连接目标`, () => {
       () => globalThis.__wslUpdateMainFixture!.targets,
     );
     expect(targets).toEqual([{ kind: "wsl", distro: "Ubuntu" }, target, target]);
-    const artifacts = resolve(process.env.XCODE_E2E_ARTIFACT_DIR!);
+    const artifacts = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR!);
     await mkdir(artifacts, { recursive: true });
     await browser.saveScreenshot(resolve(artifacts, "wsl-required-update.png"));
     await writeFile(
@@ -427,7 +427,7 @@ describe(`${marker}: WSL 默认参数与连接目标`, () => {
       );
       expect(targets).toHaveLength(1);
       expect(targets[0]).toMatchObject(input);
-      const artifacts = resolve(process.env.XCODE_E2E_ARTIFACT_DIR!);
+      const artifacts = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR!);
       await browser.saveScreenshot(resolve(artifacts, `upgrade-target-changed-${input.kind}.png`));
       await writeFile(
         resolve(artifacts, `upgrade-target-changed-${input.kind}.json`),
@@ -470,7 +470,7 @@ describe(`${marker}: WSL 默认参数与连接目标`, () => {
       expect(facts.targets).toEqual([input, target]);
       expect(facts.resolvedTargets).toEqual([target, target]);
       expect(facts.confirmed).toEqual([false, true]);
-      const artifacts = resolve(process.env.XCODE_E2E_ARTIFACT_DIR!);
+      const artifacts = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR!);
       await browser.saveScreenshot(resolve(artifacts, `wsl-install-${index}.png`));
       await writeFile(
         resolve(artifacts, `wsl-install-${index}.json`),
@@ -507,7 +507,7 @@ describe(`${marker}: WSL 默认参数与连接目标`, () => {
       );
       expect(targets).toEqual([input, input]);
       await writeFile(
-        resolve(process.env.XCODE_E2E_ARTIFACT_DIR!, `wsl-form-${index}.json`),
+        resolve(process.env.ZCODE_E2E_ARTIFACT_DIR!, `wsl-form-${index}.json`),
         JSON.stringify({ targets }, null, 2),
       );
     });

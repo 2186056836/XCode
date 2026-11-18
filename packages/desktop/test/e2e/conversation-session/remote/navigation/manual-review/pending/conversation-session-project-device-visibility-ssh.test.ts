@@ -52,7 +52,7 @@ const switchSelector = '[data-testid="hide-project-device-names"]';
 const row = (identity: string) =>
   $(`[data-project-workspace-identity=${JSON.stringify(identity)}]`);
 async function screenshot(name: string) {
-  await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, `device-${name}.png`));
+  await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `device-${name}.png`));
 }
 async function leaveDetails() {
   const outside = await browser.execute(() => ({ x: innerWidth - 24, y: 24 }));
@@ -164,7 +164,7 @@ describe(marker, () => {
     if (this.currentTest?.state === "failed") {
       await screenshot("failure");
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "device-failure-page.txt"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "device-failure-page.txt"),
         await $("body").getText(),
       );
     }
@@ -350,7 +350,7 @@ describe(marker, () => {
     const remoteCoreAfter = await readRemoteCoreIdentity(secondConfig, marker);
     await screenshot("restored-after-container-restart");
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "device-ssh-evidence.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "device-ssh-evidence.json"),
       JSON.stringify(
         {
           sourceIds,

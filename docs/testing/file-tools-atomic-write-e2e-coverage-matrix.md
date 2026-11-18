@@ -8,7 +8,7 @@
 
 实现口径：`NodeFileSystemAdapter` 的默认 `atomic: true` 写入使用 `O_NOFOLLOW` temp 文件、复制原文件权限、sync、rename；若 atomic 路径失败，会清理 temp 并 fallback 到 `O_TRUNC` 非原子写目标文件。这个 fallback 在异常磁盘错误下可能截断已有目标；本轮权限回归暂接受这一行为，不在实现里加入额外兜底或 fault-injection hook。
 
-本矩阵只覆盖权限保留和 symlink 拒绝；不覆盖 `XCODE_E2E_FS_FAULTS`、atomic temp/rename 失败恢复或磁盘满语义。相关存储故障仍归属 `D02` 产品语义确认。
+本矩阵只覆盖权限保留和 symlink 拒绝；不覆盖 `ZCODE_E2E_FS_FAULTS`、atomic temp/rename 失败恢复或磁盘满语义。相关存储故障仍归属 `D02` 产品语义确认。
 
 ## Case Index
 

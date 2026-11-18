@@ -98,7 +98,7 @@ describe("虚拟项目", () => {
       /可读取和编辑|can read and edit/,
     );
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "virtual-project-editor.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "virtual-project-editor.png"),
     );
     await captureProjectDialogLayouts("editor");
     await browser.keys("Escape");
@@ -173,7 +173,7 @@ describe("虚拟项目", () => {
     for (const icon of ["ellipsis", "list-tree", "message-circle-plus"])
       expect(await row.$(`svg.lucide-${icon}`).isExisting()).toBe(true);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP20-project-row-hover.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP20-project-row-hover.png"),
     );
     await row.$('[data-testid="virtual-project-menu"]').click();
     await $('[data-testid="virtual-project-edit"]').click();
@@ -209,7 +209,7 @@ describe("虚拟项目", () => {
   });
   it("VP22：已有目录列表、设为主要与编辑器删除", async function () {
     this.timeout(90_000);
-    const testHome = process.env.XCODE_E2E_HOME_DIR!;
+    const testHome = process.env.ZCODE_E2E_HOME_DIR!;
     if (
       ![".e2e-home-", "zcode-virtual-project-e2e-"].some((prefix) =>
         basename(testHome).startsWith(prefix),
@@ -318,7 +318,7 @@ describe("虚拟项目", () => {
   it("VP12：Bot 访问范围选择项目 ID，同 cwd 的项目分别保存", async function () {
     this.timeout(90_000);
     await openWorkspaceDraftFromSidebar(DEFAULT_WORKSPACE);
-    const testHome = process.env.XCODE_E2E_HOME_DIR!;
+    const testHome = process.env.ZCODE_E2E_HOME_DIR!;
     if (
       !testHome ||
       ![".e2e-home-", "zcode-virtual-project-e2e-"].some((prefix) =>
@@ -422,7 +422,7 @@ describe("虚拟项目", () => {
   it("VP01：首个窗口可用时 app 与 CLI 两库的版本化迁移已经完成", async function () {
     this.timeout(60_000);
     await openWorkspaceDraftFromSidebar(DEFAULT_WORKSPACE);
-    const testHome = process.env.XCODE_E2E_HOME_DIR;
+    const testHome = process.env.ZCODE_E2E_HOME_DIR;
     if (
       !testHome ||
       ![".e2e-home-", "zcode-virtual-project-e2e-"].some((prefix) =>
@@ -447,7 +447,7 @@ describe("虚拟项目", () => {
   it("VP08：离线远端项目只显示缓存，移除入口后重载不复活", async function () {
     this.timeout(90_000);
     await openWorkspaceDraftFromSidebar(DEFAULT_WORKSPACE);
-    const testHome = process.env.XCODE_E2E_HOME_DIR;
+    const testHome = process.env.ZCODE_E2E_HOME_DIR;
     if (
       !testHome ||
       ![".e2e-home-", "zcode-virtual-project-e2e-"].some((prefix) =>
@@ -557,7 +557,7 @@ describe("虚拟项目", () => {
   });
   it("VP08/VP17/VP18 URL：元数据无 tab，远端任务执行、重开与 CLI 冷恢复", async function () {
     this.timeout(120_000);
-    const testHome = process.env.XCODE_E2E_HOME_DIR;
+    const testHome = process.env.ZCODE_E2E_HOME_DIR;
     if (
       !testHome ||
       ![".e2e-home-", "zcode-virtual-project-e2e-"].some((prefix) =>
@@ -576,8 +576,8 @@ describe("虚拟项目", () => {
           ...process.env,
           HOME: serverHome,
           USERPROFILE: serverHome,
-          XCODE_DATA_BASE_DIR: serverHome,
-          XCODE_DESKTOP_HOME_DIR: serverHome,
+          ZCODE_DATA_BASE_DIR: serverHome,
+          ZCODE_DESKTOP_HOME_DIR: serverHome,
         },
         stdio: ["pipe", "pipe", "pipe"],
       },
@@ -807,7 +807,7 @@ describe("虚拟项目", () => {
         };
       });
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP17-draft.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP17-draft.json"),
         JSON.stringify(draftOwner, null, 2),
       );
       expect(draftOwner.projectId).toBe(ready.projectId);
@@ -869,7 +869,7 @@ describe("虚拟项目", () => {
       await renamed.$(`[data-testid="${testId(TID_TASK_ITEM, remoteTaskId)}"]`).click();
       await $('//*[normalize-space(.)="E2E_VP17_READY" and not(*)]').waitForDisplayed();
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP17-remote-task.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP17-remote-task.png"),
       );
       const currentRuntime = () =>
         Array.from(output.matchAll(/E2E_VP18_RUNTIME ([^\n]+)\n/g))
@@ -902,7 +902,7 @@ describe("虚拟项目", () => {
       expect(currentRuntime()).toBeTruthy();
       expect(currentRuntime()).not.toBe(previousRuntime);
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP18-remote-cold.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP18-remote-cold.png"),
       );
 
       // VP25：远端留存 activeTaskId 不能让离开的行继续高亮；归档当前任务后必须退出正文。
@@ -962,7 +962,7 @@ describe("虚拟项目", () => {
       }
     } finally {
       try {
-        await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP17-final.png"));
+        await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP17-final.png"));
         // 测试服务退出前回到本地，防止后续用例被已关闭 Source 的活动 tab 阻塞。
         await $('[data-project-name="XCodeProject"]')
           .$('[data-testid="virtual-project-create-task"]')
@@ -970,7 +970,7 @@ describe("虚拟项目", () => {
         await waitForWorkspaceApp(DEFAULT_WORKSPACE, 30_000);
       } catch (error) {
         await writeFile(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP17-cleanup-error.log"),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP17-cleanup-error.log"),
           String(error),
         );
       } finally {
@@ -984,7 +984,7 @@ describe("虚拟项目", () => {
       });
       try {
         await writeFile(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP17-facts.json"),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP17-facts.json"),
           JSON.stringify(
             factsDb
               .prepare(
@@ -998,10 +998,10 @@ describe("虚拟项目", () => {
       } finally {
         factsDb.close();
       }
-      await writeFile(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP17-server.log"), output);
+      await writeFile(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP17-server.log"), output);
       if (process.env.DEEPSEEK_E2E_CAPTURE_PATH)
         await writeFile(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP17-network.json"),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP17-network.json"),
           await readFile(process.env.DEEPSEEK_E2E_CAPTURE_PATH),
         );
     }
@@ -1053,7 +1053,7 @@ describe("虚拟项目", () => {
     expect(second.projectId).toBeNull();
     expect(second.activeTaskId).toBeNull();
     expect(second.path).toBe(first.path);
-    const testHome = process.env.XCODE_E2E_HOME_DIR!;
+    const testHome = process.env.ZCODE_E2E_HOME_DIR!;
     await browser.waitUntil(async () => {
       const settings = JSON.parse(await readFile(join(testHome, ".xcode/v2/setting.json"), "utf8"));
       return settings.lastActiveWorkspace?.workspacePath === second.path;
@@ -1092,7 +1092,7 @@ describe("虚拟项目", () => {
     });
     // 从草稿新建项目会初始化主目录；恢复必须选回实际 roots，不能再次用空 roots 比较。
     const db = new DatabaseSync(
-      join(process.env.XCODE_E2E_HOME_DIR!, ".xcode/v2/tasks-index.sqlite"),
+      join(process.env.ZCODE_E2E_HOME_DIR!, ".xcode/v2/tasks-index.sqlite"),
       { readOnly: true },
     );
     let restoreRoots: string[];
@@ -1122,7 +1122,7 @@ describe("虚拟项目", () => {
   });
   it("VP11：设置目录来自去重 roots，未打开的目录可以选择", async function () {
     this.timeout(90_000);
-    const testHome = process.env.XCODE_E2E_HOME_DIR!;
+    const testHome = process.env.ZCODE_E2E_HOME_DIR!;
     if (
       ![".e2e-home-", "zcode-virtual-project-e2e-"].some((prefix) =>
         basename(testHome).startsWith(prefix),
@@ -1254,7 +1254,7 @@ describe("虚拟项目", () => {
     );
     await clickTestIdByDom(TID_AUTOMATION_FORM_SUBMIT);
     await $(`[data-testid="${TID_AUTOMATIONS_LIST}"]`).waitForDisplayed({ timeout: 15_000 });
-    const testHome = process.env.XCODE_E2E_HOME_DIR;
+    const testHome = process.env.ZCODE_E2E_HOME_DIR;
     if (!testHome) throw new Error("isolated E2E HOME required");
     const db = new DatabaseSync(join(testHome, ".xcode", "v2", "tasks-index.sqlite"), {
       readOnly: true,
@@ -1350,7 +1350,7 @@ async function captureProjectDialogLayouts(stage: string) {
           expect(fit.inputSize).toBeGreaterThanOrEqual(16);
         await browser.saveScreenshot(
           join(
-            process.env.XCODE_E2E_ARTIFACT_DIR!,
+            process.env.ZCODE_E2E_ARTIFACT_DIR!,
             `VP19-${stage}-${width}-${dark ? "dark" : "light"}.png`,
           ),
         );

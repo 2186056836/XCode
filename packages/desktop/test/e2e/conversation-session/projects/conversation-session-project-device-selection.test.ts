@@ -163,7 +163,7 @@ async function readDirectory() {
 }
 describe(marker, () => {
   afterEach(async () => {
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "last-state.png"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "last-state.png"));
   });
   after(async () => {
     await browser.electron.execute(() => globalThis.__projectConnectionRestore?.());
@@ -308,7 +308,7 @@ describe(marker, () => {
       `${projectName}_OFFLINE`,
     );
 
-    const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR!;
+    const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR!;
     for (const locale of ["zh-CN", "en-US"])
       for (const theme of ["light", "dark"]) {
         await browser.execute(
@@ -530,7 +530,7 @@ describe(marker, () => {
       sessionRowDetailsOpened: true,
     });
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "task-hover-no-identity.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "task-hover-no-identity.png"),
     );
     await openForm();
     await expectSelectedDevice(remote.hostId);

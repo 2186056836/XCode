@@ -1,5 +1,5 @@
-export const CODING_PLAN_TEAM_MOCK_BASE_URL_ENV = "XCODE_CODING_PLAN_TEAM_MOCK_BASE_URL";
-export const CODING_PLAN_UPGRADE_MOCK_BASE_URL_ENV = "XCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL";
+export const CODING_PLAN_TEAM_MOCK_BASE_URL_ENV = "ZCODE_CODING_PLAN_TEAM_MOCK_BASE_URL";
+export const CODING_PLAN_UPGRADE_MOCK_BASE_URL_ENV = "ZCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL";
 
 type MutableEnvironment = Record<string, string | undefined>;
 
@@ -8,11 +8,11 @@ export function isOffPeakTeamPlanSpec(specs: readonly string[]) {
 }
 
 const CODING_PLAN_COMMON_ENV_KEYS = [
-  "XCODE_BASE_URL",
-  "XCODE_ENDPOINT_ORIGIN",
-  "XCODE_TEST_BASE_URL",
+  "ZCODE_BASE_URL",
+  "ZCODE_ENDPOINT_ORIGIN",
+  "ZCODE_TEST_BASE_URL",
   "BIGMODEL_API_BASE_URL",
-  "XCODE_E2E_CODING_PLAN_MOCK_URL",
+  "ZCODE_E2E_CODING_PLAN_MOCK_URL",
 ] as const;
 
 const CODING_PLAN_TEAM_SPEC_MARKERS = [
@@ -97,18 +97,18 @@ export function shouldPrepareCodingPlanTeamMock(specs: readonly string[]) {
 
 export function applyCodingPlanTeamMockEnv(environment: MutableEnvironment, baseUrl: string) {
   environment[CODING_PLAN_TEAM_MOCK_BASE_URL_ENV] = baseUrl;
-  environment.XCODE_ENV = "test";
+  environment.ZCODE_ENV = "test";
   for (const key of CODING_PLAN_COMMON_ENV_KEYS) {
     environment[key] = baseUrl;
   }
-  environment.XCODE_BIGMODEL_USAGE_QUOTA_URL = `${baseUrl}/api/monitor/usage/quota/limit`;
+  environment.ZCODE_BIGMODEL_USAGE_QUOTA_URL = `${baseUrl}/api/monitor/usage/quota/limit`;
   environment.BIGMODEL_USAGE_QUOTA_URL = `${baseUrl}/api/monitor/usage/quota/limit`;
 }
 
 export function clearCodingPlanTeamMockEnv(environment: MutableEnvironment, baseUrl: string) {
   clearOwnedEnvironmentValues(environment, baseUrl, [
     ...CODING_PLAN_COMMON_ENV_KEYS,
-    "XCODE_BIGMODEL_USAGE_QUOTA_URL",
+    "ZCODE_BIGMODEL_USAGE_QUOTA_URL",
     "BIGMODEL_USAGE_QUOTA_URL",
   ]);
   if (environment[CODING_PLAN_TEAM_MOCK_BASE_URL_ENV] === baseUrl) {
@@ -129,7 +129,7 @@ export function applyCodingPlanUpgradeMockEnv(environment: MutableEnvironment, b
 export function shouldReuseDesktopE2EBuild(environment: MutableEnvironment): boolean {
   // 子 shard 的动态端口晚于父构建；构建决策和源码证据必须共用这个判据。
   return (
-    environment.XCODE_E2E_SKIP_BUILD === "1" &&
+    environment.ZCODE_E2E_SKIP_BUILD === "1" &&
     !environment[CODING_PLAN_UPGRADE_MOCK_BASE_URL_ENV]?.trim()
   );
 }

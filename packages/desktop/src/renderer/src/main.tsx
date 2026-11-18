@@ -58,11 +58,11 @@ const launchMarks: LaunchMarks | null = parseLaunchMarks(
 );
 (
   window as Window & {
-    __XCODE_RENDERER_START__?: number;
-    __XCODE_LAUNCH_MARKS__?: LaunchMarks | null;
+    __ZCODE_RENDERER_START__?: number;
+    __ZCODE_LAUNCH_MARKS__?: LaunchMarks | null;
   }
-).__XCODE_RENDERER_START__ = rendererStartedAt;
-(window as Window & { __XCODE_LAUNCH_MARKS__?: LaunchMarks | null }).__XCODE_LAUNCH_MARKS__ =
+).__ZCODE_RENDERER_START__ = rendererStartedAt;
+(window as Window & { __ZCODE_LAUNCH_MARKS__?: LaunchMarks | null }).__ZCODE_LAUNCH_MARKS__ =
   launchMarks;
 registerE2EStoreBridgesIfEnabled();
 
@@ -119,9 +119,9 @@ document.documentElement.classList.toggle("platform-linux-desktop", isLinuxDeskt
 const isLocalDevelopmentRuntime =
   (
     globalThis as typeof globalThis & {
-      __XCODE_LOCAL_DEVELOPMENT_RUNTIME__?: boolean;
+      __ZCODE_LOCAL_DEVELOPMENT_RUNTIME__?: boolean;
     }
-  ).__XCODE_LOCAL_DEVELOPMENT_RUNTIME__ === true;
+  ).__ZCODE_LOCAL_DEVELOPMENT_RUNTIME__ === true;
 
 function readBooleanFlag(name: string, defaultValue: boolean): boolean {
   const value = new URLSearchParams(window.location.search).get(name);
@@ -272,7 +272,7 @@ function flushPendingRemoteWorkspaceServicePorts(): void {
 function StartupReadyNotifier() {
   useEffect(() => {
     // T5:React 首次 commit。供启动分阶段耗时计算 react_commit 段。
-    (window as Window & { __XCODE_REACT_COMMIT_AT__?: number }).__XCODE_REACT_COMMIT_AT__ =
+    (window as Window & { __ZCODE_REACT_COMMIT_AT__?: number }).__ZCODE_REACT_COMMIT_AT__ =
       Date.now();
     // HTML 启动壳的弹出动画结束时，React 首屏可能还没 commit，直接移除壳会露出空白。
     // 这里在 React commit 后通知 index.html，再由启动壳统一判断动画和 React ready 两个条件后退场。

@@ -38,7 +38,7 @@ import {
 const MARKER = "E2E_SSH_VERSION_POLICY";
 const scenario = process.env.R3_VERSION_POLICY_CASE ?? "manual-required";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-version-policy",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-version-policy",
 );
 
 /** 只点击向导错误面板内的按钮，避免误点设置页或横幅中的同名动作。 */

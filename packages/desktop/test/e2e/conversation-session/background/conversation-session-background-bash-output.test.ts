@@ -164,7 +164,7 @@ async function expectTaskProcessResources(pid: number, running: boolean) {
     if (running) {
       await $('[data-testid="resource-manager-group-task"]').scrollIntoView({ block: "center" });
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "task-process-memory.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "task-process-memory.png"),
       );
     }
   } finally {
@@ -174,7 +174,7 @@ async function expectTaskProcessResources(pid: number, running: boolean) {
 }
 
 async function readAgentLogs() {
-  const logDir = process.env.XCODE_LOG_DIR!;
+  const logDir = process.env.ZCODE_LOG_DIR!;
   const files = (await readdir(logDir)).filter((file) => file.endsWith(".jsonl"));
   return (await Promise.all(files.map((file) => readFile(join(logDir, file), "utf8")))).join("\n");
 }
@@ -259,7 +259,7 @@ describe("后台 Bash 实时输出详情", () => {
       await contains(`${name}_THIRD_no_newline`);
       if (name === "EXPLICIT")
         await browser.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, "background-bash-live.png"),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "background-bash-live.png"),
         );
       expect(await alive(name!)).toBe(true);
       expect(await details().getAttribute("data-status")).toBe("running");
@@ -272,7 +272,7 @@ describe("后台 Bash 实时输出详情", () => {
       expect(await details().$('[data-testid="background-bash-running"]').isExisting()).toBe(false);
       await expectStatusBarAlignment();
       if (name === "EXPLICIT") {
-        const logDir = process.env.XCODE_E2E_RUNTIME_LOG_DIR;
+        const logDir = process.env.ZCODE_E2E_RUNTIME_LOG_DIR;
         expect(logDir).toBeTruthy();
         const files = (await readdir(logDir!)).filter((file) => file.endsWith(".log"));
         const logs = (
@@ -406,7 +406,7 @@ describe("后台 Bash 实时输出详情", () => {
       }),
     ).toBe(true);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "background-bash-paused.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "background-bash-paused.png"),
     );
     expect(await viewport.getAttribute("data-scroll-mask")).toBe("bottom");
     const frozen = await text();
@@ -508,7 +508,7 @@ describe("后台 Bash 实时输出详情", () => {
     });
     expect(await alive("CHILD")).toBe(true);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "background-bash-child-released.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "background-bash-child-released.png"),
     );
     // Agent 摘要在已折叠的执行历史中；先展开历史，再从真实摘要入口重新订阅 child。
     const history = await $(
@@ -536,7 +536,7 @@ describe("后台 Bash 实时输出详情", () => {
     expect(await alive("CHILD")).toBe(true);
     expect(await countUpstreamRequests({ includes: ["E2E_BGV_CHILD_WORK:"] })).toBe(requests);
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "background-bash-cold-resume.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "background-bash-cold-resume.json"),
       JSON.stringify(
         {
           childSessionId,

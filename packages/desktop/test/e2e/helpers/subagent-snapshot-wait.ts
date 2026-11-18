@@ -2,7 +2,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 
 async function runtimeLogReader() {
-  const root = await browser.electron.execute(() => process.env.XCODE_E2E_RUNTIME_LOG_DIR!);
+  const root = await browser.electron.execute(() => process.env.ZCODE_E2E_RUNTIME_LOG_DIR!);
   const read = async () =>
     (
       await Promise.all(

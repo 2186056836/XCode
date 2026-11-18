@@ -31,7 +31,7 @@ const TEAM_SELECTION = {
 
 async function captureEvidence(label: string) {
   const directory =
-    process.env.XCODE_E2E_ARTIFACT_DIR ||
+    process.env.ZCODE_E2E_ARTIFACT_DIR ||
     join(process.cwd(), ".e2e-artifacts", "provider-responsive");
   await mkdir(directory, { recursive: true });
   await browser.saveScreenshot(join(directory, `provider-responsive-${label}.png`));
@@ -69,7 +69,7 @@ async function openProviderSettings() {
 }
 
 async function setScenario(enabled: boolean) {
-  const baseUrl = process.env.XCODE_CODING_PLAN_TEAM_MOCK_BASE_URL;
+  const baseUrl = process.env.ZCODE_CODING_PLAN_TEAM_MOCK_BASE_URL;
   assert.ok(baseUrl, "缺少套餐业务 mock 地址");
   const response = await fetch(`${baseUrl}/__e2e/coding-plan/scenario`, {
     method: "POST",
@@ -195,7 +195,7 @@ describe("供应商真实应用响应式回归", () => {
         TEAM_SELECTION,
       );
       const response = await fetch(
-        `${process.env.XCODE_CODING_PLAN_TEAM_MOCK_BASE_URL}/__e2e/coding-plan/requests`,
+        `${process.env.ZCODE_CODING_PLAN_TEAM_MOCK_BASE_URL}/__e2e/coding-plan/requests`,
       );
       assert.equal(response.status, 200);
       const payload = (await response.json()) as { requests: Array<{ path: string }> };

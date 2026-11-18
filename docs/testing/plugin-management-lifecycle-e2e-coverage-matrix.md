@@ -45,7 +45,7 @@
 ### 非官方市场风险确认（2026-10-29）
 
 - 浏览器候选：`packages/ui/test/browser/manual-review/pending/plugin-marketplace-risk.test.mjs`，8/8 通过。覆盖未勾选/撤销勾选、按钮/Enter、关闭重开、失败重试、提交中防重、中英文及深浅主题。日志与截图：`packages/desktop/.e2e-artifacts/marketplace-risk-20261029/browser/`。受控提交回调验证共享弹框，不代表真实手机 Host。
-- 桌面独立风险用例：`plugins/marketplace/plugin-localization-creator.test.ts` 的“非官方市场必须确认风险才能添加，关闭后重新确认”，1/1 通过；共享添加 helper 显式勾选。运行产物：`packages/desktop/.e2e-artifacts/desktop-e2e-20261029122013512-p41331-196fa3432633342b/`。通过 `XCODE_E2E_MOCHA_GREP='非官方市场必须确认风险'` 选择此场景。
+- 桌面独立风险用例：`plugins/marketplace/plugin-localization-creator.test.ts` 的“非官方市场必须确认风险才能添加，关闭后重新确认”，1/1 通过；共享添加 helper 显式勾选。运行产物：`packages/desktop/.e2e-artifacts/desktop-e2e-20261029122013512-p41331-196fa3432633342b/`。通过 `ZCODE_E2E_MOCHA_GREP='非官方市场必须确认风险'` 选择此场景。
 - 同文件原有完整本地化用例仍在最后的窄屏商店布局断言失败：`clientWidth=269, scrollWidth=306, viewportWidth=390`。恢复基线 `024fde56b5` 的原始弹框、用例和 helper 后结果相同，基线产物：`packages/desktop/.e2e-artifacts/desktop-e2e-20261029121823423-p33643-11909677e38e9a71/`。该失败不计为通过，未修改商店布局或放宽断言。
 - 本次不新增人工晋级或 Docker/CI 准入；实际手机远控及 Windows/Linux 待验。
 
@@ -65,7 +65,7 @@
   新增候选未人工晋级，也未新增 Docker/CI admission。Windows/Linux 和真实手机远控未验证。
 
 浏览器入口：`node --test packages/ui/test/browser/manual-review/pending/plugin-update-all.test.mjs`。
-桌面候选按 E2E 工作流设置 `XCODE_E2E_MANUAL_REVIEW=1`，显式使用
+桌面候选按 E2E 工作流设置 `ZCODE_E2E_MANUAL_REVIEW=1`，显式使用
 `fixtures/upstream/common.json` 与 `fixtures/upstream/plugin-management/plugin-update-all-failure.json`
 作为 replay fixture，再运行该 spec。
 
@@ -247,7 +247,7 @@ case-local replay 验证 Agent 工具执行 -> 官方目录 -> 确认卡片 -> �
 
 - `side-pane-plugin-menu.test.mjs` 不再替换静态名单模块，改为请求配置响应并通过真实公开配置解析器。
 - 1200px / 英文 / Zai Light 和 390px / 中文 / Zai Dark 两组通过：推荐交集、重复项去重、未收录开发插件与未知面板排除、启动页/菜单、键盘打开，以及空配置/请求失败回归。
-- 可选 `XCODE_UI_RECOMMENDATIONS_LIVE_CONFIG_URL` 接入真实测试环境配置；本次接口返回 5 条推荐并完成展示和打开参数断言。工作区面板仍由 fixture 提供，不代表真实安装或沙箱运行验收。
+- 可选 `ZCODE_UI_RECOMMENDATIONS_LIVE_CONFIG_URL` 接入真实测试环境配置；本次接口返回 5 条推荐并完成展示和打开参数断言。工作区面板仍由 fixture 提供，不代表真实安装或沙箱运行验收。
 - 真实 Host 配置服务连接测试接口：并行读取仅发一次请求，后续读取命中缓存，5 条插件/面板身份与已校验发布包一致。
 - Nacos 测试配置保留原有 16 项，只追加 `uiPluginRecommendations`；使用原 MD5 发布、精确回读，并核对公共接口返回。生产配置未修改。
 - 未重跑各插件的真实安装与沙箱运行，也未做 Windows/Linux 或真实手机远控实机验证。用例保留 pending，不晋级。
@@ -287,7 +287,7 @@ case-local replay 验证 Agent 工具执行 -> 官方目录 -> 确认卡片 -> �
 | PLM-UI-BACKGROUND           | 无锚点/隐藏 tab 冷启动、最小化后首次创建与执行、session 空闲时仍执行且不销毁、删除释放                                              | `mcp-apps-host-e2e.mjs --background-only`                                            | 真实 Electron、生产 owner/Agent/沙箱；受控页面，未晋升 CI                                        |
 | PLM-UI-BACKGROUND-ADMISSION | 无卡片挂载和 conversation 订阅的真实工具结果首次创建、后台运行、返回复用；双窗口不同会话的同插件实例保留与释放                      | `mcp-apps-host-e2e.mjs --background-only`                                            | macOS Electron 通过；同窗口并发准入和不同会话键隔离另以单测覆盖，未晋升 CI                       |
 | PLM-UI-VISIBILITY           | 保活侧栏收起、切标签、离开聊天/工作区时不可见且不拦点击；后台工作、编辑状态及实例保留，恢复交互                                     | `mcp-apps-host-e2e.mjs --managed-only`                                               | macOS Electron 深浅主题通过；生产组件集成，宿主页面投影另以桌面/手机壳 UT 覆盖，未晋升 CI        |
-| PLM-UI-BACKGROUND-CRAFT     | 最小化窗口且无卡片时，真实工具结果触发 WASM 首次初始化；后台图层操作、编辑状态保留与恢复展示截图；切主页面后隐藏 UI、后台编辑并返回 | `mcp-apps-host-e2e.mjs --photocraft-background-only`，设置 `XCODE_PHOTOCRAFT_SERVER` | macOS Electron 通过；未修改的 PhotoCraft 0.2.2，恢复截图包含后台新增图层，不替代商店安装路径验证 |
+| PLM-UI-BACKGROUND-CRAFT     | 最小化窗口且无卡片时，真实工具结果触发 WASM 首次初始化；后台图层操作、编辑状态保留与恢复展示截图；切主页面后隐藏 UI、后台编辑并返回 | `mcp-apps-host-e2e.mjs --photocraft-background-only`，设置 `ZCODE_PHOTOCRAFT_SERVER` | macOS Electron 通过；未修改的 PhotoCraft 0.2.2，恢复截图包含后台新增图层，不替代商店安装路径验证 |
 
 Web/remote 不支持回退、runtime 失效、内联滚动与页面保留沿用 `--managed-only`。
 Windows/Linux、真实手机和其它第三方插件需独立验证。
@@ -326,7 +326,7 @@ React 面板等待连接后自动运行、无错误闪现和重复实例。2026-
 
 - 浏览器候选：`packages/ui/test/browser/manual-review/pending/plugin-concurrent-install.test.mjs`。真实 store 和安装按钮，390/1200px × 中英文 × 深浅主题共 8 组通过；旧实现 8 组均在第二次安装清掉第一次忙碌态处失败。日志和截图写入系统临时目录的 `zcode-plugin-concurrent-install/`。
 - 桌面正式用例：`plugins/installation/plugin-concurrent-install.test.ts`。macOS Electron + 真实 CLI，个人来源本地 HTTP 下载响应门验证两项同时安装中、第一项失败不清理第二项、两项失败后均可重试；运行 `desktop-e2e-20261015143344848-p62610-27dafbf8f737df99` 通过。截图位于 `.e2e-artifacts/plugin-management/plm-concurrent-install/both-pending.png`。
-- 离线执行：`XCODE_E2E_MANUAL_REVIEW=1 E2E_PROVIDER_HTTP_MODE=replay E2E_PROVIDER_REPLAY_FIXTURE_PATH=packages/desktop/test/e2e/fixtures/upstream/common.json pnpm --filter @zcode/desktop test:e2e -- --spec './test/e2e/plugins/installation/plugin-concurrent-install.test.ts'`。
+- 离线执行：`ZCODE_E2E_MANUAL_REVIEW=1 E2E_PROVIDER_HTTP_MODE=replay E2E_PROVIDER_REPLAY_FIXTURE_PATH=packages/desktop/test/e2e/fixtures/upstream/common.json pnpm --filter @zcode/desktop test:e2e -- --spec './test/e2e/plugins/installation/plugin-concurrent-install.test.ts'`。
 - PLM-DETAIL-DURING-INSTALL：同一桌面用例中，A 下载被响应门挂起、B 排在 A 后面时打开本地插件详情，组件区 30 秒内渲染技能，返回后两项仍为安装中。修复后运行 `desktop-e2e-20261019044431890-p93406-b0458048236a975f` 通过，截图 `.e2e-artifacts/plugin-management/plm-detail-during-install/detail-loaded.png`；还原 CLI 修复后运行 `desktop-e2e-20261019044633752-p3203-b44c097feed8ea0d` 在组件区等待处失败。
 - 新建右侧标签页骨架屏（list/overview 排队）：同一桌面用例在 A 下载挂起、B 排队时经桌面服务链路请求 `listPlugins` 与 `getPluginsOverview`，要求 10 秒内返回。修复后运行 `desktop-e2e-20261019062945458-p57938-d3a0c643c27817e2` 通过；只还原 transport 的 list/overview 立即派发后，运行 `desktop-e2e-20261019063058281-p64564-98a2c55f0e022488` 在该步失败（`plugins/list and plugins/overview waited for the install`）。现场证据：dev 日志 `listPlugins`/`getPluginsOverview` 耗时 14569 ms，在第二次安装结束 1.4 秒后才返回。
 - store 回归覆盖成功乱序、失败、同名操作及上下文切换隔离、来源校验与安装交叠。浏览器成功路径使用受控服务，不等于真实下载成功验证。手机真机/远控、Windows/Linux 未执行。浏览器用例 pending；桌面用例已转正，PLM-DETAIL-DURING-INSTALL 与 list/overview 两步经作者确认随之转正。
@@ -637,7 +637,7 @@ f 的时机：首跑（`desktop-e2e-20261106091604741-p7841-a9d94834325c4557`）
 
 ### 2026-11-06 插件 E2E 整轮复跑
 
-改动：已有 `sessions.write` 授权要重新确认（§17.12）、context-inspector 总量用服务商数字（§11 方案 A）、Jarvis 顶栏权限模式下拉不截断、dot 改名 Jarvis。分支 `feat/extension-session-approvals`，macOS，逐个用例顺序运行（`XCODE_E2E_MANUAL_REVIEW=1`）。产物都在 `packages/desktop/.e2e-artifacts/` 下。
+改动：已有 `sessions.write` 授权要重新确认（§17.12）、context-inspector 总量用服务商数字（§11 方案 A）、Jarvis 顶栏权限模式下拉不截断、dot 改名 Jarvis。分支 `feat/extension-session-approvals`，macOS，逐个用例顺序运行（`ZCODE_E2E_MANUAL_REVIEW=1`）。产物都在 `packages/desktop/.e2e-artifacts/` 下。
 
 | 用例               | 入口                                         | 模型（replay 夹具或 dummy provider）                       | 结果     | 运行产物                                                                  |
 | ------------------ | -------------------------------------------- | ---------------------------------------------------------- | -------- | ------------------------------------------------------------------------- |
@@ -783,7 +783,7 @@ CLI 一侧（2026-11-07）：`apps/zcode-cli/packages/bootstrap/tests/plugins-pr
 | J2 `grants.request` 申请完全访问的对话框                               | 新加：PLM-EXT-JARVISHOST j                                                         |
 | J2 摘要文案、卡片、重试、小结分隔线、设置面板、模式提示与宽度          | 删除（插件页面）                                                                   |
 
-迁移后的运行（macOS，逐个顺序，`XCODE_E2E_MANUAL_REVIEW=1`）：
+迁移后的运行（macOS，逐个顺序，`ZCODE_E2E_MANUAL_REVIEW=1`）：
 
 | 用例        | 入口                                         | 模型                                                       | 结果     | 运行产物                                                |
 | ----------- | -------------------------------------------- | ---------------------------------------------------------- | -------- | ------------------------------------------------------- |

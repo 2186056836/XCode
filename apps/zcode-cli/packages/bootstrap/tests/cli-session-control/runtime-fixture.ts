@@ -37,7 +37,7 @@ export async function fixture(
   });
   const createRootApp = vi.fn(async (input: CliRootAppRequest) => {
     const app = await createRegistryBackedTestApp({
-      env: { XCODE_STORAGE_DIR: cwd },
+      env: { ZCODE_STORAGE_DIR: cwd },
       skipUserConfig: true,
       sessionId: input.sessionId,
       sessionStore: store,

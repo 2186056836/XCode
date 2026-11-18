@@ -18,7 +18,7 @@ const REMOTE_IDENTITY = buildServerRemoteWorkspaceIdentity({
   workspacePath: DEFAULT_WORKSPACE,
 });
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/local-conversation-identity",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/local-conversation-identity",
 );
 
 interface NavigationTab {

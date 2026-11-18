@@ -13,7 +13,7 @@
 // 不可用」：它取决于异步读回的模型清单，不是用户的一次操作，只能在清单到达后回报给父组件。
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { XCODE_AGENT_PROVIDER } from "@zcode/shared";
+import { ZCODE_AGENT_PROVIDER } from "@zcode/shared";
 import { ThoughtLevelCycleControl } from "@/chat-input-toolbar/ThoughtLevelCycleControl.js";
 import { cn } from "@/components/lib/utils.js";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
@@ -267,7 +267,7 @@ function WorkflowAskModelLine({
           }}
           open={disabled ? false : levelOpen}
           option={face.thoughtOption}
-          provider={XCODE_AGENT_PROVIDER}
+          provider={ZCODE_AGENT_PROVIDER}
           restoreFocusSelector={null}
           showInvalidCurrentValue
           triggerClassName={cn(WORKFLOW_ASK_CHIP_CLASS_NAME, changed && "font-medium")}

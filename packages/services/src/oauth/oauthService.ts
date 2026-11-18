@@ -60,7 +60,7 @@ import {
 const OAUTH_TIMEOUT_MS = 5 * 60 * 1000;
 const OAUTH_PROFILE_TIMEOUT_MS = 10_000;
 const COMPLETED_POLLING_STATE_GRACE_MS = 30 * 1000;
-const XCODE_JWT_TOKEN_KEY = "zcodejwttoken";
+const ZCODE_JWT_TOKEN_KEY = "zcodejwttoken";
 const log = (...args: unknown[]) =>
   console.log(formatLogPrefix("oauthService", process.pid), ...args);
 const serviceLog = createServiceLogger("oauthService");
@@ -439,7 +439,7 @@ export class OAuthService implements IOAuthService {
     let tokens: { key: string; value: string }[];
     try {
       tokens = await Promise.all(
-        [XCODE_JWT_TOKEN_KEY, `oauth:${activeProvider}:access_token`].map(async (key) => ({
+        [ZCODE_JWT_TOKEN_KEY, `oauth:${activeProvider}:access_token`].map(async (key) => ({
           key,
           value: (await this.credentialService.load(key))?.trim() ?? "",
         })),
@@ -825,7 +825,7 @@ export class OAuthService implements IOAuthService {
           activeProvider,
           {
             ...tokenSet,
-            zcodeJwtToken: tokenSet.zcodeJwtToken ?? snapshot[XCODE_JWT_TOKEN_KEY] ?? undefined,
+            zcodeJwtToken: tokenSet.zcodeJwtToken ?? snapshot[ZCODE_JWT_TOKEN_KEY] ?? undefined,
           },
           withProviderProfileSchema(activeProvider, profile),
         ))

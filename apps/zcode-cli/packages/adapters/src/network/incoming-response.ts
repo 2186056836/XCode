@@ -20,7 +20,7 @@ const MAX_WEB_RESPONSE_STATUS = 599;
 /** Node 没给状态码时（理论上不会）按网关错误对待，与此前的兜底一致。 */
 const MISSING_STATUS = 502;
 
-export const UNSUPPORTED_HTTP_STATUS_CODE = "XCODE_UNSUPPORTED_HTTP_STATUS";
+export const UNSUPPORTED_HTTP_STATUS_CODE = "ZCODE_UNSUPPORTED_HTTP_STATUS";
 
 /** 原样读出的响应：状态码不做任何裁剪，正文是流（无正文状态为 `null`）。 */
 export interface IncomingResponse {

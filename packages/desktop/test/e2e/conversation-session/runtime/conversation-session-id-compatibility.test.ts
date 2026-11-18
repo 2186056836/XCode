@@ -52,7 +52,7 @@ const LEGACY_IDS = [
   "session_12345678-1234-4234-8234-123456789abc",
 ];
 const paths = getE2EAppDataPaths();
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? `.e2e-artifacts/${CASE_NAME}`);
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? `.e2e-artifacts/${CASE_NAME}`);
 let replay: Awaited<ReturnType<typeof startConversationModelProviderReplayServer>>;
 const facts: Record<string, unknown> = {};
 
@@ -175,10 +175,10 @@ describe("SID01–SID05: 会话 ID 创建、历史引用和完整重启恢复", 
 
   it("手机 shared-host 恢复两种旧 ID，引用发送后刷新仍保留原身份", async function () {
     this.timeout(180000);
-    const endpoint = process.env.XCODE_WEB_REMOTE_CONTROL_URL;
+    const endpoint = process.env.ZCODE_WEB_REMOTE_CONTROL_URL;
     if (!endpoint) throw new Error("SID 手机验收需要隔离 Web/relay fixture");
     const pairingUrl = await obtainUnreadPairingUrl(new URL(endpoint).origin);
-    const executablePath = process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
+    const executablePath = process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
     const chrome = await chromium.launch({
       ...(executablePath ? { executablePath } : { channel: "chrome" }),
       headless: true,
@@ -571,10 +571,10 @@ function pendingCreateEntry(command: CommandEnvelope) {
 }
 
 async function resendOnMobile(command: CommandEnvelope): Promise<string> {
-  const endpoint = process.env.XCODE_WEB_REMOTE_CONTROL_URL;
+  const endpoint = process.env.ZCODE_WEB_REMOTE_CONTROL_URL;
   if (!endpoint) throw new Error("SID 手机重发需要隔离 Web/relay fixture");
   const pairingUrl = await obtainUnreadPairingUrl(new URL(endpoint).origin);
-  const executablePath = process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
+  const executablePath = process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
   const chrome = await chromium.launch({
     ...(executablePath ? { executablePath } : { channel: "chrome" }),
     headless: true,

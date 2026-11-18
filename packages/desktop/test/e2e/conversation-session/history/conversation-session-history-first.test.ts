@@ -28,7 +28,7 @@ import {
 const root = join(DEFAULT_WORKSPACE, ".zcode", "history-first-e2e");
 const release = join(root, "release");
 const entered = join(root, "entered");
-const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR ?? join(process.cwd(), ".e2e-artifacts");
+const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR ?? join(process.cwd(), ".e2e-artifacts");
 
 describe("HF01：历史首帧早于 resume hook 完成", () => {
   afterEach(async function () {

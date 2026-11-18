@@ -33,7 +33,7 @@ const CASE_MARKER = "E2E_R3_DAEMON_SERVICE_FALLBACK";
 type ServiceCase = "stale-group" | "private-tmp" | "registered";
 const SUBCASE = (process.env.R3_DAEMON_SERVICE_CASE ?? "") as ServiceCase;
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-daemon-service-fallback",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-daemon-service-fallback",
 );
 const ACCESS_GROUP = "zcode-e2e-svc";
 const RESTRICTED_ROOT = "/srv/zcode-e2e-svc";

@@ -9,7 +9,7 @@ import { build, preview, loadConfigFromFile } from "vite";
 import { chromium } from "playwright-core";
 const root = fileURLToPath(new URL("../../../../../../", import.meta.url));
 const artifacts =
-  process.env.XCODE_RETENTION_ARTIFACT_DIR ??
+  process.env.ZCODE_RETENTION_ARTIFACT_DIR ??
   root + "packages/desktop/.e2e-artifacts/renderer-retention-20261105/browser";
 let server, browser;
 before(async () => {
@@ -23,7 +23,7 @@ before(async () => {
     root + "packages/desktop/vite.config.ts",
   );
   const baseline = new Map();
-  if (process.env.XCODE_RETENTION_BASELINE_REF) {
+  if (process.env.ZCODE_RETENTION_BASELINE_REF) {
     for (const path of [
       "packages/ui/src/v4/ConversationComposer.tsx",
       "packages/ui/src/LexicalChatInput.tsx",
@@ -31,13 +31,13 @@ before(async () => {
     ]) {
       const { stdout } = await promisify(execFile)(
         "git",
-        ["show", process.env.XCODE_RETENTION_BASELINE_REF + ":" + path],
+        ["show", process.env.ZCODE_RETENTION_BASELINE_REF + ":" + path],
         { cwd: root, maxBuffer: 2000000 },
       );
       baseline.set(root + path, stdout);
     }
   }
-  if (process.env.XCODE_RETENTION_REUSE_BUILD !== "1")
+  if (process.env.ZCODE_RETENTION_REUSE_BUILD !== "1")
     await build({
       ...config,
       configFile: false,

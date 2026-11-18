@@ -792,7 +792,7 @@ describe("PAT-KEY-E2E: 账号就绪时创建 Coding Plan Key", () => {
     await control("ok", false);
     expect(await query()).toBe(true);
     expect(await profiles()).toBe(initial);
-    const logDir = await browser.electron.execute(() => process.env.XCODE_E2E_RUNTIME_LOG_DIR);
+    const logDir = await browser.electron.execute(() => process.env.ZCODE_E2E_RUNTIME_LOG_DIR);
     if (!logDir) throw new Error("缺少 E2E 日志目录");
     const recoveryCompletions = async () => {
       const logs = await Promise.all(

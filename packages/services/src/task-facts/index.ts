@@ -1,7 +1,7 @@
 import {
   generateTraceId,
   resolveWorkspaceKey,
-  XCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER,
   type XCodeTaskMeta,
 } from "@zcode/shared";
 import type { SessionsIndexReconcileResult } from "@zcode/shared/zcode-protocol-v4";
@@ -58,7 +58,7 @@ export function createTaskFacts(options: {
           createdAt: fact.createdAt,
           updatedAt: fact.updatedAt,
           mode: "default",
-          provider: XCODE_AGENT_PROVIDER,
+          provider: ZCODE_AGENT_PROVIDER,
           // 对账可能先于摘要完成首次入库；两条路径必须保留相同的父子关系。
           ...(fact.parentSessionId ? { forkedFromTaskId: fact.parentSessionId } : {}),
         },
@@ -95,7 +95,7 @@ export function createTaskFacts(options: {
         createdAt: summary.createdAt,
         updatedAt: summary.lastActivityAt,
         mode: "default",
-        provider: XCODE_AGENT_PROVIDER,
+        provider: ZCODE_AGENT_PROVIDER,
         ...(summary.parentSessionId ? { forkedFromTaskId: summary.parentSessionId } : {}),
         ...(lastOutcome ? { status: lastOutcome === "error" ? "error" : "completed" } : {}),
       };

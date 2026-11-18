@@ -1,6 +1,6 @@
-import { XCODE_VERSION, type XCodeEnv } from "@zcode/shared";
+import { ZCODE_VERSION, type XCodeEnv } from "@zcode/shared";
 
-declare const __XCODE_CDN_BASE_URL__: string | undefined;
+declare const __ZCODE_CDN_BASE_URL__: string | undefined;
 const DEFAULT_CDN_BASE_URL = "https://cdn-zcode.z.ai";
 
 export interface ResolveRemoteCdnOptions {
@@ -81,10 +81,10 @@ export function resolveRemoteCdnBaseUrls(options: ResolveRemoteCdnOptions = {}):
   const override = options.overrideBaseUrl?.trim();
   if (override) return [normalizeBaseUrl(override)];
   const baseUrl =
-    process.env.XCODE_CDN_BASE_URL?.trim() ||
-    (typeof __XCODE_CDN_BASE_URL__ === "undefined" ? "" : __XCODE_CDN_BASE_URL__) ||
+    process.env.ZCODE_CDN_BASE_URL?.trim() ||
+    (typeof __ZCODE_CDN_BASE_URL__ === "undefined" ? "" : __ZCODE_CDN_BASE_URL__) ||
     DEFAULT_CDN_BASE_URL;
   return [
-    `${normalizeBaseUrl(baseUrl)}/zcode/electron/releases/${options.version ?? XCODE_VERSION}`,
+    `${normalizeBaseUrl(baseUrl)}/zcode/electron/releases/${options.version ?? ZCODE_VERSION}`,
   ];
 }

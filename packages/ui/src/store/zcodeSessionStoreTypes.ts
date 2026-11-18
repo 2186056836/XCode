@@ -7,7 +7,7 @@ import type { DraftPluginUiOpenRequest } from "@/plugin-ui/contract.js";
  */
 import {
   buildNativeSupplierKey,
-  XCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER,
   type XCodeApiRetryStatus,
   type ModelSelectionGhostReason,
   type ModelSelectionResolution,
@@ -523,7 +523,7 @@ export const DEFAULT_WORKSPACE_INIT_STATE: WorkspaceInitState = {
   attempts: 0,
 };
 
-export const FALLBACK_PROVIDER: XCodeProvider = XCODE_AGENT_PROVIDER;
+export const FALLBACK_PROVIDER: XCodeProvider = ZCODE_AGENT_PROVIDER;
 
 export const DEFAULT_TASK_UI_STATE: TaskUiState = {
   permissionRequest: null,

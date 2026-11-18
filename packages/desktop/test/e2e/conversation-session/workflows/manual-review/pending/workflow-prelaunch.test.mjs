@@ -7,7 +7,7 @@ import { chromium } from "playwright-core";
 
 test("WFS02 编写无内容，待确认可展开；桌面深色与手机浅色", async () => {
   const targets = await (
-    await fetch(`${process.env.XCODE_E2E_CDP_URL ?? "http://localhost:9229"}/json/list`)
+    await fetch(`${process.env.ZCODE_E2E_CDP_URL ?? "http://localhost:9229"}/json/list`)
   ).json();
   const app = targets.find((target) => target.type === "page" && target.url.includes("localhost:"));
   assert.ok(app);

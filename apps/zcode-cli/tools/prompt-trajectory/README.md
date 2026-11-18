@@ -18,7 +18,7 @@ message representation merely to make conversion succeed.
 
 Recording rules:
 
-- Each case runs with a temporary home and `XCODE_STORAGE_DIR`. User skills,
+- Each case runs with a temporary home and `ZCODE_STORAGE_DIR`. User skills,
   plugins, `~/.zcode/AGENTS.md` and the user's session database never enter a
   recording, and the recording leaves no session in the user's database.
 - The recorder registers one Registry provider for the fixture model. Its

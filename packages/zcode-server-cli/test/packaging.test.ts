@@ -651,7 +651,7 @@ describe("stageRelease", () => {
     };
     if (options.mcpEntry) {
       manifest.mcpServers = {
-        [name]: { command: "node", args: [`\${XCODE_PLUGIN_ROOT}/${options.mcpEntry}`] },
+        [name]: { command: "node", args: [`\${ZCODE_PLUGIN_ROOT}/${options.mcpEntry}`] },
       };
       if (options.withMcpEntryFile !== false) {
         const entryPath = join(pluginDir, ...options.mcpEntry.split("/"));

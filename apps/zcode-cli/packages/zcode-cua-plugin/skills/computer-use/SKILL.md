@@ -25,8 +25,8 @@ Put the bootstrap and the actions in the **same** cell, bootstrap first:
 
 ```js
 const root =
-  process.env.XCODE_CUA_PLUGIN_ROOT ??
-  process.env.XCODE_PLUGIN_ROOT ??
+  process.env.ZCODE_CUA_PLUGIN_ROOT ??
+  process.env.ZCODE_PLUGIN_ROOT ??
   process.env.CLAUDE_PLUGIN_ROOT;
 const { join } = await import("node:path");
 const { pathToFileURL } = await import("node:url");

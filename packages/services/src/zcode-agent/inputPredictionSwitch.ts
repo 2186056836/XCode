@@ -6,7 +6,7 @@
 // - conversationInputPredictionV4 是否真的转发给 CLI（关闭时直接回 unavailable）。
 
 /** 环境变量名：未设置或为空时取缺省（开启）；"1" 开启；"0" 或其它任何值关闭。 */
-export const REMOTE_INPUT_PREDICTION_ENV = "XCODE_REMOTE_INPUT_PREDICTION";
+export const REMOTE_INPUT_PREDICTION_ENV = "ZCODE_REMOTE_INPUT_PREDICTION";
 
 /**
  * 未设置环境变量时的缺省：开启。

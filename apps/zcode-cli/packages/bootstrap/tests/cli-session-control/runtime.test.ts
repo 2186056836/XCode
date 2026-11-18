@@ -15,7 +15,7 @@ describe("CLI session control runtime", () => {
       sessionId: createSessionId(),
       sessionStore: f.store,
       skipUserConfig: true,
-      env: { XCODE_STORAGE_DIR: f.cwd },
+      env: { ZCODE_STORAGE_DIR: f.cwd },
       modelExecutor: { generateText: async () => answer },
       configuredDefaultModelSelection: { providerId: "zai", modelId: "glm-4.6" },
       runtimeConfig: { workingDirectory: f.cwd },

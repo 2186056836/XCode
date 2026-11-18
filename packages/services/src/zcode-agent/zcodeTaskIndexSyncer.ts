@@ -7,7 +7,7 @@ import {
   isXCodeGoalContinuationReminderText,
   isXCodeModelOnlySyntheticUserMessage,
   resolveWorkspaceKey,
-  XCODE_AGENT_PROVIDER_NOT_READY_CODE,
+  ZCODE_AGENT_PROVIDER_NOT_READY_CODE,
   type XCodeTaskGoal,
   type XCodeTaskMode,
   type XCodeTaskMeta,
@@ -42,7 +42,7 @@ import type {
   XCodeAgentSessionTarget,
   XCodeAgentWorkspaceTarget,
 } from "./zcodeAgent.js";
-import { XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE } from "./zcodeAgent.js";
+import { ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE } from "./zcodeAgent.js";
 import { formatTaskMetaModelSelectionFromSnapshot } from "./zcodeConfigOptions.js";
 
 import { createTaskFacts, type TaskFactMutation } from "#src/task-facts/index.js";
@@ -291,11 +291,11 @@ export function createXCodeTaskIndexSyncer(
   const isProviderNotReadyError = (error: unknown): boolean =>
     typeof error === "object" &&
     error !== null &&
-    (error as { code?: unknown }).code === XCODE_AGENT_PROVIDER_NOT_READY_CODE;
+    (error as { code?: unknown }).code === ZCODE_AGENT_PROVIDER_NOT_READY_CODE;
   const isRuntimeUnavailableError = (error: unknown): boolean =>
     typeof error === "object" &&
     error !== null &&
-    (error as { code?: unknown }).code === XCODE_AGENT_RUNTIME_UNAVAILABLE_CODE;
+    (error as { code?: unknown }).code === ZCODE_AGENT_RUNTIME_UNAVAILABLE_CODE;
   const logTopicSubscribeFailure = (
     state: WorkspaceIngestState,
     topic: TaskIndexTopicKind,

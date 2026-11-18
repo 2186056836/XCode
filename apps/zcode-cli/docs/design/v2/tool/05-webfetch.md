@@ -201,17 +201,17 @@ XCode 如果支持 WebFetch 摘要，也应把版权和引用限制放在 `WebFe
 `WebFetch` 专用 `HttpClientPort` 的网络环境要求：
 
 - 显式 `network.httpProxy` 配置优先。
-- 未显式配置时，先读取 `XCODE_HTTP_PROXY`；再读取 runtime 已封存到
-  `XCODE_TOOL_ENV_PASSTHROUGH_JSON` 的用户标准代理变量。不得直接继承当前进程里的
+- 未显式配置时，先读取 `ZCODE_HTTP_PROXY`；再读取 runtime 已封存到
+  `ZCODE_TOOL_ENV_PASSTHROUGH_JSON` 的用户标准代理变量。不得直接继承当前进程里的
   裸 `HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY`，因为 runtime 初始化会先清理这些变量，
   只在明确的工具/网络边界恢复。
   runtime 封存代理变量按小写优先读取（与 undici 的读取顺序一致）：
   `https_proxy`、`HTTPS_PROXY`、`http_proxy`、`HTTP_PROXY`、`all_proxy`、`ALL_PROXY`。
-- `network.noProxy` 必须同时对 WebFetch 生效；`XCODE_NO_PROXY` 和 runtime 封存的
+- `network.noProxy` 必须同时对 WebFetch 生效；`ZCODE_NO_PROXY` 和 runtime 封存的
   `no_proxy` / `NO_PROXY` 可作为 fallback，且小写优先。runtime 封存的 `no_proxy`
-  只参与 WebFetch fallback，不绕过显式 `network.httpProxy` / `XCODE_HTTP_PROXY`。
+  只参与 WebFetch fallback，不绕过显式 `network.httpProxy` / `ZCODE_HTTP_PROXY`。
   裸标准环境变量不作为继承输入。
-- 自定义 CA 至少支持 `network.caCertFile` 和 `XCODE_AGENT_CA_CERT`；标准 CA 变量只由 runtime 派生给受控子进程。
+- 自定义 CA 至少支持 `network.caCertFile` 和 `ZCODE_AGENT_CA_CERT`；标准 CA 变量只由 runtime 派生给受控子进程。
 - WebFetch 自己不得重新解析这些环境变量，必须完全复用 `HttpClientPort` 的统一解析逻辑。
 - WebFetch 通过 `HttpClientPort` 使用普通 HTTP 总请求超时，默认 60000ms；该超时不适用于 provider SSE 等长流式请求。
 - WebFetch 请求必须在 tool handler 层执行 URL 字面量 egress policy，再进入 `HttpClientPort`。
@@ -241,7 +241,7 @@ XCode 如果支持 WebFetch 摘要，也应把版权和引用限制放在 `WebFe
 - `packages/core/tests/webfetch-tool.test.ts` 覆盖显式 HTTP URL 规范化为 HTTPS、HTML 转 markdown 后交给 lite model、模型可见结果只返回 `result`、内存 cache 命中仍按新 prompt 处理、literal local/private IP 拒绝、`.localhost` 拒绝、普通域名不触发 DNS preflight、DNS64 私网字面量映射拒绝、公网 IP 字面量允许、`198.18.0.0/15` / `64:ff9b:1::/48` / `100::/64` / `2001:2::/48` / `2001:10::/28` / `2001:20::/28` 特殊段拒绝、cross-host redirect 拒绝、single-label host 拒绝、网络 pending/complete/error 状态事件。
 - `packages/core/tests/permission-service.test.ts` 覆盖 WebFetch project rule 使用规范化 `domain:<hostname>` 匹配，以及 domain deny 覆盖完整 URL allow。
 - `packages/core/tests/tool-contracts.test.ts` 覆盖 WebFetch tool contract 声明为 `sideEffectScope: network` 且需要审批。
-- `packages/adapters/tests/http.test.ts` 覆盖 `HttpClientPort` trace header、`XCODE_HTTP_PROXY`、runtime 封存代理、`network.noProxy`、`XCODE_AGENT_CA_CERT`、标准代理/证书变量过滤、响应大小上限和 unsupported protocol；`packages/adapters/tests/http-response-status.test.ts` 覆盖走代理时上游回 `999` / `204` / `304` 原样带回、不打死进程。
+- `packages/adapters/tests/http.test.ts` 覆盖 `HttpClientPort` trace header、`ZCODE_HTTP_PROXY`、runtime 封存代理、`network.noProxy`、`ZCODE_AGENT_CA_CERT`、标准代理/证书变量过滤、响应大小上限和 unsupported protocol；`packages/adapters/tests/http-response-status.test.ts` 覆盖走代理时上游回 `999` / `204` / `304` 原样带回、不打死进程。
 - `packages/desktop/test/e2e/conversation-session/tools/conversation-session-webfetch.test.ts`
   保留桌面会话 `WebFetch` 成功闭环用例，但当前位于 `manual-review/pending`，不能计入正式自动覆盖。
   fixture 仍位于 `packages/desktop/test/e2e/fixtures/cases/conversation-session/conversation-session-webfetch.json`。

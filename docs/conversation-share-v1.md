@@ -103,7 +103,7 @@ Preview not_found → 现有 Loader
 `/cn/share/mock-partial-unsupported`（认不出的行被跳过，顶部出软提示）和
 `/cn/share/mock-outdated-client`（载荷版本高于本 build，显示「需要更新 XCode」而不是「格式无效」）。
 
-目标 Environment 的分享运行时始终使用真实 Share API，API 地址由 `XCODE_ENV` 解析；不再提供运行时
+目标 Environment 的分享运行时始终使用真实 Share API，API 地址由 `ZCODE_ENV` 解析；不再提供运行时
 Mock 开关。`ConversationShareMockApiClient` 仅用于服务单测和协议 fixture，不能生成可跨进程访问的分享链接。
 
 公开页正文展示复用 `packages/ui` 的只读 presentation 层：通过
@@ -239,7 +239,7 @@ CSP 的两个硬约束（改动前先读，否则会静默打断线上页面）�
 - `script-src` 必须带 `'wasm-unsafe-eval'`：shiki 代码高亮默认走 oniguruma wasm
   （`packages/ui/src/lib/shikiHighlighter.ts` 的 `createHighlighter`），只给 `'self'` 会让分享页
   所有代码高亮失效。它只放开 wasm 编译，`eval` / `new Function` 仍然被挡住（已实测）。
-- `connect-src` 保持 `https:`：API origin 是 vite 构建期按 `XCODE_ENV` 注入的
+- `connect-src` 保持 `https:`：API origin 是 vite 构建期按 `ZCODE_ENV` 注入的
   （`packages/web-share/vite.config.ts`），写死具体 origin 会让 test/production 各自需要一份 conf。
 
 artifact 只经 `window.open` 打开、不做 `<img src>`，因此不受 `img-src` 收紧影响。
@@ -459,7 +459,7 @@ Zai Light/Dark 和中英文。手机 remote 与普通 Web 继续不提供分享�
 - **延后确认**：权限不足、远端断开或 stat 超时等无法证明文件不存在的情况。选择阶段只提示“发布时会再次确认”，
   发布阶段以实际读取结果为准。
 
-  分类依据必须是协议侧的稳定 fault 码（`XCODE_ATTACHMENT_FAULT_CODES`），不能匹配错误文本。
+  分类依据必须是协议侧的稳定 fault 码（`ZCODE_ATTACHMENT_FAULT_CODES`），不能匹配错误文本。
   `conversationAttachmentStat` 是 metadata-only 探测，其 `totalBytes` 上界（`attachmentStatMaxBytes`）
   与搬运字节的读取通道上界（`attachmentPreviewMaxBytes`）是两个独立边界：stat 必须能表达超出传输能力的
   真实文件大小，否则“已知容量超限”这一确定阻断会退化成“延后确认”，发布时静默丢掉附件。

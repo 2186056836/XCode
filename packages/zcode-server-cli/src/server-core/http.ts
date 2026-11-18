@@ -36,9 +36,9 @@ import {
   SERVER_REMOTE_PROTOCOL_VERSION,
   TOPIC_RESOURCE_RELAY_CHANNEL,
   serverRemoteInfoOutputSchema,
-  XCODE_COMPATIBILITY_MANIFEST,
-  XCODE_RPC_HOST_CAPABILITY_HEADER,
-  XCODE_VERSION,
+  ZCODE_COMPATIBILITY_MANIFEST,
+  ZCODE_RPC_HOST_CAPABILITY_HEADER,
+  ZCODE_VERSION,
   type ServerRemoteInfo,
 } from "@zcode/shared";
 import { createHostCapabilityStore, type HostCapabilityStore } from "./hostCapability.js";
@@ -220,11 +220,11 @@ export async function createCoreHttpServer(
   const ingressToken = options.ingressToken?.trim();
   const info: ServerRemoteInfo = serverRemoteInfoOutputSchema.parse({
     serverId: options.serverId ?? hostname() ?? "zcode-server",
-    version: XCODE_VERSION,
+    version: ZCODE_VERSION,
     protocolVersion: SERVER_REMOTE_PROTOCOL_VERSION,
     authRequired: Boolean(ingressToken),
     workspaces: [],
-    compatibility: XCODE_COMPATIBILITY_MANIFEST,
+    compatibility: ZCODE_COMPATIBILITY_MANIFEST,
     migration: { failedPathCount: options.migrationFailedPathCount ?? 0 },
     identity: { osUser: resolveServerOsUser(), hostname: hostname() },
     capabilities: {
@@ -285,7 +285,7 @@ export async function createCoreHttpServer(
     })),
   );
   app.use("/ws/host", async (context, next) => {
-    const capability = context.req.header(XCODE_RPC_HOST_CAPABILITY_HEADER);
+    const capability = context.req.header(ZCODE_RPC_HOST_CAPABILITY_HEADER);
     if (!capabilities.consume(capability)) {
       return context.json({ error: "Invalid or expired host capability" }, 401);
     }

@@ -4,8 +4,8 @@ const { join } = require("node:path");
 const { pathToFileURL } = require("node:url");
 const originalNow = Date.now;
 const originalFetch = globalThis.fetch;
-const origin = process.env.XCODE_E2E_OAUTH_RACE_URL;
-const caseId = process.env.XCODE_E2E_OAUTH_CLOCK_CASE;
+const origin = process.env.ZCODE_E2E_OAUTH_RACE_URL;
+const caseId = process.env.ZCODE_E2E_OAUTH_CLOCK_CASE;
 let offset = 0;
 Date.now = () => originalNow() + offset;
 globalThis.fetch = async (input, init) => {
@@ -16,7 +16,7 @@ globalThis.fetch = async (input, init) => {
     if (value !== null) {
       offset = Number(value);
       await appendFile(
-        join(process.env.XCODE_E2E_HOST_FAULT_ROOT, `host-boundary-${process.pid}.jsonl`),
+        join(process.env.ZCODE_E2E_HOST_FAULT_ROOT, `host-boundary-${process.pid}.jsonl`),
         JSON.stringify({ pid: process.pid, id: caseId, kind: "clock-shift", offset }) + "\n",
       );
     }
@@ -25,7 +25,7 @@ globalThis.fetch = async (input, init) => {
 };
 async function start() {
   await appendFile(
-    join(process.env.XCODE_E2E_HOST_FAULT_ROOT, `host-boundary-${process.pid}.jsonl`),
+    join(process.env.ZCODE_E2E_HOST_FAULT_ROOT, `host-boundary-${process.pid}.jsonl`),
     JSON.stringify({ pid: process.pid, id: caseId, kind: "ready" }) + "\n",
   );
   await import(pathToFileURL(process.argv[2]).href);

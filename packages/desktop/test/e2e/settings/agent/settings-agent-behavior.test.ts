@@ -160,7 +160,7 @@ describe("Agent 行为与工具设置", () => {
               expect(bounds.right).toBeLessThanOrEqual(bounds.width);
               await browser.saveScreenshot(
                 join(
-                  process.env.XCODE_E2E_ARTIFACT_DIR!,
+                  process.env.ZCODE_E2E_ARTIFACT_DIR!,
                   `agent-settings-${width}-${theme}-${locale}-${target}.png`,
                 ),
               );

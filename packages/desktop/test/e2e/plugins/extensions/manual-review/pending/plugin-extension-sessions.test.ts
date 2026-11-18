@@ -329,7 +329,7 @@ describe("PLM-EXT-P3A 扩展的会话读权限、授权与审计", () => {
   after(async () => {
     evidence.screenshots = screenshots;
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-p3a-evidence.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-p3a-evidence.json"),
       JSON.stringify(evidence, null, 2),
     ).catch(() => undefined);
     await clearAppData();

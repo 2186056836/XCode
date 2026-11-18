@@ -42,7 +42,7 @@ describe("GUC Gen UI input context", () => {
   before(async () => {
     server = await startUpstreamReplayServer({
       artifactPath: resolve(
-        process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts",
+        process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts",
         "gen-ui-provider.json",
       ),
       fixturePaths: [resolve(`test/e2e/fixtures/upstream/conversation-session/${NAME}.json`)],
@@ -98,7 +98,7 @@ describe("GUC Gen UI input context", () => {
     }, WEB_REMOTE_CONTROL_FIXTURE_CREDENTIALS);
     mobile = await mobileContext.newPage();
     await openMobilePairingPage(mobile, pairingUrl, {
-      artifactDir: process.env.XCODE_E2E_ARTIFACT_DIR!,
+      artifactDir: process.env.ZCODE_E2E_ARTIFACT_DIR!,
       caseMarker: NAME,
       phase: "queue",
       readySelector: '[data-testid="sidebar"], [data-mobile-page="chat"]',
@@ -127,7 +127,7 @@ describe("GUC Gen UI input context", () => {
     expect(queueText).not.toContain("untrusted_gen_ui_state");
     expect(queueText).not.toContain("GEN_UI_QUEUED");
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts", "gen-ui-queue.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts", "gen-ui-queue.png"),
     );
     await mobile
       .locator("li[data-queue-item-id]")
@@ -141,7 +141,7 @@ describe("GUC Gen UI input context", () => {
       .waitFor();
     await assertMobileClean();
     await mobile.screenshot({
-      path: join(process.env.XCODE_E2E_ARTIFACT_DIR!, "gen-ui-mobile-queue.png"),
+      path: join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "gen-ui-mobile-queue.png"),
     });
     await clickPageState("later", "GEN_UI_LATER");
     await releaseControlledReplay("gen-ui-hold");

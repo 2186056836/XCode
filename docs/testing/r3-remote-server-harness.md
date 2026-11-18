@@ -403,19 +403,19 @@ GitLab 的 `git ls-remote` 已从连接超时变为缺少用户名/凭据，说�
 runner 从 `resources-<suffix>.json` 注入：
 
 ```
-XCODE_E2E_SSH_HOST / PORT / USERNAME / PASSWORD     每轮随机密码，docker exec chpasswd 写入
-XCODE_E2E_SSH_WORKSPACE_PATHS                        两个目录，A/B workspace 隔离用
-XCODE_E2E_SSH_WORKSPACE_PATH                         单 workspace 形态（WPL-011）
-XCODE_E2E_SSH_CONTAINER                              容器控制面（docker exec 故障注入）
-XCODE_E2E_SSH_{A,B}_{HOST,PORT,USERNAME,PASSWORD}    双 Source（R3_RESOURCES_B 存在时）
-XCODE_E2E_SSH_SHARED_WORKSPACE_PATH                  双 Source 共用的同一 POSIX 路径
+ZCODE_E2E_SSH_HOST / PORT / USERNAME / PASSWORD     每轮随机密码，docker exec chpasswd 写入
+ZCODE_E2E_SSH_WORKSPACE_PATHS                        两个目录，A/B workspace 隔离用
+ZCODE_E2E_SSH_WORKSPACE_PATH                         单 workspace 形态（WPL-011）
+ZCODE_E2E_SSH_CONTAINER                              容器控制面（docker exec 故障注入）
+ZCODE_E2E_SSH_{A,B}_{HOST,PORT,USERNAME,PASSWORD}    双 Source（R3_RESOURCES_B 存在时）
+ZCODE_E2E_SSH_SHARED_WORKSPACE_PATH                  双 Source 共用的同一 POSIX 路径
 DEEPSEEK_E2E_HTTP_MODE=replay + 按 spec 名匹配的 fixture
 LANG/LC_ALL/LANGUAGE=zh_CN                           钉住中文界面（见下）
-XCODE_DEV_REMOTE_ASSET_USE_CDN / _CDN_BASE_URL / _CACHE_DIR
+ZCODE_DEV_REMOTE_ASSET_USE_CDN / _CDN_BASE_URL / _CACHE_DIR
                                                      仅 local-download-proxy；Electron env 由
                                                      chromedriver 在 worker 前创建，case 内部
                                                      export 太晚，只能由编排注入
-XCODE_E2E_MOCHA_GREP                                 只跑 spec 内某个用例（settings-ui-polish
+ZCODE_E2E_MOCHA_GREP                                 只跑 spec 内某个用例（settings-ui-polish
                                                      只有 MP-UI-05-remote 是远程用例）
 ```
 
@@ -423,8 +423,8 @@ XCODE_E2E_MOCHA_GREP                                 只跑 spec 内某个用例
 
 `conversation-session-r3-live-bigmodel-team.test.ts` 导入生产 BigModel 登录材料，必须独立运行，
 并由 WDIO 在 launcher / worker / Electron 启动前统一选择生产 XCode 控制面；
-同时显式设置 `XCODE_ENV=production` 和 `BIGMODEL_API_BASE_URL=https://bigmodel.cn`，
-因为 Team 组织/项目校验的域名独立于 XCode 控制面。SSH 的环境白名单透传 `XCODE_ENV`，
+同时显式设置 `ZCODE_ENV=production` 和 `BIGMODEL_API_BASE_URL=https://bigmodel.cn`，
+因为 Team 组织/项目校验的域名独立于 XCode 控制面。SSH 的环境白名单透传 `ZCODE_ENV`，
 不会透传 BigModel 地址覆盖；只覆盖本机地址时，远端仍会请求 `bigmodel.cn`。
 真实账号用例还必须使用 `R3_BUILD_ENV=production` 构建：Desktop 的 `buildHostProcessEnv`
 会重新注入编译期环境，且内置 Provider 配置也随构建档位变化，单改运行时变量不能替代生产构建。
@@ -487,7 +487,7 @@ provider/model/endpoint 正确。业务 401 退出、登录弹窗、SSH 协议�
 | downloadproxy 第一行断言 `received undefined`                                 | 三个 CDN/缓存 env **仓库里从来没有入口注入过**，这个 case 在任何机器上都跑不起来                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | share 等不到 `share-ssh-ready`                                                | 缺 replay 反向隧道：容器里的 `127.0.0.1` 是容器自己。该 case 沿用默认 replay provider，用 `mirrorLocalPort` 让远端监听同一端口号即可（已修，回复能拿到了）                                                                                                                                                                                                                                                                                                                                           |
 | share 分享入口 `conversation-share-trigger` 始终 missing                      | 入口条件含 `user &&`，而 `user` 是 OAuth 产物（credentials 的 `oauth:<provider>:user_info`），API Key 登录不产生。已排除 `remoteTarget.kind`（实测 `"ssh"`）、header 缺失、草稿态。**仍未跑通**：补 OAuth 凭据要先让应用进到可操作状态，而该 case 沿用的老 conversation helper（`prepareConversationE2E` → `ensureDeepSeekProviderForE2E`）内部走 WebDriver clickable，正是容器里会误判的路径（`chat-model-select-trigger still not clickable`）。要跑通得先把它迁到 `prepareV4ConversationE2E` 体系 |
-| settings-ui-polish FAIL                                                       | 远程用例 MP-UI-05-remote 本身通过，被同 spec 的本机用例 MP-UI-06 拖累；已用 `XCODE_E2E_MOCHA_GREP` 只跑远程用例                                                                                                                                                                                                                                                                                                                                                                                      |
+| settings-ui-polish FAIL                                                       | 远程用例 MP-UI-05-remote 本身通过，被同 spec 的本机用例 MP-UI-06 拖累；已用 `ZCODE_E2E_MOCHA_GREP` 只跑远程用例                                                                                                                                                                                                                                                                                                                                                                                      |
 | 一整轮 8 个 case 各在 1 秒内 FAIL(1)                                          | 复跑脚本传的 runId 前缀不满足 runner 校验，而队列把 runner 输出丢进 `/dev/null` —— 编排失败与业务失败无法区分。现在写 `run-logs/<runId>.launcher.log`                                                                                                                                                                                                                                                                                                                                                |
 | live-zapi / dockertrn                                                         | `zapi.z.ai` 从宿主与容器均不可达，等飞连（用户手动配）                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | live-team                                                                     | 同上，注入 live 凭据后应用停在 `root-startup-loading`（`bodyText:""`、`localStorageKeys:[]`），启动阶段的账号请求打不通                                                                                                                                                                                                                                                                                                                                                                              |

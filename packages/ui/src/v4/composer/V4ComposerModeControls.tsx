@@ -2,7 +2,7 @@ import { modeTriggerColor } from "@/chat-input-toolbar/display-help.js";
 import { memo, useCallback, useMemo } from "react";
 import { LightbulbIcon, XIcon, ChevronDownIcon } from "lucide-react";
 import {
-  XCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER,
   getXCodeAgentAvailableModes,
   type XCodeConfigOption,
 } from "@zcode/shared";
@@ -71,7 +71,7 @@ function V4ComposerModeSwitchImpl({
     },
     [confirmMode, onSwitchMode],
   );
-  const displayProvider = provider ?? XCODE_AGENT_PROVIDER;
+  const displayProvider = provider ?? ZCODE_AGENT_PROVIDER;
   const modeShortcutLabel = useShortcutCommandLabel("cycleSessionMode");
   const modes = getXCodeAgentAvailableModes();
   const permissions = modes.filter((mode) => mode.id !== "plan");

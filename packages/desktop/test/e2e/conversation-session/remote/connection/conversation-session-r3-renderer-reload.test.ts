@@ -22,11 +22,11 @@ import {
 
 const CASE_MARKER = "E2E_R3_RENDERER_RELOAD";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-renderer-reload",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-renderer-reload",
 );
 
 async function readReadyCounts() {
-  const directory = process.env.XCODE_E2E_RUNTIME_LOG_DIR;
+  const directory = process.env.ZCODE_E2E_RUNTIME_LOG_DIR;
   if (!directory) throw new Error("缺少本 worker 的 Desktop 日志目录");
   const files = (await readdir(directory)).filter((name) => name.endsWith(".log"));
   const counts = new Map<string, number>();

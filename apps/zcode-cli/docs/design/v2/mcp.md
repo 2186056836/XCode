@@ -139,7 +139,7 @@ Effective config order should be:
 2. user config `~/.xcode/cli/config.json`
 3. discovered project config files, root-to-cwd
 4. explicit project config path, if provided by embedding/tests
-5. `XCODE_*` environment config
+5. `ZCODE_*` environment config
 6. CLI/session/runtime overrides
 
 This preserves the current rule that env and CLI/session overrides win. It also means project config can override user config for normal preference fields.

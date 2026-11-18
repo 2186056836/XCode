@@ -91,8 +91,8 @@ export async function prepareOfficialMcpAuthRoutingFixture(options: {
     if (!address || typeof address === "string") throw new Error("Missing MCP fixture address");
     const baseUrl = `http://127.0.0.1:${address.port}`;
     const envPatch = {
-      XCODE_E2E_OFFICIAL_AUTH_ROUTING_URL: baseUrl,
-      XCODE_OFFICIAL_MCP_DEV_TRUSTED_ORIGINS: baseUrl,
+      ZCODE_E2E_OFFICIAL_AUTH_ROUTING_URL: baseUrl,
+      ZCODE_OFFICIAL_MCP_DEV_TRUSTED_ORIGINS: baseUrl,
     };
     previous = Object.fromEntries(Object.keys(envPatch).map((key) => [key, process.env[key]]));
     Object.assign(process.env, envPatch);

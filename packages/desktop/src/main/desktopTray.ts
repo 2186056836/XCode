@@ -5,7 +5,7 @@ import {
   DesktopCommandIds,
   desktopMenuMessageIds,
   getDesktopMenuMessage,
-  XCODE_PRODUCT_FLAVOR,
+  ZCODE_PRODUCT_FLAVOR,
   type DesktopCommandId,
   type Locale,
 } from "@zcode/shared";
@@ -100,7 +100,7 @@ export function createDesktopTray(options: {
         },
         { type: "separator" },
         // 更新入口跟随产品身份：Preview（含生产后端的 Preview）禁用更新器，托盘也不能露出入口。
-        ...(XCODE_PRODUCT_FLAVOR === "production"
+        ...(ZCODE_PRODUCT_FLAVOR === "production"
           ? [
               {
                 label: getLabel(desktopMenuMessageIds.helpCheckForUpdates),

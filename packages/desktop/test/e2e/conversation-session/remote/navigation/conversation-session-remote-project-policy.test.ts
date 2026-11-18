@@ -9,7 +9,7 @@ describe("远程单目录项目展示", () => {
   before(async function () {
     this.timeout(120_000);
     await prepareV4ConversationE2E({ skipProvider: true });
-    const home = process.env.XCODE_E2E_HOME_DIR;
+    const home = process.env.ZCODE_E2E_HOME_DIR;
     // 根因：旧守卫只接受手工运行的目录名，拒绝队列按批次/case 分配的独立 HOME。
     // 本例只验离线缓存，可由普通 runner 执行；仍要求统一隔离 HOME 前缀。
     const isolatedRunnerHome = home && basename(home).startsWith(".e2e-home-");

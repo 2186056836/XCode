@@ -11,7 +11,7 @@ import {
 } from "#e2e/helpers/v4-conversation";
 
 async function readQueryCounts() {
-  const directory = await browser.electron.execute(() => process.env.XCODE_E2E_RUNTIME_LOG_DIR!);
+  const directory = await browser.electron.execute(() => process.env.ZCODE_E2E_RUNTIME_LOG_DIR!);
   const logs = await Promise.all(
     (await readdir(directory))
       .filter((name) => name.endsWith(".log"))
@@ -40,7 +40,7 @@ describe("TSL40：完整桌面连续输出不重复读取侧栏目录", () => {
     await waitForV4TimelineContaining("ACTIVITY_29", 30_000);
     const after = await readQueryCounts();
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "sidebar-query-counts.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "sidebar-query-counts.json"),
       JSON.stringify({ before, after }),
     );
     expect(after).toEqual(before);
@@ -61,7 +61,7 @@ describe("TSL40：完整桌面连续输出不重复读取侧栏目录", () => {
       (await $(selector).getText()).includes("E2E_ACTIVITY_RENAMED"),
     );
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "sidebar-activity-renamed.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "sidebar-activity-renamed.png"),
     );
   });
 });

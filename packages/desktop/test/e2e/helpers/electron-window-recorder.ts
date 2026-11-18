@@ -62,7 +62,7 @@ export interface ElectronWindowRecordingSession {
 
 /** 录屏编码器默认路径；与 startElectronWindowRecording 的解析顺序一致。 */
 export function resolveElectronRecordingFfmpegPath(ffmpegPath?: string): string {
-  return ffmpegPath?.trim() || process.env.XCODE_E2E_FFMPEG_PATH?.trim() || "ffmpeg";
+  return ffmpegPath?.trim() || process.env.ZCODE_E2E_FFMPEG_PATH?.trim() || "ffmpeg";
 }
 
 /**

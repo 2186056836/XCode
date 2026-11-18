@@ -267,7 +267,7 @@ it("BOT-E2E-RW-02 legacy 与 stable Bot 通过同一 Source 身份完成任务�
     expect(bound.every((identity) => identity === stable)).toBe(true);
     expect(connections).toBe(1);
     const artifactDir = resolve(
-      process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/bot-r3-workspace-identity",
+      process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/bot-r3-workspace-identity",
     );
     await mkdir(artifactDir, { recursive: true });
     await writeFile(

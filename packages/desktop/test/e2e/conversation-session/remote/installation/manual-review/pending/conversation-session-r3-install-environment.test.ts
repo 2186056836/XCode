@@ -19,7 +19,7 @@ import {
 
 const CASE_MARKER = "E2E_R3_INSTALL_ENVIRONMENT";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-install-environment",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-install-environment",
 );
 // old-glibc-runtime 需要真实 glibc < 2.28 的远端镜像，不注入 getconf。服务器队列没有该档位，
 // 只能本机运行，构建与运行命令见 harness/remote/README.md「低版本 glibc 目标」。

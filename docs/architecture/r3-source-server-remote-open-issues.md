@@ -417,7 +417,7 @@
 
 - 状态：已关闭
 - 根因：删除 legacy 资产链时，“构建并断言官方插件 MCP runtime”的责任没有落到新 staging 链任何一环。
-- 修复：`scripts/build-desktop-agent-cli.mjs` 的 MCP runtime 清单补入 `@zcode/android-emulator-plugin` 与 `@zcode/ios-simulator-plugin`，该脚本是桌面与 Source Server staging 共用的唯一构建入口；`stage.ts` 复制每个插件后新增 `assertOfficialPluginRuntime`，manifest 缺失或 `mcpServers` 引用的 `${XCODE_PLUGIN_ROOT}/...` 文件不存在即抛错。R2 spec 新增“官方插件 MCP runtime 不变量”条目。
+- 修复：`scripts/build-desktop-agent-cli.mjs` 的 MCP runtime 清单补入 `@zcode/android-emulator-plugin` 与 `@zcode/ios-simulator-plugin`，该脚本是桌面与 Source Server staging 共用的唯一构建入口；`stage.ts` 复制每个插件后新增 `assertOfficialPluginRuntime`，manifest 缺失或 `mcpServers` 引用的 `${ZCODE_PLUGIN_ROOT}/...` 文件不存在即抛错。R2 spec 新增“官方插件 MCP runtime 不变量”条目。
 - 自动化验证：`packaging.test.ts` 新增 2 项 fail-closed 用例（缺 MCP 入口、缺 manifest），修复前失败、修复后通过；既有插件 staging 用例补断言 `dist/mcp/server.js` 被打包；`runtime-asset-scripts.test.ts` 清单断言同步。
 - 运行时验证：本地删除 `apps/zcode-cli/packages/{android-emulator,ios-simulator}-plugin/dist` 后执行 `pnpm --filter @zcode/server-cli stage --target linux-x64`，构建链实际重建两个插件，`zcode-server-linux-x64.tar.gz` 内四个 MCP 插件的 `runtime/packages/*/dist/mcp/server.js` 均存在，耗时约 1 分钟。未运行真实 CI `build:remote:assets`。
 - 剩余风险：`stageRelease` 现在会对所有被复制的 `*-plugin` 目录做校验，若未来新增声明 mcpServers 却不在构建清单中的官方插件，staging 会显式失败而非静默残缺，这是预期行为。

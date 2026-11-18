@@ -148,7 +148,7 @@ Plugin command roots are specified by [`plugin-compat.md`](plugin-compat.md).
 They are projected as `source: "plugin"` roots and otherwise use this same
 markdown command format.
 
-No `XCODE_*` environment variable is introduced for this feature. If a future
+No `ZCODE_*` environment variable is introduced for this feature. If a future
 environment override is needed, it must be specified separately with precedence,
 error behavior, and tests.
 
@@ -244,14 +244,14 @@ Dynamic expansion:
   sets them as environment variables (see [tool/04-bash.md](tool/04-bash.md)),
   so the shell expands them, including forms such as `${NAME:-default}`, and
   scripts started by the block can read them too:
-  - `CLAUDE_PROJECT_DIR`, `XCODE_PROJECT_DIR`: the session workspace root.
-  - `CLAUDE_SESSION_ID`, `CLAUDE_CODE_SESSION_ID`, `XCODE_SESSION_ID`: the
+  - `CLAUDE_PROJECT_DIR`, `ZCODE_PROJECT_DIR`: the session workspace root.
+  - `CLAUDE_SESSION_ID`, `CLAUDE_CODE_SESSION_ID`, `ZCODE_SESSION_ID`: the
     session ID.
 - Plugin variables are replaced with their values in the block text, in both
   the `${NAME}` and `$NAME` forms, because the `Bash` call does not know which
   plugin the step came from. This applies to plugin commands only:
-  `CLAUDE_PLUGIN_ROOT`, `XCODE_PLUGIN_ROOT`, `CLAUDE_PLUGIN_DATA`,
-  `XCODE_PLUGIN_DATA`, `XCODE_PLUGIN_ID`, `XCODE_PLUGIN_NAME`. The values come
+  `CLAUDE_PLUGIN_ROOT`, `ZCODE_PLUGIN_ROOT`, `CLAUDE_PLUGIN_DATA`,
+  `ZCODE_PLUGIN_DATA`, `ZCODE_PLUGIN_ID`, `ZCODE_PLUGIN_NAME`. The values come
   from the installed plugin (validated manifest name, user-level install or
   config paths), never from the workspace.
 - A Windows path value (starting with a drive letter such as `C:\` or with
@@ -261,7 +261,7 @@ Dynamic expansion:
   accepts `C:/...` with or without quotes.
 - The block is not handed off when it uses a plugin variable outside a plugin
   command, a plugin variable with a shell modifier (for example
-  `${CLAUDE_PLUGIN_ROOT:-x}` or `${#CLAUDE_PLUGIN_ROOT}`), or `CLAUDE_SKILL_DIR` / `XCODE_SKILL_DIR`
+  `${CLAUDE_PLUGIN_ROOT:-x}` or `${#CLAUDE_PLUGIN_ROOT}`), or `CLAUDE_SKILL_DIR` / `ZCODE_SKILL_DIR`
   (commands have no skill directory). It becomes a note that names the
   variable, so the shell never expands it to an empty string.
 - Shell blocks never make resolution fail. Invoking such a command behaves like

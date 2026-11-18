@@ -123,7 +123,7 @@ describe("ensureSshRemoteReleaseAssets（默认全平台判断）", () => {
   });
 
   it("runs the full-platform entry without env overrides when nothing is declared", async () => {
-    // 未声明「只需 Linux」时（服务器队列、CI）保持原行为：调用全平台入口，不改 XCODE_ENV。
+    // 未声明「只需 Linux」时（服务器队列、CI）保持原行为：调用全平台入口，不改 ZCODE_ENV。
     const exists = vi.fn(async () => false);
     const prepareReleaseAssets = vi.fn((_request: SshRemoteReleasePrepareRequest) => {
       exists.mockResolvedValue(true);
@@ -179,7 +179,7 @@ describe("ensureSshRemoteReleaseAssets（声明只需 Linux）", () => {
     expect(prepareReleaseAssets).not.toHaveBeenCalled();
   });
 
-  it("rebuilds through the Linux entry with XCODE_ENV=test, never the full-platform entry", async () => {
+  it("rebuilds through the Linux entry with ZCODE_ENV=test, never the full-platform entry", async () => {
     // 磁盘上有 Linux 包但 descriptor 只列了 linux-x64：不能凭文件存在就复用。
     const release = createFakeRelease({
       "source-server-release.json": descriptor(["linux-x64"]),
@@ -200,7 +200,7 @@ describe("ensureSshRemoteReleaseAssets（声明只需 Linux）", () => {
     expect(prepared).toBe(true);
     expect(prepareReleaseAssets).toHaveBeenCalledExactlyOnceWith({
       script: "prepare:remote-assets:linux",
-      env: { XCODE_ENV: "test" },
+      env: { ZCODE_ENV: "test" },
     });
   });
 
@@ -247,11 +247,11 @@ describe("ensureSshRemoteReleaseAssets（声明只需 Linux）", () => {
 describe("resolveSshRemoteReleaseScope", () => {
   it("defaults to all and only switches to linux on the explicit declaration", () => {
     expect(resolveSshRemoteReleaseScope({})).toBe("all");
-    expect(resolveSshRemoteReleaseScope({ XCODE_E2E_REMOTE_RELEASE_SCOPE: " " })).toBe("all");
-    expect(resolveSshRemoteReleaseScope({ XCODE_E2E_REMOTE_RELEASE_SCOPE: "linux" })).toBe("linux");
+    expect(resolveSshRemoteReleaseScope({ ZCODE_E2E_REMOTE_RELEASE_SCOPE: " " })).toBe("all");
+    expect(resolveSshRemoteReleaseScope({ ZCODE_E2E_REMOTE_RELEASE_SCOPE: "linux" })).toBe("linux");
     expect(() =>
-      resolveSshRemoteReleaseScope({ XCODE_E2E_REMOTE_RELEASE_SCOPE: "darwin" }),
-    ).toThrow(/XCODE_E2E_REMOTE_RELEASE_SCOPE/u);
+      resolveSshRemoteReleaseScope({ ZCODE_E2E_REMOTE_RELEASE_SCOPE: "darwin" }),
+    ).toThrow(/ZCODE_E2E_REMOTE_RELEASE_SCOPE/u);
   });
 });
 

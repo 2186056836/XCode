@@ -6,20 +6,20 @@ import { basename, join, win32 } from "node:path";
 import { homedir } from "node:os";
 import {
   DATA_BASE_DIR_FORBIDDEN_WINDOWS_INSTALL_DIR_ERROR_CODE,
-  XCODE_AGENT_RUNTIME,
+  ZCODE_AGENT_RUNTIME,
 } from "@zcode/shared";
 
 let _dataBaseDir: string | null = null;
-export const XCODE_WINDOWS_APP_INSTALL_DIR_ENV = "XCODE_WINDOWS_APP_INSTALL_DIR";
-const envDataBaseDir = process.env.XCODE_DATA_BASE_DIR?.trim() || null;
-// 与 settingService 的 resolveUserHomeDir() 同一解析链（含 XCODE_DESKTOP_HOME_DIR）：
+export const ZCODE_WINDOWS_APP_INSTALL_DIR_ENV = "ZCODE_WINDOWS_APP_INSTALL_DIR";
+const envDataBaseDir = process.env.ZCODE_DATA_BASE_DIR?.trim() || null;
+// 与 settingService 的 resolveUserHomeDir() 同一解析链（含 ZCODE_DESKTOP_HOME_DIR）：
 // 独立 dev/e2e 实例设了自己的 home，这里若只认 HOME 会指向真实家目录，
 // 与 setting.json 的位置（resolveUserHomeDir 侧）不一致。
 const defaultDataBaseDir =
-  process.env.XCODE_DESKTOP_HOME_DIR?.trim() || process.env.HOME?.trim() || homedir();
+  process.env.ZCODE_DESKTOP_HOME_DIR?.trim() || process.env.HOME?.trim() || homedir();
 
-// 命名约定（fork）：环境变量前缀保持 XCODE_（沿用官方，避免破坏脚本/CI）；
-// 应用数据目录固定用 .xcode（fork 品牌）。XCODE_DATA_BASE_DIR 只是「父级基目录」，
+// 命名约定（fork）：环境变量前缀保持 ZCODE_（沿用官方，避免破坏脚本/CI）；
+// 应用数据目录固定用 .xcode（fork 品牌）。ZCODE_DATA_BASE_DIR 只是「父级基目录」，
 // 真正的数据根目录见 getXCodeDataRootDir() = {base}/.xcode。
 
 export interface DataBaseDirTargetValidationOptions {
@@ -41,7 +41,7 @@ export function setDataBaseDir(dir: string | null): void {
   _dataBaseDir = dir?.trim() || null;
 }
 
-/** Get the current base directory. Priority: setDataBaseDir() > env XCODE_DATA_BASE_DIR > homedir(). */
+/** Get the current base directory. Priority: setDataBaseDir() > env ZCODE_DATA_BASE_DIR > homedir(). */
 export function getDataBaseDir(): string {
   if (_dataBaseDir) return _dataBaseDir;
   if (envDataBaseDir) return envDataBaseDir;
@@ -75,7 +75,7 @@ export function getZcodeHomeRoots(): string[] {
   }
   // 2) 真实家目录（旧 XCode 的默认位置；setting.json 本体也在这里）
   homes.add(
-    process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+    process.env.ZCODE_DESKTOP_HOME_DIR?.trim() ||
       process.env.HOME?.trim() ||
       process.env.USERPROFILE?.trim() ||
       homedir(),
@@ -86,7 +86,7 @@ export function getZcodeHomeRoots(): string[] {
     homes.add(envHome);
   }
   // 4) 旧版环境变量（旧 XCode 在 setting.json 未声明时使用）
-  const legacyEnv = process.env.XCODE_DATA_BASE_DIR?.trim();
+  const legacyEnv = process.env.ZCODE_DATA_BASE_DIR?.trim();
   if (legacyEnv) {
     homes.add(legacyEnv);
   }
@@ -101,7 +101,7 @@ export function getZcodeHomeRoots(): string[] {
 /** 读旧 XCode 的 setting.json（固定在 {真实家目录}/.zcode/v2/），取其 dataBaseDir。 */
 function readLegacyZcodeDeclaredDataBaseDir(): string | null {
   const home =
-    process.env.XCODE_DESKTOP_HOME_DIR?.trim() ||
+    process.env.ZCODE_DESKTOP_HOME_DIR?.trim() ||
     process.env.HOME?.trim() ||
     process.env.USERPROFILE?.trim() ||
     homedir();
@@ -150,7 +150,7 @@ export function getAppConfigDir(): string {
  * Agent 侧用户级默认指令（个性化）文件的 home 解析。
  * 必须与 CLI adapter（apps/zcode-cli/packages/adapters/src/context/index.ts 的
  * resolveUserHomeDir）保持完全一致：只认 HOME/USERPROFILE。不能改用
- * XCODE_DATA_BASE_DIR（CLI 读该文件时忽略它）或 XCODE_DESKTOP_HOME_DIR
+ * ZCODE_DATA_BASE_DIR（CLI 读该文件时忽略它）或 ZCODE_DESKTOP_HOME_DIR
  * （agent 子进程不认），否则 App 写的文件和 Agent 读的文件会分叉。
  */
 export function resolveAgentUserInstructionsHomeDir(env: NodeJS.ProcessEnv = process.env): string {
@@ -221,7 +221,7 @@ function collectWindowsForbiddenAppInstallDirs(
   const localAppData = readEnvValue(env, "LOCALAPPDATA");
   const candidates = [
     options.appInstallDir,
-    readEnvValue(env, XCODE_WINDOWS_APP_INSTALL_DIR_ENV),
+    readEnvValue(env, ZCODE_WINDOWS_APP_INSTALL_DIR_ENV),
     // fork 分离：安装目录随 productName 变为 XCode，数据目录禁止指向其中
     programFiles ? win32.join(programFiles, "XCode") : null,
     programFilesX86 ? win32.join(programFilesX86, "XCode") : null,
@@ -339,8 +339,8 @@ export function getLegacyDeletedTaskSessionSnapshotPath(
  * 避免同机不同工作区配置漂移。
  */
 export function getProviderWorkspaceConfigDir(): string {
-  return XCODE_AGENT_RUNTIME.nativeConfigDir
-    ? join(getDataBaseDir(), XCODE_AGENT_RUNTIME.nativeConfigDir)
+  return ZCODE_AGENT_RUNTIME.nativeConfigDir
+    ? join(getDataBaseDir(), ZCODE_AGENT_RUNTIME.nativeConfigDir)
     : join(getDataBaseDir(), ".zcode", "cli");
 }
 

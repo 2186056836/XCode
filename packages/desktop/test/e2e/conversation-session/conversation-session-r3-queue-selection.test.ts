@@ -34,7 +34,7 @@ import {
 
 const CASE_MARKER = "E2E_R3_QUEUE_SELECTION";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-queue-selection",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-queue-selection",
 );
 const PROVIDER_B_ID = "e2e-r3-queue-selection-b";
 const PROVIDER_B_NAME = "R3 Queue Model B";

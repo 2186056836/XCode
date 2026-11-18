@@ -11,7 +11,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog.js";
 import { useOptionalPlatform } from "@/hooks/usePlatform.js";
-import { DesktopCommandIds, XCODE_VERSION } from "@zcode/shared";
+import { DesktopCommandIds, ZCODE_VERSION } from "@zcode/shared";
 /* eslint-disable max-lines -- Source/Profile/迁移三类管理操作共享同一 Host 快照和错误状态。 */
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -627,7 +627,7 @@ export function SourceServerManagementPanel({
       const confirmed = await confirmDialog(
         getSourceServerReinstallConfirmation({
           source: server.displayName,
-          version: XCODE_VERSION,
+          version: ZCODE_VERSION,
           formatMessage: intl.formatMessage,
         }),
       );
@@ -1129,7 +1129,7 @@ export function SourceServerManagementPanel({
                     deviceBusy,
                     installState: server.installState,
                     lastSeenVersion: server.lastSeenVersion,
-                    localVersion: XCODE_VERSION,
+                    localVersion: ZCODE_VERSION,
                   })
                 : ({ visible: false } as const);
               const actionBusy =

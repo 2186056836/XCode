@@ -89,9 +89,9 @@ describe("已有对话内 OffPeakCreate（冷恢复会话）E2E", () => {
     await waitForWorkspaceApp(DEFAULT_WORKSPACE, 60000);
 
     // 修复原因：默认回放强制录屏会在无 ffmpeg 的 runner 上于业务通过后报 spawn ffmpeg ENOENT；
-    // 仅人工审核需要视频，与 DCA-V1-06 一致按 XCODE_E2E_MANUAL_REVIEW=1 启用。
+    // 仅人工审核需要视频，与 DCA-V1-06 一致按 ZCODE_E2E_MANUAL_REVIEW=1 启用。
     const recording =
-      process.env.XCODE_E2E_MANUAL_REVIEW === "1"
+      process.env.ZCODE_E2E_MANUAL_REVIEW === "1"
         ? await startElectronWindowRecording({
             frameIntervalMs: 200,
             outputPath: resolveArtifactPath(`${CASE_NAME}.webm`),
@@ -338,7 +338,7 @@ async function readTestIdValue(currentTestId: string): Promise<string> {
 
 function resolveArtifactPath(fileName: string) {
   return resolve(
-    process.env.XCODE_E2E_ARTIFACT_DIR?.trim() ||
+    process.env.ZCODE_E2E_ARTIFACT_DIR?.trim() ||
       process.env.CODEX_E2E_ARTIFACT_DIR?.trim() ||
       join(process.cwd(), ".e2e-artifacts", CASE_NAME),
     fileName,

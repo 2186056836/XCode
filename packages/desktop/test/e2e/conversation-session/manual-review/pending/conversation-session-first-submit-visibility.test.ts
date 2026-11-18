@@ -102,7 +102,7 @@ describe("草稿首发列表与详情同步", () => {
           ).__firstSubmitEvidence!,
       );
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `FSV05-${scope}-frames.json`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `FSV05-${scope}-frames.json`),
         JSON.stringify(evidence, null, 2),
       );
       const firstDetail = evidence.frames.find(
@@ -115,7 +115,7 @@ describe("草稿首发列表与详情同步", () => {
           .every((frame) => frame.newRows === 0),
       ).toBe(true);
       const db = new DatabaseSync(
-        join(process.env.XCODE_E2E_HOME_DIR!, ".xcode/v2/tasks-index.sqlite"),
+        join(process.env.ZCODE_E2E_HOME_DIR!, ".xcode/v2/tasks-index.sqlite"),
         { readOnly: true },
       );
       try {
@@ -131,7 +131,7 @@ describe("草稿首发列表与详情同步", () => {
         db.close();
       }
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `FSV05-${scope}-first-detail.png`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `FSV05-${scope}-first-detail.png`),
       );
       await waitForV4UserMessageContaining(marker);
       await waitForV4AssistantMessageContaining("deepseek-e2e-ok");

@@ -142,10 +142,10 @@ const HOME_ENV_KEYS = ["HOME", "USERPROFILE"] as const;
 
 /** 进程内切换家目录与存储目录，返回恢复函数；录制按 case 顺序执行，不并发。 */
 function setIsolatedHome(home: string): () => void {
-  const keys = [...HOME_ENV_KEYS, "XCODE_STORAGE_DIR"] as const;
+  const keys = [...HOME_ENV_KEYS, "ZCODE_STORAGE_DIR"] as const;
   const previous = new Map(keys.map((key) => [key, process.env[key]]));
   for (const key of HOME_ENV_KEYS) process.env[key] = home;
-  process.env.XCODE_STORAGE_DIR = join(home, ".zcode");
+  process.env.ZCODE_STORAGE_DIR = join(home, ".zcode");
   return () => {
     for (const [key, value] of previous) {
       if (value === undefined) delete process.env[key];

@@ -57,9 +57,9 @@ describe("B09 排队消息冻结编辑：桌面与手机", () => {
   let mobile: Page | undefined;
 
   after(async () => {
-    if (mobile && process.env.XCODE_E2E_ARTIFACT_DIR)
+    if (mobile && process.env.ZCODE_E2E_ARTIFACT_DIR)
       await mobile
-        .screenshot({ path: join(process.env.XCODE_E2E_ARTIFACT_DIR, "B09-mobile.png") })
+        .screenshot({ path: join(process.env.ZCODE_E2E_ARTIFACT_DIR, "B09-mobile.png") })
         .catch(() => undefined);
     await webBrowser?.close();
     const pane = await getV4PaneSnapshot().catch(() => null);
@@ -271,14 +271,14 @@ describe("B09 排队消息冻结编辑：桌面与手机", () => {
 
   async function openMobileTask(taskId: string): Promise<Page> {
     const pairingUrl = await obtainUnreadPairingUrl(
-      new URL(process.env.XCODE_WEB_REMOTE_CONTROL_URL!).origin,
+      new URL(process.env.ZCODE_WEB_REMOTE_CONTROL_URL!).origin,
     );
     webBrowser = await chromium.launch({
-      ...(process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE
-        ? { executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
+      ...(process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE
+        ? { executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
         : { channel: "chrome" }),
       headless: true,
-      args: process.env.XCODE_E2E_BROWSER_NO_PROXY === "1" ? ["--no-proxy-server"] : [],
+      args: process.env.ZCODE_E2E_BROWSER_NO_PROXY === "1" ? ["--no-proxy-server"] : [],
     });
     mobileContext = await webBrowser.newContext({
       viewport: { width: 390, height: 844 },
@@ -289,7 +289,7 @@ describe("B09 排队消息冻结编辑：桌面与手机", () => {
     await seedMobileFixtureLogin(mobileContext);
     const page = await mobileContext.newPage();
     await openMobilePairingPage(page, pairingUrl, {
-      artifactDir: process.env.XCODE_E2E_ARTIFACT_DIR!,
+      artifactDir: process.env.ZCODE_E2E_ARTIFACT_DIR!,
       caseMarker: CASE_MARKER,
       phase: "pair",
       readySelector: `[data-testid="${testId(TID_TASK_ITEM, taskId)}"]`,

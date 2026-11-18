@@ -161,7 +161,7 @@ export class XCodeStdioTransport implements XCodeProtocolTransport {
       this.requestStdioClose();
       // POSIX coverage CLI bundle 带完整 source map，启动/收尾慢于发布包，保留写盘宽限。
       const configuredEofWaitMs =
-        process.env.XCODE_E2E_COVERAGE === "1"
+        process.env.ZCODE_E2E_COVERAGE === "1"
           ? E2E_COVERAGE_STDIO_EOF_EXIT_WAIT_MS
           : STDIO_EOF_EXIT_WAIT_MS;
       await this.waitForChildExit(configuredEofWaitMs);

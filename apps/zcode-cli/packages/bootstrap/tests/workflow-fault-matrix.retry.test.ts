@@ -5,7 +5,7 @@
 // 这些行的共同预期是 **completed**：模型侧故障在 workflow 内被重试、被 governor 吸收，
 // 脚本从未看见它。按行的有界计数写在各 describe 里；六条公共不变式由 assertCommonInvariants 断。
 //
-// 缺省跑快档；XCODE_FAULT_MATRIX=full 展开全矩阵（helpers/fault-matrix-cells.ts）。
+// 缺省跑快档；ZCODE_FAULT_MATRIX=full 展开全矩阵（helpers/fault-matrix-cells.ts）。
 
 import { SessionEventType } from "@zcode/contracts";
 import { describe, expect, it } from "vitest";

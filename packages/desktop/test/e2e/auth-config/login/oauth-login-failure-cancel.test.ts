@@ -35,7 +35,7 @@ describe("OAuth 登录失败态的取消交互", () => {
     );
     await dismissOccupationOnboarding();
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "auth-entry.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "auth-entry.json"),
       JSON.stringify(
         await browser.execute(() => ({
           text: document.body.innerText,
@@ -217,7 +217,7 @@ describe("OAuth 登录失败态的取消交互", () => {
       );
       expect(await hasOAuthError()).toBe(false);
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "oauth-cas-success.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "oauth-cas-success.json"),
         JSON.stringify(result, null, 2),
       );
     } finally {

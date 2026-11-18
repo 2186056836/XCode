@@ -14,7 +14,7 @@ const root = fileURLToPath(new URL("../../../../../../", import.meta.url));
 const entry =
   "/packages/ui/test/browser/manual-review/pending/conversation-timeline-resize.fixture.tsx";
 const artifacts =
-  process.env.XCODE_E2E_ARTIFACT_DIR ||
+  process.env.ZCODE_E2E_ARTIFACT_DIR ||
   join(root, "packages/desktop/.e2e-artifacts/conversation-timeline-resize");
 let server, browser, origin;
 before(async () => {
@@ -527,11 +527,11 @@ for (const mobile of [false, true])
           );
         });
         await page.goto(
-          `${origin}fixture?mobile=${mobile}&theme=${theme}&heavy=${process.env.XCODE_RESIZE_HEAVY_TOOLS === "1"}`,
+          `${origin}fixture?mobile=${mobile}&theme=${theme}&heavy=${process.env.ZCODE_RESIZE_HEAVY_TOOLS === "1"}`,
         );
         const timeline = page.getByTestId("v4-timeline");
         await timeline.waitFor();
-        if (process.env.XCODE_RESIZE_HEAVY_TOOLS === "1") {
+        if (process.env.ZCODE_RESIZE_HEAVY_TOOLS === "1") {
           await page.getByRole("button", { name: "Tools", exact: true }).click();
           await page.waitForFunction(
             () =>

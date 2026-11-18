@@ -1244,7 +1244,7 @@ Expected: PASS.
 Run:
 
 ```bash
-XCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- --spec './test/e2e/conversation-session/planning/conversation-session-plan-file-compact-continuity.test.ts'
+ZCODE_E2E_MANUAL_REVIEW=1 pnpm --filter @zcode/desktop test:e2e -- --spec './test/e2e/conversation-session/planning/conversation-session-plan-file-compact-continuity.test.ts'
 ```
 
 Expected:

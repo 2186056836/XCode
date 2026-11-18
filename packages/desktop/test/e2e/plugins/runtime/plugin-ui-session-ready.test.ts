@@ -10,7 +10,7 @@ describe("PLM-UI-SESSION-READY plugin cold recovery", () => {
   it("waits for session readiness and opens once without reload", async () => {
     const repo = resolve(process.cwd(), "../..");
     const artifacts =
-      process.env.XCODE_E2E_ARTIFACT_DIR ?? join(repo, "packages/desktop/.e2e-artifacts");
+      process.env.ZCODE_E2E_ARTIFACT_DIR ?? join(repo, "packages/desktop/.e2e-artifacts");
     await mkdir(artifacts, { recursive: true });
     const output = await mkdtemp(join(artifacts, "plugin-ui-session-ready-"));
     let stdout = "";

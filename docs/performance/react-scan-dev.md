@@ -12,10 +12,10 @@ CUA 权限浮窗及 Web/手机入口。
 
 - React Scan 是 `@zcode/desktop` 的开发依赖，锁定版本，脚本由本地 Vite 服务提供，不依赖 CDN。
 - 仅 `vite serve` 且 mode 非 `production` 时默认启用。
-- `XCODE_REACT_SCAN=0` 关闭注入。该变量与连接哪个后端的 `XCODE_ENV` 无关。
+- `ZCODE_REACT_SCAN=0` 关闭注入。该变量与连接哪个后端的 `ZCODE_ENV` 无关。
 - 使用 head 中的普通 script，先于 React/React DOM 模块执行，避免首次挂载前未安装 hook 而漏报。
 - `vite build`（包括非 production mode）与 preview 不注入脚本；生产 renderer 不携带 React Scan。
-- `XCODE_REACT_SCAN` 不影响 E2E 构建产物，不进入构建缓存环境变量指纹。构建配置的变量审计仅在 `vite.config.ts` 中排除此开发开关；其他构建变量仍须登记。
+- `ZCODE_REACT_SCAN` 不影响 E2E 构建产物，不进入构建缓存环境变量指纹。构建配置的变量审计仅在 `vite.config.ts` 中排除此开发开关；其他构建变量仍须登记。
 - Scan 自己管理工具栏和暂停状态，不在业务层增加第二套渲染计数或持久化。
 
 ```text
@@ -32,17 +32,17 @@ vite build / preview ────────────────→ React �
 macOS / Linux 临时关闭：
 
 ```sh
-XCODE_REACT_SCAN=0 pnpm dev:desktop
+ZCODE_REACT_SCAN=0 pnpm dev:desktop
 ```
 
 Windows PowerShell 临时关闭：
 
 ```powershell
-$env:XCODE_REACT_SCAN = "0"
+$env:ZCODE_REACT_SCAN = "0"
 pnpm dev:desktop
 ```
 
-也可在仓库根 `.env.local` 设置 `XCODE_REACT_SCAN=0`。移除变量并重启即可恢复默认开启。
+也可在仓库根 `.env.local` 设置 `ZCODE_REACT_SCAN=0`。移除变量并重启即可恢复默认开启。
 
 ## 验证合同
 

@@ -47,7 +47,7 @@ const HUNG_ATTEMPTS = 4;
 const DEADLINE_MS = 30_000;
 const desktopRoot = process.cwd();
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ??
+  process.env.ZCODE_E2E_ARTIFACT_DIR ??
     ".e2e-artifacts/remote-workspace-folder-thread-exhaustion-ssh",
 );
 

@@ -74,7 +74,7 @@ describe("desktop e2e process cleanup", () => {
       /const exitAfterLastWindowClosed[\s\S]*?exitPreparedApp\("all-windows-closed-after-preparation"\)/u,
     );
     expect(mainSource).toMatch(
-      /process\.env\.XCODE_E2E_RUN_ID\?\.trim\(\)[\s\S]*?spawn\("taskkill"[\s\S]*?spawn\("kill", \["-9", String\(process\.pid\)\]/u,
+      /process\.env\.ZCODE_E2E_RUN_ID\?\.trim\(\)[\s\S]*?spawn\("taskkill"[\s\S]*?spawn\("kill", \["-9", String\(process\.pid\)\]/u,
     );
   });
 

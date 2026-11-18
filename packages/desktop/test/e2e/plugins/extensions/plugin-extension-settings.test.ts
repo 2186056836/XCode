@@ -215,7 +215,7 @@ async function findFilesContaining(root: string, needle: string): Promise<string
 async function scanLeaks(needle: string): Promise<{ roots: string[]; hits: string[] }> {
   const { homeDir, appDataDir } = getE2EAppDataPaths();
   const roots = [
-    ...new Set([homeDir, appDataDir, process.env.XCODE_E2E_RUNTIME_LOG_DIR ?? ""]),
+    ...new Set([homeDir, appDataDir, process.env.ZCODE_E2E_RUNTIME_LOG_DIR ?? ""]),
   ].filter(Boolean);
   const hits = (await Promise.all(roots.map((root) => findFilesContaining(root, needle)))).flat();
   return { roots, hits: [...new Set(hits)] };
@@ -256,7 +256,7 @@ async function callAccountTool(name: string, args: Record<string, unknown>): Pro
 describe("PLM-EXT-P2D 插件设置与扩展的 settings 能力", () => {
   after(async () => {
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-p2d-evidence.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-p2d-evidence.json"),
       JSON.stringify(evidence, null, 2),
     ).catch(() => undefined);
     await clearAppData();

@@ -28,7 +28,7 @@ export async function main(): Promise<void> {
     api: createSitesApi({
       origin: resolveRuntimeXCodeEndpointOrigin(process.env),
       // 面板只在桌面端可用，桌面端总会设置它；插件自己的版本号不是 XCode 版本，不拿来顶替。
-      appVersion: process.env.XCODE_APP_VERSION?.trim() ?? "",
+      appVersion: process.env.ZCODE_APP_VERSION?.trim() ?? "",
       fetch: globalThis.fetch,
       timeoutMs: REQUEST_TIMEOUT_MS,
     }),

@@ -16,10 +16,10 @@
     "pdf": {
       "type": "stdio",
       "command": "node",
-      "args": ["${XCODE_PLUGIN_ROOT}/dist/server.mjs"],
-      "cwd": "${XCODE_PROJECT_DIR}",
+      "args": ["${ZCODE_PLUGIN_ROOT}/dist/server.mjs"],
+      "cwd": "${ZCODE_PROJECT_DIR}",
       "env": {
-        "XCODE_WORKSPACE_ROOT": "${XCODE_PROJECT_DIR}"
+        "ZCODE_WORKSPACE_ROOT": "${ZCODE_PROJECT_DIR}"
       },
       "isolation": "workspace"
     }

@@ -41,7 +41,7 @@
 - 复跑：`local-docker-20261104101204-57bef5`，3 个 spec、5 个用例全部通过；包含 MEM-DEVICE-01/02/03、SSH P0 和 R3 Scope。命令如下：
 
 ```sh
-XCODE_E2E_MANUAL_REVIEW=1 node harness/remote/run-local-docker.mjs \
+ZCODE_E2E_MANUAL_REVIEW=1 node harness/remote/run-local-docker.mjs \
   packages/desktop/test/e2e/conversation-session/remote/configuration/manual-review/pending/conversation-session-remote-memory-settings.test.ts \
   packages/desktop/test/e2e/conversation-session/remote/connection/conversation-session-ssh-remote-p0.test.ts \
   packages/desktop/test/e2e/conversation-session/remote/configuration/conversation-session-r3-settings-scopes.test.ts

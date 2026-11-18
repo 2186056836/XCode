@@ -44,7 +44,7 @@ import {
 const CASE = "E2E_SCT04";
 const CALLER_TITLE = "SCT04 调用会话";
 const TITLE = "SCT04 生命周期分叉";
-const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR!;
+const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR!;
 const tools: AppControlToolEvidence = {};
 const assertions: Record<string, unknown> = {};
 const evidence = { tools, assertions };
@@ -169,8 +169,8 @@ describe(`${CASE}: App session lifecycle through actual tools`, () => {
 
     const pairUrl = await obtainUnreadPairingUrl();
     mobile = await chromium.launch({
-      ...(process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE
-        ? { executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
+      ...(process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE
+        ? { executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
         : { channel: "chrome" }),
       headless: true,
     });

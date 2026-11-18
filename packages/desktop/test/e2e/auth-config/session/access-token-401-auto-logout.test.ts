@@ -9,10 +9,10 @@ import {
 import { clearAppData, getE2EAppDataPaths } from "#e2e/helpers/desktop-app";
 import { dismissOccupationOnboarding } from "#e2e/helpers/occupation-onboarding";
 
-const responseStatus = process.env.XCODE_E2E_AUTH_EXPIRY_HTTP_STATUS === "200" ? 200 : 401;
-const emptyRejection = process.env.XCODE_E2E_AUTH_EXPIRY_RESPONSE_KIND === "empty";
-const provider = process.env.XCODE_E2E_AUTH_EXPIRY_PROVIDER === "zai" ? "zai" : "bigmodel";
-const preserveSession = process.env.XCODE_E2E_AUTH_VALIDATION_HEADER === "1";
+const responseStatus = process.env.ZCODE_E2E_AUTH_EXPIRY_HTTP_STATUS === "200" ? 200 : 401;
+const emptyRejection = process.env.ZCODE_E2E_AUTH_EXPIRY_RESPONSE_KIND === "empty";
+const provider = process.env.ZCODE_E2E_AUTH_EXPIRY_PROVIDER === "zai" ? "zai" : "bigmodel";
+const preserveSession = process.env.ZCODE_E2E_AUTH_VALIDATION_HEADER === "1";
 
 describe("用户资料 access token 登录过期", () => {
   after(async () => {
@@ -21,7 +21,7 @@ describe("用户资料 access token 登录过期", () => {
   });
 
   it(`AUTH-06: ${preserveSession ? "ZAI 有效身份遇到业务异常仍保留登录" : `${provider} HTTP ${responseStatus} ${emptyRejection ? "空正文" : "业务401"} 后清理并进入登录入口`}`, async () => {
-    const baseUrl = process.env.XCODE_E2E_ACCESS_TOKEN_401_URL;
+    const baseUrl = process.env.ZCODE_E2E_ACCESS_TOKEN_401_URL;
     if (!baseUrl) throw new Error("缺少隔离 userinfo HTTP fixture");
 
     if (preserveSession) {

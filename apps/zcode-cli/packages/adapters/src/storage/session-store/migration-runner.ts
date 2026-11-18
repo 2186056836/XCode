@@ -107,7 +107,7 @@ export async function runSqliteSessionMigrationsAsync(
       onBeforeApply: async (id) => { migrationId = id; if (migration!.kind === "none") migration!.kind = "upgrade"; await progress("migrating", { migrationId: id, completed: migration!.executedCount, total: SQLITE_MIGRATIONS.length }); },
       onApplied: () => { migration!.executedCount++; },
       onCommitting: () => progress("committing"),
-      onBackupSkipped: () => process.emitWarning(`SQLite migration backup skipped: ${dbPath}`, { code: "XCODE_MIGRATION_BACKUP_SKIPPED" }),
+      onBackupSkipped: () => process.emitWarning(`SQLite migration backup skipped: ${dbPath}`, { code: "ZCODE_MIGRATION_BACKUP_SKIPPED" }),
     });
     migration!.committedCount = migration!.executedCount;
     await progress("ready");

@@ -70,7 +70,7 @@ const ENV_ALLOWLIST = new Set([
   "APPDATA",
   "LOCALAPPDATA",
   "NODE_ENV",
-  "XCODE_PROCESS_LABEL",
+  "ZCODE_PROCESS_LABEL",
 ]);
 /**
  * 系统在子进程启动时注入的键，不来自 Window Host 的环境（见 docs/plugins/extension-host.md §12.1）：
@@ -125,7 +125,7 @@ async function seedExtensionFixtures(): Promise<void> {
 
 async function readMainLog(): Promise<string[]> {
   const logDir =
-    process.env.XCODE_E2E_RUNTIME_LOG_DIR?.trim() || join(resolveE2EStorageRoot(), "v2", "logs");
+    process.env.ZCODE_E2E_RUNTIME_LOG_DIR?.trim() || join(resolveE2EStorageRoot(), "v2", "logs");
   const names = (await readdir(logDir).catch(() => [] as string[]))
     .filter((name) => name.endsWith(".log"))
     .sort();
@@ -275,7 +275,7 @@ function findRow(rows: LauncherRow[], item: string): LauncherRow | undefined {
 describe("PLM-EXT-2A 扩展进程基础设施与插槽", () => {
   after(async () => {
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-2a-evidence.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "plm-ext-2a-evidence.json"),
       JSON.stringify(evidence, null, 2),
     ).catch(() => undefined);
     await clearAppData();
@@ -420,7 +420,7 @@ describe("PLM-EXT-2A 扩展进程基础设施与插槽", () => {
     expect(envKeys.some((key) => /OTEL|TELEMETRY|OAUTH|SECRET|TOKEN|BIGMODEL/i.test(key))).toBe(
       false,
     );
-    expect(envKeys).toContain("XCODE_PROCESS_LABEL");
+    expect(envKeys).toContain("ZCODE_PROCESS_LABEL");
 
     // (d) 启动页「扩展」分区：清单非法（悬停带字段路径）、版本不兼容、条目不可用。
     await openLauncher();

@@ -10,7 +10,7 @@ import { waitForWorkspaceApp, DEFAULT_WORKSPACE } from "#e2e/helpers/desktop-app
 import { seedArchiveAutomations } from "#e2e/helpers/archive-automations";
 
 const row = (id: string) => $(`[data-testid="archive-task"][data-task-id="${id}"]`);
-const home = process.env.XCODE_E2E_HOME_DIR!;
+const home = process.env.ZCODE_E2E_HOME_DIR!;
 const ids = ["arm-alpha", "arm-beta", "arm-scheduled", "arm-loose", "arm-removed"];
 function readRow(id: string) {
   const db = new DatabaseSync(join(home, ".zcode/v2/tasks-index.sqlite"), { readOnly: true });
@@ -231,7 +231,7 @@ describe("归档管理", () => {
       await browser.waitUntil(async () => (await state()).calls === 1);
       expect((await state()).openedBeforeRequest).toBe(true);
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "apd-preflight-pending.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "apd-preflight-pending.png"),
       );
       await browser.keys("Escape");
       await dialog.waitForExist({ reverse: true });
@@ -379,7 +379,7 @@ describe("归档管理", () => {
     });
     expect(ids.map((id) => readRow(id).archived)).toEqual(ids.map(() => 1));
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "ARM07-disabled-30-days.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "ARM07-disabled-30-days.png"),
     );
   });
   it("ARM01/05/06：分组折叠、搜索、时间排序和项目选择", async () => {
@@ -616,8 +616,8 @@ describe("归档管理", () => {
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("pair receiver unavailable");
     const mobile = await chromium.launch({
-      ...(process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE
-        ? { executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
+      ...(process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE
+        ? { executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
         : { channel: "chrome" }),
       headless: true,
     });
@@ -673,7 +673,7 @@ describe("归档管理", () => {
       await seedMobileFixtureLogin(context);
       const page = await context.newPage();
       await openMobilePairingPage(page, await pairing, {
-        artifactDir: process.env.XCODE_E2E_ARTIFACT_DIR!,
+        artifactDir: process.env.ZCODE_E2E_ARTIFACT_DIR!,
         caseMarker: "APD11",
         phase: "pairing",
         readySelector: '[data-testid="task-settings-button"]',
@@ -729,7 +729,7 @@ describe("归档管理", () => {
       );
       expect(await dialog.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)).toBe(true);
       await page.screenshot({
-        path: join(process.env.XCODE_E2E_ARTIFACT_DIR!, "apd-mobile-confirmation.png"),
+        path: join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "apd-mobile-confirmation.png"),
       });
       await page.getByTestId("confirm-dialog-confirm").tap();
       await page.waitForFunction(() =>
@@ -867,7 +867,7 @@ async function captureArchiveLayouts() {
         }
         await browser.saveScreenshot(
           join(
-            process.env.XCODE_E2E_ARTIFACT_DIR!,
+            process.env.ZCODE_E2E_ARTIFACT_DIR!,
             `archive-${width}-${locale}-${theme}-collapsed.png`,
           ),
         );
@@ -882,7 +882,7 @@ async function captureArchiveLayouts() {
         ).toBe(true);
         await browser.saveScreenshot(
           join(
-            process.env.XCODE_E2E_ARTIFACT_DIR!,
+            process.env.ZCODE_E2E_ARTIFACT_DIR!,
             `archive-${width}-${locale}-${theme}-expanded.png`,
           ),
         );

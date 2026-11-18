@@ -155,7 +155,7 @@ async function reviewTrustCode(page?: Page) {
 
 describe("WMT-01 workspace MCP manual trust", () => {
   afterEach(async function () {
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (artifactDir && this.currentTest?.state === "failed") {
       const caseMarker = this.currentTest.title.match(/^WMT-\d+/u)?.[0] ?? "WMT-01";
       await browser.saveScreenshot(join(artifactDir, `${caseMarker}-desktop-failure.png`));
@@ -196,7 +196,7 @@ describe("WMT-01 workspace MCP manual trust", () => {
       },
     };
     await writeFile(configPath, JSON.stringify(config));
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (!artifactDir) throw new Error("isolated artifact directory required");
     await setPluginPresentation({ locale: "zh-CN", theme: "zai-light", width: 1280, height: 660 });
     const recording = await startElectronWindowRecording({
@@ -351,7 +351,7 @@ describe("WMT-01 workspace MCP manual trust", () => {
   });
   it("WMT-02/05: mobile session guidance and settings share the Host trust state", async function () {
     this.timeout(180_000);
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (!artifactDir) throw new Error("isolated artifact directory required");
     await clickTestIdByDom(TID_SETTINGS_BACK_BUTTON);
     await waitForTestIdByDom(pendingTriggerId);
@@ -359,7 +359,7 @@ describe("WMT-01 workspace MCP manual trust", () => {
     expect(taskId).toBeTruthy();
     const pairingUrl = await obtainUnreadPairingUrl();
     const executablePath =
-      process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE || process.env.R3_MOBILE_CHROME;
+      process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE || process.env.R3_MOBILE_CHROME;
     const chrome = await chromium.launch({
       ...(executablePath ? { executablePath } : { channel: "chrome" }),
       headless: true,
@@ -520,7 +520,7 @@ describe("WMT-01 workspace MCP manual trust", () => {
   });
   it("WMT-03: deleting the final project entry exposes a trustable fallback beside invalid config", async function () {
     this.timeout(180_000);
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (!artifactDir) throw new Error("isolated artifact directory required");
     const fallbackName = "e2e_workspace_mcp_fallback";
     const fallbackRowId = testId(TID_MCP_SERVER_ROW, fallbackName);

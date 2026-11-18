@@ -5,8 +5,8 @@ import {
   getDesktopMenuMessage,
   isValidShortcutBinding,
   resolveLocaleFromLanguageTag,
-  XCODE_ENV,
-  XCODE_PRODUCT_FLAVOR,
+  ZCODE_ENV,
+  ZCODE_PRODUCT_FLAVOR,
   type DesktopCommandId,
   type Locale,
 } from "@zcode/shared";
@@ -121,7 +121,7 @@ function buildApplicationMenuTemplate(options: {
                 click: () => void options.executeDesktopCommand(DesktopCommandIds.ShowAbout),
               },
               // 更新入口跟随产品身份：Preview 禁用更新器，生产后端的 Preview 也不例外。
-              ...(XCODE_PRODUCT_FLAVOR === "production"
+              ...(ZCODE_PRODUCT_FLAVOR === "production"
                 ? [
                     {
                       id: CHECK_FOR_UPDATE_MENU_ID,
@@ -262,7 +262,7 @@ function buildApplicationMenuTemplate(options: {
                 label: getLabel(desktopMenuMessageIds.helpAbout),
                 click: () => void options.executeDesktopCommand(DesktopCommandIds.ShowAbout),
               },
-              ...(XCODE_PRODUCT_FLAVOR === "production"
+              ...(ZCODE_PRODUCT_FLAVOR === "production"
                 ? [
                     {
                       id: CHECK_FOR_UPDATE_MENU_ID,
@@ -293,7 +293,7 @@ function buildApplicationMenuTemplate(options: {
               { type: "separator" as const },
             ]
           : []),
-        ...(XCODE_ENV === "test"
+        ...(ZCODE_ENV === "test"
           ? [
               {
                 label: getLabel(desktopMenuMessageIds.helpXCodeEndpoint),

@@ -110,7 +110,7 @@ async function enableProbe() {
   });
 }
 
-const out = process.env.XCODE_E2E_ARTIFACT_DIR!;
+const out = process.env.ZCODE_E2E_ARTIFACT_DIR!;
 describe("SPT08 full App session selection rendering", () => {
   after(async () => {
     await restoreHandoffProbes();

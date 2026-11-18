@@ -63,12 +63,12 @@ const scenario = process.env.R3_HISTORY_CASE ?? "single";
 // conflict：canonical 与 source 的身份冲突；conflict-sources：canonical 不含该任务，两个 source 之间冲突。
 const conflictScenario = scenario === "conflict" || scenario === "conflict-sources";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-upgrade-history",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-upgrade-history",
 );
 
 async function replaceRunApplication(base: string) {
   const desktopRoot = resolve(import.meta.dirname, "../../../../..");
-  const runId = process.env.XCODE_E2E_RUN_ID;
+  const runId = process.env.ZCODE_E2E_RUN_ID;
   if (!runId) throw new Error("缺少隔离应用路径");
   const cache = join(desktopRoot, ".e2e-cache", runId);
   const copies: Array<[string, string]> = [

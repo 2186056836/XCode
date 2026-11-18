@@ -219,7 +219,7 @@ export async function createConfigWithPluginMigrations(
  * 1. System defaults
  * 2. User config file (~/.xcode/cli/config.json)
  * 3. Project config files (root to cwd, then explicit projectConfigPath)
- * 4. Environment variables (XCODE_*)
+ * 4. Environment variables (ZCODE_*)
  * 5. CLI overrides
  */
 export function createConfig(options: ConfigFactoryOptions = {}): ConfigResult {
@@ -579,13 +579,13 @@ function summarizeOptionalProjectConfig(files: ProjectConfigFile[]): OptionalPat
 // ── Hook Trust identity（docs/specs/workspace-hook-trust.md D23）──
 // 唯一 resolver 在 @zcode/shared/managed-worktree；这里只提供 Node 只读文件端口与数据根目录。
 
-const XCODE_DATA_BASE_DIR_ENV_KEY = "XCODE_DATA_BASE_DIR";
+const ZCODE_DATA_BASE_DIR_ENV_KEY = "ZCODE_DATA_BASE_DIR";
 
-/** 与 Host getDataBaseDir 同规则：XCODE_DATA_BASE_DIR 优先，空值回落 homedir。 */
+/** 与 Host getDataBaseDir 同规则：ZCODE_DATA_BASE_DIR 优先，空值回落 homedir。 */
 export function resolveXCodeDataBaseDir(
   env: Record<string, string | undefined> = process.env,
 ): string {
-  return env[XCODE_DATA_BASE_DIR_ENV_KEY]?.trim() || homedir();
+  return env[ZCODE_DATA_BASE_DIR_ENV_KEY]?.trim() || homedir();
 }
 
 const nodeTrustIdentityFs: WorkspaceHookTrustIdentityFs = {

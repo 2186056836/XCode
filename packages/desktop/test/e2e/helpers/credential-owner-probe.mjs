@@ -2,7 +2,7 @@ import { appendFile, mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { AsyncEntry } from "@napi-rs/keyring";
 
-const path = process.env.XCODE_E2E_CREDENTIAL_OWNER_LOG;
+const path = process.env.ZCODE_E2E_CREDENTIAL_OWNER_LOG;
 if (!path) throw new Error("Credential owner probe requires its isolated output path");
 const role = process.type ?? "node";
 await mkdir(dirname(path), { recursive: true });

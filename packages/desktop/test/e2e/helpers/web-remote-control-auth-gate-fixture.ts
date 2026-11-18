@@ -166,12 +166,12 @@ export async function prepareWebRemoteControlAuthGateFixture(options: {
   const envPatch = {
     // 缓存账号会触发独立业务 API；必须同样隔离，避免合成凭据收到线上401并提前登出。
     ZAI_BUSINESS_BASE_URL: baseUrl,
-    XCODE_E2E_REMOTE_AUTH_GATE_URL: baseUrl,
-    XCODE_BASE_URL: baseUrl,
-    XCODE_ENDPOINT_ORIGIN: baseUrl,
-    XCODE_TEST_BASE_URL: baseUrl,
-    XCODE_WEB_REMOTE_CONTROL_RELAY_WS_URL: `${baseUrl.replace("http:", "ws:")}/api/v1/remote/ws2`,
-    XCODE_WEB_REMOTE_CONTROL_URL: `${baseUrl}/remote/v4`,
+    ZCODE_E2E_REMOTE_AUTH_GATE_URL: baseUrl,
+    ZCODE_BASE_URL: baseUrl,
+    ZCODE_ENDPOINT_ORIGIN: baseUrl,
+    ZCODE_TEST_BASE_URL: baseUrl,
+    ZCODE_WEB_REMOTE_CONTROL_RELAY_WS_URL: `${baseUrl.replace("http:", "ws:")}/api/v1/remote/ws2`,
+    ZCODE_WEB_REMOTE_CONTROL_URL: `${baseUrl}/remote/v4`,
   };
   const previous = Object.fromEntries(Object.keys(envPatch).map((key) => [key, process.env[key]]));
   Object.assign(process.env, envPatch);

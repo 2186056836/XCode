@@ -38,7 +38,7 @@ import {
 } from "#e2e/helpers/v4-conversation";
 
 const CASE_MARKER = "E2E_R3_ACK_LOSS";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-ack-loss");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-ack-loss");
 
 declare global {
   interface Window {

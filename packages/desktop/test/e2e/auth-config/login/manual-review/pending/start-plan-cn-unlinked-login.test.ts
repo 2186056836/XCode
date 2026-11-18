@@ -47,7 +47,7 @@ describe("AUTH-CN-START: 国内登录未关联 BigModel 时使用 Start Plan", (
 
   it("CNS-01: 只显示 BigModel 的 Start，用 XCode JWT 查询并可选择 Start 模型", async function () {
     this.timeout(240_000);
-    const upstream = process.env.XCODE_E2E_CODING_PLAN_MOCK_URL;
+    const upstream = process.env.ZCODE_E2E_CODING_PLAN_MOCK_URL;
     if (!upstream) throw new Error("Missing isolated account control plane");
     await prepareV4ConversationE2E({ skipProvider: true });
     // Start balance 返回有效体验套餐与 GLM-5.3 额度；同时清空控制面请求记录。
@@ -189,7 +189,7 @@ describe("AUTH-CN-START: 国内登录未关联 BigModel 时使用 Start Plan", (
 async function artifactPath(name: string): Promise<string> {
   // 产物目录可能尚未创建；截图与诊断 JSON 写入前统一确保存在。
   const dir = join(
-    process.env.XCODE_E2E_ARTIFACT_DIR || join(process.cwd(), ".e2e-artifacts"),
+    process.env.ZCODE_E2E_ARTIFACT_DIR || join(process.cwd(), ".e2e-artifacts"),
     "start-plan-cn-unlinked",
   );
   await mkdir(dir, { recursive: true });

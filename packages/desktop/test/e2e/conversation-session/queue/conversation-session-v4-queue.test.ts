@@ -212,10 +212,10 @@ describe("v4 M4/B09 门禁：queue 单项管理与冻结编辑", () => {
     const taskId = (await getV4PaneSnapshot()).sessionId;
     await clickV4Stop();
     await waitForV4Pane((snapshot) => !snapshot.canStop, "手机配对前停止首轮", 30000);
-    const endpoint = process.env.XCODE_WEB_REMOTE_CONTROL_URL;
+    const endpoint = process.env.ZCODE_WEB_REMOTE_CONTROL_URL;
     if (!endpoint || !taskId) throw new Error("缺少手机 fixture / task");
     const pairingUrl = await obtainUnreadPairingUrl(new URL(endpoint).origin);
-    const executablePath = process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
+    const executablePath = process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
     const chrome = await chromium.launch({
       ...(executablePath ? { executablePath } : { channel: "chrome" }),
       headless: true,
@@ -383,7 +383,7 @@ describe("v4 M4/B09 门禁：queue 单项管理与冻结编辑", () => {
   });
 });
 
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/queue-edit");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/queue-edit");
 
 async function saveVisualEvidence(label: string, samples: unknown) {
   await mkdir(artifactDir, { recursive: true });

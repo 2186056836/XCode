@@ -53,10 +53,10 @@ import type {
   PluginStoreListing,
   PluginPort,
 } from "@zcode/contracts";
-import { XCODE_OFFICIAL_PLUGIN_MARKETPLACE, isOfficialMarketplaceId } from "@zcode/contracts";
+import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE, isOfficialMarketplaceId } from "@zcode/contracts";
 import {
   DEFAULT_PLUGIN_MARKETPLACES,
-  XCODE_CUA_OFFICIAL_PLUGIN_ID,
+  ZCODE_CUA_OFFICIAL_PLUGIN_ID,
   isXCodeCuaInternalFeatureEnabled,
 } from "@zcode/shared";
 import {
@@ -287,7 +287,7 @@ function countVisibleMarketplacePlugins(
   plugins: readonly { name: string }[] | undefined,
 ): number | undefined {
   if (!plugins) return undefined;
-  if (marketplaceId !== XCODE_OFFICIAL_PLUGIN_MARKETPLACE) return plugins.length;
+  if (marketplaceId !== ZCODE_OFFICIAL_PLUGIN_MARKETPLACE) return plugins.length;
   return plugins.filter((entry) => entry.name !== OFFICIAL_NODE_REPL_HOST_PLUGIN_NAME).length;
 }
 
@@ -436,7 +436,7 @@ export async function getXCodePluginsOverview(
   const suppressed = new Set(configResult.config.plugins.suppressedBuiltins);
   const restorableBuiltins: XCodeAvailablePluginData[] = OFFICIAL_PLUGIN_DEFINITIONS.filter(
     (def) =>
-      suppressed.has(`${def.name}@${XCODE_OFFICIAL_PLUGIN_MARKETPLACE}`) &&
+      suppressed.has(`${def.name}@${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE}`) &&
       // computer-use 的恢复入口需要 internal 特性开启（与 restoreBuiltinPluginCore 同口径）。
       (def.name !== "computer-use" || isXCodeCuaInternalFeatureEnabled(options.env ?? process.env)),
   ).map((def) => {
@@ -444,9 +444,9 @@ export async function getXCodePluginsOverview(
       ? parseEntryStoreListing({ name: def.name, ...def.listing })
       : undefined;
     return {
-      id: `${def.name}@${XCODE_OFFICIAL_PLUGIN_MARKETPLACE}`,
+      id: `${def.name}@${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE}`,
       name: def.name,
-      marketplace: XCODE_OFFICIAL_PLUGIN_MARKETPLACE,
+      marketplace: ZCODE_OFFICIAL_PLUGIN_MARKETPLACE,
       version: def.version,
       installed: false,
       // Bugfix：可恢复条目只带 listing 时丢了 "ui"，卸载后的文档插件从「UI 插件」掉进分类分组。
@@ -535,7 +535,7 @@ function loadPluginListingsById(storageRoot: string): Record<string, PluginStore
     if (!definition.listing) continue;
     const listing = parseEntryStoreListing({ name: definition.name, ...definition.listing });
     if (listing) {
-      listings.set(`${definition.name}@${XCODE_OFFICIAL_PLUGIN_MARKETPLACE}`, listing);
+      listings.set(`${definition.name}@${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE}`, listing);
     }
   }
 
@@ -775,7 +775,7 @@ async function installXCodeMarketplacePluginLocked(
     options.marketplace,
   )?.plugins.find((entry) => entry.name === options.pluginName);
   const isSuppressedBundledOfficial =
-    options.marketplace === XCODE_OFFICIAL_PLUGIN_MARKETPLACE &&
+    options.marketplace === ZCODE_OFFICIAL_PLUGIN_MARKETPLACE &&
     configResult.config.plugins.suppressedBuiltins.includes(pluginId) &&
     (bundledEntry?.source === "filesystem" || bundledEntry?.source === "sea");
   if (isSuppressedBundledOfficial) {
@@ -855,7 +855,7 @@ async function installXCodeMarketplacePluginLocked(
       ],
     };
   }
-  if (options.marketplace === XCODE_OFFICIAL_PLUGIN_MARKETPLACE) {
+  if (options.marketplace === ZCODE_OFFICIAL_PLUGIN_MARKETPLACE) {
     // 官方 marketplace 复用内置插件的 id 空间。若同名 CDN 插件重新安装，
     // 清掉历史内置 suppression，否则 Runtime 仍会把已拥有的安装误判为 suppressed。
     for (const record of installed.installed) {
@@ -1026,14 +1026,14 @@ function applySparsePaths(
  * 因此核心不能再次获取 promise-chain lock；公开入口再负责提供锁保护。
  */
 async function restoreBuiltinPluginCore(options: RestoreBuiltinPluginOptions): Promise<void> {
-  const zcodeCuaPluginId = XCODE_CUA_OFFICIAL_PLUGIN_ID;
+  const zcodeCuaPluginId = ZCODE_CUA_OFFICIAL_PLUGIN_ID;
   if (
     options.pluginId === zcodeCuaPluginId &&
     !isXCodeCuaInternalFeatureEnabled(options.env ?? process.env)
   ) {
     // overview 虽然隐藏了恢复入口，但协议调用仍可绕过 UI 写用户配置。
     // 功能开关关闭时在写盘前失败，确保用户配置与插件缓存都保持零痕迹。
-    throw new Error("computer-use built-in plugin requires XCODE_CUA_PRODUCT_HELPER to be enabled");
+    throw new Error("computer-use built-in plugin requires ZCODE_CUA_PRODUCT_HELPER to be enabled");
   }
   const { configResult, pluginStorageRoot } = await resolvePluginContext(options);
   // 准备取消或失败时不能先改变配置；seed 不按抑制态过滤，成功后再提交恢复。

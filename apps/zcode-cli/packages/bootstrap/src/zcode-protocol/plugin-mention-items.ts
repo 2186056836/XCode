@@ -6,7 +6,7 @@
 import { CoreErrorType, isCoreError } from "@zcode/contracts";
 import { findPluginReferenceCatalogEntry } from "@zcode/core";
 import {
-  XCODE_PLUGIN_MENTION_ERROR_CODES,
+  ZCODE_PLUGIN_MENTION_ERROR_CODES,
   zcodePluginMentionItemsSchema,
   zcodePluginsMentionItemsParamsSchema,
   type XCodePluginMentionErrorCode,
@@ -77,7 +77,7 @@ async function resolveMentionToolServer(
   if (!entry || !entry.enabled || entry.conflictingPluginIds.length > 0) {
     throw mentionError(
       INVALID_PARAMS_CODE,
-      XCODE_PLUGIN_MENTION_ERROR_CODES.pluginUnavailable,
+      ZCODE_PLUGIN_MENTION_ERROR_CODES.pluginUnavailable,
       `Plugin is not available in this session: ${pluginId}`,
     );
   }
@@ -88,7 +88,7 @@ async function resolveMentionToolServer(
     if (!visibility.includes(APP_VISIBILITY)) {
       throw mentionError(
         INVALID_PARAMS_CODE,
-        XCODE_PLUGIN_MENTION_ERROR_CODES.toolNotAppVisible,
+        ZCODE_PLUGIN_MENTION_ERROR_CODES.toolNotAppVisible,
         `Plugin tool is not visible to the app: ${serverName}/${tool}`,
       );
     }
@@ -96,7 +96,7 @@ async function resolveMentionToolServer(
   }
   throw mentionError(
     INVALID_PARAMS_CODE,
-    XCODE_PLUGIN_MENTION_ERROR_CODES.toolNotFound,
+    ZCODE_PLUGIN_MENTION_ERROR_CODES.toolNotFound,
     `Plugin tool not found: ${pluginId}/${tool}`,
   );
 }
@@ -117,14 +117,14 @@ async function callMentionTool(
     if (isAuthorizationDenied(error)) {
       throw mentionError(
         SERVER_ERROR_CODE,
-        XCODE_PLUGIN_MENTION_ERROR_CODES.toolDenied,
+        ZCODE_PLUGIN_MENTION_ERROR_CODES.toolDenied,
         `Plugin tool call was denied: ${serverName}/${tool}`,
         error,
       );
     }
     throw mentionError(
       SERVER_ERROR_CODE,
-      XCODE_PLUGIN_MENTION_ERROR_CODES.toolFailed,
+      ZCODE_PLUGIN_MENTION_ERROR_CODES.toolFailed,
       `Plugin tool call failed: ${serverName}/${tool}`,
       error,
     );
@@ -133,7 +133,7 @@ async function callMentionTool(
   if (result.isError === true) {
     throw mentionError(
       SERVER_ERROR_CODE,
-      XCODE_PLUGIN_MENTION_ERROR_CODES.toolFailed,
+      ZCODE_PLUGIN_MENTION_ERROR_CODES.toolFailed,
       `Plugin tool returned an error: ${serverName}/${tool}`,
     );
   }
@@ -150,7 +150,7 @@ async function callMentionTool(
       .map((issue) => ["items", ...issue.path].join("."));
     throw mentionError(
       SERVER_ERROR_CODE,
-      XCODE_PLUGIN_MENTION_ERROR_CODES.resultInvalid,
+      ZCODE_PLUGIN_MENTION_ERROR_CODES.resultInvalid,
       `Plugin tool returned invalid mention items: ${serverName}/${tool} (${paths.join(", ")})`,
     );
   }

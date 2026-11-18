@@ -47,7 +47,7 @@ import {
 
 const CASE = "E2E_SCT07";
 const TITLE = "2000字小说创作";
-const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR!;
+const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR!;
 const tools: AppControlToolEvidence = {};
 const evidence: Record<string, unknown> = { tools };
 type SessionRef = {
@@ -157,8 +157,8 @@ describe(`${CASE}: cross-project App search, read and explicit open`, () => {
 
     const pairUrl = await obtainUnreadPairingUrl();
     mobile = await chromium.launch({
-      ...(process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE
-        ? { executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
+      ...(process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE
+        ? { executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
         : { channel: "chrome" }),
       headless: true,
     });

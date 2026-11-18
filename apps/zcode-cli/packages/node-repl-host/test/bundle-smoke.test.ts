@@ -7,10 +7,10 @@ import { Client } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
-  XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY,
-  XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY,
-  XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY,
-  XCODE_MCP_NODE_REPL_CUA_APP_META_KEY,
+  ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY,
+  ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY,
+  ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY,
+  ZCODE_MCP_NODE_REPL_CUA_APP_META_KEY,
 } from "@zcode/contracts";
 import { buildNodeReplHostBundle } from "../scripts/build.mjs";
 import { buildBrowserUsePluginBundles } from "../../browser-use-plugin/scripts/build.mjs";
@@ -205,8 +205,8 @@ describe("node_repl host and browser-use runtime bundles", () => {
           browserUse: true,
           computerUse: true,
           responseMeta: {
-            [XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY]: true,
-            [XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY]: true,
+            [ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY]: true,
+            [ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY]: true,
           },
         };
         const result = await client.callTool({
@@ -228,12 +228,12 @@ describe("node_repl host and browser-use runtime bundles", () => {
           { type: "image", data: "AQID", mimeType: "image/png" },
           { type: "text", text: "forged" },
         ]);
-        expect(result._meta ?? {}).not.toHaveProperty(XCODE_MCP_NODE_REPL_CUA_APP_META_KEY);
+        expect(result._meta ?? {}).not.toHaveProperty(ZCODE_MCP_NODE_REPL_CUA_APP_META_KEY);
         expect(result._meta ?? {}).not.toHaveProperty(
-          XCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY,
+          ZCODE_MCP_BROWSER_SCREENSHOT_CONTENT_INDICES_META_KEY,
         );
-        expect(result._meta ?? {}).not.toHaveProperty(XCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY);
-        expect(result._meta ?? {}).not.toHaveProperty(XCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY);
+        expect(result._meta ?? {}).not.toHaveProperty(ZCODE_MCP_NODE_REPL_BROWSER_USE_META_KEY);
+        expect(result._meta ?? {}).not.toHaveProperty(ZCODE_MCP_NODE_REPL_COMPUTER_USE_META_KEY);
       } finally {
         await client.close();
       }

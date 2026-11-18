@@ -1,6 +1,6 @@
 // I76：一次响应里交错的思考、文字和工具按流顺序保存，并按请求规则回放。
 // 规格见 apps/zcode-cli/docs/design/v2/model/assistant-block-order.md。
-// 运行时指定 XCODE_E2E_UPSTREAM_CONTEXT_WINDOW=128000，避免待审默认小窗口插入自动压缩。
+// 运行时指定 ZCODE_E2E_UPSTREAM_CONTEXT_WINDOW=128000，避免待审默认小窗口插入自动压缩。
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -388,8 +388,8 @@ describe("I76 assistant block order", () => {
 // 把会话里的 assistant 消息改写成改动前的存储格式：part 没有 blockIndex，多个文字块直接拼接成
 // 一个 text part，工具 part 带 declarationIndex。node:sqlite 只提供同步接口；调用时应用已退出，没有并发写入。
 function rewriteAsLegacyMessages(sessionId: string) {
-  const home = process.env.XCODE_E2E_HOME_DIR;
-  if (!home) throw new Error("缺少 XCODE_E2E_HOME_DIR");
+  const home = process.env.ZCODE_E2E_HOME_DIR;
+  if (!home) throw new Error("缺少 ZCODE_E2E_HOME_DIR");
   const database = new DatabaseSync(join(home, ".zcode", "cli", "db", "db.sqlite"));
   try {
     database.exec("begin immediate");
@@ -529,11 +529,11 @@ async function expectTaskSearchFinds(query: string, sessionId: string) {
 
 // 手机远控读取同一会话：展开过程区后，停止消息与反馈消息的文字行顺序和桌面相同。
 async function expectPhoneRowOrder(sessionId: string) {
-  const endpoint = process.env.XCODE_WEB_REMOTE_CONTROL_URL;
-  const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+  const endpoint = process.env.ZCODE_WEB_REMOTE_CONTROL_URL;
+  const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
   if (!endpoint || !artifactDir) throw new Error("缺少手机 fixture 或 artifact 目录");
   const pairingUrl = await obtainUnreadPairingUrl(new URL(endpoint).origin);
-  const executablePath = process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
+  const executablePath = process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE;
   const chrome = await chromium.launch({
     ...(executablePath ? { executablePath } : { channel: "chrome" }),
     headless: true,

@@ -27,7 +27,7 @@ describe("standalone session tools bootstrap", () => {
       sessionId,
       sessionStore: store,
       skipUserConfig: true,
-      env: { XCODE_STORAGE_DIR: cwd },
+      env: { ZCODE_STORAGE_DIR: cwd },
       configuredDefaultModelSelection: { providerId: "zai", modelId: "glm-4.6" },
       runtimeConfig: { workingDirectory: cwd, mode: "yolo" },
       modelExecutor: {
@@ -89,7 +89,7 @@ describe("standalone session tools bootstrap", () => {
         sessionId,
         sessionStore: store,
         skipUserConfig: true,
-        env: { XCODE_STORAGE_DIR: cwd },
+        env: { ZCODE_STORAGE_DIR: cwd },
         configuredDefaultModelSelection: { providerId: "zai", modelId: "glm-4.6" },
         runtimeConfig: { workingDirectory: cwd, mode: "yolo" },
         modelExecutor: {
@@ -114,7 +114,7 @@ describe("standalone session tools bootstrap", () => {
         sessionId,
         sessionStore: store,
         skipUserConfig: true,
-        env: { XCODE_STORAGE_DIR: cwd },
+        env: { ZCODE_STORAGE_DIR: cwd },
         runtimeConfig: { workingDirectory: cwd, mode: "yolo" },
         modelExecutor: {
           generateText: async () => {
@@ -180,7 +180,7 @@ describe("standalone session tools bootstrap", () => {
       sessionId,
       sessionStore: store,
       skipUserConfig: true,
-      env: { XCODE_STORAGE_DIR: cwd },
+      env: { ZCODE_STORAGE_DIR: cwd },
       configuredDefaultModelSelection: { providerId: "zai", modelId: "glm-4.6" },
       runtimeConfig: { workingDirectory: cwd, mode: "yolo" },
       modelExecutor: {
@@ -268,7 +268,7 @@ describe("standalone session tools bootstrap", () => {
         sessionId: actorId,
         sessionStore: store,
         skipUserConfig: true,
-        env: { XCODE_STORAGE_DIR: cwd },
+        env: { ZCODE_STORAGE_DIR: cwd },
         configuredDefaultModelSelection: { providerId: "zai", modelId: "glm-4.6" },
         runtimeConfig: { workingDirectory: cwd, mode: "yolo" },
         permissionBroker: {
@@ -385,7 +385,7 @@ describe("standalone session tools bootstrap", () => {
       standaloneSessionControl: true,
       sessionStore: store,
       skipUserConfig: true,
-      env: { XCODE_STORAGE_DIR: cwd },
+      env: { ZCODE_STORAGE_DIR: cwd },
       configuredDefaultModelSelection: { providerId: "zai", modelId: "glm-4.6" },
       runtimeConfig: { workingDirectory: cwd, mode: "yolo" },
       permissionBroker: {
@@ -509,7 +509,7 @@ describe("standalone session tools bootstrap", () => {
       standaloneSessionControl: true,
       sessionStore: store,
       skipUserConfig: true,
-      env: { XCODE_STORAGE_DIR: cwd },
+      env: { ZCODE_STORAGE_DIR: cwd },
       configuredDefaultModelSelection: { providerId: "zai", modelId: "glm-4.6" },
       runtimeConfig: { workingDirectory: cwd, mode: "yolo" },
       permissionBroker: {

@@ -22,7 +22,7 @@ it("Windows 更新发布者来自已签名应用，并保留原更新配置", as
       status: 0,
       subject: "CN=Example Publisher, O=Example Company, C=US",
     }));
-    vi.stubEnv("XCODE_WINDOWS_UPDATE_TRUSTED_PUBLISHER_DNS", "invalid retired setting");
+    vi.stubEnv("ZCODE_WINDOWS_UPDATE_TRUSTED_PUBLISHER_DNS", "invalid retired setting");
     await writeWindowsUpdatePublisher({
       appOutDir: root,
       executableName: "Example",
@@ -140,7 +140,7 @@ it("安装包使用 desktop 依赖中的唯一 Electron 版本，并声明 macOS
 });
 
 it("macOS afterExtract 从 app Resources 保留 Electron 原始许可", async () => {
-  vi.stubEnv("XCODE_TARGET_OS", "darwin");
+  vi.stubEnv("ZCODE_TARGET_OS", "darwin");
   const { default: config } = await import("../electron-builder.config.js");
   const root = await mkdtemp(join(tmpdir(), "zcode-electron-license-mac-"));
   const appName = "Electron.app";
@@ -168,7 +168,7 @@ it("macOS afterExtract 从 app Resources 保留 Electron 原始许可", async ()
 });
 
 it("Windows afterExtract 继续从 appOutDir 根目录保留 Electron 原始许可", async () => {
-  vi.stubEnv("XCODE_TARGET_OS", "win32");
+  vi.stubEnv("ZCODE_TARGET_OS", "win32");
   const { default: config } = await import("../electron-builder.config.js");
   const root = await mkdtemp(join(tmpdir(), "zcode-electron-license-win-"));
   const resources = join(root, "resources");
@@ -201,7 +201,7 @@ it("缺失生产依赖时打包必须失败", async () => {
 });
 
 it("Windows 打包关闭 Node Inspector，保留 Agent 所需的 RunAsNode", async () => {
-  vi.stubEnv("XCODE_TARGET_OS", "win32");
+  vi.stubEnv("ZCODE_TARGET_OS", "win32");
   const { default: config } = await import("../electron-builder.config.js");
 
   expect(config.electronFuses?.enableNodeCliInspectArguments).toBe(false);
@@ -210,7 +210,7 @@ it("Windows 打包关闭 Node Inspector，保留 Agent 所需的 RunAsNode", asy
 });
 
 it.each(["darwin", "linux"])("%s 保留现有 fuse 配置", async (platform) => {
-  vi.stubEnv("XCODE_TARGET_OS", platform);
+  vi.stubEnv("ZCODE_TARGET_OS", platform);
   const { default: config } = await import("../electron-builder.config.js");
 
   expect(config.electronFuses).toBeUndefined();

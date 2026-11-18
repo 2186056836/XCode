@@ -22,8 +22,8 @@ import type {
 import {
   HookEventName as HookEventNameValue,
   HookMatcherConfigSchema,
-  XCODE_INLINE_PLUGIN_MARKETPLACE,
-  XCODE_OFFICIAL_PLUGIN_MARKETPLACE,
+  ZCODE_INLINE_PLUGIN_MARKETPLACE,
+  ZCODE_OFFICIAL_PLUGIN_MARKETPLACE,
 } from "@zcode/contracts";
 import {
   directoryExistsAsync,
@@ -113,7 +113,7 @@ export {
   type PluginUpdateStatus,
 } from "./version-compare.js";
 
-const XCODE_MANIFEST_PATH = join(".zcode-plugin", "plugin.json");
+const ZCODE_MANIFEST_PATH = join(".zcode-plugin", "plugin.json");
 const CLAUDE_MANIFEST_PATH = join(".claude-plugin", "plugin.json");
 const CODEX_MANIFEST_PATH = join(".codex-plugin", "plugin.json");
 const DEFAULT_VERSION = "0.0.0";
@@ -296,7 +296,7 @@ export class NodePluginAdapter implements PluginPort {
     for (const rootPath of request.config.dirs) {
       candidates.push({
         defaultEnabled: true,
-        marketplace: XCODE_INLINE_PLUGIN_MARKETPLACE,
+        marketplace: ZCODE_INLINE_PLUGIN_MARKETPLACE,
         rootPath: resolve(rootPath),
         source: "inline",
       });
@@ -304,7 +304,7 @@ export class NodePluginAdapter implements PluginPort {
     for (const rootPath of request.officialPluginRoots ?? []) {
       candidates.push({
         defaultEnabled: false,
-        marketplace: XCODE_OFFICIAL_PLUGIN_MARKETPLACE,
+        marketplace: ZCODE_OFFICIAL_PLUGIN_MARKETPLACE,
         rootPath: resolve(rootPath),
         source: "official",
       });
@@ -313,7 +313,7 @@ export class NodePluginAdapter implements PluginPort {
       ...(await scanOfficialCache(request.storageRoot, diagnostics, materials, options)).map(
         (rootPath) => ({
           defaultEnabled: false,
-          marketplace: XCODE_OFFICIAL_PLUGIN_MARKETPLACE,
+          marketplace: ZCODE_OFFICIAL_PLUGIN_MARKETPLACE,
           rootPath,
           source: "official" as const,
         }),
@@ -711,7 +711,7 @@ async function scanOfficialCache(
       join(
         storageRoot,
         "marketplaces",
-        XCODE_OFFICIAL_PLUGIN_MARKETPLACE,
+        ZCODE_OFFICIAL_PLUGIN_MARKETPLACE,
         "bundled-marketplace.json",
       ),
     );
@@ -724,7 +724,7 @@ async function scanOfficialCache(
     return bundledRoots;
   }
 
-  const cacheRoot = join(storageRoot, "cache", XCODE_OFFICIAL_PLUGIN_MARKETPLACE);
+  const cacheRoot = join(storageRoot, "cache", ZCODE_OFFICIAL_PLUGIN_MARKETPLACE);
   try {
     const roots: string[] = [];
     for (const pluginEntry of await materials.directory(cacheRoot)) {
@@ -798,7 +798,7 @@ async function findManifest(
   rootPath: string,
   materials: PluginMaterialReader,
 ): Promise<string | null> {
-  const zcodePath = join(rootPath, XCODE_MANIFEST_PATH);
+  const zcodePath = join(rootPath, ZCODE_MANIFEST_PATH);
   if (await materials.fileExists(zcodePath)) {
     return zcodePath;
   }

@@ -2,7 +2,7 @@ import type { IPlatformService } from "@zcode/shared";
 import type { IntlInstance } from "@/i18n/IntlProvider.js";
 import type { FeedbackSubmitDraft } from "@/feedback/feedbackStore.js";
 import { runExportLogsAction } from "@/lib/exportLogsAction.js";
-import { XCODE_PRODUCT_DOCS_URL } from "@/lib/productDocs.js";
+import { ZCODE_PRODUCT_DOCS_URL } from "@/lib/productDocs.js";
 
 export interface HelpMenuActionHandlers {
   openIssueReport: () => Promise<void>;
@@ -30,7 +30,7 @@ export function createHelpMenuActionHandlers({
       });
     },
     openProductDocs: () => {
-      platform.openExternal(XCODE_PRODUCT_DOCS_URL);
+      platform.openExternal(ZCODE_PRODUCT_DOCS_URL);
     },
     exportLogs: () => {
       void runExportLogsAction(platform, intl);

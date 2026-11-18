@@ -93,9 +93,9 @@ PostToolUse hook、结果事件等异步步骤）。冷恢复需要 live 的写�
   未配置的 compact 而失败；下列命令修正准备条件后通过，不涉及产品代码调整。
 
 ```sh
-XCODE_E2E_MANUAL_REVIEW=1 \
-XCODE_E2E_DEEPSEEK_CONTEXT_WINDOW=128000 \
-XCODE_E2E_DEEPSEEK_MAX_OUTPUT_TOKENS=32768 \
+ZCODE_E2E_MANUAL_REVIEW=1 \
+ZCODE_E2E_DEEPSEEK_CONTEXT_WINDOW=128000 \
+ZCODE_E2E_DEEPSEEK_MAX_OUTPUT_TOKENS=32768 \
 E2E_PROVIDER_HTTP_MODE=replay \
 E2E_PROVIDER_REPLAY_FIXTURE_PATH="$PWD/packages/desktop/test/e2e/fixtures/upstream/conversation-session/conversation-session-tool-history-order.json" \
 pnpm --filter @zcode/desktop test:e2e -- --spec ./test/e2e/conversation-session/tools/conversation-session-tool-history-order.test.ts

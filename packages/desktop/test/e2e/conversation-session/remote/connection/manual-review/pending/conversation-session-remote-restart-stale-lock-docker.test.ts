@@ -32,7 +32,7 @@ const ROOT: RemoteAccount = { user: "root", home: "/root" };
 const DEAD_PID = 4_000_000;
 const desktopRoot = process.cwd();
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-restart-stale-lock-docker",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-restart-stale-lock-docker",
 );
 
 describe(`${MARKER}: 容器重启后接管残留锁`, () => {

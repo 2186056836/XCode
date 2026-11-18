@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { XCODE_PLUGIN_MENTION_ERROR_CODES } from "@zcode/shared";
+import { ZCODE_PLUGIN_MENTION_ERROR_CODES } from "@zcode/shared";
 import { useXCodeIntl } from "@/i18n/IntlProvider.js";
 import { resolveLocalizedText } from "@/extension-slots/domain/slotSelectors.js";
 import { useComposerMentionSlot } from "@/extension-slots/adapters/useComposerMentionSlot.js";
@@ -51,7 +51,7 @@ export function useExtensionMentionGroups(
               : group.state === "error"
                 ? intl.formatMessage({
                     id:
-                      group.errorCode === XCODE_PLUGIN_MENTION_ERROR_CODES.toolDenied
+                      group.errorCode === ZCODE_PLUGIN_MENTION_ERROR_CODES.toolDenied
                         ? "extensions.mention.denied"
                         : "extensions.mention.failed",
                   })

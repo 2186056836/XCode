@@ -78,7 +78,7 @@ import {
 // 会在 packages/ui 的 Desktop 构建链解析失败，App 重启后打不开。）
 import {
   WORKFLOW_REFINE_PERMISSION_OPTION_ID,
-  XCODE_FILE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS,
+  ZCODE_FILE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS,
   extractPlanStepsFromToolInput,
   extractPlanStepsFromToolOutput,
   isHighspeedProviderId,
@@ -830,7 +830,7 @@ export class ProductProjection {
         if (
           state.lastPublishedAt !== null &&
           this.ms(event) - state.lastPublishedAt <
-            XCODE_FILE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS
+            ZCODE_FILE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS
         ) {
           return "";
         }
@@ -3499,7 +3499,7 @@ export class ProductProjection {
     const now = this.ms(event);
     if (
       state.lastPublishedAt !== null &&
-      now - state.lastPublishedAt < XCODE_FILE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS
+      now - state.lastPublishedAt < ZCODE_FILE_STREAMING_TOOL_INPUT_PREVIEW_MIN_INTERVAL_MS
     ) {
       return [];
     }

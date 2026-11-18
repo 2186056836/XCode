@@ -39,7 +39,7 @@ const DEV: RemoteAccount = { user: "dev", home: "/home/dev" };
 const DEAD_PID = 4_000_000;
 const desktopRoot = process.cwd();
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-remote-supervisor-lock-failure",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-remote-supervisor-lock-failure",
 );
 
 describe(`${MARKER}: Supervisor 写状态前失败时连接错误带出原因`, () => {

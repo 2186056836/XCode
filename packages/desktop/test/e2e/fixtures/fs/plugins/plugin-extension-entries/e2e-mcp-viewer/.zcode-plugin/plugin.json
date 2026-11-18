@@ -6,7 +6,7 @@
     "viewer": {
       "type": "stdio",
       "command": "node",
-      "args": ["${XCODE_PLUGIN_ROOT}/server.mjs"]
+      "args": ["${ZCODE_PLUGIN_ROOT}/server.mjs"]
     }
   },
   "ui": {

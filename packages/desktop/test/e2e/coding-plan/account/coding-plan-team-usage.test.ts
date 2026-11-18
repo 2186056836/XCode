@@ -88,7 +88,7 @@ describe("Team Plan 设置与使用统计 E2E", () => {
   it("CTP-13: Start balance 限流显示重试，恢复后展示套餐", async function () {
     this.timeout(120000);
     const evidenceDir =
-      process.env.XCODE_E2E_ARTIFACT_DIR || join(process.cwd(), ".e2e-artifacts", "coding-plan");
+      process.env.ZCODE_E2E_ARTIFACT_DIR || join(process.cwd(), ".e2e-artifacts", "coding-plan");
     await mkdir(evidenceDir, { recursive: true });
     await prepareScenario(
       "personalOnly",
@@ -339,7 +339,7 @@ describe("Team Plan 设置与使用统计 E2E", () => {
             return probe.samples as { client: number; scroll: number }[];
           });
           await writeFile(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR!, `provider-width-${width}-${theme}.json`),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `provider-width-${width}-${theme}.json`),
             JSON.stringify(samples, null, 2),
           );
           expect(samples.length).toBeGreaterThan(0);
@@ -404,13 +404,13 @@ describe("Team Plan 设置与使用统计 E2E", () => {
             providerId: process.env.E2E_PROVIDER_ID,
           });
           await browser.saveScreenshot(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR!, "logout-" + width + "-" + theme + ".png"),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "logout-" + width + "-" + theme + ".png"),
           );
         }
     } finally {
       const diagnostic = await browser.execute(() => (window as any).__logoutBoundaryAuth?.());
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "logout-boundary.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "logout-boundary.json"),
         JSON.stringify({ auth: diagnostic, source: await readComposerTeamUsageSource() }),
       );
       await browser.execute(async () => {
@@ -499,7 +499,7 @@ describe("Team Plan 设置与使用统计 E2E", () => {
           );
           expect(trace.length).toBeGreaterThan(0);
           await writeFile(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR!, "connection-" + mode + ".json"),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "connection-" + mode + ".json"),
             JSON.stringify(trace, null, 2),
           );
           if (mode === "cas")
@@ -521,7 +521,7 @@ describe("Team Plan 设置与使用统计 E2E", () => {
             };
           });
           await writeFile(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR!, "boundary-" + mode + ".json"),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "boundary-" + mode + ".json"),
             JSON.stringify(diagnostics, null, 2),
           );
           await browser.execute((mode) => {
@@ -607,7 +607,7 @@ describe("Team Plan 设置与使用统计 E2E", () => {
             ),
           ).toBe(true);
           await writeFile(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR!, "connection-retry-no-event.json"),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "connection-retry-no-event.json"),
             JSON.stringify(trace, null, 2),
           );
           await browser.execute(() => (window as any).__connectionBoundaryProbe.restore());
@@ -757,7 +757,7 @@ describe("Team Plan 设置与使用统计 E2E", () => {
     await team.waitForDisplayed({ timeout: 10000 });
     expect(await $('[aria-label="BigModel Unavailable Team"]').isExisting()).toBe(false);
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "composer-connections-before.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "composer-connections-before.png"),
     );
     await team.click();
     await browser.waitUntil(
@@ -782,7 +782,7 @@ describe("Team Plan 设置与使用统计 E2E", () => {
       return probe.samples;
     });
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "composer-switch-state.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "composer-switch-state.json"),
       JSON.stringify(samples, null, 2),
     );
     expect(samples.some((sample) => (sample as { loading?: boolean }).loading)).toBe(true);
@@ -813,7 +813,7 @@ describe("Team Plan 设置与使用统计 E2E", () => {
       projectId: "proj-team-a",
     });
     await browser.saveScreenshot(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "composer-connections-team.png"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "composer-connections-team.png"),
     );
     const personal = $(
       `[data-model-provider-key="registry-provider:${BUILTIN_MODEL_PROVIDER_IDS.bigmodelIndividualCodingPlan}"]`,
@@ -935,7 +935,7 @@ describe("Team Plan 设置与使用统计 E2E", () => {
         return { count: probe.count, samples: probe.samples };
       });
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `connection-loading-${direction}.json`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `connection-loading-${direction}.json`),
         JSON.stringify(probe, null, 2),
       );
       expect(probe.count).toBe(2);
@@ -1004,7 +1004,7 @@ describe("Team Plan 设置与使用统计 E2E", () => {
       expect(await $('[role="alert"]').isExisting()).toBe(false);
       const after = await readSettings();
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, `connection-effective-${target}.json`),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `connection-effective-${target}.json`),
         JSON.stringify(
           {
             before: {
@@ -1080,7 +1080,7 @@ describe("Team Plan 设置与使用统计 E2E", () => {
     const after = await readSettings();
     const label = await connection.getText();
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "connection-other-window-team.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "connection-other-window-team.json"),
       JSON.stringify(
         { teamA, afterClick, teamB, label, updatedAt: after.providerFamilyDomainUpdatedAt },
         null,
@@ -1144,7 +1144,7 @@ describe("Team Plan 设置与使用统计 E2E", () => {
       await browser.keys("Home");
       expect(await $('[data-testid="composer-provider-loading"]').isExisting()).toBe(false);
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "reasoning-read-menu.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "reasoning-read-menu.json"),
         JSON.stringify(
           await browser.execute(() => ({
             config: (document.querySelector('[data-testid="v4-model-config"]') as HTMLElement)
@@ -2719,9 +2719,9 @@ async function readMockRequests(): Promise<MockRequest[]> {
 }
 
 function getMockBaseUrl() {
-  const baseUrl = process.env.XCODE_E2E_CODING_PLAN_MOCK_URL?.trim();
+  const baseUrl = process.env.ZCODE_E2E_CODING_PLAN_MOCK_URL?.trim();
   if (!baseUrl) {
-    throw new Error("XCODE_E2E_CODING_PLAN_MOCK_URL 未配置");
+    throw new Error("ZCODE_E2E_CODING_PLAN_MOCK_URL 未配置");
   }
   return baseUrl;
 }

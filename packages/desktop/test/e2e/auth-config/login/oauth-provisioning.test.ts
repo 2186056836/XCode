@@ -46,7 +46,7 @@ class Runtime {
       process.execPath,
       [require.resolve("tsx/cli"), resolve("test/e2e/fixtures/oauth-provisioning/runtime.ts")],
       {
-        env: { ...process.env, HOME: home, XCODE_DATA_BASE_DIR: home, XCODE_ENV: "test" },
+        env: { ...process.env, HOME: home, ZCODE_DATA_BASE_DIR: home, ZCODE_ENV: "test" },
         stdio: ["pipe", "pipe", "pipe"],
       },
     );

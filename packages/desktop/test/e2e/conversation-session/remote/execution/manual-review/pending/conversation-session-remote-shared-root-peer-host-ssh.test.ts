@@ -46,7 +46,7 @@ const PEER_UNIT_CONTENT = [
 const OBSERVE_MS = 30_000;
 const desktopRoot = process.cwd();
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-shared-root-peer-host-ssh",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-shared-root-peer-host-ssh",
 );
 
 /** 以 dev 身份执行，带 user manager 的 bus，等同于 SSH 会话里的 systemctl --user。 */

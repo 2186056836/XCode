@@ -2,11 +2,11 @@ import { wrapStartupReporterRequest } from "./startupTelemetryDelivery.js";
 import { randomUUID } from "node:crypto";
 import { basename } from "node:path";
 import armsRum from "@arms/rum-electron";
-import { XCODE_AGENT_LIFECYCLE_LOG_MARKER } from "@zcode/shared/process-diagnostic";
+import { ZCODE_AGENT_LIFECYCLE_LOG_MARKER } from "@zcode/shared/process-diagnostic";
 import {
-  XCODE_ARMS_RUM_ENDPOINT,
-  XCODE_TELEMETRY_REPORT_ENDPOINT,
-  XCODE_VERSION,
+  ZCODE_ARMS_RUM_ENDPOINT,
+  ZCODE_TELEMETRY_REPORT_ENDPOINT,
+  ZCODE_VERSION,
   mapXCodeEnvToArmsRumEnv,
 } from "@zcode/shared";
 import { ARMS_BROWSER_COLLECTORS, parseArmsViewName } from "../shared/armsRumShared.js";
@@ -32,7 +32,7 @@ function reportEndpointKey(value: unknown): string | undefined {
 }
 
 const reportEndpoints = new Set(
-  [XCODE_ARMS_RUM_ENDPOINT, XCODE_TELEMETRY_REPORT_ENDPOINT]
+  [ZCODE_ARMS_RUM_ENDPOINT, ZCODE_TELEMETRY_REPORT_ENDPOINT]
     .map(reportEndpointKey)
     .filter((value): value is string => value !== undefined),
 );
@@ -81,7 +81,7 @@ function shouldExcludeArmsEvent(event: Record<string, unknown>): boolean {
   // 本地日志与真正的未捕获异常保留，登记/scope 问题仍由浏览器生命周期修复。
   return (
     event.source === "console.error" &&
-    (event.message.includes(XCODE_AGENT_LIFECYCLE_LOG_MARKER) ||
+    (event.message.includes(ZCODE_AGENT_LIFECYCLE_LOG_MARKER) ||
       /^browser tab '(?:browser|iab-tab):[^'\r\n]+' is unavailable for renderer scope$/u.test(
         event.message,
       ))
@@ -238,16 +238,16 @@ armsRum.client.useReporter = (reporter) => {
 };
 export const armsInitPromise = armsRum
   .init({
-    enable: XCODE_ARMS_RUM_ENDPOINT !== "",
-    version: XCODE_VERSION,
-    endpoint: XCODE_ARMS_RUM_ENDPOINT,
+    enable: ZCODE_ARMS_RUM_ENDPOINT !== "",
+    version: ZCODE_VERSION,
+    endpoint: ZCODE_ARMS_RUM_ENDPOINT,
     env: armsRumEnv,
     // Browser SDK 由 SDK 在 dom-ready 经 executeJavaScript 注入；勿再在 preload/renderer 手动 init，避免重复采集
     autoInject: true,
     browserCollectors: { ...ARMS_BROWSER_COLLECTORS },
     app: {
       name: runtimeApplicationName,
-      version: XCODE_VERSION,
+      version: ZCODE_VERSION,
       env: armsRumEnv,
       type: "electron",
       framework: "react",
@@ -318,7 +318,7 @@ export const armsInitPromise = armsRum
     },
   })
   .then(() => {
-    logger.info(`[arms] electron initialized env=${armsRumEnv} version=${XCODE_VERSION}`);
+    logger.info(`[arms] electron initialized env=${armsRumEnv} version=${ZCODE_VERSION}`);
   })
   .catch((error) => {
     logger.error("[arms] electron init failed:", error);

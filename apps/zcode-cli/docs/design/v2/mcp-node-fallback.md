@@ -33,8 +33,8 @@ Desktop host (Electron utilityProcess)
  └─ agent: <Electron> zcode.cjs app-server        (ELECTRON_RUN_AS_NODE=1)
      └─ MCP stdio spawn (MCP SDK → cross-spawn; resolves PATH + PATHEXT from the child env)
          env.PATH = <user PATH> <delimiter> <cliStorageRoot>/node-fallback/v1
-         env.XCODE_NODE_FALLBACK_EXEC_PATH = <Electron executable>
-         env.XCODE_NODE_FALLBACK_NPM_ROOT  = <bundled npm package root>
+         env.ZCODE_NODE_FALLBACK_EXEC_PATH = <Electron executable>
+         env.ZCODE_NODE_FALLBACK_NPM_ROOT  = <bundled npm package root>
 
          "node server.js" ─ user node on PATH? ── yes → user node
                                                └─ no  → shim node → <Electron> server.js
@@ -99,10 +99,10 @@ users do not configure them.
 
 | Variable                        | Value                                                      | Used by            | Missing        |
 | ------------------------------- | ---------------------------------------------------------- | ------------------ | -------------- |
-| `XCODE_NODE_FALLBACK_EXEC_PATH` | Absolute path of the agent's `process.execPath` (Electron) | all shims          | shim exits 127 |
-| `XCODE_NODE_FALLBACK_NPM_ROOT`  | Absolute path of the bundled npm package root              | `npm`, `npx` shims | shim exits 127 |
+| `ZCODE_NODE_FALLBACK_EXEC_PATH` | Absolute path of the agent's `process.execPath` (Electron) | all shims          | shim exits 127 |
+| `ZCODE_NODE_FALLBACK_NPM_ROOT`  | Absolute path of the bundled npm package root              | `npm`, `npx` shims | shim exits 127 |
 
-`XCODE_NODE_FALLBACK_NPM_ROOT` is omitted when no bundled npm is found.
+`ZCODE_NODE_FALLBACK_NPM_ROOT` is omitted when no bundled npm is found.
 
 Merge order for the stdio child env:
 

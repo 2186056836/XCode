@@ -1,6 +1,6 @@
 // 生产 renderer 的独立 CDP E2E；使用 node:test，不能放入 WDIO/Docker preset。
 // 前置：隔离 HOME 中播种 8 个 sess_probe_retention_0..7 已完成会话，启动未开启 E2E bridge 的 App。
-// XCODE_RETENTION_CDP_URL=http://127.0.0.1:9326 XCODE_RETENTION_ARTIFACT_DIR=<dir>
+// ZCODE_RETENTION_CDP_URL=http://127.0.0.1:9326 ZCODE_RETENTION_ARTIFACT_DIR=<dir>
 // pnpm --filter @zcode/desktop test:e2e:retention
 import assert from "node:assert/strict";
 import { createWriteStream } from "node:fs";
@@ -13,9 +13,9 @@ import { countRetainedHistory } from "#e2e/helpers/session-pane-retention-heap";
 
 const prefix = "sess_probe_retention_";
 // SPR03 的 fixture 使用 8 个独立工作区，覆盖每个 transport 各遗留一个预热 owner 的路径。
-const crossWorkspace = process.env.XCODE_RETENTION_CROSS_WORKSPACE === "1";
+const crossWorkspace = process.env.ZCODE_RETENTION_CROSS_WORKSPACE === "1";
 // SPR04/05 复用同工作区 fixture，直接检查已脱离 store 的历史 snapshot。
-const sameWorkspace = process.env.XCODE_RETENTION_SAME_WORKSPACE === "1";
+const sameWorkspace = process.env.ZCODE_RETENTION_SAME_WORKSPACE === "1";
 const returnToDraft = crossWorkspace || sameWorkspace;
 
 function rendererPage(browser: Browser) {
@@ -35,9 +35,9 @@ test(
       : "SPR01: 136 session switches release inactive snapshots and closed stores",
   { timeout: 1_200_000 },
   async () => {
-    const endpoint = process.env.XCODE_RETENTION_CDP_URL;
-    const artifactDir = process.env.XCODE_RETENTION_ARTIFACT_DIR;
-    const sourceMapPath = process.env.XCODE_RETENTION_RENDERER_SOURCEMAP;
+    const endpoint = process.env.ZCODE_RETENTION_CDP_URL;
+    const artifactDir = process.env.ZCODE_RETENTION_ARTIFACT_DIR;
+    const sourceMapPath = process.env.ZCODE_RETENTION_RENDERER_SOURCEMAP;
     assert(!sameWorkspace || sourceMapPath, "SPR04/05 需要精确生产 renderer sourcemap 校验回调族");
     assert(endpoint && artifactDir, "需要显式指定隔离 App CDP 与证据目录");
     const output = resolve(artifactDir);

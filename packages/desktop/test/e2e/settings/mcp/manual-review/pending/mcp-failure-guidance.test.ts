@@ -26,7 +26,7 @@ import {
 
 const paths = getE2EAppDataPaths();
 const artifactDir =
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? join(paths.homeDir, "mcp-diagnostic-artifacts");
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? join(paths.homeDir, "mcp-diagnostic-artifacts");
 const pythonRow = testId(TID_MCP_SERVER_ROW, MCP_DIAGNOSTIC_PYTHON);
 const nodeRow = testId(TID_PLUGIN_MCP_SERVER_ROW, MCP_DIAGNOSTIC_NODE);
 const commandRow = testId(TID_MCP_SERVER_ROW, MCP_DIAGNOSTIC_COMMAND);
@@ -141,7 +141,7 @@ describe("MCP 启动失败处理建议（候选）", () => {
     this.timeout(180_000);
     await clickTestIdByDom(TID_SETTINGS_BACK_BUTTON);
     const url = await obtainUnreadPairingUrl(
-      new URL(process.env.XCODE_WEB_REMOTE_CONTROL_URL!).origin,
+      new URL(process.env.ZCODE_WEB_REMOTE_CONTROL_URL!).origin,
     );
     const mobile = await chromium.launch({ channel: "chrome", headless: true });
     const context = await mobile.newContext({ viewport: { width: 390, height: 844 } });

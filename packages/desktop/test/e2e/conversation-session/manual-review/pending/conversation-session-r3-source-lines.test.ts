@@ -26,13 +26,13 @@ import {
 } from "../../../helpers/ssh-remote-p0.js";
 
 const CASE_MARKER = "E2E_R3_SOURCE_LINES";
-const artifactDir = resolve(process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-source-lines");
+const artifactDir = resolve(process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-source-lines");
 const SYMLINK_PATH = "/home/dev/r3-workspace-link";
 
 async function readProvisioningCompletions(): Promise<
   Array<{ environmentKey: string; trigger: string; status: string }>
 > {
-  const directory = await browser.electron.execute(() => process.env.XCODE_E2E_RUNTIME_LOG_DIR);
+  const directory = await browser.electron.execute(() => process.env.ZCODE_E2E_RUNTIME_LOG_DIR);
   if (!directory) throw new Error(`${CASE_MARKER}: 缺少本次 Main 日志目录`);
   const marker = "[provider-provisioning] Environment sync completed ";
   const contents = await Promise.all(

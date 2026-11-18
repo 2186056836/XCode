@@ -12,7 +12,7 @@ export async function checkPushWorktree(cwd = process.cwd(), env = process.env) 
   if (await git("status", "--porcelain=v1", "-z", "--untracked-files=all"))
     throw new Error("Push 工作区不干净：请先提交或自行保存已暂存、未暂存及未跟踪改动");
   const head = await git("rev-parse", "HEAD");
-  for (const line of (env.XCODE_PRE_PUSH_STDIN ?? "").split(/\r?\n/u).filter((s) => s.trim())) {
+  for (const line of (env.ZCODE_PRE_PUSH_STDIN ?? "").split(/\r?\n/u).filter((s) => s.trim())) {
     const entry = line.trim().split(/\s+/u);
     if (
       entry.length !== 4 ||

@@ -93,7 +93,7 @@ export function createHostCommandEnvelope<T extends CommandType>(
 
 /** v4 命令被服务端否决（rejected/stale/failed）。code 供调用方结构化分流，不匹配错误文案。 */
 export class XCodeV4CommandRejectedError extends Error {
-  readonly code = "XCODE_V4_COMMAND_REJECTED";
+  readonly code = "ZCODE_V4_COMMAND_REJECTED";
 
   constructor(
     readonly commandType: CommandType,

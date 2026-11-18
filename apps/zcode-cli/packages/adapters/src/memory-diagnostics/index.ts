@@ -5,7 +5,7 @@ import { Session } from "node:inspector";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { getHeapStatistics } from "node:v8";
-import { CLI_MEMORY_DIAGNOSTIC_DIRECTORY, XCODE_COMMIT, XCODE_VERSION } from "@zcode/shared";
+import { CLI_MEMORY_DIAGNOSTIC_DIRECTORY, ZCODE_COMMIT, ZCODE_VERSION } from "@zcode/shared";
 import {
   createMemoryDiagnosticRecorder,
   MEMORY_DIAGNOSTIC_INTERVAL_MS,
@@ -74,8 +74,8 @@ export function startCliMemoryDiagnostics(
   const metadata = {
     instanceId: randomUUID(),
     pid: process.pid,
-    version: XCODE_VERSION,
-    commit: XCODE_COMMIT,
+    version: ZCODE_VERSION,
+    commit: ZCODE_COMMIT,
     node: process.versions.node,
     v8: process.versions.v8,
     bundleSha256: "",

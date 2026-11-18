@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import { Check, Plus, Trash2 } from "lucide-react";
 import { completeNewModelSelection } from "@zcode/provider";
 import {
-  XCODE_AGENT_PROVIDER,
+  ZCODE_AGENT_PROVIDER,
   type AgentColor,
   type AgentsCapability,
   type AgentsListResult,
@@ -1408,7 +1408,7 @@ export function SubagentsSection({
   const pluginInventoryWorkspacePath = targetWorkspacePath;
   const chatModelSelectGroups = useMemo(() => {
     if (!modelSelectionView) return [];
-    return buildRegistryModelSelectGroups(XCODE_AGENT_PROVIDER, modelSelectionView, {
+    return buildRegistryModelSelectGroups(ZCODE_AGENT_PROVIDER, modelSelectionView, {
       startPlanBadgeLabel: intl.formatMessage({
         id: "settings.modelProvider.connectionMode.startPlanBadge",
       }),
@@ -1433,7 +1433,7 @@ export function SubagentsSection({
         const result = await subagentsService.list({
           workspacePath: targetWorkspacePath ?? "",
           workspaceIdentity: targetWorkspaceIdentity,
-          provider: XCODE_AGENT_PROVIDER,
+          provider: ZCODE_AGENT_PROVIDER,
           mode: activeScope === "user" ? "settingsUserOnly" : "allRuntimeScopes",
         });
         if (requestId !== latestRequestIdRef.current) {
@@ -1538,7 +1538,7 @@ export function SubagentsSection({
             agentId: editingAgent.id,
             config,
             oldFilePath: editingAgent.path,
-            provider: XCODE_AGENT_PROVIDER,
+            provider: ZCODE_AGENT_PROVIDER,
             scope: editingAgent.scope === "workspace" ? "workspace" : "user",
             workspacePath: editingAgent.projectPath ?? targetWorkspacePath ?? undefined,
             workspaceIdentity: targetWorkspaceIdentity,
@@ -1546,7 +1546,7 @@ export function SubagentsSection({
         } else {
           await subagentsService.createAgent({
             config,
-            provider: XCODE_AGENT_PROVIDER,
+            provider: ZCODE_AGENT_PROVIDER,
             scope: activeScope,
             workspacePath: targetWorkspacePath ?? undefined,
             workspaceIdentity: targetWorkspaceIdentity,

@@ -84,7 +84,7 @@ const CREATE_REQUEST_ID = "e2e-p3c-create";
 const SEND_REQUEST_ID = "e2e-p3c-send";
 const LABEL_SELECTOR = '[data-v4-user-input-source-kind="extension"]';
 const LABELS = { "zh-CN": `来自插件 ${PLUGIN}`, "en-US": `From plugin ${PLUGIN}` } as const;
-const artifacts = process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd();
+const artifacts = process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd();
 
 interface SessionRef {
   kind: "app";
@@ -631,12 +631,12 @@ describe("PLM-EXT-P3C 扩展经 ctx.sessions.* 写会话", () => {
     this.timeout(300000);
     requirePluginManualReview();
     expect(sessionId).toBeTruthy();
-    const endpoint = process.env.XCODE_WEB_REMOTE_CONTROL_URL;
+    const endpoint = process.env.ZCODE_WEB_REMOTE_CONTROL_URL;
     if (!endpoint) throw new Error("the mobile Web fixture is not configured for this spec");
     const pairingUrl = await obtainUnreadPairingUrl(new URL(endpoint).origin);
     mobile = await chromium.launch({
-      ...(process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE
-        ? { executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
+      ...(process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE
+        ? { executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
         : { channel: "chrome" }),
       headless: true,
     });

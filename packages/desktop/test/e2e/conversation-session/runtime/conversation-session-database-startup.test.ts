@@ -66,7 +66,7 @@ describe("global database migration startup gate", () => {
       await expect(loading).toHaveAttribute("data-database-phase", "waiting_for_lock");
       await expect($('[contenteditable="true"]')).not.toBeDisplayed();
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "database-waiting.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR ?? process.cwd(), "database-waiting.png"),
       );
       await browser.refresh();
       await $('[data-testid="database-startup-status"]').waitForDisplayed({ timeout: 30_000 });

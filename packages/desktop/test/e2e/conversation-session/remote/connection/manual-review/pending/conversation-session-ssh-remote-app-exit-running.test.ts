@@ -25,7 +25,7 @@ import {
 
 const MARKER = "E2E_SSH_APP_EXIT_RUNNING";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-app-exit-running",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-app-exit-running",
 );
 
 describe(`${MARKER}: 完整退出 Desktop 后远端回合继续`, () => {

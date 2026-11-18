@@ -7,7 +7,7 @@ import { chromium } from "playwright-core";
 
 test("WFS03 snippet 三态内容与展开交互", async () => {
   const targets = await (
-    await fetch(`${process.env.XCODE_E2E_CDP_URL ?? "http://localhost:9229"}/json/list`)
+    await fetch(`${process.env.ZCODE_E2E_CDP_URL ?? "http://localhost:9229"}/json/list`)
   ).json();
   const app = targets.find((target) => target.type === "page" && target.url.includes("localhost:"));
   assert.ok(app);
@@ -85,10 +85,10 @@ test("WFS03 snippet 三态内容与展开交互", async () => {
       );
       const copy = page.getByTestId("snippet-result").getByRole("button", { name: "Copy code" });
       assert.equal(await copy.count(), 1);
-      if (process.env.XCODE_E2E_SCREENSHOT_PREFIX) {
+      if (process.env.ZCODE_E2E_SCREENSHOT_PREFIX) {
         await page.screenshot({
           animations: "disabled",
-          path: `${process.env.XCODE_E2E_SCREENSHOT_PREFIX}-${width}.png`,
+          path: `${process.env.ZCODE_E2E_SCREENSHOT_PREFIX}-${width}.png`,
         });
       }
 

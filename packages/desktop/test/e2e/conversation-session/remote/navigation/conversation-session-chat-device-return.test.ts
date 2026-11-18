@@ -48,7 +48,7 @@ async function openFromChat(locale = "zh-CN", evidence?: string) {
   );
   if (evidence) {
     await settlePresentation();
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, `menu-${evidence}.png`));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `menu-${evidence}.png`));
   }
   await entry.click();
   await $(`[data-testid="${TID_SETTINGS_PAGE}"]`).waitForDisplayed();
@@ -199,11 +199,11 @@ describe(marker, () => {
         events: (window as Window & { __chatDeviceFocus?: unknown[] }).__chatDeviceFocus,
       }));
       await writeFile(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "chat-device-focus.json"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "chat-device-focus.json"),
         JSON.stringify(focus, null, 2),
       );
       await browser.saveScreenshot(
-        join(process.env.XCODE_E2E_ARTIFACT_DIR!, "chat-device-failure.png"),
+        join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "chat-device-failure.png"),
       );
     }
   });
@@ -289,7 +289,7 @@ describe(marker, () => {
           await settlePresentation();
           await browser.saveScreenshot(
             join(
-              process.env.XCODE_E2E_ARTIFACT_DIR!,
+              process.env.ZCODE_E2E_ARTIFACT_DIR!,
               `cancel-return-${locale}-${theme}-${width}.png`,
             ),
           );
@@ -329,7 +329,7 @@ describe(marker, () => {
           const bounds = await folder.getLocation();
           expect(bounds.x).toBeGreaterThanOrEqual(0);
           await browser.saveScreenshot(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR!, `folder-${locale}-${theme}-${width}.png`),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `folder-${locale}-${theme}-${width}.png`),
           );
         }
       }

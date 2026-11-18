@@ -10,7 +10,7 @@ Git push ref 输入 → 清理 Git local env → 工作区与目标检查
 
 - 已暂存、未暂存或未跟踪修改均阻止 push；忽略 Git 已忽略的文件。
 - hook 每个非删除目标先解析为 commit，再与当前 HEAD 比较；附注标签可以指向 HEAD；删除 ref 可通过目标检查，多 ref 逐项校验。
-- hook 继续通过 XCODE_PRE_PUSH_STDIN 传递 ref 和 SHA，架构检查与工程测试使用真实推送基线。
+- hook 继续通过 ZCODE_PRE_PUSH_STDIN 传递 ref 和 SHA，架构检查与工程测试使用真实推送基线。
 - 架构基线优先级：显式参数或环境变量、CI 变量、push remote SHA、upstream merge-base、
   默认分支 merge-base、HEAD。首次推送优先 origin/staging。具体实现见 scripts/architecture/git-base.mjs。
 - 无效的显式架构基线仍失败。工程测试保留 remote SHA / 首推 staging merge-base / 手动 upstream 的基线语义；无效基线不能静默跳过。

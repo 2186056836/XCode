@@ -178,4 +178,4 @@ Subagent 模型边界回放按父子请求身份及实际 `tool_result` 阶段�
 SR87-06 的旧自动化 fixture 在 Electron/Host 退出后同时回退该记录的旧字段与 `0002_provider_selection` 迁移记录，再冷启动验证真实迁移；只写 NULL 而保留完成日志并不代表旧版本前置。
 
 F-OFFPEAK-002 使用隔离网关的确定性文本响应与请求记录场景：真实表单创建、取票和 scheduler 仍完整执行，验证 Team headers、ticket 与模型身份，不依赖真实上游或管理场景的排队窗口。
-此例不能开启 `XCODE_OFFPEAK_MOCK`：该开关会固定返回个人假凭证。网关由测试 launcher 独立启动，控制面代理票据请求并给出闲时曝光配置，Host 仍通过真实账号选择解析 Team 身份。
+此例不能开启 `ZCODE_OFFPEAK_MOCK`：该开关会固定返回个人假凭证。网关由测试 launcher 独立启动，控制面代理票据请求并给出闲时曝光配置，Host 仍通过真实账号选择解析 Team 身份。

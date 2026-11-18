@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { NodePersonalProviderConfigRepository } from "@zcode/provider-node";
-import { XCODE_CUA_OFFICIAL_PLUGIN_ID } from "@zcode/shared";
+import { ZCODE_CUA_OFFICIAL_PLUGIN_ID } from "@zcode/shared";
 import {
   TID_LOGIN_USE_API_KEY_BUTTON,
   TID_TASK_SETTINGS_BUTTON,
@@ -28,7 +28,7 @@ import { skipOccupationOnboardingIfPresent } from "#e2e/helpers/occupation-onboa
 
 const CASE_NAME = "conversation-session-composer-compression";
 const evidence = join(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? join(process.cwd(), ".e2e-artifacts"),
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? join(process.cwd(), ".e2e-artifacts"),
   CASE_NAME,
 );
 
@@ -209,7 +209,7 @@ describe("Composer 五档压缩", () => {
               enabled: true,
               enabledPlugins: {
                 ...config.plugins?.enabledPlugins,
-                [XCODE_CUA_OFFICIAL_PLUGIN_ID]: true,
+                [ZCODE_CUA_OFFICIAL_PLUGIN_ID]: true,
               },
             },
           }),

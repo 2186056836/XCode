@@ -32,7 +32,7 @@ import { openWorkspaceDraftFromSidebar } from "../helpers/workspace-agent-warmup
 
 const CASE_MARKER = "E2E_R3_MODEL_CANDIDATES";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-model-candidates",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-model-candidates",
 );
 const LOCAL_ONLY_PROVIDER_ID = "e2e-r3-local-only";
 const LOCAL_ONLY_LABEL = "R3 Local Only Provider";

@@ -43,7 +43,7 @@ const deviceName = "SSH guide device";
 const primaryName = "SSH guide primary";
 const scenario = process.env.R3_CONNECTION_MANAGEMENT_CASE ?? "edit";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-connection-management",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-connection-management",
 );
 
 async function openSettings() {

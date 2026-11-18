@@ -301,7 +301,7 @@ async function waitForSuccessfulModelIo(input: {
 }
 
 async function waitForAutoCompactDecision(sessionId: string): Promise<Record<string, unknown>> {
-  const logDir = process.env.XCODE_LOG_DIR?.trim() || join(paths.homeDir, ".zcode", "cli", "log");
+  const logDir = process.env.ZCODE_LOG_DIR?.trim() || join(paths.homeDir, ".zcode", "cli", "log");
   let matched: Record<string, unknown> | null = null;
   await browser.waitUntil(
     async () => {

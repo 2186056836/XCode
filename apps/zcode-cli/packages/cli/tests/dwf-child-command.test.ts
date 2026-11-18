@@ -15,35 +15,35 @@ import assert from "node:assert/strict";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { XCODE_DWF_CHILD_COMMAND } from "@zcode/contracts";
+import { ZCODE_DWF_CHILD_COMMAND } from "@zcode/contracts";
 import { isDwfChildInvocation } from "../src/dwf-child-command.js";
 import { run } from "../src/run.js";
 
 import { createChildContext } from "./dwf-child-command-fixture.js";
 
 test("recognises the dwf child subcommand only as argv[0]", () => {
-  assert.equal(isDwfChildInvocation([XCODE_DWF_CHILD_COMMAND, "/tmp/run.mjs"]), true);
-  assert.equal(isDwfChildInvocation([XCODE_DWF_CHILD_COMMAND]), true);
+  assert.equal(isDwfChildInvocation([ZCODE_DWF_CHILD_COMMAND, "/tmp/run.mjs"]), true);
+  assert.equal(isDwfChildInvocation([ZCODE_DWF_CHILD_COMMAND]), true);
   assert.equal(isDwfChildInvocation([]), false);
   assert.equal(isDwfChildInvocation(["--help"]), false);
   // 出现在别处不算：否则一个普通 prompt 里提到这个词就能改变 CLI 的行为。
-  assert.equal(isDwfChildInvocation(["-p", XCODE_DWF_CHILD_COMMAND]), false);
+  assert.equal(isDwfChildInvocation(["-p", ZCODE_DWF_CHILD_COMMAND]), false);
 });
 
 test("fails with usage when the entry path argument is missing", async () => {
-  const { ctx, stdout, stderr } = createChildContext([XCODE_DWF_CHILD_COMMAND]);
+  const { ctx, stdout, stderr } = createChildContext([ZCODE_DWF_CHILD_COMMAND]);
 
   const exitCode = await run(ctx);
 
   assert.equal(exitCode, 1);
   // stdout 是父进程的 NDJSON 通道，接线错误只许走 stderr。
   assert.equal(stdout(), "");
-  assert.match(stderr(), new RegExp(`Usage: ${XCODE_DWF_CHILD_COMMAND}`));
+  assert.match(stderr(), new RegExp(`Usage: ${ZCODE_DWF_CHILD_COMMAND}`));
 });
 
 test("fails on stderr when the entry file does not exist", async () => {
   const { ctx, stdout, stderr } = createChildContext([
-    XCODE_DWF_CHILD_COMMAND,
+    ZCODE_DWF_CHILD_COMMAND,
     join(tmpdir(), "dwf-child-cmd-missing", "nope.mjs"),
   ]);
 

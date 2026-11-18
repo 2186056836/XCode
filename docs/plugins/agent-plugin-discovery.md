@@ -122,7 +122,7 @@ Graph delta：新增 capability.agent-plugin-discovery，与官方市场来源�
 | Desktop 候选 E2E                                    | macOS 1/1 通过，实际 ZIP 安装与状态读取；仍为 pending                                                                  |
 | `git diff --check`                                  | 通过                                                                                                                   |
 
-Desktop 最终运行 ID：`desktop-e2e-20260916115741578-p84753-08fac10243dccf5a`。使用 `XCODE_E2E_SOURCE_EVIDENCE=1`、`XCODE_E2E_MANUAL_REVIEW=1` 和 case-local replay fixture。报告位于 `packages/desktop/.e2e-artifacts/<run-id>/summary.md`，截图位于 `packages/desktop/.e2e-artifacts/plugin-management/plm-lc-021/`。
+Desktop 最终运行 ID：`desktop-e2e-20260916115741578-p84753-08fac10243dccf5a`。使用 `ZCODE_E2E_SOURCE_EVIDENCE=1`、`ZCODE_E2E_MANUAL_REVIEW=1` 和 case-local replay fixture。报告位于 `packages/desktop/.e2e-artifacts/<run-id>/summary.md`，截图位于 `packages/desktop/.e2e-artifacts/plugin-management/plm-lc-021/`。
 
 实测覆盖查询官方目录、卡片等待、跳过后不安装、英文深色安装确认、实际安装成功，以及工具结果保持 `refreshRequired`。390px 中文浅色截图已复核卡片与按钮的视口边界。旧轮次迟到请求不会在新轮次重新弹卡片；registry 只接受匹配 session 的首个应答，等待 10 分钟也不会自动批准。
 

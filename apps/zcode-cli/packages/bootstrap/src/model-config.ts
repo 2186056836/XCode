@@ -7,8 +7,8 @@ import type { ProviderEndpointRoutingPort } from "@zcode/contracts";
 import {
   resolveRuntimeXCodeEnv,
   resolveRuntimeXCodeEndpointOrigin,
-  XCODE_APP_VERSION_ENV,
-  XCODE_CLIENT_LANGUAGE_ENV,
+  ZCODE_APP_VERSION_ENV,
+  ZCODE_CLIENT_LANGUAGE_ENV,
 } from "@zcode/shared";
 import {
   createRuntimePlatformHeaders,
@@ -75,17 +75,17 @@ function resolveAppVersionForHeaders(
   env: EnvRecord,
   options: Pick<RuntimeExecutionConfigOptions, "appVersion">,
 ): string | undefined {
-  return normalizePrintableHeaderValue(env[XCODE_APP_VERSION_ENV] ?? options.appVersion);
+  return normalizePrintableHeaderValue(env[ZCODE_APP_VERSION_ENV] ?? options.appVersion);
 }
 
 /**
- * X-Client-Language 优先取 Desktop spawn 时下发的界面语言（XCODE_CLIENT_LANGUAGE）。
+ * X-Client-Language 优先取 Desktop spawn 时下发的界面语言（ZCODE_CLIENT_LANGUAGE）。
  * Bug 原因：过去只取 Agent 进程 Intl，App 从 Dock 启动没有 LANG 时 ICU 回退 en-US，
  * 界面选日/俄/韩语时模型请求仍发 en-US。非法或空值回落 Intl，不阻断请求。
  */
 export function resolveClientLanguageForHeaders(env: EnvRecord): string | undefined {
   return (
-    normalizePrintableHeaderValue(env[XCODE_CLIENT_LANGUAGE_ENV]) ??
+    normalizePrintableHeaderValue(env[ZCODE_CLIENT_LANGUAGE_ENV]) ??
     normalizePrintableHeaderValue(Intl.DateTimeFormat().resolvedOptions().locale)
   );
 }

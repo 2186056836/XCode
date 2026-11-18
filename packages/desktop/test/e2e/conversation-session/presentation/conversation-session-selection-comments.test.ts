@@ -23,7 +23,7 @@ import {
   waitForV4UserMessageContaining,
 } from "#e2e/helpers/v4-conversation";
 
-const artifacts = () => process.env.XCODE_E2E_ARTIFACT_DIR!;
+const artifacts = () => process.env.ZCODE_E2E_ARTIFACT_DIR!;
 const ANSWER_ONE = "E2E_SCM_ANSWER_ONE";
 const ANSWER_TWO = "E2E_SCM_ANSWER_TWO";
 const COMMENT_KEEP = "E2E_SCM_COMMENT_KEEP";

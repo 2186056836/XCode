@@ -196,7 +196,7 @@ describe("XCode endpoint X-Client-Language 跟随界面语言", () => {
     const firstHandle = await browser.getWindowHandle();
     // 只让第二个窗口的 Host 写 setting.json 失败；语言由该窗口的设置页切换，持久化必然失败。
     const second = await openFaultInjectedHostWindow(HOST_PRELOAD, {
-      XCODE_E2E_FS_FAULTS: JSON.stringify([
+      ZCODE_E2E_FS_FAULTS: JSON.stringify([
         {
           id: "client-language-settings-write",
           code: "EACCES",

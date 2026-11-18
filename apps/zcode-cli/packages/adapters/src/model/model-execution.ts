@@ -1270,9 +1270,9 @@ export function createUpstreamRequestProfileFetch(input: {
         const body = parsed as Record<string, unknown>;
         stripCodeBuddyIncompatibleReasoningFields(body);
         ensureCodeBuddyLeadingSystemMessage(body);
-        // XCODE_PROFILE_DEBUG=1：落盘出站体，用于定位 11133 这类「模型侧拒绝参数」
+        // ZCODE_PROFILE_DEBUG=1：落盘出站体，用于定位 11133 这类「模型侧拒绝参数」
         // 的具体字段（上游只回一句 rejected by the model provider，不带 param）。
-        if (process.env.XCODE_PROFILE_DEBUG === "1") {
+        if (process.env.ZCODE_PROFILE_DEBUG === "1") {
           try {
             // 先写一行摘要再写正文：正文可能很长，按 20k 截断会切掉 reasoning_effort
             // 这类位于 messages 之后的字段，只看截断 JSON 会误判「没发」。
@@ -1317,8 +1317,8 @@ export function createUpstreamRequestProfileFetch(input: {
 
   if (input.profile !== "opencode-free-tier") return input.fetch;
   const baseFetch = input.fetch;
-  // 临时诊断（XCODE_PROFILE_DEBUG=1 时落盘请求/错误响应，定位上游 400 拒绝字段）。
-  const debugEnabled = process.env.XCODE_PROFILE_DEBUG === "1";
+  // 临时诊断（ZCODE_PROFILE_DEBUG=1 时落盘请求/错误响应，定位上游 400 拒绝字段）。
+  const debugEnabled = process.env.ZCODE_PROFILE_DEBUG === "1";
   const debugFile = debugEnabled
     ? join(tmpdir(), "xcode-profile-debug.log")
     : undefined;

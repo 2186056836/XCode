@@ -21,13 +21,13 @@ describe("虚拟项目多目录冷恢复", () => {
   after(async () => {
     const capture = process.env.E2E_PROVIDER_CAPTURE_PATH;
     if (capture)
-      await copyFile(capture, join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP16-network.json"));
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP16-final.png"));
+      await copyFile(capture, join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP16-network.json"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP16-final.png"));
     await clearAppData();
   });
   it("VP16：运行实例保持旧 roots，完整进程重建才采用新 roots，cwd 与主目录配置链不变", async function () {
     await waitForWorkspaceApp(DEFAULT_WORKSPACE, 45_000);
-    const home = process.env.XCODE_E2E_HOME_DIR!;
+    const home = process.env.ZCODE_E2E_HOME_DIR!;
     if (
       !home ||
       ![".e2e-home-", "zcode-virtual-project-e2e-"].some((prefix) =>
@@ -131,7 +131,7 @@ describe("虚拟项目多目录冷恢复", () => {
     await $(`[data-testid="${testId(TID_TASK_ITEM, taskId!)}"]`).click();
     await inspect("COLD", "C");
     expect(await readTask()).toBe(taskId);
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "VP16-cold-roots.png"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "VP16-cold-roots.png"));
   });
 });
 

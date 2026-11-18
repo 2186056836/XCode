@@ -1,9 +1,9 @@
 /* oxlint-disable eslint(max-lines) -- telemetry state lock、deviceMid 编排和上报路径共享同一状态文件，拆分会增加锁语义漂移风险。 */
 import {
   createUuid,
-  XCODE_VERSION,
-  XCODE_ENV,
-  XCODE_TELEMETRY_REPORT_ENDPOINT,
+  ZCODE_VERSION,
+  ZCODE_ENV,
+  ZCODE_TELEMETRY_REPORT_ENDPOINT,
   buildXCodeSourceHeadersFromContext,
   rewriteXCodeEndpointUrl,
   sanitizeTelemetryEventDetail,
@@ -18,7 +18,7 @@ import { dirname, join } from "node:path";
 import { createServiceLogger } from "#src/logger/serviceLogger.js";
 import { getAppConfigDir } from "../paths.js";
 
-const REPORT_ENDPOINT = XCODE_TELEMETRY_REPORT_ENDPOINT;
+const REPORT_ENDPOINT = ZCODE_TELEMETRY_REPORT_ENDPOINT;
 
 function sessionCreateEventId(userId: string, sessionId: string): string {
   const bytes = createHash("sha256")
@@ -348,7 +348,7 @@ export function createTelemetryCore(dependencies: TelemetryCoreDependencies = {}
   let didWarnMarketingParamsLoadFailure = false;
   const randomUUID = dependencies.randomUUID ?? (() => createUuid());
   const now = dependencies.now ?? Date.now;
-  const appVersion = dependencies.appVersion ?? XCODE_VERSION;
+  const appVersion = dependencies.appVersion ?? ZCODE_VERSION;
   const platform = dependencies.platform ?? process.platform;
   const osVersion = dependencies.osVersion ?? version();
   const requestTimeoutMs = dependencies.requestTimeoutMs ?? REPORT_REQUEST_TIMEOUT_MS;
@@ -477,7 +477,7 @@ export function createTelemetryCore(dependencies: TelemetryCoreDependencies = {}
       platform,
       arch: dependencies.arch ?? process.arch,
       osVersion,
-      releaseChannel: dependencies.releaseChannel ?? XCODE_ENV,
+      releaseChannel: dependencies.releaseChannel ?? ZCODE_ENV,
       clientLanguage: context.clientLanguage,
       clientTimezone: context.clientTimezone,
       deviceMid,

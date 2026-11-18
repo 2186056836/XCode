@@ -159,7 +159,7 @@ node --test scripts/test/conversation-session-formal-admission*.test.mjs
 
 `conversation-session-formal-admission-audit.test.mjs` 会 spawn 实际 audit CLI，验证 JSON/text
 输出、精确 error 与 nonzero exit。它通过受控环境变量
-`XCODE_CONVERSATION_SESSION_FORMAL_ADMISSION_ROOT` 只替换 inspector 的 synthetic root；该变量
+`ZCODE_CONVERSATION_SESSION_FORMAL_ADMISSION_ROOT` 只替换 inspector 的 synthetic root；该变量
 仅在子进程继承 Node test runner 的 `NODE_TEST_CONTEXT` 时可用，单独设置 `NODE_ENV=test` 会
 以 test-only 错误退出。catalog、coverage matrix 与所有其它 docs root 仍固定读取真实仓库，
 不会修改真实 formal 目录。

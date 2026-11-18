@@ -6,7 +6,7 @@ import { chromium } from "playwright-core";
 
 test("WFS01 workflow 普通摘要打开同一个 run side pane", async () => {
   const connection = await chromium.connectOverCDP(
-    process.env.XCODE_E2E_CDP_URL ?? "http://localhost:9229",
+    process.env.ZCODE_E2E_CDP_URL ?? "http://localhost:9229",
   );
   try {
     const page = connection

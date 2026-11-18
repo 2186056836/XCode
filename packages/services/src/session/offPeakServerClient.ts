@@ -126,7 +126,7 @@ export class OffPeakServerError extends Error {
 }
 
 export interface OffPeakServerClientDeps {
-  /** API origin（真实服务端或 mock 网关，XCODE_OFFPEAK_MOCK 切换在装配层）；mock 网关懒启动故允许异步。 */
+  /** API origin（真实服务端或 mock 网关，ZCODE_OFFPEAK_MOCK 切换在装配层）；mock 网关懒启动故允许异步。 */
   resolveOrigin: () => string | Promise<string>;
   /** 凭证快照：四个 ticket 接口统一携带同一次 selected credential snapshot。 */
   resolveCredentials: () => Promise<OffPeakCredentialSnapshot>;

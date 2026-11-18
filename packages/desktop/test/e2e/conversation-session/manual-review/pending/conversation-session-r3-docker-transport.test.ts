@@ -46,7 +46,7 @@ import {
 
 const CASE_MARKER = "E2E_R3_DOCKER_TRANSPORT";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-docker-transport",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-docker-transport",
 );
 const run = promisify(execFile);
 
@@ -61,7 +61,7 @@ async function dockerSh(container: string, command: string): Promise<string> {
 
 async function connectDockerTargetUntilReady(
   container: string,
-  workspacePath = process.env.XCODE_E2E_SSH_WORKSPACE_PATH,
+  workspacePath = process.env.ZCODE_E2E_SSH_WORKSPACE_PATH,
 ): Promise<{ identity: string; remoteSessionId: string; kind: string | null }> {
   // Composer 的旧远程入口已退役；与 SSH 一样从项目创建进入 transport 选择。
   await openRemoteProjectSelection();
@@ -181,10 +181,10 @@ describe(`${CASE_MARKER}: Desktop Docker transport 首装、首发与关闭重�
 
   it("R3A-TRN-01 独立 Docker 容器：Docker 入口安装、Provisioning、真实首发、断开后重连", async function () {
     this.timeout(30 * 60_000);
-    // 本机 runner 已把同一 SSH / Docker 目标写入 XCODE_E2E_SSH_CONTAINER；旧用例只读服务器队列
+    // 本机 runner 已把同一 SSH / Docker 目标写入 ZCODE_E2E_SSH_CONTAINER；旧用例只读服务器队列
     // 的别名，尚未执行产品操作就报缺变量。保留显式目标优先，否则复用 runner 创建的隔离容器。
     const container =
-      process.env.R3_DOCKER_TARGET?.trim() || process.env.XCODE_E2E_SSH_CONTAINER?.trim();
+      process.env.R3_DOCKER_TARGET?.trim() || process.env.ZCODE_E2E_SSH_CONTAINER?.trim();
     if (!container) throw new Error(`${CASE_MARKER}: 需设置 R3_DOCKER_TARGET`);
     facts.container = container;
     facts.containerUser = (

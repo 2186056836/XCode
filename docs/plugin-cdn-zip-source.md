@@ -15,7 +15,7 @@
   `.zcode-plugin/plugin.json`、`.claude-plugin/plugin.json` 或 `.codex-plugin/plugin.json`
   的目录，不长期保留 zip archive。
 - 下载链路要对齐现有 marketplace/git 网络出口策略。现有 git 子进程通过
-  `buildMarketplaceGitEnv()` 和 `applyNetworkEgressEnv()` 注入 `XCODE_HTTP_PROXY` 等显式网络环境；
+  `buildMarketplaceGitEnv()` 和 `applyNetworkEgressEnv()` 注入 `ZCODE_HTTP_PROXY` 等显式网络环境；
   zip 下载应使用同一网络出口语义，而不是绕过代理配置。
 - 保持 Claude Marketplace Git 兼容性。本 Phase 1 原本不改变 `github`、`git`、`url`、
   `git-subdir`；后续 [公开 GitHub 插件源无 Git安装规格](./plugin-github-archive-source.md)
@@ -167,7 +167,7 @@ Phase 1 zip 安装步骤：
 4. `resolveZipPluginSource()` 创建临时目录，例如 `mkdtemp(join(tmpdir(), "zcode-plugin-zip-"))`。
 5. 下载 zip 到临时文件或流式写入临时文件：
    - 使用与 marketplace 操作一致的 AbortSignal。
-   - 对齐 `XCODE_HTTP_PROXY` / `XCODE_HTTPS_PROXY` / `XCODE_NO_PROXY` / CA 等网络出口配置。
+   - 对齐 `ZCODE_HTTP_PROXY` / `ZCODE_HTTPS_PROXY` / `ZCODE_NO_PROXY` / CA 等网络出口配置。
    - 记录累计下载字节，超过上限立即 abort 并删除临时目录。
 6. 计算下载内容 SHA-256：
    - 若 entry 提供 `sha256`，实际 digest 必须完全相等。
@@ -211,8 +211,8 @@ Phase 1 zip 安装步骤：
 
 ### Network egress
 
-- ZIP 下载必须使用 adapters 的 web-fetch 网络出口语义：显式 `XCODE_HTTP_PROXY` / `XCODE_NO_PROXY`
-  优先，并回退读取 `XCODE_TOOL_ENV_PASSTHROUGH_JSON` 中封存的用户 `HTTP_PROXY` / `HTTPS_PROXY` /
+- ZIP 下载必须使用 adapters 的 web-fetch 网络出口语义：显式 `ZCODE_HTTP_PROXY` / `ZCODE_NO_PROXY`
+  优先，并回退读取 `ZCODE_TOOL_ENV_PASSTHROUGH_JSON` 中封存的用户 `HTTP_PROXY` / `HTTPS_PROXY` /
   `NO_PROXY`。
 - 不能直接使用只识别显式 XCode proxy 的默认 HTTP resolver；否则 agent 清理标准代理变量后，git source
   可以安装而 ZIP source 会尝试直连。
@@ -327,7 +327,7 @@ Phase 1 为最小改动，也可以扩展现有 `readPluginSourceSha()`：
 - `apps/zcode-cli/packages/adapters/src/plugins/index.ts`
   - 如新增 public helper 或测试需要导出，更新 barrel。
 - `apps/zcode-cli/packages/adapters/src/network/subprocess-env.ts` 或相邻 network helper
-  - 抽出 HTTP fetch/proxy 对齐逻辑，避免 zip 下载绕过 `XCODE_HTTP_PROXY` 等网络策略。
+  - 抽出 HTTP fetch/proxy 对齐逻辑，避免 zip 下载绕过 `ZCODE_HTTP_PROXY` 等网络策略。
 - `apps/zcode-cli/packages/bootstrap/src/plugins.ts`
   - update overview 的 latest/installed pin 读取从 git sha 扩展到 zip sha256。
 - `apps/zcode-cli/packages/adapters/src/plugins/version-compare.ts`
@@ -376,8 +376,8 @@ Phase 1 为最小改动，也可以扩展现有 `readPluginSourceSha()`：
 - 支持 AbortSignal：下载中 abort 后清理临时目录。
 - cleanup failure：失败路径保留原始错误并附带 cleanup diagnostic；cache 已复制成功时仍写入
   installed record。
-- 代理配置测试：仅在 `XCODE_TOOL_ENV_PASSTHROUGH_JSON` 中提供用户 `HTTP_PROXY`，不设置
-  `XCODE_HTTP_PROXY`，断言 ZIP 请求仍通过本地代理；测试不得访问外网。
+- 代理配置测试：仅在 `ZCODE_TOOL_ENV_PASSTHROUGH_JSON` 中提供用户 `HTTP_PROXY`，不设置
+  `ZCODE_HTTP_PROXY`，断言 ZIP 请求仍通过本地代理；测试不得访问外网。
 - redirect 安全测试：跳转到非 HTTPS、非 loopback URL 时拒绝；跨 origin 跳转时不转发自定义
   `headers`，同 origin 跳转仍可保留普通 header。
 

@@ -21,7 +21,7 @@ import {
 
 const CASE_MARKER = "E2E_R3_RECOVERY_GUARDS";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-recovery-guards",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/r3-recovery-guards",
 );
 const EIGHT_DAYS_MS = 8 * 24 * 60 * 60_000;
 

@@ -26,7 +26,7 @@ const KILLER_SCRIPT = "/home/dev/.e2e-install-killer.sh";
 const KILLER_LOG = "/tmp/e2e-install-killer.log";
 const NO_JSON_MESSAGE = "Remote command returned no JSON result";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-install-killed",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-install-killed",
 );
 const execFileAsync = promisify(execFile);
 

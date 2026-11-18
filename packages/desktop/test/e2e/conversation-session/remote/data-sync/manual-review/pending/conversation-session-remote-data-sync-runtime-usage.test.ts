@@ -102,7 +102,7 @@ const HOOK_COMMAND = `echo ${HOOK_MARK} >> "$HOME/${HOOK_LOG}"`;
 // Core 的标准输出被 supervisor 丢弃，测试拿不到发布事件，只能从推送完成起等足规格的发布窗口再发下一轮。
 const SUBAGENT_PUBLISH_WINDOW_MS = 3_000;
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/dsync-17-runtime-usage",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/dsync-17-runtime-usage",
   "dsync-17",
 );
 
@@ -166,7 +166,7 @@ async function writeLocalContent(homeDir: string): Promise<void> {
         version: "1.0.0",
         description: "data sync runtime inline plugin",
         mcpServers: {
-          rt: { type: "stdio", command: "node", args: ["${XCODE_PLUGIN_ROOT}/server.cjs"] },
+          rt: { type: "stdio", command: "node", args: ["${ZCODE_PLUGIN_ROOT}/server.cjs"] },
         },
       },
       null,

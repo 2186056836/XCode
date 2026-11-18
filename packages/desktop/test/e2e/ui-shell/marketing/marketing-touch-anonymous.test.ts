@@ -14,7 +14,7 @@ import {
 
 const byId = (id: string) => $(`[data-testid="${id}"]`);
 function origin() {
-  const value = process.env.XCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
+  const value = process.env.ZCODE_CODING_PLAN_UPGRADE_MOCK_BASE_URL;
   if (!value) throw new Error("Missing isolated marketing fixture");
   return value;
 }

@@ -182,7 +182,7 @@ describe(marker, () => {
         );
         expect(layout.every((row) => !row.overflow && row.height > 0)).toBe(true);
         await browser.saveScreenshot(
-          join(process.env.XCODE_E2E_ARTIFACT_DIR!, `choice-${locale}-${theme}.png`),
+          join(process.env.ZCODE_E2E_ARTIFACT_DIR!, `choice-${locale}-${theme}.png`),
         );
       }
     await browser.electron.execute((electron) =>
@@ -195,7 +195,7 @@ describe(marker, () => {
         window as Window & { __testActions?: { setLocale(locale: string): void } }
       ).__testActions?.setLocale("zh-CN"),
     );
-    await browser.saveScreenshot(join(process.env.XCODE_E2E_ARTIFACT_DIR!, "choice-desktop.png"));
+    await browser.saveScreenshot(join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "choice-desktop.png"));
     await browser.keys("Escape");
     await picker.waitForExist({ reverse: true });
     expect(await getV4ComposerText()).toBe(marker + " retained original draft");
@@ -323,7 +323,7 @@ describe(marker, () => {
       ).tasks,
     ).toEqual(localBefore.tasks);
     await writeFile(
-      join(process.env.XCODE_E2E_ARTIFACT_DIR!, "choice-identities.json"),
+      join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "choice-identities.json"),
       JSON.stringify({ projects: [first, second], tasks, directory }, null, 2),
     );
   });

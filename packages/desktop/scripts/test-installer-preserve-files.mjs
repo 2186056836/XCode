@@ -285,7 +285,7 @@ if (process.platform !== "win32") {
 
     process.stdout.write("[installer-preserve-files] passed\n");
   } finally {
-    if (process.env.XCODE_KEEP_INSTALLER_FIXTURE !== "1") {
+    if (process.env.ZCODE_KEEP_INSTALLER_FIXTURE !== "1") {
       rmSync(tempRoot, { recursive: true, force: true });
     }
   }

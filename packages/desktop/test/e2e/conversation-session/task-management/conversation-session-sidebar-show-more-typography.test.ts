@@ -13,7 +13,7 @@ const title = `${project} [data-task-title-copy="original"]`;
 
 // 合成 Host 索引仅用于样式和分页，不恢复任务或请求模型；node:sqlite 仅提供同步 API。
 async function seedRows() {
-  const home = process.env.XCODE_E2E_HOME_DIR;
+  const home = process.env.ZCODE_E2E_HOME_DIR;
   // 原因：runner 的隔离 HOME 可能是 .e2e-home、.e2e-home-<runId> 或显式根下的 shard 目录。
   if (!isIsolatedE2EHomeDir(home)) throw new Error("需要本 case 的隔离 HOME");
   const root = join(DEFAULT_WORKSPACE, ".zcode-e2e", "show-more");
@@ -157,12 +157,12 @@ describe("侧栏显示更多文字", () => {
           const normal = await sample();
           evidence.push({ width, theme, fontSize, normal });
           await writeFile(
-            join(process.env.XCODE_E2E_ARTIFACT_DIR!, "show-more-styles.json"),
+            join(process.env.ZCODE_E2E_ARTIFACT_DIR!, "show-more-styles.json"),
             JSON.stringify(evidence, null, 2),
           );
           await browser.saveScreenshot(
             join(
-              process.env.XCODE_E2E_ARTIFACT_DIR!,
+              process.env.ZCODE_E2E_ARTIFACT_DIR!,
               `show-more-${width}-${theme}-${fontSize}.png`,
             ),
           );

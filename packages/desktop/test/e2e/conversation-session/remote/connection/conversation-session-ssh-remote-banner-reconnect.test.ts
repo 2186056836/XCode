@@ -16,7 +16,7 @@ import { waitForV4ConversationState } from "#e2e/helpers/v4-conversation";
 
 const CASE_MARKER = "E2E_SSH_BANNER_RECONNECT";
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-remote-banner-reconnect",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/ssh-remote-banner-reconnect",
 );
 const BANNER = '[data-testid="remote-conversation-banner"]';
 const WIZARD = '[data-testid="ssh-dialog"]';

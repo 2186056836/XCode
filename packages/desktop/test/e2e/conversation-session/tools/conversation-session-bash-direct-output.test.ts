@@ -304,7 +304,7 @@ describe("Bash 直接文件输出补充 E2E", () => {
     this.timeout(60000);
     const id = "toolu_bdo_realtime";
     const marker = "E2E_BDO_REALTIME";
-    const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR;
+    const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR;
     if (!artifactDir) throw new Error("E2E artifact directory is required for refresh timings");
     const observations: {
       stage: number;

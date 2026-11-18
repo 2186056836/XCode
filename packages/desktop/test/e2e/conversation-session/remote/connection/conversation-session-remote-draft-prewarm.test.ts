@@ -103,7 +103,7 @@ describe(`${CASE}: 远端草稿先确定项目归属再预热`, () => {
   let mobile: Browser | undefined;
   let page: Page | undefined;
   const evidence: Record<string, unknown> = {};
-  const artifactDir = process.env.XCODE_E2E_ARTIFACT_DIR!;
+  const artifactDir = process.env.ZCODE_E2E_ARTIFACT_DIR!;
 
   after(async () => {
     await writeFile(
@@ -246,8 +246,8 @@ describe(`${CASE}: 远端草稿先确定项目归属再预热`, () => {
 
     const pairingUrl = await obtainUnreadPairingUrl();
     mobile = await chromium.launch({
-      ...(process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE
-        ? { executablePath: process.env.XCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
+      ...(process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE
+        ? { executablePath: process.env.ZCODE_E2E_MOBILE_BROWSER_EXECUTABLE }
         : { channel: "chrome" }),
       headless: true,
     });

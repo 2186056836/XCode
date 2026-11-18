@@ -5,7 +5,7 @@ import type { XCodeAutomation, XCodeAutomationCreateParams } from "@zcode/shared
 
 /** 使用真实任务库建立关联；日程远于验收窗口，不让后台 tick 改写对照数据。 */
 export async function seedArchiveAutomations(target: { workspacePath?: string; taskId: string }) {
-  const home = process.env.XCODE_E2E_HOME_DIR;
+  const home = process.env.ZCODE_E2E_HOME_DIR;
   if (!home) throw new Error("archive automation fixture requires isolated E2E HOME");
   const database = new DatabaseSync(join(home, ".zcode/v2/tasks-index.sqlite"), { readOnly: true });
   let workspacePath = target.workspacePath;

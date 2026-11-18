@@ -263,7 +263,7 @@ describe(`${CASE_MARKER}: 设置设备列表与未完成连接`, () => {
       ),
     ).toBe(true);
     const artifactRoot = resolve(
-      process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-device-cards",
+      process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-device-cards",
     );
     await mkdir(artifactRoot, { recursive: true });
     await browser.saveScreenshot(resolve(artifactRoot, "device-row-deep-link-highlight.png"));

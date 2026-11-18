@@ -132,7 +132,7 @@ SubagentStopped(stopped)。自然完成与停止竞争只能由先提交的一�
 - 节奏：无进展 15 分钟首次提醒；主代理不停止它（即「继续等待」）时，下一次间隔加倍：30 分钟、
   60 分钟……上限 4 小时。有新进展后计数清零，回到 15 分钟。Agent 结束或会话关闭后不再提醒。
   `RuntimeConfig.subagents.backgroundStallNotifyMs` / `backgroundStallMaxIntervalMs` 可覆盖。
-- 开发验收用环境变量 `XCODE_SUBAGENT_STALL_NOTIFY_MS`（bootstrap 读取，只改首次阈值，毫秒）：
+- 开发验收用环境变量 `ZCODE_SUBAGENT_STALL_NOTIFY_MS`（bootstrap 读取，只改首次阈值，毫秒）：
   - 优先级低于 `runtimeConfig.subagents.backgroundStallNotifyMs`；
   - 不是纯数字或 ≤ 0 时不生效，用默认 15 分钟；
   - 低于 10 秒按 10 秒：每次提醒都会在父会话空闲时开一轮模型调用，间隔从极小值加倍要几十轮才到

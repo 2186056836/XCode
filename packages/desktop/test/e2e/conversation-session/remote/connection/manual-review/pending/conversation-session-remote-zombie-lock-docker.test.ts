@@ -36,7 +36,7 @@ const MARKER = "E2E_REMOTE_ZOMBIE_LOCK_DOCKER";
 const ROOT: RemoteAccount = { user: "root", home: "/root" };
 const desktopRoot = process.cwd();
 const artifactDir = resolve(
-  process.env.XCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-zombie-lock-docker",
+  process.env.ZCODE_E2E_ARTIFACT_DIR ?? ".e2e-artifacts/remote-zombie-lock-docker",
 );
 
 async function readProcessState(container: string, pid: number): Promise<string> {
