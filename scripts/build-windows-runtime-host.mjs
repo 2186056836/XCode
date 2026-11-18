@@ -1,6 +1,7 @@
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -57,6 +58,78 @@ function run(args) {
   });
 }
 
+/**
+ * MinGW 直编回退（本机无 VS2022/CMake 时的等价路径）。
+ *
+ * 两个 cpp 只依赖 windows.h / tlhelp32.h，CMakeLists 里除 C++17、-municode(wmain)、
+ * 静态链接外没有别的条件；直接 g++ 编译出的 PE 与 MSVC 构建功能等价（已跑过
+ * ready → started → close/empty 全流程握手验证）。GNU ld 无法在含中文的路径上写输出，
+ * 所以先在 ASCII 临时目录编译再拷回 outputDir。
+ */
+function cmakeAvailable() {
+  const cmake = process.env.CMAKE || "cmake";
+  try {
+    execFileSync(cmake, ["--version"], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function findMingwGxx(arch) {
+  if (process.env.XCODE_WINDOWS_CXX) return process.env.XCODE_WINDOWS_CXX;
+  const roots = [process.env.MINGW_ROOT, "D:/mingw64", "C:/mingw64", "C:/msys64/mingw64"]
+    .filter(Boolean);
+  const name = arch === "arm64" ? "aarch64-w64-mingw32-g++.exe" : "x86_64-w64-mingw32-g++.exe";
+  for (const root of roots) {
+    const candidate = join(root, "bin", name);
+    if (existsSync(candidate)) return candidate;
+  }
+  // 最后回退到 PATH
+  try {
+    execFileSync(name, ["--version"], { stdio: "ignore" });
+    return name;
+  } catch {
+    return null;
+  }
+}
+
+async function buildWithMingw({ arch, outputDir, work }) {
+  const gxx = findMingwGxx(arch);
+  if (!gxx) {
+    throw new Error(
+      "Neither CMake nor a MinGW C++ compiler is available. Install VS2022+CMake or MinGW-w64.",
+    );
+  }
+  const flags = [
+    "-std=c++17", "-O2", "-Wall", "-Wextra", "-municode", "-static",
+    "-static-libgcc", "-static-libstdc++",
+  ];
+  // GNU ld 打不开含中文的输出路径，编译到 work（os.tmpdir，纯 ASCII）再拷回。
+  for (const [src, out] of [
+    ["main.cpp", "zcode-runtime-host.exe"],
+    ["installer-process-helper.cpp", "zcode-installer-process-helper.exe"],
+  ]) {
+    execFileSync(gxx, [...flags, "-o", join(work, out), join(source, src)], { stdio: "inherit" });
+  }
+  await mkdir(outputDir, { recursive: true });
+  for (const out of ["zcode-runtime-host.exe", "zcode-installer-process-helper.exe"]) {
+    await copyFile(join(work, out), join(outputDir, out));
+  }
+  const hostBytes = await readFile(join(outputDir, "zcode-runtime-host.exe"));
+  const helperBytes = await readFile(join(outputDir, "zcode-installer-process-helper.exe"));
+  verifyRuntimeHostPe(hostBytes, arch);
+  verifyRuntimeHostPe(helperBytes, arch);
+  await writeFile(
+    join(outputDir, "build.json"),
+    JSON.stringify({
+      source: await sourceDigest(),
+      binary: createHash("sha256").update(hostBytes).digest("hex"),
+      installerProcessHelper: createHash("sha256").update(helperBytes).digest("hex"),
+    }),
+  );
+}
+
 export async function isRuntimeHostReady(outputDir, arch) {
   try {
     const hostBytes = await readFile(join(outputDir, "zcode-runtime-host.exe"));
@@ -78,6 +151,10 @@ export async function buildRuntimeHost({ arch, outputDir }) {
   const plan = resolveRuntimeHostBuild(arch);
   const work = await mkdtemp(join(tmpdir(), "zcode-runtime-host-"));
   try {
+    if (!cmakeAvailable()) {
+      await buildWithMingw({ arch, outputDir, work });
+      return;
+    }
     await run(["-S", source, "-B", work, ...plan.configureArgs, "-DCMAKE_BUILD_TYPE=Release"]);
     await run([
       "--build",
