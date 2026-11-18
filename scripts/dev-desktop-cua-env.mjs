@@ -1,12 +1,33 @@
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 export const WINDOWS_CUA_DEV_ROOT_ENV = "ZCODE_CUA_DEV_ROOT";
 
 /**
- * workspace 内 producer 相对仓库根的位置。Windows runtime 解析要求 DEV_ROOT 是物理目录
+ * 开源占位包相对仓库根的位置。Windows runtime 解析要求 DEV_ROOT 是物理目录
  * （root 不能是 symlink/junction），packages/zcode-cua 是 checkout 内的真实目录，满足该约束。
+ * 注意它只是 placeholder：没有真实 producer/helper，绑上去 CUA 仍然不可用。
  */
 export const WINDOWS_CUA_PRODUCER_SEGMENTS = ["packages", "zcode-cua"];
+
+/**
+ * dev 模式真正该绑的 CUA runtime 根：cua-vendor 从 vendor/cua 装配出的 Helper。
+ *
+ * 它带 runtime-manifest.json 与 `zcodeCuaRuntime` dev 契约（root package.json 必须与
+ * manifest 合成一致，否则 resolveWindowsCuaRuntime 以 invalid-runtime-manifest 失败）。
+ */
+export function resolveWindowsCuaDevRoot(repoRoot, platform = process.platform, arch = process.arch) {
+  const vendored = join(
+    repoRoot,
+    "packages",
+    "desktop",
+    "bundled-tools",
+    `${platform}-${arch}`,
+    "cua-helper",
+  );
+  if (existsSync(join(vendored, "runtime-manifest.json"))) return vendored;
+  return join(repoRoot, ...WINDOWS_CUA_PRODUCER_SEGMENTS);
+}
 
 /**
  * 标准 dev 启动在 Windows 上要绑定的 CUA runtime 根。
@@ -16,13 +37,17 @@ export const WINDOWS_CUA_PRODUCER_SEGMENTS = ["packages", "zcode-cua"];
  * 产品分支去读 process.resourcesPath——dev 下那是 node_modules/electron/dist/resources，
  * 里面只有 default_app.asar，没有 tools/cua-helper，解析必然以 invalid-runtime-manifest
  * 失败。结果标准 dev 启动的 Windows computer use 恒不可用，且要靠开发者自己记得设
- * ZCODE_CUA_DEV_ROOT。这里补齐 macOS 已有的同一条原则：缺省绑定到本 checkout 的 workspace
- * producer（packages/zcode-cua，与产品构建同源）。
+ * ZCODE_CUA_DEV_ROOT。
+ *
+ * 2026-11-18 修复原因：这个函数此前**没有任何调用方**（`dev:desktop` 从不注入），只能靠
+ * 开发者在 shell 里手工 export；前缀回退到 ZCODE_ 后，旧的 XCODE_CUA_DEV_ROOT 手工设置会
+ * 静默失效，表现为「Computer Use is unavailable for this node_repl session」。缺省同时改为
+ * 指向 vendored helper（原来指向开源占位包，即使被调用也跑不通）。
  *
  * 开发者显式设置 ZCODE_CUA_DEV_ROOT（例如指向自己的 zcode-cua source checkout）时永远尊重
  * 其取值，不覆盖；这里只补缺省，不改变 runtime 侧「只认 ZCODE_CUA_DEV_ROOT」的既有边界。
  */
-export function resolveDevDesktopWindowsCuaEnv({ platform, repoRoot, env }) {
+export function resolveDevDesktopWindowsCuaEnv({ platform, repoRoot, env, arch = process.arch }) {
   if (platform !== "win32") return {};
   if (typeof repoRoot !== "string" || !repoRoot.trim()) {
     throw new Error("[dev-desktop-cua-env] repoRoot is required to resolve the Windows CUA root");
@@ -32,5 +57,5 @@ export function resolveDevDesktopWindowsCuaEnv({ platform, repoRoot, env }) {
   }
   // runtime 侧同样把纯空白视为未配置，这里保持一致，避免 "   " 既不启用覆盖也不给缺省。
   if (env[WINDOWS_CUA_DEV_ROOT_ENV]?.trim()) return {};
-  return { [WINDOWS_CUA_DEV_ROOT_ENV]: join(repoRoot, ...WINDOWS_CUA_PRODUCER_SEGMENTS) };
+  return { [WINDOWS_CUA_DEV_ROOT_ENV]: resolveWindowsCuaDevRoot(repoRoot, platform, arch) };
 }

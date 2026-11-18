@@ -24,12 +24,10 @@ const desktopPackage = JSON.parse(
   await readFile(resolve(desktopPackageRoot, "package.json"), "utf8"),
 );
 const sourceRoot = await resolveWindowsCuaHelperSourceRoot({
-  // fork 环境变量统一 ZCODE_ 前缀，同时兼容上游 ZCODE_（显式指定真实 producer 包目录时
-  // 不能因为前缀残留静默忽略；否则会回退到占位包，Computer Use 直接不可用）。
-  runtimePackageDir:
-    process.env.ZCODE_CUA_HELPER_RUNTIME_PACKAGE_DIR ??
-    process.env.ZCODE_CUA_HELPER_RUNTIME_PACKAGE_DIR,
-  devRoot: process.env.ZCODE_CUA_DEV_ROOT ?? process.env.ZCODE_CUA_DEV_ROOT,
+  // 环境变量统一 ZCODE_ 前缀（与上游同名）。品牌化时期这里曾写成
+  // `XCODE_X ?? ZCODE_X` 的兜底对，前缀回退后两侧同键，收敛成单次读取。
+  runtimePackageDir: process.env.ZCODE_CUA_HELPER_RUNTIME_PACKAGE_DIR,
+  devRoot: process.env.ZCODE_CUA_DEV_ROOT,
   servicesPackageRoot,
 });
 const result = await prepareWindowsCuaHelperAssets({

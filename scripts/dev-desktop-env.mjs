@@ -6,6 +6,7 @@ import { homedir } from "node:os";
 
 import { withPinnedNodePath } from "./mise-toolchain-env.mjs";
 import { quoteArgsForWindowsShell } from "./spawn-command.mjs";
+import { resolveDevDesktopWindowsCuaEnv } from "./dev-desktop-cua-env.mjs";
 
 const requestedEnv = process.argv[2]?.trim().toLowerCase();
 const agentBytecode = process.argv.slice(3).includes("--agent-bytecode");
@@ -55,6 +56,19 @@ if (configuredDataBaseDir) {
 } else {
   process.env.ZCODE_DATA_BASE_DIR = defaultDevDataBaseDir();
   console.log(`[dev] isolated data root (auto): ${process.env.ZCODE_DATA_BASE_DIR}`);
+}
+
+// Windows 下把 Computer Use runtime 缺省绑到本 checkout 里 cua-vendor 装配出的 Helper。
+// 不注入的话 host 会落到产品分支读 process.resourcesPath（dev 下没有 tools/cua-helper），
+// CUA 恒不可用；显式设了 ZCODE_CUA_DEV_ROOT 时这里不覆盖。
+const cuaDevEnv = resolveDevDesktopWindowsCuaEnv({
+  platform: process.platform,
+  repoRoot,
+  env: process.env,
+});
+for (const [key, value] of Object.entries(cuaDevEnv)) {
+  process.env[key] = value;
+  console.log(`[dev] computer use runtime root: ${value}`);
 }
 const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
