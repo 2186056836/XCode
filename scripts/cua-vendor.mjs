@@ -202,10 +202,7 @@ async function invalidateStaleProducerCaches(vendorRoot) {
   if (!existsSync(vendoredProducer)) return;
   const expectedHash = await sha256(vendoredProducer);
 
-  const dataRoots = [
-    process.env.ZCODE_DATA_BASE_DIR?.trim() ? join(process.env.ZCODE_DATA_BASE_DIR.trim(), ".xcode") : undefined,
-    join(homedir(), ".xcode"),
-  ].filter((root) => typeof root === "string" && root.length > 0);
+  const dataRoots = resolvePluginDataRoots();
 
   for (const dataRoot of dataRoots) {
     const cacheRoot = join(dataRoot, "cli", "plugins", "cache", "zcode-plugins-official", "node-repl-host");
@@ -220,6 +217,63 @@ async function invalidateStaleProducerCaches(vendorRoot) {
     await rm(cacheRoot, { recursive: true, force: true });
     log(`清除陈旧 producer 缓存: ${cacheRoot}`);
   }
+}
+
+/**
+ * 清掉插件缓存里与仓库不一致的 computer-use 插件。
+ *
+ * 与上面 node-repl-host 是同一个陷阱：缓存按 `<name>/<version>` 做键，版本号不变就永不重拷。
+ * 品牌前缀回退到 ZCODE_ 之后，仓库里的 SKILL.md 教 agent 用 `ZCODE_CUA_PLUGIN_ROOT`，
+ * 而已缓存的旧副本仍教 `XCODE_CUA_PLUGIN_ROOT` —— agent 照 skill 写代码就会读到
+ * undefined，只能现场瞎试（实测 dev 恢复会话确实这么翻车）。docs/scripts 同理。
+ *
+ * 用 SKILL.md 的内容哈希做判据（它是 agent 唯一会读的那份指导），不一致就清整个
+ * plugin 缓存目录，由启动 seed 从仓库重新灌。
+ */
+async function invalidateStaleComputerUsePluginCaches() {
+  const sourceSkill = join(
+    repoRoot,
+    "apps",
+    "zcode-cli",
+    "packages",
+    "zcode-cua-plugin",
+    "skills",
+    "computer-use",
+    "SKILL.md",
+  );
+  if (!existsSync(sourceSkill)) return;
+  const expectedHash = await sha256(sourceSkill);
+
+  for (const dataRoot of resolvePluginDataRoots()) {
+    const cacheRoot = join(
+      dataRoot,
+      "cli",
+      "plugins",
+      "cache",
+      "zcode-plugins-official",
+      "computer-use",
+    );
+    if (!existsSync(cacheRoot)) continue;
+    let stale = false;
+    for (const versionDir of safeReaddir(cacheRoot)) {
+      const cached = join(cacheRoot, versionDir, "skills", "computer-use", "SKILL.md");
+      if (!existsSync(cached)) continue;
+      if ((await sha256(cached)) !== expectedHash) stale = true;
+    }
+    if (!stale) continue;
+    await rm(cacheRoot, { recursive: true, force: true });
+    log(`清除陈旧 computer-use 插件缓存: ${cacheRoot}`);
+  }
+}
+
+/** plugin 缓存所在的数据根：dev 隔离根优先，其次是安装版默认根。 */
+function resolvePluginDataRoots() {
+  return [
+    process.env.ZCODE_DATA_BASE_DIR?.trim()
+      ? join(process.env.ZCODE_DATA_BASE_DIR.trim(), ".xcode")
+      : undefined,
+    join(homedir(), ".xcode"),
+  ].filter((root) => typeof root === "string" && root.length > 0);
 }
 
 function safeReaddir(dir) {
@@ -246,6 +300,7 @@ async function main() {
 
   log("vendor 来源:", vendorRoot, "目标平台:", platformKey);
   await invalidateStaleProducerCaches(vendorRoot);
+  await invalidateStaleComputerUsePluginCaches();
   await installProducer(vendorRoot, platformKey);
   await installHelper(vendorRoot, platformKey);
   await installPluginRuntime(vendorRoot, platformKey);

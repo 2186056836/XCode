@@ -1,6 +1,6 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { homedir, platform, userInfo } from "node:os";
-import { link, lstat, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { link, lstat, readFile, realpath, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { CREDENTIAL_DECRYPT_ERROR_CODE, CREDENTIAL_DECRYPT_ERROR_PREFIX } from "@zcode/shared";
 import { atomicWritePrivateTextFile, withFileLock } from "../node/privateFilePersistence.js";
@@ -57,6 +57,28 @@ function keyCacheFor(store?: CredentialKeyStore): Map<string, Promise<KeyMateria
 
 function digest(value: string | Buffer): Buffer {
   return createHash("sha256").update(value).digest();
+}
+
+/**
+ * 系统钥匙的账户名由「凭据文件路径」派生，必须先 realpath 再摘要。
+ *
+ * Bug 原因：dev 隔离数据根靠 `scripts/link-dev-credentials.mjs` 把
+ * `<真实家目录>/.xcode/v2/credentials.json` **符号链接**进 `{dev根}/.xcode/v2/`，
+ * 让两边共用同一份凭据。但钥匙账户名取的是未解析符号链接的路径，于是同一个物理文件
+ * 派生出两把不同的钥匙：密文由安装版写成，dev 用自己那把解 → keyFingerprint 不匹配 →
+ * CREDENTIAL_SECURE_STORAGE_UNAVAILABLE → 账号管理里账号列表为空（用户感知是「账号全丢了」，
+ * 实际磁盘上 18 个账号完好）。realpath 让「同一个文件 → 同一把钥匙」，符号链接方案才成立。
+ *
+ * 文件尚不存在时（首次登录、目录初始化）realpath 会 ENOENT，退回规范化路径——此时还没
+ * 有任何密文依赖钥匙，不存在错配。注意若先用独立文件登录、之后才改成符号链接，那份旧
+ * 密文会失去对应钥匙；这是链接脚本「用正式版凭据覆盖 dev」的既定语义，不是这里能兜的。
+ */
+async function resolveKeyStoragePath(filePath: string): Promise<string> {
+  try {
+    return await realpath(filePath);
+  } catch {
+    return resolve(filePath);
+  }
 }
 function decryptError(): Error {
   return Object.assign(
@@ -169,13 +191,13 @@ async function resolveManagedSecret(
 function systemKeyStore(filePath: string): CredentialKeyStore {
   let entry: Promise<import("@napi-rs/keyring").AsyncEntry> | undefined;
   const getEntry = () => {
-    entry ??= import("@napi-rs/keyring")
-      .then(
-        ({ AsyncEntry }) =>
-          new AsyncEntry(SYSTEM_SERVICE, digest(resolve(filePath)).toString("hex"), {
-            linux: { store: "secret-service" },
-          }),
-      )
+    entry ??= resolveKeyStoragePath(filePath)
+      .then(async (storagePath) => {
+        const { AsyncEntry } = await import("@napi-rs/keyring");
+        return new AsyncEntry(SYSTEM_SERVICE, digest(storagePath).toString("hex"), {
+          linux: { store: "secret-service" },
+        });
+      })
       .catch(() => {
         entry = undefined;
         throw unavailable();
