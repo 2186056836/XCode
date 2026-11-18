@@ -403,6 +403,17 @@ function applyPersonaConfig(
       break;
     }
   }
+  // 身份只负责 cliPrefix / prefill；输入混淆是独立轴，换身份不能把它一起抹掉
+  // （与 session/setPersona 同一修法）。
+  const currentObfuscation =
+    record.app.runtime.getSystemPromptOverrides()?.obfuscation ??
+    record.customSystemMessages?.obfuscation;
+  if (overrides) {
+    const obfuscation = overrides.obfuscation ?? currentObfuscation;
+    if (obfuscation) overrides = { ...overrides, obfuscation };
+  } else if (currentObfuscation) {
+    overrides = { obfuscation: currentObfuscation };
+  }
   if (overrides) {
     record.customSystemMessages = overrides;
   } else {

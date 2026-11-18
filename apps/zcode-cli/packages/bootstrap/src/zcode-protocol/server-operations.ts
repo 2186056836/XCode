@@ -3148,6 +3148,13 @@ export async function setPersona(context: ZCodeProtocolAgentServerContext, rawPa
   const record = requireSession(context, params.sessionId);
   assertExpectedRevision(record, params.expectedRevision);
 
+  // 身份只负责 cliPrefix / prefill；输入混淆是独立轴，换身份不能把它一起抹掉。
+  // 之前这里整体覆盖 customSystemMessages，导致「先选混淆、再换身份」后
+  // obfuscationMode 还在、内容却没了，混淆静默失效（e2e 抓到的真实回归）。
+  const currentObfuscation =
+    record.app.runtime.getSystemPromptOverrides()?.obfuscation ??
+    record.customSystemMessages?.obfuscation;
+
   let overrides: SessionCustomSystemMessages | undefined;
   switch (params.personaMode) {
     case "inherit": {
@@ -3198,6 +3205,15 @@ export async function setPersona(context: ZCodeProtocolAgentServerContext, rawPa
       record.personaOverride = templateId;
       break;
     }
+  }
+
+  // 混淆内容与身份内容合流：调用方显式给了（inherit 的全局快照）就用它的，
+  // 否则保留会话当前值；builtin 清空身份时也要把混淆留下来。
+  if (overrides) {
+    const obfuscation = overrides.obfuscation ?? currentObfuscation;
+    if (obfuscation) overrides = { ...overrides, obfuscation };
+  } else if (currentObfuscation) {
+    overrides = { obfuscation: currentObfuscation };
   }
 
   if (overrides) {

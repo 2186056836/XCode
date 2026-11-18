@@ -176,11 +176,29 @@ export function applyPersistedPromptOverrides(
     delete record.obfuscationInherited;
   }
 
-  if (persisted.customSystemMessages) {
-    record.customSystemMessages = cloneCustomSystemMessages(persisted.customSystemMessages);
-    record.app.runtime.updateConfig({
-      systemPromptOverrides: cloneCustomSystemMessages(persisted.customSystemMessages),
-    });
+  const restored = persisted.customSystemMessages
+    ? cloneCustomSystemMessages(persisted.customSystemMessages)
+    : undefined;
+  // 兼容早期写坏的快照：obfuscationMode 有值、内容却丢了（setPersona 曾整体覆盖
+  // customSystemMessages）。按 mode 反推内容补回去，否则恢复后「显示标准档、实际不混淆」。
+  const restoredObfuscationMode = persisted.obfuscationMode;
+  if (restoredObfuscationMode && restoredObfuscationMode !== "inherit" && !restored?.obfuscation) {
+    const repaired =
+      restoredObfuscationMode === "off"
+        ? { enabled: false }
+        : { enabled: true, tier: restoredObfuscationMode };
+    if (restored) {
+      restored.obfuscation = repaired;
+    } else {
+      record.customSystemMessages = { obfuscation: repaired };
+      record.app.runtime.updateConfig({ systemPromptOverrides: { obfuscation: repaired } });
+      return;
+    }
+  }
+
+  if (restored) {
+    record.customSystemMessages = restored;
+    record.app.runtime.updateConfig({ systemPromptOverrides: restored });
   } else {
     delete record.customSystemMessages;
     record.app.runtime.updateConfig({ systemPromptOverrides: undefined });
