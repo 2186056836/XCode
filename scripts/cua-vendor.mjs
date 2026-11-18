@@ -28,8 +28,9 @@
  */
 import { copyFile, cp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -183,6 +184,52 @@ async function installPluginRuntime(vendorRoot, platformKey) {
   }
 }
 
+/**
+ * 清掉插件缓存里陈旧的 producer。
+ *
+ * plugin host 加载 node_repl 的路径是
+ * `<数据根>/cli/plugins/cache/zcode-plugins-official/node-repl-host/<version>/dist/mcp/server.js`，
+ * **不是**仓库里的 dist。缓存按 `<name>/<version>` 做键：版本号不变时启动 seed 认为
+ * 已就绪、不会重新拷贝，于是占位包一旦进去就永久躺着。实测 dev 数据根与安装包数据根
+ * 都中招——仓库里装着 4.88MB 真 producer，而 agent 实际跑的是 2.03MB 占位版，
+ * 表现为 agent.computerUse.* 报「Computer Use is not available in this build」。
+ *
+ * 只在缓存内容与 vendor 不一致时清理：清掉后由启动 seed 从仓库重新灌（版本键不变，
+ * 但目录缺失即视为未安装），这条路径已实测可自愈。
+ */
+async function invalidateStaleProducerCaches(vendorRoot) {
+  const vendoredProducer = join(vendorRoot, "producer", "server.js");
+  if (!existsSync(vendoredProducer)) return;
+  const expectedHash = await sha256(vendoredProducer);
+
+  const dataRoots = [
+    process.env.XCODE_DATA_BASE_DIR?.trim() ? join(process.env.XCODE_DATA_BASE_DIR.trim(), ".xcode") : undefined,
+    join(homedir(), ".xcode"),
+  ].filter((root) => typeof root === "string" && root.length > 0);
+
+  for (const dataRoot of dataRoots) {
+    const cacheRoot = join(dataRoot, "cli", "plugins", "cache", "zcode-plugins-official", "node-repl-host");
+    if (!existsSync(cacheRoot)) continue;
+    let stale = false;
+    for (const versionDir of safeReaddir(cacheRoot)) {
+      const cached = join(cacheRoot, versionDir, "dist", "mcp", "server.js");
+      if (!existsSync(cached)) continue;
+      if ((await sha256(cached)) !== expectedHash) stale = true;
+    }
+    if (!stale) continue;
+    await rm(cacheRoot, { recursive: true, force: true });
+    log(`清除陈旧 producer 缓存: ${cacheRoot}`);
+  }
+}
+
+function safeReaddir(dir) {
+  try {
+    return readdirSync(dir);
+  } catch {
+    return [];
+  }
+}
+
 async function main() {
   const forceSeed = process.argv.includes("--seed");
   const platformKey = `${process.platform}-${process.arch}`;
@@ -198,6 +245,7 @@ async function main() {
   }
 
   log("vendor 来源:", vendorRoot, "目标平台:", platformKey);
+  await invalidateStaleProducerCaches(vendorRoot);
   await installProducer(vendorRoot, platformKey);
   await installHelper(vendorRoot, platformKey);
   await installPluginRuntime(vendorRoot, platformKey);

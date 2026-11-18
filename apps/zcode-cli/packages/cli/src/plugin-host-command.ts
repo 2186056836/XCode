@@ -12,6 +12,9 @@ import type { RunContext } from "@zcode/shared-types";
 
 const HOST_USAGE = `${XCODE_PLUGIN_HOST_COMMAND} <server-path> [-- <server-arg>...]`;
 
+// 移植的官方 producer 只认这个（未品牌化的）变量名，见下方恢复逻辑。
+const LEGACY_CUA_BROKER_SOCKET_ENV_KEY = "ZCODE_CUA_PERMISSION_BROKER_SOCKET";
+
 type HostedPluginModule = {
   main?: unknown;
 };
@@ -53,11 +56,18 @@ export async function runPluginHostCommand(ctx: RunContext, argv: string[]): Pro
 
     const originalArgv = process.argv;
     const originalBrokerSocket = process.env[XCODE_CUA_BROKER_SOCKET_ENV_KEY];
+    const originalLegacyBrokerSocket = process.env[LEGACY_CUA_BROKER_SOCKET_ENV_KEY];
     // shared node_repl 把同一凭据组恢复到环境，由 broker bridge 读取；旧的独立 CUA
     // MCP 不再拥有执行入口。
     process.argv = [process.execPath, serverPath, ...serverArgs];
     if (capturedBrokerCredentials.socket && process.env[XCODE_CUA_NODE_REPL_HOST_ENV_KEY] === "1") {
       process.env[XCODE_CUA_BROKER_SOCKET_ENV_KEY] = capturedBrokerCredentials.socket;
+      // XCode fork：node_repl 的 Computer Use producer 是从官方包移植的闭源产物，只读
+      // ZCODE_CUA_* 变量名。CLI 入口的 sanitize 会把这个别名一并剔除（它和 XCODE_ 原名
+      // 承载同一份连接材料，必须同等处理），而这里只恢复了 XCODE_ 名——producer 于是拿不到
+      // broker socket，createComputerUseRuntime 返回 undefined，bridge 缺失后
+      // setupComputerUseRuntime/agent.computerUse.* 在真机必然失败。两个名字都要恢复。
+      process.env[LEGACY_CUA_BROKER_SOCKET_ENV_KEY] = capturedBrokerCredentials.socket;
     }
     try {
       await module.main();
@@ -67,6 +77,11 @@ export async function runPluginHostCommand(ctx: RunContext, argv: string[]): Pro
         delete process.env[XCODE_CUA_BROKER_SOCKET_ENV_KEY];
       } else {
         process.env[XCODE_CUA_BROKER_SOCKET_ENV_KEY] = originalBrokerSocket;
+      }
+      if (originalLegacyBrokerSocket === undefined) {
+        delete process.env[LEGACY_CUA_BROKER_SOCKET_ENV_KEY];
+      } else {
+        process.env[LEGACY_CUA_BROKER_SOCKET_ENV_KEY] = originalLegacyBrokerSocket;
       }
     }
 
