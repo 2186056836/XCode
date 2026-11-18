@@ -207,6 +207,7 @@ export type {
   ZCodeAgentWorkspaceTarget,
   ZCodeAgentSetPersonaParams,
   ZCodeAgentSetPrefillParams,
+  ZCodeAgentSetObfuscationParams,
 } from "./zcode-agent/zcodeAgent.js";
 
 // XCode session service — app-facing session facade without XCode Agent naming.

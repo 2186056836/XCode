@@ -494,6 +494,10 @@ export interface ConversationComposerProps {
   ) => void;
   /** XCode fork：草稿态 PreFill 开关；null = 跟随全局。 */
   onSelectDraftPrefill?: (mode: "inherit" | "on" | "off" | null) => void;
+  /** XCode fork：草稿态输入混淆档位；null = 跟随全局。 */
+  onSelectDraftObfuscation?: (
+    mode: "inherit" | "off" | "light" | "standard" | "heavy" | null,
+  ) => void;
   onSwitchMode: (mode: string) => void;
   /** 打开当前 session 的 Status panel，并直达 Running 明细。 */
   onOpenRunningBackgroundWorks?: () => void;
@@ -620,6 +624,7 @@ function ConversationComposerImpl({
   onSelectThought,
   onSelectDraftPersona,
   onSelectDraftPrefill,
+  onSelectDraftObfuscation,
   onSwitchMode,
   onOpenRunningBackgroundWorks,
   backgroundWorkOpenTarget = "panel",
@@ -2705,6 +2710,7 @@ function ConversationComposerImpl({
               onSelectThought={onSelectThought}
               onSelectDraftPersona={onSelectDraftPersona}
               onSelectDraftPrefill={onSelectDraftPrefill}
+              onSelectDraftObfuscation={onSelectDraftObfuscation}
               onSwitchMode={onSwitchMode}
               onRecoverCustomModelSelection={onRecoverCustomModelSelection}
               onSendCompressionCommand={onSendCompressionCommand}

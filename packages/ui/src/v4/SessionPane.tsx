@@ -60,7 +60,6 @@ import type {
   ConversationRowTarget,
   SessionErrorInfo,
   SessionModelTransition,
-  TurnObfuscationSettings,
   UserInputRow,
   V4ConversationFileChangesResult,
 } from "@zcode/shared/zcode-protocol-v4";
@@ -2035,6 +2034,7 @@ export function SessionPane({
     handleDraftSelectThought,
     handleDraftSelectPersona,
     handleDraftSelectPrefillMode,
+    handleDraftSelectObfuscationMode,
     handleDraftSwitchMode,
     observeDraftPermissionGrant,
     promoteComposerDraft,
@@ -2175,27 +2175,16 @@ export function SessionPane({
   }, [draftConfigRef, modelSelectionView?.revision, sessionId, workspaceIdentity, workspacePath]);
   const recommendStartPlan = useStartPlanRecommendation(modelSelectionView);
   const { settings: sharedSettings } = useSettings();
-  // godmode Parseltongue 输入混淆：提交瞬间从全局设置读取，作为 turn 级值随本次 Submission 传递
-  // （镜像 modelSelection，编辑重发/换档后立即生效，不再依赖会话物化时冻结的旧值）。
-  const currentTurnObfuscation = useMemo<TurnObfuscationSettings>(() => {
-    const obfuscation = sharedSettings?.customSystemMessages?.obfuscation ?? {};
-    if (obfuscation.enabled !== true) return { enabled: false, tier: "light" };
-    return { enabled: true, tier: obfuscation.tier ?? "light" };
-  }, [sharedSettings?.customSystemMessages?.obfuscation]);
+  // godmode Parseltongue 输入混淆是会话级配置（跟随全局只是默认选项）：由聊天选择器写入
+  // session/setObfuscation，CLI 逐轮读 config.systemPromptOverrides.obfuscation。
+  // 这里不再从全局设置冻结成 turn 级值——否则会把用户在会话里选的档位盖掉。
   const createSubmissionFromComposer = useCallback(
-    () =>
-      createComposerSubmissionConfig(
-        draftConfigRef.current,
-        modelSelectionView,
-        currentTurnObfuscation,
-      ),
-    [draftConfigRef, modelSelectionView, currentTurnObfuscation],
+    () => createComposerSubmissionConfig(draftConfigRef.current, modelSelectionView),
+    [draftConfigRef, modelSelectionView],
   );
   const composerSubmissionReady = useMemo(
-    () =>
-      createComposerSubmissionConfig(draftConfig, modelSelectionView, currentTurnObfuscation) !==
-      null,
-    [draftConfig, modelSelectionView, currentTurnObfuscation],
+    () => createComposerSubmissionConfig(draftConfig, modelSelectionView) !== null,
+    [draftConfig, modelSelectionView],
   );
   // 会话常驻模型已不在 Registry（套餐到期 / 切账号）时，View 只给出 selectionIssue、draftConfig 没有模型，
   // 提交门禁会静默禁用发送；这里把同一个 selectionIssue 派生成一条可关闭的横幅，告诉用户去重选模型。
@@ -4635,14 +4624,11 @@ export function SessionPane({
           // 只有显式透传 []，CLI 才能区分“用户删除全部”与“调用方未修改附件”。
           ...(attachments ? { attachments: [...attachments] } : {}),
           ...(submissionSelection ? { modelSelection: submissionSelection } : {}),
-          // 输入区此刻的协作模式 / plan 开关 / godmode 混淆同样随本次编辑固定，
+          // 输入区此刻的协作模式 / plan 开关随本次编辑固定，
           // 否则重发会沿用被 rewind 那轮的历史配置。
           ...(composerSubmission?.mode ? { mode: composerSubmission.mode } : {}),
           ...(composerSubmission?.planEnabled !== undefined
             ? { planEnabled: composerSubmission.planEnabled }
-            : {}),
-          ...(composerSubmission?.obfuscation
-            ? { obfuscation: composerSubmission.obfuscation }
             : {}),
           // 加速本轮的执行材料必须覆盖普通 Selection；CLI 只在 Selection 指向
           // 加速 Provider 且凭据齐备时才把它当加速编辑。
@@ -4892,9 +4878,6 @@ export function SessionPane({
           ...(composerSubmission?.mode ? { mode: composerSubmission.mode } : {}),
           ...(composerSubmission?.planEnabled !== undefined
             ? { planEnabled: composerSubmission.planEnabled }
-            : {}),
-          ...(composerSubmission?.obfuscation
-            ? { obfuscation: composerSubmission.obfuscation }
             : {}),
           ...highspeed.override,
         },
@@ -5198,6 +5181,16 @@ export function SessionPane({
           prefillMode,
         });
       }
+      // 输入混淆排在 PreFill 之后：两者都写 customSystemMessages，顺序反了会互相覆盖。
+      const obfuscationMode = draftConfigRef.current.obfuscationMode;
+      if (obfuscationMode && obfuscationMode !== "inherit") {
+        await zcodeAgentService.setObfuscation({
+          sessionId: targetSessionId,
+          workspacePath,
+          ...(workspaceIdentity ? { workspaceIdentity } : {}),
+          obfuscationMode,
+        });
+      }
 
       if (
         desiredConfig.followupMode &&
@@ -5384,6 +5377,13 @@ export function SessionPane({
       handleDraftSelectPrefillMode(mode === "inherit" ? null : mode);
     },
     [handleDraftSelectPrefillMode],
+  );
+
+  const handleSelectDraftObfuscation = useCallback(
+    (mode: "inherit" | "off" | "light" | "standard" | "heavy" | null) => {
+      handleDraftSelectObfuscationMode(mode === "inherit" ? null : mode);
+    },
+    [handleDraftSelectObfuscationMode],
   );
 
   const handleRecoverCustomModelSelection = useCallback(
@@ -6648,6 +6648,7 @@ export function SessionPane({
       onSelectThought={handleSelectThought}
       onSelectDraftPersona={handleSelectDraftPersona}
       onSelectDraftPrefill={handleSelectDraftPrefill}
+      onSelectDraftObfuscation={handleSelectDraftObfuscation}
       onSwitchMode={handleSwitchMode}
       onOpenRunningBackgroundWorks={
         sessionId && runningBackgroundWorkCount > 0 ? handleOpenRunningBackgroundWorks : undefined

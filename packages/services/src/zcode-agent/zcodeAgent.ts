@@ -428,6 +428,14 @@ export interface ZCodeAgentSetPrefillParams extends ZCodeAgentSessionTarget {
   expectedRevision?: number;
 }
 
+export interface ZCodeAgentSetObfuscationParams extends ZCodeAgentSessionTarget {
+  /** inherit = 跟随全局（默认选项）；其余为会话级档位。 */
+  obfuscationMode: "inherit" | "off" | "light" | "standard" | "heavy";
+  /** inherit 时由调用方解析好的全局值，用于固定「跟随全局」的生效内容。 */
+  inherited?: { enabled?: boolean; tier?: "light" | "standard" | "heavy" };
+  expectedRevision?: number;
+}
+
 export interface ZCodeAgentSetModeParams extends ZCodeAgentSessionTarget {
   mode: ZCodeSessionMode;
   expectedRevision?: number;
@@ -994,6 +1002,8 @@ export interface IZCodeAgentService {
   setThoughtLevel(params: ZCodeAgentSetThoughtLevelParams): Promise<ZCodeSessionStateSnapshot>;
   setPersona(params: ZCodeAgentSetPersonaParams): Promise<ZCodeSessionStateSnapshot>;
   setPrefill(params: ZCodeAgentSetPrefillParams): Promise<ZCodeSessionStateSnapshot>;
+  /** fork（godmode）：会话级输入混淆档位；inherit = 跟随全局。 */
+  setObfuscation(params: ZCodeAgentSetObfuscationParams): Promise<ZCodeSessionStateSnapshot>;
   setMode(params: ZCodeAgentSetModeParams): Promise<ZCodeSessionStateSnapshot>;
   respondProviderRuntimeHeaders(
     params: ZCodeAgentRespondProviderRuntimeHeadersParams,

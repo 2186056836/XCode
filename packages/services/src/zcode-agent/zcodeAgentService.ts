@@ -293,6 +293,7 @@ import type {
   ZCodeAgentSetThoughtLevelParams,
   ZCodeAgentSetPersonaParams,
   ZCodeAgentSetPrefillParams,
+  ZCodeAgentSetObfuscationParams,
   ZCodeAgentPluginReferenceCatalogParams,
   ZCodeAgentSkillReferenceCatalogParams,
   ZCodeAgentReadMcpResourceParams,
@@ -7111,6 +7112,20 @@ export function createZCodeAgentService(
         {
           sessionId: params.sessionId,
           prefillMode: params.prefillMode,
+          expectedRevision: params.expectedRevision,
+        },
+        zcodeSessionStateSnapshotSchema,
+      );
+    },
+
+    async setObfuscation(params: ZCodeAgentSetObfuscationParams) {
+      const client = await getClient(params);
+      return client.request(
+        zcodeProtocolMethods.sessionSetObfuscation,
+        {
+          sessionId: params.sessionId,
+          obfuscationMode: params.obfuscationMode,
+          ...(params.inherited ? { inherited: params.inherited } : {}),
           expectedRevision: params.expectedRevision,
         },
         zcodeSessionStateSnapshotSchema,

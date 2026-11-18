@@ -84,6 +84,7 @@ import {
   zcodeSessionSetPersonaParamsSchema,
   zcodeSessionSetPrefillParamsSchema,
   zcodeSessionSetModelParamsSchema,
+  zcodeSessionSetObfuscationParamsSchema,
   zcodeSessionSetThoughtLevelParamsSchema,
   zcodeSessionStopParamsSchema,
   zcodeSessionSubscribeParamsSchema,
@@ -3266,6 +3267,58 @@ export async function setPrefill(context: ZCodeProtocolAgentServerContext, rawPa
   return await afterStateMutation(context, record, "prefill_changed");
 }
 
+/**
+ * XCode fork：会话级输入混淆档位。
+ *
+ * 「跟随全局」是默认选项而不是唯一形态：inherit 恢复首次覆盖前的值（与 setPrefill
+ * 同构），off / light / standard / heavy 写入会话覆盖。内容永远来自当前生效的
+ * customSystemMessages，这里只改 `obfuscation`。
+ */
+export async function setObfuscation(
+  context: ZCodeProtocolAgentServerContext,
+  rawParams: unknown,
+) {
+  const params = parseParams(zcodeSessionSetObfuscationParamsSchema, rawParams);
+  const record = requireSession(context, params.sessionId);
+  assertExpectedRevision(record, params.expectedRevision);
+
+  const current =
+    record.app.runtime.getSystemPromptOverrides() ?? record.customSystemMessages ?? {};
+  const currentObfuscation = current.obfuscation ?? {};
+
+  let obfuscation: NonNullable<SessionCustomSystemMessages["obfuscation"]>;
+  if (params.obfuscationMode === "inherit") {
+    // 跟随全局：优先用调用方（UI 持有设置快照）解析好的值；缺省恢复首次覆盖前的值。
+    obfuscation = {
+      ...(record.obfuscationInherited ?? params.inherited ?? currentObfuscation),
+    };
+    delete record.obfuscationOverride;
+    delete record.obfuscationInherited;
+  } else {
+    if (record.obfuscationOverride === undefined) {
+      record.obfuscationInherited = { ...currentObfuscation };
+    }
+    record.obfuscationOverride = params.obfuscationMode;
+    obfuscation =
+      params.obfuscationMode === "off"
+        ? { ...currentObfuscation, enabled: false }
+        : { ...currentObfuscation, enabled: true, tier: params.obfuscationMode };
+  }
+
+  const overrides: SessionCustomSystemMessages = { ...current, obfuscation };
+  record.customSystemMessages = overrides;
+  record.app.runtime.updateConfig({ systemPromptOverrides: overrides });
+  // 与身份/PreFill 同样落盘：只改内存 record，重启后会退回全局偏好。
+  await persistSessionPromptOverrides({
+    logger: context.logger,
+    record,
+    sessionId: record.app.sessionId,
+    sessionStore: context.deps.sessionStore,
+  });
+
+  return await afterStateMutation(context, record, "obfuscation_changed");
+}
+
 export async function setMode(context: ZCodeProtocolAgentServerContext, rawParams: unknown) {
   const params = parseParams(zcodeSessionSetModeParamsSchema, rawParams);
   const record = requireSession(context, params.sessionId);
@@ -4315,6 +4368,7 @@ async function snapshotWithDiagnostics(
     // 用户看到的就是「第一条会话选的什么就是什么，后面怎么改都不生效」。
     personaOverride: record.personaOverride,
     prefillOverride: record.prefillOverride,
+    obfuscationOverride: record.obfuscationOverride,
     persistedContextUsageBreakdownEvents,
     persistedGoalVerificationEvents,
     session,

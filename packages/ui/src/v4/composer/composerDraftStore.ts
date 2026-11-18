@@ -38,6 +38,8 @@ export interface V4ComposerDraft {
   persona?: SessionPersonaConfig;
   /** 草稿态 PreFill 开关；缺省 = 跟随全局。 */
   prefillMode?: "inherit" | "on" | "off";
+  /** 草稿态输入混淆档位；缺省 = 跟随全局。 */
+  obfuscationMode?: "inherit" | "off" | "light" | "standard" | "heavy";
   /** 已处理的 Plan 工具结果；只去重，不保护期间的手动改选。 */
   lastPlanTransitionId?: string;
   /** 已消费的审批交互；重复快照不能把用户后来改回的权限再刷成 yolo。 */
@@ -328,6 +330,13 @@ function readDraft(value: unknown): V4ComposerDraft | null {
     ...(persona.success ? { persona: persona.data } : {}),
     ...(value.prefillMode === "inherit" || value.prefillMode === "on" || value.prefillMode === "off"
       ? { prefillMode: value.prefillMode }
+      : {}),
+    ...(value.obfuscationMode === "inherit" ||
+    value.obfuscationMode === "off" ||
+    value.obfuscationMode === "light" ||
+    value.obfuscationMode === "standard" ||
+    value.obfuscationMode === "heavy"
+      ? { obfuscationMode: value.obfuscationMode }
       : {}),
     updatedAt:
       typeof value.updatedAt === "number" && Number.isFinite(value.updatedAt) ? value.updatedAt : 0,

@@ -270,6 +270,45 @@ export async function applyRequestedSessionConfig(
   if (config.prefillMode) {
     applyPrefillMode(record, config.prefillMode);
   }
+  // 输入混淆在 PreFill 之后应用：两者都写 customSystemMessages，必须基于前一步的结果。
+  if (config.obfuscationMode) {
+    applyObfuscationMode(record, config.obfuscationMode);
+  }
+}
+
+/**
+ * 草稿态输入混淆档位。与 `session/setObfuscation` 同一套语义：inherit 恢复首次覆盖前
+ * 的值（缺省保持当前值），其余档位写入会话覆盖，内容沿用当前 customSystemMessages。
+ */
+function applyObfuscationMode(
+  record: V4SessionRecordView,
+  mode: NonNullable<NonNullable<CommandPayloadMap["createSession"]["config"]>["obfuscationMode"]>,
+): void {
+  const current =
+    record.app.runtime.getSystemPromptOverrides() ?? record.customSystemMessages ?? {};
+  const currentObfuscation = current.obfuscation ?? {};
+  if (mode === "inherit") {
+    const restored = record.obfuscationInherited ?? currentObfuscation;
+    delete record.obfuscationOverride;
+    delete record.obfuscationInherited;
+    const overrides = { ...current, obfuscation: { ...restored } };
+    record.customSystemMessages = overrides;
+    record.app.runtime.updateConfig({ systemPromptOverrides: overrides });
+    return;
+  }
+  if (record.obfuscationOverride === undefined) {
+    record.obfuscationInherited = { ...currentObfuscation };
+  }
+  record.obfuscationOverride = mode;
+  const overrides = {
+    ...current,
+    obfuscation:
+      mode === "off"
+        ? { ...currentObfuscation, enabled: false }
+        : { ...currentObfuscation, enabled: true, tier: mode },
+  };
+  record.customSystemMessages = overrides;
+  record.app.runtime.updateConfig({ systemPromptOverrides: overrides });
 }
 
 /**

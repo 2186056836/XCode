@@ -9351,6 +9351,7 @@ const zhCN: Record<string, string> = {
   "chat.message.editAssistant": "编辑",
   "chat.slash.app.plan.label": "计划模式",
   "chat.toolbar.obfuscation": "输入混淆",
+  "chat.toolbar.obfuscation.inherit": "跟随全局",
   "chat.toolbar.persona": "会话身份",
   "chat.toolbar.persona.inherit": "跟随全局",
   "chat.toolbar.persona.builtin": "内置身份",

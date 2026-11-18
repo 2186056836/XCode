@@ -17,4 +17,6 @@ export const createSessionRequestedConfigSchema = z.object({
   persona: sessionPersonaConfigSchema.optional(),
   /** XCode fork：草稿态 PreFill 开关（在首条输入之前应用）。 */
   prefillMode: z.enum(["inherit", "on", "off"]).optional(),
+  /** XCode fork：草稿态输入混淆档位（在首条输入之前应用）。 */
+  obfuscationMode: z.enum(["inherit", "off", "light", "standard", "heavy"]).optional(),
 });

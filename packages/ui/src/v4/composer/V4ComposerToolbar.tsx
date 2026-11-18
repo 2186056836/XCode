@@ -31,8 +31,6 @@ import {
   type ZCodeProviderAccountAccess,
   type ZCodeConfigOption,
   type ZCodeProvider,
-  type ModelJailbreakObfuscationSettings,
-  type ModelJailbreakObfuscationTier,
   GODMODE_TEMPLATES,
 } from "@zcode/shared";
 import { TID_V4_MODEL_CONFIG, TID_V4_COMPOSER_INPUT } from "@zcode/shared/test-ids";
@@ -445,6 +443,8 @@ export interface V4ComposerToolbarProps {
   ) => void;
   /** 草稿态 PreFill 开关；null = 跟随全局（移除草稿覆盖）。 */
   onSelectDraftPrefill?: (mode: "inherit" | "on" | "off" | null) => void;
+  /** 草稿态输入混淆档位；null = 跟随全局。 */
+  onSelectDraftObfuscation?: (mode: ObfuscationMode | null) => void;
   onSwitchMode: (mode: string) => void;
   /** prepare/configOptions 失败时，custom provider 选择走 workspace recovery 链。 */
   onRecoverCustomModelSelection?: (
@@ -453,6 +453,9 @@ export interface V4ComposerToolbarProps {
   ) => Promise<void> | void;
   onSendCompressionCommand?: (command: string) => void;
 }
+
+/** fork（godmode）：输入混淆档位；inherit = 跟随全局（默认选项）。 */
+export type ObfuscationMode = "inherit" | "off" | "light" | "standard" | "heavy";
 
 /**
  * 会话 runtime 未就绪（冷会话被常驻池回收）的判定。
@@ -467,6 +470,32 @@ function isSessionRuntimeNotReady(error: unknown): boolean {
     (typeof code === "string" && /runtimeNotReady|sessionUnavailable/.test(code)) ||
     /Session runtime is not ready/.test(error.message)
   );
+}
+
+/**
+ * 会话级写入的「先写、被拒再激活」封装。
+ *
+ * 修复原因：早先改成「写入前先 ensureSessionReady」，在健康的会话上反而会卡住——
+ * ensureSessionReady 走 runtime/capabilities，超时 180s 后把整个协议客户端销毁，
+ * 写入变成 "client disposed"，表现为点了身份完全没反应。正确顺序是先直接写，
+ * 只有确实被 runtimeNotReady 拒绝时才激活并重试一次。
+ */
+async function withSessionRuntimeReady<T>(
+  target: { sessionId: string; workspacePath: string; workspaceIdentity?: string },
+  write: () => Promise<T>,
+  ensureReady: (target: {
+    sessionId: string;
+    workspacePath: string;
+    workspaceIdentity?: string;
+  }) => Promise<void>,
+): Promise<T> {
+  try {
+    return await write();
+  } catch (error) {
+    if (!isSessionRuntimeNotReady(error)) throw error;
+    await ensureReady(target);
+    return await write();
+  }
 }
 
 /** 模型 / 思考深度 / context usage 簇（渲染在发送键左侧，与旧 UI 同位）。 */
@@ -499,6 +528,7 @@ function V4ComposerModelControlsImpl({
   onSelectThought,
   onSelectDraftPersona,
   onSelectDraftPrefill,
+  onSelectDraftObfuscation,
   onSendCompressionCommand,
   onRecoverCustomModelSelection,
 }: V4ComposerToolbarProps) {
@@ -517,10 +547,11 @@ function V4ComposerModelControlsImpl({
   const providerSourcesLoading = providerSettingsRead.state.status !== "ready";
   // 配置面存活服务读（过渡归宿 = 配置面 v4 化）：连接方式选中键喂 BigModel Team Plan 门控豁免。
   const baseServices = useBaseWorkspaceServices();
-  const { settings: sharedSettings, update: updateSharedSettings } = useSettings({
+  const { settings: sharedSettings } = useSettings({
     services: baseServices,
   });
   const { zcodeAgentService } = useServices();
+  const globalObfuscation = sharedSettings?.customSystemMessages?.obfuscation;
   /**
    * 会话级写入前先确保 runtime 就绪。
    *
@@ -545,6 +576,8 @@ function V4ComposerModelControlsImpl({
   const [personaId, setPersonaId] = useState<string | null>(null);
   const [personaCustom, setPersonaCustom] = useState(false);
   const [prefillMode, setPrefillMode] = useState<"inherit" | "on" | "off">("inherit");
+  // 会话级输入混淆档位：来自协议 snapshot（settings.obfuscation）。inherit = 跟随全局。
+  const [obfuscationMode, setObfuscationMode] = useState<ObfuscationMode>("inherit");
   useEffect(() => {
     if (!sessionId) {
       setPersonaSource("inherit");
@@ -554,6 +587,8 @@ function V4ComposerModelControlsImpl({
       return;
     }
     let cancelled = false;
+    // 切会话时先回到「跟随全局」，避免上一条会话的档位在新会话首次读回前闪一下。
+    setObfuscationMode("inherit");
     // 冷会话（运行时常驻池已回收）读不到快照：先激活 runtime 再读，否则选择器会一直显示
     // 「跟随全局」，而磁盘上其实存着用户当初选的模板——这正是「页面看着变了、值却没生效」。
     const target = {
@@ -567,10 +602,13 @@ function V4ComposerModelControlsImpl({
         messageLimit: 1,
         contentProfile: "index",
       });
+    // 冷会话第一次读可能还没激活 runtime：等一拍重读一次即可。
+    // 这里刻意不调 ensureSessionReady——它在健康会话上也可能卡在 runtime/capabilities，
+    // 超时后会把整个协议客户端销毁（写入随之变成 "client disposed"）。
     void readSnapshot()
       .catch(async (error: unknown) => {
         if (!isSessionRuntimeNotReady(error)) throw error;
-        await ensureSessionRuntimeReady(target);
+        await new Promise((resolve) => setTimeout(resolve, 500));
         return readSnapshot();
       })
       .then((snapshot) => {
@@ -579,6 +617,7 @@ function V4ComposerModelControlsImpl({
         setPersonaId(snapshot.settings.persona?.templateId ?? null);
         setPersonaCustom(snapshot.settings.persona?.custom === true);
         setPrefillMode(snapshot.settings.prefill?.mode ?? "inherit");
+        setObfuscationMode(snapshot.settings.obfuscation?.mode ?? "inherit");
       })
       .catch((error: unknown) => {
         logger.warn("[v4-toolbar] 读取会话身份/PreFill 失败", {
@@ -589,7 +628,7 @@ function V4ComposerModelControlsImpl({
     return () => {
       cancelled = true;
     };
-  }, [sessionId, workspacePath, workspaceIdentity, zcodeAgentService, ensureSessionRuntimeReady]);
+  }, [sessionId, workspacePath, workspaceIdentity, zcodeAgentService]);
   const globalCustomSystemMessages = sharedSettings?.customSystemMessages;
   const customPersonaTemplates = sharedSettings?.customPersonaTemplates ?? [];
   const CUSTOM_PERSONA_PREFIX = "custom:";
@@ -650,10 +689,11 @@ function V4ComposerModelControlsImpl({
                   personaMode: "inherit" as const,
                   ...("inherited" in selection ? { inherited: selection.inherited } : {}),
                 };
-      void (async () => {
-        await ensureSessionRuntimeReady(target);
-        return zcodeAgentService.setPersona(params);
-      })()
+      void withSessionRuntimeReady(
+        target,
+        () => zcodeAgentService.setPersona(params),
+        ensureSessionRuntimeReady,
+      )
         .then((snapshot) => {
           setPersonaSource(snapshot.settings.persona?.source ?? "inherit");
           setPersonaId(snapshot.settings.persona?.templateId ?? null);
@@ -1321,58 +1361,94 @@ function V4ComposerModelControlsImpl({
     [effectiveConfig, onSelectThought],
   );
 
-  // 「高级」段：Parseltongue 输入混淆（godmode）。读写 sharedSettings.customSystemMessages.obfuscation，
-  // 与「模型越狱」页同一份持久化，保证两边联动。组装为 ModelConfigSelect 的 advancedSection（4 档：关闭/轻度/标准/重度）。
+  // 「高级」段：Parseltongue 输入混淆（godmode）。
+  // 与「会话身份 / PreFill」同一套会话级语义：inherit = 跟随全局（默认选项），
+  // 关闭/轻度/标准/重度 写入会话覆盖；草稿态写 draftConfig，由 createSession 在首条输入前应用。
+  const selectObfuscation = useCallback(
+    (value: string) => {
+      const mode: ObfuscationMode =
+        value === "off" || value === "light" || value === "standard" || value === "heavy"
+          ? value
+          : "inherit";
+      if (!sessionId) {
+        onSelectDraftObfuscation?.(mode === "inherit" ? null : mode);
+        return;
+      }
+      const target = {
+        sessionId,
+        workspacePath,
+        ...(workspaceIdentity ? { workspaceIdentity } : {}),
+      };
+      // 与身份/PreFill 同理：冷会话 runtime 未就绪时写入会被拒，先写、被拒再激活重试。
+      // inherit 时带上 UI 侧的全局值，把「跟随全局」的生效内容固定在切回的那一刻。
+      void withSessionRuntimeReady(
+        target,
+        () =>
+          zcodeAgentService.setObfuscation({
+            ...target,
+            obfuscationMode: mode,
+            ...(mode === "inherit" && globalObfuscation
+              ? { inherited: { ...globalObfuscation } }
+              : {}),
+          }),
+        ensureSessionRuntimeReady,
+      )
+        .then((snapshot) => {
+          setObfuscationMode(snapshot.settings.obfuscation?.mode ?? "inherit");
+        })
+        .catch((error: unknown) => {
+          logger.warn("[v4-toolbar] 输入混淆写入失败", {
+            error: error instanceof Error ? error.message : String(error),
+            sessionId,
+            obfuscationMode: mode,
+          });
+        });
+    },
+    [
+      sessionId,
+      workspacePath,
+      workspaceIdentity,
+      zcodeAgentService,
+      onSelectDraftObfuscation,
+      ensureSessionRuntimeReady,
+      globalObfuscation,
+    ],
+  );
+
+  const effectiveObfuscationMode: ObfuscationMode = sessionId
+    ? obfuscationMode
+    : (draftConfig?.obfuscationMode ?? "inherit");
+
   const advancedSection = useMemo(() => {
-    const obfuscation = sharedSettings?.customSystemMessages?.obfuscation ?? {};
-    const enabled = obfuscation.enabled === true;
-    const tier = obfuscation.tier ?? "light";
-    // 当前档位：未启用即「关闭」，启用则映射到对应档位。
-    const currentValue = enabled ? tier : "off";
-    const saveObfuscation = (patch: Partial<ModelJailbreakObfuscationSettings>) => {
-      void updateSharedSettings({
-        customSystemMessages: {
-          ...sharedSettings?.customSystemMessages,
-          obfuscation: { enabled: false, tier: "light", ...obfuscation, ...patch },
-        },
-      });
+    const tierLabels: Record<ObfuscationMode, string> = {
+      inherit: "",
+      off: intl.formatMessage({ id: "settings.modelJailbreak.obfuscation.value.off" }),
+      light: intl.formatMessage({ id: "settings.modelJailbreak.obfuscation.value.light" }),
+      standard: intl.formatMessage({ id: "settings.modelJailbreak.obfuscation.value.standard" }),
+      heavy: intl.formatMessage({ id: "settings.modelJailbreak.obfuscation.value.heavy" }),
     };
-    const items: Array<{ value: string; label: string; selected: boolean }> = [
-      {
-        value: "off",
-        label: intl.formatMessage({ id: "settings.modelJailbreak.obfuscation.value.off" }),
-        selected: currentValue === "off",
-      },
-      {
-        value: "light",
-        label: intl.formatMessage({ id: "settings.modelJailbreak.obfuscation.value.light" }),
-        selected: currentValue === "light",
-      },
-      {
-        value: "standard",
-        label: intl.formatMessage({ id: "settings.modelJailbreak.obfuscation.value.standard" }),
-        selected: currentValue === "standard",
-      },
-      {
-        value: "heavy",
-        label: intl.formatMessage({ id: "settings.modelJailbreak.obfuscation.value.heavy" }),
-        selected: currentValue === "heavy",
-      },
-    ];
+    // 「跟随全局」必须自证跟随到什么档位：全局值取自设置快照。
+    const globalMode: ObfuscationMode =
+      globalObfuscation?.enabled === true ? (globalObfuscation.tier ?? "light") : "off";
+    const inheritLabel = `${intl.formatMessage({ id: "chat.toolbar.obfuscation.inherit" })} · ${
+      tierLabels[globalMode]
+    }`;
+    const labelFor = (mode: ObfuscationMode) =>
+      mode === "inherit" ? inheritLabel : tierLabels[mode];
+    const items: Array<{ value: string; label: string; selected: boolean }> = (
+      ["inherit", "off", "light", "standard", "heavy"] as const
+    ).map((mode) => ({
+      value: mode,
+      label: labelFor(mode),
+      selected: effectiveObfuscationMode === mode,
+    }));
     return {
       label: intl.formatMessage({ id: "chat.toolbar.obfuscation" }),
-      currentLabel: items.find((item) => item.selected)?.label ?? "",
+      currentLabel: labelFor(effectiveObfuscationMode),
       items,
-      onValueChange: (value: string) => {
-        // 关闭=禁用；轻度/标准/重度=启用且设置对应 tier。
-        if (value === "off") {
-          saveObfuscation({ enabled: false });
-          return;
-        }
-        saveObfuscation({ enabled: true, tier: value as ModelJailbreakObfuscationTier });
-      },
+      onValueChange: selectObfuscation,
     };
-  }, [intl, sharedSettings?.customSystemMessages, updateSharedSettings]);
+  }, [intl, effectiveObfuscationMode, selectObfuscation, globalObfuscation]);
 
   // 会话身份段：default = 内置身份（无覆盖）；其余是 GODMODE 模板 id。
   // 与设置页共用同一份模板清单，选中后按会话写入提示词 + 配套 prefill。
@@ -1418,11 +1494,12 @@ function V4ComposerModelControlsImpl({
         workspacePath,
         ...(workspaceIdentity ? { workspaceIdentity } : {}),
       };
-      // 同上：冷会话的 runtime 未就绪时 setPrefill 会被拒，必须先激活再写。
-      void (async () => {
-        await ensureSessionRuntimeReady(target);
-        return zcodeAgentService.setPrefill({ ...target, prefillMode: mode });
-      })()
+      // 同上：冷会话的 runtime 未就绪时 setPrefill 会被拒，先写、被拒再激活重试。
+      void withSessionRuntimeReady(
+        target,
+        () => zcodeAgentService.setPrefill({ ...target, prefillMode: mode }),
+        ensureSessionRuntimeReady,
+      )
         .then((snapshot) => {
           setPrefillMode(snapshot.settings.prefill?.mode ?? "inherit");
         })

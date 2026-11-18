@@ -9832,6 +9832,7 @@ const enUS: Record<string, string> = {
   "chat.message.editAssistant": "Edit",
   "chat.slash.app.plan.label": "Plan mode",
   "chat.toolbar.obfuscation": "Input obfuscation",
+  "chat.toolbar.obfuscation.inherit": "Follow global",
   "chat.toolbar.persona": "Session persona",
   "chat.toolbar.persona.inherit": "Follow global",
   "chat.toolbar.persona.builtin": "Built-in",

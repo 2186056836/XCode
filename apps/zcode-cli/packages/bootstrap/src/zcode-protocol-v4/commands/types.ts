@@ -100,12 +100,19 @@ export interface V4SessionRecordView {
       enabled?: boolean;
       messages?: Array<{ role: "user" | "assistant"; content: string }>;
     };
+    obfuscation?: {
+      enabled?: boolean;
+      tier?: "light" | "standard" | "heavy";
+    };
   };
   /** undefined = 继承全局；null = 内置；string = 模板 id。 */
   personaOverride?: string | null;
   /** undefined = 跟随全局；true = 强制开启；false = 强制关闭。 */
   prefillOverride?: boolean;
   prefillInheritedEnabled?: boolean;
+  /** undefined = 跟随全局；其余 = 会话级输入混淆档位。 */
+  obfuscationOverride?: "off" | "light" | "standard" | "heavy";
+  obfuscationInherited?: { enabled?: boolean; tier?: "light" | "standard" | "heavy" };
 }
 
 export interface V4CommandCoreHost {

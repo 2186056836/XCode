@@ -74,6 +74,8 @@ export async function buildSessionSnapshot(input: {
   personaOverride?: string | null;
   /** undefined = 跟随全局；true = 强制开启；false = 强制关闭。 */
   prefillOverride?: boolean;
+  /** undefined = 跟随全局；其余 = 会话级输入混淆档位。 */
+  obfuscationOverride?: "off" | "light" | "standard" | "heavy";
   stateRevision: number;
   slashCommandOptions?: ListProtocolSlashCommandsOptions;
   target?: SessionGoal | null;
@@ -132,6 +134,7 @@ export async function buildSessionSnapshot(input: {
       modelAvailability: input.modelAvailability,
       personaOverride: input.personaOverride,
       prefillOverride: input.prefillOverride,
+      obfuscationOverride: input.obfuscationOverride,
     }),
     slashCommands: await listProtocolSlashCommands({
       ...input.slashCommandOptions,
@@ -227,6 +230,7 @@ export async function mapSessionSettings(
     modelAvailability?: "all" | "current";
     personaOverride?: string | null;
     prefillOverride?: boolean;
+    obfuscationOverride?: "off" | "light" | "standard" | "heavy";
   } = {},
 ): Promise<ZCodeSessionSettingsState> {
   const thoughtLevels = app.listThoughtLevels();
@@ -288,6 +292,9 @@ export async function mapSessionSettings(
           : options.prefillOverride
             ? "on"
             : "off",
+    },
+    obfuscation: {
+      mode: options.obfuscationOverride ?? "inherit",
     },
     model: {
       // app/stdio 场景下 provider catalog 属于 app 状态，不应随每次 session/read、

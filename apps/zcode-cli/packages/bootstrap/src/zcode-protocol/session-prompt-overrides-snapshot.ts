@@ -24,6 +24,10 @@ export interface PersistedPromptOverrides {
   prefillMode: "inherit" | "on" | "off";
   /** 首次覆盖前的 enabled，供「跟随全局」恢复；与 record 同字段。 */
   prefillInheritedEnabled?: boolean;
+  /** 输入混淆档位：inherit = 跟随全局；其余为会话覆盖。 */
+  obfuscationMode?: "inherit" | "off" | "light" | "standard" | "heavy";
+  /** 首次覆盖前的混淆值，供「跟随全局」恢复。 */
+  obfuscationInherited?: SessionCustomSystemMessages["obfuscation"];
   /** 当时生效的完整正文；inherit 时也保留，避免恢复后正文变空。 */
   customSystemMessages?: SessionCustomSystemMessages;
 }
@@ -34,6 +38,8 @@ interface PromptOverridesRecord {
   personaOverride?: string | null;
   prefillOverride?: boolean;
   prefillInheritedEnabled?: boolean;
+  obfuscationOverride?: "off" | "light" | "standard" | "heavy";
+  obfuscationInherited?: SessionCustomSystemMessages["obfuscation"];
   customSystemMessages?: SessionCustomSystemMessages;
 }
 
@@ -55,6 +61,10 @@ export function snapshotPromptOverrides(
       record.prefillOverride === undefined ? "inherit" : record.prefillOverride ? "on" : "off",
     ...(record.prefillInheritedEnabled !== undefined
       ? { prefillInheritedEnabled: record.prefillInheritedEnabled }
+      : {}),
+    obfuscationMode: record.obfuscationOverride ?? "inherit",
+    ...(record.obfuscationInherited
+      ? { obfuscationInherited: { ...record.obfuscationInherited } }
       : {}),
     ...(record.customSystemMessages
       ? { customSystemMessages: cloneCustomSystemMessages(record.customSystemMessages) }
@@ -153,6 +163,19 @@ export function applyPersistedPromptOverrides(
     }
   }
 
+  // 混淆档位与内容分开恢复：mode 决定「跟随全局 / 会话覆盖」的来源标记，
+  // 生效内容仍然来自下面的 customSystemMessages（其中已含 obfuscation）。
+  if (!persisted.obfuscationMode || persisted.obfuscationMode === "inherit") {
+    delete record.obfuscationOverride;
+  } else {
+    record.obfuscationOverride = persisted.obfuscationMode;
+  }
+  if (persisted.obfuscationInherited) {
+    record.obfuscationInherited = { ...persisted.obfuscationInherited };
+  } else {
+    delete record.obfuscationInherited;
+  }
+
   if (persisted.customSystemMessages) {
     record.customSystemMessages = cloneCustomSystemMessages(persisted.customSystemMessages);
     record.app.runtime.updateConfig({
@@ -188,6 +211,10 @@ function parsePersistedPromptOverrides(value: unknown): PersistedPromptOverrides
     ...(typeof raw.prefillInheritedEnabled === "boolean"
       ? { prefillInheritedEnabled: raw.prefillInheritedEnabled }
       : {}),
+    ...(isObfuscationMode(raw.obfuscationMode) ? { obfuscationMode: raw.obfuscationMode } : {}),
+    ...(isObfuscationValue(raw.obfuscationInherited)
+      ? { obfuscationInherited: { ...raw.obfuscationInherited } }
+      : {}),
     ...(isCustomSystemMessages(raw.customSystemMessages)
       ? { customSystemMessages: cloneCustomSystemMessages(raw.customSystemMessages) }
       : {}),
@@ -196,6 +223,32 @@ function parsePersistedPromptOverrides(value: unknown): PersistedPromptOverrides
 
 function isCustomSystemMessages(value: unknown): value is SessionCustomSystemMessages {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isObfuscationMode(
+  value: unknown,
+): value is "inherit" | "off" | "light" | "standard" | "heavy" {
+  return (
+    value === "inherit" ||
+    value === "off" ||
+    value === "light" ||
+    value === "standard" ||
+    value === "heavy"
+  );
+}
+
+function isObfuscationValue(
+  value: unknown,
+): value is NonNullable<SessionCustomSystemMessages["obfuscation"]> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const raw = value as Record<string, unknown>;
+  return (
+    (raw.enabled === undefined || typeof raw.enabled === "boolean") &&
+    (raw.tier === undefined ||
+      raw.tier === "light" ||
+      raw.tier === "standard" ||
+      raw.tier === "heavy")
+  );
 }
 
 function cloneCustomSystemMessages(

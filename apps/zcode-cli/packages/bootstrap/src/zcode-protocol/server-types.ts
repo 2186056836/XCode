@@ -137,6 +137,13 @@ export interface ZCodeProtocolSessionRecord {
   prefillOverride?: boolean;
   /** PreFill 继承态落盘（会话在 inherit 模式下曾按全局值固定过）。 */
   prefillInheritedEnabled?: boolean;
+  /**
+   * 会话级输入混淆：undefined = 跟随全局（默认）；其余为会话覆盖档位。
+   * 只用于区分「跟随全局」与「会话覆盖」，生效内容仍是 customSystemMessages.obfuscation。
+   */
+  obfuscationOverride?: "off" | "light" | "standard" | "heavy";
+  /** 首次覆盖前的混淆值，供切回「跟随全局」时恢复。 */
+  obfuscationInherited?: SessionJailbreakObfuscation;
   createdAt: number;
   deliveryKind?: ZCodeDeliveryKind;
   /**

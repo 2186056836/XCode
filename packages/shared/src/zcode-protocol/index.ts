@@ -1371,6 +1371,16 @@ export const zcodeSessionSettingsStateSchema = z
       })
       .strict()
       .optional(),
+    /**
+     * fork（godmode）：本会话的输入混淆档位。inherit = 跟随全局（默认选项），
+     * off / light / standard / heavy = 会话级覆盖。
+     */
+    obfuscation: z
+      .object({
+        mode: z.enum(["inherit", "off", "light", "standard", "heavy"]),
+      })
+      .strict()
+      .optional(),
     permission: z
       .object({
         mode: zcodeSessionModeSchema.optional(),
@@ -4550,6 +4560,7 @@ export const zcodeProtocolMethods = {
   interactionBrowserExecute: "interaction/browserExecute",
   sessionSetPersona: "session/setPersona",
   sessionSetPrefill: "session/setPrefill",
+  sessionSetObfuscation: "session/setObfuscation",
   proxyPoolList: "proxyPool/list",
   proxyPoolSave: "proxyPool/save",
   proxyPoolDelete: "proxyPool/delete",
@@ -4855,6 +4866,37 @@ export const zcodeSessionSetPrefillParamsSchema = z
   })
 
 export type ZCodeSessionSetPrefillParams = z.infer<typeof zcodeSessionSetPrefillParamsSchema>;
+
+/** fork（godmode）：会话级输入混淆档位；inherit = 跟随全局（默认）。 */
+export const zcodeSessionObfuscationModeSchema = z.enum([
+  "inherit",
+  "off",
+  "light",
+  "standard",
+  "heavy",
+]);
+
+export const zcodeSessionSetObfuscationParamsSchema = z.object({
+  sessionId: nonEmptyString,
+  obfuscationMode: zcodeSessionObfuscationModeSchema,
+  /**
+   * inherit 时由调用方解析好的全局值（UI 持有设置快照）：把「跟随全局」的生效内容
+   * 固定在切回 inherit 的那一刻，之后全局再变也不自动同步——与 setPersona 的
+   * inherited 同语义。
+   */
+  inherited: z
+    .object({
+      enabled: z.boolean().optional(),
+      tier: z.enum(["light", "standard", "heavy"]).optional(),
+    })
+    .strict()
+    .optional(),
+  expectedRevision: z.number().int().nonnegative().optional(),
+})
+
+export type ZCodeSessionSetObfuscationParams = z.infer<
+  typeof zcodeSessionSetObfuscationParamsSchema
+>;
 
 export const zcodeProxyPoolEntrySchema = z
   .object({

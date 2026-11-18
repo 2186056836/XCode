@@ -135,6 +135,10 @@ export interface DraftConfigControl {
   handleDraftSelectPrefillMode: (
     mode: NonNullable<SessionConfigState["prefillMode"]> | null,
   ) => void;
+  /** 草稿态输入混淆档位；null = 跟随全局。 */
+  handleDraftSelectObfuscationMode: (
+    mode: NonNullable<SessionConfigState["obfuscationMode"]> | null,
+  ) => void;
   /** composer 编辑提交已结算：退出编辑态回到原草稿时保留编辑态的模型与 mode（Plan 不保留）。 */
   keepEditConfigOnExit: (editScopeId: string) => void;
   /** 预热身份就绪后观察所属草稿的新授权，不改变 Composer 的 root scope。 */
@@ -407,6 +411,7 @@ export function useDraftConfigControl(params: {
       thought: effectiveSelection?.options?.reasoningLevel ?? "",
       ...(draft.persona ? { persona: draft.persona } : {}),
       ...(draft.prefillMode ? { prefillMode: draft.prefillMode } : {}),
+      ...(draft.obfuscationMode ? { obfuscationMode: draft.obfuscationMode } : {}),
     }),
     [
       draft.mode,
@@ -416,6 +421,7 @@ export function useDraftConfigControl(params: {
       currentState.observedConfig,
       draft.persona,
       draft.prefillMode,
+      draft.obfuscationMode,
     ],
   );
   const draftConfigRef = useRef(draftConfig);
@@ -588,6 +594,7 @@ export function useDraftConfigControl(params: {
         thought: selection?.options?.reasoningLevel ?? "",
         ...(next.persona ? { persona: next.persona } : {}),
         ...(next.prefillMode ? { prefillMode: next.prefillMode } : {}),
+        ...(next.obfuscationMode ? { obfuscationMode: next.obfuscationMode } : {}),
       };
       setStoredState(nextState);
       persistDraft(next);
@@ -607,6 +614,7 @@ export function useDraftConfigControl(params: {
         // 只读 draftConfig 的 `effectivePersona` 才能看到用户刚选的身份。
         persona: next.persona,
         prefillMode: next.prefillMode,
+        obfuscationMode: next.obfuscationMode,
         // 导入等待目录期间的显式选择也是有效选择，不能再被默认初始化覆盖。
         ...(current.mode ? {} : { mode: mode.success ? mode.data : "build" }),
       }));
@@ -1095,6 +1103,18 @@ export function useDraftConfigControl(params: {
     [updateDraftConfig],
   );
 
+  const handleDraftSelectObfuscationMode = useCallback(
+    (mode: NonNullable<SessionConfigState["obfuscationMode"]> | null) => {
+      updateDraftConfig((current) => {
+        const next = { ...current };
+        if (mode) next.obfuscationMode = mode;
+        else delete next.obfuscationMode;
+        return next;
+      });
+    },
+    [updateDraftConfig],
+  );
+
   const handleDraftSwitchMode = useCallback(
     (mode: string) => {
       if (mode === "plan" || mode === "plan-off") {
@@ -1147,6 +1167,7 @@ export function useDraftConfigControl(params: {
     observeDraftPermissionGrant,
     handleDraftSelectPersona,
     handleDraftSelectPrefillMode,
+    handleDraftSelectObfuscationMode,
   };
 }
 

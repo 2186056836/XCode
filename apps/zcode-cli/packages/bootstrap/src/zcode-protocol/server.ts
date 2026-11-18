@@ -63,6 +63,7 @@ import {
   sendPrompt,
   setMode,
   setModel,
+  setObfuscation,
   setPersona,
   setPrefill,
   setThoughtLevel,
@@ -854,6 +855,8 @@ export class ZCodeProtocolAgentServer {
         return await setPersona(this.context, request.params);
       case zcodeProtocolMethods.sessionSetPrefill:
         return await setPrefill(this.context, request.params);
+      case zcodeProtocolMethods.sessionSetObfuscation:
+        return await setObfuscation(this.context, request.params);
       case zcodeProtocolMethods.sessionSetMode:
         return await setMode(this.context, request.params);
       case zcodeProtocolMethods.sessionClose:

@@ -85,6 +85,11 @@ export const sessionConfigStateSchema = z.object({
    * on/off 由 createSession 或 session/setPrefill 写入。
    */
   prefillMode: z.enum(["inherit", "on", "off"]).optional(),
+  /**
+   * XCode fork：会话级输入混淆档位。缺省 = 跟随会话物化时继承的全局值；
+   * off/light/standard/heavy 由 createSession 或 session/setObfuscation 写入。
+   */
+  obfuscationMode: z.enum(["inherit", "off", "light", "standard", "heavy"]).optional(),
   /** 最近工具转换的关联，供草稿定向同步；不新增可见历史事件。 */
   planTransition: z
     .object({
