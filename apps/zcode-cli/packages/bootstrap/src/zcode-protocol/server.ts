@@ -193,6 +193,8 @@ const PLUGIN_PREPARATION_MUTATION_METHODS = new Set<string>([
 ]);
 
 const MAX_CLIENT_REQUEST_REANNOUNCE_INTERVAL_MS = 10_000;
+/** 单个协议请求超过这个时长就打印一次「卡在哪一阶段」的告警（排障用，不改变行为）。 */
+const SLOW_REQUEST_PROBE_MS = 10_000;
 
 type ZCodeProtocolOutboundMessage = ZCodeProtocolNotification | ZCodeProtocolRequest;
 
@@ -603,6 +605,22 @@ export class ZCodeProtocolAgentServer {
   ): Promise<ZCodeProtocolError | ZCodeProtocolResponse> {
     // request id 可在前一请求完成后复用；新请求不能继承未消费的旧 outbox。
     this.postResponseOutbox.delete(request.id);
+    // 慢请求探针：卡住时至少要能说清「卡在哪个阶段」。
+    // eventLoopLagMs 由 setTimeout 的迟到量推断：循环被同步任务占住时它同样会晚触发。
+    const probeStartedAt = Date.now();
+    let probePhase: "residency" | "not-deleting" | "dispatch" = "residency";
+    const slowProbe = setTimeout(() => {
+      const elapsedMs = Date.now() - probeStartedAt;
+      this.logger?.warn("XCode Protocol request slow", {
+        event: "zcode_protocol.request.slow",
+        method: request.method,
+        module: "bootstrap.zcode_protocol",
+        phase: probePhase,
+        elapsedMs,
+        eventLoopLagMs: Math.max(0, elapsedMs - SLOW_REQUEST_PROBE_MS),
+      });
+    }, SLOW_REQUEST_PROBE_MS);
+    slowProbe.unref?.();
     let releaseResidencyOperation: (() => void) | undefined;
     const deletionRequest =
       request.method === V4_METHODS.sessionDeletionPreview ||
@@ -633,12 +651,14 @@ export class ZCodeProtocolAgentServer {
         releaseResidencyOperation =
           await this.context.sessionResidentPool?.acquireOperation(sessionIds);
       }
+      probePhase = "not-deleting";
       if (
         request.method !== V4_METHODS.sessionDeletionPreview &&
         request.method !== V4_METHODS.sessionDeletionExecute
       )
         for (const id of collectResidencySessionIds(request.params))
           await this.context.deps.sessionStore?.assertSessionNotDeleting?.(id as SessionId);
+      probePhase = "dispatch";
       const result = await this.dispatchRequest(request);
       return this.ok(request.id, result);
     } catch (error) {
@@ -646,6 +666,7 @@ export class ZCodeProtocolAgentServer {
       const protocolError = toProtocolError(error);
       return this.fail(request.id, protocolError.code, protocolError.message, protocolError.data);
     } finally {
+      clearTimeout(slowProbe);
       if (changesPlugins) {
         this.context.deps?.pluginPreparation?.invalidate();
         this.context.deps?.pluginDiscovery?.invalidate?.();
