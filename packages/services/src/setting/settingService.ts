@@ -38,6 +38,8 @@ import {
   type LegacyTeamConnection,
 } from "#src/setting/legacyAccountConnectionSettings.js";
 const MAX_RECENT_PROJECTS = 10;
+/** 超过这个体积就不再缩进写盘（皮肤背景图 base64 会让文件到数 MB）。 */
+const SETTINGS_PRETTY_PRINT_MAX_CHARS = 512 * 1024;
 const SETTINGS_PARSE_RETRY_DELAY_MS = 300;
 const SETTINGS_PARSE_RETRY_COUNT = 3;
 
@@ -196,7 +198,6 @@ async function writeSettingsAt(
   commitAccountSelection = false,
 ): Promise<void> {
   const settingsDir = dirname(settingsFile);
-  log("writing settings to:", settingsFile, JSON.stringify(settings));
   maybeThrowInjectedFsFault({ operation: "mkdir", path: settingsDir });
   await mkdir(settingsDir, { recursive: true });
   if (!shouldCommit()) return;
@@ -215,7 +216,19 @@ async function writeSettingsAt(
   if (!commitAccountSelection && readIncompleteLegacyTeamConnections(raw).length > 0) {
     delete persisted.providerFamilyConnectionSelections;
   }
-  await atomicWriteText(settingsFile, JSON.stringify(persisted, null, 2), {
+  // 修复原因（「跑一段时间就卡发送、会话加载不出来」）：这里原先把整份 settings 写进日志。
+  // 皮肤背景图是 setting.json 里的 base64（可达数 MB），于是每次保存都产生一条数 MB 的
+  // 日志行；日志经 Host → Main → stdout 转发，把事件循环和日志管道一起占满，Agent 的
+  // stdout 读不动，协议请求成片超时。日志只留体积，正文不进日志。
+  const compact = JSON.stringify(persisted);
+  // 大负载不再 pretty-print：皮肤背景图让文件到数 MB 时，缩进会把写盘量再放大 ~35%。
+  const text =
+    compact.length <= SETTINGS_PRETTY_PRINT_MAX_CHARS
+      ? JSON.stringify(persisted, null, 2)
+      : compact;
+  log("writing settings to:", settingsFile, { bytes: compact.length });
+  const startedAt = Date.now();
+  await atomicWriteText(settingsFile, text, {
     useFileLock: false,
     beforeRename: () => {
       if (!shouldCommit()) {
@@ -225,7 +238,7 @@ async function writeSettingsAt(
       enterCommitPhase();
     },
   });
-  log("write done");
+  log("write done", { bytes: compact.length, durationMs: Date.now() - startedAt });
 }
 
 export function createSettingService(): ISettingService {
@@ -394,8 +407,18 @@ export function createSettingServiceWithMigrations(dependencies: SettingServiceD
           merged.recentProjects = [...new Set(merged.recentProjects)].slice(0, MAX_RECENT_PROJECTS);
         }
 
+        const projected = await projectSettings(merged);
+        // 无变化的重复保存（窗口尺寸、侧栏/恢复状态等高频回写）不再落盘：
+        // 这个 fork 的 setting.json 含皮肤背景图 base64，一次写盘是数 MB 的读+写+序列化。
+        // 连接选择是显式操作（版本要单调递增），不能走这条短路。
+        if (
+          !writesConnections &&
+          JSON.stringify(projected) === JSON.stringify(current)
+        ) {
+          return;
+        }
         await writeSettings(
-          await projectSettings(merged),
+          projected,
           shouldCommit,
           enterCommitPhase,
           Object.hasOwn(patch, "providerFamilyConnectionSelections"),
