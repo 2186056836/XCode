@@ -229,10 +229,14 @@ async function loadModelsDevDatabase(fetchImpl: typeof globalThis.fetch): Promis
  *     （space-bunny-free = low/medium/high/xhigh/max、hy3-free = low/medium/high、
  *      fledge-alpha-free = low/high/max、kimi-k3 = 仅 max、exo-free = 仅 high）。
  *   - 只有 `{type:"toggle"}`（GLM-5 系 / Qwen3.8-Max / Kimi 系）
- *     → 上游只声明开关，映射成 `enabled` 一档 + 前端的 `disabled` 关闭档，
- *       与内置静态配置里这些模型的既有取值一致。
+ *     → 上游只声明开关，没有可调档位元数据：给默认四档 low/high/max
+ *       （导入时再加前端的 `disabled` 关闭档）。
  *   - `[]`（minimax-m2.5 系 / mimo 系 / nemotron 系：有 thinking 但未声明任何可调项）
- *     → 同 toggle 处理：`enabled`。给一个上游没承诺的离散档位等于凭空发明。
+ *     → 同 toggle 处理。
+ *
+ * 默认档位是产品决策（2026-11-20）：元数据缺失时不再用「开启/关闭」开关档，
+ * 统一给 low/high/max 三档；运行时 `mapReasoningEffortForOpenCode` 会按模型
+ * 支持的档位钳制，上游不认的档位不会原样发出。
  *
  * 排序走共享的 `sortReasoningLevelsByIntensity`：上游数组顺序不可信
  * （与 Qoder `Object.keys()` 同一个坑），不排序会把非单调序列写进 optionSpecs。
@@ -249,8 +253,8 @@ export function extractModelsDevReasoningEfforts(model: ModelsDevModel | undefin
       .filter((value) => value.length > 0 && !isOffReasoningLevel(value));
     if (levels.length > 0) return sortReasoningLevelsByIntensity(levels);
   }
-  // 有 thinking 但只声明 toggle（或什么都没声明）：只给「启用」一档。
-  return ["enabled"];
+  // 有 thinking 但只声明 toggle（或什么都没声明）：没有真实档位元数据，给默认三档。
+  return ["low", "high", "max"];
 }
 
 /**

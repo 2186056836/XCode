@@ -86,7 +86,9 @@ const DEFAULT_BATCH_CONFIG: BatchModelConfigDraft = {
   supportsJsonSchemaOutputValue: false,
   supportsNativeWebSearchValue: false,
   supportsMidConversationSystemValue: false,
-  reasoningLevelValuesValue: ["disabled", "enabled"],
+  // 元数据缺失时的默认档位：disabled/low/high/max 四档（从低到高），
+  // 不再用「关闭/开启」开关档（2026-11-20 产品决策）。
+  reasoningLevelValuesValue: ["disabled", "low", "high", "max"],
   reasoningLevelMapValue: "{}",
 };
 
