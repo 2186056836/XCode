@@ -22,6 +22,21 @@ interface EmitStructuredLogEntry extends HostStructuredLog {
 }
 
 /**
+ * 单条 Host 日志的字符上限。
+ *
+ * 修复原因：setting.json 里的皮肤背景图是 base64（实测数 MB），旧代码每次保存都把整份
+ * settings 打进日志。日志要经 Host → Main → stdout 转发，一条数 MB 的行就足以卡住日志
+ * 管道与事件循环，Agent 的 stdout 随之读不动，表现就是「跑一会儿发送全卡、会话加载不出来」。
+ * 源头已在 settingService 修掉；这里再加一道闸，避免任何调用方再用一条日志拖死整条链路。
+ */
+const MAX_HOST_LOG_MESSAGE_CHARS = 16 * 1024;
+
+function truncateHostLogMessage(message: string): string {
+  if (message.length <= MAX_HOST_LOG_MESSAGE_CHARS) return message;
+  return `${message.slice(0, MAX_HOST_LOG_MESSAGE_CHARS)}…[日志已截断，原长 ${message.length} 字符]`;
+}
+
+/**
  * host 现在会同时通过 stdout/stderr 和 postMessage 上报日志。
  * 如果 main 两边都立刻写盘，同一条日志会重复出现两次。
  * 这里优先相信结构化的 postMessage；只有 host 在退出前都没发出结构化日志时，
@@ -50,7 +65,7 @@ export function createHostLogRelay(
   }
 
   function emitStructuredLog(entry: EmitStructuredLogEntry): void {
-    const line = `[host-log] (${label}) [${entry.source}] ${entry.message}`;
+    const line = `[host-log] (${label}) [${entry.source}] ${truncateHostLogMessage(entry.message)}`;
     if (entry.level === "error") {
       logger.error(line);
       return;
@@ -70,7 +85,7 @@ export function createHostLogRelay(
         return;
       }
 
-      rawLogs.push({ kind: "stdout", message });
+      rawLogs.push({ kind: "stdout", message: truncateHostLogMessage(message) });
     },
 
     onStderr(message: string): void {
@@ -78,7 +93,7 @@ export function createHostLogRelay(
         return;
       }
 
-      rawLogs.push({ kind: "stderr", message });
+      rawLogs.push({ kind: "stderr", message: truncateHostLogMessage(message) });
     },
 
     onStructuredLog(entry: HostStructuredLog): void {
