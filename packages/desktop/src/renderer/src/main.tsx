@@ -430,8 +430,10 @@ window.addEventListener("message", (event) => {
       querySource: "dsh-pet",
       // 显式预算（见 petOptions）；requestTimeoutMs 让协议层登记 operationId，
       // Core 才会用调用方的 signal 而不是自己的 60s 硬超时。
+      // 修复原因：桌宠是后台点缀，原来给 170s——provider 卡住时它在模型队列里占住近三分钟，
+      // 用户此刻的发送/加载只能排队干等。30s 足够一句话生成，超时就放弃这一条。
       maxOutputTokens,
-      requestTimeoutMs: 170_000,
+      requestTimeoutMs: PET_GENERATE_DEADLINE_MS,
     });
     console.log("[dsh-pet] generate ok", requestId, (result.text || "").slice(0, 40));
     replyPetGenerate({ requestId, text: result.text });
@@ -441,6 +443,9 @@ window.addEventListener("message", (event) => {
   });
 });
 
+
+/** 桌宠辅助生成的上限：后台点缀不能和用户消息抢模型队列。 */
+const PET_GENERATE_DEADLINE_MS = 30_000;
 
 function initializeBusinessRoot(port: MessagePort): void {
   appInitialized = true;

@@ -2085,11 +2085,13 @@ const dshPetOverlayController = createDshPetOverlayController({
     if (!main || main.isDestroyed()) return null;
     const requestId = `dsh-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const result = await new Promise<{ text: string } | null>((resolve) => {
+      // 与渲染层 PET_GENERATE_DEADLINE_MS（30s）保持：这里只多留几秒 IPC 余量。
+      // 原来是 175s，provider 一卡，桌宠的这条后台请求会把会话模型队列占住近三分钟。
       const timeout = setTimeout(() => {
         ipcMain.removeAllListeners(`dsh-pet-generate-result-${requestId}`);
         lastDshGenerateError = "生成超时";
         resolve(null);
-      }, 175_000);
+      }, 40_000);
       timeout.unref?.();
       ipcMain.once(
         `dsh-pet-generate-result-${requestId}`,

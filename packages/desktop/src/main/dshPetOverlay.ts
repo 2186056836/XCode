@@ -1169,6 +1169,9 @@ function extractChatImage(text: string, pool: string[]): { text: string; image?:
   };
 
   let whisperInFlight = false;
+  // 连续生成失败（provider 429/不可达）时指数退避，避免每 60s 再往模型队列塞一条
+  // 需要等到超时才会放弃的请求。
+  let whisperFailureStreak = 0;
 
   /** 生成一句碎碎念并推给对应宠物窗；失败静默重排。 */
   const generateWhisper = async (
@@ -1177,6 +1180,7 @@ function extractChatImage(text: string, pool: string[]): { text: string; image?:
   ): Promise<void> => {
     if (whisperInFlight) return;
     whisperInFlight = true;
+    let produced = false;
     try {
       const persona = pet.whisperPrompt || config.whisperPrompt;
       const name = pet.name || pet.id;
@@ -1199,6 +1203,7 @@ function extractChatImage(text: string, pool: string[]): { text: string; image?:
       deps.logger.info(`[dsh-pet] whisper generate -> ${text === null ? "null" : JSON.stringify(text.slice(0, 40))}`);
       const cleaned = (text ?? "").trim().replace(/^["'“”]+|["'“”]+$/g, "").split("\n")[0]?.trim();
       if (!cleaned) return;
+      produced = true;
       const entry = petWindows.get(pet.id);
       if (entry && !entry.win.isDestroyed()) {
         entry.win.webContents.send(PlatformChannels.DshPetStateEvent, {
@@ -1211,13 +1216,15 @@ function extractChatImage(text: string, pool: string[]): { text: string; image?:
       deps.logger.warn("[dsh-pet] whisper generation failed", error);
     } finally {
       whisperInFlight = false;
+      whisperFailureStreak = produced ? 0 : Math.min(whisperFailureStreak + 1, 3);
     }
   };
 
   let whisperTimer: NodeJS.Timeout | null = null;
   const scheduleWhisper = (): void => {
     if (whisperTimer) clearTimeout(whisperTimer);
-    const seconds = Math.max(60, config.eventsRefreshSec.whisper);
+    // 连续失败时按 2/4/8 倍退避：模型不可用时不能每 60s 再抢一次队列。
+    const seconds = Math.max(60, config.eventsRefreshSec.whisper) * 2 ** whisperFailureStreak;
     whisperTimer = setTimeout(() => {
       whisperTimer = null;
       // 总开关关闭时不生成碎碎念（窗口不存在，模型调用纯浪费）。

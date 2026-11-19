@@ -6782,6 +6782,11 @@ export function createZCodeAgentService(
           {
             signal,
             ...(params.requestTimeoutMs ? { timeoutMs: params.requestTimeoutMs } : {}),
+            // 修复原因（「跑一会儿就卡、会话加载不出来」）：这是辅助生成（桌宠碎碎念/搭话、
+            // 起名等），调用方给的 deadline 只是「这次不等了」。按默认策略超时会把整个
+            // protocol client 判为不健康并回收 Agent，一次桌宠生成就能把用户正在进行的
+            // 发送/订阅连带打断。超时只作废这次生成，不能牵连连接。
+            invalidateConnectionOnTimeout: false,
           },
         );
       } finally {
