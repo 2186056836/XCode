@@ -14,7 +14,7 @@
   !define XCODE_INSTALLER_IS_ELEVATED_INNER `${UAC_IsInnerInstance}`
 !endif
 
-!ifndef XCODE_INSTALLER_PROCESS_HELPER
+!ifndef ZCODE_INSTALLER_PROCESS_HELPER
   ; CR-01 修复原因：普通 NSIS 只有 APP_64/APP_ARM64（压缩包路径），没有 APP_DIR_*；
   ; 正式构建由 afterPack 落盘按架构的 helper define 文件（见 electron-builder.config.js），
   ; 编译时按目标架构 include；缺失不在此报错，宏内在真正使用处明确失败。
@@ -324,10 +324,10 @@
     SetOutPath "$PLUGINSDIR"
     ; CR-01 修复原因：普通 NSIS 只有 APP_64/APP_ARM64（压缩包路径），没有 APP_DIR_*；
     ; helper 来源由文件顶层的生成 define 提供，缺失在此明确失败，不得回退压缩包宏。
-    !ifndef XCODE_INSTALLER_PROCESS_HELPER
-      !error "Installer process helper requires XCODE_INSTALLER_PROCESS_HELPER or generated define"
+    !ifndef ZCODE_INSTALLER_PROCESS_HELPER
+      !error "Installer process helper requires ZCODE_INSTALLER_PROCESS_HELPER or generated define"
     !endif
-    File /oname=zcode-installer-process-helper.exe "${XCODE_INSTALLER_PROCESS_HELPER}"
+    File /oname=zcode-installer-process-helper.exe "${ZCODE_INSTALLER_PROCESS_HELPER}"
     nsExec::ExecToStack /TIMEOUT=30000 `"$PLUGINSDIR\zcode-installer-process-helper.exe" "$installationDir\${APP_EXECUTABLE_FILENAME}"`
     Pop $R1
     Pop $R2
@@ -507,17 +507,17 @@
     StrCmp $XCodeCleanupBackup "" zcodeRetryExhaustedNoBackup
     !insertmacro ZCodeReportInstallerStage "cleanup-retries-exhausted exit-code=$R0 recoverable=1"
     ${If} $LANGUAGE == 2052
-      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "旧版本清理失败（错误码 $R0）。请排除文件占用或权限问题后重试，或取消以恢复旧版本。日志：$XCodeInstallerLogPath" /SD IDCANCEL IDRETRY OneMoreAttempt
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "旧版本清理失败（错误码 $R0）。请排除文件占用或权限问题后重试，或取消以恢复旧版本。日志：$ZCodeInstallerLogPath" /SD IDCANCEL IDRETRY OneMoreAttempt
     ${Else}
-      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Previous version cleanup failed (exit code $R0). Resolve file locks or permissions and retry, or cancel to restore the previous version. Log: $XCodeInstallerLogPath" /SD IDCANCEL IDRETRY OneMoreAttempt
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Previous version cleanup failed (exit code $R0). Resolve file locks or permissions and retry, or cancel to restore the previous version. Log: $ZCodeInstallerLogPath" /SD IDCANCEL IDRETRY OneMoreAttempt
     ${EndIf}
     Goto zcodeRetryExhaustedDone
     zcodeRetryExhaustedNoBackup:
     !insertmacro ZCodeReportInstallerStage "cleanup-retries-exhausted exit-code=$R0 recoverable=0"
     ${If} $LANGUAGE == 2052
-      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "旧版本清理失败（错误码 $R0）。本次更新没有完整备份：排除占用后可重试，取消将退出安装且无法自动恢复旧版本文件。日志：$XCodeInstallerLogPath" /SD IDCANCEL IDRETRY OneMoreAttempt
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "旧版本清理失败（错误码 $R0）。本次更新没有完整备份：排除占用后可重试，取消将退出安装且无法自动恢复旧版本文件。日志：$ZCodeInstallerLogPath" /SD IDCANCEL IDRETRY OneMoreAttempt
     ${Else}
-      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Previous version cleanup failed (exit code $R0). No complete backup exists for this update: retry after resolving file locks, or cancel to exit setup without automatic restore. Log: $XCodeInstallerLogPath" /SD IDCANCEL IDRETRY OneMoreAttempt
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Previous version cleanup failed (exit code $R0). No complete backup exists for this update: retry after resolving file locks, or cancel to exit setup without automatic restore. Log: $ZCodeInstallerLogPath" /SD IDCANCEL IDRETRY OneMoreAttempt
     ${EndIf}
     zcodeRetryExhaustedDone:
   !macroend
@@ -529,7 +529,7 @@
       StrCpy $XCodeCleanupMode "restore"
       Call XCodeCleanupSnapshot
       ${If} $XCodeCleanupFailed == "1"
-        !insertmacro XCodeCleanupErrorMessage "旧版本文件恢复失败，备份已保留：$XCodeCleanupBackup。详细日志：$XCodeInstallerLogPath" "Cannot restore the previous version. Backup retained: $XCodeCleanupBackup. Log: $XCodeInstallerLogPath"
+        !insertmacro XCodeCleanupErrorMessage "旧版本文件恢复失败，备份已保留：$XCodeCleanupBackup。详细日志：$ZCodeInstallerLogPath" "Cannot restore the previous version. Backup retained: $XCodeCleanupBackup. Log: $ZCodeInstallerLogPath"
         Return
       ${EndIf}
     ${EndIf}
