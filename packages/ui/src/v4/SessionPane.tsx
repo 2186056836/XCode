@@ -187,10 +187,7 @@ import {
   resolveSessionModelUnavailable,
   type ComposerSubmissionConfig,
 } from "@/v4/composer/composerSubmissionConfig.js";
-import {
-  useDraftSessionPrewarm,
-  type DraftPrewarmBinding,
-} from "@/v4/composer/useDraftSessionPrewarm.js";
+import { useDraftSessionPrewarm } from "@/v4/composer/useDraftSessionPrewarm.js";
 import { projectSessionConfigToTaskConfigOptions } from "@/v4/composer/sessionConfigTaskCache.js";
 import { useDraftRuntimeRebuildGate } from "@/v4/composer/useDraftRuntimeRebuildGate.js";
 import { useDraftModelReadinessGate } from "@/v4/composer/useDraftModelReadinessGate.js";
@@ -520,29 +517,6 @@ const EMPTY_SUBAGENT_PROJECTION: NonNullable<ConversationSnapshot["subagents"]> 
 };
 
 const MAX_CONVERSATION_FILE_CHANGES_CACHE_ENTRIES = 20;
-
-/**
- * 首发等待预热会话的上限。Agent 换代（liveness 恢复 / Helper ready / 请求超时回收）会冲掉
- * 草稿态预热会话并触发重建；实测重建在 5s 门禁内完成，这里给同样量级的余量。
- */
-const DRAFT_SEND_BINDING_WAIT_MS = 8_000;
-const DRAFT_SEND_BINDING_RETRY_DELAY_MS = 80;
-
-/** 预热 owner 自身换代的错误：同一次发送意图下可以等下一代，不属于用户切换草稿。 */
-const DRAFT_SEND_TRANSIENT_ERRORS = new Set([
-  "草稿会话尚未开始创建",
-  "草稿会话创建失败，请重试",
-  "草稿会话已失效",
-]);
-const DRAFT_SEND_SWITCHED_ERROR = "草稿会话已切换，请重新发送";
-
-function isDraftSendTransientError(error: unknown, rebuilding: boolean): boolean {
-  if (!(error instanceof Error)) return false;
-  if (DRAFT_SEND_TRANSIENT_ERRORS.has(error.message)) return true;
-  // 「已切换」只在 runtime 重建窗口内才算换代：窗口外用户真的换了草稿，
-  // 继续等下去会把旧输入发进新草稿。
-  return rebuilding && error.message === DRAFT_SEND_SWITCHED_ERROR;
-}
 
 function toComposerUiError(
   sessionId: string | null | undefined,
@@ -3572,12 +3546,6 @@ export function SessionPane({
     workspaceIdentity,
     workspacePath,
   });
-  // 发送等待可能跨一次预热换代，而换代只在重渲染后才反映到闭包上：
-  // 等待入口必须经 ref 取最新 generation，不能一直用点击那一刻的闭包。
-  const waitForDraftSessionRef = useRef(waitForDraftSession);
-  waitForDraftSessionRef.current = waitForDraftSession;
-  const draftRuntimeRebuildingRef = useRef(draftRuntimeRebuilding);
-  draftRuntimeRebuildingRef.current = draftRuntimeRebuilding;
   const ensureDraftPrewarmConfigBeforeSendRef = useRef<(targetSessionId: string) => Promise<void>>(
     async () => undefined,
   );
@@ -4304,34 +4272,11 @@ export function SessionPane({
       }
       // Bug 根因：首发曾把 binding=null 当成无预热，绕过 owner 再建一个会话。
       // 文本、附件/context 和 goal 都等待同一创建任务，创建失败或换代直接保留草稿。
-      // 修复原因：等待期间 Agent 换代（请求超时回收 / liveness 恢复 / Helper ready）会递增
-      // draftRuntimeInvalidationVersion 并重建预热会话；旧实现对任何换代都抛「草稿会话已切换」，
-      // 把用户刚点的发送直接打回成「发送失败」——实际用户没有切换任何草稿。现在把换代窗口内
-      // 的换代当作等待：拿到新一代预热（且仍处于同一次发送意图）再发；窗口外真的切了草稿
-      // 仍然失败，避免把旧输入发进别的草稿。
-      const acquireDraftSendBinding = async (): Promise<DraftPrewarmBinding | null> => {
-        if (sessionId !== null) return null;
-        const deadline = Date.now() + DRAFT_SEND_BINDING_WAIT_MS;
-        for (;;) {
-          try {
-            const binding = await waitForDraftSessionRef.current();
-            await ensureDraftPrewarmConfigBeforeSendRef.current(binding.sessionId);
-            if (!binding.beginPromotion()) throw new Error(DRAFT_SEND_SWITCHED_ERROR);
-            return binding;
-          } catch (error) {
-            if (
-              !isDraftSendTransientError(error, draftRuntimeRebuildingRef.current) ||
-              Date.now() >= deadline
-            ) {
-              throw error;
-            }
-            await new Promise((resolve) =>
-              setTimeout(resolve, DRAFT_SEND_BINDING_RETRY_DELAY_MS),
-            );
-          }
-        }
-      };
-      const draftBinding = await acquireDraftSendBinding();
+      const draftBinding = sessionId === null ? await waitForDraftSession() : null;
+      if (draftBinding) {
+        await ensureDraftPrewarmConfigBeforeSendRef.current(draftBinding.sessionId);
+        if (!draftBinding.beginPromotion()) throw new Error("草稿会话已切换，请重新发送");
+      }
       const targetSessionId = sessionId ?? draftBinding!.sessionId;
       if (draftBinding && draftSlashCommand) {
         const consumed = await dispatchSlashCommand(
@@ -4454,7 +4399,7 @@ export function SessionPane({
       createSubmissionFromComposer,
       sessionId,
       settleCurrentQueueInputs,
-      // waitForDraftSession 经 ref 读取：换代不应让发送回调换身份（否则等待中的点击会丢）。
+      waitForDraftSession,
     ],
   );
 
