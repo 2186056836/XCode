@@ -34,6 +34,7 @@ export interface PrefillTemplate {
 }
 
 import { XCODE_DEFAULT_TEMPLATE } from "./godmode-templates/xcode-default.generated.js";
+import { UNRESTRICTED_MODE_TEMPLATE } from "./godmode-templates/unrestricted-mode.generated.js";
 import {
   XIAOHONG_CREATION_PREFILL,
   XIAOHONG_CREATION_TEMPLATE,
@@ -48,10 +49,11 @@ import { MEIMEI_PREFILL, MEIMEI_TEMPLATE } from "./godmode-templates/meimei.gene
 
 /**
  * 数组顺序即设置页/聊天选择器的展示顺序。
- * 「默认XCODE」放最前面，作为恢复官方身份文案的入口。
+ * 「默认XCODE」放最前面，作为恢复官方身份文案的入口；「无限制模式」排第二。
  */
 export const GODMODE_TEMPLATES: GodmodeTemplate[] = [
   XCODE_DEFAULT_TEMPLATE,
+  UNRESTRICTED_MODE_TEMPLATE,
   XIAOMEI_CTF_TEMPLATE,
   XIAOYU_SECURITY_TEMPLATE,
   XIAOHONG_CREATION_TEMPLATE,
