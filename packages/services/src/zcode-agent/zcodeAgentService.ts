@@ -6715,11 +6715,16 @@ export function createZCodeAgentService(
       const client = await getClient(params);
       // Worker 自己读取 XCode Built-in / Personal Config；Host 只在执行前确保账号状态形成的
       // Account Config Overlay 已同步，避免新进程先按旧套餐状态创建 Model。
+      //
+      // 修复原因（「跑一会儿就卡、会话卡住」）：这里原来是 refreshRegistry: true。registry
+      // 刷新走网络，实测能把整条辅助生成拖到 166s（30s deadline 之外还有一段同步前置等待），
+      // 而它只是「尽快看到最新目录」的缓存预热——Account Config 的交付不依赖它。
+      // 辅助生成不该因为一次慢刷新把 Agent 占住；目录刷新由账号配置变更事件自行触发。
       await ensureAccountProviderConfigSynced({
         client,
         reason: "workspace_generate_text",
         workspace: params,
-        refreshRegistry: true,
+        refreshRegistry: false,
       });
       // 跨 RPC 调用时 AbortSignal 过不了结构化克隆（到手只剩一个空对象），
       // 调用方只能用 requestTimeoutMs 表达 deadline。这里把它落成本地
