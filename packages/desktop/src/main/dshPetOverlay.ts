@@ -50,11 +50,6 @@ export type DshPetConfig = DshPetUserConfig;
 const POINTER_POLL_MS = 60;
 /** 光标停在余量区（非输入忙碌）超过它即恢复穿透（ms）。 */
 const OFF_BODY_RELEASE_MS = 400;
-/**
- * 内联字体的体积上限（字节）。上首软糖体约 3.9 MB，base64 后约 5.2 MB；
- * 超过这个量级说明取到的不是预期字体，宁可回落到系统字体也不要把主进程内存撑爆。
- */
-const DSH_PET_FONT_MAX_BYTES = 16 * 1024 * 1024;
 
 interface DshPetDependencies {
   preloadPath: string;
@@ -594,18 +589,16 @@ export function createDshPetOverlayController(deps: DshPetDependencies) {
           signal: controller.signal,
           onProgress: broadcastAssetsProgress,
         });
-        const font = await dshAssets.ensureFont({ signal: controller.signal });
         const status = await dshAssets.status();
-        // 素材装好后重载桌宠窗：字体是在窗口初始化时一次性注入的（applyAssetFont），
-        // 不重载的话「下载全部素材」之后要等用户重启应用才看得到软糖体和完整动作。
-        if (font) {
-          for (const entry of petWindows.values()) {
-            if (!entry.win.isDestroyed()) entry.win.webContents.reload();
-          }
+        // 素材装好后重载桌宠窗：表情包列表在窗口初始化时读一次并缓存，不重载的话
+        // 「下载全部素材」之后要等用户重启应用才看得到新表情。字体已随应用内置，
+        // 不参与这一步。
+        for (const entry of petWindows.values()) {
+          if (!entry.win.isDestroyed()) entry.win.webContents.reload();
         }
         return {
           ok: true,
-          counts: { ...status.counts, font: status.counts.font && Boolean(font) },
+          counts: status.counts,
           downloaded: { webm: Object.keys(webm).length, memes: memes.length },
         };
       } finally {
@@ -665,30 +658,9 @@ export function createDshPetOverlayController(deps: DshPetDependencies) {
             }
           }
         }
-        let font: string | null = null;
-        if (payload?.font === true) {
-          const path = await dshAssets.cachedFont();
-          if (path) {
-            // 修复原因（「选了软糖体没生效」）：字体必须内联成 data URL。
-            // @font-face 对跨源字体强制 CORS 校验，而 zcode-media 走 registerFileProtocol，
-            // 响应带不了 Access-Control-Allow-Origin，字体加载会被静默拒绝——图片和视频
-            // 不做这个校验，所以只有字体坏。读成 base64 内联就绕开了跨源判定。
-            try {
-              const data = await readFile(path);
-              if (data.byteLength > 0 && data.byteLength <= DSH_PET_FONT_MAX_BYTES) {
-                font = `data:font/ttf;base64,${data.toString("base64")}`;
-              } else if (data.byteLength > 0) {
-                deps.logger.warn("[dsh-pet] bundled font too large, ignored", {
-                  bytes: data.byteLength,
-                });
-              }
-            } catch (error) {
-              deps.logger.warn("[dsh-pet] read bundled font failed", error);
-              font = null;
-            }
-          }
-        }
-        return { webm: webmUrls, memes: memeUrls, font };
+        // 字体不再随 IPC 内联：上首软糖体是渲染页同源的预置资源（pets-dsh/font/），
+        // 由 dsh-pet-overlay.html 的 @font-face 直接加载，绕开了跨源字体的 CORS 限制。
+        return { webm: webmUrls, memes: memeUrls };
       },
     );
     ipcMain.handle(PlatformChannels.DshPetLoadPack, (_event, payload: { petId?: unknown }) => {

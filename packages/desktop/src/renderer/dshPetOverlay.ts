@@ -169,15 +169,6 @@ declare global {
 const bridge = window.dshPet ?? null;
 const stageEl = document.getElementById("stage") as HTMLDivElement | null;
 const petEl = document.getElementById("pet") as HTMLDivElement | null;
-/**
- * 完整素材包的字体是否已接管。
- *
- * 修复原因（「选了软糖体没生效」）：它原来声明在 main() 体内第 628 行，而 applyAssetFont()
- * 在 337 行就被调用——函数声明会提升、`let` 不会，于是每次启动都在 TDZ 里抛
- * `ReferenceError: Cannot access 'assetFontApplied' before initialization`，
- * 字体注入一次都没执行过。放到模块作用域，调用顺序不再影响初始化。
- */
-let assetFontApplied = false;
 
 if (!bridge || !stageEl || !petEl) {
   console.warn("[dsh-pet-overlay] bridge missing");
@@ -342,8 +333,6 @@ async function main(b: DshPetBridge, stage: HTMLDivElement, pet: HTMLDivElement)
     }
   };
   await applyPack();
-  // 完整素材包的字体是异步补的，不阻塞桌宠窗首帧——装上就换，没装继续用系统字体。
-  void applyAssetFont();
   // ───────── A/B 双缓冲视频（上游同构：换源不闪） ─────────
   const videos = [document.createElement("video"), document.createElement("video")];
   let front = 0;
@@ -634,34 +623,6 @@ async function main(b: DshPetBridge, stage: HTMLDivElement, pet: HTMLDivElement)
   let tipCursor: { x: number; y: number } | null = null;
   let bubbleFadeTimer: number | null = null;
 
-  /**
-   * 完整素材包的字体接管。
-   *
-   * 内置已移除 3.9 MB 的「上首软糖体」；HTML 里那条 @font-face 会 404 并静默回落到
-   * 系统字体。装了完整包后在这里补一条指向授权 URL 的 @font-face —— 用同一
-   * font-family 名后声明覆盖前者，不需要改 HTML。
-   *
-   * 用 `function` 而不是 `const`：它在 applyPack 之后、本函数定义之前就被调用，
-   * 箭头函数会在暂时性死区里抛 ReferenceError。
-   */
-  async function applyAssetFont(): Promise<void> {
-    const assetsBridge = b.assets;
-    if (assetFontApplied || !assetsBridge) return;
-    try {
-      const result = await assetsBridge.media({ names: [], font: true });
-      // 没装字体就保持「未接管」：素材包下载完成后主进程会重载本窗，届时再注入一次。
-      if (!result.font) return;
-      const style = document.createElement("style");
-      style.dataset.dshAssetFont = "1";
-      style.textContent = `@font-face{font-family:"ShangshouSoftCandy";src:url("${result.font}") format("truetype");font-display:swap;font-weight:400}`;
-      document.head.appendChild(style);
-      // 主动加载一次，document.fonts 里能看到真实状态（失败仍回落系统字体）。
-      void document.fonts.load('400 21px "ShangshouSoftCandy"').catch(() => undefined);
-      assetFontApplied = true;
-    } catch {
-      /* 字体不是必需品，失败就用系统字体 */
-    }
-  }
   const applyBubbleFont = (): void => {
     // 对话弹窗挂在 body 下，继承不到宠物根容器的字体，走全局变量（上游同款）。
     document.documentElement.style.setProperty("--dsh-pet-font-family", fontStackOf(userConfig.font.family));

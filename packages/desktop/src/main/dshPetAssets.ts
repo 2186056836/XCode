@@ -66,9 +66,12 @@ export interface DshAssetProbe {
 
 export interface DshAssetsStatus {
   installed: boolean;
-  /** 本地已下载的文件数（按类别）。 */
+  /**
+   * 已就绪的文件数（按类别）。
+   * `font` 恒为 true：上首软糖体已改为随应用内置的预置资源，不再走下载。
+   */
   counts: { webm: number; memes: number; font: boolean };
-  /** 每类**需要下载**的总数：已排除随包发布的内置动作。 */
+  /** 每类**需要下载**的总数：已排除随包发布的内置动作与字体。 */
   totals: { webm: number; memes: number; font: number };
   dir: string;
   /** 最近一次使用过的镜像名。 */
@@ -101,8 +104,6 @@ export interface DshAssetsManager {
   /** 已缓存动作的绝对路径集合（键 = 动作名）。渲染端据此决定是否需要下载。 */
   cachedWebmNames(): Promise<string[]>;
   cachedMemes(): Promise<string[]>;
-  /** 字体文件绝对路径；没下载返回 null。 */
-  cachedFont(): Promise<string | null>;
   /** 测速并返回排好序的镜像。 */
   probeMirrors(): Promise<DshAssetProbe[]>;
   /**
@@ -118,8 +119,6 @@ export interface DshAssetsManager {
     signal?: AbortSignal;
     onProgress?: (p: DshAssetsProgress) => void;
   }): Promise<string[]>;
-  /** 确保字体已下载，返回绝对路径。 */
-  ensureFont(options?: { signal?: AbortSignal }): Promise<string | null>;
   /** 清空缓存。 */
   clear(): Promise<void>;
 }
@@ -494,7 +493,6 @@ export function createDshAssetsManager(deps: DshAssetsManagerDeps): DshAssetsMan
 
   const webmPath = (name: string): string => join(cacheRoot, "webm", `${name}.webm`);
   const memePath = (name: string): string => join(cacheRoot, "memes", name);
-  const fontPath = (name: string): string => join(cacheRoot, "fonts", name);
 
   const listCached = async (sub: string, ext: string): Promise<string[]> => {
     try {
@@ -526,19 +524,18 @@ export function createDshAssetsManager(deps: DshAssetsManagerDeps): DshAssetsMan
 
   return {
     async status(): Promise<DshAssetsStatus> {
-      const [webm, memes, fontFiles] = await Promise.all([
+      const [webm, memes] = await Promise.all([
         listCached("webm", ".webm"),
         listCached("memes", ".png"),
-        listCached("fonts", ".ttf"),
       ]);
-      // 分母只算「需要下载的」：内置动作随包发布、永远不会进缓存目录。
+      // 分母只算「需要下载的」：内置动作与字体随包发布、永远不会进缓存目录。
       // 之前写成上游总数 106，导致下满 98 个后仍显示「还差 8 个」。
       const downloadableWebm = ALL_ACTION_NAMES.filter(
         (name) => !BUNDLED_ACTIONS.includes(name as never),
       ).length;
       return {
-        installed: webm.length > 0 || memes.length > 0 || fontFiles.length > 0,
-        counts: { webm: webm.length, memes: memes.length, font: fontFiles.length > 0 },
+        installed: webm.length > 0 || memes.length > 0,
+        counts: { webm: webm.length, memes: memes.length, font: true },
         totals: { webm: downloadableWebm, memes: 27, font: 1 },
         dir: cacheRoot,
         lastMirror: preferredTemplate ? mirrorLabel(preferredTemplate) : null,
@@ -552,11 +549,6 @@ export function createDshAssetsManager(deps: DshAssetsManagerDeps): DshAssetsMan
 
     async cachedMemes(): Promise<string[]> {
       return listCached("memes", ".png");
-    },
-
-    async cachedFont(): Promise<string | null> {
-      const files = await listCached("fonts", ".ttf");
-      return files[0] ? fontPath(files[0]) : null;
     },
 
     async probeMirrors(): Promise<DshAssetProbe[]> {
@@ -647,21 +639,6 @@ export function createDshAssetsManager(deps: DshAssetsManagerDeps): DshAssetsMan
         }
       });
       return ready;
-    },
-
-    async ensureFont(options = {}) {
-      const name = "上首软糖体.ttf";
-      const target = fontPath(name);
-      if (await fileExists(target)) return target;
-      try {
-        await fetchFile(`fonts/${name}`, target, options.signal);
-        return target;
-      } catch (error) {
-        logger.warn("[dsh-assets] font download failed", {
-          error: error instanceof Error ? error.message : String(error),
-        });
-        return null;
-      }
     },
 
     async clear(): Promise<void> {

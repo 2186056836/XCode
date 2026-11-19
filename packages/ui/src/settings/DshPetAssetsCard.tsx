@@ -1,13 +1,15 @@
 /**
  * 「素材包」卡片：完整桌宠素材的按需下载。
  *
- * 内置只有 8 个核心动作。其余 98 个动作、27 张表情包和个人设字体改为逐文件
+ * 内置只有 8 个核心动作。其余 98 个动作、27 张表情包改为逐文件
  * 按需下载——上游整包约 60 MB，本机到 codeload 与加速镜像实测只有 30–50 KB/s，
  * 整包要 20–30 分钟，用户等不起。按需模式下单个动作约 450 KB，十秒级完成，
  * 没播放过的动作永远不下载。
  *
+ * 软糖体已改为随应用内置的预置资源，不再走下载。
+ *
  * 卡片提供两件事：
- *  1. 一键下载（把剩余动作 + 表情包 + 字体一次下完，可取消、可中断续传）；
+ *  1. 一键下载（把剩余动作 + 表情包一次下完，可取消、可中断续传）；
  *  2. 进度与镜像来源展示，让用户知道在等什么、走的是哪个源。
  */
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -259,7 +261,6 @@ export function DshPetAssetsCard(): React.JSX.Element | null {
                 {t("contentsValue", {
                   webm: `${counts.webm}/${totals.webm}`,
                   memes: `${counts.memes}/${totals.memes}`,
-                  font: counts.font ? t("fontYes") : t("fontNo"),
                 })}
               </span>
             </div>

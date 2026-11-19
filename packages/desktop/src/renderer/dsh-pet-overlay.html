@@ -4,8 +4,17 @@
     <meta charset="UTF-8" />
     <title>XCode DSH Pet</title>
     <style>
-      /* 上首软糖体不再随安装包内置（素材在线化）：装了完整素材包由 applyAssetFont 动态注入
-         --dsh-pet-font-family，没装则回落系统字体栈，所以这里不能再引用内置字体文件。 */
+      /* 上首软糖体随应用内置（预置资源）：素材包只负责动作与表情包，字体不再下载。
+         字体走同源静态文件，绕开 @font-face 的跨源校验（zcode-media 协议带不了 CORS
+         响应头，之前用协议地址加载会被静默拒绝）。文件缺失时仍回落系统字体栈。 */
+      @font-face {
+        font-family: "ShangshouSoftCandy";
+        src: url("pets-dsh/font/%E4%B8%8A%E9%A6%96%E8%BD%AF%E7%B3%96%E4%BD%93.ttf")
+          format("truetype");
+        font-display: swap;
+        font-weight: 400;
+        font-style: normal;
+      }
       html,
       body {
         margin: 0;
