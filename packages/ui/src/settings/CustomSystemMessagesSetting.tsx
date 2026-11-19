@@ -48,7 +48,14 @@ export function CustomSystemMessagesSetting() {
   const persist = async (next: { cliPrefix?: string }): Promise<boolean> => {
     setSaving(true);
     try {
-      await update({ customSystemMessages: next });
+      // 只改提示词。`settingService.update` 是顶层浅合并，整份传 customSystemMessages
+      // 会把同级的 PreFill / 混淆一起抹掉（保存身份后 PreFill 失效就是这么来的）。
+      await update({
+        customSystemMessages: {
+          ...settings?.customSystemMessages,
+          ...next,
+        },
+      });
       return true;
     } catch (error) {
       logger.warn("[settings] 保存 Agent 提示词失败", { error: String(error) });
@@ -61,12 +68,16 @@ export function CustomSystemMessagesSetting() {
 
   const handleSave = async () => {
     const trimmed = draft.trim();
-    const next = !trimmed || trimmed === DEFAULT_IDENTITY_PROMPT ? {} : { cliPrefix: trimmed };
+    // undefined = 删掉 cliPrefix，回落到内置身份行；JSON 序列化时该键会被丢掉。
+    const next =
+      !trimmed || trimmed === DEFAULT_IDENTITY_PROMPT
+        ? { cliPrefix: undefined }
+        : { cliPrefix: trimmed };
     if (await persist(next)) setOpen(false);
   };
 
   const handleRestoreDefault = async () => {
-    if (await persist({})) {
+    if (await persist({ cliPrefix: undefined })) {
       setDraft(DEFAULT_IDENTITY_PROMPT);
     }
   };
