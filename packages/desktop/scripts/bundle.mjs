@@ -213,10 +213,19 @@ export function createElectronBuilderBinariesMirrorEnv(mirror) {
   };
 }
 
-export function createBundleProcessEnvs({ os, arch, electronMirror, electronBuilderMirror }) {
+export function createBundleProcessEnvs({
+  os,
+  arch,
+  electronMirror,
+  electronBuilderMirror,
+  release = false,
+}) {
   const commonEnv = {
     ZCODE_TARGET_OS: os,
     ZCODE_TARGET_ARCH: arch,
+    // --release：产品身份（XCode vs XCode Preview）与内嵌后端环境都由 ZCODE_ENV 决定，
+    // 且会被 tsup/vite 编进产物；必须覆盖 shell 里可能继承到的测试值。
+    ...(release ? { ZCODE_ENV: "production" } : {}),
     ...createElectronRuntimeMirrorEnv(electronMirror),
   };
   const clearedElectronBuilderEnv = createElectronBuilderBinariesMirrorEnv("");
@@ -290,10 +299,14 @@ function printHelp() {
   pnpm bundle:desktop
   pnpm bundle:desktop -- --os mac --arch x64
   pnpm bundle:desktop -- linux arm64
+  pnpm bundle:desktop -- --os win --arch x64 --release
 
 参数:
   --os, -o <mac|win|linux>     目标操作系统，默认 mac
   --arch, -a <x64|arm64>       目标 CPU 架构，默认 arm64
+  --release                    打正式版：向 prepare/build/electron-builder 注入
+                               ZCODE_ENV=production（正式身份 XCode、生产后端、
+                               产物名不带 Preview / _TEST）
   --skip-prepare               跳过 prepare:runtime-assets
   --skip-build                 跳过 pnpm build
   --dry-run                    只打印最终命令，不执行打包
@@ -302,6 +315,7 @@ function printHelp() {
 环境变量:
   ZCODE_TARGET_OS              与 --os 等价
   ZCODE_TARGET_ARCH            与 --arch 等价
+  ZCODE_RELEASE=1              与 --release 等价
 `);
 }
 
@@ -327,6 +341,7 @@ function parseArgs(argv) {
     arch: process.env.ZCODE_TARGET_ARCH ?? null,
     skipPrepare: process.env.ZCODE_SKIP_PREPARE === "1",
     skipBuild: process.env.ZCODE_SKIP_BUILD === "1",
+    release: process.env.ZCODE_RELEASE === "1",
     dryRun: false,
     positionals: [],
   };
@@ -355,6 +370,11 @@ function parseArgs(argv) {
 
     if (arg === "--skip-build") {
       options.skipBuild = true;
+      continue;
+    }
+
+    if (arg === "--release") {
+      options.release = true;
       continue;
     }
 
@@ -402,6 +422,7 @@ function parseArgs(argv) {
     arch: resolvedArch,
     skipPrepare: options.skipPrepare,
     skipBuild: options.skipBuild,
+    release: options.release,
     dryRun: options.dryRun,
   };
 }
@@ -742,7 +763,9 @@ function verifyPackagedRuntimeDependencies(os, arch) {
 }
 
 async function main() {
-  const { os, arch, skipPrepare, skipBuild, dryRun } = parseArgs(process.argv.slice(2));
+  const { os, arch, skipPrepare, skipBuild, release, dryRun } = parseArgs(
+    process.argv.slice(2),
+  );
   const buildArgs = [
     "exec",
     "electron-builder",
@@ -754,12 +777,20 @@ async function main() {
 
   console.log(`[bundle] target=${os}/${arch}`);
   console.log(`[bundle] skipPrepare=${skipPrepare} skipBuild=${skipBuild}`);
+  if (release) {
+    const inheritedEnv = process.env.ZCODE_ENV?.trim();
+    if (inheritedEnv && inheritedEnv.toLowerCase() !== "production") {
+      console.log(`[bundle] --release 覆盖继承的 ZCODE_ENV=${inheritedEnv} → production`);
+    }
+    console.log("[bundle] release=true：正式版身份 XCode + 生产后端（ZCODE_ENV=production）");
+  }
 
   const { buildEnv, electronBuilderEnv } = createBundleProcessEnvs({
     os,
     arch,
     electronMirror: resolveElectronMirror(),
     electronBuilderMirror: resolveElectronBuilderBinariesMirror(),
+    release,
   });
 
   if (dryRun) {

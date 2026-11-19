@@ -162,6 +162,9 @@ pnpm bundle:desktop
 # 指定目标平台与 CPU 架构
 pnpm bundle:desktop -- --os win --arch x64
 
+# 发布版（正式身份 XCode + 生产后端；不加 --release 会打成 XCode Preview + _TEST）
+pnpm bundle:desktop -- --os win --arch x64 --release
+
 pnpm bundle:desktop -- --help
 ```
 

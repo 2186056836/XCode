@@ -44,6 +44,20 @@ GC 后 heapUsed 和 RSS；用户截图的 Strings 分类不能直接等同于源
 pnpm bundle:desktop
 ```
 
+## 正式版打包
+
+不设置 `ZCODE_ENV` 时产品身份会 fail-safe 成 `XCode Preview`（测试后端、产物带 `_TEST`）。
+发布版必须显式声明：
+
+```bash
+pnpm bundle:desktop -- --os win --arch x64 --release
+```
+
+`--release` 会向 `prepare:runtime-assets`、`pnpm build` 和 `electron-builder` 注入
+`ZCODE_ENV=production`：安装包身份为 `XCode`（appId `dev.xcode.app`）、内嵌后端为生产环境、
+产物名不带 `Preview` / `_TEST`。等价环境变量为 `ZCODE_RELEASE=1`；shell 里继承到的
+`ZCODE_ENV=test` 会被覆盖并打印提示。
+
 ## 显式指定目标平台
 
 命名参数：
