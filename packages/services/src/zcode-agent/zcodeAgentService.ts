@@ -494,82 +494,6 @@ const PLUGIN_MANAGEMENT_REQUEST_TIMEOUT_MS = 5 * 60_000;
 const CHILD_PROCESSES_REQUEST_TIMEOUT_MS = 800;
 const PLUGIN_OPERATION_CANCEL_REQUEST_TIMEOUT_MS = 5_000;
 const SESSION_COMPACT_REQUEST_TIMEOUT_MS = 5 * 60_000;
-/**
- * 会话级配置写入（身份 / PreFill / 混淆 / 模式 / 思考档）只改内存 record 与一条 session_entry，
- * 正常几十毫秒。给短超时并禁止「超时即回收整个 Agent」：Agent 被长模型调用占住时，一次设置
- * 写入不应该连带换代整条连接——换代还会冲掉草稿态预热会话，首发直接报「草稿会话已切换」。
- */
-const SESSION_CONFIG_WRITE_REQUEST_TIMEOUT_MS = 20_000;
-const SESSION_CONFIG_WRITE_REQUEST_OPTIONS = {
-  timeoutMs: SESSION_CONFIG_WRITE_REQUEST_TIMEOUT_MS,
-  invalidateConnectionOnTimeout: false,
-} as const;
-/**
- * 发送前的 Provider 同步会做一次 registry 刷新（走网络）。它只是「用最新凭据再发」的优化，
- * 网络卡住时不能把用户的消息一起卡死到协议层 180s 超时。
- */
-const SEND_PROVIDER_SYNC_TIMEOUT_MS = 15_000;
-/** registry 刷新本身的上限：超时只作废这次刷新，不判定连接不可信。 */
-const PROVIDER_REGISTRY_REFRESH_TIMEOUT_MS = 30_000;
-/**
- * 订阅清理 / 列表对账属于控制面请求：超时只表示这一次没做完，不能让整条连接失效。
- * 旧实现对它们按「链路不可信」回收 Agent，一次慢清理就会连带草稿态预热换代，
- * 首发便报「草稿会话已切换」。
- */
-const SUBSCRIPTION_CLEANUP_REQUEST_TIMEOUT_MS = 15_000;
-const SESSIONS_INDEX_RECONCILE_TIMEOUT_MS = 30_000;
-
-class BestEffortStepTimeoutError extends Error {
-  constructor(
-    readonly step: string,
-    readonly timeoutMs: number,
-  ) {
-    super(`${step} timed out after ${timeoutMs}ms`);
-    this.name = "BestEffortStepTimeoutError";
-  }
-}
-
-/**
- * 给「可以降级」的等待设上限。返回结果而不是 throw，让调用方决定超时是继续还是失败；
- * 超时只作废这一步，不能让协议 client 认为连接不可信。
- *
- * 落败的 work 之后仍可能 resolve/reject：先把它收成结果再 race，避免超时后留下
- * unhandled rejection。
- */
-async function runWithBestEffortTimeout<T>(
-  step: string,
-  timeoutMs: number,
-  work: Promise<T>,
-): Promise<
-  { status: "ok"; value: T } | { status: "timeout" | "failed"; error: Error }
-> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const settled = work.then(
-    (value) => ({ status: "ok" as const, value }),
-    (error: unknown) => ({
-      status: "failed" as const,
-      error: error instanceof Error ? error : new Error(String(error)),
-    }),
-  );
-  try {
-    return await Promise.race([
-      settled,
-      new Promise<{ status: "timeout"; error: Error }>((resolve) => {
-        timer = setTimeout(
-          () =>
-            resolve({
-              status: "timeout",
-              error: new BestEffortStepTimeoutError(step, timeoutMs),
-            }),
-          timeoutMs,
-        );
-        timer.unref?.();
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-}
 
 interface PendingPermissionRequest {
   client: ZCodeProtocolClient;
@@ -2579,26 +2503,11 @@ export function createZCodeAgentService(
           });
         }
         if (params.refreshRegistry) {
-          try {
-            await params.client.request(
-              zcodeProtocolMethods.providerRefreshRegistry,
-              { reason: params.reason },
-              zcodeProviderRefreshRegistryResultSchema,
-              {
-                timeoutMs: PROVIDER_REGISTRY_REFRESH_TIMEOUT_MS,
-                // 刷新是「尽快看到最新目录」，超时说明这一次没刷新完，不代表连接坏了；
-                // 判定连接不可信会把所有会话一起换代，代价远大于延后一次刷新。
-                invalidateConnectionOnTimeout: false,
-              },
-            );
-          } catch (error) {
-            if (!(error instanceof ZCodeProtocolRequestTimeoutError)) throw error;
-            logger.warn(undefined, "Provider Registry 刷新超时，沿用上一份目录", {
-              error: error.message,
-              reason: params.reason,
-              timeoutMs: PROVIDER_REGISTRY_REFRESH_TIMEOUT_MS,
-            });
-          }
+          await params.client.request(
+            zcodeProtocolMethods.providerRefreshRegistry,
+            { reason: params.reason },
+            zcodeProviderRefreshRegistryResultSchema,
+          );
         }
       });
     accountConfigSyncByClient.set(params.client, current);
@@ -2932,10 +2841,6 @@ export function createZCodeAgentService(
         connectionId: route.connectionId,
       },
       zcodeProtocolEmptyResultSchema,
-      {
-        timeoutMs: SUBSCRIPTION_CLEANUP_REQUEST_TIMEOUT_MS,
-        invalidateConnectionOnTimeout: false,
-      },
     );
     // request 在途时 runtime restart/重订阅可用相同 route key 建立新对象；
     // 迟到旧 response 只能清理它自己的 generation，不能按复合 key 删除新 route。
@@ -6907,31 +6812,14 @@ export function createZCodeAgentService(
     async sendPrompt(params: ZCodeAgentSendPromptParams) {
       const startedAt = Date.now();
       const client = await getClient(params);
+      await ensureAccountProviderConfigSynced({
+        client,
+        reason: "session_send",
+        workspace: params,
+        refreshRegistry: true,
+      });
       const sessionTraceId = params.sessionTraceId?.trim() || getSessionTraceId(params);
       const logTraceId = sessionTraceId ?? params.inputId;
-      // 修复原因（「发送超时/发送失败」）：这一步会顺带做 Provider Registry 刷新（网络）。
-      // 网络卡住时它会一直等到协议层超时，用户的发送就跟着卡住/失败。刷新只是让本次消息
-      // 用上最新凭据，超时后应沿用已交付的配置继续发送，而不是把消息挡在门外。
-      const providerSync = await runWithBestEffortTimeout(
-        "session_send.provider_config_sync",
-        SEND_PROVIDER_SYNC_TIMEOUT_MS,
-        ensureAccountProviderConfigSynced({
-          client,
-          reason: "session_send",
-          workspace: params,
-          refreshRegistry: true,
-        }),
-      );
-      if (providerSync.status === "failed") throw providerSync.error;
-      if (providerSync.status === "timeout") {
-        logger.warn(logTraceId, "发送前 Provider 同步超时，沿用上一份配置继续发送", {
-          durationMs: Date.now() - startedAt,
-          sessionId: params.sessionId,
-          timeoutMs: SEND_PROVIDER_SYNC_TIMEOUT_MS,
-          workspaceKey: resolveWorkspaceKey(params),
-          workspacePath: params.workspacePath,
-        });
-      }
       const browserAmbientContext =
         params.browserAmbientContext ??
         (await collectBrowserAmbientContext(options?.browserControlExecutor, {
@@ -7197,7 +7085,6 @@ export function createZCodeAgentService(
           persistAsWorkspaceLastUsed: params.persistAsWorkspaceLastUsed,
         },
         zcodeSessionStateSnapshotSchema,
-        SESSION_CONFIG_WRITE_REQUEST_OPTIONS,
       );
       return snapshot;
     },
@@ -7215,7 +7102,6 @@ export function createZCodeAgentService(
           expectedRevision: params.expectedRevision,
         },
         zcodeSessionStateSnapshotSchema,
-        SESSION_CONFIG_WRITE_REQUEST_OPTIONS,
       );
     },
 
@@ -7229,7 +7115,6 @@ export function createZCodeAgentService(
           expectedRevision: params.expectedRevision,
         },
         zcodeSessionStateSnapshotSchema,
-        SESSION_CONFIG_WRITE_REQUEST_OPTIONS,
       );
     },
 
@@ -7244,7 +7129,6 @@ export function createZCodeAgentService(
           expectedRevision: params.expectedRevision,
         },
         zcodeSessionStateSnapshotSchema,
-        SESSION_CONFIG_WRITE_REQUEST_OPTIONS,
       );
     },
 
@@ -7258,7 +7142,6 @@ export function createZCodeAgentService(
           expectedRevision: params.expectedRevision,
         },
         zcodeSessionStateSnapshotSchema,
-        SESSION_CONFIG_WRITE_REQUEST_OPTIONS,
       );
     },
 
@@ -8485,10 +8368,6 @@ export function createZCodeAgentService(
         V4_METHODS.sessionsIndexReconcile,
         { workspaceId: resolveWorkspaceKey(params), sessionIds: params.sessionIds },
         sessionsIndexReconcileResultSchema,
-        {
-          timeoutMs: SESSIONS_INDEX_RECONCILE_TIMEOUT_MS,
-          invalidateConnectionOnTimeout: false,
-        },
       );
     },
 
