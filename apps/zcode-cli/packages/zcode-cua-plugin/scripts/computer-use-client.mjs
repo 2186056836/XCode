@@ -522,7 +522,24 @@ function appStateOf(methodName, result) {
   for (const text of textBlocks(result)) {
     const parsed = parseJsonRecord(text);
     if (!parsed) continue;
-    for (const key of ["state_id", "app", "window", "elements", "text", "snapshot_mode", "base_state_id"]) {
+    for (const key of [
+      "state_id",
+      "app",
+      "window",
+      "elements",
+      "text",
+      "snapshot_mode",
+      "base_state_id",
+      // 没有像素时的具体原因：Windows 适配器写在 screenshot_error（minimized /
+      // invalid_target / target_changed / unsupported / capture_failed），
+      // producer 还可能给 empty_capture_reason / non_actionable_reason。
+      // 不并进来，上层只剩一句笼统的「hidden or unrendered window」可报。
+      "screenshot_error",
+      "empty_capture_reason",
+      "non_actionable_reason",
+      "capture_surfaces_status",
+      "screenshot_blank",
+    ]) {
       if (merged[key] === undefined && parsed[key] !== undefined) merged[key] = parsed[key];
     }
   }
@@ -551,6 +568,36 @@ function appStateOf(methodName, result) {
   }
   return merged;
 }
+
+/**
+ * 没有像素时 producer / 适配器给出的具体原因。
+ *
+ * 客户端历史上只报「hidden or unrendered window」，把几种完全不同的故障混成一句：
+ * - minimized：Helper 在 include_screenshot=true 时会先解除最小化再抓帧，但窗口恢复
+ *   与 WGC 合成就绪之间存在竞态，首帧经常 invalid_target；
+ * - unsupported / capture_failed：环境层面截图不可用（会话锁定、权限、图形栈），
+ *   重试永远不会成功，应直接改走 AX；
+ * - target_changed：抓帧过程中窗口换了 surface，重新观察通常能恢复。
+ */
+function screenshotFailureReason(state) {
+  return (
+    state.non_actionable_reason ??
+    state.screenshot_error ??
+    state.empty_capture_reason ??
+    state.capture_surfaces_status ??
+    null
+  );
+}
+
+/**
+ * 首帧缺失后的重试间隔。
+ *
+ * 最小化目标会在 include_screenshot=true 时被 Helper 解除最小化，但恢复后的窗口要等
+ * 桌面合成器（Windows 上是 WGC）重新出一帧；同一个 cell 里立刻再抓经常还是
+ * `invalid_target`（真机复现）。间隔取 300/700ms：总等待约 1s，足够跨过首帧，
+ * 又不至于把一次工具调用拖到模型超时。
+ */
+const SCREENSHOT_RETRY_DELAYS_MS = [300, 700];
 
 /**
  * Producer 随观察附带的**告知性文本块**（`[effect_evidence unchanged]`、
@@ -618,6 +665,28 @@ function createTarget(ctx, binding) {
     return { state, result };
   };
 
+  /**
+   * 带截图的观察：首帧缺失时有限次重试。
+   *
+   * `include_screenshot=true` 本身会触发 Helper 恢复最小化窗口，但恢复与合成器出帧之间
+   * 有竞态，首帧经常是 invalid_target；原实现一次抓不到就直接抛错/丢图，模型只能放弃
+   * 或去抢焦点（历史事故）。这里按固定间隔重试，环境层面明确不可用
+   * （unsupported/capture_failed）时立即放弃 —— 那种情况重试永远不会成功。
+   */
+  const observeForScreenshot = async (options, yieldsTree) => {
+    let observed = await observe(options, true, yieldsTree);
+    let bytes = imageBytesOf(observed.result);
+    for (const delayMs of SCREENSHOT_RETRY_DELAYS_MS) {
+      if (bytes) break;
+      const reason = screenshotFailureReason(observed.state);
+      if (reason === "unsupported" || reason === "capture_failed") break;
+      await sleep(delayMs);
+      observed = await observe({ ...options, disableDiffing: true }, true, yieldsTree);
+      bytes = imageBytesOf(observed.result);
+    }
+    return { ...observed, bytes };
+  };
+
   const act = async (methodName, args) => {
     const result = await call(methodName, args);
     assertOk(methodName, result);
@@ -649,44 +718,52 @@ function createTarget(ctx, binding) {
 
     async getScreenshot(options) {
       // yieldsTree=false：只截图不给树文本，所以它不强制整树，也不能把自己算成基线。
-      const { state, result } = await observe(options, true, false);
-      const bytes = imageBytesOf(result);
+      const { state, bytes } = await observeForScreenshot(options, false);
       if (!bytes) {
+        const reason = screenshotFailureReason(state);
+        const unsupported = reason === "unsupported" || reason === "capture_failed";
         throw new ComputerUseError(
           // 措辞纪律（2026-09-11 真机）：这里过去写「raise the window and retry」，
           // 那是直接教模型抢用户焦点 —— 后台截图本来就能拿到（负坐标副屏窗口实测可用）。
           //
-          // 而真正常见的成因是应用处于 hidden（⌘H）：macOS 不渲染隐藏窗口，Helper 的前后
-          // surface 指纹必然不一致，栅格 fail-closed。此时重试永远不会成功，模型如果只看到
-          // 一句无信息的 "Screenshot unavailable" 就会绕圈并升级（历史上升级成抢焦点，
-          // 后来升级成 request_access + shell 排查）。所以把 producer 给出的原因带上，
-          // 并指回真正可走的 AX 路径 —— 隐藏窗口的 accessibility 完全不受影响。
+          // 而真正常见的两类成因完全不同：隐藏/最小化窗口不渲染（Helper 恢复后仍可能
+          // 拿不到首帧），或当前会话的像素抓取整体不可用（unsupported/capture_failed，
+          // 例如锁屏、权限或图形栈限制）。模型如果只看到一句无信息的
+          // "Screenshot unavailable" 就会绕圈并升级（历史上升级成抢焦点，后来升级成
+          // request_access + shell 排查），所以必须把 producer 给出的原因带上，
+          // 并指回真正可走的 AX 路径 —— 窗口的 accessibility 完全不受影响。
           `Screenshot unavailable for ${binding.label}` +
-            (state.non_actionable_reason ? ` (${state.non_actionable_reason})` : "") +
+            (reason ? ` (${reason})` : "") +
             (state.screenshot_blank ? " (the captured raster was blank)" : "") +
-            ". The accessibility tree still works on a hidden or unrendered window: use " +
-            "getAXState() and act on element indices. Do not activate the app; ask the user " +
-            "to unhide the window if pixels are genuinely required.",
-          { code: "ELEMENT_UNAVAILABLE", details: { app: binding.label } },
+            (unsupported
+              ? ". Pixel capture is unavailable in this environment (not a window-visibility" +
+                " problem), so retrying the screenshot will not help: use getAXState() and act" +
+                " on element indices."
+              : ". The accessibility tree still works on a hidden or unrendered window: use " +
+                "getAXState() and act on element indices. Do not activate the app; ask the user " +
+                "to unhide the window if pixels are genuinely required."),
+          { code: "ELEMENT_UNAVAILABLE", details: { app: binding.label, reason } },
         );
       }
       return bytes;
     },
 
     async getAXStateAndScreenshot(options) {
-      const { state, result } = await observe(options, true, true);
-      const screenshot = imageBytesOf(result);
+      const { state, result, bytes: screenshot } = await observeForScreenshot(options, true);
       // 静默丢图是本轮最后一条同类缺陷（过去 screenshot===null 时直接 return {state}，
       // 一句话不给）。真机上模型正是从"没收到图"推断出「截图没有
       // 回传（窗口在副显示器上，坐标为负）」，然后去抢用户焦点——它得到的信息量是零，
       // 所以只能猜。请求了像素却没拿到，必须说清为什么、以及重试有没有用。
-      const note =
-        screenshot || !state.non_actionable_reason
-          ? ""
-          : `\n[screenshot unavailable: ${state.non_actionable_reason}]` +
-            " A hidden or minimized window produces this persistently, so re-observing will not" +
-            " help. The accessibility tree above is complete — act on element indices. Do not" +
-            " activate the app.";
+      const reason = screenshotFailureReason(state);
+      const note = screenshot
+        ? ""
+        : `\n[screenshot unavailable: ${reason ?? "no pixels returned"}]` +
+          (reason === "unsupported" || reason === "capture_failed"
+            ? " Pixel capture is unavailable in this environment, so re-observing will not help." +
+              " The accessibility tree above is complete — act on element indices."
+            : " A hidden or minimized window produces this persistently, so re-observing will not" +
+              " help. The accessibility tree above is complete — act on element indices. Do not" +
+              " activate the app.");
       const text = `${state.text}${advisoryTextOf(result, state.text)}`;
       emitText(globals, `${text}${note}`, options);
       return screenshot ? { state: text, screenshot } : { state: text };
