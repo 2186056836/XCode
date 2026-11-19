@@ -17,7 +17,7 @@ const promptsDir = join(packageRoot, "prompts");
 const outDir = join(packageRoot, "src", "godmode-templates");
 
 /** 顺序即 UI 下拉顺序，必须显式声明：readdir 的字典序会把 Hermes 排到最前。 */
-const TEMPLATE_ORDER = ["xiaomei-ctf", "xiaoyu-security", "xiaohong-creation", "meimei"];
+const TEMPLATE_ORDER = ["xcode-default", "xiaomei-ctf", "xiaoyu-security", "xiaohong-creation", "meimei"];
 
 function parseFrontmatter(source, file) {
   // Windows 检出（core.autocrlf）会把 md 落成 CRLF；先归一化，否则 startsWith("\n") 判空。
@@ -85,22 +85,33 @@ for (const id of TEMPLATE_ORDER) {
   const promptFile = `${id}.md`;
   const prefillFile = `${id}.prefill.md`;
   if (!files.includes(promptFile)) throw new Error(`prompts/${promptFile} 不存在`);
-  if (!files.includes(prefillFile)) throw new Error(`prompts/${prefillFile} 不存在`);
 
   const prompt = parseFrontmatter(readFileSync(join(promptsDir, promptFile), "utf8"), promptFile);
   if (prompt.fields.id !== id) throw new Error(`${promptFile}: frontmatter id 必须是 ${id}`);
   for (const key of ["name", "family", "strategy"]) {
     if (!prompt.fields[key]) throw new Error(`${promptFile}: frontmatter 缺少 ${key}`);
   }
-  const prefill = parseFrontmatter(
-    readFileSync(join(promptsDir, prefillFile), "utf8"),
-    prefillFile,
-  );
-  const turns = parsePrefillTurns(prefill.body, prefillFile);
+  // 「默认XCODE」只有提示词、没有配套 PreFill：允许省略 *_PREFILL 生成物，
+  // 应用模板时保持当前 PreFill 不变（消费者本来就按 id find，找不到即不写）。
+  const prefill = files.includes(prefillFile)
+    ? parseFrontmatter(readFileSync(join(promptsDir, prefillFile), "utf8"), prefillFile)
+    : undefined;
+  const turns = prefill ? parsePrefillTurns(prefill.body, prefillFile) : [];
 
   const name = constantName(id);
+  const prefillExport = prefill
+    ? `
+export const ${name}_PREFILL: PrefillTemplate = {
+  id: "${id}",
+  name: ${JSON.stringify(prefill.fields.name ?? prompt.fields.name)},
+  messages: [
+${renderTurns(turns, "    ")}
+  ],
+};
+`
+    : "";
   const output = `// 由 scripts/generate-godmode-templates.mjs 从 prompts/${promptFile} 生成，请勿手改。
-import type { GodmodeTemplate, PrefillTemplate } from "../godmode-templates.js";
+import type { GodmodeTemplate${prefill ? ", PrefillTemplate" : ""} } from "../godmode-templates.js";
 
 export const ${name}_TEMPLATE: GodmodeTemplate = {
   id: "${id}",
@@ -109,17 +120,9 @@ export const ${name}_TEMPLATE: GodmodeTemplate = {
   strategy: ${JSON.stringify(prompt.fields.strategy)},
   prompt: \`${escapeTemplateLiteral(prompt.body)}\`,
 };
-
-export const ${name}_PREFILL: PrefillTemplate = {
-  id: "${id}",
-  name: ${JSON.stringify(prefill.fields.name ?? prompt.fields.name)},
-  messages: [
-${renderTurns(turns, "    ")}
-  ],
-};
-`;
+${prefillExport}`;
   writeFileSync(join(outDir, `${id}.generated.ts`), output, "utf8");
-  summary.push(`${id} (${turns.length} prefill turns)`);
+  summary.push(`${id} (${prefill ? `${turns.length} prefill turns` : "no prefill"})`);
 }
 
 const defaultTurns = parsePrefillTurns(

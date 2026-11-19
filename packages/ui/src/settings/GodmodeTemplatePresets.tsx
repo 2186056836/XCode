@@ -80,7 +80,9 @@ export function GodmodeTemplatePresets() {
           // 与「使用」同构：只换提示词与 PreFill，混淆等其它字段保持当前值。
           ...settings?.customSystemMessages,
           cliPrefix: draft.cliPrefix,
-          prefill: { enabled: true, messages },
+          // 模板没有 PreFill（例如「默认XCODE」）时不清空当前配置：用户可能只改了
+          // 提示词，要停用 PreFill 用上面的「全局 PreFill」开关。
+          ...(messages.length > 0 ? { prefill: { enabled: true, messages } } : {}),
         },
       });
       toast(intl.formatMessage({ id: "settings.modelJailbreak.templates.edited" }));

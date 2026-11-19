@@ -33,6 +33,7 @@ export interface PrefillTemplate {
   messages: PrefillTemplateMessage[];
 }
 
+import { XCODE_DEFAULT_TEMPLATE } from "./godmode-templates/xcode-default.generated.js";
 import {
   XIAOHONG_CREATION_PREFILL,
   XIAOHONG_CREATION_TEMPLATE,
@@ -45,8 +46,12 @@ import {
 import { GODMODE_DEFAULT_PREFILL as DEFAULT_PREFILL_TURNS } from "./godmode-templates/default-prefill.generated.js";
 import { MEIMEI_PREFILL, MEIMEI_TEMPLATE } from "./godmode-templates/meimei.generated.js";
 
-/** 数组顺序即设置页/聊天选择器的展示顺序。 */
+/**
+ * 数组顺序即设置页/聊天选择器的展示顺序。
+ * 「默认XCODE」放最前面，作为恢复官方身份文案的入口。
+ */
 export const GODMODE_TEMPLATES: GodmodeTemplate[] = [
+  XCODE_DEFAULT_TEMPLATE,
   XIAOMEI_CTF_TEMPLATE,
   XIAOYU_SECURITY_TEMPLATE,
   XIAOHONG_CREATION_TEMPLATE,
@@ -60,8 +65,8 @@ export const GODMODE_DEFAULT_PREFILL: PrefillTemplateMessage[] = [...DEFAULT_PRE
  * PreFill 预置对话模板。
  *
  * 交互与系统提示词模板同构：下拉选一套 → 点「使用」→ 写入
- * `customSystemMessages.prefill`（同时自动开启），之后仍可通过「编辑」继续改。
- * id 与 GODMODE_TEMPLATES 一一对应。
+ * `customSystemMessages.prefill`（同时自动开启）。
+ * 只有带配套 `*.prefill.md` 的模板才会出现在这里（「默认XCODE」只提供提示词）。
  */
 export const PREFILL_TEMPLATES: PrefillTemplate[] = [
   XIAOMEI_CTF_PREFILL,
