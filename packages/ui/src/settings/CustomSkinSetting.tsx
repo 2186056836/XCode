@@ -1,12 +1,12 @@
 /* oxlint-disable eslint(max-lines) -- 皮肤设置卡片只承载设置行 + 工坊入口 + 恢复默认；
    编辑器本体在 SkinStudio.tsx，预设/主题库在 skin-library.ts。 */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { PaletteIcon, WandIcon } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
 import { useSettings } from "@/hooks/useSettingService.js";
-import { applyCustomSkin } from "@/useTheme.js";
+import { applyCustomSkin, useCustomSkinApplication } from "@/useTheme.js";
 import { SettingsRow } from "@/settings/SettingsPageParts.js";
 import type { CustomSkinSettings } from "@zcode/shared";
 import { SkinStudio } from "@/settings/SkinStudio.js";
@@ -29,10 +29,9 @@ export function CustomSkinSetting() {
   const [studioOpen, setStudioOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // 皮肤配置变化（保存成功/其他窗口同步）时立即应用到当前窗口。
-  useEffect(() => {
-    applyCustomSkin(savedSkin);
-  }, [savedSkin]);
+  // 皮肤配置变化（保存成功/其他窗口同步）时立即应用到当前窗口；与 Root 的全局
+  // 应用共用内容指纹去重，设置快照刷新不会反复重建数 MB 背景图的 CSS。
+  useCustomSkinApplication(settings ? savedSkin : undefined);
 
   /** 写入 AppSettings.customSkin 并应用；清空必须传 null（RPC/JSON 会吞 undefined）。 */
   const persist = async (next: CustomSkinSettings | null): Promise<boolean> => {

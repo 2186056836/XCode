@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   DEFAULT_SKIN_IMAGE,
   DEFAULT_SKIN_SURFACE,
@@ -423,6 +423,46 @@ export function applyCustomSkin(skin: CustomSkinSettings | null | undefined) {
 }
 
 
+
+/**
+ * 应用启动后的皮肤落地。
+ *
+ * 修复原因：`applyCustomSkin` 原先只有「外观」设置卡片挂载或保存时调用，重启 dev /
+ * 更新后不打开设置页，皮肤就一直是未加载状态（连 `#xcode-custom-skin-style` 都不存在，
+ * html 背景为 none）。这里在 app 根节点按设置快照应用一次。
+ *
+ * 去重：设置快照每次 refresh 都是新对象，直接依赖对象会把数 MB 的背景图反复重建成
+ * CSS。用轻量指纹（背景图只比长度 + 首尾片段）判断内容是否真的变了。
+ */
+export function useCustomSkinApplication(skin: CustomSkinSettings | null | undefined): void {
+  const appliedFingerprintRef = useRef<string | null>(null);
+  useEffect(() => {
+    // undefined = 设置还没加载完（不要先按「无皮肤」清底）；null = 明确没有皮肤。
+    if (skin === undefined) return;
+    const fingerprint = customSkinFingerprint(skin);
+    if (appliedFingerprintRef.current === fingerprint) return;
+    appliedFingerprintRef.current = fingerprint;
+    applyCustomSkin(skin);
+  }, [skin]);
+}
+
+function customSkinFingerprint(skin: CustomSkinSettings | null): string {
+  if (!skin) return "none";
+  // 背景图是数 MB 的 data URL：只比长度与首尾片段，避免每轮 refresh 拷贝整串。
+  const background = skin.backgroundImage
+    ? `${skin.backgroundImage.length}:${skin.backgroundImage.slice(0, 32)}:${skin.backgroundImage.slice(-32)}`
+    : null;
+  return JSON.stringify({
+    base: skin.base,
+    overrides: skin.overrides ?? null,
+    background,
+    focusX: skin.backgroundFocusX ?? null,
+    focusY: skin.backgroundFocusY ?? null,
+    image: skin.image ?? null,
+    surface: skin.surface ?? null,
+    safeCss: skin.safeCss ?? null,
+  });
+}
 
 /** :root token 覆盖规则；空 map 返回空串。 */
 function rootTokenRule(tokenValues: Map<string, string>): string {

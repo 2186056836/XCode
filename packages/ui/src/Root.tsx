@@ -123,6 +123,7 @@ import { resolveProviderAvailabilityState } from "@/lib/modelProviderAvailabilit
 import { useProviderAvailabilityLoginEntryGuard } from "@/root/useProviderAvailabilityLoginEntryGuard.js";
 import { ensureProviderFamilyDomainMigration } from "@/lib/providerFamilyDomainMigration.js";
 import { useSettings } from "@/hooks/useSettingService.js";
+import { useCustomSkinApplication } from "@/useTheme.js";
 import { CLOSE_ACTIVE_CONTEXT_REQUEST_EVENT } from "@/lib/closeActiveContext.js";
 import { AssistantCodeCommentFeatureProvider } from "@/AssistantCodeCommentFeatureProvider.js";
 import {
@@ -290,6 +291,9 @@ function RootInner({
     refresh: refreshAppSettings,
     update: updateAppSettings,
   } = useSettings();
+  // 皮肤是全局外观：设置快照就绪后按内容指纹应用一次。此前只有「外观」设置卡片
+  // 挂载/保存时才 applyCustomSkin，重启或更新后不打开设置页皮肤就一直不加载。
+  useCustomSkinApplication(appSettings?.customSkin);
   // docs/dynamic-workflow/launch.md「The user's choice」：设置里的动态工作流选择变化后，通知本窗口
   // 的 Host 重发 CLI 策略（并转发给远程 Host），再重读灰度快照。
   useDynamicWorkflowUserModeSync({
