@@ -100,7 +100,8 @@
     "clean": "node ../../scripts/clean-dist.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src",
-    "lint:fix": "oxlint --write src"
+    "lint:fix": "oxlint --write src",
+    "generate:opencode-prompt": "node scripts/generate-opencode-build-prompt.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "3.0.81",

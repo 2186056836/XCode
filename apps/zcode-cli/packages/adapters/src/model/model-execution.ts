@@ -8,6 +8,8 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
+import { spawn } from "node:child_process";
+import type { Readable } from "node:stream";
 import {
   applyBuildAgentSignature,
   mintSessionId,
@@ -15,7 +17,7 @@ import {
 } from "./opencode-build-agent.js";
 import { createModelRequestSecurityState } from "./request-security-edition/index.js";
 import type { ModelRequestSecurityPort } from "./request-security.js";
-import { appendFileSync } from "node:fs";
+import { appendFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import type { LanguageModel } from "ai";
 import {
@@ -32,7 +34,12 @@ import {
   type ProviderEndpointRoutingPort,
 } from "@zcode/contracts";
 import type { RegistryProviderConfig } from "@zcode/provider";
-import { isOffReasoningLevel, mapReasoningEffortForOpenCode, withOpenRouterAttributionHeaders } from "@zcode/shared";
+import {
+  isOffReasoningLevel,
+  mapReasoningEffortForOpenCode,
+  OPENCODE_FREE_TLS_HELPER_ENV,
+  withOpenRouterAttributionHeaders,
+} from "@zcode/shared";
 import { createAnthropicCompatFetch } from "./anthropic-stream-compat.js";
 import { createOpenAIResponsesJsonCompatFetch } from "./openai-responses-json-compat.js";
 import { createModelOptionMapFetch, type RawRequestBodyCapture } from "./model-option-map-fetch.js";
@@ -584,10 +591,22 @@ function applyModelRequestAuth(
 // 【2026-10-18 端点迁移（当前生效）】官方 CLI 1.19.0 已把 chat 端点迁到
 //   https://opencode.ai/inference/openai/v1/chat/completions；旧 /zen/v1 走独立
 //   额度桶，稳定返回 429 FreeUsageLimitError。新端点重跑闸门矩阵：UA /
-//   session(counter≤63) / tools 11 名并集仍是放行条件；system prompt 仍**不校验**
-//   （build-only、XCode 自有 system、两个 system 共存/任意顺序，四种组合全 200）。
+//   session(counter≤63) / tools 11 名并集仍是放行条件；system prompt 当时测得
+//   不校验（2026-11-20 已推翻，见下一段）。
 //   模型目录改为 https://opencode.ai/inference/v1/models——`{baseUrl}/models`
 //   现在是 404，host 侧 upstreamModelListFetcher 对该 profile 单独拼目录。
+//
+// 【2026-11-20 重新实测：两条硬门禁都收紧了】
+//   1. TLS 客户端指纹：同请求体/同 IP，Bun(1.3.14)→200、Node/OpenSSL→429、
+//      Electron/Chromium→429、Go crypto/tls→429；用 uTLS 逐字节复刻 Bun 的
+//      ClientHello（17 cipher、无 GREASE、extension 顺序、512B padding）→200。
+//      桌面端通过 opencode-tls helper（bundled-tools/<platform>/opencode-tls）
+//      发送请求；helper 缺失时回退普通 fetch。
+//   2. system prompt：纯自定义 system → 429；官方 build prompt 原文放在
+//      自定义 system 前面/后面/独立 system 消息 → 200。运行时由
+//      applyBuildAgentSignature 在第一条 system 前拼签名段（含 <env> 三行）。
+//   3. session ID 必须是 `ses_` + 12 位时间 hex + 14 位 base62；过长/占位
+//      同样落进 429 桶（参考实现的 Go 客户端踩过：16 hex + fffe）。
 //
 // 结论：**匿名（Bearer public）可直接访问 free 档**（2026-10-16 以本产品完整请求
 // 形态直连实测 200）。真实 key 是可选的第二条路径：填 provider API Key 或设环境
@@ -1176,6 +1195,109 @@ const CODEX_MASQUERADE_VERSION = "0.153.4";
 const CODEX_MASQUERADE_USER_AGENT = `${CODEX_MASQUERADE_UA_PREFIX}${CODEX_MASQUERADE_VERSION} (Windows 10.0.26200; x86_64) ${CODEX_MASQUERADE_UA_PREFIX}${CODEX_MASQUERADE_VERSION}`;
 
 /**
+ * OpenCode 免费档的 TLS helper 传输层。
+ *
+ * 为什么不用 baseFetch：`opencode.ai` 的匿名免费档按 **TLS 客户端指纹**分额度桶。
+ * 2026-11-20 实测（同一请求体、同一 IP）：Bun→200，Node/OpenSSL→429，
+ * Electron/Chromium→429，Go 默认 TLS→429；用 uTLS 逐字节复刻 Bun 1.3.14 的
+ * ClientHello 后→200。helper 就是那个复刻实现（见 desktop/tools/opencode-tls）。
+ *
+ * 协议：每进程一个请求。stdin 一行 JSON，stdout 先一行响应头 JSON，再是原始
+ * 响应体（已解压）。这里把它包成标准 `Response`，body 保持流式，SSE 不被缓冲。
+ *
+ * 注意：helper 直连 opencode.ai，不经过 `createNetworkProxyFetch` 的全局代理；
+ * 只在提供 helper 时启用（桌面端打包注入），缺省行为仍是普通 fetch。
+ */
+function createOpenCodeTlsHelperFetch(helperPath: string): ProviderFetch {
+  return async (request, init) => {
+    const url =
+      typeof request === "string"
+        ? request
+        : request instanceof URL
+          ? request.toString()
+          : request.url;
+    const method = (init?.method ?? "GET").toUpperCase();
+    const headers = Object.entries(readRequestHeaders(init?.headers));
+    const bodyText = typeof init?.body === "string" ? init.body : "";
+    const signal = init?.signal ?? undefined;
+    if (signal?.aborted) {
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }
+
+    const child = spawn(helperPath, [], {
+      stdio: ["pipe", "pipe", "pipe"],
+      windowsHide: true,
+    });
+    const stdout = child.stdout as Readable;
+    let stderr = "";
+    child.stderr?.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString("utf8");
+    });
+    const onAbort = (): void => {
+      child.kill();
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+    child.on("close", () => signal?.removeEventListener("abort", onAbort));
+    // EPIPE（helper 提前退出）不应变成未捕获异常，错误统一由 stdout/exit 路径上报。
+    child.stdin?.on("error", () => undefined);
+    child.stdin?.end(
+      `${JSON.stringify({
+        method,
+        url,
+        headers,
+        body: Buffer.from(bodyText, "utf8").toString("base64"),
+      })}\n`,
+    );
+
+    const iterator = stdout[Symbol.asyncIterator]() as AsyncIterator<Buffer>;
+    let buffered = Buffer.alloc(0);
+    let header: { status: number; statusText?: string; headers?: [string, string][] } | null = null;
+    while (!header) {
+      const next = await iterator.next();
+      if (next.done) {
+        child.kill();
+        throw new Error(
+          `OpenCode TLS helper exited before response header${stderr ? `: ${stderr.trim()}` : ""}`,
+        );
+      }
+      buffered = Buffer.concat([buffered, next.value]);
+      const lineEnd = buffered.indexOf(0x0a);
+      if (lineEnd < 0) continue;
+      const line = buffered.subarray(0, lineEnd).toString("utf8").trim();
+      buffered = buffered.subarray(lineEnd + 1);
+      if (!line) continue;
+      header = JSON.parse(line) as { status: number; statusText?: string; headers?: [string, string][] };
+    }
+
+    const responseHeaders = new Headers();
+    for (const [name, value] of header.headers ?? []) {
+      responseHeaders.append(name, value);
+    }
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        if (buffered.byteLength > 0) controller.enqueue(buffered);
+      },
+      async pull(controller) {
+        const next = await iterator.next();
+        if (next.done) {
+          controller.close();
+          return;
+        }
+        controller.enqueue(next.value);
+      },
+      cancel() {
+        child.kill();
+      },
+    });
+    return new Response(body, {
+      status: header.status,
+      statusText: header.statusText && header.statusText !== String(header.status) ? header.statusText : undefined,
+      headers: responseHeaders,
+    });
+  };
+}
+
+/**
  * 按 requestProfile 改写发往上游的 JSON 请求体；非目标画像、非 JSON POST
  * （如 models 拉取）原样透传。放在 transport 之后、业务错误适配之前，
  * 使 403 FreeTierError 仍能走统一的业务错误渲染。
@@ -1358,6 +1480,13 @@ export function createUpstreamRequestProfileFetch(input: {
 
   if (input.profile !== "opencode-free-tier") return input.fetch;
   const baseFetch = input.fetch;
+  // 桌面端会打包并注入 opencode-tls helper（复刻 Bun 的 TLS 指纹）。没有 helper
+  // 时（纯 CLI/远端 host）仍走普通 fetch —— 免费档可能返回 429，但真实 key 不受影响。
+  const tlsHelperPath = process.env[OPENCODE_FREE_TLS_HELPER_ENV]?.trim();
+  const tlsTransport =
+    tlsHelperPath && existsSync(tlsHelperPath)
+      ? createOpenCodeTlsHelperFetch(tlsHelperPath)
+      : baseFetch;
   // 临时诊断（ZCODE_PROFILE_DEBUG=1 时落盘请求/错误响应，定位上游 400 拒绝字段）。
   const debugEnabled = process.env.ZCODE_PROFILE_DEBUG === "1";
   const debugFile = debugEnabled
@@ -1418,7 +1547,7 @@ export function createUpstreamRequestProfileFetch(input: {
     const nextInit = { ...init, body: JSON.stringify(body), headers: mergeOpenCodeSessionHeader(init, session) };
     let response: Response;
     try {
-      response = await baseFetch(migratedUrl, nextInit);
+      response = await tlsTransport(migratedUrl, nextInit);
       // OpenCode free 闸门第二层：session 被拒时重新 mint 一个再试一次。
       if (response.status === 403 && url.includes("/chat/completions")) {
         try {
@@ -1426,7 +1555,7 @@ export function createUpstreamRequestProfileFetch(input: {
           if (/FreeTierError/.test(errorText)) {
             session = mintSessionId();
             const retryInit = { ...nextInit, headers: mergeOpenCodeSessionHeader(init, session) };
-            response = await baseFetch(migratedUrl, retryInit);
+            response = await tlsTransport(migratedUrl, retryInit);
           }
         } catch {
           // 读错误体失败时不阻断，按原响应上抛。

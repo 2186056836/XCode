@@ -6,6 +6,7 @@ import type { ConnectOptions } from "@zcode/server/remote";
 import { listSSHConfigAliasesFromLocalConfig } from "@zcode/services/node";
 import { DEV_HELPER_APP_NAME, HELPER_APP_NAME } from "@zcode/zcode-cua/broker/helperConstants";
 import {
+  OPENCODE_FREE_TLS_HELPER_ENV,
   ZCODE_APP_VERSION_ENV,
   ZCODE_BUILD_COMMIT_ID_ENV,
   ZCODE_AGENT_RUNTIME,
@@ -506,6 +507,11 @@ export function buildHostProcessEnv(hostProcessLocalEnv: Record<string, string>)
     hostProcessLocalEnv,
     larkCliBinaryPath,
   );
+  const resolvedOpenCodeTlsHelperPath = resolveHostProcessBinaryEnv(
+    OPENCODE_FREE_TLS_HELPER_ENV,
+    hostProcessLocalEnv,
+    resolveBundledRuntimeToolBinaryPath("opencode-tls", "opencode-tls"),
+  );
   const dataBaseDir = getDataBaseDir();
   const rawInheritedEnv = {
     ...hostProcessLocalEnv,
@@ -593,6 +599,9 @@ export function buildHostProcessEnv(hostProcessLocalEnv: Record<string, string>)
       : {}),
     ...(resolvedGlmBinaryPath ? { GLM_BINARY_PATH: resolvedGlmBinaryPath } : {}),
     ...(resolvedLarkCliBinaryPath ? { ZCODE_LARK_CLI_BINARY: resolvedLarkCliBinaryPath } : {}),
+    ...(resolvedOpenCodeTlsHelperPath
+      ? { [OPENCODE_FREE_TLS_HELPER_ENV]: resolvedOpenCodeTlsHelperPath }
+      : {}),
   };
   return hostProcessEnv;
 }

@@ -946,6 +946,14 @@ export default {
       to: "tools/ripgrep",
       filter: ["**/*"],
     },
+    {
+      // OpenCode 免费档的 TLS 指纹 helper：Node/Electron 的 TLS 会落进 429 桶，
+      // 只有复刻 Bun ClientHello 的 helper 能进 200 桶。路径由 desktopRuntimeEnv
+      // 通过 ZCODE_OPENCODE_TLS_HELPER 注入给 host/agent。
+      from: `bundled-tools/${targetPlatform.key}/opencode-tls`,
+      to: "tools/opencode-tls",
+      filter: ["**/*"],
+    },
     ...nativeSearchReleasePlan.extraResourceToolIds.map((toolId) => ({
       from: `bundled-tools/${targetPlatform.key}/${toolId}`,
       to: `tools/${toolId}`,

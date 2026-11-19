@@ -14,13 +14,16 @@
  *   ③ `tools` 必须**包含**那 11 个官方工具名（可多带任意额外工具）。
  *   ④ `Authorization: Bearer public`（匿名）或真实 `oc_sk_...` key。
  *
- * 【system prompt 不校验——同日真机矩阵】
- *   新端点上 build-only / XCode 自有 system / [build, xcode] / [xcode, build] 四种
- *   组合全部 200。参考实现「必须精确匹配 build prompt」的结论在端点迁移后不成立，
- *   不要为它引入 8.7KB 静态 prompt（浪费 token 且改变产品语义）。
+ * 【system prompt 校验（2026-11-20 重新实测，推翻 10-18 结论）】
+ *   纯自定义 system → 429；把官方 build prompt 原文放在自定义 system 前面、后面，
+ *   或作为独立 system 消息 → 全部 200。线上闸门会找这段原文，`<env>` 三行也必须存在。
+ *   因此运行时只在最前面拼签名段，XCode 自己的 system 正文完整保留。
+ *   同一轮实测还确认：TLS 客户端指纹是硬门禁（Node/Electron/Go 默认 TLS → 429，
+ *   复刻 Bun 的 ClientHello → 200），桌面端通过 opencode-tls helper 解决，
+ *   helper 不可用时回退普通 fetch（免费档可能 429，真实 key 不受影响）。
  *
  * 【与产品自身能力的关系】
- *   - system prompt：不注入、不改写，XCode 语义完整保留。
+ *   - system prompt：XCode 语义保留，仅在前面拼官方签名段（见 ensureBuildSignaturePrompt）。
  *   - tools：把 11 个官方名**补进** XCode 的工具数组（并集），不覆盖产品工具。
  *
  * 三层缺一即 `403 FreeTierError`（"can only be used from within OpenCode"）。
@@ -34,6 +37,10 @@
  *   数据量很小且变化频率低，内联是最省事的打包安全做法。
  */
 import { randomBytes } from "node:crypto";
+import {
+  OPENCODE_BUILD_PROMPT,
+  OPENCODE_BUILD_PROMPT_MARKER,
+} from "./opencode-build-prompt.generated.js";
 
 /** 闸门③要求出现的那 11 个官方工具名（原 opencode-signature/tools.json）。 */
 const GATE_TOOL_NAMES: readonly string[] = [
@@ -149,7 +156,59 @@ const GATE_TOOL_PLACEHOLDER_DESCRIPTION = "This tool is currently unavailable an
  * 注意：补进来的占位工具没有可用 schema，模型一般不会优先调用；若它确实调了，
  * 执行侧会按 XCode 自己的工具名解析（大部分名字本就重叠：bash/edit/read/...）。
  */
+/**
+ * 官方 build agent 的 system 原文 + CLI 注入的 `<env>` 段。
+ *
+ * 2026-11-20 重新实测：新端点**会**校验 system 里包含这段原文——纯自定义 system
+ * → 429；把原文放在自定义 system 前面 / 后面 / 作为独立 system 消息 → 200。
+ * 所以这里采用「前缀」形态：保留 XCode 自己的 system 正文，只在最前面拼签名段。
+ * `<env>` 三行缺一不可（值为任意）。
+ */
+function buildSignatureSystemPrompt(): string {
+  // cwd 值不参与校验（/tmp、/ 均可），用中性的 "/" 避免把用户真实工作目录发给上游。
+  const cwd = "/";
+  return `${OPENCODE_BUILD_PROMPT}\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: ${cwd}\n  Platform: ${process.platform}\n  Today's date: ${new Date().toDateString()}\n</env>\nSkills provide specialized instructions and workflows for specific tasks.\nUse the skill tool to load a skill when a task matches its description.\n`;
+}
+
+/**
+ * 保证 system 里带官方 build prompt。
+ *
+ * - 已有（XCode 自己拼过 / 上一轮已注入）→ 不重复；
+ * - 有 system 消息 → 把签名段拼到第一条 system 正文前面；
+ * - 没有 system → 在最前面插一条。
+ */
+function ensureBuildSignaturePrompt(body: Record<string, unknown>): void {
+  const messages = Array.isArray(body.messages) ? (body.messages as unknown[]) : null;
+  if (!messages) return;
+  const hasSignature = messages.some((message) => {
+    if (!message || typeof message !== "object") return false;
+    const record = message as Record<string, unknown>;
+    return (
+      record.role === "system" &&
+      typeof record.content === "string" &&
+      record.content.includes(OPENCODE_BUILD_PROMPT_MARKER)
+    );
+  });
+  if (hasSignature) return;
+  const signature = buildSignatureSystemPrompt();
+  const firstSystemIndex = messages.findIndex((message) => {
+    if (!message || typeof message !== "object") return false;
+    return (message as Record<string, unknown>).role === "system";
+  });
+  if (firstSystemIndex < 0) {
+    messages.unshift({ role: "system", content: signature });
+    return;
+  }
+  const firstSystem = messages[firstSystemIndex] as Record<string, unknown>;
+  if (typeof firstSystem.content === "string") {
+    firstSystem.content = `${signature}\n\n${firstSystem.content}`;
+  } else if (Array.isArray(firstSystem.content)) {
+    firstSystem.content = [{ type: "text", text: signature }, ...firstSystem.content];
+  }
+}
+
 export function applyBuildAgentSignature(body: Record<string, unknown>): void {
+  ensureBuildSignaturePrompt(body);
   const existing = Array.isArray(body.tools) ? (body.tools as unknown[]) : [];
   const present = new Set(existing.map(toolNameOf).filter((n): n is string => !!n));
   const missing = GATE_TOOL_NAMES.filter((name) => !present.has(name));

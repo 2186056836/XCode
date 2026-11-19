@@ -120,6 +120,7 @@ export {
 export * from "./rendererActionTrace.js";
 export * from "./validation.js";
 export type { CustomPersonaTemplate } from "./validationAppSettings.js";
+export { OPENCODE_FREE_TLS_HELPER_ENV } from "./opencodeFreeTls.js";
 export {
   PERSONA_TEMPLATE_NAME_PLACEHOLDER,
   resolvePersonaTemplateMessages,

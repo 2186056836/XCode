@@ -34,6 +34,9 @@ const shouldPrepareMacosWindowBounds = target.os === "darwin";
 // native-search 归档随仓库分发，准备步骤只做本地解包校验，不需要任何下载源配置。
 const localRuntimeScripts = [
   "prepare:agent-bundle",
+  // OpenCode 免费档的 TLS 指纹 helper（Go + uTLS）。Node/Electron 的 TLS 无法进
+  // 200 桶，发布包必须带上当前平台的 helper；构建机需要 Go 1.24+。
+  "build:opencode-tls",
   ...(target.os === "win32" ? ["prepare:windows-runtime-host"] : []),
   ...(shouldPrepareWindowsCuaHelper ? ["prepare:windows-cua-helper"] : []),
   ...(nativeSearchReleasePlan.enabled ? ["prepare:native-search"] : []),

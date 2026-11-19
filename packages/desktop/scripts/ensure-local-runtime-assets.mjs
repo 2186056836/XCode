@@ -89,6 +89,20 @@ const REQUIRED_LOCAL_RUNTIME_ASSETS = [
         },
       ]
     : []),
+  {
+    // OpenCode 免费档的 TLS 指纹 helper：缺失时该 provider 会回退普通 fetch 并
+    // 落进 429 桶。dev 首次启动构建一次（需要 Go 1.24+）。
+    label: "OpenCode TLS helper",
+    script: "build:opencode-tls",
+    isReady: () =>
+      existsSync(
+        join(
+          bundledToolsRoot,
+          "opencode-tls",
+          process.platform === "win32" ? "opencode-tls.exe" : "opencode-tls",
+        ),
+      ),
+  },
   ...(shouldRequireWindowsBrowserImportHelper
     ? [
         {
