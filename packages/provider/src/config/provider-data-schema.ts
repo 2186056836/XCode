@@ -119,7 +119,14 @@ export const providerConfigDataSchema = z
     // OpenCode CLI 登录并把会话 token 填进 provider apiKey，SDK 才会上行
     // Authorization: Bearer <token>（所以 api.headers 里不要硬编码 Authorization，
     // 否则会按 SDK 头合并优先级遮蔽用户 token）。指纹+stream 是请求体侧必需契约。
-    requestProfile: z.enum(["opencode-free-tier", "codebuddy", "qoder"]).nullable().optional(),
+    // codex-masquerade = 仅放行 Codex 官方客户端的网关（sub2api 等）：请求头强制
+    // codex_cli_rs 形态（UA / originator / version / x-codex-window-id /
+    // OpenAI-Beta），由 adapters 的 profile 包装层保真；这类组通常只放行
+    // /v1/responses，provider api.type 必须是 openai-responses。
+    requestProfile: z
+      .enum(["opencode-free-tier", "codebuddy", "qoder", "codex-masquerade"])
+      .nullable()
+      .optional(),
     // XCode fork：供应商级模型展示元数据（可读名/倍率/上下文档位/思考档位），
     // 「从上游获取」时写入。历史上存成 api.headers["X-Qoder-Model-Meta"]（JSON
     // 字符串），会随请求发往上游（越界指纹），且把 headers 变成强耦合通道；

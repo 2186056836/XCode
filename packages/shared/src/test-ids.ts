@@ -555,6 +555,8 @@ export const TID_MODEL_PROVIDER_MODEL_DELETE_BUTTON = "model-provider-model-dele
 export const TID_MODEL_PROVIDER_ADD_MODEL_BUTTON = "model-provider-add-model-button";
 /** 模型供应商"从上游拉取模型"按钮（XCode fork） */
 export const TID_MODEL_PROVIDER_IMPORT_MODELS_BUTTON = "model-provider-import-models-button";
+/** 模型供应商"伪装 Codex"复选框（XCode fork） */
+export const TID_MODEL_PROVIDER_CODEX_MASQUERADE = "model-provider-codex-masquerade";
 /** 模型供应商"批量删除模型"按钮（XCode fork） */
 export const TID_MODEL_PROVIDER_BATCH_DELETE_BUTTON = "model-provider-batch-delete-button";
 /** 模型行勾选框（动态后缀为模型行号；XCode fork） */

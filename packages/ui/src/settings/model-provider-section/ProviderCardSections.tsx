@@ -17,6 +17,7 @@ import {
   TID_MODEL_PROVIDER_ADD_MODEL_BUTTON,
   TID_MODEL_PROVIDER_BASE_URL_INPUT,
   TID_MODEL_PROVIDER_BATCH_DELETE_BUTTON,
+  TID_MODEL_PROVIDER_CODEX_MASQUERADE,
   TID_MODEL_PROVIDER_IMPORT_MODELS_BUTTON,
   TID_MODEL_PROVIDER_MODEL_DELETE_BUTTON,
   TID_MODEL_PROVIDER_MODEL_INPUT,
@@ -37,6 +38,7 @@ import {
   DownloadCloud,
 } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
+import { Checkbox } from "@/components/ui/checkbox.js";
 import { Input } from "@/components/ui/input.js";
 import {
   DropdownMenu,
@@ -380,6 +382,9 @@ export function ProviderModelsSection({
   providerEnabled = true,
   providerAccess,
   providerModelMeta,
+  providerApiType,
+  codexMasqueradeEnabled = false,
+  onToggleCodexMasquerade,
   models,
   onTestModel,
   onModelCommit,
@@ -397,6 +402,12 @@ export function ProviderModelsSection({
   providerAccess?: ProviderConfigObject["access"];
   /** XCode fork：provider 的模型展示元数据表（可读名/倍率/档位）。 */
   providerModelMeta?: ProviderConfigObject["modelMeta"];
+  /** XCode fork：当前生效的 API 协议；伪装 Codex 只对 Responses 通道有意义。 */
+  providerApiType?: ProviderApiType;
+  /** XCode fork：是否已开启「伪装 Codex」请求画像。 */
+  codexMasqueradeEnabled?: boolean;
+  /** 缺省时不渲染开关（只读端点、登录型供应商等不支持自定义画像的场景）。 */
+  onToggleCodexMasquerade?: (enabled: boolean) => void | Promise<void>;
   models: ProviderSettingsFormModel[];
   onTestModel?: (model: string) => Promise<ModelConnectivityResult>;
   onModelCommit: (
@@ -461,8 +472,29 @@ export function ProviderModelsSection({
     () => new Set(),
   );
   const [batchDeleting, setBatchDeleting] = useState(false);
+  const [codexMasqueradeSaving, setCodexMasqueradeSaving] = useState(false);
   const confirmDialog = useConfirmDialog();
   const { showFeedback } = useProviderDetailFeedback();
+
+  const handleToggleCodexMasquerade = useCallback(
+    async (enabled: boolean) => {
+      if (!onToggleCodexMasquerade || codexMasqueradeSaving) return;
+      setCodexMasqueradeSaving(true);
+      try {
+        await onToggleCodexMasquerade(enabled);
+      } catch (error) {
+        logger.warn("[ModelProviderSection] 切换伪装 Codex 失败", { providerId, error });
+        showFeedback({
+          key: `codex-masquerade:${providerId}`,
+          message: intl.formatMessage({ id: "settings.modelProvider.codexMasquerade.saveError" }),
+          state: "failure",
+        });
+      } finally {
+        setCodexMasqueradeSaving(false);
+      }
+    },
+    [codexMasqueradeSaving, intl, onToggleCodexMasquerade, providerId, showFeedback],
+  );
 
   const deletableModelIds = useMemo(() => models.map((model) => model.modelId), [models]);
   // 与当前可删列表求交集：models 变化（删除/导入）后不留死 id，避免按钮计数虚高。
@@ -619,6 +651,24 @@ export function ProviderModelsSection({
           {intl.formatMessage({ id: "settings.modelProvider.models" })}
         </span>
         <div className="flex flex-wrap items-center gap-2">
+          {onToggleCodexMasquerade ? (
+            <label
+              className="flex cursor-pointer items-center gap-2 text-ui-sm text-foreground-subtle select-none"
+              title={intl.formatMessage({
+                id: "settings.modelProvider.codexMasquerade.description",
+              })}
+            >
+              <Checkbox
+                data-testid={TID_MODEL_PROVIDER_CODEX_MASQUERADE}
+                checked={codexMasqueradeEnabled}
+                disabled={codexMasqueradeSaving}
+                onCheckedChange={(checked) =>
+                  void handleToggleCodexMasquerade(checked === true)
+                }
+              />
+              {intl.formatMessage({ id: "settings.modelProvider.codexMasquerade" })}
+            </label>
+          ) : null}
           {onFetchUpstreamModels && onImportUpstreamModels && (
             <Button
               type="button"
@@ -645,6 +695,14 @@ export function ProviderModelsSection({
           </Button>
         </div>
       </div>
+      {codexMasqueradeEnabled && providerApiType !== undefined && providerApiType !== "openai-responses" ? (
+        <div className="mb-2 flex items-start gap-1.5 text-ui-sm text-warning">
+          <InfoIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+          {intl.formatMessage({
+            id: "settings.modelProvider.codexMasquerade.requiresResponses",
+          })}
+        </div>
+      ) : null}
       {/* XCode fork：勾选后浮现的操作条。默认无勾选时不占空间。 */}
       {effectiveSelectedModelIds.length > 0 ? (
         <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-input-border bg-surface px-3 py-2">

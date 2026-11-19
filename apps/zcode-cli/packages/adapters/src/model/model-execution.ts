@@ -1167,6 +1167,15 @@ function rewriteCodeBuddySseStream(response: Response): Response {
 }
 
 /**
+ * Codex 伪装画像的客户端指纹（2026-11-18 实测，guide：
+ * codex-masquerade-guide.md）。UA / version 必须相互一致，版本号取自官方
+ * codex_cli_rs 0.153.4 的 release。
+ */
+const CODEX_MASQUERADE_UA_PREFIX = "codex_cli_rs/";
+const CODEX_MASQUERADE_VERSION = "0.153.4";
+const CODEX_MASQUERADE_USER_AGENT = `${CODEX_MASQUERADE_UA_PREFIX}${CODEX_MASQUERADE_VERSION} (Windows 10.0.26200; x86_64) ${CODEX_MASQUERADE_UA_PREFIX}${CODEX_MASQUERADE_VERSION}`;
+
+/**
  * 按 requestProfile 改写发往上游的 JSON 请求体；非目标画像、非 JSON POST
  * （如 models 拉取）原样透传。放在 transport 之后、业务错误适配之前，
  * 使 403 FreeTierError 仍能走统一的业务错误渲染。
@@ -1312,6 +1321,38 @@ export function createUpstreamRequestProfileFetch(input: {
       } catch {
         return codebuddyFetch(request, fingerprintedInit);
       }
+    };
+  }
+
+  // Codex 伪装画像（requestProfile = "codex-masquerade"）。
+  //
+  // 只放行 Codex 官方客户端的网关（sub2api 等）在网关层做客户端指纹校验：
+  // key 有效但「不像官方客户端」一律 403 forbidden_error
+  // "This account only allows Codex official clients"。实测硬门槛是
+  // UA(codex_cli_rs 形态) + originator + x-codex-window-id 三件套。
+  //
+  // 为什么必须在 transport 层补而不是只写 api.headers：AI SDK 会在 init.headers
+  // 里放自己的产品 UA（XCode/<版本> ...），静态配置的 UA 会被它盖掉——与 OpenCode
+  // 免费档踩过的坑同源（见 mergeOpenCodeSessionHeader 注释）。这里按前缀判断：
+  // 已经是 codex_cli_rs/ 形态就不动，否则换回官方形态。
+  //
+  // x-codex-window-id 每次请求新生成：guide 记录固定 UUID 也能过，但这是引擎
+  // 指纹头，固定值更容易被按会话/频率识别；header 里显式配了值则尊重配置。
+  // 这类组只放行 /v1/responses，api.type 由 provider 配置决定（UI 勾选时会提示）。
+  if (input.profile === "codex-masquerade") {
+    const baseFetch = input.fetch;
+    return async (request, init) => {
+      const headers = readRequestHeaders(init?.headers);
+      const uaKey = Object.keys(headers).find((k) => k.toLowerCase() === "user-agent");
+      if (!uaKey || !headers[uaKey].startsWith(CODEX_MASQUERADE_UA_PREFIX)) {
+        if (uaKey) delete headers[uaKey];
+        headers["User-Agent"] = CODEX_MASQUERADE_USER_AGENT;
+      }
+      setHeaderIfAbsent(headers, "originator", "codex_cli_rs");
+      setHeaderIfAbsent(headers, "version", CODEX_MASQUERADE_VERSION);
+      setHeaderIfAbsent(headers, "x-codex-window-id", randomUUID());
+      setHeaderIfAbsent(headers, "OpenAI-Beta", "responses=experimental");
+      return baseFetch(request, { ...init, headers });
     };
   }
 

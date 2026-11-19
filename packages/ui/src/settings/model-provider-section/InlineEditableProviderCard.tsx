@@ -13,6 +13,7 @@ import {
   type ModelConfigObject,
   type ModelConfigResolution,
   type ProviderApiType,
+  type ProviderConfigObject,
   type SavePersonalModelDraftInput,
 } from "@zcode/provider";
 import { logger } from "@/logger.js";
@@ -46,6 +47,18 @@ interface ProviderSaveNotificationTarget {
 }
 
 export const PROVIDER_TEXT_INPUT_IDLE_SAVE_MS = MODEL_PROVIDER_TEXT_IDLE_TRIGGER_MS;
+
+/**
+ * 伪装 Codex 手写进个人层的客户端指纹头（guide §5 的静态写法）。
+ * 关闭开关时一并摘掉，否则只删 requestProfile 会留下「开关关了、请求还在伪装」。
+ */
+const CODEX_MASQUERADE_HEADER_NAMES: ReadonlySet<string> = new Set([
+  "user-agent",
+  "originator",
+  "version",
+  "x-codex-window-id",
+  "openai-beta",
+]);
 
 export function shouldApplyProviderSaveCompletion(
   currentRevision: number,
@@ -916,6 +929,39 @@ export function InlineEditableProviderCard({
     });
   }, [onDelete]);
 
+  // XCode fork：伪装 Codex。请求头由 adapters 的 codex-masquerade 画像注入
+  // （UA 必须在 transport 层盖，静态 api.headers 会被 AI SDK 的产品 UA 遮掉）。
+  // 兼容早期按 guide 手写的静态头：个人层里有 originator=codex_cli_rs 也算已开启；
+  // 关闭时把 requestProfile 与这几项伪装头一起摘掉，避免只关开关却仍在伪装。
+  const codexMasqueradeHeadersEnabled = Object.entries(
+    provider.personalConfig.api?.headers ?? {},
+  ).some(([key, value]) => key.toLowerCase() === "originator" && value === "codex_cli_rs");
+  const codexMasqueradeEnabled =
+    provider.config.requestProfile === "codex-masquerade" || codexMasqueradeHeadersEnabled;
+  const handleToggleCodexMasquerade = useCallback(
+    async (enabled: boolean) => {
+      // Overlay 是只读对象；删除键要一份可变副本。
+      const personalConfig: {
+        -readonly [K in keyof ProviderConfigObject]: ProviderConfigObject[K];
+      } = { ...provider.personalConfig };
+      if (enabled) {
+        personalConfig.requestProfile = "codex-masquerade";
+      } else {
+        delete personalConfig.requestProfile;
+        const headers = personalConfig.api?.headers;
+        if (headers) {
+          const cleaned = { ...headers };
+          for (const key of Object.keys(cleaned)) {
+            if (CODEX_MASQUERADE_HEADER_NAMES.has(key.toLowerCase())) delete cleaned[key];
+          }
+          personalConfig.api = { ...personalConfig.api, headers: cleaned };
+        }
+      }
+      await onSave({ ...provider, personalConfig });
+    },
+    [onSave, provider],
+  );
+
   const headerProviderName = providerDisplayName;
   const isAccountProvider = provider.config.access?.type === "zhipu-account";
   const isApiKeyProvider = isApiKeyAccess(provider.config.access);
@@ -1019,6 +1065,9 @@ export function InlineEditableProviderCard({
           providerEnabled={provider.enabled}
           providerAccess={provider.config.access}
           providerModelMeta={provider.config?.modelMeta}
+          providerApiType={provider.config.api?.type ?? undefined}
+          codexMasqueradeEnabled={codexMasqueradeEnabled}
+          onToggleCodexMasquerade={handleToggleCodexMasquerade}
           models={models}
           onTestModel={onTestModel ? handleTestModel : undefined}
           onModelCommit={handleModelCommit}
