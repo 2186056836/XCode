@@ -425,6 +425,18 @@ export interface ZCodeAgentSetPersonaParams extends ZCodeAgentSessionTarget {
 export interface ZCodeAgentSetPrefillParams extends ZCodeAgentSessionTarget {
   /** inherit = 跟随全局；on/off = 会话强制开关。 */
   prefillMode: "inherit" | "on" | "off";
+  /**
+   * 调用方解析好的全局 customSystemMessages：会话还没有覆盖时作为基座，
+   * 避免只写 enabled 把继承的身份正文与 prefill 消息一起抹掉。
+   */
+  inherited?: {
+    cliPrefix?: string;
+    prefill?: {
+      enabled?: boolean;
+      messages?: Array<{ role: "user" | "assistant"; content: string }>;
+    };
+    obfuscation?: { enabled?: boolean; tier?: "light" | "standard" | "heavy" };
+  };
   expectedRevision?: number;
 }
 

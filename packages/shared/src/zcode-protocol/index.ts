@@ -4862,6 +4862,36 @@ export const zcodeSessionSetPrefillParamsSchema = z
   .object({
     sessionId: nonEmptyString,
     prefillMode: zcodeSessionPrefillModeSchema,
+    /**
+     * 调用方（UI 持有设置快照）解析好的「跟随全局」内容。会话还没有自己的覆盖时，
+     * 只写 enabled 会把继承来的身份正文与 prefill 消息一起抹掉；带上它才能把基座补回来。
+     */
+    inherited: z
+      .object({
+        cliPrefix: z.string().optional(),
+        prefill: z
+          .object({
+            enabled: z.boolean().optional(),
+            messages: z
+              .array(
+                z
+                  .object({ role: z.enum(["user", "assistant"]), content: z.string() })
+                  .strict(),
+              )
+              .optional(),
+          })
+          .strict()
+          .optional(),
+        obfuscation: z
+          .object({
+            enabled: z.boolean().optional(),
+            tier: z.enum(["light", "standard", "heavy"]).optional(),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .optional(),
     expectedRevision: z.number().int().nonnegative().optional(),
   })
 

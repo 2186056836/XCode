@@ -19,6 +19,11 @@ type ModelIdentity = Pick<Model, "providerId" | "modelId">;
 
 export interface PromptSnapshot {
   model: { providerId: string; modelId: string };
+  /**
+   * 冻结的可重建前缀。字段名沿用 `system` 兼容已落盘的旧快照：旧数据里只有 system 消息；
+   * 新数据还会包含 godmode PreFill 的 priming 轮（role=user/assistant）。
+   * 之前只记 system，重建时前缀里就没有 PreFill，表现为「选择器开了也不生效」。
+   */
   system: ModelInputMessage[];
 }
 
@@ -80,7 +85,7 @@ export async function recordPromptSnapshot(
   if (input.modelSelectionScope === "execution" || !isSessionModel(runtime, input.model)) return;
   const snapshot: PromptSnapshot = {
     model: { providerId: input.model.providerId, modelId: input.model.modelId },
-    system: leadingSystemMessages(input.entries),
+    system: leadingPrefixMessages(input.entries),
   };
   runtime.promptSnapshot = snapshot;
   await savePromptSnapshotEntry(runtime, snapshot, input.traceContext);
@@ -130,17 +135,36 @@ function isSessionModel(runtime: AgentRuntimeInternal, model: ModelIdentity): bo
   return selection?.providerId === model.providerId && selection.modelId === model.modelId;
 }
 
-function leadingSystemMessages(entries: readonly RuntimeMessageEntry[]): ModelInputMessage[] {
+/**
+ * 快照里的消息还原成历史条目：system 不带来源标记，PreFill priming 轮必须带
+ * `context_prefix`，否则 rebuild 之后它们会被当成真实对话保留（重复注入）。
+ */
+export function buildPromptSnapshotEntries(snapshot: PromptSnapshot): RuntimeMessageEntry[] {
+  return snapshot.system.map((message) =>
+    message.role === "system"
+      ? { message: structuredClone(message) }
+      : {
+          message: structuredClone(message),
+          metadata: { source: "context_prefix" as const },
+        },
+  );
+}
+
+/**
+ * 前缀里除 system 之外还可能有 PreFill priming 轮（metadata.source=context_prefix）。
+ * 这些必须一起冻结，否则重建时用「只有 system 的快照」覆盖前缀，PreFill 就丢了。
+ */
+function leadingPrefixMessages(entries: readonly RuntimeMessageEntry[]): ModelInputMessage[] {
   return entries.slice(0, countContextPrefixMessages(entries)).flatMap((entry) =>
-    entry.kind !== "attachment" && entry.message.role === "system"
+    entry.kind !== "attachment"
       ? [
           {
-            role: "system" as const,
+            role: entry.message.role,
             content: structuredClone(entry.message.content),
             ...(entry.message.cacheControl
               ? { cacheControl: { ...entry.message.cacheControl } }
               : {}),
-          },
+          } as ModelInputMessage,
         ]
       : [],
   );
@@ -197,10 +221,11 @@ export function parsePromptSnapshot(data: unknown): PromptSnapshot | null | unde
     !Array.isArray(system)
   )
     return undefined;
+  // 旧快照只有 system；新快照还包含 PreFill priming 轮（user/assistant），都要接受。
   const systemValid = system.every(
     (message) =>
       isRecord(message) &&
-      message.role === "system" &&
+      (message.role === "system" || message.role === "user" || message.role === "assistant") &&
       (typeof message.content === "string" || Array.isArray(message.content)) &&
       (message.cacheControl === undefined || isRecord(message.cacheControl)),
   );

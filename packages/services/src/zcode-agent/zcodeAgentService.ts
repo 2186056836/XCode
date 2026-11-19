@@ -7122,6 +7122,9 @@ export function createZCodeAgentService(
         {
           sessionId: params.sessionId,
           prefillMode: params.prefillMode,
+          // 会话还没有自己的覆盖时，服务端用这份全局内容做基座，避免只写 enabled
+          // 把继承来的身份正文与 prefill 消息抹掉。
+          ...(params.inherited ? { inherited: params.inherited } : {}),
           expectedRevision: params.expectedRevision,
         },
         zcodeSessionStateSnapshotSchema,

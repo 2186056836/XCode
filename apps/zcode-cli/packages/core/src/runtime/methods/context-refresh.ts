@@ -40,7 +40,7 @@ import { throwIfTurnAborted } from "../helpers/turn-errors.js";
 import { buildProjectionAnchor } from "./projection-anchor.js";
 import { persistRuntimeReminderMessage } from "./runtime-reminder-persistence.js";
 import { supersedeContextComposition } from "../context-composition/state.js";
-import { promptSnapshotFor } from "../helpers/prompt-snapshot.js";
+import { buildPromptSnapshotEntries, promptSnapshotFor } from "../helpers/prompt-snapshot.js";
 import { resolveGenUiOutputDirectory } from "../helpers/gen-ui-output.js";
 
 export function rebuildContextPrefix(
@@ -79,8 +79,9 @@ export function rebuildContextPrefix(
   // 主会话的 prompt 快照适用于这个模型时，system 用快照记录的字节，不用当前代码的渲染结果。
   // 修复原因：system 原来每次按当前代码重建，升级或冷恢复后已发送的前缀字节改变，prompt cache 失效。
   const snapshot = promptSnapshotFor(runtime, options.model);
+  // 快照里除 system 之外可能还有 PreFill priming 轮，重建时必须按前缀条目还原。
   const contextEntries: RuntimeMessageEntry[] = snapshot
-    ? snapshot.system.map((message) => ({ message: structuredClone(message) }))
+    ? buildPromptSnapshotEntries(snapshot)
     : buildContextHistoryEntries(effectiveContextResult);
   const canonicalEntries = runtime.messageHistory.borrowReadOnlyRuntimeEntries();
   const canonicalConversationEntries = canonicalEntries.slice(

@@ -78,6 +78,10 @@ export function updateConfig(
   if ("systemPromptOverrides" in patch) {
     const previousCliPrefix = this.config.systemPromptOverrides?.cliPrefix?.trim() ?? "";
     const nextCliPrefix = patch.systemPromptOverrides?.cliPrefix?.trim() ?? "";
+    // PreFill 也属于可重建前缀（builder 把它作为 priming 轮跟在 system 后面），
+    // 同样会被 prompt 快照冻结。不作废快照就表现为「选择器里开/关 PreFill 都没反应」。
+    const previousPrefill = JSON.stringify(this.config.systemPromptOverrides?.prefill ?? null);
+    const nextPrefill = JSON.stringify(patch.systemPromptOverrides?.prefill ?? null);
     // 显式 undefined = 清除覆盖；config 是逐轮读取的，重建前缀后下一轮立即生效。
     if (patch.systemPromptOverrides === undefined) {
       delete this.config.systemPromptOverrides;
@@ -87,7 +91,7 @@ export function updateConfig(
     // 身份正文变了 = system 前缀变了。主会话的 prompt 快照会把它冻结在首次请求的字节上
     // （rebuildContextPrefix 优先用快照），不作废就表现为「切换身份不生效」：
     // runtime 已经换了身份，模型请求还是旧 system。清除后下一次请求按新正文重建并重新记录。
-    if (previousCliPrefix !== nextCliPrefix) {
+    if (previousCliPrefix !== nextCliPrefix || previousPrefill !== nextPrefill) {
       void clearPromptSnapshot(this, this.rootTraceContext);
     }
     if (!this.activeTurn) {

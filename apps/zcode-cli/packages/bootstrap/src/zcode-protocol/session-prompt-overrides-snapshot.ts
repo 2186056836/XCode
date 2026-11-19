@@ -134,6 +134,7 @@ interface PromptOverridesTarget extends PromptOverridesRecord {
   app: {
     runtime: {
       updateConfig(patch: { systemPromptOverrides?: SessionCustomSystemMessages }): void;
+      getSystemPromptOverrides?(): SessionCustomSystemMessages | undefined;
     };
   };
 }
@@ -179,6 +180,18 @@ export function applyPersistedPromptOverrides(
   const restored = persisted.customSystemMessages
     ? cloneCustomSystemMessages(persisted.customSystemMessages)
     : undefined;
+  // 兼容早期写坏的快照：`setPrefill` 曾在残缺覆盖上直接写 enabled，落盘的正文只剩
+  // `{prefill:{enabled}}` 这种壳——身份正文与 prefill 消息都被挤掉了。跟随全局时
+  // 用 runtime 已物化的全局内容补回来，否则恢复后「显示已开启、实际一条都不注入」。
+  const runtimeOverrides = record.app.runtime.getSystemPromptOverrides?.();
+  if (restored && persisted.personaMode === "inherit" && runtimeOverrides) {
+    if (!restored.cliPrefix?.trim() && runtimeOverrides.cliPrefix?.trim()) {
+      restored.cliPrefix = runtimeOverrides.cliPrefix;
+    }
+    if (!restored.prefill?.messages?.length && runtimeOverrides.prefill?.messages?.length) {
+      restored.prefill = { ...runtimeOverrides.prefill, ...restored.prefill };
+    }
+  }
   // 兼容早期写坏的快照：obfuscationMode 有值、内容却丢了（setPersona 曾整体覆盖
   // customSystemMessages）。按 mode 反推内容补回去，否则恢复后「显示标准档、实际不混淆」。
   const restoredObfuscationMode = persisted.obfuscationMode;

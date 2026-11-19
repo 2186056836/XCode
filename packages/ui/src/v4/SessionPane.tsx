@@ -5179,6 +5179,10 @@ export function SessionPane({
           workspacePath,
           ...(workspaceIdentity ? { workspaceIdentity } : {}),
           prefillMode,
+          // 与选择器同源：预热会话可能早于全局设置落地创建，只写 enabled 会留下空壳。
+          ...(sharedSettings?.customSystemMessages
+            ? { inherited: sharedSettings.customSystemMessages }
+            : {}),
         });
       }
       // 输入混淆排在 PreFill 之后：两者都写 customSystemMessages，顺序反了会互相覆盖。

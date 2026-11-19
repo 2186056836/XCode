@@ -1509,7 +1509,14 @@ function V4ComposerModelControlsImpl({
       // 同上：冷会话的 runtime 未就绪时 setPrefill 会被拒，先写、被拒再激活重试。
       void withSessionRuntimeReady(
         target,
-        () => zcodeAgentService.setPrefill({ ...target, prefillMode: mode }),
+        () =>
+          zcodeAgentService.setPrefill({
+            ...target,
+            prefillMode: mode,
+            // 带上全局内容：会话还没覆盖过时，服务端用它补基座，否则只写 enabled
+            // 会把继承的身份正文与 prefill 消息一起抹掉（表现为开了也不注入）。
+            ...(globalCustomSystemMessages ? { inherited: globalCustomSystemMessages } : {}),
+          }),
         ensureSessionRuntimeReady,
       )
         .then((snapshot) => {
@@ -1530,6 +1537,7 @@ function V4ComposerModelControlsImpl({
       zcodeAgentService,
       onSelectDraftPrefill,
       ensureSessionRuntimeReady,
+      globalCustomSystemMessages,
     ],
   );
 

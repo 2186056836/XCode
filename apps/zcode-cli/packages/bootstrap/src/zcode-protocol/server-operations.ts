@@ -3250,15 +3250,31 @@ export async function setPrefill(context: ZCodeProtocolAgentServerContext, rawPa
     record.app.runtime.getSystemPromptOverrides() ?? record.customSystemMessages ?? {};
   const currentPrefill = current.prefill;
 
+  // 会话自己的覆盖可能只是之前切开关留下的壳（例如 `{"prefill":{"enabled":true}}`，
+  // 既没有身份正文也没有 prefill 消息）。在这种壳上直接写 enabled 会把继承来的正文
+  // 一起挤掉，表现为「选择器里开 PreFill 一条都不注入」。调用方带了全局快照时用它
+  // 补基座：内容以「真正有 messages 的那份」为准，开关值仍按上面的覆盖语义走。
+  const inherited = params.inherited as SessionCustomSystemMessages | undefined;
+  const inheritedPrefill = inherited?.prefill;
+  const basePrefill =
+    currentPrefill?.messages?.length
+      ? currentPrefill
+      : (inheritedPrefill ?? currentPrefill);
+  const baseCliPrefix = current.cliPrefix?.trim()
+    ? current.cliPrefix
+    : (inherited?.cliPrefix ?? current.cliPrefix);
+  const baseObfuscation = current.obfuscation ?? inherited?.obfuscation;
+
   let enabled: boolean;
   if (params.prefillMode === "inherit") {
     // 没有覆盖过时保持当前值；覆盖过则恢复首次覆盖前的 enabled。
-    enabled = record.prefillInheritedEnabled ?? currentPrefill?.enabled ?? false;
+    enabled =
+      record.prefillInheritedEnabled ?? currentPrefill?.enabled ?? basePrefill?.enabled ?? false;
     delete record.prefillOverride;
     delete record.prefillInheritedEnabled;
   } else {
     if (record.prefillOverride === undefined) {
-      record.prefillInheritedEnabled = currentPrefill?.enabled ?? false;
+      record.prefillInheritedEnabled = currentPrefill?.enabled ?? basePrefill?.enabled ?? false;
     }
     record.prefillOverride = params.prefillMode === "on";
     enabled = record.prefillOverride;
@@ -3266,8 +3282,10 @@ export async function setPrefill(context: ZCodeProtocolAgentServerContext, rawPa
 
   const overrides: SessionCustomSystemMessages = {
     ...current,
+    ...(baseCliPrefix ? { cliPrefix: baseCliPrefix } : {}),
+    ...(baseObfuscation ? { obfuscation: baseObfuscation } : {}),
     prefill: {
-      ...(currentPrefill ?? {}),
+      ...(basePrefill ?? {}),
       enabled,
     },
   };
