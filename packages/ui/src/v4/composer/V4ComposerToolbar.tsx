@@ -32,6 +32,7 @@ import {
   type ZCodeConfigOption,
   type ZCodeProvider,
   GODMODE_TEMPLATES,
+  resolvePersonaTemplatePlaceholders,
 } from "@zcode/shared";
 import { TID_V4_MODEL_CONFIG, TID_V4_COMPOSER_INPUT } from "@zcode/shared/test-ids";
 import type {
@@ -661,12 +662,14 @@ function V4ComposerModelControlsImpl({
         const id = value.slice(CUSTOM_PERSONA_PREFIX.length);
         const template = customPersonaTemplates.find((item) => item.id === id);
         if (!template) return null;
+        // 应用时展开 {{name}}：会话里只应看到替换后的正文，模板原文留在设置里。
+        const resolved = resolvePersonaTemplatePlaceholders(template);
         return {
           mode: "custom" as const,
           custom: {
             id: template.id,
-            cliPrefix: template.cliPrefix,
-            ...(template.prefill ? { prefill: template.prefill } : {}),
+            cliPrefix: resolved.cliPrefix,
+            ...(resolved.prefill ? { prefill: resolved.prefill } : {}),
           },
         };
       }

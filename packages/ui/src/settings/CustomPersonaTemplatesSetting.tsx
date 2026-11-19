@@ -31,7 +31,12 @@ function createTemplateId(): string {
   return `custom-${crypto.randomUUID()}`;
 }
 
-const EMPTY_DRAFT: PersonaTemplateEditorDraft = { name: "", cliPrefix: "", prefill: [] };
+const EMPTY_DRAFT: PersonaTemplateEditorDraft = {
+  name: "",
+  assistantName: "",
+  cliPrefix: "",
+  prefill: [],
+};
 
 export function CustomPersonaTemplatesSetting() {
   const { intl } = useZCodeIntl();
@@ -52,6 +57,7 @@ export function CustomPersonaTemplatesSetting() {
     setEditingId(template.id);
     setInitial({
       name: template.name,
+      assistantName: template.assistantName ?? "",
       cliPrefix: template.cliPrefix,
       prefill: clonePrefillMessages(template.prefill?.messages),
     });
@@ -75,12 +81,16 @@ export function CustomPersonaTemplatesSetting() {
   const save = async (draft: PersonaTemplateEditorDraft) => {
     const trimmedName = draft.name.trim();
     if (!trimmedName) return;
+    // 模板原文保留 {{name}}；助手名字单独存，应用模板时再展开（见 shared 的
+    // resolvePersonaTemplatePlaceholders）。这样改名不用重写提示词。
+    const assistantName = draft.assistantName.trim().slice(0, MAX_NAME_LENGTH);
     const messages = draft.prefill
       .map((message) => ({ role: message.role, content: message.content.trim() }))
       .filter((message) => message.content.length > 0);
     const entry: CustomPersonaTemplate = {
       id: editingId ?? createTemplateId(),
       name: trimmedName.slice(0, MAX_NAME_LENGTH),
+      ...(assistantName ? { assistantName } : {}),
       cliPrefix: draft.cliPrefix.slice(0, MAX_PROMPT_LENGTH),
       ...(messages.length > 0 ? { prefill: { enabled: true, messages } } : {}),
     };

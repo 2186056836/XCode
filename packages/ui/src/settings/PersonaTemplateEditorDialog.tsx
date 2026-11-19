@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { PlusIcon, Trash2Icon } from "lucide-react";
-import type { ModelJailbreakPrefillMessage } from "@zcode/shared";
+import { PERSONA_TEMPLATE_NAME_PLACEHOLDER, type ModelJailbreakPrefillMessage } from "@zcode/shared";
 import { Button } from "@/components/ui/button.js";
 import {
   Dialog,
@@ -23,6 +23,11 @@ import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 
 export interface PersonaTemplateEditorDraft {
   name: string;
+  /**
+   * 助手名字：应用模板时替换提示词与 PreFill 里的 `{{name}}` 占位。
+   * 模板原文仍保留占位符，换名字不用重写提示词。
+   */
+  assistantName: string;
   cliPrefix: string;
   prefill: ModelJailbreakPrefillMessage[];
 }
@@ -50,6 +55,7 @@ export function PersonaTemplateEditorDialog(props: {
   const { open, title, initial, showName = true, saving = false, onOpenChange, onSubmit } = props;
   const { intl } = useZCodeIntl();
   const [name, setName] = useState(initial.name);
+  const [assistantName, setAssistantName] = useState(initial.assistantName);
   const [prompt, setPrompt] = useState(initial.cliPrefix);
   const [prefill, setPrefill] = useState<ModelJailbreakPrefillMessage[]>(() =>
     clonePrefillMessages(initial.prefill),
@@ -60,6 +66,7 @@ export function PersonaTemplateEditorDialog(props: {
   useEffect(() => {
     if (!open) return;
     setName(initialRef.current.name);
+    setAssistantName(initialRef.current.assistantName);
     setPrompt(initialRef.current.cliPrefix);
     setPrefill(clonePrefillMessages(initialRef.current.prefill));
   }, [open]);
@@ -71,12 +78,13 @@ export function PersonaTemplateEditorDialog(props: {
   /** 回到打开时的内容：内置模板就是模板原文，自定义模板就是已保存的版本。 */
   const restoreDefault = () => {
     setName(initialRef.current.name);
+    setAssistantName(initialRef.current.assistantName);
     setPrompt(initialRef.current.cliPrefix);
     setPrefill(clonePrefillMessages(initialRef.current.prefill));
   };
 
   const submit = () => {
-    onSubmit({ name, cliPrefix: prompt, prefill });
+    onSubmit({ name, assistantName, cliPrefix: prompt, prefill });
   };
 
   return (
@@ -101,6 +109,25 @@ export function PersonaTemplateEditorDialog(props: {
               />
             </label>
           ) : null}
+          <label className="flex flex-col gap-1.5 text-ui-sm">
+            <span className="text-foreground-subtle">
+              {intl.formatMessage({ id: "settings.modelJailbreak.customTemplates.assistantName" })}
+            </span>
+            <Input
+              value={assistantName}
+              maxLength={MAX_NAME_LENGTH}
+              onChange={(event) => setAssistantName(event.currentTarget.value)}
+              placeholder={intl.formatMessage({
+                id: "settings.modelJailbreak.customTemplates.assistantNamePlaceholder",
+              })}
+            />
+            <span className="text-ui-xs text-foreground-subtle">
+              {intl.formatMessage(
+                { id: "settings.modelJailbreak.customTemplates.assistantNameHint" },
+                { placeholder: PERSONA_TEMPLATE_NAME_PLACEHOLDER },
+              )}
+            </span>
+          </label>
           <label className="flex flex-col gap-1.5 text-ui-sm">
             <span className="text-foreground-subtle">
               {intl.formatMessage({ id: "settings.modelJailbreak.customTemplates.prompt" })}

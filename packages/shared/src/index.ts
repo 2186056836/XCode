@@ -120,6 +120,13 @@ export {
 export * from "./rendererActionTrace.js";
 export * from "./validation.js";
 export type { CustomPersonaTemplate } from "./validationAppSettings.js";
+export {
+  PERSONA_TEMPLATE_NAME_PLACEHOLDER,
+  resolvePersonaTemplateMessages,
+  resolvePersonaTemplatePlaceholders,
+  resolvePersonaTemplateText,
+} from "./personaTemplatePlaceholders.js";
+export type { PersonaTemplatePlaceholderSource } from "./personaTemplatePlaceholders.js";
 export * from "./godmode-templates.js";
 export * from "./api.js";
 export * from "./zcode-protocol/index.js";

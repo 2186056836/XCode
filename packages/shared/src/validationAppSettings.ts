@@ -575,6 +575,8 @@ export const customPersonaTemplateSchema = z
   .object({
     id: z.string().trim().min(1).max(100),
     name: z.string().trim().min(1).max(100),
+    /** 助手名字：应用模板时替换提示词 / PreFill 里的 `{{name}}`；模板原文保留占位符。 */
+    assistantName: z.string().trim().max(100).optional(),
     cliPrefix: z.string().max(65535),
     prefill: modelJailbreakPrefillSettingsSchema.optional(),
   })

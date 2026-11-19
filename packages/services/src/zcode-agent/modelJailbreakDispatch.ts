@@ -14,6 +14,7 @@ import {
   GODMODE_DEFAULT_PREFILL,
   GODMODE_TEMPLATES,
   PREFILL_TEMPLATES,
+  resolvePersonaTemplatePlaceholders,
   zcodeModelJailbreakApplyTemplateParamsSchema,
   zcodeModelJailbreakSetObfuscationParamsSchema,
   zcodeModelJailbreakSetPrefillParamsSchema,
@@ -164,10 +165,14 @@ export async function dispatchModelJailbreakRequest(
         );
       }
       const current = settings.customSystemMessages ?? {};
+      // 自定义模板应用时展开 {{name}}（助手名字）；内置模板没有该变量，原样写入。
+      const resolvedCustom = customTemplate
+        ? resolvePersonaTemplatePlaceholders(customTemplate)
+        : undefined;
       await store.update({
         customSystemMessages: {
           ...current,
-          cliPrefix: template?.prompt ?? customTemplate!.cliPrefix,
+          cliPrefix: template?.prompt ?? resolvedCustom!.cliPrefix,
           ...(template
             ? (() => {
                 const prefillTemplate = PREFILL_TEMPLATES.find(
@@ -184,8 +189,8 @@ export async function dispatchModelJailbreakRequest(
                     }
                   : {};
               })()
-            : customTemplate?.prefill
-              ? { prefill: customTemplate.prefill }
+            : resolvedCustom?.prefill
+              ? { prefill: resolvedCustom.prefill }
               : {}),
         },
       });

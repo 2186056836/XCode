@@ -1,3 +1,4 @@
+import { resolvePersonaTemplateText } from "@zcode/shared";
 import { useState } from "react";
 import { PencilIcon } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
@@ -32,6 +33,7 @@ export function GodmodeTemplatePresets() {
   const [saving, setSaving] = useState(false);
   const [editorInitial, setEditorInitial] = useState<PersonaTemplateEditorDraft>({
     name: "",
+    assistantName: "",
     cliPrefix: "",
     prefill: [],
   });
@@ -63,6 +65,8 @@ export function GodmodeTemplatePresets() {
     const prefill = PREFILL_TEMPLATES.find((template) => template.id === selected.id);
     setEditorInitial({
       name: selected.name,
+      // 内置模板没有保存过助手名字；用户本次填写的会在这里展开后写回全局。
+      assistantName: "",
       cliPrefix: selected.prompt,
       prefill: clonePrefillMessages(prefill?.messages),
     });
@@ -70,8 +74,14 @@ export function GodmodeTemplatePresets() {
   };
 
   const saveEdited = async (draft: PersonaTemplateEditorDraft) => {
+    // 内置模板直接写全局配置，没有模板对象可保留占位符：在这里把 {{name}}
+    // 展开成本次填写的助手名字。自定义模板则保留原文，应用时再展开。
+    const assistantName = draft.assistantName.trim();
     const messages = draft.prefill
-      .map((message) => ({ role: message.role, content: message.content.trim() }))
+      .map((message) => ({
+        role: message.role,
+        content: resolvePersonaTemplateText(message.content.trim(), assistantName),
+      }))
       .filter((message) => message.content.length > 0);
     setSaving(true);
     try {
@@ -79,7 +89,7 @@ export function GodmodeTemplatePresets() {
         customSystemMessages: {
           // 与「使用」同构：只换提示词与 PreFill，混淆等其它字段保持当前值。
           ...settings?.customSystemMessages,
-          cliPrefix: draft.cliPrefix,
+          cliPrefix: resolvePersonaTemplateText(draft.cliPrefix, assistantName),
           // 模板没有 PreFill（例如「默认XCODE」）时不清空当前配置：用户可能只改了
           // 提示词，要停用 PreFill 用上面的「全局 PreFill」开关。
           ...(messages.length > 0 ? { prefill: { enabled: true, messages } } : {}),
