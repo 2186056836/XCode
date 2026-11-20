@@ -51,7 +51,7 @@ import {
   XIAOYU_SECURITY_TEMPLATE,
 } from "./godmode-templates/xiaoyu-security.generated.js";
 import { GODMODE_DEFAULT_PREFILL as DEFAULT_PREFILL_TURNS } from "./godmode-templates/default-prefill.generated.js";
-import { MEIMEI_PREFILL, MEIMEI_TEMPLATE } from "./godmode-templates/meimei.generated.js";
+import { FUJIANG_TEMPLATE } from "./godmode-templates/fujiang.generated.js";
 
 /**
  * 数组顺序即设置页/聊天选择器的展示顺序。
@@ -65,7 +65,7 @@ export const GODMODE_TEMPLATES: GodmodeTemplate[] = [
   XIAOMEI_CTF_TEMPLATE,
   XIAOYU_SECURITY_TEMPLATE,
   XIAOHONG_CREATION_TEMPLATE,
-  MEIMEI_TEMPLATE,
+  FUJIANG_TEMPLATE,
 ];
 
 /** godmode 默认 prefill 内容（对齐 prefill.json 的 priming turns）。 */
@@ -82,7 +82,6 @@ export const PREFILL_TEMPLATES: PrefillTemplate[] = [
   XIAOMEI_CTF_PREFILL,
   XIAOYU_SECURITY_PREFILL,
   XIAOHONG_CREATION_PREFILL,
-  MEIMEI_PREFILL,
 ];
 
 /** Parseltongue 输入混淆档位说明（供 UI 使用）。 */
