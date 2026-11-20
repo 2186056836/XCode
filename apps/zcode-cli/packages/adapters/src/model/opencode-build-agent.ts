@@ -23,7 +23,7 @@
  *   即校验落点是「system 里存在 `<env>...</env>`，且块内 `Working directory:`
  *   后面有非空值」；Platform / 日期两行可有可无，值也不校验，CRLF/LF 均可。
  *   因此运行时只拼最小 env 签名段，XCode 自己的 system 正文完整保留。
- *   官方 prompt 原文与生成物保留在仓库里仅作参考，不再参与请求。
+ *   官方 build prompt 原文已从仓库移除，不再参与请求。
  *   同一轮实测还确认：TLS 客户端指纹是硬门禁（Node/Electron/Go 默认 TLS → 429，
  *   复刻 Bun 的 ClientHello → 200），桌面端通过 opencode-tls helper 解决，
  *   helper 不可用时回退普通 fetch（免费档可能 429，真实 key 不受影响）。

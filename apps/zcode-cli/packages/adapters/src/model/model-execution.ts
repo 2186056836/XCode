@@ -606,7 +606,7 @@ function applyModelRequestAuth(
 //      必须有一行非空 `Working directory:`（大小写敏感，缺闭合标签/空值均 429；
 //      Platform、日期、值都不校验，CRLF 也可）。纯自定义 system + 最小 env 块 → 200，
 //      官方 prompt 全文但不带 env → 429。运行时由 applyBuildAgentSignature 在
-//      第一条 system 前拼最小 env 签名段（opencode-build-prompt.* 仅留作参考）。
+//      第一条 system 前拼最小 env 签名段（官方 prompt 文件已删除）。
 //   3. 只接受 `stream: true`：同一请求体改成非流式，无论 system 如何都返回
 //      429 FreeUsageLimitError；AI SDK 的 streamText 天然满足。
 //   4. session ID 必须是 `ses_` + 12 位时间 hex + 14 位 base62；过长/占位

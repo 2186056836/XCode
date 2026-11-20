@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { applyBuildAgentSignature } from "../src/model/opencode-build-agent.js";
-import { OPENCODE_BUILD_PROMPT_MARKER } from "../src/model/opencode-build-prompt.generated.js";
+
+/** 官方 build prompt 的首句：确认运行时不再发送它。 */
+const OPENCODE_BUILD_PROMPT_MARKER = "You are opencode, an interactive CLI tool";
 
 describe("OpenCode free env signature", () => {
   it("prepends the minimal env block while keeping the product system text", () => {
