@@ -2,10 +2,12 @@
 /**
  * 把 opencode-build-prompt.txt 生成为可 import 的 TS 常量。
  *
- * 为什么需要官方的 build prompt：opencode.ai 免费档的服务端闸门会校验 system 里
- * 必须包含官方 build agent 的原文（2026-11-20 实测：换任意自定义 system → 429，
- * 前缀/后缀/独立 system 消息都能过）。运行时再从桌面 asar 里读不现实，所以把
- * 原文入库并生成常量。
+ * 历史：2026-11-20 上午曾认为免费档要求 system 里包含官方 build prompt 原文，
+ * 于是把它入库并由运行时拼到 system 前面。当天下午的逐项消融推翻了该结论：
+ * 闸门只校验 system 里的 `<env>...</env>` 块，且块内要有一行非空
+ * `Working directory:`；官方 prompt 全文不带 env 时仍然 429。
+ * 现在运行时只拼最小 env 签名段（见 opencode-build-agent.ts），本常量与 txt
+ * 保留作为原文参考，不再参与请求。
  *
  * 用法：node scripts/generate-opencode-build-prompt.mjs
  */
@@ -22,11 +24,11 @@ const output = `/**
  * 由 scripts/generate-opencode-build-prompt.mjs 生成，不要手改。
  *
  * 来源：OpenCode CLI 1.19.4 desktop asar 的 build agent system prompt（2026-11-18）。
- * 免费档服务端会校验该原文存在于 system 中；替换/删改会落进 429 桶。
+ * 仅作原文参考；运行时不再发送，免费档只校验 <env> 块。
  */
 export const OPENCODE_BUILD_PROMPT = ${JSON.stringify(text)};
 
-/** 用于判断请求里是否已经包含官方 build prompt。 */
+/** 仅用于测试断言运行时不发送官方 prompt。 */
 export const OPENCODE_BUILD_PROMPT_MARKER = "You are opencode, an interactive CLI tool";
 `;
 await writeFile(targetPath, output, "utf8");

@@ -14,16 +14,23 @@
  *   ③ `tools` 必须**包含**那 11 个官方工具名（可多带任意额外工具）。
  *   ④ `Authorization: Bearer public`（匿名）或真实 `oc_sk_...` key。
  *
- * 【system prompt 校验（2026-11-20 重新实测，推翻 10-18 结论）】
- *   纯自定义 system → 429；把官方 build prompt 原文放在自定义 system 前面、后面，
- *   或作为独立 system 消息 → 全部 200。线上闸门会找这段原文，`<env>` 三行也必须存在。
- *   因此运行时只在最前面拼签名段，XCode 自己的 system 正文完整保留。
+ * 【system prompt 校验（2026-11-20 重新实测）】
+ *   闸门**不要求**官方 build prompt 全文。逐项消融结果：
+ *   - 官方 prompt 全文但没有 `<env>` 块 → 429；
+ *   - 只有 `<env>` 块（含一行非空 `Working directory:`）→ 200；
+ *   - 自定义 system + `<env>` 块 → 200；
+ *   - `<env></env>`、缺 `</env>`、大小写不符、`Working directory:` 为空 → 429。
+ *   即校验落点是「system 里存在 `<env>...</env>`，且块内 `Working directory:`
+ *   后面有非空值」；Platform / 日期两行可有可无，值也不校验，CRLF/LF 均可。
+ *   因此运行时只拼最小 env 签名段，XCode 自己的 system 正文完整保留。
+ *   官方 prompt 原文与生成物保留在仓库里仅作参考，不再参与请求。
  *   同一轮实测还确认：TLS 客户端指纹是硬门禁（Node/Electron/Go 默认 TLS → 429，
  *   复刻 Bun 的 ClientHello → 200），桌面端通过 opencode-tls helper 解决，
  *   helper 不可用时回退普通 fetch（免费档可能 429，真实 key 不受影响）。
+ *   另外免费档只接受 `stream: true`；非流式请求一律 429 FreeUsageLimitError。
  *
  * 【与产品自身能力的关系】
- *   - system prompt：XCode 语义保留，仅在前面拼官方签名段（见 ensureBuildSignaturePrompt）。
+ *   - system prompt：XCode 语义保留，仅在前面拼最小 env 签名段（见 ensureBuildSignaturePrompt）。
  *   - tools：把 11 个官方名**补进** XCode 的工具数组（并集），不覆盖产品工具。
  *
  * 三层缺一即 `403 FreeTierError`（"can only be used from within OpenCode"）。
@@ -37,10 +44,6 @@
  *   数据量很小且变化频率低，内联是最省事的打包安全做法。
  */
 import { randomBytes } from "node:crypto";
-import {
-  OPENCODE_BUILD_PROMPT,
-  OPENCODE_BUILD_PROMPT_MARKER,
-} from "./opencode-build-prompt.generated.js";
 
 /** 闸门③要求出现的那 11 个官方工具名（原 opencode-signature/tools.json）。 */
 const GATE_TOOL_NAMES: readonly string[] = [
@@ -107,7 +110,9 @@ function timeSegment(timestamp: number, counter: number): string {
   const value = ~current;
   let hex = "";
   for (let i = 0; i < 6; i++) {
-    hex += Number((value >> BigInt(40 - 8 * i)) & 0xffn).toString(16).padStart(2, "0");
+    hex += Number((value >> BigInt(40 - 8 * i)) & 0xffn)
+      .toString(16)
+      .padStart(2, "0");
   }
   return hex;
 }
@@ -131,7 +136,9 @@ function toolNameOf(tool: unknown): string | undefined {
   if (!tool || typeof tool !== "object") return undefined;
   const record = tool as Record<string, unknown>;
   const fn = record.function as Record<string, unknown> | undefined;
-  const name = (fn && typeof fn.name === "string" && fn.name) || (typeof record.name === "string" && record.name);
+  const name =
+    (fn && typeof fn.name === "string" && fn.name) ||
+    (typeof record.name === "string" && record.name);
   return name || undefined;
 }
 
@@ -144,7 +151,8 @@ function toolNameOf(tool: unknown): string | undefined {
  * 参考实现的空串碰巧只在部分模型上成立）。文案沿用指纹占位的同款禁用语义，
  * 引导模型优先用产品自己的同名工具，降低误调概率。
  */
-const GATE_TOOL_PLACEHOLDER_DESCRIPTION = "This tool is currently unavailable and must not be used.";
+const GATE_TOOL_PLACEHOLDER_DESCRIPTION =
+  "This tool is currently unavailable and must not be used.";
 
 /**
  * 闸门③适配：**并集**注入那 11 个官方工具名。
@@ -157,23 +165,36 @@ const GATE_TOOL_PLACEHOLDER_DESCRIPTION = "This tool is currently unavailable an
  * 执行侧会按 XCode 自己的工具名解析（大部分名字本就重叠：bash/edit/read/...）。
  */
 /**
- * 官方 build agent 的 system 原文 + CLI 注入的 `<env>` 段。
+ * 官方 CLI 每轮追加的 env 段（最小闸门签名）。
  *
- * 2026-11-20 重新实测：新端点**会**校验 system 里包含这段原文——纯自定义 system
- * → 429；把原文放在自定义 system 前面 / 后面 / 作为独立 system 消息 → 200。
- * 所以这里采用「前缀」形态：保留 XCode 自己的 system 正文，只在最前面拼签名段。
- * `<env>` 三行缺一不可（值为任意）。
+ * 2026-11-20 消融确认：服务端只校验 `<env>...</env>` 内存在非空
+ * `Working directory:` 行；官方 build prompt 全文、Platform、日期都不参与校验。
+ * 这里仍按官方 CLI 的形状补全三行，避免日后校验收紧时再次失败；cwd 用中性的
+ * "/"，不把用户真实工作目录发给上游。
  */
+const ENV_SIGNATURE_PATTERN = /<env>[\s\S]*?Working directory:[^\n]*\S/;
+
 function buildSignatureSystemPrompt(): string {
-  // cwd 值不参与校验（/tmp、/ 均可），用中性的 "/" 避免把用户真实工作目录发给上游。
-  const cwd = "/";
-  return `${OPENCODE_BUILD_PROMPT}\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: ${cwd}\n  Platform: ${process.platform}\n  Today's date: ${new Date().toDateString()}\n</env>\nSkills provide specialized instructions and workflows for specific tasks.\nUse the skill tool to load a skill when a task matches its description.\n`;
+  return `Here is some useful information about the environment you are running in:\n<env>\n  Working directory: /\n  Platform: ${process.platform}\n  Today's date: ${new Date().toDateString()}\n</env>\nSkills provide specialized instructions and workflows for specific tasks.\nUse the skill tool to load a skill when a task matches its description.\n`;
+}
+
+/** 读取 system content（string 或 text part 数组）的纯文本。 */
+function systemTextOf(content: unknown): string {
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return "";
+  return content
+    .map((part) => {
+      if (!part || typeof part !== "object") return "";
+      const record = part as Record<string, unknown>;
+      return typeof record.text === "string" ? record.text : "";
+    })
+    .join("\n");
 }
 
 /**
- * 保证 system 里带官方 build prompt。
+ * 保证 system 里带 env 签名段。
  *
- * - 已有（XCode 自己拼过 / 上一轮已注入）→ 不重复；
+ * - 已有（官方 CLI 形状 / 上一轮已注入）→ 不重复；
  * - 有 system 消息 → 把签名段拼到第一条 system 正文前面；
  * - 没有 system → 在最前面插一条。
  */
@@ -183,11 +204,7 @@ function ensureBuildSignaturePrompt(body: Record<string, unknown>): void {
   const hasSignature = messages.some((message) => {
     if (!message || typeof message !== "object") return false;
     const record = message as Record<string, unknown>;
-    return (
-      record.role === "system" &&
-      typeof record.content === "string" &&
-      record.content.includes(OPENCODE_BUILD_PROMPT_MARKER)
-    );
+    return record.role === "system" && ENV_SIGNATURE_PATTERN.test(systemTextOf(record.content));
   });
   if (hasSignature) return;
   const signature = buildSignatureSystemPrompt();

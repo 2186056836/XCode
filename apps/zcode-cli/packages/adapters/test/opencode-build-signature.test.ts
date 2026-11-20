@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { applyBuildAgentSignature } from "../src/model/opencode-build-agent.js";
 import { OPENCODE_BUILD_PROMPT_MARKER } from "../src/model/opencode-build-prompt.generated.js";
 
-describe("OpenCode free build signature", () => {
-  it("prepends the official build prompt while keeping the product system text", () => {
+describe("OpenCode free env signature", () => {
+  it("prepends the minimal env block while keeping the product system text", () => {
     const body: Record<string, unknown> = {
       messages: [
         { role: "system", content: "XCode 自己的系统提示词" },
@@ -14,10 +14,12 @@ describe("OpenCode free build signature", () => {
 
     const messages = body.messages as Array<{ role: string; content: string }>;
     expect(messages[0]!.role).toBe("system");
-    expect(messages[0]!.content).toContain(OPENCODE_BUILD_PROMPT_MARKER);
     expect(messages[0]!.content).toContain("<env>");
-    expect(messages[0]!.content).toContain("Working directory:");
+    expect(messages[0]!.content).toContain("</env>");
+    expect(messages[0]!.content).toContain("Working directory: /");
     expect(messages[0]!.content).toContain("XCode 自己的系统提示词");
+    // 2026-11-20 消融：官方 prompt 全文不参与校验，不再发送。
+    expect(messages[0]!.content).not.toContain(OPENCODE_BUILD_PROMPT_MARKER);
     // 不新增 system 消息，避免改变消息顺序语义。
     expect(messages.filter((message) => message.role === "system")).toHaveLength(1);
   });
@@ -29,16 +31,33 @@ describe("OpenCode free build signature", () => {
     applyBuildAgentSignature(body);
     const messages = body.messages as Array<{ role: string; content: string }>;
     expect(messages[0]!.role).toBe("system");
-    expect(messages[0]!.content).toContain(OPENCODE_BUILD_PROMPT_MARKER);
+    expect(messages[0]!.content).toContain("<env>");
+    expect(messages[0]!.content).toContain("Working directory:");
   });
 
-  it("does not double-inject when the signature is already present", () => {
+  it("does not double-inject when an env signature is already present", () => {
     const body: Record<string, unknown> = {
-      messages: [{ role: "system", content: `${OPENCODE_BUILD_PROMPT_MARKER}...` }],
+      messages: [
+        {
+          role: "system",
+          content:
+            "Here is some useful information about the environment you are running in:\n<env>\n  Working directory: /tmp\n</env>",
+        },
+      ],
     };
     applyBuildAgentSignature(body);
     const messages = body.messages as Array<{ content: string }>;
-    expect(messages[0]!.content.split(OPENCODE_BUILD_PROMPT_MARKER).length - 1).toBe(1);
+    expect(messages[0]!.content.split("<env>").length - 1).toBe(1);
+  });
+
+  it("injects into array-shaped system content once", () => {
+    const body: Record<string, unknown> = {
+      messages: [{ role: "system", content: [{ type: "text", text: "XCode 系统提示词" }] }],
+    };
+    applyBuildAgentSignature(body);
+    const messages = body.messages as Array<{ content: Array<{ type: string; text: string }> }>;
+    expect(messages[0]!.content[0]!.text).toContain("<env>");
+    expect(messages[0]!.content[1]!.text).toBe("XCode 系统提示词");
   });
 
   it("still unions the official tool names and normalizes token limits", () => {

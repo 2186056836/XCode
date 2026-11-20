@@ -369,7 +369,7 @@ export class AiSdkModelExecution {
       baseUrl: providerConfig.baseURL,
       apiKey:
         providerConfig.access.type !== "zhipu-account"
-          ? providerConfig.access.apiKey ?? undefined
+          ? (providerConfig.access.apiKey ?? undefined)
           : undefined,
       fetch: providerTransport,
       reasoningLevelValues,
@@ -596,17 +596,23 @@ function applyModelRequestAuth(
 //   模型目录改为 https://opencode.ai/inference/v1/models——`{baseUrl}/models`
 //   现在是 404，host 侧 upstreamModelListFetcher 对该 profile 单独拼目录。
 //
-// 【2026-11-20 重新实测：两条硬门禁都收紧了】
+// 【2026-11-20 重新实测：三条硬门禁】
 //   1. TLS 客户端指纹：同请求体/同 IP，Bun(1.3.14)→200、Node/OpenSSL→429、
 //      Electron/Chromium→429、Go crypto/tls→429；用 uTLS 逐字节复刻 Bun 的
 //      ClientHello（17 cipher、无 GREASE、extension 顺序、512B padding）→200。
 //      桌面端通过 opencode-tls helper（bundled-tools/<platform>/opencode-tls）
 //      发送请求；helper 缺失时回退普通 fetch。
-//   2. system prompt：纯自定义 system → 429；官方 build prompt 原文放在
-//      自定义 system 前面/后面/独立 system 消息 → 200。运行时由
-//      applyBuildAgentSignature 在第一条 system 前拼签名段（含 <env> 三行）。
-//   3. session ID 必须是 `ses_` + 12 位时间 hex + 14 位 base62；过长/占位
+//   2. system prompt：不是校验官方 build prompt 全文，而是 `<env>...</env>` 块内
+//      必须有一行非空 `Working directory:`（大小写敏感，缺闭合标签/空值均 429；
+//      Platform、日期、值都不校验，CRLF 也可）。纯自定义 system + 最小 env 块 → 200，
+//      官方 prompt 全文但不带 env → 429。运行时由 applyBuildAgentSignature 在
+//      第一条 system 前拼最小 env 签名段（opencode-build-prompt.* 仅留作参考）。
+//   3. 只接受 `stream: true`：同一请求体改成非流式，无论 system 如何都返回
+//      429 FreeUsageLimitError；AI SDK 的 streamText 天然满足。
+//   4. session ID 必须是 `ses_` + 12 位时间 hex + 14 位 base62；过长/占位
 //      同样落进 429 桶（参考实现的 Go 客户端踩过：16 hex + fffe）。
+//   注：429 文案与"额度用尽"完全相同，同一出口短时间连发也会触发频控；
+//      定位闸门时必须在同一出口夹对照请求，不能只看状态码。
 //
 // 结论：**匿名（Bearer public）可直接访问 free 档**（2026-10-16 以本产品完整请求
 // 形态直连实测 200）。真实 key 是可选的第二条路径：填 provider API Key 或设环境
@@ -700,7 +706,11 @@ function readRequestHeaders(headers: RequestInit["headers"]): Record<string, str
 }
 
 function requestUrlOf(request: string | URL | { url: string }): string {
-  return typeof request === "string" ? request : request instanceof URL ? request.toString() : request.url;
+  return typeof request === "string"
+    ? request
+    : request instanceof URL
+      ? request.toString()
+      : request.url;
 }
 
 /**
@@ -712,7 +722,9 @@ function isCodeBuddyUpstreamUrl(baseUrl: string | undefined): boolean {
   if (!baseUrl) return false;
   try {
     const host = new URL(baseUrl).hostname.toLowerCase();
-    return host === "copilot.tencent.com" || host.endsWith(".codebuddy.ai") || host === "codebuddy.ai";
+    return (
+      host === "copilot.tencent.com" || host.endsWith(".codebuddy.ai") || host === "codebuddy.ai"
+    );
   } catch {
     return false;
   }
@@ -840,10 +852,7 @@ function toolNameOf(tool: unknown): string {
  * 的大小写变体并存会被判重复。因此把客户端声明的大小写变体就地改名（如
  * `Bash`→`bash`；模型回调由工具注册表的小写回退解析回原工具），缺失成员补齐。
  */
-function canonicalizeFingerprintTools(
-  tools: unknown[],
-  makeTool: (name: string) => unknown,
-): void {
+function canonicalizeFingerprintTools(tools: unknown[], makeTool: (name: string) => unknown): void {
   for (const name of OPENCODE_FINGERPRINT_TOOLS) {
     const existing = tools.find(
       (tool) => toolNameOf(tool).toLowerCase() === name && toolNameOf(tool) !== "",
@@ -984,7 +993,9 @@ function readQoderIdentity(
 }
 
 // 内部身份头不能上行（上游不需要，也会泄露本地身份信息）。
-function stripQoderIdentityHeaders(headers: Record<string, string> | undefined): Record<string, string> | undefined {
+function stripQoderIdentityHeaders(
+  headers: Record<string, string> | undefined,
+): Record<string, string> | undefined {
   if (!headers) return headers;
   const out: Record<string, string> = {};
   for (const [key, value] of Object.entries(headers)) {
@@ -1115,10 +1126,7 @@ function createCodeBuddySseRewriter(): {
           | undefined;
         if (!delta) continue;
         // 空白思考不是内容，只是网关填充：删掉它，SDK 才不会为它开一段。
-        if (
-          typeof delta.reasoning_content === "string" &&
-          !delta.reasoning_content.trim()
-        ) {
+        if (typeof delta.reasoning_content === "string" && !delta.reasoning_content.trim()) {
           delete delta.reasoning_content;
         }
         if (delta.refusal === "") delete delta.refusal;
@@ -1266,7 +1274,11 @@ function createOpenCodeTlsHelperFetch(helperPath: string): ProviderFetch {
       const line = buffered.subarray(0, lineEnd).toString("utf8").trim();
       buffered = buffered.subarray(lineEnd + 1);
       if (!line) continue;
-      header = JSON.parse(line) as { status: number; statusText?: string; headers?: [string, string][] };
+      header = JSON.parse(line) as {
+        status: number;
+        statusText?: string;
+        headers?: [string, string][];
+      };
     }
 
     const responseHeaders = new Headers();
@@ -1291,7 +1303,10 @@ function createOpenCodeTlsHelperFetch(helperPath: string): ProviderFetch {
     });
     return new Response(body, {
       status: header.status,
-      statusText: header.statusText && header.statusText !== String(header.status) ? header.statusText : undefined,
+      statusText:
+        header.statusText && header.statusText !== String(header.status)
+          ? header.statusText
+          : undefined,
       headers: responseHeaders,
     });
   };
@@ -1333,12 +1348,19 @@ export function createUpstreamRequestProfileFetch(input: {
       } catch {
         return qoderFetch(request, init);
       }
-      const url = typeof request === "string" ? request : request instanceof URL ? request.toString() : request.url;
+      const url =
+        typeof request === "string"
+          ? request
+          : request instanceof URL
+            ? request.toString()
+            : request.url;
       const model = typeof openAiBody.model === "string" ? openAiBody.model : "";
       const identity = readQoderIdentity(input.headers, input.apiKey);
       if (!identity) {
         return new Response(
-          JSON.stringify({ error: { message: "qoder credential missing user identity; reconnect the account" } }),
+          JSON.stringify({
+            error: { message: "qoder credential missing user identity; reconnect the account" },
+          }),
           { status: 401, headers: { "Content-Type": "application/json" } },
         );
       }
@@ -1489,9 +1511,7 @@ export function createUpstreamRequestProfileFetch(input: {
       : baseFetch;
   // 临时诊断（ZCODE_PROFILE_DEBUG=1 时落盘请求/错误响应，定位上游 400 拒绝字段）。
   const debugEnabled = process.env.ZCODE_PROFILE_DEBUG === "1";
-  const debugFile = debugEnabled
-    ? join(tmpdir(), "xcode-profile-debug.log")
-    : undefined;
+  const debugFile = debugEnabled ? join(tmpdir(), "xcode-profile-debug.log") : undefined;
   return async (request, init) => {
     // OpenCode free 闸门第二层：本请求的 session ID（counter ≤ 63 的 descending ID）。
     // 每次请求新建一个，与真实客户端同分布；避免固定值被上游按指纹/频率识别。
@@ -1544,7 +1564,11 @@ export function createUpstreamRequestProfileFetch(input: {
       // 无 system 时才前置注入，避免覆盖产品自己的 prompt 体系。
       applyBuildAgentSignature(body);
     }
-    const nextInit = { ...init, body: JSON.stringify(body), headers: mergeOpenCodeSessionHeader(init, session) };
+    const nextInit = {
+      ...init,
+      body: JSON.stringify(body),
+      headers: mergeOpenCodeSessionHeader(init, session),
+    };
     let response: Response;
     try {
       response = await tlsTransport(migratedUrl, nextInit);
