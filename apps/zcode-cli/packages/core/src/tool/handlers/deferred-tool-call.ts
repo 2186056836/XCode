@@ -10,6 +10,9 @@ const MAX_CONTROL_RESULT_BYTES = 100_000;
 
 export const deferredToolCallEntry: ToolEntry = {
   capability: "Call a deferred tool using its loaded definition",
+  // Defer：OpenCode 免费档出站别名（与 LocalToolSearch 同时出现会被上游判为
+  // 非官方客户端并返回 429），模型回调的别名在这里解析回 DeferredToolCall。
+  aliases: ["Defer"],
   metadata: {
     name: DEFERRED_TOOL_CALL_NAME,
     description:

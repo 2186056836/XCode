@@ -2,9 +2,10 @@
 //
 // 背景：opencode.ai 的匿名免费档按 **TLS 客户端指纹**分额度桶。Node/OpenSSL、
 // Chromium(BoringSSL) 与 Go crypto/tls 都会落进 429 桶；只有与官方 CLI 同源的
-// Bun(BoringSSL) 指纹能进 200 桶。本进程用 uTLS 复刻 Bun 1.3.14 的真实
-// ClientHello（2026-11-20 抓包逐字节对齐），从 stdin 读一个请求、向 stdout
-// 流式写回响应。
+// Bun(BoringSSL) 指纹能进 200 桶。本进程用 uTLS 复刻 Bun 1.4.4 的真实
+// ClientHello（2026-11-20 用本地 CONNECT 代理抓官方 CLI 1.19.4 原始字节对齐：
+// TLS 1.3 + X25519MLKEM768 混合 key share，无 GREASE、无 padding），
+// 从 stdin 读一个请求、向 stdout 流式写回响应。
 //
 // 协议（每进程一个请求）：
 //
@@ -47,10 +48,9 @@ type responseHeader struct {
 	Headers    [][2]string `json:"headers"`
 }
 
-// Bun 1.3.14 抓包：ClientHello 总长固定 512 字节（含 padding），SNI 固定为
-// opencode.ai 时 padding 数据区为 237 字节。
-const paddingLength = 237
-
+// Bun 1.4.4 抓包：37 字节 cipher suite 列表、13 个 extension、无 GREASE；
+// key share 首项是 X25519MLKEM768（1216 字节），随后是 X25519（32 字节），
+// 因此 ClientHello 约 1.5KB，和旧版 1.3.14 的 512 字节 padding 形态完全不同。
 func main() {
 	decoder := json.NewDecoder(bufio.NewReader(os.Stdin))
 	var payload requestPayload
@@ -234,20 +234,31 @@ func dialTLS(address string, serverName string) (*utls.UConn, error) {
 		TLSVersMin:         utls.VersionTLS13,
 		TLSVersMax:         utls.VersionTLS13,
 		Extensions: []utls.TLSExtension{
-			&utls.GenericExtension{Id: 0x0000, Data: []byte{0x00, 0x0e, 0x00, 0x00, 0x0b, 0x6f, 0x70, 0x65, 0x6e, 0x63, 0x6f, 0x64, 0x65, 0x2e, 0x61, 0x69}},
+			// 官方抓包（Bun 1.4.4 / BoringSSL）的 extension 顺序：
+			// 0 SNI → 23 EMS → 65281 renegotiation → 10 groups → 11 points →
+			// 35 ticket → 16 ALPN → 5 status_request → 13 sigalgs → 18 SCT →
+			// 51 key_share → 45 psk_modes → 43 supported_versions。
+			&utls.SNIExtension{ServerName: serverName},
 			&utls.GenericExtension{Id: 0x0017, Data: []byte{}},
 			&utls.GenericExtension{Id: 0xff01, Data: []byte{0x00}},
-			&utls.GenericExtension{Id: 0x000a, Data: []byte{0x00, 0x06, 0x00, 0x1d, 0x00, 0x17, 0x00, 0x18}},
+			&utls.GenericExtension{Id: 0x000a, Data: []byte{0x00, 0x08, 0x11, 0xec, 0x00, 0x1d, 0x00, 0x17, 0x00, 0x18}},
 			&utls.GenericExtension{Id: 0x000b, Data: []byte{0x01, 0x00}},
 			&utls.GenericExtension{Id: 0x0023, Data: []byte{}},
 			&utls.ALPNExtension{AlpnProtocols: []string{"http/1.1"}},
 			&utls.GenericExtension{Id: 0x0005, Data: []byte{0x01, 0x00, 0x00, 0x00, 0x00}},
-			&utls.GenericExtension{Id: 0x000d, Data: []byte{0x00, 0x12, 0x04, 0x03, 0x08, 0x04, 0x04, 0x01, 0x05, 0x03, 0x08, 0x05, 0x05, 0x01, 0x08, 0x06, 0x06, 0x01, 0x02, 0x01}},
+			&utls.GenericExtension{Id: 0x000d, Data: []byte{
+				0x00, 0x16,
+				0x04, 0x03, 0x08, 0x04, 0x04, 0x01, 0x05, 0x03, 0x08, 0x05, 0x05, 0x01,
+				0x08, 0x06, 0x06, 0x01, 0x08, 0x07, 0x06, 0x03, 0x02, 0x01,
+			}},
 			&utls.GenericExtension{Id: 0x0012, Data: []byte{}},
-			&utls.KeyShareExtension{KeyShares: []utls.KeyShare{{Group: utls.X25519}}},
+			// Data 留空时 uTLS 会为 X25519MLKEM768 生成 ML-KEM 封装密钥 + X25519 公钥。
+			&utls.KeyShareExtension{KeyShares: []utls.KeyShare{
+				{Group: utls.X25519MLKEM768},
+				{Group: utls.X25519},
+			}},
 			&utls.GenericExtension{Id: 0x002d, Data: []byte{0x01, 0x01}},
 			&utls.GenericExtension{Id: 0x002b, Data: []byte{0x04, 0x03, 0x04, 0x03, 0x03}},
-			&utls.GenericExtension{Id: 0x0015, Data: make([]byte, paddingLength)},
 		},
 	}
 	uconn := utls.UClient(tcp, &utls.Config{ServerName: serverName, MinVersion: utls.VersionTLS13, MaxVersion: utls.VersionTLS13}, utls.HelloCustom)

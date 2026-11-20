@@ -565,6 +565,9 @@ function levenshteinDistance(left: string, right: string): number {
 export const readToolEntry: ToolEntry = {
   capability:
     "Read text files and supported images from the file-system adapter without modifying files",
+  // ReadFile：OpenCode 免费档出站别名（工具名 read + 参数 file_path 会被上游判为
+  // 非官方客户端并返回 429），模型回调的别名在这里解析回 Read。
+  aliases: ["ReadFile"],
   metadata: {
     name: "Read",
     description: READ_PROVIDER_DESCRIPTION,

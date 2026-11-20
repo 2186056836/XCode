@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { applyBuildAgentSignature } from "../src/model/opencode-build-agent.js";
 
-/** 官方 build prompt 的首句：确认运行时不再发送它。 */
-const OPENCODE_BUILD_PROMPT_MARKER = "You are opencode, an interactive CLI tool";
-
 describe("OpenCode free env signature", () => {
-  it("prepends the minimal env block while keeping the product system text", () => {
+  it("prepends the env block while keeping the product system text", () => {
     const body: Record<string, unknown> = {
       messages: [
         { role: "system", content: "XCode 自己的系统提示词" },
@@ -16,12 +13,12 @@ describe("OpenCode free env signature", () => {
 
     const messages = body.messages as Array<{ role: string; content: string }>;
     expect(messages[0]!.role).toBe("system");
+    // 2026-11-20 晚复测：官方 build prompt 不参与校验，只拼 env 连续 3 轮 200。
     expect(messages[0]!.content).toContain("<env>");
     expect(messages[0]!.content).toContain("</env>");
     expect(messages[0]!.content).toContain("Working directory: /");
     expect(messages[0]!.content).toContain("XCode 自己的系统提示词");
-    // 2026-11-20 消融：官方 prompt 全文不参与校验，不再发送。
-    expect(messages[0]!.content).not.toContain(OPENCODE_BUILD_PROMPT_MARKER);
+    expect(messages[0]!.content).not.toContain("You are opencode, an interactive CLI tool");
     // 不新增 system 消息，避免改变消息顺序语义。
     expect(messages.filter((message) => message.role === "system")).toHaveLength(1);
   });
@@ -33,7 +30,6 @@ describe("OpenCode free env signature", () => {
     applyBuildAgentSignature(body);
     const messages = body.messages as Array<{ role: string; content: string }>;
     expect(messages[0]!.role).toBe("system");
-    expect(messages[0]!.content).toContain("<env>");
     expect(messages[0]!.content).toContain("Working directory:");
   });
 
@@ -62,20 +58,50 @@ describe("OpenCode free env signature", () => {
     expect(messages[0]!.content[1]!.text).toBe("XCode 系统提示词");
   });
 
-  it("still unions the official tool names and normalizes token limits", () => {
+  it("renames gated tools and still unions the official tool names", () => {
     const body: Record<string, unknown> = {
       messages: [{ role: "user", content: "hi" }],
-      tools: [{ type: "function", function: { name: "xcode_tool" } }],
+      tools: [
+        // appendChatFingerprintTools 会先把 Read/Edit 小写成 read/edit。
+        { type: "function", function: { name: "read" } },
+        { type: "function", function: { name: "edit" } },
+        { type: "function", function: { name: "LocalToolSearch" } },
+        { type: "function", function: { name: "DeferredToolCall" } },
+        { type: "function", function: { name: "xcode_tool" } },
+      ],
       max_completion_tokens: 100,
     };
     applyBuildAgentSignature(body);
     const names = (body.tools as Array<{ function: { name: string } }>).map(
       (tool) => tool.function.name,
     );
+    // 出站别名：read+file_path / edit+old_string / 两工具组合都是上游 429 的触发签名。
+    expect(names).toContain("ReadFile");
+    expect(names).toContain("EditFile");
+    expect(names).toContain("SearchTools");
+    expect(names).toContain("Defer");
+    expect(names).not.toContain("Read");
+    expect(names).not.toContain("Edit");
     expect(names).toContain("xcode_tool");
     expect(names).toContain("read");
     expect(body.max_completion_tokens).toBeUndefined();
     expect(body.max_tokens).toBe(32000);
     expect(body.tool_choice).toBe("auto");
+  });
+
+  it("keeps the original tool object when the rename target already exists", () => {
+    const body: Record<string, unknown> = {
+      messages: [{ role: "user", content: "hi" }],
+      tools: [
+        { type: "function", function: { name: "Read" } },
+        { type: "function", function: { name: "ReadFile" } },
+      ],
+    };
+    applyBuildAgentSignature(body);
+    const names = (body.tools as Array<{ function: { name: string } }>).map(
+      (tool) => tool.function.name,
+    );
+    expect(names.filter((name) => name === "ReadFile")).toHaveLength(1);
+    expect(names).toContain("Read");
   });
 });

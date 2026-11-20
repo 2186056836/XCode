@@ -18,7 +18,9 @@ export function resolveDeferredToolCall<T extends ExecutableToolCall>(
   registry: Pick<ToolRegistry, "get">,
 ): { call: T; error?: Error } {
   const original = call;
-  if (original.name !== DEFERRED_TOOL_CALL_NAME) return { call };
+  // 用 registry 解析而不是逐字比较：OpenCode 免费档要求出站把 DeferredToolCall
+  // 改名成 Defer（与 LocalToolSearch 同现会被上游 429），模型回显的是别名。
+  if (registry.get(original.name)?.metadata.name !== DEFERRED_TOOL_CALL_NAME) return { call };
   const reject = (message: string) => ({
     call: original,
     error: createCoreError(CoreErrorType.ToolExecutionFailed, message, { recoverable: true }),

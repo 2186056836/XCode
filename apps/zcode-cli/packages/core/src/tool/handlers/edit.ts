@@ -254,6 +254,9 @@ export const editHandler: ToolHandler = async (input, context) => {
 
 export const editToolEntry: ToolEntry = {
   capability: "Replace exact text in a file through the file-system adapter",
+  // EditFile：OpenCode 免费档出站别名（工具名 edit + 参数 old_string/new_string
+  // 会被上游判为非官方客户端并返回 429），模型回调的别名在这里解析回 Edit。
+  aliases: ["EditFile"],
   metadata: {
     name: "Edit",
     description: EDIT_PROVIDER_DESCRIPTION,

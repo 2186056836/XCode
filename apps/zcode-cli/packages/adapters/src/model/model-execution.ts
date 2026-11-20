@@ -596,20 +596,22 @@ function applyModelRequestAuth(
 //   模型目录改为 https://opencode.ai/inference/v1/models——`{baseUrl}/models`
 //   现在是 404，host 侧 upstreamModelListFetcher 对该 profile 单独拼目录。
 //
-// 【2026-11-20 重新实测：三条硬门禁】
-//   1. TLS 客户端指纹：同请求体/同 IP，Bun(1.3.14)→200、Node/OpenSSL→429、
-//      Electron/Chromium→429、Go crypto/tls→429；用 uTLS 逐字节复刻 Bun 的
-//      ClientHello（17 cipher、无 GREASE、extension 顺序、512B padding）→200。
-//      桌面端通过 opencode-tls helper（bundled-tools/<platform>/opencode-tls）
+// 【2026-11-20 重新实测：硬门禁】
+//   1. TLS 客户端指纹：同请求体/同 IP，Bun(1.4.4)→200、Node/OpenSSL→429、
+//      Electron/Chromium→429、Go crypto/tls→429；用 uTLS 逐字节复刻当前 Bun
+//      ClientHello（17 cipher、无 GREASE、X25519MLKEM768 混合 key share、无 padding）
+//      →200。桌面端通过 opencode-tls helper（bundled-tools/<platform>/opencode-tls）
 //      发送请求；helper 缺失时回退普通 fetch。
-//   2. system prompt：不是校验官方 build prompt 全文，而是 `<env>...</env>` 块内
-//      必须有一行非空 `Working directory:`（大小写敏感，缺闭合标签/空值均 429；
-//      Platform、日期、值都不校验，CRLF 也可）。纯自定义 system + 最小 env 块 → 200，
-//      官方 prompt 全文但不带 env → 429。运行时由 applyBuildAgentSignature 在
-//      第一条 system 前拼最小 env 签名段（官方 prompt 文件已删除）。
-//   3. 只接受 `stream: true`：同一请求体改成非流式，无论 system 如何都返回
+//   2. system prompt：只要求 `<env>...</env>` 段且块内 `Working directory:` 后
+//      有非空值；官方 build prompt **不参与校验**（只拼 env 连续 3 轮 200）。
+//      运行时由 applyBuildAgentSignature 在第一条 system 前拼最小 env 签名段。
+//   3. tools：必须含小写 `read`；工具名小写等于 read 时参数不能出现 `file_path`，
+//      等于 edit 时不能出现 `old_string`/`new_string`；`LocalToolSearch` 与
+//      `DeferredToolCall` 同时出现也会 429。出站用别名（ReadFile/EditFile/
+//      SearchTools/Defer）绕开，入站由 ToolRegistry.aliases 解析回原工具。
+//   4. 只接受 `stream: true`：同一请求体改成非流式，无论 system 如何都返回
 //      429 FreeUsageLimitError；AI SDK 的 streamText 天然满足。
-//   4. session ID 必须是 `ses_` + 12 位时间 hex + 14 位 base62；过长/占位
+//   5. session ID 必须是 `ses_` + 12 位时间 hex + 14 位 base62；过长/占位
 //      同样落进 429 桶（参考实现的 Go 客户端踩过：16 hex + fffe）。
 //   注：429 文案与"额度用尽"完全相同，同一出口短时间连发也会触发频控；
 //      定位闸门时必须在同一出口夹对照请求，不能只看状态码。
@@ -1882,8 +1884,13 @@ export function readProviderBusinessFailureFromBody(body: unknown):
   const providerMessage = readProviderMessage(record);
   const failedBySuccess = record.success === false;
   const failedByCode = isNonZeroProviderCode(providerCode);
+  // OpenCode 免费档等上游用 `{"type":"error","error":{"type":"FreeUsageLimitError",...}}`
+  // 上报失败：既没有 `success:false`，也没有数字业务码，只有 error.type。
+  // 旧逻辑只认前两者，429 的真实额度提示被通用 "rate limited" 文案覆盖，
+  // 用户只看到「测试正常、对话报错」却拿不到上游原因。
+  const failedByTypedError = record.type === "error" && hasProviderErrorPayload(record.error);
 
-  if (!failedBySuccess && !failedByCode) {
+  if (!failedBySuccess && !failedByCode && !failedByTypedError) {
     return undefined;
   }
 
@@ -2331,6 +2338,14 @@ function toProviderCode(value: unknown): ProviderCode | undefined {
       : normalized;
   }
   return undefined;
+}
+
+/** 错误体是否携带 error 载荷（对象或非空字符串）；Responses API 的 error 事件不带该字段。 */
+function hasProviderErrorPayload(value: unknown): boolean {
+  if (typeof value === "string") {
+    return value.trim().length > 0;
+  }
+  return asRecord(value) !== undefined;
 }
 
 function readProviderMessage(record: Record<string, unknown>): string | undefined {

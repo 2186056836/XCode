@@ -17,7 +17,9 @@ const NO_MATCHING_TOOLS_MESSAGE =
 
 export const toolSearchToolEntry: ToolEntry = {
   capability: "Search available tools and load their definitions",
-  aliases: [LOCAL_TOOL_SEARCH_NAME],
+  // SearchTools：OpenCode 免费档出站别名（`LocalToolSearch` 与 DeferredToolCall
+  // 同时出现会触发上游 429），模型回调的名字在这里解析回本工具。
+  aliases: [LOCAL_TOOL_SEARCH_NAME, "SearchTools"],
   metadata: {
     name: TOOL_SEARCH_NAME,
     // 模型侧说明使用固定文案；schema 展开由 provider 处理，客户端仍只返回真实引用。
