@@ -13,6 +13,15 @@
 
 XCode is an AI coding workspace with desktop, browser, and terminal interfaces. This repository contains the clients, backend services, shared UI, and Agent CLI and runtime source code.
 
+## Fork Features
+
+This repository is an enhanced fork of ZCode. Building on the upstream multi-platform capabilities, it focuses on:
+
+- **Model jailbreak**: 7 built-in identity templates (Default XCODE, Unrestricted, Red Team, Xiaomei CTF, Xiaoyu Security, XiaoHong Creation, Fujiang), with session-level identity switching, custom templates, `{{name}}` assistant-name placeholders, PreFill priming turns, and Parseltongue input obfuscation (Light / Standard / Heavy).
+- **Free models & provider integrations**: built-in OpenCode Free, Kilo Free, and Mouming AI; CodeBuddy / Qoder account login and check-in; Codex client masquerade; bulk upstream model import and reasoning-level configuration.
+- **Custom skins**: color and background overrides applied at startup, Skin Studio presets, and DreamSkin theme import.
+- **Dual pet systems**: classic pets plus DSH desktop pets with overlay, ready-to-use core actions, downloadable asset packs, custom pet packs, and the bundled RuanTang font.
+
 ## Updates
 
 - **2026-11-12**: Updated to XCode v3.18.2.
