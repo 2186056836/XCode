@@ -18,6 +18,11 @@ export interface GodmodeTemplate {
   family: string;
   /** 越狱策略名。 */
   strategy: string;
+  /**
+   * 内置模板的默认助手名字：应用模板时替换提示词 / PreFill 里的 `{{name}}`。
+   * 设置页「编辑」会把它预填到「助手名字」输入框。
+   */
+  assistantName?: string;
   /** 整段 system 提示词，填入 cliPrefix。 */
   prompt: string;
 }

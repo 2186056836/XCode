@@ -9,7 +9,11 @@ import type {
   CommandPayloadMap,
   CommandResult,
 } from "@zcode/shared/zcode-protocol-v4";
-import { GODMODE_TEMPLATES, PREFILL_TEMPLATES } from "@zcode/shared";
+import {
+  GODMODE_TEMPLATES,
+  PREFILL_TEMPLATES,
+  resolvePersonaTemplateText,
+} from "@zcode/shared";
 import { V4CommandNoopError } from "../../v4-gateway.js";
 import { runSessionModelConfigMutation } from "../../model-config-mutation.js";
 import { requireRecord } from "../record-access.js";
@@ -379,12 +383,19 @@ function applyPersonaConfig(
         ? PREFILL_TEMPLATES.find((item) => item.id === templateId)
         : undefined;
       overrides = {
-        cliPrefix: promptTemplate.prompt,
+        // 内置模板的默认助手名字（prompt frontmatter）在这里展开 {{name}}。
+        cliPrefix: resolvePersonaTemplateText(promptTemplate.prompt, promptTemplate.assistantName),
         ...(prefillTemplate
           ? {
               prefill: {
                 enabled: true,
-                messages: prefillTemplate.messages.map((message) => ({ ...message })),
+                messages: prefillTemplate.messages.map((message) => ({
+                  ...message,
+                  content: resolvePersonaTemplateText(
+                    message.content,
+                    promptTemplate.assistantName,
+                  ),
+                })),
               },
             }
           : {}),

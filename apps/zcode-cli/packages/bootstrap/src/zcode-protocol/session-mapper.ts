@@ -1,5 +1,6 @@
 import {
   GODMODE_TEMPLATES,
+  resolvePersonaTemplateText,
   ZCODE_PROTOCOL_NAME,
   ZCODE_PROTOCOL_VERSION,
   getZCodeGoalActiveIterationCount,
@@ -273,7 +274,11 @@ export async function mapSessionSettings(
   const matchedTemplateId =
     explicitTemplateId ??
     (activePrefix
-      ? (GODMODE_TEMPLATES.find((template) => template.prompt.trim() === activePrefix)?.id ?? null)
+      ? (GODMODE_TEMPLATES.find(
+          (template) =>
+            resolvePersonaTemplateText(template.prompt, template.assistantName).trim() ===
+            activePrefix,
+        )?.id ?? null)
       : null);
   return {
     mode: {

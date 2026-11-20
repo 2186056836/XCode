@@ -33,6 +33,7 @@ import {
   type ZCodeProvider,
   GODMODE_TEMPLATES,
   resolvePersonaTemplatePlaceholders,
+  resolvePersonaTemplateText,
 } from "@zcode/shared";
 import { TID_V4_MODEL_CONFIG, TID_V4_COMPOSER_INPUT } from "@zcode/shared/test-ids";
 import type {
@@ -1587,9 +1588,16 @@ function V4ComposerModelControlsImpl({
     // 全局身份当前命中哪套模板（含用户自定义模板），只用于「跟随全局」的副标签。
     const globalPrefix = globalCustomSystemMessages?.cliPrefix?.trim() ?? "";
     const globalTemplateName = globalPrefix
-      ? (GODMODE_TEMPLATES.find((template) => template.prompt.trim() === globalPrefix)?.name ??
-        customPersonaTemplates.find((template) => template.cliPrefix.trim() === globalPrefix)
-          ?.name ??
+      ? (GODMODE_TEMPLATES.find(
+          (template) =>
+            resolvePersonaTemplateText(template.prompt, template.assistantName).trim() ===
+            globalPrefix,
+        )?.name ??
+        customPersonaTemplates.find(
+          (template) =>
+            resolvePersonaTemplateText(template.cliPrefix, template.assistantName).trim() ===
+            globalPrefix,
+        )?.name ??
         customLabel)
       : null;
     const items = [

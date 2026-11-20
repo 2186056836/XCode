@@ -46,12 +46,16 @@ export function GodmodeTemplatePresets() {
     await update({
       customSystemMessages: {
         ...settings?.customSystemMessages,
-        cliPrefix: selected.prompt,
+        // 内置模板自带默认助手名字（如「无限制模式」= 小美），应用时展开 {{name}}。
+        cliPrefix: resolvePersonaTemplateText(selected.prompt, selected.assistantName),
         ...(prefill
           ? {
               prefill: {
                 enabled: true,
-                messages: prefill.messages.map((message) => ({ ...message })),
+                messages: prefill.messages.map((message) => ({
+                  ...message,
+                  content: resolvePersonaTemplateText(message.content, selected.assistantName),
+                })),
               },
             }
           : {}),
@@ -65,8 +69,9 @@ export function GodmodeTemplatePresets() {
     const prefill = PREFILL_TEMPLATES.find((template) => template.id === selected.id);
     setEditorInitial({
       name: selected.name,
-      // 内置模板没有保存过助手名字；用户本次填写的会在这里展开后写回全局。
-      assistantName: "",
+      // 内置模板的默认助手名字（来自 prompt frontmatter）预填到输入框；
+      // 提示词原文保留 {{name}}，保存时按这里的值展开。
+      assistantName: selected.assistantName ?? "",
       cliPrefix: selected.prompt,
       prefill: clonePrefillMessages(prefill?.messages),
     });

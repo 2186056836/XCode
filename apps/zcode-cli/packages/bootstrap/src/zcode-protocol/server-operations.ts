@@ -62,6 +62,7 @@ import {
   DEFAULT_XCODE_MODEL_CONTEXT_BUDGET_STRATEGY,
   GODMODE_TEMPLATES,
   PREFILL_TEMPLATES,
+  resolvePersonaTemplateText,
   ZCODE_SESSION_RUNTIME_PREFERENCES_REQUEST_TIMEOUT_MS,
   zcodeProtocolErrorCodes,
   zcodeProtocolMethods,
@@ -3192,12 +3193,19 @@ export async function setPersona(context: ZCodeProtocolAgentServerContext, rawPa
       }
       const prefillTemplate = PREFILL_TEMPLATES.find((item) => item.id === templateId);
       overrides = {
-        cliPrefix: promptTemplate.prompt,
+        // 内置模板的默认助手名字（prompt frontmatter）在这里展开 {{name}}。
+        cliPrefix: resolvePersonaTemplateText(promptTemplate.prompt, promptTemplate.assistantName),
         ...(prefillTemplate
           ? {
               prefill: {
                 enabled: true,
-                messages: prefillTemplate.messages.map((message) => ({ ...message })),
+                messages: prefillTemplate.messages.map((message) => ({
+                  ...message,
+                  content: resolvePersonaTemplateText(
+                    message.content,
+                    promptTemplate.assistantName,
+                  ),
+                })),
               },
             }
           : {}),

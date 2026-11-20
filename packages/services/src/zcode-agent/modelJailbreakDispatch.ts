@@ -15,6 +15,7 @@ import {
   GODMODE_TEMPLATES,
   PREFILL_TEMPLATES,
   resolvePersonaTemplatePlaceholders,
+  resolvePersonaTemplateText,
   zcodeModelJailbreakApplyTemplateParamsSchema,
   zcodeModelJailbreakSetObfuscationParamsSchema,
   zcodeModelJailbreakSetPrefillParamsSchema,
@@ -66,9 +67,12 @@ function buildState(
   settings: CustomSystemMessagesSettings | undefined,
 ): ZCodeModelJailbreakProtocolSnapshot["state"] {
   const cliPrefix = settings?.cliPrefix?.trim() ?? "";
-  // 当前身份提示词与某个模板正文逐字相同时，认为「套用了该模板」。
+  // 当前身份提示词与某个模板（展开 {{name}} 后）正文逐字相同时，认为「套用了该模板」。
   const applied = cliPrefix
-    ? (GODMODE_TEMPLATES.find((template) => template.prompt === cliPrefix)?.id ?? null)
+    ? (GODMODE_TEMPLATES.find(
+        (template) =>
+          resolvePersonaTemplateText(template.prompt, template.assistantName).trim() === cliPrefix,
+      )?.id ?? null)
     : null;
   const prefillMessages = settings?.prefill?.messages ?? [];
   return {
@@ -165,14 +169,17 @@ export async function dispatchModelJailbreakRequest(
         );
       }
       const current = settings.customSystemMessages ?? {};
-      // 自定义模板应用时展开 {{name}}（助手名字）；内置模板没有该变量，原样写入。
+      // 内置模板与应用时一样展开 {{name}}：内置模板的默认助手名字来自 prompt
+      // frontmatter（如「无限制模式」= 小美），自定义模板来自 assistantName。
       const resolvedCustom = customTemplate
         ? resolvePersonaTemplatePlaceholders(customTemplate)
         : undefined;
       await store.update({
         customSystemMessages: {
           ...current,
-          cliPrefix: template?.prompt ?? resolvedCustom!.cliPrefix,
+          cliPrefix: template
+            ? resolvePersonaTemplateText(template.prompt, template.assistantName)
+            : resolvedCustom!.cliPrefix,
           ...(template
             ? (() => {
                 const prefillTemplate = PREFILL_TEMPLATES.find(
@@ -184,6 +191,10 @@ export async function dispatchModelJailbreakRequest(
                         enabled: true,
                         messages: prefillTemplate.messages.map((message) => ({
                           ...message,
+                          content: resolvePersonaTemplateText(
+                            message.content,
+                            template.assistantName,
+                          ),
                         })),
                       },
                     }

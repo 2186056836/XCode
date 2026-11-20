@@ -117,7 +117,11 @@ export const ${name}_TEMPLATE: GodmodeTemplate = {
   id: "${id}",
   name: ${JSON.stringify(prompt.fields.name)},
   family: ${JSON.stringify(prompt.fields.family)},
-  strategy: ${JSON.stringify(prompt.fields.strategy)},
+  strategy: ${JSON.stringify(prompt.fields.strategy)},${
+    prompt.fields.assistantName
+      ? `\n  assistantName: ${JSON.stringify(prompt.fields.assistantName)},`
+      : ""
+  }
   prompt: \`${escapeTemplateLiteral(prompt.body)}\`,
 };
 ${prefillExport}`;
