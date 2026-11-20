@@ -7,10 +7,11 @@
 // 流式写回响应。
 //
 // 协议（每进程一个请求）：
-//   stdin 一行 JSON: {method, url, headers: [[name,value],...], body: base64}
-//   stdout 一行 JSON: {status, statusText, headers: [[name,value],...]}
-//   之后是解压后的响应体字节（已去掉 Content-Encoding / Content-Length /
-//   Transfer-Encoding）。
+//
+//	stdin 一行 JSON: {method, url, headers: [[name,value],...], body: base64}
+//	stdout 一行 JSON: {status, statusText, headers: [[name,value],...]}
+//	之后是解压后的响应体字节（已去掉 Content-Encoding / Content-Length /
+//	Transfer-Encoding）。
 package main
 
 import (
@@ -162,8 +163,68 @@ func fail(message string) {
 	os.Exit(1)
 }
 
+// resolveProxy 读取出口代理。显式 OPENCODE_TLS_PROXY 优先，其次标准 HTTPS_PROXY。
+// 只支持 HTTP CONNECT：TLS 仍由本进程端到端发起，代理看不到也无法改变 ClientHello。
+func resolveProxy() string {
+	for _, key := range []string{"OPENCODE_TLS_PROXY", "HTTPS_PROXY", "https_proxy"} {
+		if value := strings.TrimSpace(os.Getenv(key)); value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+// dialTCP 直连或经 HTTP CONNECT 代理建立到目标的 TCP 隧道。
+func dialTCP(address string) (net.Conn, error) {
+	proxy := resolveProxy()
+	if proxy == "" {
+		return net.DialTimeout("tcp", address, 20*time.Second)
+	}
+	parsed, err := url.Parse(proxy)
+	if err != nil {
+		return nil, fmt.Errorf("parse proxy: %w", err)
+	}
+	if parsed.Scheme != "http" {
+		return nil, fmt.Errorf("unsupported proxy scheme %q (only http CONNECT)", parsed.Scheme)
+	}
+	proxyAddress := parsed.Host
+	if parsed.Port() == "" {
+		proxyAddress = net.JoinHostPort(parsed.Hostname(), "80")
+	}
+	conn, err := net.DialTimeout("tcp", proxyAddress, 20*time.Second)
+	if err != nil {
+		return nil, fmt.Errorf("proxy dial: %w", err)
+	}
+	_ = conn.SetDeadline(time.Now().Add(30 * time.Second))
+	var builder strings.Builder
+	builder.WriteString("CONNECT " + address + " HTTP/1.1\r\nHost: " + address + "\r\n")
+	if parsed.User != nil {
+		password, _ := parsed.User.Password()
+		credentials := base64.StdEncoding.EncodeToString([]byte(parsed.User.Username() + ":" + password))
+		builder.WriteString("Proxy-Authorization: Basic " + credentials + "\r\n")
+	}
+	builder.WriteString("\r\n")
+	if _, err := io.WriteString(conn, builder.String()); err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("proxy connect: %w", err)
+	}
+	response, err := http.ReadResponse(bufio.NewReader(conn), &http.Request{Method: http.MethodConnect})
+	if err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("proxy response: %w", err)
+	}
+	if response.StatusCode != http.StatusOK {
+		response.Body.Close()
+		conn.Close()
+		return nil, fmt.Errorf("proxy CONNECT rejected: %s", response.Status)
+	}
+	// 200 时 ReadResponse 会把 Body 指向隧道本身；不能 Close/读它，否则会破坏隧道。
+	_ = conn.SetDeadline(time.Time{})
+	return conn, nil
+}
+
 func dialTLS(address string, serverName string) (*utls.UConn, error) {
-	tcp, err := net.DialTimeout("tcp", address, 20*time.Second)
+	tcp, err := dialTCP(address)
 	if err != nil {
 		return nil, err
 	}

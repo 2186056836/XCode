@@ -34,6 +34,13 @@ stderr 出错时的可读原因
 
 只接受 `https://opencode.ai/...`，避免被当成任意 SSRF 通道。
 
+## 代理
+
+helper 默认直连。需要走 HTTP CONNECT 代理时设置 `OPENCODE_TLS_PROXY`
+（例如 `http://user:pass@127.0.0.1:7890`）；未设置时回退标准 `HTTPS_PROXY` /
+`https_proxy`。代理只转发 TCP 隧道，TLS 仍由本进程端到端发起，ClientHello
+指纹不受影响。仅支持 `http://` CONNECT（不支持 SOCKS）。
+
 ## 构建
 
 ```bash
