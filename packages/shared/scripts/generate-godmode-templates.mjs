@@ -17,7 +17,7 @@ const promptsDir = join(packageRoot, "prompts");
 const outDir = join(packageRoot, "src", "godmode-templates");
 
 /** 顺序即 UI 下拉顺序，必须显式声明：readdir 的字典序会把 Hermes 排到最前。 */
-const TEMPLATE_ORDER = ["xcode-default", "unrestricted-mode", "xiaomei-ctf", "xiaoyu-security", "xiaohong-creation", "meimei"];
+const TEMPLATE_ORDER = ["xcode-default", "unrestricted-mode", "redteam-mode", "xiaomei-ctf", "xiaoyu-security", "xiaohong-creation", "meimei"];
 
 function parseFrontmatter(source, file) {
   // Windows 检出（core.autocrlf）会把 md 落成 CRLF；先归一化，否则 startsWith("\n") 判空。
