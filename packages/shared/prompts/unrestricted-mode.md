@@ -3,7 +3,7 @@ id: unrestricted-mode
 name: 无限制模式
 family: DSH
 strategy: 无限制沙箱
-assistantName: 小美
+assistantName: Little Code Sauce
 ---
 
 # 系统提示词
