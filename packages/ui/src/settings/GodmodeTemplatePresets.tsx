@@ -1,4 +1,4 @@
-import { resolvePersonaTemplateText } from "@zcode/shared";
+import { resolveBuiltinPersonaTemplate, resolvePersonaTemplateText } from "@zcode/shared";
 import { useState } from "react";
 import { PencilIcon } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
@@ -22,8 +22,10 @@ import { GODMODE_TEMPLATES, PREFILL_TEMPLATES } from "@/settings/godmodeTemplate
  * `customSystemMessages.cliPrefix` 与 `customSystemMessages.prefill`，避免两套
  * 下拉框各选一次、还可能选到不配套的组合。
  *
- * 「编辑」把选中的内置模板按当前内容摊到表单里，改完保存同样写回全局；内置模板
- * 本身是代码常量，这里改的是写进 setting.json 的那一份。
+ * 每个内置模板有独立槽位（`builtinPersonaOverrides[id]`）：「编辑」摊开的是该模板
+ * 当前生效的内容（槽位优先、代码常量兜底），保存只写回这个槽位；只有正在生效的
+ * 就是这个模板时才同步全局配置。内置模板本身是代码常量，槽位是写进 setting.json
+ * 的那一份，应用/切换时按「槽位优先」解析。
  */
 export function GodmodeTemplatePresets() {
   const { intl } = useZCodeIntl();
@@ -42,23 +44,14 @@ export function GodmodeTemplatePresets() {
 
   const applyTemplate = async () => {
     if (!selected) return;
-    const prefill = PREFILL_TEMPLATES.find((template) => template.id === selected.id);
+    // 槽位优先、代码常量兜底：用户在设置页改过的内置模板应用改动后的版本。
+    const resolved = resolveBuiltinPersonaTemplate(selected.id, settings?.builtinPersonaOverrides);
+    if (!resolved) return;
     await update({
       customSystemMessages: {
         ...settings?.customSystemMessages,
-        // 内置模板自带默认助手名字（如「无限制模式」= 小美），应用时展开 {{name}}。
-        cliPrefix: resolvePersonaTemplateText(selected.prompt, selected.assistantName),
-        ...(prefill
-          ? {
-              prefill: {
-                enabled: true,
-                messages: prefill.messages.map((message) => ({
-                  ...message,
-                  content: resolvePersonaTemplateText(message.content, selected.assistantName),
-                })),
-              },
-            }
-          : {}),
+        cliPrefix: resolved.cliPrefix,
+        ...(resolved.prefill ? { prefill: resolved.prefill } : {}),
       },
     });
     toast(intl.formatMessage({ id: "settings.modelJailbreak.templateApplied" }));
@@ -66,14 +59,19 @@ export function GodmodeTemplatePresets() {
 
   const openEditor = () => {
     if (!selected) return;
+    const override = settings?.builtinPersonaOverrides?.[selected.id];
     const prefill = PREFILL_TEMPLATES.find((template) => template.id === selected.id);
     setEditorInitial({
       name: selected.name,
       // 内置模板的默认助手名字（来自 prompt frontmatter）预填到输入框；
       // 提示词原文保留 {{name}}，保存时按这里的值展开。
       assistantName: selected.assistantName ?? "",
-      cliPrefix: selected.prompt,
-      prefill: clonePrefillMessages(prefill?.messages),
+      // 该模板已有用户槽位时摊开槽位内容（已是展开后的正文），否则用代码常量。
+      cliPrefix: override?.cliPrefix ?? selected.prompt,
+      prefill:
+        override?.prefill?.messages && override.prefill.messages.length > 0
+          ? clonePrefillMessages(override.prefill.messages)
+          : clonePrefillMessages(prefill?.messages),
     });
     setEditorOpen(true);
   };
@@ -88,17 +86,40 @@ export function GodmodeTemplatePresets() {
         content: resolvePersonaTemplateText(message.content.trim(), assistantName),
       }))
       .filter((message) => message.content.length > 0);
+    const cliPrefix = resolvePersonaTemplateText(draft.cliPrefix, assistantName);
+    // 每个内置模板一个独立槽位：编辑非当前人设只更新它的槽位，不再覆盖全局。
+    const nextOverrides = {
+      ...(settings?.builtinPersonaOverrides ?? {}),
+      [selectedId]: {
+        cliPrefix,
+        // 模板没有 PreFill（例如「默认XCODE」）时不清空当前槽位里的 PreFill：
+        // 用户可能只改了提示词，要停用 PreFill 用上面的「全局 PreFill」开关。
+        ...(messages.length > 0 ? { prefill: { enabled: true, messages } } : {}),
+      },
+    };
+    // 只有「正在生效的就是这个模板」时才同步全局配置，让改动立刻生效；
+    // 否则只存槽位，等用户以后切换/应用该模板时再读取。
+    const resolvedBefore = resolveBuiltinPersonaTemplate(
+      selectedId,
+      settings?.builtinPersonaOverrides,
+    );
+    const globalPrefix = settings?.customSystemMessages?.cliPrefix?.trim() ?? "";
+    const isActive = Boolean(
+      resolvedBefore && globalPrefix && resolvedBefore.cliPrefix.trim() === globalPrefix,
+    );
     setSaving(true);
     try {
       await update({
-        customSystemMessages: {
-          // 与「使用」同构：只换提示词与 PreFill，混淆等其它字段保持当前值。
-          ...settings?.customSystemMessages,
-          cliPrefix: resolvePersonaTemplateText(draft.cliPrefix, assistantName),
-          // 模板没有 PreFill（例如「默认XCODE」）时不清空当前配置：用户可能只改了
-          // 提示词，要停用 PreFill 用上面的「全局 PreFill」开关。
-          ...(messages.length > 0 ? { prefill: { enabled: true, messages } } : {}),
-        },
+        builtinPersonaOverrides: nextOverrides,
+        ...(isActive
+          ? {
+              customSystemMessages: {
+                ...settings?.customSystemMessages,
+                cliPrefix,
+                ...(messages.length > 0 ? { prefill: { enabled: true, messages } } : {}),
+              },
+            }
+          : {}),
       });
       toast(intl.formatMessage({ id: "settings.modelJailbreak.templates.edited" }));
       setEditorOpen(false);

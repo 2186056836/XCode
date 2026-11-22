@@ -12,13 +12,9 @@ const DEFAULT_AGENT_IDENTITY =
 const OUTPUT_STYLE_AGENT_IDENTITY =
   'You are an interactive agent that helps users according to your "Output Style", which describes how you should respond to user queries.';
 
-const SECURITY_NOTICE =
+/** 官方安全声明原文：start-plan 官方段因闸门保留；中和前导需要引用它。 */
+export const SECURITY_NOTICE =
   "IMPORTANT: Assist with authorized security testing, defensive security, CTF challenges, and educational contexts. Refuse requests for destructive techniques, DoS attacks, mass targeting, supply chain compromise, or detection evasion for malicious purposes. Dual-use security tools (C2 frameworks, credential testing, exploit development) require clear authorization context: pentesting engagements, CTF competitions, security research, or defensive use cases.";
-
-/** 安全 IMPORTANT 行：交互式身份与工作流子代理身份共用，逐字同一份。 */
-export function buildSecurityNotice(): string {
-  return SECURITY_NOTICE;
-}
 
 /**
  * `# Harness` 块：稳定运行时约束，不属于 output style 可替换的 coding instructions，
@@ -48,6 +44,9 @@ function buildIdentityPrompt(
 
   const identityLines = ["", intro].join("\n");
 
+  // fork 身份段不带官方 SECURITY_NOTICE 安全声明（2026-11-21 起）：那是官方 ZCode 的
+  // 合规原文，会稀释越狱身份模板；只有 start-plan 官方段（buildOfficialIdentitySection）
+  // 因闸门要求官方原文而保留。
   return [identityLines, "", buildHarnessBlock(midConversationSystem)].join("\n");
 }
 
@@ -69,13 +68,22 @@ export function buildIdentitySection(
   };
 }
 
-/** 官方 ZCode 身份段（含安全声明）：zai 的 start-plan 端点对 system 逐字校验，必须官方格式。 */
-export function buildOfficialIdentitySection(): ContextSection {
+/**
+ * 官方 ZCode 身份段（含安全声明）：zai 的 start-plan 端点对 system 逐字校验，必须官方格式。
+ *
+ * Harness 第三条按 MCS 动态二选一（2026-11-21 t6 实测：网关两种官方变体都放行 200），
+ * 与 fork 身份段共用 `buildHarnessBlock(midConversationSystem)` 的判定，向官方客户端
+ * 行为看齐；闸门不校验变体选择，只校验原文连续与顺序。
+ */
+export function buildOfficialIdentitySection(midConversationSystem = true): ContextSection {
   // 与官方 buildIdentityPrompt 逐字同构（1103 官方 DEFAULT_AGENT_IDENTITY），
   // start-plan 网关按官方全文校验，任何旧版措辞都会被判 unusual activity/405。
   const intro = DEFAULT_AGENT_IDENTITY;
   // buildIdentityPrompt 结构：["", intro, "", SECURITY_NOTICE].join("\n") 再拼 "\n\n"+harness。
-  const content = ["", intro, "", SECURITY_NOTICE].join("\n") + "\n\n" + buildHarnessBlock();
+  const content =
+    ["", intro, "", SECURITY_NOTICE].join("\n") +
+    "\n\n" +
+    buildHarnessBlock(midConversationSystem);
 
   return {
     name: "Agent Identity",

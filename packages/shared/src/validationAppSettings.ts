@@ -587,6 +587,30 @@ export type CustomPersonaTemplate = z.infer<typeof customPersonaTemplateSchema>;
 export const customPersonaTemplatesSchema = z.array(customPersonaTemplateSchema).max(50);
 
 /**
+ * XCode fork：内置身份模板的用户改动槽位（按模板 id 存）。
+ *
+ * 旧行为把「编辑非当前人设并保存」直接写成全局 `customSystemMessages`（等于立刻切换
+ * 全局人设，并覆盖原来那份）。改成独立槽位后：设置页编辑只写这里；应用/切换模板时
+ * 按「槽位优先、代码常量兜底」解析；只有当前生效的模板被编辑时才同步全局配置。
+ * 正文字段存展开 `{{name}}` 后的内容（与「使用」写入全局的形态一致）。
+ */
+export const builtinPersonaOverrideSchema = z
+  .object({
+    cliPrefix: z.string().max(65535).optional(),
+    prefill: modelJailbreakPrefillSettingsSchema.optional(),
+  })
+  .strict();
+
+export const builtinPersonaOverridesSchema = z
+  .record(z.string().min(1).max(100), builtinPersonaOverrideSchema)
+  .refine((value) => Object.keys(value).length <= 50, {
+    message: "too many builtin persona overrides",
+  });
+
+export type BuiltinPersonaOverride = z.infer<typeof builtinPersonaOverrideSchema>;
+export type BuiltinPersonaOverrides = z.infer<typeof builtinPersonaOverridesSchema>;
+
+/**
  * 背景图 data URL 的字符上限，与 customSkinSchema 的 max 同源。
  * 注意这是 base64 编码后的长度：编码会比原文件膨胀约 4/3，所以按原文件大小
  * 做预检会放行 7.5MB 以上的图、保存时才被 Zod 打回来（用户只看到"保存失败"）。
@@ -908,6 +932,7 @@ const appSettingsObjectSchema = z.object({
   zcodeEndpointOrigin: zcodeEndpointOriginSchema.optional(),
   customSystemMessages: customSystemMessagesSchema.optional(),
   customPersonaTemplates: customPersonaTemplatesSchema.optional(),
+  builtinPersonaOverrides: builtinPersonaOverridesSchema.optional(),
   // null = 显式移除皮肤、回退官方主题（RPC/JSON 会吞 undefined，清空必须走 null）。
   customSkin: customSkinSchema.nullable().optional(),
   // 代理池：条目数组 + 策略 + 选中项。用 optional 而非 default，避免老 setting.json
@@ -1029,6 +1054,7 @@ export const appSettingsPatchSchema = z.object({
   zcodeEndpointOrigin: zcodeEndpointOriginSchema.optional(),
   customSystemMessages: customSystemMessagesSchema.optional(),
   customPersonaTemplates: customPersonaTemplatesSchema.optional(),
+  builtinPersonaOverrides: builtinPersonaOverridesSchema.optional(),
   // null = 显式移除皮肤、回退官方主题（RPC/JSON 会吞 undefined，清空必须走 null）。
   customSkin: customSkinSchema.nullable().optional(),
   // 代理池整块替换语义：UI 与服务层都按「读-改-写」提交完整 ProxyPoolSettings，

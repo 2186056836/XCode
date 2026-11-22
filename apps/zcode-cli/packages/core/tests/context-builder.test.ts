@@ -1519,19 +1519,18 @@ describe("context builder — workflow actor identity", () => {
     }).build();
     const text = result.systemMessages.map((message) => String(message.content)).join("\n");
 
-    // 开场句 → persona → 安全行 → Harness → 契约，且顺序固定。
+    // 开场句 → persona → Harness → 契约，且顺序固定；fork 身份段不带官方安全声明。
     const opening = text.indexOf(
       'You are a subagent inside a dynamic workflow run, named "reviewer".',
     );
     const persona = text.indexOf("You are a strict reviewer.");
-    const security = text.indexOf("IMPORTANT: Assist with authorized security testing");
     const harness = text.indexOf("# Harness");
     const contract = text.indexOf("# Working inside a workflow");
     expect(opening).toBeGreaterThanOrEqual(0);
     expect(opening).toBeLessThan(persona);
-    expect(persona).toBeLessThan(security);
-    expect(security).toBeLessThan(harness);
+    expect(persona).toBeLessThan(harness);
     expect(harness).toBeLessThan(contract);
+    expect(text).not.toContain("IMPORTANT: Assist with authorized security testing");
 
     // 基座里保住的纪律。
     expect(text).toContain("Reference code as `file_path:line_number`");
@@ -1680,12 +1679,13 @@ describe("context builder — workflow actor identity", () => {
     ).toThrow(/mutually exclusive/);
   });
 
-  it("keeps the general-purpose main identity before the security and harness sections", () => {
+  it("keeps the general-purpose main identity before the harness section", () => {
     const text = systemText({ workingDirectory: "/workspace", envInfo });
+    // fork 身份段不带官方 SECURITY_NOTICE（只有 start-plan 官方段保留）。
     expect(text).toContain(
-      "\nYou are an agent working with the user toward their goals, using your own judgment along the way.\n\nIMPORTANT: Assist with authorized security testing",
+      "\nYou are an agent working with the user toward their goals, using your own judgment along the way.\n\n# Harness",
     );
-    expect(text).toContain("\n\n# Harness\n - Text you output outside of tool use");
+    expect(text).not.toContain("IMPORTANT: Assist with authorized security testing");
   });
 });
 

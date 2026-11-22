@@ -236,7 +236,7 @@ export const OFFICIAL_PLUGIN_DEFINITIONS: readonly OfficialPluginDefinition[] = 
     ],
     // 插件 package/manifest 升版时遗漏官方 seed 版本，会继续加载旧缓存目录。
     // package、manifest、definition 三处版本应保持一致，避免发布内容和安装版本再次分叉。
-    version: "0.5.1",
+    version: "0.5.2",
   },
   ...(
     [
@@ -296,7 +296,7 @@ export const OFFICIAL_PLUGIN_DEFINITIONS: readonly OfficialPluginDefinition[] = 
       "../../image-search-plugin",
       "../../../image-search-plugin",
     ],
-    version: "0.1.1",
+    version: "0.1.2",
   },
   {
     listing: {
@@ -526,7 +526,7 @@ export const OFFICIAL_PLUGIN_DEFINITIONS: readonly OfficialPluginDefinition[] = 
       "dist/server.mjs",
       "dist/ui/panel.html",
     ],
-    version: "0.5.0",
+    version: "0.5.1",
   },
 ];
 

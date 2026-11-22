@@ -373,6 +373,27 @@ function applyPersonaConfig(
     }
     case "template": {
       const templateId = persona.templateId;
+      // UI 解析好的内置模板内容（槽位优先、常量兜底）优先；缺省回退代码常量。
+      const provided = persona.template?.id === templateId ? persona.template : undefined;
+      if (provided) {
+        const prefillMessages = provided.prefill?.messages ?? [];
+        overrides = {
+          cliPrefix: provided.cliPrefix,
+          ...(prefillMessages.length > 0
+            ? {
+                prefill: {
+                  enabled: provided.prefill?.enabled !== false,
+                  messages: prefillMessages.map((message) => ({
+                    role: message.role,
+                    content: message.content,
+                  })),
+                },
+              }
+            : {}),
+        };
+        record.personaOverride = templateId;
+        break;
+      }
       const promptTemplate = templateId
         ? GODMODE_TEMPLATES.find((item) => item.id === templateId)
         : undefined;

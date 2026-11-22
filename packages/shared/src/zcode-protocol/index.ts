@@ -4851,6 +4851,31 @@ export const zcodeSessionSetPersonaParamsSchema = z
       })
       .strict()
       .optional(),
+    /**
+     * personaMode=template 时由调用方（UI 持有设置快照）提供解析后的内置模板内容：
+     * 槽位优先、代码常量兜底由 UI 侧 resolveBuiltinPersonaTemplate 完成。
+     * 缺省时 host 回退到代码常量（兼容旧调用方与 agent 工具）。
+     */
+    template: z
+      .object({
+        id: nonEmptyString,
+        cliPrefix: z.string().max(65535),
+        prefill: z
+          .object({
+            enabled: z.boolean().optional(),
+            messages: z
+              .array(
+                z
+                  .object({ role: z.enum(["user", "assistant"]), content: z.string() })
+                  .strict(),
+              )
+              .optional(),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .optional(),
     expectedRevision: z.number().int().nonnegative().optional(),
   })
 

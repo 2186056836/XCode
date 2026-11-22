@@ -5166,6 +5166,7 @@ export function SessionPane({
           ...(workspaceIdentity ? { workspaceIdentity } : {}),
           personaMode: persona.mode,
           ...(persona.templateId ? { templateId: persona.templateId } : {}),
+          ...(persona.template ? { template: persona.template } : {}),
           ...(persona.inherited ? { inherited: persona.inherited } : {}),
           ...(persona.custom ? { custom: persona.custom } : {}),
         });

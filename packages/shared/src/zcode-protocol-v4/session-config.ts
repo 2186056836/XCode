@@ -59,6 +59,30 @@ export const sessionPersonaConfigSchema = z
       })
       .strict()
       .optional(),
+    /**
+     * template 模式下 UI 解析好的内置模板内容（槽位优先、代码常量兜底）。
+     * 缺省时 host 回退代码常量，兼容旧调用方。
+     */
+    template: z
+      .object({
+        id: z.string().min(1),
+        cliPrefix: z.string().max(65535),
+        prefill: z
+          .object({
+            enabled: z.boolean().optional(),
+            messages: z
+              .array(
+                z
+                  .object({ role: z.enum(["user", "assistant"]), content: z.string() })
+                  .strict(),
+              )
+              .optional(),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 

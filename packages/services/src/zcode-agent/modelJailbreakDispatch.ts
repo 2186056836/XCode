@@ -13,14 +13,14 @@
 import {
   GODMODE_DEFAULT_PREFILL,
   GODMODE_TEMPLATES,
-  PREFILL_TEMPLATES,
+  resolveBuiltinPersonaTemplate,
   resolvePersonaTemplatePlaceholders,
-  resolvePersonaTemplateText,
   zcodeModelJailbreakApplyTemplateParamsSchema,
   zcodeModelJailbreakSetObfuscationParamsSchema,
   zcodeModelJailbreakSetPrefillParamsSchema,
   zcodeModelJailbreakSetPromptParamsSchema,
   zcodeProtocolMethods,
+  type BuiltinPersonaOverrides,
   type CustomSystemMessagesSettings,
   type CustomPersonaTemplate,
   type ZCodeModelJailbreakProtocolSnapshot,
@@ -35,15 +35,18 @@ export const DEFAULT_IDENTITY_PROMPT = "You are XCode, an interactive coding age
 
 const DEFAULT_OBFUSCATION_TIER = "standard" as const;
 
-/** host 侧只需要能读写 customSystemMessages 这一块。 */
+/** host 侧只需要能读写 customSystemMessages 与其配套模板槽位。 */
 export interface ModelJailbreakSettingStore {
   get(): Promise<{
     customSystemMessages?: CustomSystemMessagesSettings;
     /** 用户自定义身份模板（设置页「模型越狱」里新建的）。 */
     customPersonaTemplates?: CustomPersonaTemplate[];
+    /** 内置模板的用户改动槽位（按模板 id）。 */
+    builtinPersonaOverrides?: BuiltinPersonaOverrides;
   }>;
   update(patch: {
     customSystemMessages?: CustomSystemMessagesSettings;
+    builtinPersonaOverrides?: BuiltinPersonaOverrides;
   }): Promise<unknown>;
 }
 
@@ -65,13 +68,16 @@ export function isModelJailbreakProtocolMethod(method: string): boolean {
 
 function buildState(
   settings: CustomSystemMessagesSettings | undefined,
+  builtinPersonaOverrides?: BuiltinPersonaOverrides,
 ): ZCodeModelJailbreakProtocolSnapshot["state"] {
   const cliPrefix = settings?.cliPrefix?.trim() ?? "";
-  // 当前身份提示词与某个模板（展开 {{name}} 后）正文逐字相同时，认为「套用了该模板」。
+  // 当前身份提示词与某个模板的解析结果（槽位优先、常量兜底）正文逐字相同时，
+  // 认为「套用了该模板」。
   const applied = cliPrefix
     ? (GODMODE_TEMPLATES.find(
         (template) =>
-          resolvePersonaTemplateText(template.prompt, template.assistantName).trim() === cliPrefix,
+          resolveBuiltinPersonaTemplate(template.id, builtinPersonaOverrides)?.cliPrefix.trim() ===
+          cliPrefix,
       )?.id ?? null)
     : null;
   const prefillMessages = settings?.prefill?.messages ?? [];
@@ -112,7 +118,7 @@ export async function dispatchModelJailbreakRequest(
     withTemplates: boolean,
   ): Promise<ModelJailbreakDispatchResult> => {
     const settings = await store.get();
-    const state = buildState(settings.customSystemMessages);
+    const state = buildState(settings.customSystemMessages, settings.builtinPersonaOverrides);
     return {
       ok: true,
       snapshot: {
@@ -174,32 +180,16 @@ export async function dispatchModelJailbreakRequest(
       const resolvedCustom = customTemplate
         ? resolvePersonaTemplatePlaceholders(customTemplate)
         : undefined;
+      // 内置模板：槽位优先（用户在设置页的改动），常量兜底。
+      const resolvedBuiltin = template
+        ? resolveBuiltinPersonaTemplate(template.id, settings.builtinPersonaOverrides)
+        : undefined;
       await store.update({
         customSystemMessages: {
           ...current,
-          cliPrefix: template
-            ? resolvePersonaTemplateText(template.prompt, template.assistantName)
-            : resolvedCustom!.cliPrefix,
-          ...(template
-            ? (() => {
-                const prefillTemplate = PREFILL_TEMPLATES.find(
-                  (item) => item.id === template.id,
-                );
-                return prefillTemplate
-                  ? {
-                      prefill: {
-                        enabled: true,
-                        messages: prefillTemplate.messages.map((message) => ({
-                          ...message,
-                          content: resolvePersonaTemplateText(
-                            message.content,
-                            template.assistantName,
-                          ),
-                        })),
-                      },
-                    }
-                  : {};
-              })()
+          cliPrefix: resolvedBuiltin ? resolvedBuiltin.cliPrefix : resolvedCustom!.cliPrefix,
+          ...(resolvedBuiltin?.prefill
+            ? { prefill: resolvedBuiltin.prefill }
             : resolvedCustom?.prefill
               ? { prefill: resolvedCustom.prefill }
               : {}),

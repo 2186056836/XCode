@@ -51,7 +51,9 @@ import {
   XIAOYU_SECURITY_TEMPLATE,
 } from "./godmode-templates/xiaoyu-security.generated.js";
 import { GODMODE_DEFAULT_PREFILL as DEFAULT_PREFILL_TURNS } from "./godmode-templates/default-prefill.generated.js";
-import { FUJIANG_TEMPLATE } from "./godmode-templates/fujiang.generated.js";
+import { FUJIANG_PREFILL, FUJIANG_TEMPLATE } from "./godmode-templates/fujiang.generated.js";
+import { resolvePersonaTemplateText } from "./personaTemplatePlaceholders.js";
+import type { BuiltinPersonaOverrides } from "./validationAppSettings.js";
 
 /**
  * 数组顺序即设置页/聊天选择器的展示顺序。
@@ -82,6 +84,7 @@ export const PREFILL_TEMPLATES: PrefillTemplate[] = [
   XIAOMEI_CTF_PREFILL,
   XIAOYU_SECURITY_PREFILL,
   XIAOHONG_CREATION_PREFILL,
+  FUJIANG_PREFILL,
 ];
 
 /** Parseltongue 输入混淆档位说明（供 UI 使用）。 */
@@ -90,3 +93,60 @@ export const ObfuscationTierLabels: Record<"light" | "standard" | "heavy", strin
   standard: "Standard",
   heavy: "Heavy",
 };
+
+/** 解析后的内置身份模板（提示词 + 可选 PreFill），应用/切换时直接写入会话配置。 */
+export interface ResolvedBuiltinPersona {
+  cliPrefix: string;
+  prefill?: {
+    enabled: boolean;
+    messages: PrefillTemplateMessage[];
+  };
+}
+
+/**
+ * 内置模板的统一解析：**槽位优先、代码常量兜底**。
+ *
+ * 设置页「编辑→保存」把改动写进 `builtinPersonaOverrides[id]`，不再直接覆盖全局
+ * customSystemMessages；应用（设置页「使用」）、会话切换、agent 工具三处都必须走
+ * 这里，避免各写一份「有槽位却读常量」的分叉。
+ *
+ * - cliPrefix：槽位正文（已展开 {{name}}）优先；否则展开模板常量。
+ * - prefill：槽位里有轮次就用槽位（enabled 缺省视为开）；否则用配套
+ *   `*.prefill.md` 常量（同样展开 {{name}}）；都没有则不带 prefill。
+ */
+export function resolveBuiltinPersonaTemplate(
+  templateId: string,
+  overrides?: BuiltinPersonaOverrides,
+): ResolvedBuiltinPersona | undefined {
+  const template = GODMODE_TEMPLATES.find((item) => item.id === templateId);
+  if (!template) return undefined;
+  const override = overrides?.[templateId];
+  const cliPrefix =
+    override?.cliPrefix?.trim() ||
+    resolvePersonaTemplateText(template.prompt, template.assistantName);
+  const overrideMessages = override?.prefill?.messages ?? [];
+  if (overrideMessages.length > 0) {
+    return {
+      cliPrefix,
+      prefill: {
+        enabled: override?.prefill?.enabled !== false,
+        messages: overrideMessages.map((message) => ({
+          role: message.role,
+          content: message.content,
+        })),
+      },
+    };
+  }
+  const prefillTemplate = PREFILL_TEMPLATES.find((item) => item.id === templateId);
+  if (!prefillTemplate) return { cliPrefix };
+  return {
+    cliPrefix,
+    prefill: {
+      enabled: true,
+      messages: prefillTemplate.messages.map((message) => ({
+        ...message,
+        content: resolvePersonaTemplateText(message.content, template.assistantName),
+      })),
+    },
+  };
+}

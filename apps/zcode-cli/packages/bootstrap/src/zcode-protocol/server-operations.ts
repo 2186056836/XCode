@@ -3184,6 +3184,28 @@ export async function setPersona(context: ZCodeProtocolAgentServerContext, rawPa
     }
     case "template": {
       const templateId = params.templateId as string;
+      // UI 持有设置快照：内置模板的用户槽位（builtinPersonaOverrides）由它解析后透传，
+      // 这里优先采用；缺省回退代码常量，兼容旧调用方与 agent 工具。
+      const provided = params.template?.id === templateId ? params.template : undefined;
+      if (provided) {
+        const prefillMessages = provided.prefill?.messages ?? [];
+        overrides = {
+          cliPrefix: provided.cliPrefix,
+          ...(prefillMessages.length > 0
+            ? {
+                prefill: {
+                  enabled: provided.prefill?.enabled !== false,
+                  messages: prefillMessages.map((message) => ({
+                    role: message.role,
+                    content: message.content,
+                  })),
+                },
+              }
+            : {}),
+        };
+        record.personaOverride = templateId;
+        break;
+      }
       const promptTemplate = GODMODE_TEMPLATES.find((item) => item.id === templateId);
       if (!promptTemplate) {
         throw new ProtocolRequestError(

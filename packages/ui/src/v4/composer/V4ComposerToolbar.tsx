@@ -32,6 +32,7 @@ import {
   type ZCodeConfigOption,
   type ZCodeProvider,
   GODMODE_TEMPLATES,
+  resolveBuiltinPersonaTemplate,
   resolvePersonaTemplatePlaceholders,
   resolvePersonaTemplateText,
 } from "@zcode/shared";
@@ -674,9 +675,30 @@ function V4ComposerModelControlsImpl({
           },
         };
       }
-      return { mode: "template" as const, templateId: value };
+      const resolvedBuiltin = resolveBuiltinPersonaTemplate(
+        value,
+        sharedSettings?.builtinPersonaOverrides,
+      );
+      return {
+        mode: "template" as const,
+        templateId: value,
+        // 槽位优先、常量兜底的结果随请求透传；host 缺省时回退代码常量。
+        ...(resolvedBuiltin
+          ? {
+              template: {
+                id: value,
+                cliPrefix: resolvedBuiltin.cliPrefix,
+                ...(resolvedBuiltin.prefill ? { prefill: resolvedBuiltin.prefill } : {}),
+              },
+            }
+          : {}),
+      };
     },
-    [customPersonaTemplates, globalCustomSystemMessages],
+    [
+      customPersonaTemplates,
+      globalCustomSystemMessages,
+      sharedSettings?.builtinPersonaOverrides,
+    ],
   );
 
   const selectPersona = useCallback(
@@ -695,7 +717,14 @@ function V4ComposerModelControlsImpl({
       };
       const params =
         selection.mode === "template"
-          ? { ...target, personaMode: "template" as const, templateId: selection.templateId }
+          ? {
+              ...target,
+              personaMode: "template" as const,
+              templateId: selection.templateId,
+              ...("template" in selection && selection.template
+                ? { template: selection.template }
+                : {}),
+            }
           : selection.mode === "custom"
             ? { ...target, personaMode: "custom" as const, custom: selection.custom }
             : selection.mode === "builtin"
@@ -1590,8 +1619,10 @@ function V4ComposerModelControlsImpl({
     const globalTemplateName = globalPrefix
       ? (GODMODE_TEMPLATES.find(
           (template) =>
-            resolvePersonaTemplateText(template.prompt, template.assistantName).trim() ===
-            globalPrefix,
+            resolveBuiltinPersonaTemplate(
+              template.id,
+              sharedSettings?.builtinPersonaOverrides,
+            )?.cliPrefix.trim() === globalPrefix,
         )?.name ??
         customPersonaTemplates.find(
           (template) =>
@@ -1638,6 +1669,7 @@ function V4ComposerModelControlsImpl({
     effectivePersona,
     globalCustomSystemMessages,
     customPersonaTemplates,
+    sharedSettings?.builtinPersonaOverrides,
     selectPersona,
   ]);
 

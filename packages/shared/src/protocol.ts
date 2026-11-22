@@ -10,7 +10,7 @@ import type { EmbeddedBrowserViewportPreference } from "./browser-use/command-me
 import type { ProxyPoolSettings } from "./proxy-pool.js";
 import { z } from "zod";
 import { customSkinSchema } from "./validationAppSettings.js";
-import type { CustomPersonaTemplate } from "./validationAppSettings.js";
+import type { CustomPersonaTemplate, BuiltinPersonaOverrides } from "./validationAppSettings.js";
 import type { AppToolSearchMode } from "./app-runtime-preferences.js";
 
 // ── Domain types ──
@@ -427,6 +427,12 @@ export interface AppSettings {
   customSystemMessages?: CustomSystemMessagesSettings;
   /** XCode fork：用户自定义身份模板（提示词 + PreFill），在设置页与会话身份里与内置模板并列。 */
   customPersonaTemplates?: CustomPersonaTemplate[];
+  /**
+   * XCode fork：内置身份模板的用户改动槽位（按模板 id 存，展开后正文）。
+   * 应用/切换内置模板时按「槽位优先、代码常量兜底」解析，避免编辑非当前人设
+   * 时直接覆盖全局 customSystemMessages。
+   */
+  builtinPersonaOverrides?: BuiltinPersonaOverrides;
   /**
    * XCode fork：原生皮肤覆盖层（base + overrides + backgroundImage），AppSettings.customSkin 持久化。
    * null = 显式移除自定义皮肤、回退官方主题（patch 的删除语义；RPC/JSON 会吞 undefined，
